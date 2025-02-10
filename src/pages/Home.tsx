@@ -1,5 +1,6 @@
+
 import { Link } from 'react-router-dom';
-import { ArrowRight, Book, Wand2, Settings, Heart, Users, Baby, User } from 'lucide-react';
+import { ArrowRight, Book, Wand2, Settings } from 'lucide-react';
 
 const Home = () => {
   return (
@@ -30,29 +31,64 @@ const Home = () => {
           <h2 className="text-3xl font-display font-bold text-center mb-12">
             Who are you buying for?
           </h2>
-          <div className="flex justify-center items-center gap-8">
-            <Link to="/create/step1" className="group">
-              <div className="glass-card p-6 rounded-2xl text-center transition-transform hover:scale-105">
-                <Users className="w-12 h-12 text-primary mb-4 mx-auto" />
-                <h3 className="text-xl font-semibold">For Friends</h3>
+          <div className="flex justify-center items-stretch gap-8">
+            <Link to="/create/step1" className="group flex-1 max-w-[280px]">
+              <div className="glass-card h-full rounded-2xl overflow-hidden transition-transform hover:scale-105">
+                <div className="aspect-[4/3] relative">
+                  <img 
+                    src="https://images.unsplash.com/photo-1517022812141-23620dba5c23" 
+                    alt="For Friends" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="p-6 text-center">
+                  <h3 className="text-xl font-semibold">For Friends</h3>
+                </div>
               </div>
             </Link>
-            <Link to="/create/step1" className="group">
-              <div className="glass-card p-6 rounded-2xl text-center transition-transform hover:scale-105">
-                <Heart className="w-12 h-12 text-primary mb-4 mx-auto" />
-                <h3 className="text-xl font-semibold">For Love</h3>
+            
+            <Link to="/create/step1" className="group flex-1 max-w-[280px]">
+              <div className="glass-card h-full rounded-2xl overflow-hidden transition-transform hover:scale-105">
+                <div className="aspect-[4/3] relative">
+                  <img 
+                    src="https://images.unsplash.com/photo-1582562124811-c09040d0a901" 
+                    alt="For Love" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="p-6 text-center">
+                  <h3 className="text-xl font-semibold">For Love</h3>
+                </div>
               </div>
             </Link>
-            <Link to="/create/step1" className="group">
-              <div className="glass-card p-6 rounded-2xl text-center transition-transform hover:scale-105">
-                <Baby className="w-12 h-12 text-primary mb-4 mx-auto" />
-                <h3 className="text-xl font-semibold">For Kids</h3>
+            
+            <Link to="/create/step1" className="group flex-1 max-w-[280px]">
+              <div className="glass-card h-full rounded-2xl overflow-hidden transition-transform hover:scale-105">
+                <div className="aspect-[4/3] relative">
+                  <img 
+                    src="https://images.unsplash.com/photo-1535268647677-300dbf3d78d1" 
+                    alt="For Kids" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="p-6 text-center">
+                  <h3 className="text-xl font-semibold">For Kids</h3>
+                </div>
               </div>
             </Link>
-            <Link to="/create/step1" className="group">
-              <div className="glass-card p-6 rounded-2xl text-center transition-transform hover:scale-105">
-                <User className="w-12 h-12 text-primary mb-4 mx-auto" />
-                <h3 className="text-xl font-semibold">For You</h3>
+            
+            <Link to="/create/step1" className="group flex-1 max-w-[280px]">
+              <div className="glass-card h-full rounded-2xl overflow-hidden transition-transform hover:scale-105">
+                <div className="aspect-[4/3] relative">
+                  <img 
+                    src="https://images.unsplash.com/photo-1721322800607-8c38375eef04" 
+                    alt="For You" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="p-6 text-center">
+                  <h3 className="text-xl font-semibold">For You</h3>
+                </div>
               </div>
             </Link>
           </div>
