@@ -1,3 +1,4 @@
+
 import { Link } from 'react-router-dom';
 import { ArrowRight, Book, Wand2, Settings, Upload } from 'lucide-react';
 
@@ -30,7 +31,7 @@ const Home = () => {
           <h2 className="text-3xl font-display font-bold text-center mb-12">
             Who are you buying for?
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="flex flex-nowrap gap-4 overflow-x-auto pb-4">
             {[
               {
                 title: "For you",
@@ -55,7 +56,7 @@ const Home = () => {
             ].map((option, index) => (
               <div 
                 key={index} 
-                className="glass-card rounded-2xl overflow-hidden transition-transform hover:scale-105 cursor-pointer"
+                className="glass-card rounded-2xl overflow-hidden transition-transform hover:scale-105 cursor-pointer flex-shrink-0 w-[300px]"
               >
                 <div 
                   className="aspect-[4/3] bg-cover bg-center"
