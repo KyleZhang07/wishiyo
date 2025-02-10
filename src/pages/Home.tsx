@@ -1,14 +1,6 @@
-
 import { Link } from 'react-router-dom';
 import { ArrowRight, Book, BookOpen, Pencil, Heart, Gift } from 'lucide-react';
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useCallback } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
@@ -45,7 +37,7 @@ const Home = () => {
     }
   ];
 
-  const [selectedIndex, setSelectedIndex] = React.useState(0);
+  const [selectedIndex, setSelectedIndex] = useState(0);
 
   const onSelect = useCallback(() => {
     if (!emblaApi) return;
@@ -63,7 +55,6 @@ const Home = () => {
 
   return (
     <div className="page-transition">
-      {/* Hero Section with Carousel */}
       <section className="min-h-[80vh] flex items-center justify-center bg-gradient-to-b from-primary/5 to-transparent">
         <div className="container mx-auto px-4 py-16 md:py-24">
           <div className="max-w-5xl mx-auto">
@@ -104,7 +95,6 @@ const Home = () => {
                 </div>
               </div>
               
-              {/* Dot indicators */}
               <div className="flex justify-center gap-2 mt-4">
                 {slides.map((_, index) => (
                   <button
@@ -121,7 +111,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Who are you buying for? Section */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-display font-bold text-center mb-12">
@@ -191,7 +180,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Example Books Section */}
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-display font-bold text-center mb-12">
@@ -216,7 +204,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Gift Creation Steps Section */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-display font-bold text-center mb-12">
