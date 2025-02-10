@@ -1,5 +1,6 @@
+
 import { Link } from 'react-router-dom';
-import { ArrowRight, Book, Wand2, Settings, BookOpen, Pencil, Heart, Gift } from 'lucide-react';
+import { ArrowRight, Book, BookOpen, Pencil, Heart, Gift } from 'lucide-react';
 
 const Home = () => {
   return (
@@ -127,7 +128,7 @@ const Home = () => {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="text-center">
-              <div className="w-24 h-24 bg-emerald-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <div className="w-24 h-24 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <BookOpen className="w-12 h-12 text-white" />
               </div>
               <h3 className="text-xl font-semibold mb-2">Find a book they'll love</h3>
@@ -137,7 +138,7 @@ const Home = () => {
             </div>
 
             <div className="text-center">
-              <div className="w-24 h-24 bg-emerald-800 clip-hexagon flex items-center justify-center mx-auto mb-4">
+              <div className="w-24 h-24 bg-primary clip-hexagon flex items-center justify-center mx-auto mb-4">
                 <Pencil className="w-12 h-12 text-white" />
               </div>
               <h3 className="text-xl font-semibold mb-2">Personalize it with care</h3>
@@ -147,7 +148,7 @@ const Home = () => {
             </div>
 
             <div className="text-center">
-              <div className="w-24 h-24 bg-emerald-800 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-24 h-24 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
                 <Heart className="w-12 h-12 text-white" />
               </div>
               <h3 className="text-xl font-semibold mb-2">Add a message</h3>
@@ -157,7 +158,7 @@ const Home = () => {
             </div>
 
             <div className="text-center">
-              <div className="w-24 h-24 bg-emerald-800 clip-gift flex items-center justify-center mx-auto mb-4">
+              <div className="w-24 h-24 bg-primary clip-gift flex items-center justify-center mx-auto mb-4">
                 <Gift className="w-12 h-12 text-white" />
               </div>
               <h3 className="text-xl font-semibold mb-2">Give a gift to remember</h3>
