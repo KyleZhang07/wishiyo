@@ -94,38 +94,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-display font-bold text-center mb-12">
-            Why Choose AI Book Crafter?
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="glass-card p-6 rounded-2xl">
-              <Wand2 className="w-12 h-12 text-primary mb-4" />
-              <h3 className="text-xl font-semibold mb-2">AI-Powered Writing</h3>
-              <p className="text-gray-600">
-                Let AI help you create engaging content based on your ideas and preferences.
-              </p>
-            </div>
-            <div className="glass-card p-6 rounded-2xl">
-              <Settings className="w-12 h-12 text-primary mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Customizable Design</h3>
-              <p className="text-gray-600">
-                Choose from beautiful templates and customize every aspect of your book.
-              </p>
-            </div>
-            <div className="glass-card p-6 rounded-2xl">
-              <Book className="w-12 h-12 text-primary mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Professional Quality</h3>
-              <p className="text-gray-600">
-                Get professionally formatted books ready for sharing or publishing.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Example Books Section */}
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
