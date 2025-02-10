@@ -1,12 +1,12 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Heart, Users, Baby, User } from 'lucide-react';
+import { Heart, Users, Baby, User, ArrowRight } from 'lucide-react';
 
 const Step1 = () => {
   const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [bookType, setBookType] = useState<string | null>(null);
+  const [selectedBookType, setSelectedBookType] = useState<string | null>(null);
 
   const categories = [
     {
@@ -15,9 +15,18 @@ const Step1 = () => {
       icon: Users,
       description: 'Create a special book for your friends',
       bookTypes: [
-        'AI Satire & Fun Manual',
-        'Adventure Partner Archives',
-        'Friendship Memory Album'
+        {
+          title: 'AI Satire & Fun Manual',
+          description: 'A humorous take on your friendship',
+        },
+        {
+          title: 'Adventure Partner Archives',
+          description: 'Document your shared adventures',
+        },
+        {
+          title: 'Friendship Memory Album',
+          description: 'Capture your best moments together',
+        }
       ]
     },
     {
@@ -26,9 +35,18 @@ const Step1 = () => {
       icon: Heart,
       description: 'Create a romantic book for your loved one',
       bookTypes: [
-        'AI Romantic Picture Book',
-        '365 Days Love Calendar',
-        'Love Story Quest Book'
+        {
+          title: 'AI Romantic Picture Book',
+          description: 'A beautiful love story with AI-generated illustrations',
+        },
+        {
+          title: '365 Days Love Calendar',
+          description: 'Document your love story day by day',
+        },
+        {
+          title: 'Love Story Quest Book',
+          description: 'An interactive journey through your romance',
+        }
       ]
     },
     {
@@ -37,9 +55,18 @@ const Step1 = () => {
       icon: Baby,
       description: 'Create a magical book for children',
       bookTypes: [
-        'AI Comic/Picture Book',
-        'Coloring Story Book',
-        'Pop-up Adventure Book'
+        {
+          title: 'AI Comic/Picture Book',
+          description: 'A fun illustrated story for children',
+        },
+        {
+          title: 'Coloring Story Book',
+          description: 'Interactive coloring book with a story',
+        },
+        {
+          title: 'Pop-up Adventure Book',
+          description: 'An engaging 3D story experience',
+        }
       ]
     },
     {
@@ -48,96 +75,24 @@ const Step1 = () => {
       icon: User,
       description: 'Create your personal book',
       bookTypes: [
-        'Personal Biography',
-        'AI Inspiration Journal',
-        'Fashion Portfolio Book'
+        {
+          title: 'Personal Biography',
+          description: 'Tell your life story',
+        },
+        {
+          title: 'AI Inspiration Journal',
+          description: 'A motivational journey just for you',
+        },
+        {
+          title: 'Fashion Portfolio Book',
+          description: 'Showcase your style and creativity',
+        }
       ]
     }
   ];
 
-  const renderCategorySelection = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {categories.map((category) => {
-        const Icon = category.icon;
-        return (
-          <button
-            key={category.id}
-            onClick={() => setSelectedCategory(category.id)}
-            className={`p-6 rounded-xl transition-all duration-200 text-left flex items-start gap-4 ${
-              selectedCategory === category.id
-                ? 'bg-primary text-white shadow-lg scale-105'
-                : 'bg-white hover:bg-primary/5 border border-gray-200'
-            }`}
-          >
-            <div className={`p-3 rounded-lg ${
-              selectedCategory === category.id
-                ? 'bg-white/20'
-                : 'bg-primary/10'
-            }`}>
-              <Icon className={`w-6 h-6 ${
-                selectedCategory === category.id
-                  ? 'text-white'
-                  : 'text-primary'
-              }`} />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold mb-1">{category.title}</h3>
-              <p className={`text-sm ${
-                selectedCategory === category.id
-                  ? 'text-white/80'
-                  : 'text-gray-600'
-              }`}>
-                {category.description}
-              </p>
-            </div>
-          </button>
-        );
-      })}
-    </div>
-  );
-
-  const renderBookTypeSelection = () => {
-    const category = categories.find(c => c.id === selectedCategory);
-    if (!category) return null;
-
-    return (
-      <div className="space-y-6">
-        <button
-          onClick={() => setSelectedCategory(null)}
-          className="text-sm text-gray-600 hover:text-gray-900 mb-4 flex items-center gap-2"
-        >
-          ← Back to categories
-        </button>
-        
-        <h2 className="text-2xl font-semibold mb-6">Choose Book Type</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {category.bookTypes.map((type) => (
-            <button
-              key={type}
-              onClick={() => setBookType(type)}
-              className={`p-4 rounded-lg border transition-all duration-200 ${
-                bookType === type
-                  ? 'border-primary bg-primary/5 text-primary'
-                  : 'border-gray-200 hover:border-primary/50'
-              }`}
-            >
-              <h3 className="font-medium">{type}</h3>
-            </button>
-          ))}
-        </div>
-
-        {bookType && (
-          <div className="mt-8 flex justify-end">
-            <button
-              onClick={() => navigate('/create/step2')}
-              className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-            >
-              Continue to Next Step
-            </button>
-          </div>
-        )}
-      </div>
-    );
+  const handleContinue = () => {
+    navigate('/create/step2');
   };
 
   return (
@@ -145,15 +100,88 @@ const Step1 = () => {
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-display font-bold mb-4">
-            Let's Start Your Book
+            Choose Your Book Category
           </h1>
           <p className="text-gray-600">
-            Choose who you're creating this book for, and we'll help bring your ideas to life.
+            Select who you're creating this book for, and we'll help bring your ideas to life.
           </p>
         </div>
 
         <div className="glass-card rounded-2xl p-8">
-          {!selectedCategory ? renderCategorySelection() : renderBookTypeSelection()}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {categories.map((category) => {
+              const Icon = category.icon;
+              const isSelected = selectedCategory === category.id;
+              
+              return (
+                <div key={category.id}>
+                  <button
+                    onClick={() => {
+                      setSelectedCategory(category.id);
+                      setSelectedBookType(null);
+                    }}
+                    className={`w-full p-6 rounded-xl transition-all duration-200 text-left flex items-start gap-4 ${
+                      isSelected
+                        ? 'bg-primary text-white shadow-lg'
+                        : 'bg-white hover:bg-primary/5 border border-gray-200'
+                    }`}
+                  >
+                    <div className={`p-3 rounded-lg ${
+                      isSelected ? 'bg-white/20' : 'bg-primary/10'
+                    }`}>
+                      <Icon className={`w-6 h-6 ${
+                        isSelected ? 'text-white' : 'text-primary'
+                      }`} />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-1">{category.title}</h3>
+                      <p className={`text-sm ${
+                        isSelected ? 'text-white/80' : 'text-gray-600'
+                      }`}>
+                        {category.description}
+                      </p>
+                    </div>
+                  </button>
+
+                  {isSelected && (
+                    <div className="mt-4 space-y-3">
+                      {category.bookTypes.map((bookType) => (
+                        <button
+                          key={bookType.title}
+                          onClick={() => setSelectedBookType(bookType.title)}
+                          className={`w-full p-4 rounded-lg border transition-all duration-200 text-left ${
+                            selectedBookType === bookType.title
+                              ? 'border-primary bg-primary/5'
+                              : 'border-gray-200 hover:border-primary/50'
+                          }`}
+                        >
+                          <h4 className={`font-medium mb-1 ${
+                            selectedBookType === bookType.title ? 'text-primary' : ''
+                          }`}>
+                            {bookType.title}
+                          </h4>
+                          <p className="text-sm text-gray-600">
+                            {bookType.description}
+                          </p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {selectedBookType && (
+            <div className="mt-8 flex justify-end">
+              <button
+                onClick={handleContinue}
+                className="inline-flex items-center px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+              >
+                Continue to Next Step <ArrowRight className="ml-2 w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
