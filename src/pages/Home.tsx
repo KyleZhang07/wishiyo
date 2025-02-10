@@ -1,6 +1,5 @@
-
 import { Link } from 'react-router-dom';
-import { ArrowRight, Book, Wand2, Settings } from 'lucide-react';
+import { ArrowRight, Book, Wand2, Settings, Heart, Users, Baby, User } from 'lucide-react';
 
 const Home = () => {
   return (
@@ -20,6 +19,41 @@ const Home = () => {
               className="inline-flex items-center px-6 py-3 text-lg font-medium text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors"
             >
               Start Creating <ArrowRight className="ml-2" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Who are you buying for? Section */}
+      <section className="py-16 bg-white">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-display font-bold text-center mb-12">
+            Who are you buying for?
+          </h2>
+          <div className="flex justify-center items-center gap-8">
+            <Link to="/create/step1" className="group">
+              <div className="glass-card p-6 rounded-2xl text-center transition-transform hover:scale-105">
+                <Users className="w-12 h-12 text-primary mb-4 mx-auto" />
+                <h3 className="text-xl font-semibold">For Friends</h3>
+              </div>
+            </Link>
+            <Link to="/create/step1" className="group">
+              <div className="glass-card p-6 rounded-2xl text-center transition-transform hover:scale-105">
+                <Heart className="w-12 h-12 text-primary mb-4 mx-auto" />
+                <h3 className="text-xl font-semibold">For Love</h3>
+              </div>
+            </Link>
+            <Link to="/create/step1" className="group">
+              <div className="glass-card p-6 rounded-2xl text-center transition-transform hover:scale-105">
+                <Baby className="w-12 h-12 text-primary mb-4 mx-auto" />
+                <h3 className="text-xl font-semibold">For Kids</h3>
+              </div>
+            </Link>
+            <Link to="/create/step1" className="group">
+              <div className="glass-card p-6 rounded-2xl text-center transition-transform hover:scale-105">
+                <User className="w-12 h-12 text-primary mb-4 mx-auto" />
+                <h3 className="text-xl font-semibold">For You</h3>
+              </div>
             </Link>
           </div>
         </div>
