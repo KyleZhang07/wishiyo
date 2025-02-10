@@ -1,26 +1,122 @@
 
 import { Link } from 'react-router-dom';
 import { ArrowRight, Book, BookOpen, Pencil, Heart, Gift } from 'lucide-react';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import { useEffect } from 'react';
+import { useCallback } from "react";
+import useEmblaCarousel from "embla-carousel-react";
+import Autoplay from "embla-carousel-autoplay";
 
 const Home = () => {
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [
+    Autoplay({ delay: 4000, stopOnInteract: false }),
+  ]);
+
+  const slides = [
+    {
+      title: "Create Books for Friends",
+      description: "Transform your cherished memories into personalized stories. Create meaningful gifts that celebrate your friendships.",
+      image: "https://images.unsplash.com/photo-1519389950473-47ba0277781c",
+      theme: "Friends"
+    },
+    {
+      title: "Express Your Love",
+      description: "Turn your love story into a beautiful book. Create romantic narratives that capture your special moments.",
+      image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158",
+      theme: "Love"
+    },
+    {
+      title: "Inspire Young Minds",
+      description: "Create magical stories for children. Bring imagination to life with personalized children's books.",
+      image: "https://images.unsplash.com/photo-1535268647677-300dbf3d78d1",
+      theme: "Kids"
+    },
+    {
+      title: "Write Your Story",
+      description: "Tell your own story, your way. Create personal narratives that reflect your journey and experiences.",
+      image: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d",
+      theme: "You"
+    }
+  ];
+
+  const [selectedIndex, setSelectedIndex] = React.useState(0);
+
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return;
+    setSelectedIndex(emblaApi.selectedScrollSnap());
+  }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    onSelect();
+    emblaApi.on("select", onSelect);
+    return () => {
+      emblaApi.off("select", onSelect);
+    };
+  }, [emblaApi, onSelect]);
+
   return (
     <div className="page-transition">
-      {/* Hero Section */}
+      {/* Hero Section with Carousel */}
       <section className="min-h-[80vh] flex items-center justify-center bg-gradient-to-b from-primary/5 to-transparent">
         <div className="container mx-auto px-4 py-16 md:py-24">
-          <div className="text-center max-w-3xl mx-auto">
-            <h1 className="text-4xl md:text-6xl font-display font-bold mb-6 slide-in">
-              Create Your Book with AI
-            </h1>
-            <p className="text-xl text-gray-600 mb-8 slide-in">
-              Transform your ideas into beautifully crafted books using artificial intelligence.
-            </p>
-            <Link
-              to="/create/step1"
-              className="inline-flex items-center px-6 py-3 text-lg font-medium text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors"
-            >
-              Start Creating <ArrowRight className="ml-2" />
-            </Link>
+          <div className="max-w-5xl mx-auto">
+            <div className="relative">
+              <div className="overflow-hidden rounded-xl" ref={emblaRef}>
+                <div className="flex">
+                  {slides.map((slide, index) => (
+                    <div
+                      key={index}
+                      className="flex-[0_0_100%] min-w-0"
+                    >
+                      <div className="relative h-[60vh] rounded-xl overflow-hidden">
+                        <div className="absolute inset-0">
+                          <img
+                            src={slide.image}
+                            alt={slide.theme}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black/40" />
+                        </div>
+                        <div className="relative z-10 flex flex-col items-center justify-center h-full text-white p-8">
+                          <h1 className="text-4xl md:text-6xl font-display font-bold mb-6 text-center">
+                            {slide.title}
+                          </h1>
+                          <p className="text-xl text-white/90 mb-8 max-w-2xl text-center">
+                            {slide.description}
+                          </p>
+                          <Link
+                            to="/create/step1"
+                            className="inline-flex items-center px-6 py-3 text-lg font-medium text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors"
+                          >
+                            Start Creating <ArrowRight className="ml-2" />
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Dot indicators */}
+              <div className="flex justify-center gap-2 mt-4">
+                {slides.map((_, index) => (
+                  <button
+                    key={index}
+                    className={`w-3 h-3 rounded-full transition-colors ${
+                      index === selectedIndex ? "bg-white" : "bg-white/30"
+                    }`}
+                    onClick={() => emblaApi?.scrollTo(index)}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
