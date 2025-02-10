@@ -44,24 +44,27 @@ const Header = () => {
               AI Book Crafter
             </Link>
             <nav className="hidden md:flex items-center space-x-6">
+              <Link to="/" className="text-gray-600 hover:text-primary transition-colors">
+                Home
+              </Link>
               <Link to="/create/step1?type=friends" className="text-gray-600 hover:text-primary transition-colors">
-                For Friends
+                Friends
               </Link>
               <Link to="/create/step1?type=love" className="text-gray-600 hover:text-primary transition-colors">
-                For Love
+                Love
               </Link>
               <Link to="/create/step1?type=kids" className="text-gray-600 hover:text-primary transition-colors">
-                For Kids
+                Kids
               </Link>
               <Link to="/create/step1?type=you" className="text-gray-600 hover:text-primary transition-colors">
-                For You
+                You
               </Link>
             </nav>
           </div>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6">
-            <Link to="/cart" className="text-gray-600 hover:text-gray-900 transition-colors">
+            <Link to="/user-center" className="text-gray-600 hover:text-gray-900 transition-colors">
               <ShoppingCart className="w-6 h-6" />
             </Link>
             {user ? (
@@ -91,35 +94,42 @@ const Header = () => {
         {isMenuOpen && (
           <nav className="md:hidden py-4 space-y-4">
             <Link 
+              to="/" 
+              className="block px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Home
+            </Link>
+            <Link 
               to="/create/step1?type=friends" 
               className="block px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
               onClick={() => setIsMenuOpen(false)}
             >
-              For Friends
+              Friends
             </Link>
             <Link 
               to="/create/step1?type=love" 
               className="block px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
               onClick={() => setIsMenuOpen(false)}
             >
-              For Love
+              Love
             </Link>
             <Link 
               to="/create/step1?type=kids" 
               className="block px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
               onClick={() => setIsMenuOpen(false)}
             >
-              For Kids
+              Kids
             </Link>
             <Link 
               to="/create/step1?type=you" 
               className="block px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
               onClick={() => setIsMenuOpen(false)}
             >
-              For You
+              You
             </Link>
             <Link 
-              to="/cart" 
+              to="/user-center" 
               className="block px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
               onClick={() => setIsMenuOpen(false)}
             >
