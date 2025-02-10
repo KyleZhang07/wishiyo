@@ -1,6 +1,5 @@
-
 import { Link } from 'react-router-dom';
-import { ArrowRight, Book, Wand2, Settings } from 'lucide-react';
+import { ArrowRight, Book, Wand2, Settings, BookOpen, Pencil, Heart, Gift } from 'lucide-react';
 
 const Home = () => {
   return (
@@ -148,6 +147,56 @@ const Home = () => {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Gift Creation Steps Section */}
+      <section className="py-16 bg-white">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-display font-bold text-center mb-12">
+            Meaningful gifts, made in minutes
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div className="text-center">
+              <div className="w-24 h-24 bg-emerald-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <BookOpen className="w-12 h-12 text-white" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Find a book they'll love</h3>
+              <p className="text-gray-600">
+                Browse the bookshop for the perfect story
+              </p>
+            </div>
+
+            <div className="text-center">
+              <div className="w-24 h-24 bg-emerald-800 clip-hexagon flex items-center justify-center mx-auto mb-4">
+                <Pencil className="w-12 h-12 text-white" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Personalize it with care</h3>
+              <p className="text-gray-600">
+                Add their name and other little details
+              </p>
+            </div>
+
+            <div className="text-center">
+              <div className="w-24 h-24 bg-emerald-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Heart className="w-12 h-12 text-white" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Add a message</h3>
+              <p className="text-gray-600">
+                We'll print your words on the very first page
+              </p>
+            </div>
+
+            <div className="text-center">
+              <div className="w-24 h-24 bg-emerald-800 clip-gift flex items-center justify-center mx-auto mb-4">
+                <Gift className="w-12 h-12 text-white" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Give a gift to remember</h3>
+              <p className="text-gray-600">
+                Something they'll want to keep forever
+              </p>
+            </div>
           </div>
         </div>
       </section>
