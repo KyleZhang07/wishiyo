@@ -1,6 +1,6 @@
 
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, ShoppingCart } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -11,12 +11,10 @@ const Header = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
     });
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -41,20 +39,30 @@ const Header = () => {
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-200">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          <Link to="/" className="text-xl font-display font-semibold">
-            AI Book Crafter
-          </Link>
+          <div className="flex items-center space-x-8">
+            <Link to="/" className="text-xl font-display font-semibold">
+              AI Book Crafter
+            </Link>
+            <nav className="hidden md:flex items-center space-x-6">
+              <Link to="/create/step1?type=friends" className="text-gray-600 hover:text-primary transition-colors">
+                For Friends
+              </Link>
+              <Link to="/create/step1?type=love" className="text-gray-600 hover:text-primary transition-colors">
+                For Love
+              </Link>
+              <Link to="/create/step1?type=kids" className="text-gray-600 hover:text-primary transition-colors">
+                For Kids
+              </Link>
+              <Link to="/create/step1?type=you" className="text-gray-600 hover:text-primary transition-colors">
+                For You
+              </Link>
+            </nav>
+          </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
-            <Link to="/" className="text-gray-600 hover:text-gray-900 transition-colors">
-              Home
-            </Link>
-            <Link to="/create/step1" className="text-gray-600 hover:text-gray-900 transition-colors">
-              Create Book
-            </Link>
-            <Link to="/user-center" className="text-gray-600 hover:text-gray-900 transition-colors">
-              My Books
+          <div className="hidden md:flex items-center space-x-6">
+            <Link to="/cart" className="text-gray-600 hover:text-gray-900 transition-colors">
+              <ShoppingCart className="w-6 h-6" />
             </Link>
             {user ? (
               <button
@@ -68,7 +76,7 @@ const Header = () => {
                 Login
               </Link>
             )}
-          </nav>
+          </div>
 
           {/* Mobile Menu Button */}
           <button 
@@ -83,25 +91,39 @@ const Header = () => {
         {isMenuOpen && (
           <nav className="md:hidden py-4 space-y-4">
             <Link 
-              to="/" 
+              to="/create/step1?type=friends" 
               className="block px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
               onClick={() => setIsMenuOpen(false)}
             >
-              Home
+              For Friends
             </Link>
             <Link 
-              to="/create/step1" 
+              to="/create/step1?type=love" 
               className="block px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
               onClick={() => setIsMenuOpen(false)}
             >
-              Create Book
+              For Love
             </Link>
             <Link 
-              to="/user-center" 
+              to="/create/step1?type=kids" 
               className="block px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
               onClick={() => setIsMenuOpen(false)}
             >
-              My Books
+              For Kids
+            </Link>
+            <Link 
+              to="/create/step1?type=you" 
+              className="block px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              For You
+            </Link>
+            <Link 
+              to="/cart" 
+              className="block px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Cart
             </Link>
             {user ? (
               <button
