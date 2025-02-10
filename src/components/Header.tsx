@@ -41,9 +41,9 @@ const Header = () => {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-8">
             <Link to="/" className="text-xl font-display font-semibold">
-              AI Book Crafter
+              WISHIKA
             </Link>
-            <nav className="hidden md:flex items-center space-x-6">
+            <nav className="hidden md:flex items-center space-x-8">
               <Link to="/" className="text-gray-600 hover:text-primary transition-colors">
                 Home
               </Link>
