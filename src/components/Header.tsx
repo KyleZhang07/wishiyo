@@ -31,9 +31,9 @@ const Header = () => {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       navigate('/');
-      toast.success('已成功登出');
+      toast.success('Successfully logged out');
     } catch (error: any) {
-      toast.error(error.message || '登出失败，请重试');
+      toast.error(error.message || 'Logout failed, please try again');
     }
   };
 
@@ -61,11 +61,11 @@ const Header = () => {
                 onClick={handleLogout}
                 className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
               >
-                登出
+                Logout
               </button>
             ) : (
               <Link to="/login" className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors">
-                登录
+                Login
               </Link>
             )}
           </nav>
@@ -111,7 +111,7 @@ const Header = () => {
                 }}
                 className="block w-full text-left px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
               >
-                登出
+                Logout
               </button>
             ) : (
               <Link 
@@ -119,7 +119,7 @@ const Header = () => {
                 className="block px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
                 onClick={() => setIsMenuOpen(false)}
               >
-                登录
+                Login
               </Link>
             )}
           </nav>
