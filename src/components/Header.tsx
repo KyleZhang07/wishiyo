@@ -1,10 +1,41 @@
 
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [user, setUser] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      navigate('/');
+      toast.success('已成功登出');
+    } catch (error: any) {
+      toast.error(error.message || '登出失败，请重试');
+    }
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-200">
@@ -25,9 +56,18 @@ const Header = () => {
             <Link to="/user-center" className="text-gray-600 hover:text-gray-900 transition-colors">
               My Books
             </Link>
-            <Link to="/login" className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors">
-              Sign In
-            </Link>
+            {user ? (
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+              >
+                登出
+              </button>
+            ) : (
+              <Link to="/login" className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors">
+                登录
+              </Link>
+            )}
           </nav>
 
           {/* Mobile Menu Button */}
@@ -63,13 +103,25 @@ const Header = () => {
             >
               My Books
             </Link>
-            <Link 
-              to="/login" 
-              className="block px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Sign In
-            </Link>
+            {user ? (
+              <button
+                onClick={() => {
+                  handleLogout();
+                  setIsMenuOpen(false);
+                }}
+                className="block w-full text-left px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                登出
+              </button>
+            ) : (
+              <Link 
+                to="/login" 
+                className="block px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                登录
+              </Link>
+            )}
           </nav>
         )}
       </div>
