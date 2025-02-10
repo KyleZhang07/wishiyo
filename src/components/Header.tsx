@@ -46,7 +46,7 @@ const Header = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
+          <nav className="hidden md:flex items-center justify-end flex-1 ml-8 space-x-8">
             <Link to="/" className="text-gray-600 hover:text-gray-900 transition-colors">
               Home
             </Link>
