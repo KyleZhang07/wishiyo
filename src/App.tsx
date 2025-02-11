@@ -11,6 +11,9 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import UserCenter from "./pages/UserCenter";
 import NotFound from "./pages/NotFound";
+import FriendsLanding from "./pages/FriendsLanding";
+import LoveLanding from "./pages/LoveLanding";
+import KidsLanding from "./pages/KidsLanding";
 
 // Friends Book Creation Routes
 import FriendsStyleStep from "./pages/wizard/friends/StyleStep";
@@ -44,6 +47,11 @@ const App = () => {
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/user-center" element={<UserCenter />} />
+                
+                {/* Category Landing Pages */}
+                <Route path="/friends" element={<FriendsLanding />} />
+                <Route path="/love" element={<LoveLanding />} />
+                <Route path="/kids" element={<KidsLanding />} />
                 
                 {/* Friends Book Creation Routes */}
                 <Route path="/create/friends/style" element={<FriendsStyleStep />} />
