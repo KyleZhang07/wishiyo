@@ -32,14 +32,6 @@ const bookTypes: Record<string, BookType[]> = {
       description: "Transform your child's photos into an enchanting storybook where they become the hero",
       buttonText: "Create My Child's Book"
     }
-  ],
-  you: [
-    {
-      id: 'personal',
-      title: "Your Story, Your Legacy",
-      description: "Transform your life journey into a beautifully illustrated memoir to share with loved ones",
-      buttonText: "Create My Personal Book"
-    }
   ]
 };
 
