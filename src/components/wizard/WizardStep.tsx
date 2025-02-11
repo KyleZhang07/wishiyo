@@ -53,7 +53,7 @@ const WizardStep = ({
                   Back
                 </button>
               ) : (
-                <div /> {/* Empty div for spacing */}
+                <div></div>
               )}
               {nextStep && (
                 <button
