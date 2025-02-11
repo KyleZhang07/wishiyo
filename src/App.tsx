@@ -11,10 +11,24 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import UserCenter from "./pages/UserCenter";
 import NotFound from "./pages/NotFound";
-import Step1 from "./pages/wizard/Step1";
-import Step2 from "./pages/wizard/Step2";
-import Step3 from "./pages/wizard/Step3";
-import Step4 from "./pages/wizard/Step4";
+
+// Friends Book Creation Routes
+import FriendsStyleStep from "./pages/wizard/friends/StyleStep";
+import FriendsMemoriesStep from "./pages/wizard/friends/MemoriesStep";
+import FriendsPhotoStep from "./pages/wizard/friends/PhotoStep";
+import FriendsGenerateStep from "./pages/wizard/friends/GenerateStep";
+
+// Love Book Creation Routes
+import LoveStyleStep from "./pages/wizard/love/StyleStep";
+import LoveMessageStep from "./pages/wizard/love/MessageStep";
+import LoveMomentsStep from "./pages/wizard/love/MomentsStep";
+import LoveGenerateStep from "./pages/wizard/love/GenerateStep";
+
+// Kids Book Creation Routes
+import KidsCharacterStep from "./pages/wizard/kids/CharacterStep";
+import KidsSettingStep from "./pages/wizard/kids/SettingStep";
+import KidsStoryStep from "./pages/wizard/kids/StoryStep";
+import KidsGenerateStep from "./pages/wizard/kids/GenerateStep";
 
 const queryClient = new QueryClient();
 
@@ -30,10 +44,25 @@ const App = () => {
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/user-center" element={<UserCenter />} />
-                <Route path="/create/step1" element={<Step1 />} />
-                <Route path="/create/step2" element={<Step2 />} />
-                <Route path="/create/step3" element={<Step3 />} />
-                <Route path="/create/step4" element={<Step4 />} />
+                
+                {/* Friends Book Creation Routes */}
+                <Route path="/create/friends/style" element={<FriendsStyleStep />} />
+                <Route path="/create/friends/memories" element={<FriendsMemoriesStep />} />
+                <Route path="/create/friends/photos" element={<FriendsPhotoStep />} />
+                <Route path="/create/friends/generate" element={<FriendsGenerateStep />} />
+                
+                {/* Love Book Creation Routes */}
+                <Route path="/create/love/style" element={<LoveStyleStep />} />
+                <Route path="/create/love/message" element={<LoveMessageStep />} />
+                <Route path="/create/love/moments" element={<LoveMomentsStep />} />
+                <Route path="/create/love/generate" element={<LoveGenerateStep />} />
+                
+                {/* Kids Book Creation Routes */}
+                <Route path="/create/kids/character" element={<KidsCharacterStep />} />
+                <Route path="/create/kids/setting" element={<KidsSettingStep />} />
+                <Route path="/create/kids/story" element={<KidsStoryStep />} />
+                <Route path="/create/kids/generate" element={<KidsGenerateStep />} />
+                
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </main>

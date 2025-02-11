@@ -47,13 +47,13 @@ const Header = () => {
               <Link to="/" className="text-gray-600 hover:text-primary transition-colors">
                 Home
               </Link>
-              <Link to="/create/step1?type=friends" className="text-gray-600 hover:text-primary transition-colors">
+              <Link to="/create/friends/style" className="text-gray-600 hover:text-primary transition-colors">
                 Friends
               </Link>
-              <Link to="/create/step1?type=love" className="text-gray-600 hover:text-primary transition-colors">
+              <Link to="/create/love/style" className="text-gray-600 hover:text-primary transition-colors">
                 Love
               </Link>
-              <Link to="/create/step1?type=kids" className="text-gray-600 hover:text-primary transition-colors">
+              <Link to="/create/kids/character" className="text-gray-600 hover:text-primary transition-colors">
                 Kids
               </Link>
             </nav>
@@ -98,21 +98,21 @@ const Header = () => {
               Home
             </Link>
             <Link 
-              to="/create/step1?type=friends" 
+              to="/create/friends/style" 
               className="block px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
               onClick={() => setIsMenuOpen(false)}
             >
               Friends
             </Link>
             <Link 
-              to="/create/step1?type=love" 
+              to="/create/love/style" 
               className="block px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
               onClick={() => setIsMenuOpen(false)}
             >
               Love
             </Link>
             <Link 
-              to="/create/step1?type=kids" 
+              to="/create/kids/character" 
               className="block px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
               onClick={() => setIsMenuOpen(false)}
             >
