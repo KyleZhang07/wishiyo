@@ -56,9 +56,6 @@ const Header = () => {
               <Link to="/create/step1?type=kids" className="text-gray-600 hover:text-primary transition-colors">
                 Kids
               </Link>
-              <Link to="/create/step1?type=you" className="text-gray-600 hover:text-primary transition-colors">
-                You
-              </Link>
             </nav>
           </div>
 
@@ -120,13 +117,6 @@ const Header = () => {
               onClick={() => setIsMenuOpen(false)}
             >
               Kids
-            </Link>
-            <Link 
-              to="/create/step1?type=you" 
-              className="block px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              You
             </Link>
             <Link 
               to="/user-center" 
