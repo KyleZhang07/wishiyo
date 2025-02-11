@@ -38,7 +38,13 @@ const bookTypes: Record<string, BookType[]> = {
 const Step1 = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const type = searchParams.get('type') || 'friends';
+  const type = searchParams.get('type');
+
+  // If type is not valid, redirect to home
+  if (!type || !bookTypes[type]) {
+    navigate('/');
+    return null;
+  }
 
   const handleBookTypeSelect = (bookType: string) => {
     navigate('/create/step2', { state: { type, bookType } });
