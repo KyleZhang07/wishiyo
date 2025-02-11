@@ -31,7 +31,7 @@ const Home = () => {
             Who are you buying for?
           </h2>
           <div className="flex justify-center items-stretch gap-8">
-            <div className="group flex-1 max-w-[280px]">
+            <Link to="/friends" className="group flex-1 max-w-[280px] block hover:scale-105 transition-transform">
               <div className="glass-card h-full rounded-2xl overflow-hidden">
                 <div className="aspect-[4/3] relative">
                   <img 
@@ -42,18 +42,12 @@ const Home = () => {
                 </div>
                 <div className="p-6">
                   <h3 className="text-xl font-semibold mb-4">For Friends</h3>
-                  <p className="text-gray-600 mb-6">Create a unique book celebrating your friendship</p>
-                  <Link
-                    to="/create/step2?type=friends"
-                    className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors w-full justify-center"
-                  >
-                    Create for Friends
-                  </Link>
+                  <p className="text-gray-600">Create a unique book celebrating your friendship</p>
                 </div>
               </div>
-            </div>
+            </Link>
             
-            <div className="group flex-1 max-w-[280px]">
+            <Link to="/love" className="group flex-1 max-w-[280px] block hover:scale-105 transition-transform">
               <div className="glass-card h-full rounded-2xl overflow-hidden">
                 <div className="aspect-[4/3] relative">
                   <img 
@@ -64,18 +58,12 @@ const Home = () => {
                 </div>
                 <div className="p-6">
                   <h3 className="text-xl font-semibold mb-4">For Love</h3>
-                  <p className="text-gray-600 mb-6">Express your feelings in a romantic story</p>
-                  <Link
-                    to="/create/step2?type=love"
-                    className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors w-full justify-center"
-                  >
-                    Create for Love
-                  </Link>
+                  <p className="text-gray-600">Express your feelings in a romantic story</p>
                 </div>
               </div>
-            </div>
+            </Link>
             
-            <div className="group flex-1 max-w-[280px]">
+            <Link to="/kids" className="group flex-1 max-w-[280px] block hover:scale-105 transition-transform">
               <div className="glass-card h-full rounded-2xl overflow-hidden">
                 <div className="aspect-[4/3] relative">
                   <img 
@@ -86,16 +74,10 @@ const Home = () => {
                 </div>
                 <div className="p-6">
                   <h3 className="text-xl font-semibold mb-4">For Kids</h3>
-                  <p className="text-gray-600 mb-6">Create magical stories for children</p>
-                  <Link
-                    to="/create/step2?type=kids"
-                    className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors w-full justify-center"
-                  >
-                    Create for Kids
-                  </Link>
+                  <p className="text-gray-600">Create magical stories for children</p>
                 </div>
               </div>
-            </div>
+            </Link>
           </div>
         </div>
       </section>
