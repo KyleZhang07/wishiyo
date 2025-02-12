@@ -19,7 +19,7 @@ const LoveLanding = () => {
                     Create a heartfelt book filled with your special moments and deepest feelings
                   </p>
                   <Link
-                    to="/create/love/style"
+                    to="/create/love/author"
                     className="inline-flex items-center gap-2 px-8 py-4 text-lg font-medium text-primary bg-white rounded-full hover:bg-gray-50 transition-colors"
                   >
                     <Heart className="w-5 h-5" />

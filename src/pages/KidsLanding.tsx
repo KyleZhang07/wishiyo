@@ -19,7 +19,7 @@ const KidsLanding = () => {
                     Turn your child into the hero of their very own storybook adventure
                   </p>
                   <Link
-                    to="/create/kids/character"
+                    to="/create/kids/author"
                     className="inline-flex items-center gap-2 px-8 py-4 text-lg font-medium text-primary bg-white rounded-full hover:bg-gray-50 transition-colors"
                   >
                     <Sparkles className="w-5 h-5" />

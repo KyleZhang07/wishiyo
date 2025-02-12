@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -33,6 +32,11 @@ import KidsSettingStep from "./pages/wizard/kids/SettingStep";
 import KidsStoryStep from "./pages/wizard/kids/StoryStep";
 import KidsGenerateStep from "./pages/wizard/kids/GenerateStep";
 
+// Add new imports
+import FriendsAuthorStep from "./pages/wizard/friends/AuthorStep";
+import LoveAuthorStep from "./pages/wizard/love/AuthorStep";
+import KidsAuthorStep from "./pages/wizard/kids/AuthorStep";
+
 const queryClient = new QueryClient();
 
 const App = () => {
@@ -54,18 +58,21 @@ const App = () => {
                 <Route path="/kids" element={<KidsLanding />} />
                 
                 {/* Friends Book Creation Routes */}
+                <Route path="/create/friends/author" element={<FriendsAuthorStep />} />
                 <Route path="/create/friends/style" element={<FriendsStyleStep />} />
                 <Route path="/create/friends/memories" element={<FriendsMemoriesStep />} />
                 <Route path="/create/friends/photos" element={<FriendsPhotoStep />} />
                 <Route path="/create/friends/generate" element={<FriendsGenerateStep />} />
                 
                 {/* Love Book Creation Routes */}
+                <Route path="/create/love/author" element={<LoveAuthorStep />} />
                 <Route path="/create/love/style" element={<LoveStyleStep />} />
                 <Route path="/create/love/message" element={<LoveMessageStep />} />
                 <Route path="/create/love/moments" element={<LoveMomentsStep />} />
                 <Route path="/create/love/generate" element={<LoveGenerateStep />} />
                 
                 {/* Kids Book Creation Routes */}
+                <Route path="/create/kids/author" element={<KidsAuthorStep />} />
                 <Route path="/create/kids/character" element={<KidsCharacterStep />} />
                 <Route path="/create/kids/setting" element={<KidsSettingStep />} />
                 <Route path="/create/kids/story" element={<KidsStoryStep />} />
