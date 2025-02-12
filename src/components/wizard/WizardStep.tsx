@@ -10,6 +10,7 @@ interface WizardStepProps {
   nextStep?: string;
   currentStep: number;
   totalSteps: number;
+  onNextClick?: () => void | Promise<void>;
 }
 
 const WizardStep = ({
@@ -20,6 +21,7 @@ const WizardStep = ({
   nextStep,
   currentStep,
   totalSteps,
+  onNextClick,
 }: WizardStepProps) => {
   const navigate = useNavigate();
 
@@ -55,9 +57,9 @@ const WizardStep = ({
               ) : (
                 <div></div>
               )}
-              {nextStep && (
+              {(nextStep || onNextClick) && (
                 <button
-                  onClick={() => navigate(nextStep)}
+                  onClick={onNextClick ? onNextClick : () => nextStep && navigate(nextStep)}
                   className="px-6 py-3 text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors"
                 >
                   Continue
