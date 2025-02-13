@@ -1,3 +1,4 @@
+
 import { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
@@ -38,7 +39,7 @@ const WizardStep = ({
           <div className="space-y-6">
             {children}
 
-            <div className="flex justify-center pt-6 border-t border-gray-200 w-full">
+            <div className="flex justify-center pt-6 w-full">
               {(nextStep || onNextClick) && <button onClick={onNextClick ? onNextClick : () => nextStep && navigate(nextStep)} className="w-full px-6 py-3 text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors">
                   Continue
                 </button>}
