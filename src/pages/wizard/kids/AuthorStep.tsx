@@ -3,7 +3,6 @@ import { useState } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 
 const KidsAuthorStep = () => {
@@ -11,7 +10,7 @@ const KidsAuthorStep = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleContinue = async () => {
+  const handleContinue = () => {
     if (!authorName.trim()) {
       toast({
         variant: "destructive",
@@ -21,37 +20,7 @@ const KidsAuthorStep = () => {
       return;
     }
 
-    try {
-      // Get the current user
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast({
-          title: "Error",
-          description: "You must be logged in to continue.",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      const { error } = await supabase.from('book_authors').insert([{
-        full_name: authorName.trim(),
-        category: 'kids',
-        user_id: user.id
-      }]);
-
-      if (error) throw error;
-      
-      // Updated navigation to skip style step
-      navigate('/create/kids/question');
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to save author information. Please try again."
-      });
-      console.error('Error:', error);
-    }
+    navigate('/create/kids/question');
   };
 
   return (
