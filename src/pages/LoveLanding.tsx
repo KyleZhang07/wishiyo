@@ -9,9 +9,7 @@ const LoveLanding = () => {
             <div className="max-w-6xl mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                 <div className="text-white space-y-6">
-                  <h1 className="text-4xl font-display font-bold px-0 mx-0 md:text-4xl text-slate-800">Love Story. 
-Magically crafted.
-                </h1>
+                  <h1 className="text-4xl font-display font-bold px-0 mx-0 md:text-4xl text-slate-800">Love Story. Magically crafted.</h1>
                   <p className="text-xl text-slate-800">Create a heartfelt book Personalized books that brings your romance to life</p>
                   <Link to="/create/love/author" className="inline-flex items-center gap-2 px-8 py-4 text-lg font-medium text-primary bg-white rounded-full hover:bg-gray-50 transition-colors">
                     <Heart className="w-5 h-5" />
