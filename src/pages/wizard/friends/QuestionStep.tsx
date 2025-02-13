@@ -5,7 +5,7 @@ const FriendsQuestionStep = () => {
   return (
     <QuestionStep
       category="friends"
-      previousStep="/create/friends/style"
+      previousStep="/create/friends/author"
       nextStep="/create/friends/photos"
     />
   );
