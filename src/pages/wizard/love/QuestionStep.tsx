@@ -5,7 +5,7 @@ const LoveQuestionStep = () => {
   return (
     <QuestionStep
       category="love"
-      previousStep="/create/love/style"
+      previousStep="/create/love/author"
       nextStep="/create/love/moments"
     />
   );

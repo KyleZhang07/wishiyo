@@ -5,7 +5,7 @@ const KidsQuestionStep = () => {
   return (
     <QuestionStep
       category="kids"
-      previousStep="/create/kids/style"
+      previousStep="/create/kids/author"
       nextStep="/create/kids/story"
     />
   );
