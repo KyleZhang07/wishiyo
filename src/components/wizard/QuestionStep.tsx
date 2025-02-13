@@ -27,11 +27,27 @@ const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) =
 
   const handleNext = async () => {
     try {
-      // First create the book author
+      // Get the current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to continue.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // First create the book author with user_id
       const { data: authorData, error: authorError } = await supabase
         .from('book_authors')
         .insert([
-          { category, full_name: 'Anonymous' }
+          { 
+            category, 
+            full_name: 'Anonymous',
+            user_id: user.id  // Set the user_id
+          }
         ])
         .select()
         .single();
@@ -58,6 +74,7 @@ const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) =
         description: "Failed to save your answer. Please try again.",
         variant: "destructive",
       });
+      console.error('Error:', error);
     }
   };
 
