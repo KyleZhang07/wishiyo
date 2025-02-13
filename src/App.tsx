@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -16,19 +17,19 @@ import KidsLanding from "./pages/KidsLanding";
 
 // Friends Book Creation Routes
 import FriendsStyleStep from "./pages/wizard/friends/StyleStep";
-import FriendsMemoriesStep from "./pages/wizard/friends/MemoriesStep";
+import FriendsQuestionStep from "./pages/wizard/friends/QuestionStep";
 import FriendsPhotoStep from "./pages/wizard/friends/PhotoStep";
 import FriendsGenerateStep from "./pages/wizard/friends/GenerateStep";
 
 // Love Book Creation Routes
 import LoveStyleStep from "./pages/wizard/love/StyleStep";
-import LoveMessageStep from "./pages/wizard/love/MessageStep";
+import LoveQuestionStep from "./pages/wizard/love/QuestionStep";
 import LoveMomentsStep from "./pages/wizard/love/MomentsStep";
 import LoveGenerateStep from "./pages/wizard/love/GenerateStep";
 
 // Kids Book Creation Routes
-import KidsCharacterStep from "./pages/wizard/kids/CharacterStep";
-import KidsSettingStep from "./pages/wizard/kids/SettingStep";
+import KidsStyleStep from "./pages/wizard/kids/StyleStep";
+import KidsQuestionStep from "./pages/wizard/kids/QuestionStep";
 import KidsStoryStep from "./pages/wizard/kids/StoryStep";
 import KidsGenerateStep from "./pages/wizard/kids/GenerateStep";
 
@@ -60,21 +61,21 @@ const App = () => {
                 {/* Friends Book Creation Routes */}
                 <Route path="/create/friends/author" element={<FriendsAuthorStep />} />
                 <Route path="/create/friends/style" element={<FriendsStyleStep />} />
-                <Route path="/create/friends/memories" element={<FriendsMemoriesStep />} />
+                <Route path="/create/friends/question" element={<FriendsQuestionStep />} />
                 <Route path="/create/friends/photos" element={<FriendsPhotoStep />} />
                 <Route path="/create/friends/generate" element={<FriendsGenerateStep />} />
                 
                 {/* Love Book Creation Routes */}
                 <Route path="/create/love/author" element={<LoveAuthorStep />} />
                 <Route path="/create/love/style" element={<LoveStyleStep />} />
-                <Route path="/create/love/message" element={<LoveMessageStep />} />
+                <Route path="/create/love/question" element={<LoveQuestionStep />} />
                 <Route path="/create/love/moments" element={<LoveMomentsStep />} />
                 <Route path="/create/love/generate" element={<LoveGenerateStep />} />
                 
                 {/* Kids Book Creation Routes */}
                 <Route path="/create/kids/author" element={<KidsAuthorStep />} />
-                <Route path="/create/kids/character" element={<KidsCharacterStep />} />
-                <Route path="/create/kids/setting" element={<KidsSettingStep />} />
+                <Route path="/create/kids/style" element={<KidsStyleStep />} />
+                <Route path="/create/kids/question" element={<KidsQuestionStep />} />
                 <Route path="/create/kids/story" element={<KidsStoryStep />} />
                 <Route path="/create/kids/generate" element={<KidsGenerateStep />} />
                 

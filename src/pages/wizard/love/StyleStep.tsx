@@ -6,8 +6,8 @@ const LoveStyleStep = () => {
     <WizardStep
       title="Choose Your Love Story Style"
       description="Select how you want to express your love."
-      previousStep="/"
-      nextStep="/create/love/message"
+      previousStep="/love"
+      nextStep="/create/love/question"
       currentStep={1}
       totalSteps={4}
     >

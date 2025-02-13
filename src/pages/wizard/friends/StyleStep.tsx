@@ -6,8 +6,8 @@ const FriendsStyleStep = () => {
     <WizardStep
       title="Choose Your Friendship Book Style"
       description="Select a style that best represents your friendship."
-      previousStep="/"
-      nextStep="/create/friends/memories"
+      previousStep="/friends"
+      nextStep="/create/friends/question"
       currentStep={1}
       totalSteps={4}
     >
