@@ -22,10 +22,26 @@ const LoveAuthorStep = () => {
     }
 
     try {
+      // Get the current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to continue.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { error } = await supabase
         .from('book_authors')
         .insert([
-          { full_name: authorName.trim(), category: 'love' }
+          { 
+            full_name: authorName.trim(), 
+            category: 'love',
+            user_id: user.id
+          }
         ]);
 
       if (error) throw error;
@@ -37,6 +53,7 @@ const LoveAuthorStep = () => {
         title: "Error",
         description: "Failed to save author information. Please try again.",
       });
+      console.error('Error:', error);
     }
   };
 
