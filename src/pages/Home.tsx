@@ -1,23 +1,15 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Book, BookOpen, Pencil, Heart, Gift } from 'lucide-react';
-
 const Home = () => {
-  return (
-    <div className="page-transition">
+  return <div className="page-transition">
       {/* Hero Section */}
       <section className="min-h-[80vh] flex items-center justify-center bg-gradient-to-b from-primary/5 to-transparent">
         <div className="container mx-auto px-4 py-16 md:py-24">
           <div className="text-center max-w-3xl mx-auto">
-            <h1 className="text-4xl md:text-6xl font-display font-bold mb-6 slide-in">
-              Create Your Book with AI
-            </h1>
+            <h1 className="text-4xl font-display font-bold mb-6 slide-in md:text-6xl">Turn memories into magical stories</h1>
             <p className="text-xl text-gray-600 mb-8 slide-in">
-              Transform your ideas into beautifully crafted books using artificial intelligence.
-            </p>
-            <Link
-              to="/create/step2"
-              className="inline-flex items-center px-6 py-3 text-lg font-medium text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors"
-            >
+Personalized Books for Every Special Bond</p>
+            <Link to="/create/step2" className="inline-flex items-center px-6 py-3 text-lg font-medium text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors">
               Start Creating <ArrowRight className="ml-2" />
             </Link>
           </div>
@@ -34,11 +26,7 @@ const Home = () => {
             <Link to="/friends" className="group flex-1 max-w-[280px] block hover:scale-105 transition-transform">
               <div className="glass-card h-full rounded-2xl overflow-hidden">
                 <div className="aspect-[4/3] relative">
-                  <img 
-                    src="https://images.unsplash.com/photo-1517022812141-23620dba5c23" 
-                    alt="For Friends" 
-                    className="w-full h-full object-cover"
-                  />
+                  <img src="https://images.unsplash.com/photo-1517022812141-23620dba5c23" alt="For Friends" className="w-full h-full object-cover" />
                 </div>
                 <div className="p-6">
                   <h3 className="text-xl font-semibold mb-4">For Friends</h3>
@@ -50,11 +38,7 @@ const Home = () => {
             <Link to="/love" className="group flex-1 max-w-[280px] block hover:scale-105 transition-transform">
               <div className="glass-card h-full rounded-2xl overflow-hidden">
                 <div className="aspect-[4/3] relative">
-                  <img 
-                    src="https://images.unsplash.com/photo-1582562124811-c09040d0a901" 
-                    alt="For Love" 
-                    className="w-full h-full object-cover"
-                  />
+                  <img src="https://images.unsplash.com/photo-1582562124811-c09040d0a901" alt="For Love" className="w-full h-full object-cover" />
                 </div>
                 <div className="p-6">
                   <h3 className="text-xl font-semibold mb-4">For Love</h3>
@@ -66,11 +50,7 @@ const Home = () => {
             <Link to="/kids" className="group flex-1 max-w-[280px] block hover:scale-105 transition-transform">
               <div className="glass-card h-full rounded-2xl overflow-hidden">
                 <div className="aspect-[4/3] relative">
-                  <img 
-                    src="https://images.unsplash.com/photo-1535268647677-300dbf3d78d1" 
-                    alt="For Kids" 
-                    className="w-full h-full object-cover"
-                  />
+                  <img src="https://images.unsplash.com/photo-1535268647677-300dbf3d78d1" alt="For Kids" className="w-full h-full object-cover" />
                 </div>
                 <div className="p-6">
                   <h3 className="text-xl font-semibold mb-4">For Kids</h3>
@@ -89,8 +69,7 @@ const Home = () => {
             Example Books
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[1, 2, 3].map((book) => (
-              <div key={book} className="glass-card rounded-2xl overflow-hidden transition-transform hover:scale-105">
+            {[1, 2, 3].map(book => <div key={book} className="glass-card rounded-2xl overflow-hidden transition-transform hover:scale-105">
                 <div className="aspect-[3/4] bg-gray-200"></div>
                 <div className="p-6">
                   <h3 className="text-xl font-semibold mb-2">Sample Book {book}</h3>
@@ -101,8 +80,7 @@ const Home = () => {
                     Learn More
                   </button>
                 </div>
-              </div>
-            ))}
+              </div>)}
           </div>
         </div>
       </section>
@@ -156,8 +134,6 @@ const Home = () => {
           </div>
         </div>
       </section>
-    </div>
-  );
+    </div>;
 };
-
 export default Home;
