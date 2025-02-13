@@ -1,13 +1,11 @@
-
 import { Link } from 'react-router-dom';
 import { Heart } from 'lucide-react';
-
 const LoveLanding = () => {
   return <div className="page-transition">
       <div className="bg-white shadow-lg">
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/90" />
-          <div className="relative z-10 my-[34px] py-[74px] px-[60px] bg-sky-100">
+          <div className="relative z-10 px-[60px] bg-sky-100 my-[64px] py-[72px]">
             <div className="max-w-6xl mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                 <div className="text-white space-y-6">
@@ -30,5 +28,4 @@ const LoveLanding = () => {
       </div>
     </div>;
 };
-
 export default LoveLanding;
