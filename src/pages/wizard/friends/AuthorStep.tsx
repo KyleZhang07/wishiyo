@@ -1,15 +1,16 @@
+
 import { useState } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+
 const FriendsAuthorStep = () => {
   const [authorName, setAuthorName] = useState('');
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
   const navigate = useNavigate();
+
   const handleContinue = async () => {
     if (!authorName.trim()) {
       toast({
@@ -19,13 +20,11 @@ const FriendsAuthorStep = () => {
       });
       return;
     }
+
     try {
       // Get the current user
-      const {
-        data: {
-          user
-        }
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
+      
       if (!user) {
         toast({
           title: "Error",
@@ -34,15 +33,17 @@ const FriendsAuthorStep = () => {
         });
         return;
       }
-      const {
-        error
-      } = await supabase.from('book_authors').insert([{
+
+      const { error } = await supabase.from('book_authors').insert([{
         full_name: authorName.trim(),
         category: 'friends',
         user_id: user.id
       }]);
+
       if (error) throw error;
-      navigate('/create/friends/style');
+      
+      // Updated navigation to skip style step
+      navigate('/create/friends/question');
     } catch (error) {
       toast({
         variant: "destructive",
@@ -52,13 +53,28 @@ const FriendsAuthorStep = () => {
       console.error('Error:', error);
     }
   };
-  return <WizardStep title="Who is creating this friendship book?" description="Enter your name as it will appear in the book." previousStep="/friends" currentStep={1} totalSteps={4} onNextClick={handleContinue}>
+
+  return (
+    <WizardStep
+      title="Who is creating this friendship book?"
+      description="Enter your name as it will appear in the book."
+      previousStep="/friends"
+      currentStep={1}
+      totalSteps={3}
+      onNextClick={handleContinue}
+    >
       <div className="space-y-4">
         <div>
-          
-          <Input id="authorName" placeholder="Enter your name" value={authorName} onChange={e => setAuthorName(e.target.value)} />
+          <Input
+            id="authorName"
+            placeholder="Enter your name"
+            value={authorName}
+            onChange={e => setAuthorName(e.target.value)}
+          />
         </div>
       </div>
-    </WizardStep>;
+    </WizardStep>
+  );
 };
+
 export default FriendsAuthorStep;

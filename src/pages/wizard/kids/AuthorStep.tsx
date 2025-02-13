@@ -42,8 +42,8 @@ const KidsAuthorStep = () => {
 
       if (error) throw error;
       
-      // Changed navigation path from '/create/kids/character' to '/create/kids/style'
-      navigate('/create/kids/style');
+      // Updated navigation to skip style step
+      navigate('/create/kids/question');
     } catch (error) {
       toast({
         variant: "destructive",
@@ -54,25 +54,27 @@ const KidsAuthorStep = () => {
     }
   };
 
-  return <WizardStep 
-    title="Who is creating this children's book?" 
-    description="Enter your name as it will appear in the book." 
-    previousStep="/kids" 
-    currentStep={1} 
-    totalSteps={4} 
-    onNextClick={handleContinue}
-  >
-    <div className="space-y-4">
-      <div>
-        <Input 
-          id="authorName" 
-          placeholder="Enter your name" 
-          value={authorName} 
-          onChange={e => setAuthorName(e.target.value)} 
-        />
+  return (
+    <WizardStep
+      title="Who is creating this children's book?"
+      description="Enter your name as it will appear in the book."
+      previousStep="/kids"
+      currentStep={1}
+      totalSteps={3}
+      onNextClick={handleContinue}
+    >
+      <div className="space-y-4">
+        <div>
+          <Input
+            id="authorName"
+            placeholder="Enter your name"
+            value={authorName}
+            onChange={e => setAuthorName(e.target.value)}
+          />
+        </div>
       </div>
-    </div>
-  </WizardStep>;
+    </WizardStep>
+  );
 };
 
 export default KidsAuthorStep;
