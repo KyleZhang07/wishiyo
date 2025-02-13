@@ -1,7 +1,5 @@
-
 import { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-
 interface WizardStepProps {
   title: string;
   description: string;
@@ -12,7 +10,6 @@ interface WizardStepProps {
   totalSteps: number;
   onNextClick?: () => void | Promise<void>;
 }
-
 const WizardStep = ({
   title,
   description,
@@ -24,48 +21,30 @@ const WizardStep = ({
   onNextClick
 }: WizardStepProps) => {
   const navigate = useNavigate();
-
-  return (
-    <div className="page-transition container mx-auto px-4 py-24">
+  return <div className="page-transition container mx-auto px-4 py-24">
       <div className="max-w-2xl mx-auto">
         <div className="glass-card rounded-2xl p-8">
           <div className="mb-8">
             <h1 className="text-3xl font-display font-bold mb-4">
               {title}
             </h1>
-            <p className="text-gray-600">
-              {description}
-            </p>
+            
           </div>
 
           <div className="space-y-6">
             {children}
 
             <div className="flex justify-between pt-6 border-t border-gray-200">
-              {previousStep ? (
-                <button
-                  onClick={() => navigate(previousStep)}
-                  className="px-6 py-3 text-gray-600 hover:text-gray-900 transition-colors"
-                >
+              {previousStep ? <button onClick={() => navigate(previousStep)} className="px-6 py-3 text-gray-600 hover:text-gray-900 transition-colors">
                   Back
-                </button>
-              ) : (
-                <div></div>
-              )}
-              {(nextStep || onNextClick) && (
-                <button
-                  onClick={onNextClick ? onNextClick : () => nextStep && navigate(nextStep)}
-                  className="px-6 py-3 text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors"
-                >
+                </button> : <div></div>}
+              {(nextStep || onNextClick) && <button onClick={onNextClick ? onNextClick : () => nextStep && navigate(nextStep)} className="px-6 py-3 text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors">
                   Continue
-                </button>
-              )}
+                </button>}
             </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default WizardStep;
