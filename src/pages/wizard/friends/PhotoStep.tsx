@@ -6,7 +6,7 @@ const FriendsPhotoStep = () => {
     <WizardStep
       title="Add Photos of Your Friendship"
       description="Upload photos that capture your special moments together."
-      previousStep="/create/friends/memories"
+      previousStep="/create/friends/idea"
       nextStep="/create/friends/generate"
       currentStep={3}
       totalSteps={4}

@@ -6,7 +6,7 @@ const LoveMomentsStep = () => {
     <WizardStep
       title="Share Special Moments"
       description="Tell us about the moments that define your love story."
-      previousStep="/create/love/message"
+      previousStep="/create/love/idea"
       nextStep="/create/love/generate"
       currentStep={3}
       totalSteps={4}

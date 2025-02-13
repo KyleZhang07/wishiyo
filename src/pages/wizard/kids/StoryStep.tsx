@@ -6,7 +6,7 @@ const KidsStoryStep = () => {
     <WizardStep
       title="Create the Story"
       description="Tell us what happens in your character's adventure."
-      previousStep="/create/kids/setting"
+      previousStep="/create/kids/idea"
       nextStep="/create/kids/generate"
       currentStep={3}
       totalSteps={4}
