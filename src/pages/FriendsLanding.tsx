@@ -9,8 +9,8 @@ const FriendsLanding = () => {
             <div className="max-w-6xl mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                 <div className="text-white space-y-6">
-                  <h1 className="text-4xl font-display font-bold px-0 mx-0 md:text-4xl text-slate-700">Create a One-of-a-Kind Book That Wows Your Friends!</h1>
-                  <p className="text-xl text-slate-700">Use Wishika to give your friends a special book authored by you. </p>
+                  <h1 className="text-4xl font-display font-bold px-0 mx-0 md:text-4xl text-slate-800">Hilarious moment. Presented by you.</h1>
+                  <p className="text-xl text-slate-800">Use Wishika to give your friends a special book authored by you. </p>
                   <Link to="/create/friends/author" className="inline-flex items-center gap-2 px-8 py-4 text-lg font-medium text-primary bg-white rounded-full hover:bg-gray-50 transition-colors">
                     <Users className="w-5 h-5" />
                     Create for Friends
