@@ -7,10 +7,13 @@ import { Textarea } from "@/components/ui/textarea";
 interface QuestionDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectQuestion: (question: string) => void;
+  onSubmitAnswer: (question: string, answer: string) => void;
 }
 
-const QuestionDialog = ({ isOpen, onClose, onSelectQuestion }: QuestionDialogProps) => {
+const QuestionDialog = ({ isOpen, onClose, onSubmitAnswer }: QuestionDialogProps) => {
+  const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
+  const [answer, setAnswer] = useState('');
+
   const questions = [
     "What's your favorite memory together?",
     "How did you first meet?",
@@ -20,23 +23,56 @@ const QuestionDialog = ({ isOpen, onClose, onSelectQuestion }: QuestionDialogPro
     "What's a challenge you've overcome together?",
   ];
 
+  const handleQuestionSelect = (question: string) => {
+    setSelectedQuestion(question);
+  };
+
+  const handleSubmit = () => {
+    if (selectedQuestion && answer.trim()) {
+      onSubmitAnswer(selectedQuestion, answer.trim());
+      setSelectedQuestion(null);
+      setAnswer('');
+      onClose();
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Pick a Question</DialogTitle>
+          <DialogTitle>
+            {selectedQuestion ? "Enter Your Answer" : "Pick a Question"}
+          </DialogTitle>
         </DialogHeader>
         <div className="grid gap-4">
-          {questions.map((question, index) => (
-            <Button
-              key={index}
-              variant="outline"
-              className="justify-start h-auto py-3 px-4 whitespace-normal text-left"
-              onClick={() => onSelectQuestion(question)}
-            >
-              {question}
-            </Button>
-          ))}
+          {!selectedQuestion ? (
+            questions.map((question, index) => (
+              <Button
+                key={index}
+                variant="outline"
+                className="justify-start h-auto py-3 px-4 whitespace-normal text-left"
+                onClick={() => handleQuestionSelect(question)}
+              >
+                {question}
+              </Button>
+            ))
+          ) : (
+            <div className="space-y-4">
+              <p className="text-sm font-medium">{selectedQuestion}</p>
+              <Textarea
+                placeholder="Write your answer here..."
+                value={answer}
+                onChange={(e) => setAnswer(e.target.value)}
+                className="min-h-[150px]"
+              />
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setSelectedQuestion(null)}>
+                  Back
+                </Button>
+                <Button onClick={handleSubmit}>Submit</Button>
+              </div>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

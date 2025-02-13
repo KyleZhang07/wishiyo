@@ -1,12 +1,16 @@
 
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import WizardStep from './WizardStep';
 import QuestionDialog from './QuestionDialog';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, X } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+
+interface QuestionAnswer {
+  question: string;
+  answer: string;
+}
 
 interface QuestionStepProps {
   category: 'friends' | 'love' | 'kids';
@@ -16,16 +20,27 @@ interface QuestionStepProps {
 
 const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
-  const [answer, setAnswer] = useState('');
+  const [questionsAndAnswers, setQuestionsAndAnswers] = useState<QuestionAnswer[]>([]);
   const { toast } = useToast();
 
-  const handleSelectQuestion = (question: string) => {
-    setSelectedQuestion(question);
-    setIsDialogOpen(false);
+  const handleSubmitAnswer = (question: string, answer: string) => {
+    setQuestionsAndAnswers([...questionsAndAnswers, { question, answer }]);
+  };
+
+  const handleRemoveQA = (index: number) => {
+    setQuestionsAndAnswers(questionsAndAnswers.filter((_, i) => i !== index));
   };
 
   const handleNext = async () => {
+    if (questionsAndAnswers.length === 0) {
+      toast({
+        title: "No answers provided",
+        description: "Please answer at least one question to continue.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       // Get the current user
       const { data: { user } } = await supabase.auth.getUser();
@@ -46,7 +61,7 @@ const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) =
           { 
             category, 
             full_name: 'Anonymous',
-            user_id: user.id  // Set the user_id
+            user_id: user.id
           }
         ])
         .select()
@@ -54,24 +69,24 @@ const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) =
 
       if (authorError) throw authorError;
 
-      // Then save the question and answer
-      const { error: questionError } = await supabase
-        .from('book_questions')
-        .insert([
-          {
-            book_author_id: authorData.id,
-            question: selectedQuestion,
-            answer: answer
-          }
-        ]);
+      // Then save all questions and answers
+      const questionsData = questionsAndAnswers.map(qa => ({
+        book_author_id: authorData.id,
+        question: qa.question,
+        answer: qa.answer
+      }));
 
-      if (questionError) throw questionError;
+      const { error: questionsError } = await supabase
+        .from('book_questions')
+        .insert(questionsData);
+
+      if (questionsError) throw questionsError;
 
       window.location.href = nextStep;
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to save your answer. Please try again.",
+        description: "Failed to save your answers. Please try again.",
         variant: "destructive",
       });
       console.error('Error:', error);
@@ -81,48 +96,42 @@ const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) =
   return (
     <WizardStep
       title="Share Your Story"
-      description="Select a question and share your thoughts."
+      description="Answer questions to create your personalized book."
       previousStep={previousStep}
       currentStep={2}
       totalSteps={4}
       onNextClick={handleNext}
     >
       <div className="space-y-6">
-        {!selectedQuestion ? (
-          <Button
-            variant="outline"
-            className="w-full h-24 border-dashed"
-            onClick={() => setIsDialogOpen(true)}
-          >
-            <PlusCircle className="mr-2" />
-            Select a Question
-          </Button>
-        ) : (
-          <div className="space-y-4">
-            <div className="p-4 bg-muted rounded-lg">
-              <h3 className="font-medium mb-2">Selected Question:</h3>
-              <p>{selectedQuestion}</p>
-            </div>
-            <Textarea
-              placeholder="Write your answer here..."
-              className="min-h-[200px]"
-              value={answer}
-              onChange={(e) => setAnswer(e.target.value)}
-            />
+        {questionsAndAnswers.map((qa, index) => (
+          <div key={index} className="bg-white rounded-lg border p-4 relative">
             <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => setIsDialogOpen(true)}
+              variant="ghost"
+              size="icon"
+              className="absolute right-2 top-2"
+              onClick={() => handleRemoveQA(index)}
             >
-              Change Question
+              <X className="h-4 w-4" />
             </Button>
+            <h3 className="font-medium mb-2">{qa.question}</h3>
+            <p className="text-sm text-gray-600">{qa.answer}</p>
           </div>
-        )}
+        ))}
+        <Button
+          variant="outline"
+          className="w-full h-24 border-dashed"
+          onClick={() => setIsDialogOpen(true)}
+        >
+          <PlusCircle className="mr-2" />
+          {questionsAndAnswers.length === 0 
+            ? "Select a Question" 
+            : "Add Another Question"}
+        </Button>
       </div>
       <QuestionDialog
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
-        onSelectQuestion={handleSelectQuestion}
+        onSubmitAnswer={handleSubmitAnswer}
       />
     </WizardStep>
   );
