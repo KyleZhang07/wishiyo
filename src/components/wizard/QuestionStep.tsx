@@ -5,6 +5,7 @@ import WizardStep from './WizardStep';
 import QuestionDialog from './QuestionDialog';
 import { PlusCircle, X } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
+import { useNavigate } from 'react-router-dom';
 
 interface QuestionAnswer {
   question: string;
@@ -21,6 +22,7 @@ const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) =
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [questionsAndAnswers, setQuestionsAndAnswers] = useState<QuestionAnswer[]>([]);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSubmitAnswer = (question: string, answer: string) => {
     setQuestionsAndAnswers([...questionsAndAnswers, { question, answer }]);
@@ -40,7 +42,7 @@ const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) =
       return;
     }
 
-    window.location.href = nextStep;
+    navigate(`/create/${category}/idea`);
   };
 
   return (
