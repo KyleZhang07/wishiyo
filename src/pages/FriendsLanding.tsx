@@ -6,7 +6,7 @@ const FriendsLanding = () => {
         <div className="bg-white rounded-2xl overflow-hidden shadow-lg">
           <div className="relative">
             <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/90" />
-            <div className="relative z-10 px-8 py-16 rounded-none bg-emerald-400 hover:bg-emerald-300">
+            <div className="relative z-10 px-8 py-16 rounded-none bg-blue-600 hover:bg-blue-500">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                 <div className="text-white space-y-6">
                   <h1 className="text-4xl font-display font-bold px-0 mx-0 md:text-4xl">Create a One-of-a-Kind Book That Wows Your Friends!</h1>
