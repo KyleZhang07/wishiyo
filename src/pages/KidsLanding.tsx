@@ -1,10 +1,7 @@
-
 import { Link } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
-
 const KidsLanding = () => {
-  return (
-    <div className="page-transition">
+  return <div className="page-transition">
       <div className="bg-white shadow-lg">
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/90" />
@@ -33,65 +30,42 @@ const KidsLanding = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="group">
               <div className="relative aspect-square bg-white rounded-lg shadow-lg overflow-hidden mb-4">
-                <img 
-                  src="/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png"
-                  alt="Adventure Book"
-                  className="w-full h-full object-cover"
-                />
+                <img src="/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png" alt="Adventure Book" className="w-full h-full object-cover" />
               </div>
               <h3 className="text-xl font-bold mb-2">Adventure Book</h3>
               <p className="text-gray-600 mb-2">Your child's magical adventure story</p>
-              <p className="text-sm text-gray-500 mb-2">Age 4 - 10</p>
-              <Link
-                to="/create/kids/author"
-                className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors"
-              >
+              
+              <Link to="/create/kids/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors">
                 Start Create
               </Link>
             </div>
 
             <div className="group">
               <div className="relative aspect-square bg-white rounded-lg shadow-lg overflow-hidden mb-4">
-                <img 
-                  src="/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png"
-                  alt="Bedtime Stories"
-                  className="w-full h-full object-cover"
-                />
+                <img src="/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png" alt="Bedtime Stories" className="w-full h-full object-cover" />
               </div>
               <h3 className="text-xl font-bold mb-2">Bedtime Stories</h3>
               <p className="text-gray-600 mb-2">Personalized bedtime stories for sweet dreams</p>
-              <p className="text-sm text-gray-500 mb-2">Age 2 - 8</p>
-              <Link
-                to="/create/kids/author"
-                className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors"
-              >
+              
+              <Link to="/create/kids/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors">
                 Start Create
               </Link>
             </div>
 
             <div className="group">
               <div className="relative aspect-square bg-white rounded-lg shadow-lg overflow-hidden mb-4">
-                <img 
-                  src="/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png"
-                  alt="Learning Journey"
-                  className="w-full h-full object-cover"
-                />
+                <img src="/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png" alt="Learning Journey" className="w-full h-full object-cover" />
               </div>
               <h3 className="text-xl font-bold mb-2">Learning Journey</h3>
               <p className="text-gray-600 mb-2">Educational stories that make learning fun</p>
-              <p className="text-sm text-gray-500 mb-2">Age 3 - 12</p>
-              <Link
-                to="/create/kids/author"
-                className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors"
-              >
+              
+              <Link to="/create/kids/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors">
                 Start Create
               </Link>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default KidsLanding;
