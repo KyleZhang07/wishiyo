@@ -56,7 +56,7 @@ const LoveLanding = () => {
               <div className="relative aspect-square bg-white rounded-lg shadow-lg overflow-hidden mb-4">
                 <img src="/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png" alt="Wedding Story" className="w-full h-full object-cover" />
               </div>
-              <h3 className="text-xl font-bold mb-2">Wedding Story</h3>
+              <h3 className="text-xl font-bold mb-2">Picture Album</h3>
               <p className="text-gray-600 mb-2">Capture your wedding memories</p>
               <p className="text-sm text-gray-500 mb-2">For Couples</p>
               <Link to="/create/love/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors">
