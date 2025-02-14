@@ -45,6 +45,8 @@ const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) =
     navigate(`/create/${category}/idea`);
   };
 
+  const answeredQuestions = questionsAndAnswers.map(qa => qa.question);
+
   return (
     <WizardStep
       title="Share Your Story"
@@ -84,6 +86,7 @@ const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) =
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
         onSubmitAnswer={handleSubmitAnswer}
+        answeredQuestions={answeredQuestions}
       />
     </WizardStep>
   );

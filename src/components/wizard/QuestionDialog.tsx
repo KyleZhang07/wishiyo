@@ -3,25 +3,29 @@ import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 
 interface QuestionDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmitAnswer: (question: string, answer: string) => void;
+  answeredQuestions?: string[];
 }
 
 const QuestionDialog = ({
   isOpen,
   onClose,
-  onSubmitAnswer
+  onSubmitAnswer,
+  answeredQuestions = []
 }: QuestionDialogProps) => {
   const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
   const [answer, setAnswer] = useState('');
   const questions = ["What's your favorite memory together?", "How did you first meet?", "What makes your relationship special?", "What's the funniest moment you've shared?", "What do you admire most about them?", "What's a challenge you've overcome together?"];
   
   const handleQuestionSelect = (question: string) => {
-    setSelectedQuestion(question);
+    if (!answeredQuestions.includes(question)) {
+      setSelectedQuestion(question);
+    }
   };
   
   const handleSubmit = () => {
@@ -58,9 +62,23 @@ const QuestionDialog = ({
           </DialogTitle>
         </DialogHeader>
         <div className="grid gap-4">
-          {!selectedQuestion ? questions.map((question, index) => <Button key={index} variant="outline" className="justify-start h-auto py-3 px-4 whitespace-normal text-left text-base" onClick={() => handleQuestionSelect(question)}>
+          {!selectedQuestion ? questions.map((question, index) => {
+            const isAnswered = answeredQuestions.includes(question);
+            return (
+              <Button
+                key={index}
+                variant="outline"
+                className={`justify-start h-auto py-3 px-4 whitespace-normal text-left text-base relative
+                  ${isAnswered ? 'opacity-50 cursor-default' : 'transition-transform hover:scale-[1.02] active:scale-100'}
+                `}
+                onClick={() => handleQuestionSelect(question)}
+                disabled={isAnswered}
+              >
                 {question}
-              </Button>) : <div className="space-y-4">
+                {isAnswered && <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-primary" />}
+              </Button>
+            );
+          }) : <div className="space-y-4">
                 <p className="text-base font-medium">{selectedQuestion}</p>
                 <Textarea placeholder="Write your answer here..." value={answer} onChange={e => setAnswer(e.target.value)} className="min-h-[150px]" />
                 <div className="flex justify-end">
