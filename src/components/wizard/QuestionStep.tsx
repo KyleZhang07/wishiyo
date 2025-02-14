@@ -71,10 +71,10 @@ const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) =
         ))}
         <Button
           variant="outline"
-          className="w-full h-24 border-dashed"
+          className="w-full h-16 border-dashed text-lg"
           onClick={() => setIsDialogOpen(true)}
         >
-          <PlusCircle className="mr-2" />
+          <PlusCircle className="mr-2 h-5 w-5" />
           {questionsAndAnswers.length === 0 
             ? "Select a Question" 
             : "Add Another Question"}
