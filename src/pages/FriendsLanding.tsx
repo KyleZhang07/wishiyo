@@ -44,7 +44,7 @@ const FriendsLanding = () => {
               <div className="relative aspect-square bg-white rounded-lg shadow-lg overflow-hidden mb-4">
                 <img src="/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png" alt="When You Were Born" className="w-full h-full object-cover" />
               </div>
-              <h3 className="text-xl font-bold mb-2">Fantasy</h3>
+              <h3 className="text-xl font-bold mb-2">Wild Fantasy</h3>
               <p className="text-gray-600 mb-2">A story to celebrate a new baby</p>
               
               <Link to="/create/friends/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors">
