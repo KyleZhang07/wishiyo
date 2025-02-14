@@ -2,38 +2,6 @@
 import { Link } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 
-interface BookType {
-  title: string;
-  description: string;
-  ageRange: string;
-  price: string;
-  imagePath: string;
-}
-
-const bookTypes: BookType[] = [
-  {
-    title: "Adventure Book",
-    description: "Your child's magical adventure story",
-    ageRange: "Age 4 - 10",
-    price: "From $39.99 USD",
-    imagePath: "/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png"
-  },
-  {
-    title: "Bedtime Stories",
-    description: "Personalized bedtime stories for sweet dreams",
-    ageRange: "Age 2 - 8",
-    price: "From $39.99 USD",
-    imagePath: "/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png"
-  },
-  {
-    title: "Learning Journey",
-    description: "Educational stories that make learning fun",
-    ageRange: "Age 3 - 12",
-    price: "From $39.99 USD",
-    imagePath: "/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png"
-  }
-];
-
 const KidsLanding = () => {
   return (
     <div className="page-transition">
@@ -63,26 +31,62 @@ const KidsLanding = () => {
 
         <div className="max-w-6xl mx-auto px-4 py-16">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {bookTypes.map((book, index) => (
-              <div key={index} className="group">
-                <div className="relative aspect-square bg-white rounded-lg shadow-lg overflow-hidden mb-4 transition-transform group-hover:scale-105">
-                  <img 
-                    src={book.imagePath} 
-                    alt={book.title}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <h3 className="text-xl font-bold mb-2">{book.title}</h3>
-                <p className="text-gray-600 mb-2">{book.description}</p>
-                <p className="text-sm text-gray-500 mb-2">{book.ageRange}</p>
-                <Link
-                  to="/create/kids/author"
-                  className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors"
-                >
-                  Start Create
-                </Link>
+            <div className="group">
+              <div className="relative aspect-square bg-white rounded-lg shadow-lg overflow-hidden mb-4 transition-transform group-hover:scale-105">
+                <img 
+                  src="/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png"
+                  alt="Adventure Book"
+                  className="w-full h-full object-cover"
+                />
               </div>
-            ))}
+              <h3 className="text-xl font-bold mb-2">Adventure Book</h3>
+              <p className="text-gray-600 mb-2">Your child's magical adventure story</p>
+              <p className="text-sm text-gray-500 mb-2">Age 4 - 10</p>
+              <Link
+                to="/create/kids/author"
+                className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors"
+              >
+                Start Create
+              </Link>
+            </div>
+
+            <div className="group">
+              <div className="relative aspect-square bg-white rounded-lg shadow-lg overflow-hidden mb-4 transition-transform group-hover:scale-105">
+                <img 
+                  src="/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png"
+                  alt="Bedtime Stories"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Bedtime Stories</h3>
+              <p className="text-gray-600 mb-2">Personalized bedtime stories for sweet dreams</p>
+              <p className="text-sm text-gray-500 mb-2">Age 2 - 8</p>
+              <Link
+                to="/create/kids/author"
+                className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors"
+              >
+                Start Create
+              </Link>
+            </div>
+
+            <div className="group">
+              <div className="relative aspect-square bg-white rounded-lg shadow-lg overflow-hidden mb-4 transition-transform group-hover:scale-105">
+                <img 
+                  src="/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png"
+                  alt="Learning Journey"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Learning Journey</h3>
+              <p className="text-gray-600 mb-2">Educational stories that make learning fun</p>
+              <p className="text-sm text-gray-500 mb-2">Age 3 - 12</p>
+              <Link
+                to="/create/kids/author"
+                className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors"
+              >
+                Start Create
+              </Link>
+            </div>
           </div>
         </div>
       </div>

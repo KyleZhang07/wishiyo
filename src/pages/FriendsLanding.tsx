@@ -2,38 +2,6 @@
 import { Link } from 'react-router-dom';
 import { Users } from 'lucide-react';
 
-interface BookType {
-  title: string;
-  description: string;
-  ageRange: string;
-  price: string;
-  imagePath: string;
-}
-
-const bookTypes: BookType[] = [
-  {
-    title: "ABC For You",
-    description: "The most amazing way to learn the alphabet",
-    ageRange: "Age 0 - 3",
-    price: "From $39.99 USD",
-    imagePath: "/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png"
-  },
-  {
-    title: "When You Were Born",
-    description: "A story to celebrate a new baby",
-    ageRange: "Age 0 - 6",
-    price: "From $39.99 USD",
-    imagePath: "/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png"
-  },
-  {
-    title: "First Birthday For You",
-    description: "Perfect for baby's first birthday",
-    ageRange: "Age 0 - 1",
-    price: "From $39.99 USD",
-    imagePath: "/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png"
-  }
-];
-
 const FriendsLanding = () => {
   return (
     <div className="page-transition">
@@ -63,26 +31,62 @@ const FriendsLanding = () => {
 
         <div className="max-w-6xl mx-auto px-4 py-16">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {bookTypes.map((book, index) => (
-              <div key={index} className="group">
-                <div className="relative aspect-square bg-white rounded-lg shadow-lg overflow-hidden mb-4 transition-transform group-hover:scale-105">
-                  <img 
-                    src={book.imagePath} 
-                    alt={book.title}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <h3 className="text-xl font-bold mb-2">{book.title}</h3>
-                <p className="text-gray-600 mb-2">{book.description}</p>
-                <p className="text-sm text-gray-500 mb-2">{book.ageRange}</p>
-                <Link
-                  to="/create/friends/author"
-                  className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors"
-                >
-                  Start Create
-                </Link>
+            <div className="group">
+              <div className="relative aspect-square bg-white rounded-lg shadow-lg overflow-hidden mb-4 transition-transform group-hover:scale-105">
+                <img 
+                  src="/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png"
+                  alt="ABC For You"
+                  className="w-full h-full object-cover"
+                />
               </div>
-            ))}
+              <h3 className="text-xl font-bold mb-2">ABC For You</h3>
+              <p className="text-gray-600 mb-2">The most amazing way to learn the alphabet</p>
+              <p className="text-sm text-gray-500 mb-2">Age 0 - 3</p>
+              <Link
+                to="/create/friends/author"
+                className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors"
+              >
+                Start Create
+              </Link>
+            </div>
+
+            <div className="group">
+              <div className="relative aspect-square bg-white rounded-lg shadow-lg overflow-hidden mb-4 transition-transform group-hover:scale-105">
+                <img 
+                  src="/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png"
+                  alt="When You Were Born"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <h3 className="text-xl font-bold mb-2">When You Were Born</h3>
+              <p className="text-gray-600 mb-2">A story to celebrate a new baby</p>
+              <p className="text-sm text-gray-500 mb-2">Age 0 - 6</p>
+              <Link
+                to="/create/friends/author"
+                className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors"
+              >
+                Start Create
+              </Link>
+            </div>
+
+            <div className="group">
+              <div className="relative aspect-square bg-white rounded-lg shadow-lg overflow-hidden mb-4 transition-transform group-hover:scale-105">
+                <img 
+                  src="/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png"
+                  alt="First Birthday For You"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <h3 className="text-xl font-bold mb-2">First Birthday For You</h3>
+              <p className="text-gray-600 mb-2">Perfect for baby's first birthday</p>
+              <p className="text-sm text-gray-500 mb-2">Age 0 - 1</p>
+              <Link
+                to="/create/friends/author"
+                className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors"
+              >
+                Start Create
+              </Link>
+            </div>
           </div>
         </div>
       </div>
