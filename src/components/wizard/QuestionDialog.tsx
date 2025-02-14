@@ -38,9 +38,9 @@ const QuestionDialog = ({ isOpen, onClose, onSubmitAnswer }: QuestionDialogProps
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="text-2xl">
             {selectedQuestion ? "Enter Your Answer" : "Pick a Question"}
           </DialogTitle>
         </DialogHeader>
@@ -50,7 +50,7 @@ const QuestionDialog = ({ isOpen, onClose, onSubmitAnswer }: QuestionDialogProps
               <Button
                 key={index}
                 variant="outline"
-                className="justify-start h-auto py-3 px-4 whitespace-normal text-left"
+                className="justify-start h-auto py-4 px-5 whitespace-normal text-left text-lg"
                 onClick={() => handleQuestionSelect(question)}
               >
                 {question}
@@ -58,7 +58,7 @@ const QuestionDialog = ({ isOpen, onClose, onSubmitAnswer }: QuestionDialogProps
             ))
           ) : (
             <div className="space-y-4">
-              <p className="text-sm font-medium">{selectedQuestion}</p>
+              <p className="text-lg font-medium">{selectedQuestion}</p>
               <Textarea
                 placeholder="Write your answer here..."
                 value={answer}
