@@ -1,7 +1,42 @@
+
 import { Link } from 'react-router-dom';
 import { Heart } from 'lucide-react';
+
+interface BookType {
+  title: string;
+  description: string;
+  ageRange: string;
+  price: string;
+  imagePath: string;
+}
+
+const bookTypes: BookType[] = [
+  {
+    title: "Love Story",
+    description: "A romantic journey of your relationship",
+    ageRange: "For Couples",
+    price: "From $39.99 USD",
+    imagePath: "/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png"
+  },
+  {
+    title: "Anniversary Book",
+    description: "Celebrate your special moments together",
+    ageRange: "For Couples",
+    price: "From $39.99 USD",
+    imagePath: "/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png"
+  },
+  {
+    title: "Wedding Story",
+    description: "Capture your wedding memories",
+    ageRange: "For Couples",
+    price: "From $39.99 USD",
+    imagePath: "/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png"
+  }
+];
+
 const LoveLanding = () => {
-  return <div className="page-transition">
+  return (
+    <div className="page-transition">
       <div className="bg-white shadow-lg">
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/90" />
@@ -25,7 +60,34 @@ const LoveLanding = () => {
             </div>
           </div>
         </div>
+
+        <div className="max-w-6xl mx-auto px-4 py-16">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {bookTypes.map((book, index) => (
+              <div key={index} className="group">
+                <div className="relative aspect-square bg-white rounded-lg shadow-lg overflow-hidden mb-4 transition-transform group-hover:scale-105">
+                  <img 
+                    src={book.imagePath} 
+                    alt={book.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <h3 className="text-xl font-bold mb-2">{book.title}</h3>
+                <p className="text-gray-600 mb-2">{book.description}</p>
+                <p className="text-sm text-gray-500 mb-2">{book.ageRange}</p>
+                <Link
+                  to="/create/love/author"
+                  className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors"
+                >
+                  Start Create
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default LoveLanding;

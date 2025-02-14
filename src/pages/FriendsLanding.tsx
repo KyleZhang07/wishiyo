@@ -75,7 +75,12 @@ const FriendsLanding = () => {
                 <h3 className="text-xl font-bold mb-2">{book.title}</h3>
                 <p className="text-gray-600 mb-2">{book.description}</p>
                 <p className="text-sm text-gray-500 mb-2">{book.ageRange}</p>
-                <p className="font-medium">{book.price}</p>
+                <Link
+                  to="/create/friends/author"
+                  className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors"
+                >
+                  Start Create
+                </Link>
               </div>
             ))}
           </div>
