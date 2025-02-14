@@ -20,6 +20,7 @@ interface QuestionStepProps {
 
 const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
   const [questionsAndAnswers, setQuestionsAndAnswers] = useState<QuestionAnswer[]>([]);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -45,6 +46,11 @@ const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) =
     navigate(`/create/${category}/idea`);
   };
 
+  const handleEditAnswer = (question: string) => {
+    setSelectedQuestion(question);
+    setIsDialogOpen(true);
+  };
+
   const answeredQuestions = questionsAndAnswers.map(qa => qa.question);
 
   return (
@@ -58,7 +64,7 @@ const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) =
     >
       <div className="space-y-6">
         {questionsAndAnswers.map((qa, index) => (
-          <div key={index} className="bg-white rounded-lg border p-4 relative transition-transform hover:scale-[1.02] cursor-pointer" onClick={() => setIsDialogOpen(true)}>
+          <div key={index} className="bg-white rounded-lg border p-4 relative transition-transform hover:scale-[1.02] cursor-pointer" onClick={() => handleEditAnswer(qa.question)}>
             <Button
               variant="ghost"
               size="icon"
@@ -77,7 +83,10 @@ const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) =
         <Button
           variant="outline"
           className="w-full h-16 border-dashed text-lg"
-          onClick={() => setIsDialogOpen(true)}
+          onClick={() => {
+            setSelectedQuestion(null);
+            setIsDialogOpen(true);
+          }}
         >
           <PlusCircle className="mr-2 h-5 w-5" />
           {questionsAndAnswers.length === 0 
@@ -87,9 +96,13 @@ const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) =
       </div>
       <QuestionDialog
         isOpen={isDialogOpen}
-        onClose={() => setIsDialogOpen(false)}
+        onClose={() => {
+          setIsDialogOpen(false);
+          setSelectedQuestion(null);
+        }}
         onSubmitAnswer={handleSubmitAnswer}
         answeredQuestions={answeredQuestions}
+        initialQuestion={selectedQuestion}
       />
     </WizardStep>
   );
