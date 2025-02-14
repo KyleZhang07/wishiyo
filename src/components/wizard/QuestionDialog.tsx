@@ -1,16 +1,13 @@
-
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft } from 'lucide-react';
-
 interface QuestionDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmitAnswer: (question: string, answer: string) => void;
 }
-
 const QuestionDialog = ({
   isOpen,
   onClose,
@@ -19,11 +16,9 @@ const QuestionDialog = ({
   const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
   const [answer, setAnswer] = useState('');
   const questions = ["What's your favorite memory together?", "How did you first meet?", "What makes your relationship special?", "What's the funniest moment you've shared?", "What do you admire most about them?", "What's a challenge you've overcome together?"];
-  
   const handleQuestionSelect = (question: string) => {
     setSelectedQuestion(question);
   };
-  
   const handleSubmit = () => {
     if (selectedQuestion && answer.trim()) {
       onSubmitAnswer(selectedQuestion, answer.trim());
@@ -32,24 +27,16 @@ const QuestionDialog = ({
       onClose();
     }
   };
-  
   return <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle className="text-2xl">
-            {selectedQuestion ? "Enter Your Answer" : "Pick a Question"}
-          </DialogTitle>
+          
         </DialogHeader>
         <div className="grid gap-4">
           {!selectedQuestion ? questions.map((question, index) => <Button key={index} variant="outline" className="justify-start h-auto py-4 px-5 whitespace-normal text-left text-lg" onClick={() => handleQuestionSelect(question)}>
                 {question}
-              </Button>) : (
-              <div className="space-y-4 relative">
-                <Button 
-                  variant="ghost" 
-                  className="absolute -top-12 -left-4 p-2" 
-                  onClick={() => setSelectedQuestion(null)}
-                >
+              </Button>) : <div className="space-y-4 relative">
+                <Button variant="ghost" className="absolute -top-12 -left-4 p-2" onClick={() => setSelectedQuestion(null)}>
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
                 <p className="text-lg font-medium">{selectedQuestion}</p>
@@ -57,11 +44,9 @@ const QuestionDialog = ({
                 <div className="flex justify-end">
                   <Button onClick={handleSubmit}>Submit</Button>
                 </div>
-              </div>
-            )}
+              </div>}
         </div>
       </DialogContent>
     </Dialog>;
 };
-
 export default QuestionDialog;
