@@ -32,7 +32,7 @@ const KidsLanding = () => {
         <div className="max-w-6xl mx-auto px-4 py-16">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="group">
-              <div className="relative aspect-square bg-white rounded-lg shadow-lg overflow-hidden mb-4 transition-transform group-hover:scale-105">
+              <div className="relative aspect-square bg-white rounded-lg shadow-lg overflow-hidden mb-4">
                 <img 
                   src="/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png"
                   alt="Adventure Book"
@@ -51,7 +51,7 @@ const KidsLanding = () => {
             </div>
 
             <div className="group">
-              <div className="relative aspect-square bg-white rounded-lg shadow-lg overflow-hidden mb-4 transition-transform group-hover:scale-105">
+              <div className="relative aspect-square bg-white rounded-lg shadow-lg overflow-hidden mb-4">
                 <img 
                   src="/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png"
                   alt="Bedtime Stories"
@@ -70,7 +70,7 @@ const KidsLanding = () => {
             </div>
 
             <div className="group">
-              <div className="relative aspect-square bg-white rounded-lg shadow-lg overflow-hidden mb-4 transition-transform group-hover:scale-105">
+              <div className="relative aspect-square bg-white rounded-lg shadow-lg overflow-hidden mb-4">
                 <img 
                   src="/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png"
                   alt="Learning Journey"
