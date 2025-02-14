@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom';
 import { Users } from 'lucide-react';
+
 const FriendsLanding = () => {
-  return <div className="page-transition">
+  return (
+    <div className="page-transition">
       <div className="bg-white shadow-lg">
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/90" />
@@ -11,10 +13,10 @@ const FriendsLanding = () => {
                 <div className="text-white space-y-6">
                   <h1 className="text-4xl font-display font-bold px-0 mx-0 md:text-4xl text-slate-800">Hilarious moment. Presented by you.</h1>
                   <p className="text-xl text-slate-800 px-0 mx-0">Use Wishika to give your friends a special book just for them</p>
-                  <Link to="/create/friends/author" className="inline-flex items-center gap-2 px-8 py-4 text-lg font-medium text-primary bg-white rounded-full hover:bg-gray-50 transition-colors">
+                  <a href="#book-types" className="inline-flex items-center gap-2 px-8 py-4 text-lg font-medium text-primary bg-white rounded-full hover:bg-gray-50 transition-colors">
                     <Users className="w-5 h-5" />
-                    Create for Friends
-                  </Link>
+                    Choose My Book
+                  </a>
                 </div>
                 <div className="hidden md:block">
                   <div className="w-64 h-64 mx-auto rounded-full overflow-hidden border-4 border-white/20">
@@ -26,7 +28,7 @@ const FriendsLanding = () => {
           </div>
         </div>
 
-        <div className="max-w-6xl mx-auto px-4 py-16">
+        <div id="book-types" className="max-w-6xl mx-auto px-4 py-16">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="group">
               <div className="relative aspect-square bg-white rounded-lg shadow-lg overflow-hidden mb-4">
@@ -66,6 +68,8 @@ const FriendsLanding = () => {
           </div>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default FriendsLanding;
