@@ -58,17 +58,20 @@ const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) =
     >
       <div className="space-y-6">
         {questionsAndAnswers.map((qa, index) => (
-          <div key={index} className="bg-white rounded-lg border p-4 relative">
+          <div key={index} className="bg-white rounded-lg border p-4 relative transition-transform hover:scale-[1.02] cursor-pointer" onClick={() => setIsDialogOpen(true)}>
             <Button
               variant="ghost"
               size="icon"
-              className="absolute right-2 top-2"
-              onClick={() => handleRemoveQA(index)}
+              className="absolute -right-2 -top-2 rounded-full bg-white border shadow-sm hover:bg-gray-50 h-8 w-8 p-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleRemoveQA(index);
+              }}
             >
               <X className="h-4 w-4" />
             </Button>
-            <h3 className="font-medium mb-2">{qa.question}</h3>
-            <p className="text-sm text-gray-600">{qa.answer}</p>
+            <h3 className="font-medium mb-2 text-gray-500">{qa.question}</h3>
+            <p className="text-lg">{qa.answer}</p>
           </div>
         ))}
         <Button
