@@ -1,3 +1,4 @@
+
 import { Link } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 
@@ -28,7 +29,8 @@ const LoveLanding = () => {
           </div>
         </div>
 
-        <div id="book-types" className="max-w-6xl mx-auto px-4 py-16">
+        <div className="max-w-6xl mx-auto px-4 py-16">
+          <h2 className="text-3xl font-display font-bold text-slate-800 mb-8 text-center">Your Favorite</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="group">
               <div className="relative aspect-square bg-white rounded-lg shadow-lg overflow-hidden mb-4">
