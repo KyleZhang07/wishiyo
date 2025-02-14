@@ -41,18 +41,26 @@ const QuestionDialog = ({
   
   return <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle className="text-xl">
-            {selectedQuestion ? "Enter Your Answer" : "Pick a Question"}
+        <DialogHeader className="relative">
+          <DialogTitle className="text-xl text-center">
+            {selectedQuestion ? (
+              <>
+                <Button 
+                  variant="ghost" 
+                  className="absolute -top-1 left-0 p-2" 
+                  onClick={() => setSelectedQuestion(null)}
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+                Enter Your Answer
+              </>
+            ) : "Pick a Question"}
           </DialogTitle>
         </DialogHeader>
         <div className="grid gap-4">
           {!selectedQuestion ? questions.map((question, index) => <Button key={index} variant="outline" className="justify-start h-auto py-3 px-4 whitespace-normal text-left text-base" onClick={() => handleQuestionSelect(question)}>
                 {question}
-              </Button>) : <div className="space-y-4 relative">
-                <Button variant="ghost" className="absolute top-0 left-0 p-2" onClick={() => setSelectedQuestion(null)}>
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
+              </Button>) : <div className="space-y-4">
                 <p className="text-base font-medium">{selectedQuestion}</p>
                 <Textarea placeholder="Write your answer here..." value={answer} onChange={e => setAnswer(e.target.value)} className="min-h-[150px]" />
                 <div className="flex justify-end">
