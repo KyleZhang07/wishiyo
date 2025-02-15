@@ -1,8 +1,8 @@
 
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import WizardStep from './WizardStep';
-import QuestionDialog from './QuestionDialog';
+import WizardStep from '@/components/wizard/WizardStep';
+import QuestionDialog from '@/components/wizard/QuestionDialog';
 import { PlusCircle, X } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from 'react-router-dom';
@@ -12,50 +12,33 @@ interface QuestionAnswer {
   answer: string;
 }
 
-interface QuestionStepProps {
-  category: 'friends' | 'love' | 'kids';
-  previousStep: string;
-  nextStep: string;
-}
+const questions = [
+  "If your friend was a mythical creature, what would they be and why?",
+  "What magical powers would best suit your friend's personality?",
+  "What's the most adventurous dream you've shared with your friend?",
+  "If you could go on a fantasy quest together, what would it be?",
+  "What mystical item would you give your friend and why?",
+  "What legendary tale best describes your friendship?"
+];
 
-const getDefaultQuestions = (category: 'friends' | 'love' | 'kids') => {
-  switch (category) {
-    case 'friends':
-      return [
-        "How did you first meet?",
-        "What makes your friendship special?",
-        "What's your favorite memory together?",
-        "What challenges have you overcome together?",
-        "What do you admire most about your friend?",
-        "What makes your friend unique?"
-      ];
-    case 'love':
-      return [
-        "What's your favorite memory together?",
-        "How did you first meet?",
-        "What makes your relationship special?",
-        "What's the funniest moment you've shared?",
-        "What do you admire most about them?",
-        "What's a challenge you've overcome together?"
-      ];
-    case 'kids':
-      return [
-        "What's your child's favorite story?",
-        "What makes them laugh the most?",
-        "What's their favorite adventure?",
-        "What are their dreams and aspirations?",
-        "What special talents do they have?",
-        "What makes them unique and special?"
-      ];
-  }
-};
-
-const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) => {
+const WildFantasyAdventureStep = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
   const [questionsAndAnswers, setQuestionsAndAnswers] = useState<QuestionAnswer[]>([]);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  const handleNext = () => {
+    if (questionsAndAnswers.length === 0) {
+      toast({
+        title: "No adventures added",
+        description: "Share at least one magical tale!",
+        variant: "destructive",
+      });
+      return;
+    }
+    navigate('/create/friends/wild-fantasy/realm');
+  };
 
   const handleSubmitAnswer = (question: string, answer: string) => {
     setQuestionsAndAnswers([...questionsAndAnswers, { question, answer }]);
@@ -63,19 +46,6 @@ const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) =
 
   const handleRemoveQA = (index: number) => {
     setQuestionsAndAnswers(questionsAndAnswers.filter((_, i) => i !== index));
-  };
-
-  const handleNext = () => {
-    if (questionsAndAnswers.length === 0) {
-      toast({
-        title: "No answers provided",
-        description: "Please answer at least one question to continue.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    navigate(`/create/${category}/idea`);
   };
 
   const handleEditAnswer = (question: string) => {
@@ -87,9 +57,9 @@ const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) =
 
   return (
     <WizardStep
-      title="Share Your Story"
-      description="Answer questions to create your personalized book."
-      previousStep={previousStep}
+      title="Create Your Magical Tale"
+      description="Transform your friendship into an epic fantasy adventure!"
+      previousStep="/create/friends/wild-fantasy/author"
       currentStep={2}
       totalSteps={4}
       onNextClick={handleNext}
@@ -122,8 +92,8 @@ const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) =
         >
           <PlusCircle className="mr-2 h-5 w-5" />
           {questionsAndAnswers.length === 0 
-            ? "Select a Question" 
-            : "Add Another Question"}
+            ? "Begin Your First Tale" 
+            : "Add Another Adventure"}
         </Button>
       </div>
       <QuestionDialog
@@ -135,10 +105,10 @@ const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) =
         onSubmitAnswer={handleSubmitAnswer}
         answeredQuestions={answeredQuestions}
         initialQuestion={selectedQuestion}
-        questions={getDefaultQuestions(category)}
+        questions={questions}
       />
     </WizardStep>
   );
 };
 
-export default QuestionStep;
+export default WildFantasyAdventureStep;

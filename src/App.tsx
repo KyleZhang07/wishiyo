@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -35,6 +34,16 @@ import KidsQuestionStep from "./pages/wizard/kids/QuestionStep";
 import KidsIdeaStep from "./pages/wizard/kids/IdeaStep";
 import KidsStoryStep from "./pages/wizard/kids/StoryStep";
 import KidsGenerateStep from "./pages/wizard/kids/GenerateStep";
+
+// Friends Book Creation Routes - Funny Biography
+import FunnyBiographyAuthorStep from "./pages/wizard/friends/funny-biography/AuthorStep";
+import FunnyBiographyStoriesStep from "./pages/wizard/friends/funny-biography/StoriesStep";
+import FunnyBiographyPhotosStep from "./pages/wizard/friends/funny-biography/PhotosStep";
+import FunnyBiographyGenerateStep from "./pages/wizard/friends/funny-biography/GenerateStep";
+
+// Friends Book Creation Routes - Wild Fantasy
+import WildFantasyAuthorStep from "./pages/wizard/friends/wild-fantasy/AuthorStep";
+import WildFantasyAdventureStep from "./pages/wizard/friends/wild-fantasy/AdventureStep";
 
 const queryClient = new QueryClient();
 
@@ -76,6 +85,16 @@ const App = () => {
                 <Route path="/create/kids/idea" element={<KidsIdeaStep />} />
                 <Route path="/create/kids/story" element={<KidsStoryStep />} />
                 <Route path="/create/kids/generate" element={<KidsGenerateStep />} />
+                
+                {/* Funny Biography Routes */}
+                <Route path="/create/friends/funny-biography/author" element={<FunnyBiographyAuthorStep />} />
+                <Route path="/create/friends/funny-biography/stories" element={<FunnyBiographyStoriesStep />} />
+                <Route path="/create/friends/funny-biography/photos" element={<FunnyBiographyPhotosStep />} />
+                <Route path="/create/friends/funny-biography/generate" element={<FunnyBiographyGenerateStep />} />
+                
+                {/* Wild Fantasy Routes */}
+                <Route path="/create/friends/wild-fantasy/author" element={<WildFantasyAuthorStep />} />
+                <Route path="/create/friends/wild-fantasy/adventure" element={<WildFantasyAdventureStep />} />
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>
