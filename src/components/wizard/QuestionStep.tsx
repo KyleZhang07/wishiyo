@@ -57,12 +57,12 @@ const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) =
     switch (category) {
       case 'friends':
         return [
-          "What's your favorite memory with your friend?",
-          "How did you two first meet?",
-          "What makes your friendship special?",
-          "What's the funniest moment you've shared?",
-          "What do you admire most about your friend?",
-          "What's a challenge you've overcome together?"
+          "What's the most embarrassing moment you've shared with your friend?",
+          "What's the weirdest inside joke between you two?",
+          "What's the most ridiculous adventure you've been on together?",
+          "What's the funniest misunderstanding you've had?",
+          "What's the most absurd thing your friend has convinced you to do?",
+          "What's a running gag or nickname that only makes sense to you two?"
         ];
       case 'love':
         return [
@@ -87,8 +87,8 @@ const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) =
 
   return (
     <WizardStep
-      title="Share Your Story"
-      description="Answer questions to create your personalized book."
+      title="Share Your Funny Stories"
+      description="Answer questions to create a hilarious biography of your friendship."
       previousStep={previousStep}
       currentStep={2}
       totalSteps={4}
