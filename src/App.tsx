@@ -31,6 +31,18 @@ import PrankBookPranksStep from "./pages/wizard/friends/prank-book/PranksStep";
 import PrankBookEvidenceStep from "./pages/wizard/friends/prank-book/EvidenceStep";
 import PrankBookGenerateStep from "./pages/wizard/friends/prank-book/GenerateStep";
 
+// Love Book Creation Routes - Love Story
+import LoveStoryAuthorStep from "./pages/wizard/love/love-story/AuthorStep";
+import LoveStoryQuestionsStep from "./pages/wizard/love/love-story/QuestionsStep";
+import LoveStoryMomentsStep from "./pages/wizard/love/love-story/MomentsStep";
+import LoveStoryGenerateStep from "./pages/wizard/love/love-story/GenerateStep";
+
+// Kids Book Creation Routes - Adventure
+import KidsAdventureAuthorStep from "./pages/wizard/kids/adventure/AuthorStep";
+import KidsAdventureCharacterStep from "./pages/wizard/kids/adventure/CharacterStep";
+import KidsAdventureStoryStep from "./pages/wizard/kids/adventure/StoryStep";
+import KidsAdventureGenerateStep from "./pages/wizard/kids/adventure/GenerateStep";
+
 const queryClient = new QueryClient();
 
 const App = () => {
@@ -66,6 +78,18 @@ const App = () => {
                 <Route path="/create/friends/prank-book/pranks" element={<PrankBookPranksStep />} />
                 <Route path="/create/friends/prank-book/evidence" element={<PrankBookEvidenceStep />} />
                 <Route path="/create/friends/prank-book/generate" element={<PrankBookGenerateStep />} />
+
+                {/* Love Story Routes */}
+                <Route path="/create/love/love-story/author" element={<LoveStoryAuthorStep />} />
+                <Route path="/create/love/love-story/questions" element={<LoveStoryQuestionsStep />} />
+                <Route path="/create/love/love-story/moments" element={<LoveStoryMomentsStep />} />
+                <Route path="/create/love/love-story/generate" element={<LoveStoryGenerateStep />} />
+
+                {/* Kids Adventure Routes */}
+                <Route path="/create/kids/adventure/author" element={<KidsAdventureAuthorStep />} />
+                <Route path="/create/kids/adventure/character" element={<KidsAdventureCharacterStep />} />
+                <Route path="/create/kids/adventure/story" element={<KidsAdventureStoryStep />} />
+                <Route path="/create/kids/adventure/generate" element={<KidsAdventureGenerateStep />} />
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>
