@@ -25,6 +25,12 @@ import FunnyBiographyGenerateStep from "./pages/wizard/friends/funny-biography/G
 import WildFantasyAuthorStep from "./pages/wizard/friends/wild-fantasy/AuthorStep";
 import WildFantasyAdventureStep from "./pages/wizard/friends/wild-fantasy/AdventureStep";
 
+// Friends Book Creation Routes - Prank Book
+import PrankBookAuthorStep from "./pages/wizard/friends/prank-book/AuthorStep";
+import PrankBookPranksStep from "./pages/wizard/friends/prank-book/PranksStep";
+import PrankBookEvidenceStep from "./pages/wizard/friends/prank-book/EvidenceStep";
+import PrankBookGenerateStep from "./pages/wizard/friends/prank-book/GenerateStep";
+
 const queryClient = new QueryClient();
 
 const App = () => {
@@ -54,6 +60,12 @@ const App = () => {
                 {/* Wild Fantasy Routes */}
                 <Route path="/create/friends/wild-fantasy/author" element={<WildFantasyAuthorStep />} />
                 <Route path="/create/friends/wild-fantasy/adventure" element={<WildFantasyAdventureStep />} />
+
+                {/* Prank Book Routes */}
+                <Route path="/create/friends/prank-book/author" element={<PrankBookAuthorStep />} />
+                <Route path="/create/friends/prank-book/pranks" element={<PrankBookPranksStep />} />
+                <Route path="/create/friends/prank-book/evidence" element={<PrankBookEvidenceStep />} />
+                <Route path="/create/friends/prank-book/generate" element={<PrankBookGenerateStep />} />
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>
