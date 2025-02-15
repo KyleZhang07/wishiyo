@@ -34,36 +34,36 @@ const FriendsLanding = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="group">
               <div className="relative aspect-square bg-white rounded-lg shadow-lg overflow-hidden mb-4">
-                <img src="/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png" alt="ABC For You" className="w-full h-full object-cover" />
+                <img src="/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png" alt="Funny Biography" className="w-full h-full object-cover" />
               </div>
               <h3 className="text-xl font-bold mb-2">Funny Biography</h3>
-              <p className="text-gray-600 mb-2">The most amazing way to learn the alphabet</p>
+              <p className="text-gray-600 mb-2">Create a hilarious book full of funny moments and stories</p>
               
-              <Link to="/create/friends/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors">
+              <Link to="/create/friends/funny-biography/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors">
                 Start Create
               </Link>
             </div>
 
             <div className="group">
               <div className="relative aspect-square bg-white rounded-lg shadow-lg overflow-hidden mb-4">
-                <img src="/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png" alt="When You Were Born" className="w-full h-full object-cover" />
+                <img src="/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png" alt="Wild Fantasy" className="w-full h-full object-cover" />
               </div>
               <h3 className="text-xl font-bold mb-2">Wild Fantasy</h3>
-              <p className="text-gray-600 mb-2">A story to celebrate a new baby</p>
+              <p className="text-gray-600 mb-2">Turn your friendship into an epic fantasy adventure</p>
               
-              <Link to="/create/friends/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors">
+              <Link to="/create/friends/wild-fantasy/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors">
                 Start Create
               </Link>
             </div>
 
             <div className="group">
               <div className="relative aspect-square bg-white rounded-lg shadow-lg overflow-hidden mb-4">
-                <img src="/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png" alt="First Birthday For You" className="w-full h-full object-cover" />
+                <img src="/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png" alt="Prank Book" className="w-full h-full object-cover" />
               </div>
               <h3 className="text-xl font-bold mb-2">Prank Book</h3>
-              <p className="text-gray-600 mb-2">Perfect for baby's first birthday</p>
+              <p className="text-gray-600 mb-2">Document all your hilarious pranks and mischief</p>
               
-              <Link to="/create/friends/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors">
+              <Link to="/create/friends/prank-book/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors">
                 Start Create
               </Link>
             </div>
