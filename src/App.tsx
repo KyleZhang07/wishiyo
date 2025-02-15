@@ -48,6 +48,23 @@ import LovePoemsFeelingsStep from "./pages/wizard/love/love-poems/FeelingsStep";
 import LovePoemsStyleStep from "./pages/wizard/love/love-poems/StyleStep";
 import LovePoemsGenerateStep from "./pages/wizard/love/love-poems/GenerateStep";
 
+// Love Book Creation Routes - Picture Album
+import PictureAlbumAuthorStep from "./pages/wizard/love/picture-album/AuthorStep";
+import PictureAlbumPhotosStep from "./pages/wizard/love/picture-album/PhotosStep";
+import PictureAlbumGenerateStep from "./pages/wizard/love/picture-album/GenerateStep";
+
+// Kids Book Creation Routes - Story Book
+import StoryBookAuthorStep from "./pages/wizard/kids/story-book/AuthorStep";
+import StoryBookThemeStep from "./pages/wizard/kids/story-book/ThemeStep";
+import StoryBookCharactersStep from "./pages/wizard/kids/story-book/CharactersStep";
+import StoryBookGenerateStep from "./pages/wizard/kids/story-book/GenerateStep";
+
+// Kids Book Creation Routes - Learning Journey
+import LearningJourneyAuthorStep from "./pages/wizard/kids/learning/AuthorStep";
+import LearningJourneySubjectStep from "./pages/wizard/kids/learning/SubjectStep";
+import LearningJourneyStyleStep from "./pages/wizard/kids/learning/StyleStep";
+import LearningJourneyGenerateStep from "./pages/wizard/kids/learning/GenerateStep";
+
 const queryClient = new QueryClient();
 
 const App = () => {
@@ -101,6 +118,23 @@ const App = () => {
                 <Route path="/create/love/love-poems/feelings" element={<LovePoemsFeelingsStep />} />
                 <Route path="/create/love/love-poems/style" element={<LovePoemsStyleStep />} />
                 <Route path="/create/love/love-poems/generate" element={<LovePoemsGenerateStep />} />
+                
+                {/* Picture Album Routes */}
+                <Route path="/create/love/picture-album/author" element={<PictureAlbumAuthorStep />} />
+                <Route path="/create/love/picture-album/photos" element={<PictureAlbumPhotosStep />} />
+                <Route path="/create/love/picture-album/generate" element={<PictureAlbumGenerateStep />} />
+                
+                {/* Story Book Routes */}
+                <Route path="/create/kids/story-book/author" element={<StoryBookAuthorStep />} />
+                <Route path="/create/kids/story-book/theme" element={<StoryBookThemeStep />} />
+                <Route path="/create/kids/story-book/characters" element={<StoryBookCharactersStep />} />
+                <Route path="/create/kids/story-book/generate" element={<StoryBookGenerateStep />} />
+                
+                {/* Learning Journey Routes */}
+                <Route path="/create/kids/learning/author" element={<LearningJourneyAuthorStep />} />
+                <Route path="/create/kids/learning/subject" element={<LearningJourneySubjectStep />} />
+                <Route path="/create/kids/learning/style" element={<LearningJourneyStyleStep />} />
+                <Route path="/create/kids/learning/generate" element={<LearningJourneyGenerateStep />} />
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>
