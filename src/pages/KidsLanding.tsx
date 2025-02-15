@@ -1,3 +1,4 @@
+
 import { Link } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 
@@ -38,7 +39,7 @@ const KidsLanding = () => {
               <h3 className="text-xl font-bold mb-2">Adventure Book</h3>
               <p className="text-gray-600 mb-2">Your child's magical adventure story</p>
               
-              <Link to="/create/kids/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors">
+              <Link to="/create/kids/adventure/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors">
                 Start Create
               </Link>
             </div>
@@ -50,7 +51,7 @@ const KidsLanding = () => {
               <h3 className="text-xl font-bold mb-2">Story Book</h3>
               <p className="text-gray-600 mb-2">Personalized bedtime stories for sweet dreams</p>
               
-              <Link to="/create/kids/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors">
+              <Link to="/create/kids/story-book/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors">
                 Start Create
               </Link>
             </div>
@@ -62,7 +63,7 @@ const KidsLanding = () => {
               <h3 className="text-xl font-bold mb-2">Learning Journey</h3>
               <p className="text-gray-600 mb-2">Educational stories that make learning fun</p>
               
-              <Link to="/create/kids/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors">
+              <Link to="/create/kids/learning/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors">
                 Start Create
               </Link>
             </div>

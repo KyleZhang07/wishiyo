@@ -39,7 +39,7 @@ const LoveLanding = () => {
               <h3 className="text-xl font-bold mb-2">Love Story</h3>
               <p className="text-gray-600 mb-2">A romantic journey of your relationship</p>
               
-              <Link to="/create/love/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors">
+              <Link to="/create/love/love-story/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors">
                 Start Create
               </Link>
             </div>
@@ -51,7 +51,7 @@ const LoveLanding = () => {
               <h3 className="text-xl font-bold mb-2">Love Poems</h3>
               <p className="text-gray-600 mb-2">Celebrate your special moments together</p>
               
-              <Link to="/create/love/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors">
+              <Link to="/create/love/love-poems/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors">
                 Start Create
               </Link>
             </div>
@@ -63,7 +63,7 @@ const LoveLanding = () => {
               <h3 className="text-xl font-bold mb-2">Picture Album</h3>
               <p className="text-gray-600 mb-2">Capture your wedding memories</p>
               
-              <Link to="/create/love/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors">
+              <Link to="/create/love/picture-album/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors">
                 Start Create
               </Link>
             </div>
