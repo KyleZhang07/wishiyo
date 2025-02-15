@@ -1,14 +1,8 @@
 
-import QuestionStep from '@/components/wizard/QuestionStep';
+import KidsQuestionStep from '@/components/wizard/kids/KidsQuestionStep';
 
-const KidsQuestionStep = () => {
-  return (
-    <QuestionStep
-      category="kids"
-      previousStep="/create/kids/author"
-      nextStep="/create/kids/story"
-    />
-  );
+const QuestionStep = () => {
+  return <KidsQuestionStep />;
 };
 
-export default KidsQuestionStep;
+export default QuestionStep;
