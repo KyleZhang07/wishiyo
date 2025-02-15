@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -42,6 +41,12 @@ import KidsAdventureAuthorStep from "./pages/wizard/kids/adventure/AuthorStep";
 import KidsAdventureCharacterStep from "./pages/wizard/kids/adventure/CharacterStep";
 import KidsAdventureStoryStep from "./pages/wizard/kids/adventure/StoryStep";
 import KidsAdventureGenerateStep from "./pages/wizard/kids/adventure/GenerateStep";
+
+// Love Book Creation Routes - Love Poems
+import LovePoemsAuthorStep from "./pages/wizard/love/love-poems/AuthorStep";
+import LovePoemsFeelingsStep from "./pages/wizard/love/love-poems/FeelingsStep";
+import LovePoemsStyleStep from "./pages/wizard/love/love-poems/StyleStep";
+import LovePoemsGenerateStep from "./pages/wizard/love/love-poems/GenerateStep";
 
 const queryClient = new QueryClient();
 
@@ -90,6 +95,12 @@ const App = () => {
                 <Route path="/create/kids/adventure/character" element={<KidsAdventureCharacterStep />} />
                 <Route path="/create/kids/adventure/story" element={<KidsAdventureStoryStep />} />
                 <Route path="/create/kids/adventure/generate" element={<KidsAdventureGenerateStep />} />
+                
+                {/* Love Poems Routes */}
+                <Route path="/create/love/love-poems/author" element={<LovePoemsAuthorStep />} />
+                <Route path="/create/love/love-poems/feelings" element={<LovePoemsFeelingsStep />} />
+                <Route path="/create/love/love-poems/style" element={<LovePoemsStyleStep />} />
+                <Route path="/create/love/love-poems/generate" element={<LovePoemsGenerateStep />} />
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>
