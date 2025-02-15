@@ -15,7 +15,7 @@ const KidsLanding = () => {
                   <h1 className="text-4xl font-display font-bold px-0 mx-0 md:text-4xl text-slate-800">Dreams brought to life. Magically.</h1>
                   <p className="text-xl text-slate-800">Turn your child into the hero of their very own storybook adventure</p>
                   <a href="#book-types" className="inline-flex items-center gap-2 px-8 py-4 text-lg font-medium text-primary bg-white rounded-full hover:bg-gray-50 transition-colors">
-                    <Sparkles className="w-5 h-5" />
+                    <Sparkles className="w-5 h-5 text-amber-400" />
                     Choose My Book
                   </a>
                 </div>
