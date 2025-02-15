@@ -53,6 +53,38 @@ const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) =
 
   const answeredQuestions = questionsAndAnswers.map(qa => qa.question);
 
+  const getQuestions = () => {
+    switch (category) {
+      case 'friends':
+        return [
+          "What's your favorite memory with your friend?",
+          "How did you two first meet?",
+          "What makes your friendship special?",
+          "What's the funniest moment you've shared?",
+          "What do you admire most about your friend?",
+          "What's a challenge you've overcome together?"
+        ];
+      case 'love':
+        return [
+          "How did you first meet your partner?",
+          "What was your first date like?",
+          "What's the most romantic moment you've shared?",
+          "What makes your love story unique?",
+          "What's your favorite thing about your partner?",
+          "What's your dream for your future together?"
+        ];
+      case 'kids':
+        return [
+          "What's your child's name and age?",
+          "What are their favorite activities or hobbies?",
+          "What makes them smile or laugh the most?",
+          "What's their favorite animal or character?",
+          "What's their biggest dream or wish?",
+          "What makes your child unique and special?"
+        ];
+    }
+  };
+
   return (
     <WizardStep
       title="Share Your Story"
@@ -103,6 +135,7 @@ const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) =
         onSubmitAnswer={handleSubmitAnswer}
         answeredQuestions={answeredQuestions}
         initialQuestion={selectedQuestion}
+        questions={getQuestions()}
       />
     </WizardStep>
   );
