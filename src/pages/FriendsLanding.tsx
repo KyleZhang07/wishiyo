@@ -1,106 +1,75 @@
 
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link } from 'react-router-dom';
+import { Users } from 'lucide-react';
 
 const FriendsLanding = () => {
   return (
-    <div className="container mx-auto px-4 py-8">
-      <section className="max-w-4xl mx-auto text-center mb-12">
-        <h1 className="text-4xl font-bold mb-4">Create a Book About Friendship</h1>
-        <p className="text-xl text-gray-600">Transform your friendship stories into beautiful books</p>
-      </section>
-
-      <section className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-2xl font-semibold mb-4">Popular Templates</h2>
-          <ul className="space-y-4">
-            <li>
-              <Link to="/create/friends/author">
-                <Button variant="outline" className="w-full justify-start">
-                  Best Friends Forever
-                </Button>
-              </Link>
-            </li>
-            <li>
-              <Link to="/create/friends/author">
-                <Button variant="outline" className="w-full justify-start">
-                  Friend Anniversary
-                </Button>
-              </Link>
-            </li>
-            <li>
-              <Link to="/create/friends/author">
-                <Button variant="outline" className="w-full justify-start">
-                  Friendship Journey
-                </Button>
-              </Link>
-            </li>
-          </ul>
+    <div className="page-transition">
+      <div className="bg-white shadow-lg">
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/90" />
+          <div className="relative z-10 px-[60px] my-[64px] bg-sky-50 py-[100px]">
+            <div className="max-w-6xl mx-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div className="text-white space-y-6">
+                  <h1 className="text-4xl font-display font-bold px-0 mx-0 md:text-4xl text-slate-800">Hilarious moment. Presented by you.</h1>
+                  <p className="text-xl text-slate-800 px-0 mx-0">Use Wishika to give your friends a special book just for them</p>
+                  <a href="#book-types" className="inline-flex items-center gap-2 px-8 py-4 text-lg font-medium text-primary bg-white rounded-full hover:bg-gray-50 transition-colors">
+                    <Users className="w-5 h-5" />
+                    Choose My Book
+                  </a>
+                </div>
+                <div className="hidden md:block">
+                  <div className="w-64 h-64 mx-auto rounded-full overflow-hidden border-4 border-white/20">
+                    <img src="/placeholder.svg" alt="" className="w-full h-full object-cover" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-2xl font-semibold mb-4">Your Favorite</h2>
-          <ul className="space-y-4">
-            <li>
-              <Link to="/create/friends/author?genre=funny-biography">
-                <Button variant="outline" className="w-full justify-start">
-                  Funny Biography
-                </Button>
+        <div className="max-w-6xl mx-auto px-4 py-16">
+          <h2 className="text-3xl font-display font-bold text-slate-800 mb-8 text-center">Your Favorite</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="group">
+              <div className="relative aspect-square bg-white rounded-lg shadow-lg overflow-hidden mb-4">
+                <img src="/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png" alt="ABC For You" className="w-full h-full object-cover" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Funny Biography</h3>
+              <p className="text-gray-600 mb-2">The most amazing way to learn the alphabet</p>
+              
+              <Link to="/create/friends/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors">
+                Start Create
               </Link>
-            </li>
-            <li>
-              <Link to="/create/friends/author?genre=wild-fantasy">
-                <Button variant="outline" className="w-full justify-start">
-                  Wild Fantasy
-                </Button>
-              </Link>
-            </li>
-            <li>
-              <Link to="/create/friends/author?genre=prank-book">
-                <Button variant="outline" className="w-full justify-start">
-                  Prank Book
-                </Button>
-              </Link>
-            </li>
-          </ul>
-        </div>
+            </div>
 
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-2xl font-semibold mb-4">Special Occasions</h2>
-          <ul className="space-y-4">
-            <li>
-              <Link to="/create/friends/author">
-                <Button variant="outline" className="w-full justify-start">
-                  Birthday Gift
-                </Button>
+            <div className="group">
+              <div className="relative aspect-square bg-white rounded-lg shadow-lg overflow-hidden mb-4">
+                <img src="/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png" alt="When You Were Born" className="w-full h-full object-cover" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Wild Fantasy</h3>
+              <p className="text-gray-600 mb-2">A story to celebrate a new baby</p>
+              
+              <Link to="/create/friends/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors">
+                Start Create
               </Link>
-            </li>
-            <li>
-              <Link to="/create/friends/author">
-                <Button variant="outline" className="w-full justify-start">
-                  Graduation Memory
-                </Button>
-              </Link>
-            </li>
-            <li>
-              <Link to="/create/friends/author">
-                <Button variant="outline" className="w-full justify-start">
-                  Moving Away
-                </Button>
-              </Link>
-            </li>
-          </ul>
-        </div>
-      </section>
+            </div>
 
-      <section className="max-w-4xl mx-auto text-center">
-        <h2 className="text-2xl font-semibold mb-6">Start Your Journey</h2>
-        <Link to="/create/friends/author">
-          <Button size="lg" className="px-8">
-            Create Your Book
-          </Button>
-        </Link>
-      </section>
+            <div className="group">
+              <div className="relative aspect-square bg-white rounded-lg shadow-lg overflow-hidden mb-4">
+                <img src="/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png" alt="First Birthday For You" className="w-full h-full object-cover" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Prank Book</h3>
+              <p className="text-gray-600 mb-2">Perfect for baby's first birthday</p>
+              
+              <Link to="/create/friends/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors">
+                Start Create
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
