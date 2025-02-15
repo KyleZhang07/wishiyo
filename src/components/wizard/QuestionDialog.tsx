@@ -11,6 +11,7 @@ interface QuestionDialogProps {
   onSubmitAnswer: (question: string, answer: string) => void;
   answeredQuestions?: string[];
   initialQuestion?: string | null;
+  questions: string[]; // Added this required prop
 }
 
 const QuestionDialog = ({
@@ -18,11 +19,11 @@ const QuestionDialog = ({
   onClose,
   onSubmitAnswer,
   answeredQuestions = [],
-  initialQuestion = null
+  initialQuestion = null,
+  questions
 }: QuestionDialogProps) => {
   const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
   const [answer, setAnswer] = useState('');
-  const questions = ["What's your favorite memory together?", "How did you first meet?", "What makes your relationship special?", "What's the funniest moment you've shared?", "What do you admire most about them?", "What's a challenge you've overcome together?"];
   
   useEffect(() => {
     if (initialQuestion) {
