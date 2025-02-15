@@ -1,8 +1,14 @@
 
-import LoveQuestionStep from '@/components/wizard/love/LoveQuestionStep';
+import QuestionStep from '@/components/wizard/QuestionStep';
 
-const QuestionStep = () => {
-  return <LoveQuestionStep />;
+const LoveQuestionStep = () => {
+  return (
+    <QuestionStep
+      category="love"
+      previousStep="/create/love/author"
+      nextStep="/create/love/moments"
+    />
+  );
 };
 
-export default QuestionStep;
+export default LoveQuestionStep;

@@ -1,8 +1,14 @@
 
-import FriendsQuestionStep from '@/components/wizard/friends/FriendsQuestionStep';
+import QuestionStep from '@/components/wizard/QuestionStep';
 
-const QuestionStep = () => {
-  return <FriendsQuestionStep />;
+const FriendsQuestionStep = () => {
+  return (
+    <QuestionStep
+      category="friends"
+      previousStep="/create/friends/author"
+      nextStep="/create/friends/photos"
+    />
+  );
 };
 
-export default QuestionStep;
+export default FriendsQuestionStep;

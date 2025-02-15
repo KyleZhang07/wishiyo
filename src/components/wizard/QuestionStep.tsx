@@ -53,42 +53,10 @@ const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) =
 
   const answeredQuestions = questionsAndAnswers.map(qa => qa.question);
 
-  const getQuestions = () => {
-    switch (category) {
-      case 'friends':
-        return [
-          "What's the most embarrassing moment you've shared with your friend?",
-          "What's the weirdest inside joke between you two?",
-          "What's the most ridiculous adventure you've been on together?",
-          "What's the funniest misunderstanding you've had?",
-          "What's the most absurd thing your friend has convinced you to do?",
-          "What's a running gag or nickname that only makes sense to you two?"
-        ];
-      case 'love':
-        return [
-          "How did you first meet your partner?",
-          "What was your first date like?",
-          "What's the most romantic moment you've shared?",
-          "What makes your love story unique?",
-          "What's your favorite thing about your partner?",
-          "What's your dream for your future together?"
-        ];
-      case 'kids':
-        return [
-          "What's your child's name and age?",
-          "What are their favorite activities or hobbies?",
-          "What makes them smile or laugh the most?",
-          "What's their favorite animal or character?",
-          "What's their biggest dream or wish?",
-          "What makes your child unique and special?"
-        ];
-    }
-  };
-
   return (
     <WizardStep
-      title="Share Your Funny Stories"
-      description="Answer questions to create a hilarious biography of your friendship."
+      title="Share Your Story"
+      description="Answer questions to create your personalized book."
       previousStep={previousStep}
       currentStep={2}
       totalSteps={4}
@@ -135,7 +103,6 @@ const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) =
         onSubmitAnswer={handleSubmitAnswer}
         answeredQuestions={answeredQuestions}
         initialQuestion={selectedQuestion}
-        questions={getQuestions()}
       />
     </WizardStep>
   );
