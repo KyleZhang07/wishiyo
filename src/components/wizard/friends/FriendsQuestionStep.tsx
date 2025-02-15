@@ -47,18 +47,18 @@ const FriendsQuestionStep = () => {
 
   const answeredQuestions = questionsAndAnswers.map(qa => qa.question);
   const friendshipQuestions = [
-    "What's your favorite memory with your friend?",
-    "How did you two first meet?",
-    "What makes your friendship special?",
-    "What's the funniest moment you've shared?",
-    "What do you admire most about your friend?",
-    "What's a challenge you've overcome together?"
+    "What's the most embarrassing moment you've shared with your friend?",
+    "What's the weirdest inside joke between you two?",
+    "What's the most ridiculous adventure you've been on together?",
+    "What's the funniest misunderstanding you've had?",
+    "What's the most absurd thing your friend has convinced you to do?",
+    "What's a running gag or nickname that only makes sense to you two?"
   ];
 
   return (
     <WizardStep
-      title="Share Your Friendship Story"
-      description="Answer questions to create your personalized friendship book."
+      title="Share Your Funny Stories"
+      description="Answer questions to create a hilarious biography of your friendship."
       previousStep="/create/friends/author"
       currentStep={2}
       totalSteps={4}
