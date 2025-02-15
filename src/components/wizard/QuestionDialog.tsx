@@ -11,6 +11,7 @@ interface QuestionDialogProps {
   onSubmitAnswer: (question: string, answer: string) => void;
   answeredQuestions?: string[];
   initialQuestion?: string | null;
+  questions: string[]; // Add the questions prop to the interface
 }
 
 const QuestionDialog = ({
@@ -18,11 +19,11 @@ const QuestionDialog = ({
   onClose,
   onSubmitAnswer,
   answeredQuestions = [],
-  initialQuestion = null
+  initialQuestion = null,
+  questions // Add this prop to the component parameters
 }: QuestionDialogProps) => {
   const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
   const [answer, setAnswer] = useState('');
-  const questions = ["What's your favorite memory together?", "How did you first meet?", "What makes your relationship special?", "What's the funniest moment you've shared?", "What do you admire most about them?", "What's a challenge you've overcome together?"];
   
   useEffect(() => {
     if (initialQuestion) {
@@ -51,7 +52,8 @@ const QuestionDialog = ({
     onClose();
   };
   
-  return <Dialog open={isOpen} onOpenChange={handleClose}>
+  return (
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader className="relative">
           <DialogTitle className="text-xl text-center">
@@ -86,16 +88,24 @@ const QuestionDialog = ({
                 {isAnswered && <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-primary" />}
               </Button>
             );
-          }) : <div className="space-y-4">
-                <p className="font-medium text-lg">{selectedQuestion}</p>
-                <Textarea placeholder="Write your answer here..." value={answer} onChange={e => setAnswer(e.target.value)} className="min-h-[150px]" />
-                <div className="flex justify-end">
-                  <Button onClick={handleSubmit}>Submit</Button>
-                </div>
-              </div>}
+          }) : (
+            <div className="space-y-4">
+              <p className="font-medium text-lg">{selectedQuestion}</p>
+              <Textarea 
+                placeholder="Write your answer here..." 
+                value={answer} 
+                onChange={e => setAnswer(e.target.value)} 
+                className="min-h-[150px]" 
+              />
+              <div className="flex justify-end">
+                <Button onClick={handleSubmit}>Submit</Button>
+              </div>
+            </div>
+          )}
         </div>
       </DialogContent>
-    </Dialog>;
+    </Dialog>
+  );
 };
 
 export default QuestionDialog;
