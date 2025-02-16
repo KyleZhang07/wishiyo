@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import WizardStep from '@/components/wizard/WizardStep';
@@ -21,9 +20,13 @@ const PrankBookPranksStep = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const savedName = localStorage.getItem('prankBookAuthorName');
-    if (savedName) {
-      setAuthorName(savedName);
+    const savedName = localStorage.getItem('prankBookAuthorName') || '';
+    setAuthorName(savedName);
+    
+    // Load saved answers
+    const savedAnswers = localStorage.getItem('prankBookAnswers');
+    if (savedAnswers) {
+      setQuestionsAndAnswers(JSON.parse(savedAnswers));
     }
   }, []);
 
@@ -59,11 +62,15 @@ const PrankBookPranksStep = () => {
   };
 
   const handleSubmitAnswer = (question: string, answer: string) => {
-    setQuestionsAndAnswers([...questionsAndAnswers, { question, answer }]);
+    const newAnswers = [...questionsAndAnswers, { question, answer }];
+    setQuestionsAndAnswers(newAnswers);
+    localStorage.setItem('prankBookAnswers', JSON.stringify(newAnswers));
   };
 
   const handleRemoveQA = (index: number) => {
-    setQuestionsAndAnswers(questionsAndAnswers.filter((_, i) => i !== index));
+    const newAnswers = questionsAndAnswers.filter((_, i) => i !== index);
+    setQuestionsAndAnswers(newAnswers);
+    localStorage.setItem('prankBookAnswers', JSON.stringify(newAnswers));
   };
 
   const handleEditAnswer = (question: string) => {

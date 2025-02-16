@@ -34,6 +34,12 @@ const WildFantasyAdventureStep = () => {
     const savedName = localStorage.getItem('wildFantasyAuthorName') || '';
     setAuthorName(savedName);
     setQuestions(getQuestions(savedName));
+    
+    // Load saved answers
+    const savedAnswers = localStorage.getItem('wildFantasyAnswers');
+    if (savedAnswers) {
+      setQuestionsAndAnswers(JSON.parse(savedAnswers));
+    }
   }, []);
 
   const handleNext = () => {
@@ -49,11 +55,15 @@ const WildFantasyAdventureStep = () => {
   };
 
   const handleSubmitAnswer = (question: string, answer: string) => {
-    setQuestionsAndAnswers([...questionsAndAnswers, { question, answer }]);
+    const newAnswers = [...questionsAndAnswers, { question, answer }];
+    setQuestionsAndAnswers(newAnswers);
+    localStorage.setItem('wildFantasyAnswers', JSON.stringify(newAnswers));
   };
 
   const handleRemoveQA = (index: number) => {
-    setQuestionsAndAnswers(questionsAndAnswers.filter((_, i) => i !== index));
+    const newAnswers = questionsAndAnswers.filter((_, i) => i !== index);
+    setQuestionsAndAnswers(newAnswers);
+    localStorage.setItem('wildFantasyAnswers', JSON.stringify(newAnswers));
   };
 
   const handleEditAnswer = (question: string) => {

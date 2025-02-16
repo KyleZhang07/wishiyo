@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import QuestionDialog from '@/components/wizard/QuestionDialog';
@@ -21,9 +20,13 @@ const LoveStoryQuestionsStep = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const savedPartnerName = localStorage.getItem('loveStoryPartnerName');
-    if (savedPartnerName) {
-      setPartnerName(savedPartnerName);
+    const savedName = localStorage.getItem('loveStoryPartnerName') || '';
+    setPartnerName(savedName);
+    
+    // Load saved answers
+    const savedAnswers = localStorage.getItem('loveStoryAnswers');
+    if (savedAnswers) {
+      setQuestionsAndAnswers(JSON.parse(savedAnswers));
     }
   }, []);
 
@@ -59,11 +62,15 @@ const LoveStoryQuestionsStep = () => {
   };
 
   const handleSubmitAnswer = (question: string, answer: string) => {
-    setQuestionsAndAnswers([...questionsAndAnswers, { question, answer }]);
+    const newAnswers = [...questionsAndAnswers, { question, answer }];
+    setQuestionsAndAnswers(newAnswers);
+    localStorage.setItem('loveStoryAnswers', JSON.stringify(newAnswers));
   };
 
   const handleRemoveQA = (index: number) => {
-    setQuestionsAndAnswers(questionsAndAnswers.filter((_, i) => i !== index));
+    const newAnswers = questionsAndAnswers.filter((_, i) => i !== index);
+    setQuestionsAndAnswers(newAnswers);
+    localStorage.setItem('loveStoryAnswers', JSON.stringify(newAnswers));
   };
 
   const handleEditAnswer = (question: string) => {
