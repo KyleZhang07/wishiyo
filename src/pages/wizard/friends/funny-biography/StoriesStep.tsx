@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import WizardStep from '@/components/wizard/WizardStep';
 import QuestionDialog from '@/components/wizard/QuestionDialog';
@@ -12,8 +12,8 @@ interface QuestionAnswer {
   answer: string;
 }
 
-const questions = [
-  "What's the most embarrassing moment you've shared with your friend?",
+const getQuestions = (authorName: string) => [
+  `What is ${authorName}'s job?`,
   "What's the weirdest inside joke between you two?",
   "What's the most ridiculous adventure you've been on together?",
   "What's the funniest misunderstanding you've had?",
@@ -25,8 +25,14 @@ const FunnyBiographyStoriesStep = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
   const [questionsAndAnswers, setQuestionsAndAnswers] = useState<QuestionAnswer[]>([]);
+  const [questions, setQuestions] = useState<string[]>([]);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const authorName = localStorage.getItem('authorName') || 'your friend';
+    setQuestions(getQuestions(authorName));
+  }, []);
 
   const handleNext = () => {
     if (questionsAndAnswers.length === 0) {
