@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface QuestionDialogProps {
   isOpen: boolean;
@@ -11,7 +12,7 @@ interface QuestionDialogProps {
   onSubmitAnswer: (question: string, answer: string) => void;
   answeredQuestions?: string[];
   initialQuestion?: string | null;
-  questions: string[]; // Added this required prop
+  questions: string[];
 }
 
 const QuestionDialog = ({
@@ -52,8 +53,9 @@ const QuestionDialog = ({
     onClose();
   };
   
-  return <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-2xl">
+  return (
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader className="relative">
           <DialogTitle className="text-xl text-center">
             {selectedQuestion ? (
@@ -71,32 +73,46 @@ const QuestionDialog = ({
           </DialogTitle>
         </DialogHeader>
         <div className="grid gap-4">
-          {!selectedQuestion ? questions.map((question, index) => {
-            const isAnswered = answeredQuestions.includes(question);
-            return (
-              <Button
-                key={index}
-                variant="outline"
-                className={`justify-start h-auto py-3 px-4 whitespace-normal text-left text-base relative
-                  ${isAnswered ? 'opacity-50 cursor-default' : 'transition-transform hover:scale-[1.02] active:scale-100'}
-                `}
-                onClick={() => handleQuestionSelect(question)}
-                disabled={isAnswered}
-              >
-                {question}
-                {isAnswered && <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-primary" />}
-              </Button>
-            );
-          }) : <div className="space-y-4">
-                <p className="font-medium text-lg">{selectedQuestion}</p>
-                <Textarea placeholder="Write your answer here..." value={answer} onChange={e => setAnswer(e.target.value)} className="min-h-[150px]" />
-                <div className="flex justify-end">
-                  <Button onClick={handleSubmit}>Submit</Button>
-                </div>
-              </div>}
+          {!selectedQuestion ? (
+            <ScrollArea className="h-[300px] pr-4">
+              <div className="space-y-2">
+                {questions.map((question, index) => {
+                  const isAnswered = answeredQuestions.includes(question);
+                  return (
+                    <Button
+                      key={index}
+                      variant="outline"
+                      className={`justify-start h-auto py-3 px-4 whitespace-normal text-left text-base relative w-full
+                        ${isAnswered ? 'opacity-50 cursor-default' : 'transition-transform hover:scale-[1.02] active:scale-100'}
+                      `}
+                      onClick={() => handleQuestionSelect(question)}
+                      disabled={isAnswered}
+                    >
+                      {question}
+                      {isAnswered && <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-primary" />}
+                    </Button>
+                  );
+                })}
+              </div>
+            </ScrollArea>
+          ) : (
+            <div className="space-y-4">
+              <p className="font-medium text-lg">{selectedQuestion}</p>
+              <Textarea 
+                placeholder="Write your answer here..." 
+                value={answer} 
+                onChange={e => setAnswer(e.target.value)} 
+                className="min-h-[150px]" 
+              />
+              <div className="flex justify-end">
+                <Button onClick={handleSubmit}>Submit</Button>
+              </div>
+            </div>
+          )}
         </div>
       </DialogContent>
-    </Dialog>;
+    </Dialog>
+  );
 };
 
 export default QuestionDialog;
