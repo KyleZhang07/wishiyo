@@ -11,7 +11,7 @@ const WildFantasyAuthorStep = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const savedName = localStorage.getItem('friendAuthorName');
+    const savedName = localStorage.getItem('wildFantasyAuthorName');
     if (savedName) {
       setAuthorName(savedName);
     }
@@ -27,7 +27,7 @@ const WildFantasyAuthorStep = () => {
       return;
     }
 
-    localStorage.setItem('friendAuthorName', authorName.trim());
+    localStorage.setItem('wildFantasyAuthorName', authorName.trim());
     navigate('/create/friends/wild-fantasy/adventure');
   };
 

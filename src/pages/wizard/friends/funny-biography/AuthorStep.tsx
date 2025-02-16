@@ -11,7 +11,7 @@ const FunnyBiographyAuthorStep = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const savedName = localStorage.getItem('friendAuthorName');
+    const savedName = localStorage.getItem('funnyBiographyAuthorName');
     if (savedName) {
       setAuthorName(savedName);
     }
@@ -27,7 +27,7 @@ const FunnyBiographyAuthorStep = () => {
       return;
     }
 
-    localStorage.setItem('friendAuthorName', authorName.trim());
+    localStorage.setItem('funnyBiographyAuthorName', authorName.trim());
     navigate('/create/friends/funny-biography/stories');
   };
 

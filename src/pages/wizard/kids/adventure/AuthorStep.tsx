@@ -12,8 +12,8 @@ const KidsAdventureAuthorStep = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const savedName = localStorage.getItem('kidsChildName');
-    const savedAge = localStorage.getItem('kidsChildAge');
+    const savedName = localStorage.getItem('kidsAdventureChildName');
+    const savedAge = localStorage.getItem('kidsAdventureChildAge');
     if (savedName) setChildName(savedName);
     if (savedAge) setChildAge(savedAge);
   }, []);
@@ -28,8 +28,8 @@ const KidsAdventureAuthorStep = () => {
       return;
     }
 
-    localStorage.setItem('kidsChildName', childName.trim());
-    localStorage.setItem('kidsChildAge', childAge.trim());
+    localStorage.setItem('kidsAdventureChildName', childName.trim());
+    localStorage.setItem('kidsAdventureChildAge', childAge.trim());
     navigate('/create/kids/adventure/character');
   };
 

@@ -11,7 +11,7 @@ const PrankBookAuthorStep = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const savedName = localStorage.getItem('friendAuthorName');
+    const savedName = localStorage.getItem('prankBookAuthorName');
     if (savedName) {
       setAuthorName(savedName);
     }
@@ -27,7 +27,7 @@ const PrankBookAuthorStep = () => {
       return;
     }
 
-    localStorage.setItem('friendAuthorName', authorName.trim());
+    localStorage.setItem('prankBookAuthorName', authorName.trim());
     navigate('/create/friends/prank-book/pranks');
   };
 

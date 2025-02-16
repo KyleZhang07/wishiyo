@@ -12,8 +12,8 @@ const LovePoemsAuthorStep = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const savedName = localStorage.getItem('loveAuthorName');
-    const savedPartnerName = localStorage.getItem('lovePartnerName');
+    const savedName = localStorage.getItem('lovePoemsAuthorName');
+    const savedPartnerName = localStorage.getItem('lovePoemsPartnerName');
     if (savedName) setName(savedName);
     if (savedPartnerName) setPartnerName(savedPartnerName);
   }, []);
@@ -28,8 +28,8 @@ const LovePoemsAuthorStep = () => {
       return;
     }
 
-    localStorage.setItem('loveAuthorName', name.trim());
-    localStorage.setItem('lovePartnerName', partnerName.trim());
+    localStorage.setItem('lovePoemsAuthorName', name.trim());
+    localStorage.setItem('lovePoemsPartnerName', partnerName.trim());
     navigate('/create/love/love-poems/feelings');
   };
 

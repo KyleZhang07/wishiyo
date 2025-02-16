@@ -12,8 +12,8 @@ const StoryBookAuthorStep = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const savedName = localStorage.getItem('kidsChildName');
-    const savedAge = localStorage.getItem('kidsChildAge');
+    const savedName = localStorage.getItem('storyBookChildName');
+    const savedAge = localStorage.getItem('storyBookChildAge');
     if (savedName) setChildName(savedName);
     if (savedAge) setChildAge(savedAge);
   }, []);
@@ -28,8 +28,8 @@ const StoryBookAuthorStep = () => {
       return;
     }
 
-    localStorage.setItem('kidsChildName', childName.trim());
-    localStorage.setItem('kidsChildAge', childAge.trim());
+    localStorage.setItem('storyBookChildName', childName.trim());
+    localStorage.setItem('storyBookChildAge', childAge.trim());
     navigate('/create/kids/story-book/theme');
   };
 

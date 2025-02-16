@@ -12,8 +12,8 @@ const LoveStoryAuthorStep = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const savedName = localStorage.getItem('loveAuthorName');
-    const savedPartnerName = localStorage.getItem('lovePartnerName');
+    const savedName = localStorage.getItem('loveStoryAuthorName');
+    const savedPartnerName = localStorage.getItem('loveStoryPartnerName');
     if (savedName) setName(savedName);
     if (savedPartnerName) setPartnerName(savedPartnerName);
   }, []);
@@ -28,8 +28,8 @@ const LoveStoryAuthorStep = () => {
       return;
     }
 
-    localStorage.setItem('loveAuthorName', name.trim());
-    localStorage.setItem('lovePartnerName', partnerName.trim());
+    localStorage.setItem('loveStoryAuthorName', name.trim());
+    localStorage.setItem('loveStoryPartnerName', partnerName.trim());
     navigate('/create/love/love-story/questions');
   };
 

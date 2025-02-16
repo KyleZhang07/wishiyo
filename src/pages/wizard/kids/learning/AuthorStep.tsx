@@ -12,8 +12,8 @@ const LearningJourneyAuthorStep = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const savedName = localStorage.getItem('kidsChildName');
-    const savedAge = localStorage.getItem('kidsChildAge');
+    const savedName = localStorage.getItem('learningChildName');
+    const savedAge = localStorage.getItem('learningChildAge');
     if (savedName) setChildName(savedName);
     if (savedAge) setChildAge(savedAge);
   }, []);
@@ -28,8 +28,8 @@ const LearningJourneyAuthorStep = () => {
       return;
     }
 
-    localStorage.setItem('kidsChildName', childName.trim());
-    localStorage.setItem('kidsChildAge', childAge.trim());
+    localStorage.setItem('learningChildName', childName.trim());
+    localStorage.setItem('learningChildAge', childAge.trim());
     navigate('/create/kids/learning/subject');
   };
 
