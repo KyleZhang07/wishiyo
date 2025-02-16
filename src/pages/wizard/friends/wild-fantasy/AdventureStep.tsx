@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import WizardStep from '@/components/wizard/WizardStep';
 import QuestionDialog from '@/components/wizard/QuestionDialog';
@@ -12,21 +12,29 @@ interface QuestionAnswer {
   answer: string;
 }
 
-const questions = [
-  "If your friend was a mythical creature, what would they be and why?",
-  "What magical powers would best suit your friend's personality?",
-  "What's the most adventurous dream you've shared with your friend?",
-  "If you could go on a fantasy quest together, what would it be?",
-  "What mystical item would you give your friend and why?",
-  "What legendary tale best describes your friendship?"
+const getQuestions = (authorName: string) => [
+  `If ${authorName} was a mythical creature, what would they be and why?`,
+  `What magical powers would best suit ${authorName}'s personality?`,
+  `What's the most adventurous dream you've shared with ${authorName}?`,
+  `If you could go on a fantasy quest with ${authorName}, what would it be?`,
+  `What mystical item would you give ${authorName} and why?`,
+  `What legendary tale best describes your friendship with ${authorName}?`
 ];
 
 const WildFantasyAdventureStep = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
   const [questionsAndAnswers, setQuestionsAndAnswers] = useState<QuestionAnswer[]>([]);
+  const [questions, setQuestions] = useState<string[]>([]);
+  const [authorName, setAuthorName] = useState<string>('');
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const savedName = localStorage.getItem('wildFantasyAuthorName') || '';
+    setAuthorName(savedName);
+    setQuestions(getQuestions(savedName));
+  }, []);
 
   const handleNext = () => {
     if (questionsAndAnswers.length === 0) {
@@ -57,7 +65,7 @@ const WildFantasyAdventureStep = () => {
 
   return (
     <WizardStep
-      title="Create Your Magical Tale"
+      title={`Create ${authorName}'s Magical Tale`}
       description="Transform your friendship into an epic fantasy adventure!"
       previousStep="/create/friends/wild-fantasy/author"
       currentStep={2}
