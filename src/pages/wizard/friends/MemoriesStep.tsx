@@ -4,7 +4,7 @@ import WizardStep from '@/components/wizard/WizardStep';
 const FriendsMemoriesStep = () => {
   return (
     <WizardStep
-      title="Share Your Friendship Memories"
+      title="What's the Story"
       description="Tell us about the special moments you've shared together."
       previousStep="/create/friends/style"
       nextStep="/create/friends/photos"
