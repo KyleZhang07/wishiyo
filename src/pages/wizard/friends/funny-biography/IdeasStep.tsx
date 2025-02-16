@@ -6,9 +6,9 @@ const FunnyBiographyIdeasStep = () => {
     <BookIdeaStep
       genre="funny-biography"
       previousStep="/create/friends/funny-biography/stories"
-      nextStep="/create/friends/funny-biography/generate"
+      nextStep="/create/friends/funny-biography/photos"
       currentStep={3}
-      totalSteps={4}
+      totalSteps={5}
     />
   );
 };

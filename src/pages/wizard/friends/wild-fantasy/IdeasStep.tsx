@@ -6,9 +6,9 @@ const WildFantasyIdeasStep = () => {
     <BookIdeaStep
       genre="wild-fantasy"
       previousStep="/create/friends/wild-fantasy/adventure"
-      nextStep="/create/friends/wild-fantasy/generate"
+      nextStep="/create/friends/wild-fantasy/photos"
       currentStep={3}
-      totalSteps={4}
+      totalSteps={5}
     />
   );
 };

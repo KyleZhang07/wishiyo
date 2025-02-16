@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import WizardStep from '@/components/wizard/WizardStep';
@@ -45,7 +44,7 @@ const WildFantasyAdventureStep = () => {
       });
       return;
     }
-    navigate('/create/friends/wild-fantasy/realm');
+    navigate('/create/friends/wild-fantasy/ideas');
   };
 
   const handleSubmitAnswer = (question: string, answer: string) => {

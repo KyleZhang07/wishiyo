@@ -11,10 +11,10 @@ const FunnyBiographyPhotosStep = () => {
     <WizardStep
       title="Add Your Funniest Photos"
       description="Upload those embarrassing photos that always make you laugh!"
-      previousStep="/create/friends/funny-biography/stories"
+      previousStep="/create/friends/funny-biography/ideas"
       nextStep="/create/friends/funny-biography/generate"
-      currentStep={3}
-      totalSteps={4}
+      currentStep={4}
+      totalSteps={5}
     >
       <div className="space-y-6">
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">

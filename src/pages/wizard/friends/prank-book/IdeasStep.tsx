@@ -6,9 +6,9 @@ const PrankBookIdeasStep = () => {
     <BookIdeaStep
       genre="prank-book"
       previousStep="/create/friends/prank-book/pranks"
-      nextStep="/create/friends/prank-book/generate"
+      nextStep="/create/friends/prank-book/photos"
       currentStep={3}
-      totalSteps={4}
+      totalSteps={5}
     />
   );
 };

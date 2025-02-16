@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import WizardStep from '@/components/wizard/WizardStep';
@@ -52,7 +51,7 @@ const FunnyBiographyStoriesStep = () => {
       });
       return;
     }
-    navigate('/create/friends/funny-biography/photos');
+    navigate('/create/friends/funny-biography/ideas');
   };
 
   const handleSubmitAnswer = (question: string, answer: string) => {
