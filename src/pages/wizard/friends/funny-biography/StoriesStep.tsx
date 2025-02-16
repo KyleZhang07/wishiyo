@@ -52,7 +52,7 @@ const FunnyBiographyStoriesStep = () => {
       });
       return;
     }
-    navigate('/create/friends/funny-biography/photos');
+    navigate('/create/friends/funny-biography/ideas');
   };
 
   const handleSubmitAnswer = (question: string, answer: string) => {

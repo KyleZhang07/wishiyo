@@ -55,7 +55,7 @@ const PrankBookPranksStep = () => {
       });
       return;
     }
-    navigate('/create/friends/prank-book/evidence');
+    navigate('/create/friends/prank-book/ideas');
   };
 
   const handleSubmitAnswer = (question: string, answer: string) => {
