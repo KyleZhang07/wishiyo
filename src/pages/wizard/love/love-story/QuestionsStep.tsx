@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import QuestionDialog from '@/components/wizard/QuestionDialog';
 import { Button } from '@/components/ui/button';
@@ -12,21 +12,39 @@ interface QuestionAnswer {
   answer: string;
 }
 
-const questions = [
-  "How did you first meet?",
-  "What was your first date like?",
-  "When did you realize they were special?",
-  "What's your favorite memory together?",
-  "What makes your relationship unique?",
-  "What do you love most about them?"
-];
-
 const LoveStoryQuestionsStep = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
   const [questionsAndAnswers, setQuestionsAndAnswers] = useState<QuestionAnswer[]>([]);
+  const [partnerName, setPartnerName] = useState('');
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const savedPartnerName = localStorage.getItem('loveStoryPartnerName');
+    if (savedPartnerName) {
+      setPartnerName(savedPartnerName);
+    }
+  }, []);
+
+  const questions = [
+    "How did you first meet?",
+    `What was your first impression of ${partnerName}?`,
+    "What was your first date?",
+    `What is the cutest thing ${partnerName} does without realizing?`,
+    "What's your favorite way to spend time together?",
+    "What's a small thing they do that always makes your day better?",
+    `What is a food ${partnerName} loves?`,
+    `What's the cutest nickname you have for ${partnerName}?`,
+    `What's one thing ${partnerName} always beats you at?`,
+    `What's the most romantic thing ${partnerName} has ever done for you?`,
+    `What's one moment that made you fall even more in love with ${partnerName}?`,
+    `What's something you never get tired of hearing ${partnerName} say?`,
+    `What's ${partnerName}'s favorite song?`,
+    "If you could go on a dream vacation together, where would it be?",
+    "What do you think makes your relationship so special?",
+    `What's one promise you want to make to ${partnerName} forever?`
+  ];
 
   const handleNext = () => {
     if (questionsAndAnswers.length === 0) {
