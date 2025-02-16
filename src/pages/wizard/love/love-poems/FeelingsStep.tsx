@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import QuestionDialog from '@/components/wizard/QuestionDialog';
 import { Button } from '@/components/ui/button';
@@ -12,21 +12,39 @@ interface QuestionAnswer {
   answer: string;
 }
 
-const questions = [
-  "What emotions do you feel when you think of them?",
-  "What's the most romantic moment you've shared?",
-  "What makes your heart skip a beat?",
-  "What little things do they do that you love?",
-  "How would you describe your love in three words?",
-  "What dreams do you share together?"
-];
-
 const LovePoemsFeelingsStep = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
   const [questionsAndAnswers, setQuestionsAndAnswers] = useState<QuestionAnswer[]>([]);
+  const [partnerName, setPartnerName] = useState('');
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const savedPartnerName = localStorage.getItem('lovePoemsPartnerName');
+    if (savedPartnerName) {
+      setPartnerName(savedPartnerName);
+    }
+  }, []);
+
+  const questions = [
+    "How did you first meet?",
+    `What was your first impression of ${partnerName}?`,
+    "What was your first date?",
+    `What is the cutest thing ${partnerName} does without realizing?`,
+    "What's your favorite way to spend time together?",
+    "What's a small thing they do that always makes your day better?",
+    `What is a food ${partnerName} loves?`,
+    `What's the cutest nickname you have for ${partnerName}?`,
+    `What's one thing ${partnerName} always beats you at?`,
+    `What's the most romantic thing ${partnerName} has ever done for you?`,
+    `What's one moment that made you fall even more in love with ${partnerName}?`,
+    `What's something you never get tired of hearing ${partnerName} say?`,
+    `What's ${partnerName}'s favorite song?`,
+    "If you could go on a dream vacation together, where would it be?",
+    "What do you think makes your relationship so special?",
+    `What's one promise you want to make to ${partnerName} forever?`
+  ];
 
   const handleNext = () => {
     if (questionsAndAnswers.length === 0) {
@@ -57,8 +75,8 @@ const LovePoemsFeelingsStep = () => {
 
   return (
     <WizardStep
-      title="Share Your Feelings"
-      description="Express your love in words"
+      title="Share Your Love Story"
+      description="Tell us about your journey together"
       previousStep="/create/love/love-poems/author"
       currentStep={2}
       totalSteps={4}
@@ -92,8 +110,8 @@ const LovePoemsFeelingsStep = () => {
         >
           <PlusCircle className="mr-2 h-5 w-5" />
           {questionsAndAnswers.length === 0 
-            ? "Share Your First Feeling" 
-            : "Add Another Feeling"}
+            ? "Share Your First Memory" 
+            : "Add Another Memory"}
         </Button>
       </div>
       <QuestionDialog
