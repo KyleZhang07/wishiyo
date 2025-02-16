@@ -14,11 +14,18 @@ interface QuestionAnswer {
 
 const getQuestions = (authorName: string) => [
   `What is ${authorName}'s job?`,
-  "What's the weirdest inside joke between you two?",
-  "What's the most ridiculous adventure you've been on together?",
-  "What's the funniest misunderstanding you've had?",
-  "What's the most absurd thing your friend has convinced you to do?",
-  "What's a running gag or nickname that only makes sense to you two?"
+  `Who are ${authorName}'s best friends?`,
+  `What is ${authorName}'s dream?`,
+  `What are ${authorName}'s hobbies?`,
+  `What is something ${authorName} says too often?`,
+  `What is ${authorName}'s favorite place or destination?`,
+  `What is a funny habit ${authorName} has?`,
+  `What is ${authorName}'s go-to excuse for being late?`,
+  `What is ${authorName}'s secret talent?`,
+  `What is ${authorName}'s biggest weakness?`,
+  `What is ${authorName}'s favorite food?`,
+  `What would ${authorName} do with a million dollars?`,
+  `If ${authorName} could have dinner with anyone, who would it be?`
 ];
 
 const FunnyBiographyStoriesStep = () => {
