@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import WizardStep from '@/components/wizard/WizardStep';
 import QuestionDialog from '@/components/wizard/QuestionDialog';
@@ -12,27 +12,45 @@ interface QuestionAnswer {
   answer: string;
 }
 
-const questions = [
-  "What's the most hilarious prank you've ever pulled?",
-  "What's your signature prank move?",
-  "What's a prank that went hilariously wrong?",
-  "What's the most creative prank you've planned?",
-  "What's your friend's best reaction to a prank?",
-  "What's the funniest group prank you've been part of?"
-];
-
 const PrankBookPranksStep = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
   const [questionsAndAnswers, setQuestionsAndAnswers] = useState<QuestionAnswer[]>([]);
+  const [authorName, setAuthorName] = useState('');
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const savedName = localStorage.getItem('prankBookAuthorName');
+    if (savedName) {
+      setAuthorName(savedName);
+    }
+  }, []);
+
+  const questions = [
+    `What is ${authorName}'s job?`,
+    `What is ${authorName}'s biggest talent?`,
+    `What is ${authorName}'s worst habit?`,
+    `What's something ${authorName} always says?`,
+    `If ${authorName} were a top-secret agent, what would their secret mission be?`,
+    `What's ${authorName}'s go-to excuse when they mess up?`,
+    `What's one thing ${authorName} is weirdly obsessed with?`,
+    `What's the one thing ${authorName} should never be trusted with?`,
+    `What's the most ridiculous conspiracy theory about ${authorName}?`,
+    `If ${authorName} had a superpower, what would it be?`,
+    `If ${authorName} were an animal, which one would they be?`,
+    `What's ${authorName}'s go-to survival strategy in an apocalypse?`,
+    `If ${authorName} had to live in one store forever, which one would it be?`,
+    `If ${authorName} got arrested, what's the dumbest reason it would be for?`,
+    `What's ${authorName}'s most likely cause of worldwide fame?`,
+    `What's the one thing ${authorName} can't go a day without?`
+  ];
 
   const handleNext = () => {
     if (questionsAndAnswers.length === 0) {
       toast({
-        title: "No pranks added",
-        description: "Share at least one prank story!",
+        title: "No answers added",
+        description: "Share at least one story!",
         variant: "destructive",
       });
       return;
@@ -57,8 +75,8 @@ const PrankBookPranksStep = () => {
 
   return (
     <WizardStep
-      title="Record Your Best Pranks"
-      description="Share your most hilarious prank stories!"
+      title="Tell Us About Your Friend"
+      description="Share some fun details about your friend!"
       previousStep="/create/friends/prank-book/author"
       currentStep={2}
       totalSteps={4}
@@ -92,8 +110,8 @@ const PrankBookPranksStep = () => {
         >
           <PlusCircle className="mr-2 h-5 w-5" />
           {questionsAndAnswers.length === 0 
-            ? "Add Your First Prank" 
-            : "Add Another Prank"}
+            ? "Add Your First Answer" 
+            : "Add Another Answer"}
         </Button>
       </div>
       <QuestionDialog
