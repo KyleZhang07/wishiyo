@@ -38,7 +38,7 @@ const FunnyBiographyStoriesStep = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const savedName = localStorage.getItem('authorName') || 'your friend';
+    const savedName = localStorage.getItem('funnyBiographyAuthorName') || '';
     setAuthorName(savedName);
     setQuestions(getQuestions(savedName));
   }, []);
