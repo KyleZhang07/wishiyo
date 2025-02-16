@@ -57,7 +57,7 @@ const FunnyBiographyStoriesStep = () => {
 
   return (
     <WizardStep
-      title="What's the Story"
+      title="What's the Story?"
       description="Time to spill the beans on all those funny moments!"
       previousStep="/create/friends/funny-biography/author"
       currentStep={2}
@@ -92,7 +92,7 @@ const FunnyBiographyStoriesStep = () => {
         >
           <PlusCircle className="mr-2 h-5 w-5" />
           {questionsAndAnswers.length === 0 
-            ? "Add Your First Funny Story" 
+            ? "Select a Question and Answer It" 
             : "Add Another Story"}
         </Button>
       </div>

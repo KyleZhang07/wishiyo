@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import WizardStep from './WizardStep';
@@ -65,19 +64,6 @@ const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) =
     setQuestionsAndAnswers(questionsAndAnswers.filter((_, i) => i !== index));
   };
 
-  const handleNext = () => {
-    if (questionsAndAnswers.length === 0) {
-      toast({
-        title: "No answers provided",
-        description: "Please answer at least one question to continue.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    navigate(`/create/${category}/idea`);
-  };
-
   const handleEditAnswer = (question: string) => {
     setSelectedQuestion(question);
     setIsDialogOpen(true);
@@ -87,12 +73,22 @@ const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) =
 
   return (
     <WizardStep
-      title="Share Your Story"
+      title="What's the Story?"
       description="Answer questions to create your personalized book."
       previousStep={previousStep}
       currentStep={2}
       totalSteps={4}
-      onNextClick={handleNext}
+      onNextClick={() => {
+        if (questionsAndAnswers.length === 0) {
+          toast({
+            title: "No answers provided",
+            description: "Please answer at least one question to continue.",
+            variant: "destructive",
+          });
+          return;
+        }
+        navigate(nextStep);
+      }}
     >
       <div className="space-y-6">
         {questionsAndAnswers.map((qa, index) => (
@@ -122,7 +118,7 @@ const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) =
         >
           <PlusCircle className="mr-2 h-5 w-5" />
           {questionsAndAnswers.length === 0 
-            ? "Select a Question" 
+            ? "Select a Question and Answer It" 
             : "Add Another Question"}
         </Button>
       </div>
