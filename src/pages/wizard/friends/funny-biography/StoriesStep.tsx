@@ -33,12 +33,14 @@ const FunnyBiographyStoriesStep = () => {
   const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
   const [questionsAndAnswers, setQuestionsAndAnswers] = useState<QuestionAnswer[]>([]);
   const [questions, setQuestions] = useState<string[]>([]);
+  const [authorName, setAuthorName] = useState<string>('');
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const authorName = localStorage.getItem('authorName') || 'your friend';
-    setQuestions(getQuestions(authorName));
+    const savedName = localStorage.getItem('authorName') || 'your friend';
+    setAuthorName(savedName);
+    setQuestions(getQuestions(savedName));
   }, []);
 
   const handleNext = () => {
@@ -70,7 +72,7 @@ const FunnyBiographyStoriesStep = () => {
 
   return (
     <WizardStep
-      title="What's the Story?"
+      title={`What's ${authorName}'s Story?`}
       description="Time to spill the beans on all those funny moments!"
       previousStep="/create/friends/funny-biography/author"
       currentStep={2}
