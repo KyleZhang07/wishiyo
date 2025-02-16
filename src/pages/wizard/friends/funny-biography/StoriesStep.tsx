@@ -41,7 +41,18 @@ const FunnyBiographyStoriesStep = () => {
     const savedName = localStorage.getItem('authorName') || 'your friend';
     setAuthorName(savedName);
     setQuestions(getQuestions(savedName));
+
+    // Load saved answers from localStorage
+    const savedAnswers = localStorage.getItem('funnyBiographyAnswers');
+    if (savedAnswers) {
+      setQuestionsAndAnswers(JSON.parse(savedAnswers));
+    }
   }, []);
+
+  // Save answers to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('funnyBiographyAnswers', JSON.stringify(questionsAndAnswers));
+  }, [questionsAndAnswers]);
 
   const handleNext = () => {
     if (questionsAndAnswers.length === 0) {
@@ -56,11 +67,13 @@ const FunnyBiographyStoriesStep = () => {
   };
 
   const handleSubmitAnswer = (question: string, answer: string) => {
-    setQuestionsAndAnswers([...questionsAndAnswers, { question, answer }]);
+    const newQuestionsAndAnswers = [...questionsAndAnswers, { question, answer }];
+    setQuestionsAndAnswers(newQuestionsAndAnswers);
   };
 
   const handleRemoveQA = (index: number) => {
-    setQuestionsAndAnswers(questionsAndAnswers.filter((_, i) => i !== index));
+    const newQuestionsAndAnswers = questionsAndAnswers.filter((_, i) => i !== index);
+    setQuestionsAndAnswers(newQuestionsAndAnswers);
   };
 
   const handleEditAnswer = (question: string) => {
