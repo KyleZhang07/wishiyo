@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
@@ -11,6 +11,13 @@ const LovePoemsAuthorStep = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const savedName = localStorage.getItem('authorName');
+    const savedPartnerName = localStorage.getItem('partnerName');
+    if (savedName) setName(savedName);
+    if (savedPartnerName) setPartnerName(savedPartnerName);
+  }, []);
+
   const handleContinue = () => {
     if (!name.trim() || !partnerName.trim()) {
       toast({
@@ -21,6 +28,8 @@ const LovePoemsAuthorStep = () => {
       return;
     }
 
+    localStorage.setItem('authorName', name.trim());
+    localStorage.setItem('partnerName', partnerName.trim());
     navigate('/create/love/love-poems/feelings');
   };
 

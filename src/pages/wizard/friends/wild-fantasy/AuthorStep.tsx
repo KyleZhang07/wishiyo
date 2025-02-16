@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
@@ -9,6 +9,13 @@ const WildFantasyAuthorStep = () => {
   const [authorName, setAuthorName] = useState('');
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const savedName = localStorage.getItem('authorName');
+    if (savedName) {
+      setAuthorName(savedName);
+    }
+  }, []);
 
   const handleContinue = () => {
     if (!authorName.trim()) {
@@ -20,6 +27,7 @@ const WildFantasyAuthorStep = () => {
       return;
     }
 
+    localStorage.setItem('authorName', authorName.trim());
     navigate('/create/friends/wild-fantasy/adventure');
   };
 

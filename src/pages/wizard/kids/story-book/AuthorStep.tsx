@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
@@ -11,6 +11,13 @@ const StoryBookAuthorStep = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const savedName = localStorage.getItem('childName');
+    const savedAge = localStorage.getItem('childAge');
+    if (savedName) setChildName(savedName);
+    if (savedAge) setChildAge(savedAge);
+  }, []);
+
   const handleContinue = () => {
     if (!childName.trim() || !childAge.trim()) {
       toast({
@@ -21,6 +28,8 @@ const StoryBookAuthorStep = () => {
       return;
     }
 
+    localStorage.setItem('childName', childName.trim());
+    localStorage.setItem('childAge', childAge.trim());
     navigate('/create/kids/story-book/theme');
   };
 
