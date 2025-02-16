@@ -57,7 +57,7 @@ const FunnyBiographyStoriesStep = () => {
 
   return (
     <WizardStep
-      title="Share the Hilarious Stories!"
+      title="What's the Story"
       description="Time to spill the beans on all those funny moments!"
       previousStep="/create/friends/funny-biography/author"
       currentStep={2}
