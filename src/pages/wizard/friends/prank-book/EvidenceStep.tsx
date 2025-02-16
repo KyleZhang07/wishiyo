@@ -11,10 +11,10 @@ const PrankBookEvidenceStep = () => {
     <WizardStep
       title="Add Your Prank Evidence"
       description="Upload photos of your greatest pranks in action!"
-      previousStep="/create/friends/prank-book/ideas"
+      previousStep="/create/friends/prank-book/pranks"
       nextStep="/create/friends/prank-book/generate"
-      currentStep={4}
-      totalSteps={5}
+      currentStep={3}
+      totalSteps={4}
     >
       <div className="space-y-6">
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">

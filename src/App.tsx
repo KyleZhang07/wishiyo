@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -20,19 +19,14 @@ import FunnyBiographyAuthorStep from "./pages/wizard/friends/funny-biography/Aut
 import FunnyBiographyStoriesStep from "./pages/wizard/friends/funny-biography/StoriesStep";
 import FunnyBiographyPhotosStep from "./pages/wizard/friends/funny-biography/PhotosStep";
 import FunnyBiographyGenerateStep from "./pages/wizard/friends/funny-biography/GenerateStep";
-import FunnyBiographyIdeasStep from "./pages/wizard/friends/funny-biography/IdeasStep";
 
 // Friends Book Creation Routes - Wild Fantasy
 import WildFantasyAuthorStep from "./pages/wizard/friends/wild-fantasy/AuthorStep";
 import WildFantasyAdventureStep from "./pages/wizard/friends/wild-fantasy/AdventureStep";
-import WildFantasyIdeasStep from "./pages/wizard/friends/wild-fantasy/IdeasStep";
-import WildFantasyPhotosStep from "./pages/wizard/friends/wild-fantasy/PhotosStep";
-import WildFantasyGenerateStep from "./pages/wizard/friends/wild-fantasy/GenerateStep";
 
 // Friends Book Creation Routes - Prank Book
 import PrankBookAuthorStep from "./pages/wizard/friends/prank-book/AuthorStep";
 import PrankBookPranksStep from "./pages/wizard/friends/prank-book/PranksStep";
-import PrankBookIdeasStep from "./pages/wizard/friends/prank-book/IdeasStep";
 import PrankBookEvidenceStep from "./pages/wizard/friends/prank-book/EvidenceStep";
 import PrankBookGenerateStep from "./pages/wizard/friends/prank-book/GenerateStep";
 
@@ -94,21 +88,16 @@ const App = () => {
                 {/* Funny Biography Routes */}
                 <Route path="/create/friends/funny-biography/author" element={<FunnyBiographyAuthorStep />} />
                 <Route path="/create/friends/funny-biography/stories" element={<FunnyBiographyStoriesStep />} />
-                <Route path="/create/friends/funny-biography/ideas" element={<FunnyBiographyIdeasStep />} />
                 <Route path="/create/friends/funny-biography/photos" element={<FunnyBiographyPhotosStep />} />
                 <Route path="/create/friends/funny-biography/generate" element={<FunnyBiographyGenerateStep />} />
                 
                 {/* Wild Fantasy Routes */}
                 <Route path="/create/friends/wild-fantasy/author" element={<WildFantasyAuthorStep />} />
                 <Route path="/create/friends/wild-fantasy/adventure" element={<WildFantasyAdventureStep />} />
-                <Route path="/create/friends/wild-fantasy/ideas" element={<WildFantasyIdeasStep />} />
-                <Route path="/create/friends/wild-fantasy/photos" element={<WildFantasyPhotosStep />} />
-                <Route path="/create/friends/wild-fantasy/generate" element={<WildFantasyGenerateStep />} />
 
                 {/* Prank Book Routes */}
                 <Route path="/create/friends/prank-book/author" element={<PrankBookAuthorStep />} />
                 <Route path="/create/friends/prank-book/pranks" element={<PrankBookPranksStep />} />
-                <Route path="/create/friends/prank-book/ideas" element={<PrankBookIdeasStep />} />
                 <Route path="/create/friends/prank-book/evidence" element={<PrankBookEvidenceStep />} />
                 <Route path="/create/friends/prank-book/generate" element={<PrankBookGenerateStep />} />
 
