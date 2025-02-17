@@ -26,10 +26,11 @@ const QuestionDialog = ({
   const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
   const [answer, setAnswer] = useState('');
   
+  // 立即设置选定的问题和答案，避免闪烁
   useEffect(() => {
-    if (isOpen && initialQuestion) {
+    if (initialQuestion) {
       setSelectedQuestion(initialQuestion);
-      // Find existing answer for this question in local storage based on the current route
+      // 查找现有答案
       const storageKey = window.location.pathname.includes('funny-biography') 
         ? 'funnyBiographyAnswers' 
         : window.location.pathname.includes('wild-fantasy')
@@ -48,15 +49,10 @@ const QuestionDialog = ({
         const existingAnswer = answers.find((qa: any) => qa.question === initialQuestion);
         if (existingAnswer) {
           setAnswer(existingAnswer.answer);
-        } else {
-          setAnswer('');
         }
       }
-    } else if (isOpen) {
-      setSelectedQuestion(null);
-      setAnswer('');
     }
-  }, [isOpen, initialQuestion]);
+  }, [initialQuestion]);
 
   const handleQuestionSelect = (question: string) => {
     setSelectedQuestion(question);
@@ -100,27 +96,53 @@ const QuestionDialog = ({
     setAnswer('');
     onClose();
   };
+
+  // 如果是编辑模式（有initialQuestion），直接显示编辑界面
+  if (initialQuestion) {
+    return (
+      <Dialog open={isOpen} onOpenChange={handleClose}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader className="relative">
+            <DialogTitle className="text-xl text-center">
+              Edit Answer
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="font-medium text-lg">{initialQuestion}</p>
+            <Textarea 
+              placeholder="Write your answer here..." 
+              value={answer} 
+              onChange={e => setAnswer(e.target.value)} 
+              className="min-h-[150px]" 
+            />
+            <div className="flex justify-end">
+              <Button onClick={handleSubmit}>
+                Update
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
   
+  // 选择问题的界面（仅在添加新问题时显示）
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader className="relative">
           <DialogTitle className="text-xl text-center">
             {selectedQuestion ? (
-              answeredQuestions?.includes(selectedQuestion) ? (
-                "Edit Answer"
-              ) : (
-                <>
-                  <Button 
-                    variant="ghost" 
-                    className="absolute -top-1 left-0 p-2" 
-                    onClick={() => setSelectedQuestion(null)}
-                  >
-                    <ArrowLeft className="h-5 w-5" />
-                  </Button>
-                  Enter Your Answer
-                </>
-              )
+              <>
+                <Button 
+                  variant="ghost" 
+                  className="absolute -top-1 left-0 p-2" 
+                  onClick={() => setSelectedQuestion(null)}
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+                Enter Your Answer
+              </>
             ) : "Pick a Question"}
           </DialogTitle>
         </DialogHeader>
@@ -156,9 +178,7 @@ const QuestionDialog = ({
                 className="min-h-[150px]" 
               />
               <div className="flex justify-end">
-                <Button onClick={handleSubmit}>
-                  {answeredQuestions?.includes(selectedQuestion) ? "Update" : "Submit"}
-                </Button>
+                <Button onClick={handleSubmit}>Submit</Button>
               </div>
             </div>
           )}
