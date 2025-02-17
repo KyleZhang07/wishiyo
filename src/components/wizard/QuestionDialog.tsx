@@ -29,12 +29,33 @@ const QuestionDialog = ({
   useEffect(() => {
     if (initialQuestion) {
       setSelectedQuestion(initialQuestion);
+      // Find the existing answer for this question
+      const existingQA = answeredQuestions.includes(initialQuestion);
+      if (existingQA) {
+        const savedAnswers = localStorage.getItem('funnyBiographyAnswers');
+        if (savedAnswers) {
+          const answers = JSON.parse(savedAnswers);
+          const existingAnswer = answers.find((qa: any) => qa.question === initialQuestion);
+          if (existingAnswer) {
+            setAnswer(existingAnswer.answer);
+          }
+        }
+      }
     }
-  }, [initialQuestion]);
+  }, [initialQuestion, answeredQuestions]);
 
   const handleQuestionSelect = (question: string) => {
-    if (!answeredQuestions.includes(question)) {
-      setSelectedQuestion(question);
+    setSelectedQuestion(question);
+    // Find existing answer if this question was already answered
+    const savedAnswers = localStorage.getItem('funnyBiographyAnswers');
+    if (savedAnswers) {
+      const answers = JSON.parse(savedAnswers);
+      const existingAnswer = answers.find((qa: any) => qa.question === question);
+      if (existingAnswer) {
+        setAnswer(existingAnswer.answer);
+      } else {
+        setAnswer('');
+      }
     }
   };
   
@@ -83,10 +104,9 @@ const QuestionDialog = ({
                       key={index}
                       variant="outline"
                       className={`justify-start h-auto py-3 px-4 whitespace-normal text-left text-base relative w-full
-                        ${isAnswered ? 'opacity-50 cursor-default' : 'transition-transform hover:scale-[1.02] active:scale-100'}
+                        ${isAnswered ? 'bg-gray-50' : 'transition-transform hover:scale-[1.02] active:scale-100'}
                       `}
                       onClick={() => handleQuestionSelect(question)}
-                      disabled={isAnswered}
                     >
                       {question}
                       {isAnswered && <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-primary" />}
