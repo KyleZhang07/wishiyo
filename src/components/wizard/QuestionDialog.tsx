@@ -27,22 +27,26 @@ const QuestionDialog = ({
   const [answer, setAnswer] = useState('');
   
   useEffect(() => {
-    if (initialQuestion) {
-      setSelectedQuestion(initialQuestion);
-      // Find the existing answer for this question
-      const existingQA = answeredQuestions.includes(initialQuestion);
-      if (existingQA) {
+    if (isOpen) {
+      if (initialQuestion) {
+        setSelectedQuestion(initialQuestion);
+        // Find the existing answer for this question
         const savedAnswers = localStorage.getItem('funnyBiographyAnswers');
         if (savedAnswers) {
           const answers = JSON.parse(savedAnswers);
           const existingAnswer = answers.find((qa: any) => qa.question === initialQuestion);
           if (existingAnswer) {
             setAnswer(existingAnswer.answer);
+          } else {
+            setAnswer('');
           }
         }
+      } else {
+        setSelectedQuestion(null);
+        setAnswer('');
       }
     }
-  }, [initialQuestion, answeredQuestions]);
+  }, [isOpen, initialQuestion]);
 
   const handleQuestionSelect = (question: string) => {
     setSelectedQuestion(question);
@@ -56,6 +60,8 @@ const QuestionDialog = ({
       } else {
         setAnswer('');
       }
+    } else {
+      setAnswer('');
     }
   };
   
@@ -88,7 +94,7 @@ const QuestionDialog = ({
                 >
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
-                Enter Your Answer
+                {answeredQuestions.includes(selectedQuestion) ? "Edit Answer" : "Enter Your Answer"}
               </>
             ) : "Pick a Question"}
           </DialogTitle>
@@ -125,7 +131,9 @@ const QuestionDialog = ({
                 className="min-h-[150px]" 
               />
               <div className="flex justify-end">
-                <Button onClick={handleSubmit}>Submit</Button>
+                <Button onClick={handleSubmit}>
+                  {answeredQuestions.includes(selectedQuestion) ? "Update" : "Submit"}
+                </Button>
               </div>
             </div>
           )}

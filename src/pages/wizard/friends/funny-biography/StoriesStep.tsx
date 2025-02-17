@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import WizardStep from '@/components/wizard/WizardStep';
@@ -61,7 +62,17 @@ const FunnyBiographyStoriesStep = () => {
   };
 
   const handleSubmitAnswer = (question: string, answer: string) => {
-    const newAnswers = [...questionsAndAnswers, { question, answer }];
+    const newAnswers = [...questionsAndAnswers];
+    const existingIndex = newAnswers.findIndex(qa => qa.question === question);
+    
+    if (existingIndex !== -1) {
+      // Update existing answer
+      newAnswers[existingIndex] = { question, answer };
+    } else {
+      // Add new answer
+      newAnswers.push({ question, answer });
+    }
+    
     setQuestionsAndAnswers(newAnswers);
     localStorage.setItem('funnyBiographyAnswers', JSON.stringify(newAnswers));
   };
