@@ -1,4 +1,6 @@
 
+import { generateFunnyBiographyPrompt } from '../prompts/funnyBiographyPrompt';
+
 const generateIdeas = async (prompt: string) => {
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
