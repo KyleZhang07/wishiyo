@@ -30,8 +30,43 @@ const IdeaStep = ({
   const generateIdeas = async () => {
     setIsLoading(true);
     try {
-      const authorName = localStorage.getItem('funnyBiographyAuthorName');
-      const savedAnswers = localStorage.getItem('funnyBiographyAnswers');
+      const path = window.location.pathname;
+      const bookType = path.split('/')[3]; // e.g., 'funny-biography', 'prank-book', etc.
+      
+      // Get the appropriate storage key and author name based on book type
+      const storageKeyMap: { [key: string]: string } = {
+        'funny-biography': 'funnyBiographyAnswers',
+        'wild-fantasy': 'wildFantasyAnswers',
+        'prank-book': 'prankBookAnswers',
+        'love-story': 'loveStoryAnswers',
+        'love-poems': 'lovePoemsAnswers',
+        'picture-album': 'pictureAlbumAnswers',
+        'adventure': 'kidsAdventureAnswers',
+        'story-book': 'kidsStoryAnswers',
+        'learning': 'learningJourneyAnswers'
+      };
+
+      const authorNameKeyMap: { [key: string]: string } = {
+        'funny-biography': 'funnyBiographyAuthorName',
+        'wild-fantasy': 'wildFantasyAuthorName',
+        'prank-book': 'prankBookAuthorName',
+        'love-story': 'loveStoryAuthorName',
+        'love-poems': 'lovePoemsAuthorName',
+        'picture-album': 'pictureAlbumAuthorName',
+        'adventure': 'kidsAdventureAuthorName',
+        'story-book': 'kidsStoryAuthorName',
+        'learning': 'learningJourneyAuthorName'
+      };
+
+      const storageKey = storageKeyMap[bookType];
+      const authorNameKey = authorNameKeyMap[bookType];
+
+      if (!storageKey || !authorNameKey) {
+        throw new Error('Invalid book type');
+      }
+
+      const authorName = localStorage.getItem(authorNameKey);
+      const savedAnswers = localStorage.getItem(storageKey);
       
       if (!authorName || !savedAnswers) {
         toast({
@@ -44,7 +79,12 @@ const IdeaStep = ({
 
       const stories = JSON.parse(savedAnswers);
       const { data, error } = await supabase.functions.invoke('generate-ideas', {
-        body: { authorName, stories }
+        body: { 
+          authorName,
+          stories,
+          bookType,
+          category
+        }
       });
 
       if (error) throw error;

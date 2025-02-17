@@ -9,29 +9,53 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const generateFunnyBiographyPrompt = (authorName: string, stories: Array<{question: string, answer: string}>) => {
+const generatePrompt = (authorName: string, stories: Array<{question: string, answer: string}>, bookType: string, category: string) => {
   const storiesText = stories.map(story => `${story.question}\nAnswer: ${story.answer}`).join('\n\n');
   
-  return `Create 3 funny book ideas for a biography about ${authorName}. Use this information:
+  let promptTemplate = '';
+  
+  switch(bookType) {
+    case 'funny-biography':
+      promptTemplate = `Create 3 funny book ideas for a biography about ${authorName}. Use this information:\n\n${storiesText}`;
+      break;
+    case 'wild-fantasy':
+      promptTemplate = `Create 3 wild fantasy adventure book ideas featuring ${authorName} as the main character. Use these details about their personality and preferences:\n\n${storiesText}\n\nMake the ideas epic and imaginative, incorporating magical elements and fantastic scenarios.`;
+      break;
+    case 'prank-book':
+      promptTemplate = `Create 3 hilarious prank book ideas featuring ${authorName}'s mischievous adventures. Use these details about their pranking history:\n\n${storiesText}\n\nMake the ideas funny and engaging, focusing on clever pranks and their amusing consequences.`;
+      break;
+    case 'love-story':
+      promptTemplate = `Create 3 romantic book ideas about a love story featuring ${authorName}. Use these romantic moments and details:\n\n${storiesText}\n\nMake the ideas touching and heartfelt, focusing on the deep emotional connection.`;
+      break;
+    case 'love-poems':
+      promptTemplate = `Create 3 poetic book ideas featuring love poems dedicated to ${authorName}. Use these emotional details:\n\n${storiesText}\n\nMake the ideas poetic and romantic, focusing on expressing deep feelings through verse.`;
+      break;
+    case 'picture-album':
+      promptTemplate = `Create 3 picture album book ideas celebrating memories with ${authorName}. Use these special moments:\n\n${storiesText}\n\nMake the ideas visually engaging, focusing on capturing precious memories through photos and stories.`;
+      break;
+    case 'adventure':
+      promptTemplate = `Create 3 children's adventure book ideas featuring ${authorName} on exciting journeys. Use these character details:\n\n${storiesText}\n\nMake the ideas fun and educational, suitable for young readers.`;
+      break;
+    case 'story-book':
+      promptTemplate = `Create 3 children's story book ideas about ${authorName}'s magical world. Use these story elements:\n\n${storiesText}\n\nMake the ideas enchanting and imaginative, perfect for bedtime reading.`;
+      break;
+    case 'learning':
+      promptTemplate = `Create 3 educational book ideas featuring ${authorName} learning new things. Use these educational preferences:\n\n${storiesText}\n\nMake the ideas engaging and instructive, focusing on making learning fun.`;
+      break;
+    default:
+      promptTemplate = `Create 3 book ideas featuring ${authorName}. Use this information:\n\n${storiesText}`;
+  }
 
-${storiesText}
-
-IMPORTANT: Return your response as a valid JSON array with exactly 3 objects. Each object MUST have these exact fields:
+  promptTemplate += `\n\nIMPORTANT: Return your response as a valid JSON array with exactly 3 objects. Each object MUST have these exact fields:
 {
-  "title": "A witty title including their name",
+  "title": "A creative title including their name",
   "author": "by ${authorName}",
-  "description": "A funny description"
+  "description": "An engaging description"
 }
 
-DO NOT include any explanation or additional text. ONLY return the JSON array. Example format:
-[
-  {
-    "title": "Example Title",
-    "author": "by Author Name",
-    "description": "Example description"
-  },
-  ...
-]`;
+DO NOT include any explanation or additional text. ONLY return the JSON array.`;
+
+  return promptTemplate;
 };
 
 serve(async (req) => {
@@ -40,14 +64,14 @@ serve(async (req) => {
   }
 
   try {
-    const { authorName, stories } = await req.json();
-    console.log('Received request with author:', authorName);
+    const { authorName, stories, bookType, category } = await req.json();
+    console.log('Received request with author:', authorName, 'bookType:', bookType);
     
-    if (!authorName || !stories || !Array.isArray(stories)) {
-      throw new Error('Invalid input: authorName and stories array are required');
+    if (!authorName || !stories || !Array.isArray(stories) || !bookType || !category) {
+      throw new Error('Invalid input: authorName, stories array, bookType, and category are required');
     }
 
-    const prompt = generateFunnyBiographyPrompt(authorName, stories);
+    const prompt = generatePrompt(authorName, stories, bookType, category);
     console.log('Generated prompt:', prompt);
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -61,7 +85,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a creative writer specializing in humorous biographies. You must ALWAYS respond with valid JSON arrays containing exactly 3 objects with title, author, and description fields. Never include any other text or explanations.'
+            content: 'You are a creative writer specializing in various book genres. You must ALWAYS respond with valid JSON arrays containing exactly 3 objects with title, author, and description fields. Never include any other text or explanations.'
           },
           {
             role: 'user',
@@ -85,7 +109,6 @@ serve(async (req) => {
 
     let ideas;
     try {
-      // Remove any potential markdown formatting that OpenAI might add
       const cleanContent = data.choices[0].message.content
         .replace(/```json\n?/g, '')
         .replace(/```\n?/g, '')
@@ -93,7 +116,6 @@ serve(async (req) => {
       
       ideas = JSON.parse(cleanContent);
       
-      // Validate the response structure
       if (!Array.isArray(ideas)) {
         throw new Error('Response is not an array');
       }
