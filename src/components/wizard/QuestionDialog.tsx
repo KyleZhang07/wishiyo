@@ -27,27 +27,52 @@ const QuestionDialog = ({
   const [answer, setAnswer] = useState('');
   
   useEffect(() => {
-    if (initialQuestion) {
+    if (isOpen && initialQuestion) {
       setSelectedQuestion(initialQuestion);
-      // Find the existing answer for this question
-      const existingQA = answeredQuestions.includes(initialQuestion);
-      if (existingQA) {
-        const savedAnswers = localStorage.getItem('funnyBiographyAnswers');
-        if (savedAnswers) {
-          const answers = JSON.parse(savedAnswers);
-          const existingAnswer = answers.find((qa: any) => qa.question === initialQuestion);
-          if (existingAnswer) {
-            setAnswer(existingAnswer.answer);
-          }
+      // Find existing answer for this question in local storage based on the current route
+      const storageKey = window.location.pathname.includes('funny-biography') 
+        ? 'funnyBiographyAnswers' 
+        : window.location.pathname.includes('wild-fantasy')
+          ? 'wildFantasyAnswers'
+          : window.location.pathname.includes('prank-book')
+            ? 'prankBookAnswers'
+            : window.location.pathname.includes('love-poems')
+              ? 'lovePoemsAnswers'
+              : window.location.pathname.includes('love-story')
+                ? 'loveStoryAnswers'
+                : 'answers';
+
+      const savedAnswers = localStorage.getItem(storageKey);
+      if (savedAnswers) {
+        const answers = JSON.parse(savedAnswers);
+        const existingAnswer = answers.find((qa: any) => qa.question === initialQuestion);
+        if (existingAnswer) {
+          setAnswer(existingAnswer.answer);
+        } else {
+          setAnswer('');
         }
       }
+    } else if (isOpen) {
+      setSelectedQuestion(null);
+      setAnswer('');
     }
-  }, [initialQuestion, answeredQuestions]);
+  }, [isOpen, initialQuestion]);
 
   const handleQuestionSelect = (question: string) => {
     setSelectedQuestion(question);
-    // Find existing answer if this question was already answered
-    const savedAnswers = localStorage.getItem('funnyBiographyAnswers');
+    const storageKey = window.location.pathname.includes('funny-biography') 
+      ? 'funnyBiographyAnswers' 
+      : window.location.pathname.includes('wild-fantasy')
+        ? 'wildFantasyAnswers'
+        : window.location.pathname.includes('prank-book')
+          ? 'prankBookAnswers'
+          : window.location.pathname.includes('love-poems')
+            ? 'lovePoemsAnswers'
+            : window.location.pathname.includes('love-story')
+              ? 'loveStoryAnswers'
+              : 'answers';
+
+    const savedAnswers = localStorage.getItem(storageKey);
     if (savedAnswers) {
       const answers = JSON.parse(savedAnswers);
       const existingAnswer = answers.find((qa: any) => qa.question === question);
@@ -56,6 +81,8 @@ const QuestionDialog = ({
       } else {
         setAnswer('');
       }
+    } else {
+      setAnswer('');
     }
   };
   
@@ -80,16 +107,20 @@ const QuestionDialog = ({
         <DialogHeader className="relative">
           <DialogTitle className="text-xl text-center">
             {selectedQuestion ? (
-              <>
-                <Button 
-                  variant="ghost" 
-                  className="absolute -top-1 left-0 p-2" 
-                  onClick={() => setSelectedQuestion(null)}
-                >
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
-                Enter Your Answer
-              </>
+              answeredQuestions?.includes(selectedQuestion) ? (
+                "Edit Answer"
+              ) : (
+                <>
+                  <Button 
+                    variant="ghost" 
+                    className="absolute -top-1 left-0 p-2" 
+                    onClick={() => setSelectedQuestion(null)}
+                  >
+                    <ArrowLeft className="h-5 w-5" />
+                  </Button>
+                  Enter Your Answer
+                </>
+              )
             ) : "Pick a Question"}
           </DialogTitle>
         </DialogHeader>
@@ -98,7 +129,7 @@ const QuestionDialog = ({
             <ScrollArea className="h-[300px] pr-4">
               <div className="space-y-2">
                 {questions.map((question, index) => {
-                  const isAnswered = answeredQuestions.includes(question);
+                  const isAnswered = answeredQuestions?.includes(question);
                   return (
                     <Button
                       key={index}
@@ -125,7 +156,9 @@ const QuestionDialog = ({
                 className="min-h-[150px]" 
               />
               <div className="flex justify-end">
-                <Button onClick={handleSubmit}>Submit</Button>
+                <Button onClick={handleSubmit}>
+                  {answeredQuestions?.includes(selectedQuestion) ? "Update" : "Submit"}
+                </Button>
               </div>
             </div>
           )}
