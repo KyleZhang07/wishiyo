@@ -4,7 +4,7 @@ import WizardStep from './WizardStep';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 
 interface BookIdea {
   title: string;
@@ -17,11 +17,6 @@ interface IdeaStepProps {
   previousStep: string;
   nextStep: string;
 }
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
 
 const IdeaStep = ({
   category,
