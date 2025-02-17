@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import WizardStep from '@/components/wizard/WizardStep';
@@ -62,17 +61,7 @@ const FunnyBiographyStoriesStep = () => {
   };
 
   const handleSubmitAnswer = (question: string, answer: string) => {
-    const newAnswers = [...questionsAndAnswers];
-    const existingIndex = newAnswers.findIndex(qa => qa.question === question);
-    
-    if (existingIndex !== -1) {
-      // Update existing answer
-      newAnswers[existingIndex] = { question, answer };
-    } else {
-      // Add new answer
-      newAnswers.push({ question, answer });
-    }
-    
+    const newAnswers = [...questionsAndAnswers, { question, answer }];
     setQuestionsAndAnswers(newAnswers);
     localStorage.setItem('funnyBiographyAnswers', JSON.stringify(newAnswers));
   };
@@ -84,16 +73,7 @@ const FunnyBiographyStoriesStep = () => {
   };
 
   const handleEditAnswer = (question: string) => {
-    const existingAnswer = questionsAndAnswers.find(qa => qa.question === question);
-    if (existingAnswer) {
-      setSelectedQuestion(question);
-      // 直接设置isDialogOpen为true，确保对话框立即以编辑模式打开
-      setIsDialogOpen(true);
-    }
-  };
-
-  const handleAddNewQuestion = () => {
-    setSelectedQuestion(null);
+    setSelectedQuestion(question);
     setIsDialogOpen(true);
   };
 
@@ -129,7 +109,10 @@ const FunnyBiographyStoriesStep = () => {
         <Button
           variant="outline"
           className="w-full h-16 border-dashed text-lg"
-          onClick={handleAddNewQuestion}
+          onClick={() => {
+            setSelectedQuestion(null);
+            setIsDialogOpen(true);
+          }}
         >
           <PlusCircle className="mr-2 h-5 w-5" />
           {questionsAndAnswers.length === 0 
