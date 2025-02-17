@@ -21,14 +21,7 @@ Generate 3 different book ideas. Each should have:
 2. "by ${authorName}" as the author line
 3. A funny description that ties together their quirks and stories in an entertaining way
 
-Format each idea like this:
-{
-  "title": "The witty title",
-  "author": "by ${authorName}",
-  "description": "The funny description"
-}
-
-Return exactly 3 ideas in a JSON array.`;
+Return your response in strict JSON array format with exactly 3 objects having these fields: title, author, description. The response should be parseable by JSON.parse().`;
 };
 
 serve(async (req) => {
@@ -38,7 +31,14 @@ serve(async (req) => {
 
   try {
     const { authorName, stories } = await req.json();
+    console.log('Received request with author:', authorName);
+    
+    if (!authorName || !stories || !Array.isArray(stories)) {
+      throw new Error('Invalid input: authorName and stories array are required');
+    }
+
     const prompt = generateFunnyBiographyPrompt(authorName, stories);
+    console.log('Generated prompt:', prompt);
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -51,7 +51,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a creative writer specializing in humorous biographies.'
+            content: 'You are a creative writer specializing in humorous biographies. Always respond in valid JSON format.'
           },
           {
             role: 'user',
@@ -62,17 +62,50 @@ serve(async (req) => {
       }),
     });
 
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
+    }
+
     const data = await response.json();
-    const ideas = JSON.parse(data.choices[0].message.content);
+    console.log('OpenAI response:', data);
+
+    if (!data.choices?.[0]?.message?.content) {
+      throw new Error('Invalid response from OpenAI');
+    }
+
+    let ideas;
+    try {
+      ideas = JSON.parse(data.choices[0].message.content.trim());
+      
+      // Validate the response structure
+      if (!Array.isArray(ideas) || ideas.length !== 3) {
+        throw new Error('Invalid response format: expected array of 3 ideas');
+      }
+      
+      ideas.forEach(idea => {
+        if (!idea.title || !idea.author || !idea.description) {
+          throw new Error('Invalid idea format: missing required fields');
+        }
+      });
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
+      console.log('Raw content:', data.choices[0].message.content);
+      throw new Error('Failed to parse AI response as JSON');
+    }
 
     return new Response(JSON.stringify({ ideas }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Error generating ideas:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    console.error('Error in generate-ideas function:', error);
+    return new Response(
+      JSON.stringify({ 
+        error: error.message,
+        details: error.toString()
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
   }
 });
