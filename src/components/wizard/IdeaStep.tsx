@@ -4,6 +4,7 @@ import WizardStep from './WizardStep';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { createClient } from '@supabase/supabase-js';
 
 interface BookIdea {
   title: string;
@@ -16,6 +17,11 @@ interface IdeaStepProps {
   previousStep: string;
   nextStep: string;
 }
+
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
+);
 
 const IdeaStep = ({
   category,
@@ -42,22 +48,11 @@ const IdeaStep = ({
       }
 
       const stories = JSON.parse(savedAnswers);
-      const response = await fetch('/api/generate-ideas', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          authorName,
-          stories,
-        }),
+      const { data, error } = await supabase.functions.invoke('generate-ideas', {
+        body: { authorName, stories }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to generate ideas');
-      }
-
-      const data = await response.json();
+      if (error) throw error;
       setIdeas(data.ideas);
     } catch (error) {
       console.error('Error:', error);
