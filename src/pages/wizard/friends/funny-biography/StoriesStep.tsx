@@ -84,7 +84,16 @@ const FunnyBiographyStoriesStep = () => {
   };
 
   const handleEditAnswer = (question: string) => {
-    setSelectedQuestion(question);
+    const existingAnswer = questionsAndAnswers.find(qa => qa.question === question);
+    if (existingAnswer) {
+      setSelectedQuestion(question);
+      // 直接设置isDialogOpen为true，确保对话框立即以编辑模式打开
+      setIsDialogOpen(true);
+    }
+  };
+
+  const handleAddNewQuestion = () => {
+    setSelectedQuestion(null);
     setIsDialogOpen(true);
   };
 
@@ -120,10 +129,7 @@ const FunnyBiographyStoriesStep = () => {
         <Button
           variant="outline"
           className="w-full h-16 border-dashed text-lg"
-          onClick={() => {
-            setSelectedQuestion(null);
-            setIsDialogOpen(true);
-          }}
+          onClick={handleAddNewQuestion}
         >
           <PlusCircle className="mr-2 h-5 w-5" />
           {questionsAndAnswers.length === 0 
