@@ -25,34 +25,43 @@ const QuestionDialog = ({
 }: QuestionDialogProps) => {
   const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
   const [answer, setAnswer] = useState('');
-  
-  // 立即设置选定的问题和答案，避免闪烁
-  useEffect(() => {
-    if (initialQuestion) {
-      setSelectedQuestion(initialQuestion);
-      // 查找现有答案
-      const storageKey = window.location.pathname.includes('funny-biography') 
-        ? 'funnyBiographyAnswers' 
-        : window.location.pathname.includes('wild-fantasy')
-          ? 'wildFantasyAnswers'
-          : window.location.pathname.includes('prank-book')
-            ? 'prankBookAnswers'
-            : window.location.pathname.includes('love-poems')
-              ? 'lovePoemsAnswers'
-              : window.location.pathname.includes('love-story')
-                ? 'loveStoryAnswers'
-                : 'answers';
+  const [isReady, setIsReady] = useState(false);
 
-      const savedAnswers = localStorage.getItem(storageKey);
-      if (savedAnswers) {
-        const answers = JSON.parse(savedAnswers);
-        const existingAnswer = answers.find((qa: any) => qa.question === initialQuestion);
-        if (existingAnswer) {
-          setAnswer(existingAnswer.answer);
+  useEffect(() => {
+    if (isOpen) {
+      if (initialQuestion) {
+        // Edit mode
+        setSelectedQuestion(initialQuestion);
+        const storageKey = window.location.pathname.includes('funny-biography') 
+          ? 'funnyBiographyAnswers' 
+          : window.location.pathname.includes('wild-fantasy')
+            ? 'wildFantasyAnswers'
+            : window.location.pathname.includes('prank-book')
+              ? 'prankBookAnswers'
+              : window.location.pathname.includes('love-poems')
+                ? 'lovePoemsAnswers'
+                : window.location.pathname.includes('love-story')
+                  ? 'loveStoryAnswers'
+                  : 'answers';
+
+        const savedAnswers = localStorage.getItem(storageKey);
+        if (savedAnswers) {
+          const answers = JSON.parse(savedAnswers);
+          const existingAnswer = answers.find((qa: any) => qa.question === initialQuestion);
+          if (existingAnswer) {
+            setAnswer(existingAnswer.answer);
+          }
         }
+      } else {
+        // New question mode
+        setSelectedQuestion(null);
+        setAnswer('');
       }
+      setIsReady(true);
+    } else {
+      setIsReady(false);
     }
-  }, [initialQuestion]);
+  }, [isOpen, initialQuestion]);
 
   const handleQuestionSelect = (question: string) => {
     setSelectedQuestion(question);
@@ -81,7 +90,7 @@ const QuestionDialog = ({
       setAnswer('');
     }
   };
-  
+
   const handleSubmit = () => {
     if (selectedQuestion && answer.trim()) {
       onSubmitAnswer(selectedQuestion, answer.trim());
@@ -97,42 +106,18 @@ const QuestionDialog = ({
     onClose();
   };
 
-  // 如果是编辑模式（有initialQuestion），直接显示编辑界面
-  if (initialQuestion) {
-    return (
-      <Dialog open={isOpen} onOpenChange={handleClose}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader className="relative">
-            <DialogTitle className="text-xl text-center">
-              Edit Answer
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <p className="font-medium text-lg">{initialQuestion}</p>
-            <Textarea 
-              placeholder="Write your answer here..." 
-              value={answer} 
-              onChange={e => setAnswer(e.target.value)} 
-              className="min-h-[150px]" 
-            />
-            <div className="flex justify-end">
-              <Button onClick={handleSubmit}>
-                Update
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
+  if (!isReady) {
+    return null;
   }
-  
-  // 选择问题的界面（仅在添加新问题时显示）
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader className="relative">
           <DialogTitle className="text-xl text-center">
-            {selectedQuestion ? (
+            {initialQuestion ? (
+              "Edit Answer"
+            ) : selectedQuestion ? (
               <>
                 <Button 
                   variant="ghost" 
@@ -143,11 +128,13 @@ const QuestionDialog = ({
                 </Button>
                 Enter Your Answer
               </>
-            ) : "Pick a Question"}
+            ) : (
+              "Pick a Question"
+            )}
           </DialogTitle>
         </DialogHeader>
         <div className="grid gap-4">
-          {!selectedQuestion ? (
+          {!initialQuestion && !selectedQuestion ? (
             <ScrollArea className="h-[300px] pr-4">
               <div className="space-y-2">
                 {questions.map((question, index) => {
@@ -170,7 +157,7 @@ const QuestionDialog = ({
             </ScrollArea>
           ) : (
             <div className="space-y-4">
-              <p className="font-medium text-lg">{selectedQuestion}</p>
+              <p className="font-medium text-lg">{initialQuestion || selectedQuestion}</p>
               <Textarea 
                 placeholder="Write your answer here..." 
                 value={answer} 
@@ -178,7 +165,9 @@ const QuestionDialog = ({
                 className="min-h-[150px]" 
               />
               <div className="flex justify-end">
-                <Button onClick={handleSubmit}>Submit</Button>
+                <Button onClick={handleSubmit}>
+                  {initialQuestion ? "Update" : "Submit"}
+                </Button>
               </div>
             </div>
           )}
