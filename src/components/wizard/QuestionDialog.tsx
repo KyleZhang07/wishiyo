@@ -25,94 +25,37 @@ const QuestionDialog = ({
 }: QuestionDialogProps) => {
   const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
   const [answer, setAnswer] = useState('');
-  const [isEditMode, setIsEditMode] = useState(false);
-
+  
   useEffect(() => {
-    if (isOpen && initialQuestion) {
-      // We're in edit mode
-      setIsEditMode(true);
+    if (initialQuestion) {
       setSelectedQuestion(initialQuestion);
-      
-      // Get the correct storage key based on current route
-      const path = window.location.pathname;
-      const storageKey = path.includes('funny-biography') 
-        ? 'funnyBiographyAnswers' 
-        : path.includes('wild-fantasy')
-          ? 'wildFantasyAnswers'
-          : path.includes('prank-book')
-            ? 'prankBookAnswers'
-            : path.includes('love-poems')
-              ? 'lovePoemsAnswers'
-              : path.includes('love-story')
-                ? 'loveStoryAnswers'
-                : path.includes('picture-album')
-                  ? 'pictureAlbumAnswers'
-                  : path.includes('adventure')
-                    ? 'kidsAdventureAnswers'
-                    : path.includes('story-book')
-                      ? 'kidsStoryAnswers'
-                      : path.includes('learning')
-                        ? 'learningJourneyAnswers'
-                        : 'answers';
-
-      // Find existing answer
-      const savedAnswers = localStorage.getItem(storageKey);
-      if (savedAnswers) {
-        const answers = JSON.parse(savedAnswers);
-        const existingAnswer = answers.find((qa: any) => qa.question === initialQuestion);
-        if (existingAnswer) {
-          setAnswer(existingAnswer.answer);
+      // Find the existing answer for this question
+      const existingQA = answeredQuestions.includes(initialQuestion);
+      if (existingQA) {
+        const savedAnswers = localStorage.getItem('funnyBiographyAnswers');
+        if (savedAnswers) {
+          const answers = JSON.parse(savedAnswers);
+          const existingAnswer = answers.find((qa: any) => qa.question === initialQuestion);
+          if (existingAnswer) {
+            setAnswer(existingAnswer.answer);
+          }
         }
       }
-    } else if (isOpen) {
-      // We're in new question mode
-      setIsEditMode(false);
-      setSelectedQuestion(null);
-      setAnswer('');
     }
-  }, [isOpen, initialQuestion]);
+  }, [initialQuestion, answeredQuestions]);
 
   const handleQuestionSelect = (question: string) => {
-    if (answeredQuestions.includes(question)) {
-      // If question is already answered, treat it as an edit
-      setIsEditMode(true);
-      setSelectedQuestion(question);
-      
-      // Get the correct storage key based on current route
-      const path = window.location.pathname;
-      const storageKey = path.includes('funny-biography') 
-        ? 'funnyBiographyAnswers' 
-        : path.includes('wild-fantasy')
-          ? 'wildFantasyAnswers'
-          : path.includes('prank-book')
-            ? 'prankBookAnswers'
-            : path.includes('love-poems')
-              ? 'lovePoemsAnswers'
-              : path.includes('love-story')
-                ? 'loveStoryAnswers'
-                : path.includes('picture-album')
-                  ? 'pictureAlbumAnswers'
-                  : path.includes('adventure')
-                    ? 'kidsAdventureAnswers'
-                    : path.includes('story-book')
-                      ? 'kidsStoryAnswers'
-                      : path.includes('learning')
-                        ? 'learningJourneyAnswers'
-                        : 'answers';
-
-      const savedAnswers = localStorage.getItem(storageKey);
-      if (savedAnswers) {
-        const answers = JSON.parse(savedAnswers);
-        const existingAnswer = answers.find((qa: any) => qa.question === question);
-        if (existingAnswer) {
-          setAnswer(existingAnswer.answer);
-        }
+    setSelectedQuestion(question);
+    // Find existing answer if this question was already answered
+    const savedAnswers = localStorage.getItem('funnyBiographyAnswers');
+    if (savedAnswers) {
+      const answers = JSON.parse(savedAnswers);
+      const existingAnswer = answers.find((qa: any) => qa.question === question);
+      if (existingAnswer) {
+        setAnswer(existingAnswer.answer);
+      } else {
+        setAnswer('');
       }
-    } else {
-      // New question
-      setIsEditMode(false);
-      setSelectedQuestion(question);
-      setAnswer('');
     }
   };
   
@@ -121,7 +64,6 @@ const QuestionDialog = ({
       onSubmitAnswer(selectedQuestion, answer.trim());
       setSelectedQuestion(null);
       setAnswer('');
-      setIsEditMode(false);
       onClose();
     }
   };
@@ -129,7 +71,6 @@ const QuestionDialog = ({
   const handleClose = () => {
     setSelectedQuestion(null);
     setAnswer('');
-    setIsEditMode(false);
     onClose();
   };
   
@@ -138,9 +79,7 @@ const QuestionDialog = ({
       <DialogContent className="sm:max-w-md">
         <DialogHeader className="relative">
           <DialogTitle className="text-xl text-center">
-            {isEditMode ? (
-              "Edit Your Answer"
-            ) : selectedQuestion ? (
+            {selectedQuestion ? (
               <>
                 <Button 
                   variant="ghost" 
@@ -151,13 +90,11 @@ const QuestionDialog = ({
                 </Button>
                 Enter Your Answer
               </>
-            ) : (
-              "Pick a Question"
-            )}
+            ) : "Pick a Question"}
           </DialogTitle>
         </DialogHeader>
         <div className="grid gap-4">
-          {!isEditMode && !selectedQuestion ? (
+          {!selectedQuestion ? (
             <ScrollArea className="h-[300px] pr-4">
               <div className="space-y-2">
                 {questions.map((question, index) => {
@@ -188,9 +125,7 @@ const QuestionDialog = ({
                 className="min-h-[150px]" 
               />
               <div className="flex justify-end">
-                <Button onClick={handleSubmit}>
-                  {isEditMode ? "Update" : "Submit"}
-                </Button>
+                <Button onClick={handleSubmit}>Submit</Button>
               </div>
             </div>
           )}
