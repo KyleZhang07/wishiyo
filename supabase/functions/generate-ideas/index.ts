@@ -12,16 +12,26 @@ const corsHeaders = {
 const generateFunnyBiographyPrompt = (authorName: string, stories: Array<{question: string, answer: string}>) => {
   const storiesText = stories.map(story => `${story.question}\nAnswer: ${story.answer}`).join('\n\n');
   
-  return `As a comedic biography writer, create 3 hilarious book ideas for a funny biography about a person named ${authorName}. Use the following information about them:
+  return `Create 3 funny book ideas for a biography about ${authorName}. Use this information:
 
 ${storiesText}
 
-Generate 3 different book ideas. Each should have:
-1. A catchy, witty title that includes their name or references their characteristics
-2. "by ${authorName}" as the author line
-3. A funny description that ties together their quirks and stories in an entertaining way
+IMPORTANT: Return your response as a valid JSON array with exactly 3 objects. Each object MUST have these exact fields:
+{
+  "title": "A witty title including their name",
+  "author": "by ${authorName}",
+  "description": "A funny description"
+}
 
-Return your response in strict JSON array format with exactly 3 objects having these fields: title, author, description. The response should be parseable by JSON.parse().`;
+DO NOT include any explanation or additional text. ONLY return the JSON array. Example format:
+[
+  {
+    "title": "Example Title",
+    "author": "by Author Name",
+    "description": "Example description"
+  },
+  ...
+]`;
 };
 
 serve(async (req) => {
@@ -51,7 +61,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a creative writer specializing in humorous biographies. Always respond in valid JSON format.'
+            content: 'You are a creative writer specializing in humorous biographies. You must ALWAYS respond with valid JSON arrays containing exactly 3 objects with title, author, and description fields. Never include any other text or explanations.'
           },
           {
             role: 'user',
@@ -67,30 +77,40 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    console.log('OpenAI response:', data);
+    console.log('OpenAI raw response:', data.choices?.[0]?.message?.content);
 
     if (!data.choices?.[0]?.message?.content) {
-      throw new Error('Invalid response from OpenAI');
+      throw new Error('Invalid response from OpenAI: No content received');
     }
 
     let ideas;
     try {
-      ideas = JSON.parse(data.choices[0].message.content.trim());
+      // Remove any potential markdown formatting that OpenAI might add
+      const cleanContent = data.choices[0].message.content
+        .replace(/```json\n?/g, '')
+        .replace(/```\n?/g, '')
+        .trim();
+      
+      ideas = JSON.parse(cleanContent);
       
       // Validate the response structure
-      if (!Array.isArray(ideas) || ideas.length !== 3) {
-        throw new Error('Invalid response format: expected array of 3 ideas');
+      if (!Array.isArray(ideas)) {
+        throw new Error('Response is not an array');
       }
       
-      ideas.forEach(idea => {
+      if (ideas.length !== 3) {
+        throw new Error(`Expected 3 ideas, got ${ideas.length}`);
+      }
+      
+      ideas.forEach((idea, index) => {
         if (!idea.title || !idea.author || !idea.description) {
-          throw new Error('Invalid idea format: missing required fields');
+          throw new Error(`Idea ${index + 1} is missing required fields`);
         }
       });
     } catch (parseError) {
       console.error('JSON parse error:', parseError);
-      console.log('Raw content:', data.choices[0].message.content);
-      throw new Error('Failed to parse AI response as JSON');
+      console.error('Raw content:', data.choices[0].message.content);
+      throw new Error(`Failed to parse AI response: ${parseError.message}`);
     }
 
     return new Response(JSON.stringify({ ideas }), {
@@ -101,7 +121,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: error.message,
-        details: error.toString()
+        details: error.toString(),
+        timestamp: new Date().toISOString()
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
