@@ -1,10 +1,7 @@
-
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import WizardStep from './WizardStep';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
-import { generateFunnyBiographyIdeas } from '@/lib/api/openai';
-import { useToast } from '@/components/ui/use-toast';
 
 interface BookIdea {
   title: string;
@@ -23,46 +20,27 @@ const IdeaStep = ({
   previousStep,
   nextStep
 }: IdeaStepProps) => {
-  const [ideas, setIdeas] = useState<BookIdea[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
-
-  const generateIdeas = async () => {
-    setIsLoading(true);
-    try {
-      const authorName = localStorage.getItem('funnyBiographyAuthorName') || '';
-      const savedAnswers = localStorage.getItem('funnyBiographyAnswers');
-      const stories = savedAnswers ? JSON.parse(savedAnswers) : [];
-
-      if (!authorName || stories.length === 0) {
-        toast({
-          title: "Missing information",
-          description: "Please complete the previous steps first.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const generatedIdeas = await generateFunnyBiographyIdeas(authorName, stories);
-      setIdeas(generatedIdeas);
-    } catch (error) {
-      console.error('Error generating ideas:', error);
-      toast({
-        title: "Error generating ideas",
-        description: "Please try again later.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+  const [ideas, setIdeas] = useState<BookIdea[]>([
+    {
+      title: "Skiing Startup Secrets",
+      author: "by kk",
+      description: "How My Childhood Dreams of the Alps Shaped a Tech Empire"
+    },
+    {
+      title: "Board Games & Business Strategy",
+      author: "by kk",
+      description: "Everything I Know About Startups I Learned from Monopoly"
+    },
+    {
+      title: "Hiking the Startup Trail",
+      author: "by kk",
+      description: "Lessons from Mountain Trails to Boardroom Battles with a Dash of Childhood Nostalgia"
     }
-  };
-
-  useEffect(() => {
-    generateIdeas();
-  }, []);
+  ]);
 
   const handleRegenerate = () => {
-    generateIdeas();
+    // In the future, this will call an AI endpoint to generate new ideas
+    console.log('Regenerating ideas...');
   };
 
   return (
@@ -76,23 +54,11 @@ const IdeaStep = ({
     >
       <div className="space-y-4">
         <div className="flex justify-end mb-4">
-          <Button 
-            variant="outline" 
-            className="bg-black text-white hover:bg-black/90" 
-            onClick={handleRegenerate}
-            disabled={isLoading}
-          >
-            <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-            {isLoading ? 'Generating...' : 'Regenerate'}
+          <Button variant="outline" className="bg-black text-white hover:bg-black/90" onClick={handleRegenerate}>
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Regenerate
           </Button>
         </div>
-
-        {isLoading && (
-          <div className="text-center py-8">
-            <RefreshCw className="animate-spin h-8 w-8 mx-auto mb-4" />
-            <p className="text-gray-500">Generating creative ideas...</p>
-          </div>
-        )}
 
         <div className="space-y-4">
           {ideas.map((idea, index) => (
