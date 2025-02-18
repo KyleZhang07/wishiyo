@@ -6,6 +6,8 @@ import CanvasCoverPreview from '@/components/cover-generator/CanvasCoverPreview'
 import LayoutSelector from '@/components/cover-generator/LayoutSelector';
 import FontSelector from '@/components/cover-generator/FontSelector';
 import TemplateSelector from '@/components/cover-generator/TemplateSelector';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/components/ui/use-toast';
 
 const FunnyBiographyGenerateStep = () => {
   const [coverTitle, setCoverTitle] = useState('');
@@ -15,6 +17,8 @@ const FunnyBiographyGenerateStep = () => {
   const [selectedLayout, setSelectedLayout] = useState('classic-centered');
   const [selectedTemplate, setSelectedTemplate] = useState('modern');
   const [selectedFont, setSelectedFont] = useState('playfair');
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     // Load data from localStorage
@@ -37,9 +41,39 @@ const FunnyBiographyGenerateStep = () => {
     }
 
     if (savedPhotos) {
-      setCoverImage(savedPhotos);
+      handleImageProcessing(savedPhotos);
     }
   }, []);
+
+  const handleImageProcessing = async (imageUrl: string) => {
+    setIsProcessingImage(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('remove-background', {
+        body: { imageUrl }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.success && data.image) {
+        setCoverImage(data.image);
+      } else {
+        throw new Error('Failed to process image');
+      }
+    } catch (error) {
+      console.error('Error removing background:', error);
+      toast({
+        variant: "destructive",
+        title: "Error processing image",
+        description: "Failed to remove background from the image. Please try again."
+      });
+      // Set the original image as fallback
+      setCoverImage(imageUrl);
+    } finally {
+      setIsProcessingImage(false);
+    }
+  };
 
   return (
     <WizardStep
@@ -59,6 +93,7 @@ const FunnyBiographyGenerateStep = () => {
             selectedFont={selectedFont}
             selectedTemplate={selectedTemplate}
             selectedLayout={selectedLayout}
+            isProcessingImage={isProcessingImage}
           />
           
           <div className="space-y-4">

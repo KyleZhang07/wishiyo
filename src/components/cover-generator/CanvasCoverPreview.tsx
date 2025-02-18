@@ -14,6 +14,7 @@ interface CanvasCoverPreviewProps {
   selectedFont: string;
   selectedTemplate?: string;
   selectedLayout?: string;
+  isProcessingImage?: boolean;
 }
 
 const DEFAULT_CANVAS_SIZE: CanvasSize = {
@@ -32,7 +33,8 @@ const CanvasCoverPreview = ({
   coverImage,
   selectedFont,
   selectedTemplate = 'modern',
-  selectedLayout = 'centered'
+  selectedLayout = 'centered',
+  isProcessingImage = false
 }: CanvasCoverPreviewProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [imageScale, setImageScale] = useState(100);
@@ -73,6 +75,21 @@ const CanvasCoverPreview = ({
     // Draw back cover
     ctx.fillStyle = template.backCoverStyle.backgroundColor;
     ctx.fillRect(backX, 0, coverWidth, canvas.height);
+
+    // Draw loading state if processing image
+    if (isProcessingImage) {
+      const centerX = frontX + coverWidth / 2;
+      const centerY = canvas.height / 2;
+      
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+      ctx.fillRect(frontX, 0, coverWidth, canvas.height);
+      
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '24px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('Processing image...', centerX, centerY);
+      return;
+    }
 
     // Draw cover image if available with container constraints
     if (image && layout.imageContainerStyle) {
@@ -157,7 +174,7 @@ const CanvasCoverPreview = ({
 
   useEffect(() => {
     drawCover();
-  }, [template, layout, coverTitle, subtitle, authorName, selectedFont, imageScale, imagePosition, image]);
+  }, [template, layout, coverTitle, subtitle, authorName, selectedFont, imageScale, imagePosition, image, isProcessingImage]);
 
   return (
     <div className="space-y-4">
