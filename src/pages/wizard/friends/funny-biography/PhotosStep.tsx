@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import WizardStep from '@/components/wizard/WizardStep';
@@ -206,7 +207,7 @@ const FunnyBiographyPhotosStep = () => {
     }
   };
 
-  const handleContinue = async () => {
+  const handleNextClick = async () => {
     if (!photo) {
       toast({
         variant: "destructive",
@@ -263,7 +264,7 @@ const FunnyBiographyPhotosStep = () => {
       nextStep="/create/friends/funny-biography/generate"
       currentStep={3}
       totalSteps={4}
-      onContinue={handleContinue}
+      onNextClick={handleNextClick}
     >
       <div className="space-y-6">
         <input 
