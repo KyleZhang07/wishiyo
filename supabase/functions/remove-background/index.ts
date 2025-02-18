@@ -27,36 +27,45 @@ serve(async (req) => {
 
     console.log('Starting background removal process...')
 
-    // Convert base64 to Uint8Array
-    const base64Data = image.replace(/^data:image\/\w+;base64,/, '')
-    const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0))
+    try {
+      // Convert base64 to Uint8Array
+      const base64Data = image.replace(/^data:image\/\w+;base64,/, '')
+      const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0))
 
-    // Create blob from binary data
-    const blob = new Blob([binaryData], { type: 'image/png' })
+      // Create blob from binary data
+      const blob = new Blob([binaryData], { type: 'image/png' })
 
-    // Remove background
-    console.log('Processing image with background removal...')
-    const processedBlob = await remove(blob)
+      // Remove background
+      console.log('Processing image with background removal...')
+      const processedBlob = await remove(blob)
 
-    // Convert processed blob to base64
-    const processedBuffer = await processedBlob.arrayBuffer()
-    const processedArray = new Uint8Array(processedBuffer)
-    const processedBase64 = btoa(String.fromCharCode(...processedArray))
-    const processedDataUrl = `data:image/png;base64,${processedBase64}`
+      // Convert processed blob to base64
+      const processedBuffer = await processedBlob.arrayBuffer()
+      const processedArray = new Uint8Array(processedBuffer)
+      let binary = '';
+      for (let i = 0; i < processedArray.byteLength; i++) {
+        binary += String.fromCharCode(processedArray[i]);
+      }
+      const processedBase64 = btoa(binary)
+      const processedDataUrl = `data:image/png;base64,${processedBase64}`
 
-    console.log('Background removal completed successfully')
+      console.log('Background removal completed successfully')
 
-    return new Response(
-      JSON.stringify({ 
-        processedImage: processedDataUrl 
-      }),
-      { 
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json',
+      return new Response(
+        JSON.stringify({ 
+          processedImage: processedDataUrl 
+        }),
+        { 
+          headers: { 
+            ...corsHeaders,
+            'Content-Type': 'application/json',
+          },
         },
-      },
-    )
+      )
+    } catch (processingError) {
+      console.error('Image processing error:', processingError)
+      throw new Error(`Failed to process image: ${processingError.message}`)
+    }
   } catch (error) {
     console.error('Error:', error)
     return new Response(
