@@ -34,9 +34,8 @@ const IdeaStep = ({
     setIsLoading(true);
     try {
       const path = window.location.pathname;
-      const bookType = path.split('/')[3]; // e.g., 'funny-biography', 'prank-book', etc.
+      const bookType = path.split('/')[3];
       
-      // Get the appropriate storage key and author name based on book type
       const storageKeyMap: { [key: string]: string } = {
         'funny-biography': 'funnyBiographyAnswers',
         'wild-fantasy': 'wildFantasyAnswers',
@@ -128,7 +127,16 @@ const IdeaStep = ({
   };
 
   useEffect(() => {
-    generateIdeas();
+    // Try to load existing ideas and selected idea from localStorage
+    const savedIdea = localStorage.getItem('selectedIdea');
+    if (savedIdea) {
+      const parsedIdea = JSON.parse(savedIdea);
+      setIdeas([parsedIdea]); // Show only the selected idea
+      setSelectedIdeaIndex(0); // Select it
+    } else {
+      // Only generate new ideas if we don't have a saved idea
+      generateIdeas();
+    }
   }, []);
 
   return (

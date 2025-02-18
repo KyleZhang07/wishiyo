@@ -11,7 +11,7 @@ const FunnyBiographyPhotosStep = () => {
     <WizardStep
       title="Add Your Funniest Photos"
       description="Upload those embarrassing photos that always make you laugh!"
-      previousStep="/create/friends/funny-biography/stories"
+      previousStep="/create/friends/funny-biography/ideas"
       nextStep="/create/friends/funny-biography/generate"
       currentStep={3}
       totalSteps={4}
