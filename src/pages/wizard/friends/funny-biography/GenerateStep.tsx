@@ -41,6 +41,7 @@ const FunnyBiographyGenerateStep = () => {
     }
 
     if (savedPhotos) {
+      // Use the photo URL directly instead of base64
       handleImageProcessing(savedPhotos);
     }
   }, []);

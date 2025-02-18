@@ -1,6 +1,5 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import "https://deno.land/x/xhr@0.1.0/mod.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -21,15 +20,14 @@ serve(async (req) => {
       throw new Error('Image URL is required')
     }
 
-    // Convert data URL to blob
-    const base64Data = imageUrl.split(',')[1];
-    const binaryStr = atob(base64Data);
-    const arr = new Uint8Array(binaryStr.length);
-    for (let i = 0; i < binaryStr.length; i++) {
-      arr[i] = binaryStr.charCodeAt(i);
+    // Fetch the image directly from the URL instead of converting from base64
+    const imageResponse = await fetch(imageUrl)
+    if (!imageResponse.ok) {
+      throw new Error('Failed to fetch image')
     }
-    const imageBlob = new Blob([arr], { type: 'image/jpeg' });
-    console.log('Image converted to blob, size:', imageBlob.size)
+    
+    const imageBlob = await imageResponse.blob()
+    console.log('Image fetched, size:', imageBlob.size)
 
     // Call PhotoRoom API
     const formData = new FormData()
@@ -59,9 +57,17 @@ serve(async (req) => {
     const processedImageBlob = await photoroomResponse.blob()
     console.log('Received processed image, size:', processedImageBlob.size)
     
-    // Convert blob to base64
+    // Convert blob to base64 more efficiently using chunks
     const buffer = await processedImageBlob.arrayBuffer()
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)))
+    const chunks = []
+    const chunkSize = 8192
+    const uint8Array = new Uint8Array(buffer)
+    
+    for (let i = 0; i < uint8Array.length; i += chunkSize) {
+      chunks.push(String.fromCharCode.apply(null, uint8Array.subarray(i, i + chunkSize)))
+    }
+    
+    const base64 = btoa(chunks.join(''))
     const contentType = processedImageBlob.type
     const dataUrl = `data:${contentType};base64,${base64}`
 
