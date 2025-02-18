@@ -4,12 +4,18 @@ import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
 import { ImagePlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { pipeline, env } from '@huggingface/transformers';
+
+// Configure transformers.js to always download models
+env.allowLocalModels = false;
+env.useBrowserCache = false;
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const MAX_IMAGE_DIMENSION = 1200;
 
 const FunnyBiographyPhotosStep = () => {
   const [photo, setPhoto] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -34,7 +40,6 @@ const FunnyBiographyPhotosStep = () => {
         let width = img.width;
         let height = img.height;
         
-        // Calculate new dimensions while maintaining aspect ratio
         if (width > height) {
           if (width > MAX_IMAGE_DIMENSION) {
             height *= MAX_IMAGE_DIMENSION / width;
@@ -51,8 +56,6 @@ const FunnyBiographyPhotosStep = () => {
         canvas.height = height;
         
         ctx?.drawImage(img, 0, 0, width, height);
-        
-        // Compress as JPG with 0.7 quality
         const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
         resolve(compressedDataUrl);
       };
@@ -64,6 +67,90 @@ const FunnyBiographyPhotosStep = () => {
         img.src = e.target?.result as string;
       };
       reader.readAsDataURL(file);
+    });
+  };
+
+  const removeBackground = async (imageElement: HTMLImageElement): Promise<Blob> => {
+    try {
+      console.log('Starting background removal process...');
+      const segmenter = await pipeline('image-segmentation', 'Xenova/segformer-b0-finetuned-ade-512-512', {
+        device: 'webgpu',
+      });
+      
+      // Convert HTMLImageElement to canvas
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) throw new Error('Could not get canvas context');
+      
+      canvas.width = imageElement.naturalWidth;
+      canvas.height = imageElement.naturalHeight;
+      ctx.drawImage(imageElement, 0, 0);
+      
+      // Get image data as base64
+      const imageData = canvas.toDataURL('image/jpeg', 0.8);
+      console.log('Image converted to base64');
+      
+      // Process the image with the segmentation model
+      console.log('Processing with segmentation model...');
+      const result = await segmenter(imageData);
+      
+      console.log('Segmentation result:', result);
+      
+      if (!result || !Array.isArray(result) || result.length === 0 || !result[0].mask) {
+        throw new Error('Invalid segmentation result');
+      }
+      
+      // Create a new canvas for the masked image
+      const outputCanvas = document.createElement('canvas');
+      outputCanvas.width = canvas.width;
+      outputCanvas.height = canvas.height;
+      const outputCtx = outputCanvas.getContext('2d');
+      
+      if (!outputCtx) throw new Error('Could not get output canvas context');
+      
+      // Draw original image
+      outputCtx.drawImage(canvas, 0, 0);
+      
+      // Apply the mask
+      const outputImageData = outputCtx.getImageData(0, 0, outputCanvas.width, outputCanvas.height);
+      const data = outputImageData.data;
+      
+      // Apply inverted mask to alpha channel
+      for (let i = 0; i < result[0].mask.data.length; i++) {
+        const alpha = Math.round((1 - result[0].mask.data[i]) * 255);
+        data[i * 4 + 3] = alpha;
+      }
+      
+      outputCtx.putImageData(outputImageData, 0, 0);
+      
+      // Convert canvas to blob
+      return new Promise((resolve, reject) => {
+        outputCanvas.toBlob(
+          (blob) => {
+            if (blob) {
+              console.log('Successfully created final blob');
+              resolve(blob);
+            } else {
+              reject(new Error('Failed to create blob'));
+            }
+          },
+          'image/png',
+          1.0
+        );
+      });
+    } catch (error) {
+      console.error('Error removing background:', error);
+      throw error;
+    }
+  };
+
+  const loadImage = (file: Blob): Promise<HTMLImageElement> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
     });
   };
 
@@ -89,15 +176,33 @@ const FunnyBiographyPhotosStep = () => {
       return;
     }
 
+    setIsProcessing(true);
     try {
       const compressedDataUrl = await compressImage(file);
-      setPhoto(compressedDataUrl);
+      
+      // Convert base64 to blob
+      const response = await fetch(compressedDataUrl);
+      const blob = await response.blob();
+      
+      // Load image for processing
+      const img = await loadImage(blob);
+      
+      // Remove background
+      toast({
+        title: "Processing image",
+        description: "Removing background... Please wait"
+      });
+      
+      const processedBlob = await removeBackground(img);
+      const processedUrl = URL.createObjectURL(processedBlob);
+      
+      setPhoto(processedUrl);
       
       try {
-        localStorage.setItem('funnyBiographyPhoto', compressedDataUrl);
+        localStorage.setItem('funnyBiographyPhoto', processedUrl);
         toast({
           title: "Photo uploaded successfully",
-          description: "Your photo has been saved"
+          description: "Background removed and photo saved"
         });
       } catch (error) {
         console.error('Error saving to localStorage:', error);
@@ -114,6 +219,8 @@ const FunnyBiographyPhotosStep = () => {
         title: "Error",
         description: "Could not process the image. Please try another one."
       });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -137,6 +244,7 @@ const FunnyBiographyPhotosStep = () => {
           className="hidden"
           accept="image/*"
           onChange={handleFileSelect}
+          disabled={isProcessing}
         />
         <div className="aspect-square w-full max-w-md mx-auto border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center">
           {!photo ? (
@@ -144,18 +252,24 @@ const FunnyBiographyPhotosStep = () => {
               variant="ghost"
               className="w-full h-full flex flex-col items-center justify-center gap-4"
               onClick={handleUploadClick}
+              disabled={isProcessing}
             >
               <ImagePlus className="h-12 w-12 text-gray-400" />
-              <span className="text-gray-500">Click to upload</span>
+              <span className="text-gray-500">
+                {isProcessing ? "Processing..." : "Click to upload"}
+              </span>
             </Button>
           ) : (
             <button
               className="w-full h-full p-0 hover:opacity-90 transition-opacity relative group"
               onClick={handleUploadClick}
+              disabled={isProcessing}
             >
               <img src={photo} alt="" className="w-full h-full object-cover rounded-lg" />
               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
-                <span className="text-white font-medium">Click to replace photo</span>
+                <span className="text-white font-medium">
+                  {isProcessing ? "Processing..." : "Click to replace photo"}
+                </span>
               </div>
             </button>
           )}
