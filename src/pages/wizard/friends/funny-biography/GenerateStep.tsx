@@ -5,14 +5,20 @@ import { Button } from '@/components/ui/button';
 import CanvasCoverPreview from '@/components/cover-generator/CanvasCoverPreview';
 import LayoutSelector from '@/components/cover-generator/FontSelector';
 import TemplateSelector from '@/components/cover-generator/TemplateSelector';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
 const FunnyBiographyGenerateStep = () => {
   const [coverTitle, setCoverTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
   const [authorName, setAuthorName] = useState('');
   const [coverImage, setCoverImage] = useState<string>();
+  const [processedImage, setProcessedImage] = useState<string>();
   const [selectedLayout, setSelectedLayout] = useState('centered');
   const [selectedTemplate, setSelectedTemplate] = useState('modern');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     // Load data from localStorage
@@ -36,8 +42,39 @@ const FunnyBiographyGenerateStep = () => {
 
     if (savedPhotos) {
       setCoverImage(savedPhotos);
+      processImage(savedPhotos);
     }
   }, []);
+
+  const processImage = async (imageData: string) => {
+    setIsProcessing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('remove-background', {
+        body: { image: imageData }
+      });
+
+      if (error) throw error;
+
+      if (data.image) {
+        setProcessedImage(data.image);
+        // Save to localStorage for persistence
+        localStorage.setItem('funnyBiographyProcessedPhoto', data.image);
+        toast({
+          title: "Success",
+          description: "Background removed successfully!"
+        });
+      }
+    } catch (error) {
+      console.error('Error processing image:', error);
+      toast({
+        title: "Error",
+        description: "Failed to process the image. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   return (
     <WizardStep
@@ -49,11 +86,18 @@ const FunnyBiographyGenerateStep = () => {
     >
       <div className="glass-card rounded-2xl p-8 py-[40px]">
         <div className="max-w-xl mx-auto space-y-8">
+          {isProcessing && (
+            <div className="text-center py-4">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto" />
+              <p className="mt-2 text-gray-600">Processing your image...</p>
+            </div>
+          )}
+          
           <CanvasCoverPreview
             coverTitle={coverTitle}
             subtitle={subtitle}
             authorName={authorName}
-            coverImage={coverImage}
+            coverImage={processedImage || coverImage}
             selectedFont="Arial"
             selectedTemplate={selectedTemplate}
             selectedLayout={selectedLayout}
