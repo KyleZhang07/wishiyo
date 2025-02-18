@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { CanvasSize, coverLayouts } from './types';
@@ -161,12 +162,12 @@ const CanvasCoverPreview = ({
 
   return (
     <div className="space-y-4">
-      <div className="relative rounded-lg overflow-hidden shadow-xl">
+      <div className="relative rounded-lg overflow-hidden shadow-xl w-full">
         <canvas
           ref={canvasRef}
           width={DEFAULT_CANVAS_SIZE.width}
           height={DEFAULT_CANVAS_SIZE.height}
-          className="w-full h-full"
+          className="w-full object-contain"
         />
       </div>
       
