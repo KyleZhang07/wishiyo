@@ -7,20 +7,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-async function dataURLtoBlob(dataUrl: string) {
-  // Extract the base64 data from the data URL
-  const base64Data = dataUrl.split(',')[1];
-  // Convert base64 to binary
-  const binaryStr = atob(base64Data);
-  // Create a Uint8Array from the binary string
-  const arr = new Uint8Array(binaryStr.length);
-  for (let i = 0; i < binaryStr.length; i++) {
-    arr[i] = binaryStr.charCodeAt(i);
-  }
-  // Create a blob from the array
-  return new Blob([arr], { type: 'image/jpeg' });
-}
-
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -29,40 +15,34 @@ serve(async (req) => {
 
   try {
     const { imageUrl } = await req.json()
-    console.log('Processing image data URL...')
+    console.log('Processing image:', imageUrl)
 
     if (!imageUrl) {
       throw new Error('Image URL is required')
     }
 
-    // Convert data URL to blob
-    const imageBlob = await dataURLtoBlob(imageUrl)
-    console.log('Converted image to blob, size:', imageBlob.size)
-
-    const apiKey = Deno.env.get('PHOTOROOM_API_KEY')
-    console.log('Using API key:', apiKey ? 'Key found' : 'Key missing')
+    // Fetch the image
+    const imageResponse = await fetch(imageUrl)
+    const imageBlob = await imageResponse.blob()
 
     // Call PhotoRoom API
     const formData = new FormData()
     formData.append('image_file', imageBlob, 'image.jpg')
 
-    console.log('Calling PhotoRoom API...')
-    const photoroomResponse = await fetch('https://sdk.photoroom.com/v1/segment', {
+    const photoroomResponse = await fetch('https://api.photoroom.com/v1/segment', {
       method: 'POST',
       headers: {
-        'x-api-key': apiKey || '',
+        'x-api-key': Deno.env.get('PHOTOROOM_API_KEY') || '',
       },
       body: formData,
     })
 
     if (!photoroomResponse.ok) {
-      console.error('PhotoRoom API error:', photoroomResponse.status, await photoroomResponse.text())
-      throw new Error(`PhotoRoom API error: ${photoroomResponse.statusText || 'Request failed'}`)
+      throw new Error(`PhotoRoom API error: ${photoroomResponse.statusText}`)
     }
 
     // Get the processed image
     const processedImageBlob = await photoroomResponse.blob()
-    console.log('Received processed image, size:', processedImageBlob.size)
     
     // Convert blob to base64
     const buffer = await processedImageBlob.arrayBuffer()
@@ -70,7 +50,6 @@ serve(async (req) => {
     const contentType = processedImageBlob.type
     const dataUrl = `data:${contentType};base64,${base64}`
 
-    console.log('Successfully processed image')
     return new Response(
       JSON.stringify({ 
         success: true, 
