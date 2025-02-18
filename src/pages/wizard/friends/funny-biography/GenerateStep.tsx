@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import CanvasCoverPreview from '@/components/cover-generator/CanvasCoverPreview';
 import LayoutSelector from '@/components/cover-generator/FontSelector';
 import TemplateSelector from '@/components/cover-generator/TemplateSelector';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
@@ -14,7 +13,6 @@ const FunnyBiographyGenerateStep = () => {
   const [subtitle, setSubtitle] = useState('');
   const [authorName, setAuthorName] = useState('');
   const [coverImage, setCoverImage] = useState<string>();
-  const [processedImage, setProcessedImage] = useState<string>();
   const [selectedLayout, setSelectedLayout] = useState('centered');
   const [selectedTemplate, setSelectedTemplate] = useState('modern');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -26,6 +24,7 @@ const FunnyBiographyGenerateStep = () => {
     const savedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
     const savedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
     const savedPhotos = localStorage.getItem('funnyBiographyPhoto');
+    const processedPhoto = localStorage.getItem('funnyBiographyProcessedPhoto');
 
     if (savedAuthor) {
       setAuthorName(savedAuthor);
@@ -40,30 +39,51 @@ const FunnyBiographyGenerateStep = () => {
       }
     }
 
-    if (savedPhotos) {
+    // Use processed photo if available, otherwise use original photo
+    if (processedPhoto) {
+      setCoverImage(processedPhoto);
+    } else if (savedPhotos) {
       setCoverImage(savedPhotos);
-      processImage(savedPhotos);
     }
   }, []);
 
+  // Function to handle image opacity adjustment
+  const adjustImageOpacity = (imageData: string, opacity: number = 0.85): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        
+        if (ctx) {
+          ctx.globalAlpha = opacity;
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL('image/png'));
+        } else {
+          resolve(imageData); // Fallback to original if context not available
+        }
+      };
+      img.src = imageData;
+    });
+  };
+
+  // Function to handle image background processing
   const processImage = async (imageData: string) => {
     setIsProcessing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('remove-background', {
-        body: { image: imageData }
+      // Apply opacity adjustment
+      const processedImage = await adjustImageOpacity(imageData);
+      
+      // Save to localStorage for persistence
+      localStorage.setItem('funnyBiographyProcessedPhoto', processedImage);
+      setCoverImage(processedImage);
+      
+      toast({
+        title: "Success",
+        description: "Image processed successfully!"
       });
-
-      if (error) throw error;
-
-      if (data.image) {
-        setProcessedImage(data.image);
-        // Save to localStorage for persistence
-        localStorage.setItem('funnyBiographyProcessedPhoto', data.image);
-        toast({
-          title: "Success",
-          description: "Background removed successfully!"
-        });
-      }
     } catch (error) {
       console.error('Error processing image:', error);
       toast({
@@ -75,6 +95,13 @@ const FunnyBiographyGenerateStep = () => {
       setIsProcessing(false);
     }
   };
+
+  useEffect(() => {
+    const savedPhotos = localStorage.getItem('funnyBiographyPhoto');
+    if (savedPhotos && !localStorage.getItem('funnyBiographyProcessedPhoto')) {
+      processImage(savedPhotos);
+    }
+  }, []);
 
   return (
     <WizardStep
@@ -97,7 +124,7 @@ const FunnyBiographyGenerateStep = () => {
             coverTitle={coverTitle}
             subtitle={subtitle}
             authorName={authorName}
-            coverImage={processedImage || coverImage}
+            coverImage={coverImage}
             selectedFont="Arial"
             selectedTemplate={selectedTemplate}
             selectedLayout={selectedLayout}
