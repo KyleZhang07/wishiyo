@@ -75,10 +75,11 @@ const FunnyBiographyGenerateStep = () => {
       }
     }
 
-    if (processedPhoto) {
-      setCoverImage(processedPhoto);
-    } else if (savedPhotos) {
+    // Always process the original photo if it exists and we don't have a processed version
+    if (savedPhotos && !processedPhoto) {
       removeBackground(savedPhotos);
+    } else if (processedPhoto) {
+      setCoverImage(processedPhoto);
     }
   }, []);
 

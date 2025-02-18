@@ -34,7 +34,6 @@ const FunnyBiographyPhotosStep = () => {
         let width = img.width;
         let height = img.height;
         
-        // Calculate new dimensions while maintaining aspect ratio
         if (width > height) {
           if (width > MAX_IMAGE_DIMENSION) {
             height *= MAX_IMAGE_DIMENSION / width;
@@ -52,7 +51,6 @@ const FunnyBiographyPhotosStep = () => {
         
         ctx?.drawImage(img, 0, 0, width, height);
         
-        // Compress as JPG with 0.7 quality
         const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
         resolve(compressedDataUrl);
       };
@@ -94,7 +92,10 @@ const FunnyBiographyPhotosStep = () => {
       setPhoto(compressedDataUrl);
       
       try {
+        // Store the original photo and remove any previously processed photo
         localStorage.setItem('funnyBiographyPhoto', compressedDataUrl);
+        localStorage.removeItem('funnyBiographyProcessedPhoto'); // Clear processed photo
+        
         toast({
           title: "Photo uploaded successfully",
           description: "Your photo has been saved"
