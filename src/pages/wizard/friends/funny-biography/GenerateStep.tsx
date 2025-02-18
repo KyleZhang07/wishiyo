@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
-import CoverPreview from '@/components/cover-generator/CoverPreview';
+import CanvasCoverPreview from '@/components/cover-generator/CanvasCoverPreview';
 import FontSelector from '@/components/cover-generator/FontSelector';
 import TemplateSelector from '@/components/cover-generator/TemplateSelector';
 
@@ -49,7 +49,7 @@ const FunnyBiographyGenerateStep = () => {
     >
       <div className="glass-card rounded-2xl p-8 py-[40px]">
         <div className="max-w-xl mx-auto space-y-8">
-          <CoverPreview
+          <CanvasCoverPreview
             coverTitle={coverTitle}
             subtitle={subtitle}
             authorName={authorName}

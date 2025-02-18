@@ -1,4 +1,3 @@
-
 export type TemplateType = {
   id: string;
   name: string;
@@ -98,3 +97,14 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     }
   }
 };
+
+export interface CanvasSize {
+  width: number;
+  height: number;
+}
+
+export interface CanvasImage {
+  element: HTMLImageElement;
+  scale: number;
+  position: { x: number; y: number };
+}
