@@ -1,4 +1,4 @@
 
 project_id = "hbkgbggctzvqffqfrmhl"
-[functions.remove-background]
+[functions.generate-ideas]
 verify_jwt = false

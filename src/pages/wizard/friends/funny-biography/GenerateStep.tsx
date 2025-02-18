@@ -6,9 +6,6 @@ import CanvasCoverPreview from '@/components/cover-generator/CanvasCoverPreview'
 import LayoutSelector from '@/components/cover-generator/LayoutSelector';
 import FontSelector from '@/components/cover-generator/FontSelector';
 import TemplateSelector from '@/components/cover-generator/TemplateSelector';
-import { removeBackground } from '@imgly/background-removal';
-import { useToast } from '@/components/ui/use-toast';
-import { Loader2 } from 'lucide-react';
 
 const FunnyBiographyGenerateStep = () => {
   const [coverTitle, setCoverTitle] = useState('');
@@ -18,8 +15,6 @@ const FunnyBiographyGenerateStep = () => {
   const [selectedLayout, setSelectedLayout] = useState('classic-centered');
   const [selectedTemplate, setSelectedTemplate] = useState('modern');
   const [selectedFont, setSelectedFont] = useState('playfair');
-  const [isProcessingImage, setIsProcessingImage] = useState(false);
-  const { toast } = useToast();
 
   useEffect(() => {
     // Load data from localStorage
@@ -27,7 +22,6 @@ const FunnyBiographyGenerateStep = () => {
     const savedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
     const savedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
     const savedPhotos = localStorage.getItem('funnyBiographyPhoto');
-    const processedPhoto = localStorage.getItem('funnyBiographyProcessedPhoto');
 
     if (savedAuthor) {
       setAuthorName(savedAuthor);
@@ -42,51 +36,10 @@ const FunnyBiographyGenerateStep = () => {
       }
     }
 
-    if (processedPhoto) {
-      setCoverImage(processedPhoto);
-    } else if (savedPhotos) {
-      processImage(savedPhotos);
+    if (savedPhotos) {
+      setCoverImage(savedPhotos);
     }
   }, []);
-
-  const processImage = async (imageUrl: string) => {
-    setIsProcessingImage(true);
-    
-    try {
-      // Fetch the image
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-
-      // Process the image
-      const processedBlob = await removeBackground(blob);
-      
-      // Convert processed blob to base64
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64data = reader.result as string;
-        setCoverImage(base64data);
-        localStorage.setItem('funnyBiographyProcessedPhoto', base64data);
-        
-        toast({
-          title: "Background removed successfully",
-          description: "Your image has been processed and is ready to use.",
-        });
-      };
-      reader.readAsDataURL(processedBlob);
-    } catch (error) {
-      console.error('Error processing image:', error);
-      toast({
-        title: "Error processing image",
-        description: "Failed to remove background. Using original image.",
-        variant: "destructive",
-      });
-      // Set the original image if processing fails
-      setCoverImage(imageUrl);
-      localStorage.setItem('funnyBiographyProcessedPhoto', imageUrl);
-    } finally {
-      setIsProcessingImage(false);
-    }
-  };
 
   return (
     <WizardStep
@@ -98,26 +51,15 @@ const FunnyBiographyGenerateStep = () => {
     >
       <div className="glass-card rounded-2xl p-8 py-[40px]">
         <div className="max-w-xl mx-auto space-y-8">
-          <div className="relative">
-            <CanvasCoverPreview
-              coverTitle={coverTitle}
-              subtitle={subtitle}
-              authorName={authorName}
-              coverImage={coverImage}
-              selectedFont={selectedFont}
-              selectedTemplate={selectedTemplate}
-              selectedLayout={selectedLayout}
-            />
-            
-            {isProcessingImage && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg">
-                <div className="text-center text-white">
-                  <Loader2 className="w-8 h-8 mb-2 mx-auto animate-spin" />
-                  <p>Removing background...</p>
-                </div>
-              </div>
-            )}
-          </div>
+          <CanvasCoverPreview
+            coverTitle={coverTitle}
+            subtitle={subtitle}
+            authorName={authorName}
+            coverImage={coverImage}
+            selectedFont={selectedFont}
+            selectedTemplate={selectedTemplate}
+            selectedLayout={selectedLayout}
+          />
           
           <div className="space-y-4">
             <div>
