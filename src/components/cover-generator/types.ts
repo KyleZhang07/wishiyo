@@ -21,6 +21,7 @@ export type TemplateType = {
   imageStyle: {
     filter: string;
     opacity: string;
+    borderRadius: string;
   };
   spineStyle: {
     backgroundColor: string;
@@ -57,7 +58,8 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     },
     imageStyle: {
       filter: 'brightness(0.7)',
-      opacity: '0.9'
+      opacity: '0.9',
+      borderRadius: '50%'
     },
     spineStyle: {
       backgroundColor: '#1A1F2C',
@@ -92,7 +94,8 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     },
     imageStyle: {
       filter: 'brightness(0.9)',
-      opacity: '0.8'
+      opacity: '0.8',
+      borderRadius: '50%'
     },
     spineStyle: {
       backgroundColor: '#F1F0FB',
@@ -127,7 +130,8 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     },
     imageStyle: {
       filter: 'brightness(0.6) contrast(1.2)',
-      opacity: '0.85'
+      opacity: '0.85',
+      borderRadius: '50%'
     },
     spineStyle: {
       backgroundColor: '#8B5CF6',
@@ -157,74 +161,108 @@ export interface CoverLayout {
     offsetY: number;
     textAlign: 'left' | 'center' | 'right';
   };
+  imageContainerStyle?: {
+    width: string;
+    height: string;
+    borderRadius?: string;
+    position: 'top' | 'center' | 'bottom';
+  };
 }
 
 export const coverLayouts: { [key: string]: CoverLayout } = {
-  centered: {
-    id: 'centered',
-    name: 'Centered',
+  'classic-centered': {
+    id: 'classic-centered',
+    name: 'Classic Centered',
     titlePosition: {
-      offsetY: 0.3,
+      offsetY: 0.2,
       textAlign: 'center'
     },
     subtitlePosition: {
-      offsetY: 0.5,
+      offsetY: 0.35,
       textAlign: 'center'
     },
     authorPosition: {
-      offsetY: 0.85,
+      offsetY: 0.9,
       textAlign: 'center'
-    }
-  },
-  classic: {
-    id: 'classic',
-    name: 'Classic',
-    titlePosition: {
-      offsetY: 0.25,
-      textAlign: 'left'
     },
-    subtitlePosition: {
-      offsetY: 0.45,
-      textAlign: 'left'
-    },
-    authorPosition: {
-      offsetY: 0.85,
-      textAlign: 'right'
+    imageContainerStyle: {
+      width: '80%',
+      height: '50%',
+      position: 'center'
     }
   },
   'modern-split': {
     id: 'modern-split',
     name: 'Modern Split',
     titlePosition: {
-      offsetY: 0.2,
-      textAlign: 'right'
-    },
-    subtitlePosition: {
-      offsetY: 0.4,
-      textAlign: 'right'
-    },
-    authorPosition: {
-      offsetY: 0.85,
-      textAlign: 'left'
-    }
-  },
-  dynamic: {
-    id: 'dynamic',
-    name: 'Dynamic',
-    titlePosition: {
       offsetY: 0.15,
       textAlign: 'left'
     },
     subtitlePosition: {
-      offsetY: 0.6,
-      textAlign: 'right'
+      offsetY: 0.3,
+      textAlign: 'left'
     },
     authorPosition: {
       offsetY: 0.9,
+      textAlign: 'right'
+    },
+    imageContainerStyle: {
+      width: '100%',
+      height: '60%',
+      position: 'bottom'
+    }
+  },
+  'minimal-frame': {
+    id: 'minimal-frame',
+    name: 'Minimal Frame',
+    titlePosition: {
+      offsetY: 0.1,
       textAlign: 'center'
+    },
+    subtitlePosition: {
+      offsetY: 0.25,
+      textAlign: 'center'
+    },
+    authorPosition: {
+      offsetY: 0.95,
+      textAlign: 'center'
+    },
+    imageContainerStyle: {
+      width: '70%',
+      height: '70%',
+      borderRadius: '50%',
+      position: 'center'
+    }
+  },
+  'bold-header': {
+    id: 'bold-header',
+    name: 'Bold Header',
+    titlePosition: {
+      offsetY: 0.7,
+      textAlign: 'center'
+    },
+    subtitlePosition: {
+      offsetY: 0.85,
+      textAlign: 'center'
+    },
+    authorPosition: {
+      offsetY: 0.95,
+      textAlign: 'center'
+    },
+    imageContainerStyle: {
+      width: '100%',
+      height: '60%',
+      position: 'top'
     }
   }
 };
+
+export const fontOptions = [
+  { id: 'playfair', name: 'Playfair Display', className: 'font-playfair' },
+  { id: 'inter', name: 'Inter', className: 'font-inter' },
+  { id: 'roboto', name: 'Roboto', className: 'font-roboto' },
+  { id: 'lora', name: 'Lora', className: 'font-lora' }
+];
 
 export interface CanvasSize {
   width: number;

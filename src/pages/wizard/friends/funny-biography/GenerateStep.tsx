@@ -3,7 +3,8 @@ import { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
 import CanvasCoverPreview from '@/components/cover-generator/CanvasCoverPreview';
-import LayoutSelector from '@/components/cover-generator/FontSelector';
+import LayoutSelector from '@/components/cover-generator/LayoutSelector';
+import FontSelector from '@/components/cover-generator/FontSelector';
 import TemplateSelector from '@/components/cover-generator/TemplateSelector';
 
 const FunnyBiographyGenerateStep = () => {
@@ -11,8 +12,9 @@ const FunnyBiographyGenerateStep = () => {
   const [subtitle, setSubtitle] = useState('');
   const [authorName, setAuthorName] = useState('');
   const [coverImage, setCoverImage] = useState<string>();
-  const [selectedLayout, setSelectedLayout] = useState('centered');
+  const [selectedLayout, setSelectedLayout] = useState('classic-centered');
   const [selectedTemplate, setSelectedTemplate] = useState('modern');
+  const [selectedFont, setSelectedFont] = useState('playfair');
 
   useEffect(() => {
     // Load data from localStorage
@@ -54,12 +56,20 @@ const FunnyBiographyGenerateStep = () => {
             subtitle={subtitle}
             authorName={authorName}
             coverImage={coverImage}
-            selectedFont="Arial"
+            selectedFont={selectedFont}
             selectedTemplate={selectedTemplate}
             selectedLayout={selectedLayout}
           />
           
           <div className="space-y-4">
+            <div>
+              <h3 className="text-lg font-medium text-center mb-2">Choose Your Font</h3>
+              <FontSelector
+                selectedFont={selectedFont}
+                onSelectFont={setSelectedFont}
+              />
+            </div>
+
             <div>
               <h3 className="text-lg font-medium text-center mb-2">Choose Your Color Theme</h3>
               <TemplateSelector
