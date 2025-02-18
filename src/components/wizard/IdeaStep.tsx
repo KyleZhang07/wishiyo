@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import WizardStep from './WizardStep';
 import { Button } from '@/components/ui/button';
@@ -91,7 +90,8 @@ const IdeaStep = ({
 
       if (error) throw error;
       setIdeas(data.ideas);
-      setSelectedIdeaIndex(null); // Reset selection when generating new ideas
+      setSelectedIdeaIndex(null);
+      localStorage.setItem('generatedIdeas', JSON.stringify(data.ideas));
     } catch (error) {
       console.error('Error:', error);
       toast({
@@ -118,23 +118,22 @@ const IdeaStep = ({
       return;
     }
 
-    // Save selected idea to localStorage
-    const selectedIdea = ideas[selectedIdeaIndex];
-    localStorage.setItem('selectedIdea', JSON.stringify(selectedIdea));
-
-    // Navigate to next step
+    localStorage.setItem('selectedIdeaIndex', selectedIdeaIndex.toString());
     navigate(nextStep);
   };
 
   useEffect(() => {
-    // Try to load existing ideas and selected idea from localStorage
-    const savedIdea = localStorage.getItem('selectedIdea');
-    if (savedIdea) {
-      const parsedIdea = JSON.parse(savedIdea);
-      setIdeas([parsedIdea]); // Show only the selected idea
-      setSelectedIdeaIndex(0); // Select it
+    const savedIdeas = localStorage.getItem('generatedIdeas');
+    const savedIdeaIndex = localStorage.getItem('selectedIdeaIndex');
+
+    if (savedIdeas) {
+      const parsedIdeas = JSON.parse(savedIdeas);
+      setIdeas(parsedIdeas);
+      
+      if (savedIdeaIndex !== null) {
+        setSelectedIdeaIndex(parseInt(savedIdeaIndex));
+      }
     } else {
-      // Only generate new ideas if we don't have a saved idea
       generateIdeas();
     }
   }, []);
