@@ -1,23 +1,16 @@
+
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
 import { ImagePlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { pipeline, env } from '@huggingface/transformers';
-
-// Configure transformers.js to always download models
-env.allowLocalModels = false;
-env.useBrowserCache = false;
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const MAX_IMAGE_DIMENSION = 1200;
 
 const FunnyBiographyPhotosStep = () => {
   const [photo, setPhoto] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -41,6 +34,7 @@ const FunnyBiographyPhotosStep = () => {
         let width = img.width;
         let height = img.height;
         
+        // Calculate new dimensions while maintaining aspect ratio
         if (width > height) {
           if (width > MAX_IMAGE_DIMENSION) {
             height *= MAX_IMAGE_DIMENSION / width;
@@ -57,6 +51,8 @@ const FunnyBiographyPhotosStep = () => {
         canvas.height = height;
         
         ctx?.drawImage(img, 0, 0, width, height);
+        
+        // Compress as JPG with 0.7 quality
         const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
         resolve(compressedDataUrl);
       };
@@ -68,87 +64,6 @@ const FunnyBiographyPhotosStep = () => {
         img.src = e.target?.result as string;
       };
       reader.readAsDataURL(file);
-    });
-  };
-
-  const removeBackground = async (imageElement: HTMLImageElement): Promise<Blob> => {
-    try {
-      console.log('Starting background removal process...');
-      const segmenter = await pipeline('image-segmentation', 'Xenova/segformer-b0-finetuned-ade-512-512', {
-        device: 'wasm',
-      });
-      
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      
-      if (!ctx) throw new Error('Could not get canvas context');
-      
-      canvas.width = imageElement.naturalWidth;
-      canvas.height = imageElement.naturalHeight;
-      ctx.drawImage(imageElement, 0, 0);
-      
-      const imageData = canvas.toDataURL('image/jpeg', 0.8);
-      console.log('Image converted to base64');
-      
-      try {
-        const result = await segmenter(imageData);
-        
-        console.log('Segmentation result:', result);
-        
-        if (!result || !Array.isArray(result) || result.length === 0 || !result[0].mask) {
-          throw new Error('Invalid segmentation result');
-        }
-        
-        const outputCanvas = document.createElement('canvas');
-        outputCanvas.width = canvas.width;
-        outputCanvas.height = canvas.height;
-        const outputCtx = outputCanvas.getContext('2d');
-        
-        if (!outputCtx) throw new Error('Could not get output canvas context');
-        
-        outputCtx.drawImage(canvas, 0, 0);
-        
-        const outputImageData = outputCtx.getImageData(0, 0, outputCanvas.width, outputCanvas.height);
-        const data = outputImageData.data;
-        
-        for (let i = 0; i < result[0].mask.data.length; i++) {
-          const alpha = Math.round((1 - result[0].mask.data[i]) * 255);
-          data[i * 4 + 3] = alpha;
-        }
-        
-        outputCtx.putImageData(outputImageData, 0, 0);
-        console.log('Mask applied successfully');
-        
-        return new Promise((resolve, reject) => {
-          outputCanvas.toBlob(
-            (blob) => {
-              if (blob) {
-                console.log('Successfully created final blob');
-                resolve(blob);
-              } else {
-                reject(new Error('Failed to create blob'));
-              }
-            },
-            'image/png',
-            1.0
-          );
-        });
-      } catch (segmentationError) {
-        console.error('Error during segmentation:', segmentationError);
-        throw new Error('Failed to process the image. Please try again or use a different image.');
-      }
-    } catch (error) {
-      console.error('Error removing background:', error);
-      throw error;
-    }
-  };
-
-  const loadImage = (file: Blob): Promise<HTMLImageElement> => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => resolve(img);
-      img.onerror = reject;
-      img.src = URL.createObjectURL(file);
     });
   };
 
@@ -182,7 +97,7 @@ const FunnyBiographyPhotosStep = () => {
         localStorage.setItem('funnyBiographyPhoto', compressedDataUrl);
         toast({
           title: "Photo uploaded successfully",
-          description: "Click continue to process the image and remove the background"
+          description: "Your photo has been saved"
         });
       } catch (error) {
         console.error('Error saving to localStorage:', error);
@@ -202,51 +117,6 @@ const FunnyBiographyPhotosStep = () => {
     }
   };
 
-  const handleNextClick = async () => {
-    if (!photo) {
-      toast({
-        variant: "destructive",
-        title: "No photo selected",
-        description: "Please upload a photo first"
-      });
-      return;
-    }
-
-    setIsProcessing(true);
-    toast({
-      title: "Processing image",
-      description: "Removing background... This may take a few moments"
-    });
-
-    try {
-      const response = await fetch(photo);
-      const blob = await response.blob();
-      
-      const img = await loadImage(blob);
-      
-      const processedBlob = await removeBackground(img);
-      const processedUrl = URL.createObjectURL(processedBlob);
-      
-      localStorage.setItem('funnyBiographyProcessedPhoto', processedUrl);
-      
-      toast({
-        title: "Success",
-        description: "Background removed successfully!"
-      });
-      
-      navigate('/create/friends/funny-biography/generate');
-    } catch (error) {
-      console.error('Error processing image:', error);
-      toast({
-        variant: "destructive",
-        title: "Processing Error",
-        description: error instanceof Error ? error.message : "Could not process the image. Please try again with a different image."
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
   const handleUploadClick = () => {
     fileInputRef.current?.click();
   };
@@ -259,7 +129,6 @@ const FunnyBiographyPhotosStep = () => {
       nextStep="/create/friends/funny-biography/generate"
       currentStep={3}
       totalSteps={4}
-      onNextClick={handleNextClick}
     >
       <div className="space-y-6">
         <input 
@@ -268,7 +137,6 @@ const FunnyBiographyPhotosStep = () => {
           className="hidden"
           accept="image/*"
           onChange={handleFileSelect}
-          disabled={isProcessing}
         />
         <div className="aspect-square w-full max-w-md mx-auto border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center">
           {!photo ? (
@@ -276,24 +144,18 @@ const FunnyBiographyPhotosStep = () => {
               variant="ghost"
               className="w-full h-full flex flex-col items-center justify-center gap-4"
               onClick={handleUploadClick}
-              disabled={isProcessing}
             >
               <ImagePlus className="h-12 w-12 text-gray-400" />
-              <span className="text-gray-500">
-                {isProcessing ? "Processing..." : "Click to upload"}
-              </span>
+              <span className="text-gray-500">Click to upload</span>
             </Button>
           ) : (
             <button
               className="w-full h-full p-0 hover:opacity-90 transition-opacity relative group"
               onClick={handleUploadClick}
-              disabled={isProcessing}
             >
               <img src={photo} alt="" className="w-full h-full object-cover rounded-lg" />
               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
-                <span className="text-white font-medium">
-                  {isProcessing ? "Processing..." : "Click to replace photo"}
-                </span>
+                <span className="text-white font-medium">Click to replace photo</span>
               </div>
             </button>
           )}
