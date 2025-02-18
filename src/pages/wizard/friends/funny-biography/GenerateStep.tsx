@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
 import CanvasCoverPreview from '@/components/cover-generator/CanvasCoverPreview';
-import FontSelector from '@/components/cover-generator/FontSelector';
+import LayoutSelector from '@/components/cover-generator/FontSelector';
 import TemplateSelector from '@/components/cover-generator/TemplateSelector';
 
 const FunnyBiographyGenerateStep = () => {
@@ -11,7 +11,7 @@ const FunnyBiographyGenerateStep = () => {
   const [subtitle, setSubtitle] = useState('');
   const [authorName, setAuthorName] = useState('');
   const [coverImage, setCoverImage] = useState<string>();
-  const [selectedFont, setSelectedFont] = useState('font-sans');
+  const [selectedLayout, setSelectedLayout] = useState('centered');
   const [selectedTemplate, setSelectedTemplate] = useState('modern');
 
   useEffect(() => {
@@ -54,8 +54,9 @@ const FunnyBiographyGenerateStep = () => {
             subtitle={subtitle}
             authorName={authorName}
             coverImage={coverImage}
-            selectedFont={selectedFont}
+            selectedFont="Arial"
             selectedTemplate={selectedTemplate}
+            selectedLayout={selectedLayout}
           />
           
           <div className="space-y-4">
@@ -69,9 +70,9 @@ const FunnyBiographyGenerateStep = () => {
             
             <div>
               <h3 className="text-lg font-medium text-center mb-2">Choose Your Cover Layout</h3>
-              <FontSelector
-                selectedFont={selectedFont}
-                onSelectFont={setSelectedFont}
+              <LayoutSelector
+                selectedLayout={selectedLayout}
+                onSelectLayout={setSelectedLayout}
               />
             </div>
           </div>

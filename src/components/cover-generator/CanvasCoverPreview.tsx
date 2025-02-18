@@ -1,7 +1,6 @@
-
 import { useEffect, useRef, useState } from 'react';
 import ImageControls from './ImageControls';
-import { CanvasSize } from './types';
+import { CanvasSize, coverLayouts } from './types';
 import { coverTemplates } from './types';
 import { useImageLoader } from './hooks/useImageLoader';
 import { drawFrontCover, drawSpine, drawBackCover } from './utils/canvasDrawing';
@@ -13,13 +12,14 @@ interface CanvasCoverPreviewProps {
   coverImage?: string;
   selectedFont: string;
   selectedTemplate?: string;
+  selectedLayout?: string;
 }
 
 const DEFAULT_CANVAS_SIZE: CanvasSize = {
-  width: 2000,
-  height: 800,
-  spine: 80,
-  gap: 20
+  width: 2400,
+  height: 1000,
+  spine: 100,
+  gap: 30
 };
 
 const DEFAULT_SUMMARY = "A captivating journey through the pages of this book awaits. Join us on an unforgettable adventure filled with unexpected twists and turns. Every chapter brings new discoveries and insights that will keep you engaged until the very last page.";
@@ -30,7 +30,8 @@ const CanvasCoverPreview = ({
   authorName,
   coverImage,
   selectedFont,
-  selectedTemplate = 'modern'
+  selectedTemplate = 'modern',
+  selectedLayout = 'centered'
 }: CanvasCoverPreviewProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [imageScale, setImageScale] = useState(100);
@@ -38,6 +39,7 @@ const CanvasCoverPreview = ({
   
   const image = useImageLoader(coverImage, imageScale, imagePosition);
   const template = coverTemplates[selectedTemplate];
+  const layout = coverLayouts[selectedLayout];
 
   const drawCover = () => {
     const canvas = canvasRef.current;
@@ -88,7 +90,7 @@ const CanvasCoverPreview = ({
     }
 
     // Draw cover sections
-    drawFrontCover(ctx, template, {
+    drawFrontCover(ctx, template, layout, {
       frontX,
       coverWidth,
       height: canvas.height,
@@ -118,7 +120,7 @@ const CanvasCoverPreview = ({
 
   useEffect(() => {
     drawCover();
-  }, [template, coverTitle, subtitle, authorName, selectedFont, imageScale, imagePosition, image]);
+  }, [template, layout, coverTitle, subtitle, authorName, selectedFont, imageScale, imagePosition, image]);
 
   return (
     <div className="space-y-4">

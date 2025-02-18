@@ -1,5 +1,4 @@
-
-import { TemplateType, CanvasSize } from '../types';
+import { TemplateType, CoverLayout } from '../types';
 
 export const wrapText = (
   ctx: CanvasRenderingContext2D,
@@ -7,31 +6,37 @@ export const wrapText = (
   x: number,
   y: number,
   maxWidth: number,
-  lineHeight: number
+  lineHeight: number,
+  align: 'left' | 'center' | 'right'
 ) => {
   const words = text.split(' ');
   let line = '';
   let currentY = y;
+
+  ctx.textAlign = align;
+  const alignX = align === 'center' ? x + maxWidth/2 :
+                 align === 'right' ? x + maxWidth : x;
 
   for (let word of words) {
     const testLine = line + word + ' ';
     const metrics = ctx.measureText(testLine);
     
     if (metrics.width > maxWidth) {
-      ctx.fillText(line, x, currentY);
+      ctx.fillText(line, alignX, currentY);
       line = word + ' ';
       currentY += lineHeight;
     } else {
       line = testLine;
     }
   }
-  ctx.fillText(line, x, currentY);
+  ctx.fillText(line, alignX, currentY);
   return currentY;
 };
 
 export const drawFrontCover = (
   ctx: CanvasRenderingContext2D,
   template: TemplateType,
+  layout: CoverLayout,
   {
     frontX,
     coverWidth,
@@ -50,25 +55,44 @@ export const drawFrontCover = (
     selectedFont: string;
   }
 ) => {
-  const frontCenterX = frontX + (coverWidth / 2);
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-
   // Draw title
   ctx.font = `${template.titleStyle.fontWeight} ${template.titleStyle.fontSize} ${selectedFont}`;
   ctx.fillStyle = template.titleStyle.color;
-  const titleY = height * template.titleStyle.offsetY;
-  wrapText(ctx, title, frontX + coverWidth * 0.1, titleY, coverWidth * 0.8, 60);
+  const titleY = height * layout.titlePosition.offsetY;
+  wrapText(
+    ctx, 
+    title, 
+    frontX + coverWidth * 0.1, 
+    titleY, 
+    coverWidth * 0.8, 
+    60,
+    layout.titlePosition.textAlign
+  );
 
   // Draw subtitle
   ctx.font = `${template.subtitleStyle.fontWeight} ${template.subtitleStyle.fontSize} ${selectedFont}`;
   ctx.fillStyle = template.subtitleStyle.color;
-  wrapText(ctx, subtitle, frontX + coverWidth * 0.1, height * 0.5, coverWidth * 0.8, 40);
+  const subtitleY = height * layout.subtitlePosition.offsetY;
+  wrapText(
+    ctx, 
+    subtitle, 
+    frontX + coverWidth * 0.1, 
+    subtitleY, 
+    coverWidth * 0.8, 
+    40,
+    layout.subtitlePosition.textAlign
+  );
 
   // Draw author name
   ctx.font = `normal ${template.authorStyle.fontSize} ${selectedFont}`;
   ctx.fillStyle = template.authorStyle.color;
-  ctx.fillText(`By ${authorName}`, frontCenterX, height * 0.85);
+  const authorY = height * layout.authorPosition.offsetY;
+  const authorX = frontX + coverWidth * 0.1;
+  ctx.textAlign = layout.authorPosition.textAlign;
+  const authorAlignX = layout.authorPosition.textAlign === 'center' ? frontX + coverWidth/2 :
+                      layout.authorPosition.textAlign === 'right' ? frontX + coverWidth * 0.9 : 
+                      authorX;
+  ctx.fillText(`By ${authorName}`, authorAlignX, authorY);
 };
 
 export const drawSpine = (

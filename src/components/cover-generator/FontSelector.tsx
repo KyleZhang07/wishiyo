@@ -1,27 +1,21 @@
 
 import { Button } from '@/components/ui/button';
+import { coverLayouts } from './types';
 
-interface FontSelectorProps {
-  selectedFont: string;
-  onSelectFont: (font: string) => void;
+interface LayoutSelectorProps {
+  selectedLayout: string;
+  onSelectLayout: (layout: string) => void;
 }
 
-const FontSelector = ({ selectedFont, onSelectFont }: FontSelectorProps) => {
-  const layouts = [
-    { name: 'Centered', class: 'text-center' },
-    { name: 'Classic', class: 'text-left' },
-    { name: 'Modern Split', class: 'text-right' },
-    { name: 'Dynamic', class: 'font-bold' },
-  ];
-
+const LayoutSelector = ({ selectedLayout, onSelectLayout }: LayoutSelectorProps) => {
   return (
     <div className="flex gap-2 overflow-x-auto py-4">
-      {layouts.map((layout) => (
+      {Object.values(coverLayouts).map((layout) => (
         <Button
-          key={layout.name}
-          variant={selectedFont === layout.class ? 'default' : 'outline'}
-          className={`${layout.class} min-w-[80px]`}
-          onClick={() => onSelectFont(layout.class)}
+          key={layout.id}
+          variant={selectedLayout === layout.id ? 'default' : 'outline'}
+          className="min-w-[120px]"
+          onClick={() => onSelectLayout(layout.id)}
         >
           {layout.name}
         </Button>
@@ -30,4 +24,4 @@ const FontSelector = ({ selectedFont, onSelectFont }: FontSelectorProps) => {
   );
 };
 
-export default FontSelector;
+export default LayoutSelector;

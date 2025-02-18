@@ -142,6 +142,90 @@ export const coverTemplates: { [key: string]: TemplateType } = {
   }
 };
 
+export interface CoverLayout {
+  id: string;
+  name: string;
+  titlePosition: {
+    offsetY: number;
+    textAlign: 'left' | 'center' | 'right';
+  };
+  subtitlePosition: {
+    offsetY: number;
+    textAlign: 'left' | 'center' | 'right';
+  };
+  authorPosition: {
+    offsetY: number;
+    textAlign: 'left' | 'center' | 'right';
+  };
+}
+
+export const coverLayouts: { [key: string]: CoverLayout } = {
+  centered: {
+    id: 'centered',
+    name: 'Centered',
+    titlePosition: {
+      offsetY: 0.3,
+      textAlign: 'center'
+    },
+    subtitlePosition: {
+      offsetY: 0.5,
+      textAlign: 'center'
+    },
+    authorPosition: {
+      offsetY: 0.85,
+      textAlign: 'center'
+    }
+  },
+  classic: {
+    id: 'classic',
+    name: 'Classic',
+    titlePosition: {
+      offsetY: 0.25,
+      textAlign: 'left'
+    },
+    subtitlePosition: {
+      offsetY: 0.45,
+      textAlign: 'left'
+    },
+    authorPosition: {
+      offsetY: 0.85,
+      textAlign: 'right'
+    }
+  },
+  'modern-split': {
+    id: 'modern-split',
+    name: 'Modern Split',
+    titlePosition: {
+      offsetY: 0.2,
+      textAlign: 'right'
+    },
+    subtitlePosition: {
+      offsetY: 0.4,
+      textAlign: 'right'
+    },
+    authorPosition: {
+      offsetY: 0.85,
+      textAlign: 'left'
+    }
+  },
+  dynamic: {
+    id: 'dynamic',
+    name: 'Dynamic',
+    titlePosition: {
+      offsetY: 0.15,
+      textAlign: 'left'
+    },
+    subtitlePosition: {
+      offsetY: 0.6,
+      textAlign: 'right'
+    },
+    authorPosition: {
+      offsetY: 0.9,
+      textAlign: 'center'
+    }
+  }
+};
+
 export interface CanvasSize {
   width: number;
   height: number;
@@ -154,3 +238,10 @@ export interface CanvasImage {
   scale: number;
   position: { x: number; y: number };
 }
+
+export const DEFAULT_CANVAS_SIZE: CanvasSize = {
+  width: 2400,
+  height: 1000,
+  spine: 100,
+  gap: 30
+};
