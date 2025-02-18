@@ -39,22 +39,25 @@ serve(async (req) => {
     const imageBlob = await dataURLtoBlob(imageUrl)
     console.log('Converted image to blob, size:', imageBlob.size)
 
+    const apiKey = Deno.env.get('PHOTOROOM_API_KEY')
+    console.log('Using API key:', apiKey ? 'Key found' : 'Key missing')
+
     // Call PhotoRoom API
     const formData = new FormData()
     formData.append('image_file', imageBlob, 'image.jpg')
 
     console.log('Calling PhotoRoom API...')
-    const photoroomResponse = await fetch('https://api.photoroom.com/v1/segment', {
+    const photoroomResponse = await fetch('https://sdk.photoroom.com/v1/segment', {
       method: 'POST',
       headers: {
-        'x-api-key': Deno.env.get('PHOTOROOM_API_KEY') || '',
+        'x-api-key': apiKey || '',
       },
       body: formData,
     })
 
     if (!photoroomResponse.ok) {
-      console.error('PhotoRoom API error:', photoroomResponse.status, photoroomResponse.statusText)
-      throw new Error(`PhotoRoom API error: ${photoroomResponse.statusText}`)
+      console.error('PhotoRoom API error:', photoroomResponse.status, await photoroomResponse.text())
+      throw new Error(`PhotoRoom API error: ${photoroomResponse.statusText || 'Request failed'}`)
     }
 
     // Get the processed image
