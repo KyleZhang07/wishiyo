@@ -77,44 +77,50 @@ const CanvasCoverPreview = ({
       const containerWidth = parseFloat(layout.imageContainerStyle.width) / 100 * coverWidth;
       const containerHeight = parseFloat(layout.imageContainerStyle.height) / 100 * canvas.height;
       
-      // Calculate image dimensions while maintaining aspect ratio
-      const scale = imageScale / 100;
+      // Calculate base image dimensions to fit container
       const { width: imgWidth, height: imgHeight } = image.element;
       const imgAspectRatio = imgWidth / imgHeight;
       const containerAspectRatio = containerWidth / containerHeight;
       
+      // Calculate scaled dimensions based on zoom level
+      const scale = imageScale / 100;
       let scaledWidth, scaledHeight;
+      
       if (imgAspectRatio > containerAspectRatio) {
-        scaledWidth = containerWidth;
-        scaledHeight = containerWidth / imgAspectRatio;
+        scaledWidth = containerWidth * scale;
+        scaledHeight = (containerWidth / imgAspectRatio) * scale;
       } else {
-        scaledHeight = containerHeight;
-        scaledWidth = containerHeight * imgAspectRatio;
+        scaledHeight = containerHeight * scale;
+        scaledWidth = (containerHeight * imgAspectRatio) * scale;
       }
 
-      // Calculate position based on layout configuration
-      let y;
-      switch (layout.imageContainerStyle.position) {
-        case 'top':
-          y = 0;
-          break;
-        case 'bottom':
-          y = canvas.height - scaledHeight;
-          break;
-        default: // center
-          y = (canvas.height - scaledHeight) / 2;
-      }
+      // Center the image in container and apply position offset
+      let y = (canvas.height - scaledHeight) / 2;
+      let x = frontX + (coverWidth - scaledWidth) / 2;
 
-      const x = frontX + (coverWidth - scaledWidth) / 2;
+      // Limit image position to stay within container
+      const maxOffsetX = (scaledWidth - containerWidth) / 2;
+      const maxOffsetY = (scaledHeight - containerHeight) / 2;
+      
+      const offsetX = Math.max(-maxOffsetX, Math.min(maxOffsetX, imagePosition.x * scale));
+      const offsetY = Math.max(-maxOffsetY, Math.min(maxOffsetY, imagePosition.y * scale));
+      
+      x -= offsetX;
+      y -= offsetY;
 
       // Apply container constraints
       ctx.save();
+      ctx.beginPath();
+      const clipX = frontX + (coverWidth - containerWidth) / 2;
+      const clipY = (canvas.height - containerHeight) / 2;
+      
       if (layout.imageContainerStyle.borderRadius) {
-        ctx.beginPath();
         const radius = parseFloat(layout.imageContainerStyle.borderRadius) / 100 * Math.min(containerWidth, containerHeight);
-        ctx.arc(x + scaledWidth/2, y + scaledHeight/2, radius, 0, Math.PI * 2);
-        ctx.clip();
+        ctx.arc(clipX + containerWidth/2, clipY + containerHeight/2, radius, 0, Math.PI * 2);
+      } else {
+        ctx.rect(clipX, clipY, containerWidth, containerHeight);
       }
+      ctx.clip();
       
       ctx.filter = template.imageStyle.filter;
       ctx.globalAlpha = parseFloat(template.imageStyle.opacity);

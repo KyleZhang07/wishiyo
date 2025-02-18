@@ -1,3 +1,4 @@
+
 import { TemplateType, CoverLayout } from '../types';
 
 export const wrapText = (
@@ -24,7 +25,7 @@ export const wrapText = (
     if (metrics.width > maxWidth) {
       ctx.fillText(line, alignX, currentY);
       line = word + ' ';
-      currentY += lineHeight * 0.6;
+      currentY += lineHeight * 0.8; // Adjusted from 0.6 to 0.8 for better spacing
     } else {
       line = testLine;
     }
@@ -69,22 +70,22 @@ export const drawFrontCover = (
     layout.titlePosition.textAlign
   );
 
-  // Draw subtitle with reduced line spacing
+  // Draw subtitle closer to title with adjusted line spacing
   ctx.font = `${template.subtitleStyle.fontWeight} ${template.subtitleStyle.fontSize} ${selectedFont}`;
   ctx.fillStyle = template.subtitleStyle.color;
-  const subtitleY = height * layout.subtitlePosition.offsetY;
+  const subtitleY = height * (layout.titlePosition.offsetY + 0.15); // Moved closer to title
   wrapText(
     ctx, 
     subtitle, 
     frontX + coverWidth * 0.1, 
     subtitleY, 
     coverWidth * 0.8, 
-    25,
+    35, // Adjusted from 25 to 35 for better line spacing
     layout.subtitlePosition.textAlign
   );
 
-  // Draw author name
-  ctx.font = `normal ${template.authorStyle.fontSize} ${selectedFont}`;
+  // Draw larger author name
+  ctx.font = `normal 1.5rem ${selectedFont}`; // Increased font size
   ctx.fillStyle = template.authorStyle.color;
   const authorY = height * layout.authorPosition.offsetY;
   const authorX = frontX + coverWidth * 0.1;
