@@ -1,5 +1,5 @@
-
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
 import { ImagePlus } from 'lucide-react';
@@ -17,6 +17,7 @@ const FunnyBiographyPhotosStep = () => {
   const [photo, setPhoto] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -176,33 +177,16 @@ const FunnyBiographyPhotosStep = () => {
       return;
     }
 
-    setIsProcessing(true);
     try {
       const compressedDataUrl = await compressImage(file);
-      
-      // Convert base64 to blob
-      const response = await fetch(compressedDataUrl);
-      const blob = await response.blob();
-      
-      // Load image for processing
-      const img = await loadImage(blob);
-      
-      // Remove background
-      toast({
-        title: "Processing image",
-        description: "Removing background... Please wait"
-      });
-      
-      const processedBlob = await removeBackground(img);
-      const processedUrl = URL.createObjectURL(processedBlob);
-      
-      setPhoto(processedUrl);
+      setPhoto(compressedDataUrl);
       
       try {
-        localStorage.setItem('funnyBiographyPhoto', processedUrl);
+        // Store the original compressed image first
+        localStorage.setItem('funnyBiographyPhoto', compressedDataUrl);
         toast({
           title: "Photo uploaded successfully",
-          description: "Background removed and photo saved"
+          description: "Click continue to process the image"
         });
       } catch (error) {
         console.error('Error saving to localStorage:', error);
@@ -218,6 +202,49 @@ const FunnyBiographyPhotosStep = () => {
         variant: "destructive",
         title: "Error",
         description: "Could not process the image. Please try another one."
+      });
+    }
+  };
+
+  const handleContinue = async () => {
+    if (!photo) {
+      toast({
+        variant: "destructive",
+        title: "No photo selected",
+        description: "Please upload a photo first"
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+    toast({
+      title: "Processing image",
+      description: "Removing background... Please wait"
+    });
+
+    try {
+      // Convert base64 to blob
+      const response = await fetch(photo);
+      const blob = await response.blob();
+      
+      // Load image for processing
+      const img = await loadImage(blob);
+      
+      // Remove background
+      const processedBlob = await removeBackground(img);
+      const processedUrl = URL.createObjectURL(processedBlob);
+      
+      // Save the processed image
+      localStorage.setItem('funnyBiographyProcessedPhoto', processedUrl);
+      
+      // Navigate to next step
+      navigate('/create/friends/funny-biography/generate');
+    } catch (error) {
+      console.error('Error processing image:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not process the image. Please try again."
       });
     } finally {
       setIsProcessing(false);
@@ -236,6 +263,7 @@ const FunnyBiographyPhotosStep = () => {
       nextStep="/create/friends/funny-biography/generate"
       currentStep={3}
       totalSteps={4}
+      onContinue={handleContinue}
     >
       <div className="space-y-6">
         <input 

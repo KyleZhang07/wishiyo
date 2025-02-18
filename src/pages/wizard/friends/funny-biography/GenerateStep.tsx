@@ -19,7 +19,7 @@ const FunnyBiographyGenerateStep = () => {
     const savedAuthor = localStorage.getItem('funnyBiographyAuthorName');
     const savedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
     const savedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
-    const savedPhotos = localStorage.getItem('funnyBiographyPhoto');
+    const savedProcessedPhoto = localStorage.getItem('funnyBiographyProcessedPhoto');
 
     if (savedAuthor) {
       setAuthorName(savedAuthor);
@@ -34,8 +34,8 @@ const FunnyBiographyGenerateStep = () => {
       }
     }
 
-    if (savedPhotos) {
-      setCoverImage(savedPhotos);
+    if (savedProcessedPhoto) {
+      setCoverImage(savedProcessedPhoto);
     }
   }, []);
 
