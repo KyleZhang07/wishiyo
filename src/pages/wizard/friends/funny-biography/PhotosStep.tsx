@@ -76,7 +76,8 @@ const FunnyBiographyPhotosStep = () => {
     try {
       console.log('Starting background removal process...');
       const segmenter = await pipeline('image-segmentation', 'Xenova/segformer-b0-finetuned-ade-512-512', {
-        device: 'webgpu',
+        device: 'wasm', // Changed from webgpu to wasm
+        quantized: true, // Add quantization for better performance
       });
       
       // Convert HTMLImageElement to canvas
@@ -93,54 +94,60 @@ const FunnyBiographyPhotosStep = () => {
       const imageData = canvas.toDataURL('image/jpeg', 0.8);
       console.log('Image converted to base64');
       
-      // Process the image with the segmentation model
-      console.log('Processing with segmentation model...');
-      const result = await segmenter(imageData);
-      
-      console.log('Segmentation result:', result);
-      
-      if (!result || !Array.isArray(result) || result.length === 0 || !result[0].mask) {
-        throw new Error('Invalid segmentation result');
+      try {
+        // Process the image with the segmentation model
+        console.log('Processing with segmentation model...');
+        const result = await segmenter(imageData);
+        
+        console.log('Segmentation result:', result);
+        
+        if (!result || !Array.isArray(result) || result.length === 0 || !result[0].mask) {
+          throw new Error('Invalid segmentation result');
+        }
+        
+        // Create a new canvas for the masked image
+        const outputCanvas = document.createElement('canvas');
+        outputCanvas.width = canvas.width;
+        outputCanvas.height = canvas.height;
+        const outputCtx = outputCanvas.getContext('2d');
+        
+        if (!outputCtx) throw new Error('Could not get output canvas context');
+        
+        // Draw original image
+        outputCtx.drawImage(canvas, 0, 0);
+        
+        // Apply the mask
+        const outputImageData = outputCtx.getImageData(0, 0, outputCanvas.width, outputCanvas.height);
+        const data = outputImageData.data;
+        
+        // Apply inverted mask to alpha channel
+        for (let i = 0; i < result[0].mask.data.length; i++) {
+          const alpha = Math.round((1 - result[0].mask.data[i]) * 255);
+          data[i * 4 + 3] = alpha;
+        }
+        
+        outputCtx.putImageData(outputImageData, 0, 0);
+        console.log('Mask applied successfully');
+        
+        // Convert canvas to blob
+        return new Promise((resolve, reject) => {
+          outputCanvas.toBlob(
+            (blob) => {
+              if (blob) {
+                console.log('Successfully created final blob');
+                resolve(blob);
+              } else {
+                reject(new Error('Failed to create blob'));
+              }
+            },
+            'image/png',
+            1.0
+          );
+        });
+      } catch (segmentationError) {
+        console.error('Error during segmentation:', segmentationError);
+        throw new Error('Failed to process the image. Please try again or use a different image.');
       }
-      
-      // Create a new canvas for the masked image
-      const outputCanvas = document.createElement('canvas');
-      outputCanvas.width = canvas.width;
-      outputCanvas.height = canvas.height;
-      const outputCtx = outputCanvas.getContext('2d');
-      
-      if (!outputCtx) throw new Error('Could not get output canvas context');
-      
-      // Draw original image
-      outputCtx.drawImage(canvas, 0, 0);
-      
-      // Apply the mask
-      const outputImageData = outputCtx.getImageData(0, 0, outputCanvas.width, outputCanvas.height);
-      const data = outputImageData.data;
-      
-      // Apply inverted mask to alpha channel
-      for (let i = 0; i < result[0].mask.data.length; i++) {
-        const alpha = Math.round((1 - result[0].mask.data[i]) * 255);
-        data[i * 4 + 3] = alpha;
-      }
-      
-      outputCtx.putImageData(outputImageData, 0, 0);
-      
-      // Convert canvas to blob
-      return new Promise((resolve, reject) => {
-        outputCanvas.toBlob(
-          (blob) => {
-            if (blob) {
-              console.log('Successfully created final blob');
-              resolve(blob);
-            } else {
-              reject(new Error('Failed to create blob'));
-            }
-          },
-          'image/png',
-          1.0
-        );
-      });
     } catch (error) {
       console.error('Error removing background:', error);
       throw error;
@@ -183,11 +190,10 @@ const FunnyBiographyPhotosStep = () => {
       setPhoto(compressedDataUrl);
       
       try {
-        // Store the original compressed image first
         localStorage.setItem('funnyBiographyPhoto', compressedDataUrl);
         toast({
           title: "Photo uploaded successfully",
-          description: "Click continue to process the image"
+          description: "Click continue to process the image and remove the background"
         });
       } catch (error) {
         console.error('Error saving to localStorage:', error);
@@ -220,7 +226,7 @@ const FunnyBiographyPhotosStep = () => {
     setIsProcessing(true);
     toast({
       title: "Processing image",
-      description: "Removing background... Please wait"
+      description: "Removing background... This may take a few moments"
     });
 
     try {
@@ -238,14 +244,19 @@ const FunnyBiographyPhotosStep = () => {
       // Save the processed image
       localStorage.setItem('funnyBiographyProcessedPhoto', processedUrl);
       
+      toast({
+        title: "Success",
+        description: "Background removed successfully!"
+      });
+      
       // Navigate to next step
       navigate('/create/friends/funny-biography/generate');
     } catch (error) {
       console.error('Error processing image:', error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Could not process the image. Please try again."
+        title: "Processing Error",
+        description: error instanceof Error ? error.message : "Could not process the image. Please try again with a different image."
       });
     } finally {
       setIsProcessing(false);
