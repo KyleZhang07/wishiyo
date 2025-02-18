@@ -26,19 +26,8 @@ const ImageAdjustDialog = ({
   const [isDragging, setIsDragging] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
 
-  const handleMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
+  const updatePosition = (event: MouseEvent | React.MouseEvent) => {
     if (!gridRef.current) return;
-    setIsDragging(true);
-    
-    const rect = gridRef.current.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
-    const y = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
-    
-    setPosition({ x, y });
-  };
-
-  const handleMouseMove = (event: MouseEvent) => {
-    if (!isDragging || !gridRef.current) return;
     
     const rect = gridRef.current.getBoundingClientRect();
     const x = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
@@ -48,6 +37,22 @@ const ImageAdjustDialog = ({
       x: Math.max(-1, Math.min(1, x)),
       y: Math.max(-1, Math.min(1, y))
     });
+  };
+
+  const handleMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
+    setIsDragging(true);
+    updatePosition(event);
+  };
+
+  const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDragging) {
+      updatePosition(event);
+    }
+  };
+
+  const handleMouseMove = (event: MouseEvent) => {
+    if (!isDragging) return;
+    updatePosition(event);
   };
 
   const handleMouseUp = () => {
@@ -76,6 +81,7 @@ const ImageAdjustDialog = ({
           ref={gridRef}
           className="relative aspect-[4/3] mb-6 bg-gray-900 rounded-lg overflow-hidden cursor-move"
           onMouseDown={handleMouseDown}
+          onClick={handleClick}
         >
           {/* Grid lines */}
           <div className="absolute inset-0 grid grid-cols-3 grid-rows-3">
@@ -92,7 +98,7 @@ const ImageAdjustDialog = ({
             <div 
               className="absolute inset-0 flex items-center justify-center"
               style={{
-                transform: `translate(${position.x * 25}%, ${position.y * 25}%) scale(${scale / 100})`
+                transform: `translate(${position.x * 50}%, ${position.y * 50}%) scale(${scale / 100})`
               }}
             >
               <img 

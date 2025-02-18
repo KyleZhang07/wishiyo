@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { CanvasSize, coverLayouts } from './types';
@@ -97,21 +96,11 @@ const CanvasCoverPreview = ({
         scaledWidth = (containerHeight * imgAspectRatio) * scale;
       }
 
-      // Center the image in container and apply position offset
-      let y = (canvas.height - scaledHeight) / 2;
-      let x = frontX + (coverWidth - scaledWidth) / 2;
+      // Calculate position adjustments based on imagePosition
+      const maxTranslateX = (scaledWidth - containerWidth) / 2;
+      const maxTranslateY = (scaledHeight - containerHeight) / 2;
 
-      // Limit image position to stay within container
-      const maxOffsetX = (scaledWidth - containerWidth) / 2;
-      const maxOffsetY = (scaledHeight - containerHeight) / 2;
-      
-      const offsetX = Math.max(-maxOffsetX, Math.min(maxOffsetX, imagePosition.x * scale));
-      const offsetY = Math.max(-maxOffsetY, Math.min(maxOffsetY, imagePosition.y * scale));
-      
-      x -= offsetX;
-      y -= offsetY;
-
-      // Apply container constraints
+      // Apply container constraints and center the image
       ctx.save();
       ctx.beginPath();
       const clipX = frontX + (coverWidth - containerWidth) / 2;
@@ -125,6 +114,12 @@ const CanvasCoverPreview = ({
       }
       ctx.clip();
       
+      const translateX = imagePosition.x * maxTranslateX;
+      const translateY = imagePosition.y * maxTranslateY;
+      
+      const x = clipX + (containerWidth - scaledWidth) / 2 - translateX;
+      const y = clipY + (containerHeight - scaledHeight) / 2 - translateY;
+
       ctx.filter = template.imageStyle.filter;
       ctx.globalAlpha = parseFloat(template.imageStyle.opacity);
       ctx.drawImage(image.element, x, y, scaledWidth, scaledHeight);
