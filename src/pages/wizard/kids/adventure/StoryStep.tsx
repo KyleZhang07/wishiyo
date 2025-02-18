@@ -74,7 +74,15 @@ const KidsAdventureStoryStep = () => {
               <span className="text-gray-500">Click to upload</span>
             </Button>
           ) : (
-            <img src={photo} alt="" className="w-full h-full object-cover rounded-lg" />
+            <button
+              className="w-full h-full p-0 hover:opacity-90 transition-opacity relative group"
+              onClick={handleUploadClick}
+            >
+              <img src={photo} alt="" className="w-full h-full object-cover rounded-lg" />
+              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
+                <span className="text-white font-medium">Click to replace photo</span>
+              </div>
+            </button>
           )}
         </div>
       </div>
