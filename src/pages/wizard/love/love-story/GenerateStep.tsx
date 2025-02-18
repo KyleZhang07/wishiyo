@@ -5,54 +5,28 @@ import { Button } from '@/components/ui/button';
 const LoveStoryGenerateStep = () => {
   return (
     <WizardStep
-      title="Your Love Story"
-      description="Preview your romantic journey!"
+      title="Create Your Love Story"
+      description="Let's turn your beautiful moments into a timeless story"
       previousStep="/create/love/love-story/moments"
       currentStep={4}
       totalSteps={4}
     >
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-        <div className="bg-black rounded-xl p-8 aspect-[3/4] relative flex flex-col">
-          <div className="flex-1 flex flex-col justify-between">
-            <div className="text-neon-green text-4xl font-bold mb-4">Love Story</div>
-            <div className="space-y-4">
-              <div className="text-white text-lg">A Journey of Romance</div>
-              <div className="text-gray-400 text-sm">By [Author Name]</div>
-            </div>
-          </div>
-          <div className="absolute top-4 right-4">
-            <div className="bg-neon-green text-black font-bold rounded-full p-2 text-sm">
-              ROMANCE
-            </div>
-          </div>
+      <div className="space-y-6">
+        <div className="bg-white rounded-lg border p-6">
+          <h3 className="font-medium text-lg mb-4">Your Love Story Includes:</h3>
+          <ul className="space-y-2 text-gray-600">
+            <li>✓ Your Journey Together</li>
+            <li>✓ Special Moments</li>
+            <li>✓ Beautiful Photos</li>
+            <li>✓ Romantic Memories</li>
+          </ul>
         </div>
-
-        <div className="bg-black rounded-xl p-8 text-white">
-          <h3 className="text-neon-green text-2xl font-bold mb-6">Book Preview</h3>
-          <div className="space-y-6">
-            <div className="border-l-4 border-neon-green pl-4">
-              <p className="text-gray-300 mb-2">
-                "A touching tale of love, passion, and destiny."
-              </p>
-              <p className="text-sm text-gray-400">- Romance Weekly</p>
-            </div>
-            <div className="border-l-4 border-neon-green pl-4">
-              <p className="text-gray-300 mb-2">
-                "This love story will make your heart flutter."
-              </p>
-              <p className="text-sm text-gray-400">- Love & Life Magazine</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="lg:col-span-2">
-          <Button 
-            className="w-full bg-neon-green hover:bg-neon-green/90 text-black font-bold py-6 text-lg"
-            onClick={() => {/* Generate book logic */}}
-          >
-            Generate Your Love Story
-          </Button>
-        </div>
+        <Button 
+          className="w-full py-6 text-lg"
+          onClick={() => {/* Generate book logic */}}
+        >
+          Generate Your Love Story
+        </Button>
       </div>
     </WizardStep>
   );
