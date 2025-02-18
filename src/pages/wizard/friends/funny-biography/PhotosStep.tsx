@@ -4,6 +4,7 @@ import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
 import { ImagePlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { removeBackground } from '@imgly/background-removal';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const MAX_IMAGE_DIMENSION = 1200;
@@ -23,6 +24,38 @@ const FunnyBiographyPhotosStep = () => {
       console.error('Error loading photo from localStorage:', error);
     }
   }, []);
+
+  const processAndRemoveBackground = async (imageDataUrl: string) => {
+    try {
+      // Convert data URL to blob
+      const response = await fetch(imageDataUrl);
+      const blob = await response.blob();
+
+      // Process the image
+      const processedBlob = await removeBackground(blob);
+      
+      // Convert processed blob to base64
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64data = reader.result as string;
+        localStorage.setItem('funnyBiographyProcessedPhoto', base64data);
+        
+        toast({
+          title: "Background removed successfully",
+          description: "Your photo has been processed and is ready to use.",
+        });
+      };
+      reader.readAsDataURL(processedBlob);
+    } catch (error) {
+      console.error('Error removing background:', error);
+      toast({
+        variant: "destructive",
+        title: "Error removing background",
+        description: "Will use original image for the cover."
+      });
+      localStorage.setItem('funnyBiographyProcessedPhoto', imageDataUrl);
+    }
+  };
 
   const compressImage = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -91,20 +124,20 @@ const FunnyBiographyPhotosStep = () => {
 
     try {
       const compressedDataUrl = await compressImage(file);
-      setPhoto(compressedDataUrl);
       
-      try {
+      // Check if the photo has actually changed
+      const currentPhoto = localStorage.getItem('funnyBiographyPhoto');
+      if (currentPhoto !== compressedDataUrl) {
+        setPhoto(compressedDataUrl);
         localStorage.setItem('funnyBiographyPhoto', compressedDataUrl);
+        
+        // Remove old processed photo and process new one
+        localStorage.removeItem('funnyBiographyProcessedPhoto');
+        await processAndRemoveBackground(compressedDataUrl);
+        
         toast({
           title: "Photo uploaded successfully",
-          description: "Your photo has been saved"
-        });
-      } catch (error) {
-        console.error('Error saving to localStorage:', error);
-        toast({
-          variant: "destructive",
-          title: "Storage error",
-          description: "Could not save the photo. Please try a smaller image."
+          description: "Your photo has been saved and is being processed"
         });
       }
     } catch (error) {
