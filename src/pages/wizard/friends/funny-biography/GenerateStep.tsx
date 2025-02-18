@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import CanvasCoverPreview from '@/components/cover-generator/CanvasCoverPreview';
 import LayoutSelector from '@/components/cover-generator/FontSelector';
 import TemplateSelector from '@/components/cover-generator/TemplateSelector';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
@@ -13,48 +14,56 @@ const FunnyBiographyGenerateStep = () => {
   const [subtitle, setSubtitle] = useState('');
   const [authorName, setAuthorName] = useState('');
   const [coverImage, setCoverImage] = useState<string>();
+  const [processedImage, setProcessedImage] = useState<string>();
   const [selectedLayout, setSelectedLayout] = useState('centered');
   const [selectedTemplate, setSelectedTemplate] = useState('modern');
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
 
-  // Function to handle image opacity adjustment
-  const adjustImageOpacity = (imageData: string, opacity: number = 0.85): Promise<string> => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        
-        if (ctx) {
-          ctx.globalAlpha = opacity;
-          ctx.drawImage(img, 0, 0);
-          resolve(canvas.toDataURL('image/png'));
-        } else {
-          resolve(imageData); // Fallback to original if context not available
-        }
-      };
-      img.src = imageData;
-    });
-  };
+  useEffect(() => {
+    // Load data from localStorage
+    const savedAuthor = localStorage.getItem('funnyBiographyAuthorName');
+    const savedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
+    const savedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
+    const savedPhotos = localStorage.getItem('funnyBiographyPhoto');
 
-  // Function to handle image background processing
+    if (savedAuthor) {
+      setAuthorName(savedAuthor);
+    }
+
+    if (savedIdeas && savedIdeaIndex) {
+      const ideas = JSON.parse(savedIdeas);
+      const selectedIdea = ideas[parseInt(savedIdeaIndex)];
+      if (selectedIdea) {
+        setCoverTitle(selectedIdea.title || '');
+        setSubtitle(selectedIdea.description || '');
+      }
+    }
+
+    if (savedPhotos) {
+      setCoverImage(savedPhotos);
+      processImage(savedPhotos);
+    }
+  }, []);
+
   const processImage = async (imageData: string) => {
     setIsProcessing(true);
     try {
-      // Apply opacity adjustment
-      const processedImage = await adjustImageOpacity(imageData);
-      
-      // Save to localStorage for persistence
-      localStorage.setItem('funnyBiographyProcessedPhoto', processedImage);
-      setCoverImage(processedImage);
-      
-      toast({
-        title: "Success",
-        description: "Image processed successfully!"
+      const { data, error } = await supabase.functions.invoke('remove-background', {
+        body: { image: imageData }
       });
+
+      if (error) throw error;
+
+      if (data.image) {
+        setProcessedImage(data.image);
+        // Save to localStorage for persistence
+        localStorage.setItem('funnyBiographyProcessedPhoto', data.image);
+        toast({
+          title: "Success",
+          description: "Background removed successfully!"
+        });
+      }
     } catch (error) {
       console.error('Error processing image:', error);
       toast({
@@ -66,43 +75,6 @@ const FunnyBiographyGenerateStep = () => {
       setIsProcessing(false);
     }
   };
-
-  // Load and process image when component mounts
-  useEffect(() => {
-    const loadAndProcessImage = async () => {
-      const savedAuthor = localStorage.getItem('funnyBiographyAuthorName');
-      const savedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
-      const savedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
-      const savedPhotos = localStorage.getItem('funnyBiographyPhoto');
-      const processedPhoto = localStorage.getItem('funnyBiographyProcessedPhoto');
-
-      if (savedAuthor) {
-        setAuthorName(savedAuthor);
-      }
-
-      if (savedIdeas && savedIdeaIndex) {
-        const ideas = JSON.parse(savedIdeas);
-        const selectedIdea = ideas[parseInt(savedIdeaIndex)];
-        if (selectedIdea) {
-          setCoverTitle(selectedIdea.title || '');
-          setSubtitle(selectedIdea.description || '');
-        }
-      }
-
-      // Process image if we have a photo but no processed version
-      if (savedPhotos && !processedPhoto) {
-        await processImage(savedPhotos);
-      } else if (processedPhoto) {
-        // Use existing processed photo if available
-        setCoverImage(processedPhoto);
-      } else if (savedPhotos) {
-        // Fallback to original photo if no processed version
-        setCoverImage(savedPhotos);
-      }
-    };
-
-    loadAndProcessImage();
-  }, []); // Run only once when component mounts
 
   return (
     <WizardStep
@@ -125,7 +97,7 @@ const FunnyBiographyGenerateStep = () => {
             coverTitle={coverTitle}
             subtitle={subtitle}
             authorName={authorName}
-            coverImage={coverImage}
+            coverImage={processedImage || coverImage}
             selectedFont="Arial"
             selectedTemplate={selectedTemplate}
             selectedLayout={selectedLayout}
