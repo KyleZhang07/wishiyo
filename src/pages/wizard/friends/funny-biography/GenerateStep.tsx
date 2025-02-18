@@ -60,7 +60,7 @@ const FunnyBiographyGenerateStep = () => {
           
           <div className="space-y-4">
             <div>
-              <h3 className="text-lg font-medium text-center mb-2">Choose Your Cover Style</h3>
+              <h3 className="text-lg font-medium text-center mb-2">Choose Your Color Theme</h3>
               <TemplateSelector
                 selectedTemplate={selectedTemplate}
                 onSelectTemplate={setSelectedTemplate}
@@ -68,7 +68,7 @@ const FunnyBiographyGenerateStep = () => {
             </div>
             
             <div>
-              <h3 className="text-lg font-medium text-center mb-2">Choose Your Font Style</h3>
+              <h3 className="text-lg font-medium text-center mb-2">Choose Your Cover Layout</h3>
               <FontSelector
                 selectedFont={selectedFont}
                 onSelectFont={setSelectedFont}

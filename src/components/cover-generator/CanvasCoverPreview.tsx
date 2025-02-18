@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from 'react';
 import ImageControls from './ImageControls';
 import { TemplateType, CanvasSize, CanvasImage } from './types';
@@ -73,7 +72,7 @@ const CanvasCoverPreview = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const coverWidth = DEFAULT_CANVAS_SIZE.height * 0.75; // 3:4 aspect ratio
+    const coverWidth = DEFAULT_CANVAS_SIZE.height * 0.75;
     const spineWidth = DEFAULT_CANVAS_SIZE.spine;
     const gap = DEFAULT_CANVAS_SIZE.gap;
 
@@ -82,9 +81,9 @@ const CanvasCoverPreview = ({
     const spineX = frontX + coverWidth + gap;
     const backX = spineX + spineWidth + gap;
 
-    // Clear canvas
+    // Clear canvas and draw backgrounds
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+    
     // Draw front cover
     ctx.fillStyle = template.backgroundColor;
     ctx.fillRect(frontX, 0, coverWidth, canvas.height);
@@ -114,22 +113,23 @@ const CanvasCoverPreview = ({
       ctx.restore();
     }
 
-    // Draw front cover text
+    // Draw front cover text with improved positioning
     const frontCenterX = frontX + (coverWidth / 2);
-    ctx.textAlign = template.titleStyle.textAlign;
+    ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // Front title with text wrapping
+    // Draw title with proper wrapping and centering
     ctx.font = `${template.titleStyle.fontWeight} ${template.titleStyle.fontSize} ${selectedFont}`;
     ctx.fillStyle = template.titleStyle.color;
-    wrapText(ctx, coverTitle, frontX + 40, canvas.height * 0.3, coverWidth - 80, 60);
+    const titleY = canvas.height * template.titleStyle.offsetY;
+    wrapText(ctx, coverTitle, frontX + coverWidth * 0.1, titleY, coverWidth * 0.8, 60);
 
-    // Front subtitle
+    // Draw subtitle with proper spacing
     ctx.font = `${template.subtitleStyle.fontWeight} ${template.subtitleStyle.fontSize} ${selectedFont}`;
     ctx.fillStyle = template.subtitleStyle.color;
-    wrapText(ctx, subtitle, frontX + 40, canvas.height * 0.5, coverWidth - 80, 40);
+    wrapText(ctx, subtitle, frontX + coverWidth * 0.1, canvas.height * 0.5, coverWidth * 0.8, 40);
 
-    // Front author
+    // Draw author name at bottom
     ctx.font = `normal ${template.authorStyle.fontSize} ${selectedFont}`;
     ctx.fillStyle = template.authorStyle.color;
     ctx.fillText(`By ${authorName}`, frontCenterX, canvas.height * 0.85);

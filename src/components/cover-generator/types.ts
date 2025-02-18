@@ -1,4 +1,3 @@
-
 export type TemplateType = {
   id: string;
   name: string;
@@ -8,6 +7,7 @@ export type TemplateType = {
     fontSize: string;
     fontWeight: string;
     textAlign: 'left' | 'center' | 'right';
+    offsetY: number;
   };
   subtitleStyle: {
     color: string;
@@ -43,7 +43,8 @@ export const coverTemplates: { [key: string]: TemplateType } = {
       color: '#ffffff',
       fontSize: '2.5rem',
       fontWeight: 'bold',
-      textAlign: 'center'
+      textAlign: 'center',
+      offsetY: 0.3
     },
     subtitleStyle: {
       color: '#D6BCFA',
@@ -77,7 +78,8 @@ export const coverTemplates: { [key: string]: TemplateType } = {
       color: '#1A1F2C',
       fontSize: '2.5rem',
       fontWeight: 'bold',
-      textAlign: 'center'
+      textAlign: 'center',
+      offsetY: 0.3
     },
     subtitleStyle: {
       color: '#6E59A5',
@@ -111,7 +113,8 @@ export const coverTemplates: { [key: string]: TemplateType } = {
       color: '#ffffff',
       fontSize: '2.5rem',
       fontWeight: 'bold',
-      textAlign: 'center'
+      textAlign: 'center',
+      offsetY: 0.3
     },
     subtitleStyle: {
       color: '#FDE1D3',

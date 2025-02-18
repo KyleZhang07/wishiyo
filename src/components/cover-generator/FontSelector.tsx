@@ -7,24 +7,23 @@ interface FontSelectorProps {
 }
 
 const FontSelector = ({ selectedFont, onSelectFont }: FontSelectorProps) => {
-  const fonts = [
-    { name: 'Classic', class: 'font-serif' },
-    { name: 'Modern', class: 'font-sans' },
-    { name: 'Elegant', class: 'font-display' },
-    { name: 'Bold', class: 'font-bold' },
-    { name: 'Script', class: 'font-playfair' },
+  const layouts = [
+    { name: 'Centered', class: 'text-center' },
+    { name: 'Classic', class: 'text-left' },
+    { name: 'Modern Split', class: 'text-right' },
+    { name: 'Dynamic', class: 'font-bold' },
   ];
 
   return (
     <div className="flex gap-2 overflow-x-auto py-4">
-      {fonts.map((font) => (
+      {layouts.map((layout) => (
         <Button
-          key={font.name}
-          variant={selectedFont === font.class ? 'default' : 'outline'}
-          className={`${font.class} min-w-[80px]`}
-          onClick={() => onSelectFont(font.class)}
+          key={layout.name}
+          variant={selectedFont === layout.class ? 'default' : 'outline'}
+          className={`${layout.class} min-w-[80px]`}
+          onClick={() => onSelectFont(layout.class)}
         >
-          Aa
+          {layout.name}
         </Button>
       ))}
     </div>
