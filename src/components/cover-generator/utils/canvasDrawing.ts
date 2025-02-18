@@ -1,4 +1,3 @@
-
 import { TemplateType, CoverLayout } from '../types';
 
 export const wrapText = (
@@ -25,7 +24,7 @@ export const wrapText = (
     if (metrics.width > maxWidth) {
       ctx.fillText(line, alignX, currentY);
       line = word + ' ';
-      currentY += lineHeight;
+      currentY += lineHeight * 0.6;
     } else {
       line = testLine;
     }
@@ -70,7 +69,7 @@ export const drawFrontCover = (
     layout.titlePosition.textAlign
   );
 
-  // Draw subtitle
+  // Draw subtitle with reduced line spacing
   ctx.font = `${template.subtitleStyle.fontWeight} ${template.subtitleStyle.fontSize} ${selectedFont}`;
   ctx.fillStyle = template.subtitleStyle.color;
   const subtitleY = height * layout.subtitlePosition.offsetY;
@@ -80,7 +79,7 @@ export const drawFrontCover = (
     frontX + coverWidth * 0.1, 
     subtitleY, 
     coverWidth * 0.8, 
-    40,
+    25,
     layout.subtitlePosition.textAlign
   );
 

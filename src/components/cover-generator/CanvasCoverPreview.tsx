@@ -72,24 +72,57 @@ const CanvasCoverPreview = ({
     ctx.fillStyle = template.backCoverStyle.backgroundColor;
     ctx.fillRect(backX, 0, coverWidth, canvas.height);
 
-    // Draw cover image if available
-    if (image) {
-      const scale = imageScale / 100;
-      const { width, height } = image.element;
-      const scaledWidth = width * scale;
-      const scaledHeight = height * scale;
+    // Draw cover image if available with container constraints
+    if (image && layout.imageContainerStyle) {
+      const containerWidth = parseFloat(layout.imageContainerStyle.width) / 100 * coverWidth;
+      const containerHeight = parseFloat(layout.imageContainerStyle.height) / 100 * canvas.height;
       
-      const x = frontX + (coverWidth - scaledWidth) / 2 + (imagePosition.x * scale);
-      const y = (canvas.height - scaledHeight) / 2 + (imagePosition.y * scale);
+      // Calculate image dimensions while maintaining aspect ratio
+      const scale = imageScale / 100;
+      const { width: imgWidth, height: imgHeight } = image.element;
+      const imgAspectRatio = imgWidth / imgHeight;
+      const containerAspectRatio = containerWidth / containerHeight;
+      
+      let scaledWidth, scaledHeight;
+      if (imgAspectRatio > containerAspectRatio) {
+        scaledWidth = containerWidth;
+        scaledHeight = containerWidth / imgAspectRatio;
+      } else {
+        scaledHeight = containerHeight;
+        scaledWidth = containerHeight * imgAspectRatio;
+      }
 
+      // Calculate position based on layout configuration
+      let y;
+      switch (layout.imageContainerStyle.position) {
+        case 'top':
+          y = 0;
+          break;
+        case 'bottom':
+          y = canvas.height - scaledHeight;
+          break;
+        default: // center
+          y = (canvas.height - scaledHeight) / 2;
+      }
+
+      const x = frontX + (coverWidth - scaledWidth) / 2;
+
+      // Apply container constraints
       ctx.save();
+      if (layout.imageContainerStyle.borderRadius) {
+        ctx.beginPath();
+        const radius = parseFloat(layout.imageContainerStyle.borderRadius) / 100 * Math.min(containerWidth, containerHeight);
+        ctx.arc(x + scaledWidth/2, y + scaledHeight/2, radius, 0, Math.PI * 2);
+        ctx.clip();
+      }
+      
       ctx.filter = template.imageStyle.filter;
       ctx.globalAlpha = parseFloat(template.imageStyle.opacity);
       ctx.drawImage(image.element, x, y, scaledWidth, scaledHeight);
       ctx.restore();
     }
 
-    // Draw cover sections
+    // Draw text content
     drawFrontCover(ctx, template, layout, {
       frontX,
       coverWidth,
