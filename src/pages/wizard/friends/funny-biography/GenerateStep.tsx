@@ -6,7 +6,7 @@ import CanvasCoverPreview from '@/components/cover-generator/CanvasCoverPreview'
 import LayoutSelector from '@/components/cover-generator/LayoutSelector';
 import FontSelector from '@/components/cover-generator/FontSelector';
 import TemplateSelector from '@/components/cover-generator/TemplateSelector';
-import { supabase } from '@/integrations/supabase/client';
+import { removeBackground } from '@imgly/background-removal';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
 
@@ -27,6 +27,7 @@ const FunnyBiographyGenerateStep = () => {
     const savedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
     const savedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
     const savedPhotos = localStorage.getItem('funnyBiographyPhoto');
+    const processedPhoto = localStorage.getItem('funnyBiographyProcessedPhoto');
 
     if (savedAuthor) {
       setAuthorName(savedAuthor);
@@ -41,7 +42,9 @@ const FunnyBiographyGenerateStep = () => {
       }
     }
 
-    if (savedPhotos) {
+    if (processedPhoto) {
+      setCoverImage(processedPhoto);
+    } else if (savedPhotos) {
       processImage(savedPhotos);
     }
   }, []);
@@ -50,38 +53,36 @@ const FunnyBiographyGenerateStep = () => {
     setIsProcessingImage(true);
     
     try {
-      // Fetch the image and convert to File object
+      // Fetch the image
       const response = await fetch(imageUrl);
       const blob = await response.blob();
-      const file = new File([blob], 'cover-image.jpg', { type: blob.type });
 
-      // Prepare form data
-      const formData = new FormData();
-      formData.append('image', file);
-
-      // Call the edge function
-      const { data, error } = await supabase.functions.invoke('remove-background', {
-        body: formData,
-      });
-
-      if (error) throw error;
-
-      if (data?.url) {
-        setCoverImage(data.url);
+      // Process the image
+      const processedBlob = await removeBackground(blob);
+      
+      // Convert processed blob to base64
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64data = reader.result as string;
+        setCoverImage(base64data);
+        localStorage.setItem('funnyBiographyProcessedPhoto', base64data);
+        
         toast({
           title: "Background removed successfully",
           description: "Your image has been processed and is ready to use.",
         });
-      }
+      };
+      reader.readAsDataURL(processedBlob);
     } catch (error) {
       console.error('Error processing image:', error);
       toast({
         title: "Error processing image",
-        description: "Failed to remove background. Please try again.",
+        description: "Failed to remove background. Using original image.",
         variant: "destructive",
       });
       // Set the original image if processing fails
       setCoverImage(imageUrl);
+      localStorage.setItem('funnyBiographyProcessedPhoto', imageUrl);
     } finally {
       setIsProcessingImage(false);
     }
