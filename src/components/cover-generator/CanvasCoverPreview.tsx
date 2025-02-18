@@ -1,7 +1,10 @@
+
 import { useEffect, useRef, useState } from 'react';
 import ImageControls from './ImageControls';
-import { TemplateType, CanvasSize, CanvasImage } from './types';
+import { CanvasSize } from './types';
 import { coverTemplates } from './types';
+import { useImageLoader } from './hooks/useImageLoader';
+import { drawFrontCover, drawSpine, drawBackCover } from './utils/canvasDrawing';
 
 interface CanvasCoverPreviewProps {
   coverTitle: string;
@@ -32,38 +35,9 @@ const CanvasCoverPreview = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [imageScale, setImageScale] = useState(100);
   const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
-  const [image, setImage] = useState<CanvasImage | null>(null);
+  
+  const image = useImageLoader(coverImage, imageScale, imagePosition);
   const template = coverTemplates[selectedTemplate];
-
-  const loadImage = (src: string): Promise<HTMLImageElement> => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => resolve(img);
-      img.onerror = reject;
-      img.src = src;
-    });
-  };
-
-  const wrapText = (ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) => {
-    const words = text.split(' ');
-    let line = '';
-    let currentY = y;
-
-    for (let word of words) {
-      const testLine = line + word + ' ';
-      const metrics = ctx.measureText(testLine);
-      
-      if (metrics.width > maxWidth) {
-        ctx.fillText(line, x, currentY);
-        line = word + ' ';
-        currentY += lineHeight;
-      } else {
-        line = testLine;
-      }
-    }
-    ctx.fillText(line, x, currentY);
-    return currentY;
-  };
 
   const drawCover = () => {
     const canvas = canvasRef.current;
@@ -113,65 +87,34 @@ const CanvasCoverPreview = ({
       ctx.restore();
     }
 
-    // Draw front cover text with improved positioning
-    const frontCenterX = frontX + (coverWidth / 2);
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    // Draw cover sections
+    drawFrontCover(ctx, template, {
+      frontX,
+      coverWidth,
+      height: canvas.height,
+      title: coverTitle,
+      subtitle,
+      authorName,
+      selectedFont
+    });
 
-    // Draw title with proper wrapping and centering
-    ctx.font = `${template.titleStyle.fontWeight} ${template.titleStyle.fontSize} ${selectedFont}`;
-    ctx.fillStyle = template.titleStyle.color;
-    const titleY = canvas.height * template.titleStyle.offsetY;
-    wrapText(ctx, coverTitle, frontX + coverWidth * 0.1, titleY, coverWidth * 0.8, 60);
+    drawSpine(ctx, template, {
+      spineX,
+      spineWidth,
+      height: canvas.height,
+      title: coverTitle,
+      authorName,
+      selectedFont
+    });
 
-    // Draw subtitle with proper spacing
-    ctx.font = `${template.subtitleStyle.fontWeight} ${template.subtitleStyle.fontSize} ${selectedFont}`;
-    ctx.fillStyle = template.subtitleStyle.color;
-    wrapText(ctx, subtitle, frontX + coverWidth * 0.1, canvas.height * 0.5, coverWidth * 0.8, 40);
-
-    // Draw author name at bottom
-    ctx.font = `normal ${template.authorStyle.fontSize} ${selectedFont}`;
-    ctx.fillStyle = template.authorStyle.color;
-    ctx.fillText(`By ${authorName}`, frontCenterX, canvas.height * 0.85);
-
-    // Draw spine text
-    ctx.save();
-    ctx.translate(spineX + (spineWidth / 2), canvas.height * 0.5);
-    ctx.rotate(-Math.PI / 2);
-    ctx.textAlign = 'center';
-    ctx.font = `bold 1rem ${selectedFont}`;
-    ctx.fillStyle = template.spineStyle.titleColor;
-    ctx.fillText(coverTitle, 0, 0);
-    ctx.font = `normal 0.8rem ${selectedFont}`;
-    ctx.fillStyle = template.spineStyle.authorColor;
-    ctx.fillText(authorName, 0, spineWidth * 0.6);
-    ctx.restore();
-
-    // Draw back cover text
-    ctx.textAlign = 'left';
-    ctx.font = `normal ${template.backCoverStyle.summaryFontSize} ${selectedFont}`;
-    ctx.fillStyle = template.backCoverStyle.textColor;
-    wrapText(ctx, DEFAULT_SUMMARY, backX + 40, canvas.height * 0.2, coverWidth - 80, 30);
+    drawBackCover(ctx, template, {
+      backX,
+      coverWidth,
+      height: canvas.height,
+      summary: DEFAULT_SUMMARY,
+      selectedFont
+    });
   };
-
-  useEffect(() => {
-    const initCanvas = async () => {
-      if (coverImage) {
-        try {
-          const img = await loadImage(coverImage);
-          setImage({
-            element: img,
-            scale: imageScale,
-            position: imagePosition
-          });
-        } catch (error) {
-          console.error('Failed to load image:', error);
-        }
-      }
-    };
-
-    initCanvas();
-  }, [coverImage]);
 
   useEffect(() => {
     drawCover();
