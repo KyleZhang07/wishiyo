@@ -5,19 +5,69 @@ import { Button } from '@/components/ui/button';
 import { ImagePlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_IMAGE_DIMENSION = 1200;
+
 const FunnyBiographyPhotosStep = () => {
   const [photo, setPhoto] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    const savedPhoto = localStorage.getItem('funnyBiographyPhoto');
-    if (savedPhoto) {
-      setPhoto(savedPhoto);
+    try {
+      const savedPhoto = localStorage.getItem('funnyBiographyPhoto');
+      if (savedPhoto) {
+        setPhoto(savedPhoto);
+      }
+    } catch (error) {
+      console.error('Error loading photo from localStorage:', error);
     }
   }, []);
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        
+        // Calculate new dimensions while maintaining aspect ratio
+        if (width > height) {
+          if (width > MAX_IMAGE_DIMENSION) {
+            height *= MAX_IMAGE_DIMENSION / width;
+            width = MAX_IMAGE_DIMENSION;
+          }
+        } else {
+          if (height > MAX_IMAGE_DIMENSION) {
+            width *= MAX_IMAGE_DIMENSION / height;
+            height = MAX_IMAGE_DIMENSION;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        // Compress as JPG with 0.7 quality
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+        resolve(compressedDataUrl);
+      };
+      
+      img.onerror = reject;
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        img.src = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -30,17 +80,41 @@ const FunnyBiographyPhotosStep = () => {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const dataUrl = e.target?.result as string;
-      setPhoto(dataUrl);
-      localStorage.setItem('funnyBiographyPhoto', dataUrl);
+    if (file.size > MAX_FILE_SIZE) {
       toast({
-        title: "Photo uploaded successfully",
-        description: "Your photo has been saved"
+        variant: "destructive",
+        title: "File too large",
+        description: "Please upload an image smaller than 5MB"
       });
-    };
-    reader.readAsDataURL(file);
+      return;
+    }
+
+    try {
+      const compressedDataUrl = await compressImage(file);
+      setPhoto(compressedDataUrl);
+      
+      try {
+        localStorage.setItem('funnyBiographyPhoto', compressedDataUrl);
+        toast({
+          title: "Photo uploaded successfully",
+          description: "Your photo has been saved"
+        });
+      } catch (error) {
+        console.error('Error saving to localStorage:', error);
+        toast({
+          variant: "destructive",
+          title: "Storage error",
+          description: "Could not save the photo. Please try a smaller image."
+        });
+      }
+    } catch (error) {
+      console.error('Error processing image:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not process the image. Please try another one."
+      });
+    }
   };
 
   const handleUploadClick = () => {
@@ -92,4 +166,3 @@ const FunnyBiographyPhotosStep = () => {
 };
 
 export default FunnyBiographyPhotosStep;
-
