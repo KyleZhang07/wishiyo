@@ -4,6 +4,7 @@ import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
 import CoverPreview from '@/components/cover-generator/CoverPreview';
 import FontSelector from '@/components/cover-generator/FontSelector';
+import TemplateSelector from '@/components/cover-generator/TemplateSelector';
 
 const FunnyBiographyGenerateStep = () => {
   const [coverTitle, setCoverTitle] = useState('');
@@ -11,28 +12,30 @@ const FunnyBiographyGenerateStep = () => {
   const [authorName, setAuthorName] = useState('');
   const [coverImage, setCoverImage] = useState<string>();
   const [selectedFont, setSelectedFont] = useState('font-sans');
+  const [selectedTemplate, setSelectedTemplate] = useState('modern');
 
   useEffect(() => {
     // Load data from localStorage
-    const savedAuthor = localStorage.getItem('authorName');
-    const savedIdea = localStorage.getItem('selectedIdea');
-    const savedPhotos = localStorage.getItem('uploadedPhotos');
+    const savedAuthor = localStorage.getItem('funnyBiographyAuthorName');
+    const savedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
+    const savedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
+    const savedPhotos = localStorage.getItem('funnyBiographyPhoto');
 
     if (savedAuthor) {
       setAuthorName(savedAuthor);
     }
 
-    if (savedIdea) {
-      const idea = JSON.parse(savedIdea);
-      setCoverTitle(idea.title || '');
-      setSubtitle(idea.subtitle || '');
+    if (savedIdeas && savedIdeaIndex) {
+      const ideas = JSON.parse(savedIdeas);
+      const selectedIdea = ideas[parseInt(savedIdeaIndex)];
+      if (selectedIdea) {
+        setCoverTitle(selectedIdea.title || '');
+        setSubtitle(selectedIdea.description || '');
+      }
     }
 
     if (savedPhotos) {
-      const photos = JSON.parse(savedPhotos);
-      if (photos.length > 0) {
-        setCoverImage(photos[0]);
-      }
+      setCoverImage(savedPhotos);
     }
   }, []);
 
@@ -52,14 +55,25 @@ const FunnyBiographyGenerateStep = () => {
             authorName={authorName}
             coverImage={coverImage}
             selectedFont={selectedFont}
+            selectedTemplate={selectedTemplate}
           />
           
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-center">Choose Your Font Style</h3>
-            <FontSelector
-              selectedFont={selectedFont}
-              onSelectFont={setSelectedFont}
-            />
+            <div>
+              <h3 className="text-lg font-medium text-center mb-2">Choose Your Cover Style</h3>
+              <TemplateSelector
+                selectedTemplate={selectedTemplate}
+                onSelectTemplate={setSelectedTemplate}
+              />
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-medium text-center mb-2">Choose Your Font Style</h3>
+              <FontSelector
+                selectedFont={selectedFont}
+                onSelectFont={setSelectedFont}
+              />
+            </div>
           </div>
 
           <Button 
