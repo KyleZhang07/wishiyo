@@ -1,9 +1,11 @@
+
 import { useEffect, useRef, useState } from 'react';
-import ImageControls from './ImageControls';
+import { Button } from '@/components/ui/button';
 import { CanvasSize, coverLayouts } from './types';
 import { coverTemplates } from './types';
 import { useImageLoader } from './hooks/useImageLoader';
 import { drawFrontCover, drawSpine, drawBackCover } from './utils/canvasDrawing';
+import ImageAdjustDialog from './ImageAdjustDialog';
 
 interface CanvasCoverPreviewProps {
   coverTitle: string;
@@ -36,6 +38,7 @@ const CanvasCoverPreview = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [imageScale, setImageScale] = useState(100);
   const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
+  const [isAdjustDialogOpen, setIsAdjustDialogOpen] = useState(false);
   
   const image = useImageLoader(coverImage, imageScale, imagePosition);
   const template = coverTemplates[selectedTemplate];
@@ -173,12 +176,27 @@ const CanvasCoverPreview = ({
       </div>
       
       {coverImage && (
-        <ImageControls
-          imageScale={imageScale}
-          onScaleChange={setImageScale}
-          onReset={() => setImageScale(100)}
-          onCenter={() => setImagePosition({ x: 0, y: 0 })}
-        />
+        <div>
+          <Button
+            variant="outline"
+            onClick={() => setIsAdjustDialogOpen(true)}
+            className="w-full"
+          >
+            Adjust Image
+          </Button>
+
+          <ImageAdjustDialog
+            open={isAdjustDialogOpen}
+            onOpenChange={setIsAdjustDialogOpen}
+            onSave={(position, scale) => {
+              setImagePosition(position);
+              setImageScale(scale);
+            }}
+            initialPosition={imagePosition}
+            initialScale={imageScale}
+            coverImage={coverImage}
+          />
+        </div>
       )}
     </div>
   );
