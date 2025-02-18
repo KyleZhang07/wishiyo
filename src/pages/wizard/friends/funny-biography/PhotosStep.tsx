@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import WizardStep from '@/components/wizard/WizardStep';
@@ -76,11 +75,9 @@ const FunnyBiographyPhotosStep = () => {
     try {
       console.log('Starting background removal process...');
       const segmenter = await pipeline('image-segmentation', 'Xenova/segformer-b0-finetuned-ade-512-512', {
-        device: 'wasm', // Changed from webgpu to wasm
-        quantized: true, // Add quantization for better performance
+        device: 'wasm',
       });
       
-      // Convert HTMLImageElement to canvas
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       
@@ -90,13 +87,10 @@ const FunnyBiographyPhotosStep = () => {
       canvas.height = imageElement.naturalHeight;
       ctx.drawImage(imageElement, 0, 0);
       
-      // Get image data as base64
       const imageData = canvas.toDataURL('image/jpeg', 0.8);
       console.log('Image converted to base64');
       
       try {
-        // Process the image with the segmentation model
-        console.log('Processing with segmentation model...');
         const result = await segmenter(imageData);
         
         console.log('Segmentation result:', result);
@@ -105,7 +99,6 @@ const FunnyBiographyPhotosStep = () => {
           throw new Error('Invalid segmentation result');
         }
         
-        // Create a new canvas for the masked image
         const outputCanvas = document.createElement('canvas');
         outputCanvas.width = canvas.width;
         outputCanvas.height = canvas.height;
@@ -113,14 +106,11 @@ const FunnyBiographyPhotosStep = () => {
         
         if (!outputCtx) throw new Error('Could not get output canvas context');
         
-        // Draw original image
         outputCtx.drawImage(canvas, 0, 0);
         
-        // Apply the mask
         const outputImageData = outputCtx.getImageData(0, 0, outputCanvas.width, outputCanvas.height);
         const data = outputImageData.data;
         
-        // Apply inverted mask to alpha channel
         for (let i = 0; i < result[0].mask.data.length; i++) {
           const alpha = Math.round((1 - result[0].mask.data[i]) * 255);
           data[i * 4 + 3] = alpha;
@@ -129,7 +119,6 @@ const FunnyBiographyPhotosStep = () => {
         outputCtx.putImageData(outputImageData, 0, 0);
         console.log('Mask applied successfully');
         
-        // Convert canvas to blob
         return new Promise((resolve, reject) => {
           outputCanvas.toBlob(
             (blob) => {
@@ -230,18 +219,14 @@ const FunnyBiographyPhotosStep = () => {
     });
 
     try {
-      // Convert base64 to blob
       const response = await fetch(photo);
       const blob = await response.blob();
       
-      // Load image for processing
       const img = await loadImage(blob);
       
-      // Remove background
       const processedBlob = await removeBackground(img);
       const processedUrl = URL.createObjectURL(processedBlob);
       
-      // Save the processed image
       localStorage.setItem('funnyBiographyProcessedPhoto', processedUrl);
       
       toast({
@@ -249,7 +234,6 @@ const FunnyBiographyPhotosStep = () => {
         description: "Background removed successfully!"
       });
       
-      // Navigate to next step
       navigate('/create/friends/funny-biography/generate');
     } catch (error) {
       console.error('Error processing image:', error);
