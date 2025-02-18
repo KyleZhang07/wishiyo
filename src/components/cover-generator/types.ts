@@ -1,3 +1,4 @@
+
 export type TemplateType = {
   id: string;
   name: string;
@@ -20,6 +21,16 @@ export type TemplateType = {
   imageStyle: {
     filter: string;
     opacity: string;
+  };
+  spineStyle: {
+    backgroundColor: string;
+    titleColor: string;
+    authorColor: string;
+  };
+  backCoverStyle: {
+    backgroundColor: string;
+    textColor: string;
+    summaryFontSize: string;
   };
 };
 
@@ -46,6 +57,16 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     imageStyle: {
       filter: 'brightness(0.7)',
       opacity: '0.9'
+    },
+    spineStyle: {
+      backgroundColor: '#1A1F2C',
+      titleColor: '#ffffff',
+      authorColor: '#9b87f5'
+    },
+    backCoverStyle: {
+      backgroundColor: '#1A1F2C',
+      textColor: '#D6BCFA',
+      summaryFontSize: '1rem'
     }
   },
   minimal: {
@@ -70,6 +91,16 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     imageStyle: {
       filter: 'brightness(0.9)',
       opacity: '0.8'
+    },
+    spineStyle: {
+      backgroundColor: '#F1F0FB',
+      titleColor: '#1A1F2C',
+      authorColor: '#7E69AB'
+    },
+    backCoverStyle: {
+      backgroundColor: '#F1F0FB',
+      textColor: '#6E59A5',
+      summaryFontSize: '1rem'
     }
   },
   vibrant: {
@@ -94,6 +125,16 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     imageStyle: {
       filter: 'brightness(0.6) contrast(1.2)',
       opacity: '0.85'
+    },
+    spineStyle: {
+      backgroundColor: '#8B5CF6',
+      titleColor: '#ffffff',
+      authorColor: '#F2FCE2'
+    },
+    backCoverStyle: {
+      backgroundColor: '#8B5CF6',
+      textColor: '#FDE1D3',
+      summaryFontSize: '1rem'
     }
   }
 };
@@ -101,6 +142,8 @@ export const coverTemplates: { [key: string]: TemplateType } = {
 export interface CanvasSize {
   width: number;
   height: number;
+  spine: number;
+  gap: number;
 }
 
 export interface CanvasImage {
