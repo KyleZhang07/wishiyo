@@ -27,32 +27,28 @@ serve(async (req) => {
 
     console.log('Starting background removal process...')
 
-    // Convert base64 to blob
+    // Convert base64 to Uint8Array
     const base64Data = image.replace(/^data:image\/\w+;base64,/, '')
-    const byteString = atob(base64Data)
-    const byteArray = new Uint8Array(byteString.length)
-    for (let i = 0; i < byteString.length; i++) {
-      byteArray[i] = byteString.charCodeAt(i)
-    }
-    const blob = new Blob([byteArray], { type: 'image/png' })
+    const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0))
+
+    // Create blob from binary data
+    const blob = new Blob([binaryData], { type: 'image/png' })
 
     // Remove background
     console.log('Processing image with background removal...')
     const processedBlob = await remove(blob)
 
-    // Convert processed blob back to base64
-    const reader = new FileReader()
-    const base64Promise = new Promise((resolve) => {
-      reader.onloadend = () => resolve(reader.result)
-      reader.readAsDataURL(processedBlob)
-    })
-    const processedBase64 = await base64Promise
+    // Convert processed blob to base64
+    const processedBuffer = await processedBlob.arrayBuffer()
+    const processedArray = new Uint8Array(processedBuffer)
+    const processedBase64 = btoa(String.fromCharCode(...processedArray))
+    const processedDataUrl = `data:image/png;base64,${processedBase64}`
 
     console.log('Background removal completed successfully')
 
     return new Response(
       JSON.stringify({ 
-        processedImage: processedBase64 
+        processedImage: processedDataUrl 
       }),
       { 
         headers: { 
