@@ -1,3 +1,4 @@
+
 import { TemplateType, CoverLayout } from '../types';
 
 export const wrapText = (
@@ -147,5 +148,5 @@ export const drawBackCover = (
   ctx.textAlign = 'left';
   ctx.font = `normal ${template.backCoverStyle.summaryFontSize} ${selectedFont}`;
   ctx.fillStyle = template.backCoverStyle.textColor;
-  wrapText(ctx, summary, backX + 40, height * 0.2, coverWidth - 80, 30);
+  wrapText(ctx, summary, backX + 40, height * 0.2, coverWidth - 80, 30, 'left');
 };
