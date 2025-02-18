@@ -18,35 +18,6 @@ const FunnyBiographyGenerateStep = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    // Load data from localStorage
-    const savedAuthor = localStorage.getItem('funnyBiographyAuthorName');
-    const savedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
-    const savedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
-    const savedPhotos = localStorage.getItem('funnyBiographyPhoto');
-    const processedPhoto = localStorage.getItem('funnyBiographyProcessedPhoto');
-
-    if (savedAuthor) {
-      setAuthorName(savedAuthor);
-    }
-
-    if (savedIdeas && savedIdeaIndex) {
-      const ideas = JSON.parse(savedIdeas);
-      const selectedIdea = ideas[parseInt(savedIdeaIndex)];
-      if (selectedIdea) {
-        setCoverTitle(selectedIdea.title || '');
-        setSubtitle(selectedIdea.description || '');
-      }
-    }
-
-    // Use processed photo if available, otherwise use original photo
-    if (processedPhoto) {
-      setCoverImage(processedPhoto);
-    } else if (savedPhotos) {
-      setCoverImage(savedPhotos);
-    }
-  }, []);
-
   // Function to handle image opacity adjustment
   const adjustImageOpacity = (imageData: string, opacity: number = 0.85): Promise<string> => {
     return new Promise((resolve) => {
@@ -96,12 +67,42 @@ const FunnyBiographyGenerateStep = () => {
     }
   };
 
+  // Load and process image when component mounts
   useEffect(() => {
-    const savedPhotos = localStorage.getItem('funnyBiographyPhoto');
-    if (savedPhotos && !localStorage.getItem('funnyBiographyProcessedPhoto')) {
-      processImage(savedPhotos);
-    }
-  }, []);
+    const loadAndProcessImage = async () => {
+      const savedAuthor = localStorage.getItem('funnyBiographyAuthorName');
+      const savedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
+      const savedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
+      const savedPhotos = localStorage.getItem('funnyBiographyPhoto');
+      const processedPhoto = localStorage.getItem('funnyBiographyProcessedPhoto');
+
+      if (savedAuthor) {
+        setAuthorName(savedAuthor);
+      }
+
+      if (savedIdeas && savedIdeaIndex) {
+        const ideas = JSON.parse(savedIdeas);
+        const selectedIdea = ideas[parseInt(savedIdeaIndex)];
+        if (selectedIdea) {
+          setCoverTitle(selectedIdea.title || '');
+          setSubtitle(selectedIdea.description || '');
+        }
+      }
+
+      // Process image if we have a photo but no processed version
+      if (savedPhotos && !processedPhoto) {
+        await processImage(savedPhotos);
+      } else if (processedPhoto) {
+        // Use existing processed photo if available
+        setCoverImage(processedPhoto);
+      } else if (savedPhotos) {
+        // Fallback to original photo if no processed version
+        setCoverImage(savedPhotos);
+      }
+    };
+
+    loadAndProcessImage();
+  }, []); // Run only once when component mounts
 
   return (
     <WizardStep
