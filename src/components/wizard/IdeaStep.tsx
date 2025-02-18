@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
 interface BookIdea {
   title: string;
@@ -25,7 +26,9 @@ const IdeaStep = ({
 }: IdeaStepProps) => {
   const [ideas, setIdeas] = useState<BookIdea[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedIdeaIndex, setSelectedIdeaIndex] = useState<number | null>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const generateIdeas = async () => {
     setIsLoading(true);
@@ -89,6 +92,7 @@ const IdeaStep = ({
 
       if (error) throw error;
       setIdeas(data.ideas);
+      setSelectedIdeaIndex(null); // Reset selection when generating new ideas
     } catch (error) {
       console.error('Error:', error);
       toast({
@@ -99,6 +103,28 @@ const IdeaStep = ({
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleIdeaSelect = (index: number) => {
+    setSelectedIdeaIndex(index);
+  };
+
+  const handleContinue = () => {
+    if (selectedIdeaIndex === null) {
+      toast({
+        title: "No idea selected",
+        description: "Please select an idea before continuing.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Save selected idea to localStorage
+    const selectedIdea = ideas[selectedIdeaIndex];
+    localStorage.setItem('selectedIdea', JSON.stringify(selectedIdea));
+
+    // Navigate to next step
+    navigate(nextStep);
   };
 
   useEffect(() => {
@@ -112,7 +138,7 @@ const IdeaStep = ({
       previousStep={previousStep}
       currentStep={3}
       totalSteps={4}
-      nextStep={nextStep}
+      onNextClick={handleContinue}
     >
       <div className="space-y-4">
         <div className="flex justify-end mb-4">
@@ -136,7 +162,15 @@ const IdeaStep = ({
 
         <div className="space-y-4">
           {ideas.map((idea, index) => (
-            <div key={index} className="bg-white rounded-lg p-6 cursor-pointer hover:shadow-md transition-shadow">
+            <div 
+              key={index} 
+              className={`bg-white rounded-lg p-6 cursor-pointer transition-all ${
+                selectedIdeaIndex === index 
+                  ? 'ring-2 ring-primary shadow-lg scale-[1.02]' 
+                  : 'hover:shadow-md'
+              }`}
+              onClick={() => handleIdeaSelect(index)}
+            >
               <h3 className="text-2xl font-bold mb-1">{idea.title}</h3>
               <p className="text-gray-600 text-sm mb-2">{idea.author}</p>
               <p className="text-gray-800">{idea.description}</p>
