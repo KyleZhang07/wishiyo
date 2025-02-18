@@ -101,6 +101,7 @@ export const coverTemplates: { [key: string]: TemplateType } = {
 export interface CanvasSize {
   width: number;
   height: number;
+  spine: number;
 }
 
 export interface CanvasImage {
@@ -108,3 +109,58 @@ export interface CanvasImage {
   scale: number;
   position: { x: number; y: number };
 }
+
+export interface FullCoverTemplate extends TemplateType {
+  spineStyle: {
+    backgroundColor: string;
+    titleColor: string;
+    authorColor: string;
+  };
+  backCoverStyle: {
+    backgroundColor: string;
+    textColor: string;
+    summaryFontSize: string;
+  };
+}
+
+export const fullCoverTemplates: { [key: string]: FullCoverTemplate } = {
+  modern: {
+    ...coverTemplates.modern,
+    spineStyle: {
+      backgroundColor: '#1A1F2C',
+      titleColor: '#ffffff',
+      authorColor: '#9b87f5'
+    },
+    backCoverStyle: {
+      backgroundColor: '#1A1F2C',
+      textColor: '#D6BCFA',
+      summaryFontSize: '1rem'
+    }
+  },
+  minimal: {
+    ...coverTemplates.minimal,
+    spineStyle: {
+      backgroundColor: '#F1F0FB',
+      titleColor: '#1A1F2C',
+      authorColor: '#7E69AB'
+    },
+    backCoverStyle: {
+      backgroundColor: '#F1F0FB',
+      textColor: '#6E59A5',
+      summaryFontSize: '1rem'
+    }
+  },
+  vibrant: {
+    ...coverTemplates.vibrant,
+    spineStyle: {
+      backgroundColor: '#8B5CF6',
+      titleColor: '#ffffff',
+      authorColor: '#F2FCE2'
+    },
+    backCoverStyle: {
+      backgroundColor: '#8B5CF6',
+      textColor: '#FDE1D3',
+      summaryFontSize: '1rem'
+    }
+  }
+};
