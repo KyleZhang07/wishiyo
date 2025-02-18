@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import WizardStep from './WizardStep';
 import { Button } from '@/components/ui/button';
@@ -28,6 +29,37 @@ const IdeaStep = ({
   const [selectedIdeaIndex, setSelectedIdeaIndex] = useState<number | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  const getStorageKeys = (bookType: string) => {
+    const ideaStorageKeyMap: { [key: string]: string } = {
+      'funny-biography': 'funnyBiographyGeneratedIdeas',
+      'wild-fantasy': 'wildFantasyGeneratedIdeas',
+      'prank-book': 'prankBookGeneratedIdeas',
+      'love-story': 'loveStoryGeneratedIdeas',
+      'love-poems': 'lovePoemsGeneratedIdeas',
+      'picture-album': 'pictureAlbumGeneratedIdeas',
+      'adventure': 'kidsAdventureGeneratedIdeas',
+      'story-book': 'kidsStoryGeneratedIdeas',
+      'learning': 'learningJourneyGeneratedIdeas'
+    };
+
+    const selectedIdeaStorageKeyMap: { [key: string]: string } = {
+      'funny-biography': 'funnyBiographySelectedIdea',
+      'wild-fantasy': 'wildFantasySelectedIdea',
+      'prank-book': 'prankBookSelectedIdea',
+      'love-story': 'loveStorySelectedIdea',
+      'love-poems': 'lovePoemsSelectedIdea',
+      'picture-album': 'pictureAlbumSelectedIdea',
+      'adventure': 'kidsAdventureSelectedIdea',
+      'story-book': 'kidsStorySelectedIdea',
+      'learning': 'learningJourneySelectedIdea'
+    };
+
+    return {
+      ideasKey: ideaStorageKeyMap[bookType],
+      selectedIdeaKey: selectedIdeaStorageKeyMap[bookType]
+    };
+  };
 
   const generateIdeas = async () => {
     setIsLoading(true);
@@ -61,6 +93,7 @@ const IdeaStep = ({
 
       const storageKey = storageKeyMap[bookType];
       const authorNameKey = authorNameKeyMap[bookType];
+      const { ideasKey } = getStorageKeys(bookType);
 
       if (!storageKey || !authorNameKey) {
         throw new Error('Invalid book type');
@@ -91,7 +124,7 @@ const IdeaStep = ({
       if (error) throw error;
       setIdeas(data.ideas);
       setSelectedIdeaIndex(null);
-      localStorage.setItem('generatedIdeas', JSON.stringify(data.ideas));
+      localStorage.setItem(ideasKey, JSON.stringify(data.ideas));
     } catch (error) {
       console.error('Error:', error);
       toast({
@@ -106,6 +139,10 @@ const IdeaStep = ({
 
   const handleIdeaSelect = (index: number) => {
     setSelectedIdeaIndex(index);
+    const path = window.location.pathname;
+    const bookType = path.split('/')[3];
+    const { selectedIdeaKey } = getStorageKeys(bookType);
+    localStorage.setItem(selectedIdeaKey, index.toString());
   };
 
   const handleContinue = () => {
@@ -118,13 +155,16 @@ const IdeaStep = ({
       return;
     }
 
-    localStorage.setItem('selectedIdeaIndex', selectedIdeaIndex.toString());
     navigate(nextStep);
   };
 
   useEffect(() => {
-    const savedIdeas = localStorage.getItem('generatedIdeas');
-    const savedIdeaIndex = localStorage.getItem('selectedIdeaIndex');
+    const path = window.location.pathname;
+    const bookType = path.split('/')[3];
+    const { ideasKey, selectedIdeaKey } = getStorageKeys(bookType);
+    
+    const savedIdeas = localStorage.getItem(ideasKey);
+    const savedIdeaIndex = localStorage.getItem(selectedIdeaKey);
 
     if (savedIdeas) {
       const parsedIdeas = JSON.parse(savedIdeas);
