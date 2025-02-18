@@ -11,7 +11,6 @@ const PrankBookEvidenceStep = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Load photo from local storage on component mount
     const savedPhoto = localStorage.getItem('prankBookEvidence');
     if (savedPhoto) {
       setPhoto(savedPhoto);
@@ -52,7 +51,7 @@ const PrankBookEvidenceStep = () => {
     <WizardStep
       title="Upload a photo"
       description="We'll use it on the cover"
-      previousStep="/create/friends/prank-book/pranks"
+      previousStep="/create/friends/prank-book/ideas"
       nextStep="/create/friends/prank-book/generate"
       currentStep={3}
       totalSteps={4}
