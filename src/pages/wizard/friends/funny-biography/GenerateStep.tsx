@@ -6,6 +6,9 @@ import CanvasCoverPreview from '@/components/cover-generator/CanvasCoverPreview'
 import LayoutSelector from '@/components/cover-generator/LayoutSelector';
 import FontSelector from '@/components/cover-generator/FontSelector';
 import TemplateSelector from '@/components/cover-generator/TemplateSelector';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/components/ui/use-toast';
+import { Loader2 } from 'lucide-react';
 
 const FunnyBiographyGenerateStep = () => {
   const [coverTitle, setCoverTitle] = useState('');
@@ -15,6 +18,8 @@ const FunnyBiographyGenerateStep = () => {
   const [selectedLayout, setSelectedLayout] = useState('classic-centered');
   const [selectedTemplate, setSelectedTemplate] = useState('modern');
   const [selectedFont, setSelectedFont] = useState('playfair');
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     // Load data from localStorage
@@ -37,9 +42,50 @@ const FunnyBiographyGenerateStep = () => {
     }
 
     if (savedPhotos) {
-      setCoverImage(savedPhotos);
+      processImage(savedPhotos);
     }
   }, []);
+
+  const processImage = async (imageUrl: string) => {
+    setIsProcessingImage(true);
+    
+    try {
+      // Fetch the image and convert to File object
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const file = new File([blob], 'cover-image.jpg', { type: blob.type });
+
+      // Prepare form data
+      const formData = new FormData();
+      formData.append('image', file);
+
+      // Call the edge function
+      const { data, error } = await supabase.functions.invoke('remove-background', {
+        body: formData,
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        setCoverImage(data.url);
+        toast({
+          title: "Background removed successfully",
+          description: "Your image has been processed and is ready to use.",
+        });
+      }
+    } catch (error) {
+      console.error('Error processing image:', error);
+      toast({
+        title: "Error processing image",
+        description: "Failed to remove background. Please try again.",
+        variant: "destructive",
+      });
+      // Set the original image if processing fails
+      setCoverImage(imageUrl);
+    } finally {
+      setIsProcessingImage(false);
+    }
+  };
 
   return (
     <WizardStep
@@ -51,15 +97,26 @@ const FunnyBiographyGenerateStep = () => {
     >
       <div className="glass-card rounded-2xl p-8 py-[40px]">
         <div className="max-w-xl mx-auto space-y-8">
-          <CanvasCoverPreview
-            coverTitle={coverTitle}
-            subtitle={subtitle}
-            authorName={authorName}
-            coverImage={coverImage}
-            selectedFont={selectedFont}
-            selectedTemplate={selectedTemplate}
-            selectedLayout={selectedLayout}
-          />
+          <div className="relative">
+            <CanvasCoverPreview
+              coverTitle={coverTitle}
+              subtitle={subtitle}
+              authorName={authorName}
+              coverImage={coverImage}
+              selectedFont={selectedFont}
+              selectedTemplate={selectedTemplate}
+              selectedLayout={selectedLayout}
+            />
+            
+            {isProcessingImage && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg">
+                <div className="text-center text-white">
+                  <Loader2 className="w-8 h-8 mb-2 mx-auto animate-spin" />
+                  <p>Removing background...</p>
+                </div>
+              </div>
+            )}
+          </div>
           
           <div className="space-y-4">
             <div>
