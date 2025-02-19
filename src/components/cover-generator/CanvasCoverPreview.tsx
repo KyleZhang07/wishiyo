@@ -85,7 +85,7 @@ const CanvasCoverPreview = ({
       ctx.fillRect(frontX, 0, coverWidth, canvas.height);
       
       ctx.fillStyle = '#ffffff';
-      ctx.font = '24px Arial';
+      ctx.font = '48px Arial';
       ctx.textAlign = 'center';
       ctx.fillText('Processing image...', centerX, centerY);
       return;
@@ -178,12 +178,12 @@ const CanvasCoverPreview = ({
 
   return (
     <div className="space-y-4">
-      <div className="relative rounded-lg overflow-hidden shadow-xl">
+      <div className="relative rounded-lg overflow-hidden shadow-xl max-h-[80vh]">
         <canvas
           ref={canvasRef}
           width={DEFAULT_CANVAS_SIZE.width}
           height={DEFAULT_CANVAS_SIZE.height}
-          className="w-full h-full"
+          className="w-full h-full object-contain"
         />
       </div>
       
