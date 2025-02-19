@@ -109,3 +109,7 @@ export const coverLayouts: { [key: string]: CoverLayout } = {
     }
   }
 };
+
+export const getLayoutByName = (layoutName: string): CoverLayout => {
+  return coverLayouts[layoutName] || coverLayouts['classic-centered'];
+};
