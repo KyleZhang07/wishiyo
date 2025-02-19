@@ -1,3 +1,4 @@
+
 export type TemplateType = {
   id: string;
   name: string;
@@ -144,8 +145,4 @@ export const coverTemplates: { [key: string]: TemplateType } = {
       summaryFontSize: '1rem'
     }
   }
-};
-
-export const getTemplateByName = (templateName: string): TemplateType => {
-  return coverTemplates[templateName] || coverTemplates['modern'];
 };

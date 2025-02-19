@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -15,7 +16,7 @@ const generatePrompt = (authorName: string, stories: Array<{question: string, an
   
   switch(bookType) {
     case 'funny-biography':
-      promptTemplate = `Create 3 funny book ideas for a biography about ${authorName}, and for each idea also generate 4 praise quotes from fictional but contextually relevant organizations or publications. Use this information:\n\n${storiesText}`;
+      promptTemplate = `Create 3 funny book ideas for a biography about ${authorName}. Use this information:\n\n${storiesText}`;
       break;
     case 'wild-fantasy':
       promptTemplate = `Create 3 wild fantasy adventure book ideas featuring ${authorName} as the main character. Use these details about their personality and preferences:\n\n${storiesText}\n\nMake the ideas epic and imaginative, incorporating magical elements and fantastic scenarios.`;
@@ -49,25 +50,7 @@ const generatePrompt = (authorName: string, stories: Array<{question: string, an
 {
   "title": "A creative title including their name",
   "author": "by ${authorName}",
-  "description": "An engaging description",
-  "praises": [
-    {
-      "quote": "An enthusiastic praise quote",
-      "source": "A fictional but contextually relevant organization name"
-    },
-    {
-      "quote": "Another enthusiastic praise quote",
-      "source": "Another fictional but contextually relevant organization name"
-    },
-    {
-      "quote": "Yet another enthusiastic praise quote",
-      "source": "Yet another fictional but contextually relevant organization name"
-    },
-    {
-      "quote": "The final enthusiastic praise quote",
-      "source": "The final fictional but contextually relevant organization name"
-    }
-  ]
+  "description": "An engaging description"
 }
 
 DO NOT include any explanation or additional text. ONLY return the JSON array.`;

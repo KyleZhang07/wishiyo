@@ -13,7 +13,6 @@ const FunnyBiographyGenerateStep = () => {
   const [coverTitle, setCoverTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
   const [authorName, setAuthorName] = useState('');
-  const [praises, setPraises] = useState<string>('');
   const [coverImage, setCoverImage] = useState<string>();
   const [selectedLayout, setSelectedLayout] = useState('classic-centered');
   const [selectedTemplate, setSelectedTemplate] = useState('modern');
@@ -22,11 +21,11 @@ const FunnyBiographyGenerateStep = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Load data from localStorage
     const savedAuthor = localStorage.getItem('funnyBiographyAuthorName');
     const savedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
     const savedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
     const savedPhotos = localStorage.getItem('funnyBiographyPhoto');
-    const savedPraises = localStorage.getItem('funnyBiographyPraises');
 
     if (savedAuthor) {
       setAuthorName(savedAuthor);
@@ -41,17 +40,8 @@ const FunnyBiographyGenerateStep = () => {
       }
     }
 
-    if (savedPraises) {
-      const praisesArray = JSON.parse(savedPraises);
-      const formattedPraises = praisesArray
-        .map((praise: { quote: string; source: string }) => 
-          `"${praise.quote}"\n— ${praise.source}`
-        )
-        .join('\n\n');
-      setPraises(formattedPraises);
-    }
-
     if (savedPhotos) {
+      // Use the photo URL directly instead of base64
       handleImageProcessing(savedPhotos);
     }
   }, []);
@@ -105,7 +95,6 @@ const FunnyBiographyGenerateStep = () => {
             selectedTemplate={selectedTemplate}
             selectedLayout={selectedLayout}
             isProcessingImage={isProcessingImage}
-            backCoverText={praises}
           />
           
           <div className="space-y-4">

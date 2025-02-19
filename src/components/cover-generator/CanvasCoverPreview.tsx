@@ -14,7 +14,6 @@ interface CanvasCoverPreviewProps {
   selectedTemplate?: string;
   selectedLayout?: string;
   isProcessingImage?: boolean;
-  backCoverText?: string; // Add the new prop
 }
 
 const CanvasCoverPreview = ({
@@ -25,8 +24,7 @@ const CanvasCoverPreview = ({
   selectedFont,
   selectedTemplate = 'modern',
   selectedLayout = 'centered',
-  isProcessingImage = false,
-  backCoverText = '' // Add default value
+  isProcessingImage = false
 }: CanvasCoverPreviewProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [imageScale, setImageScale] = useState(100);
@@ -45,8 +43,7 @@ const CanvasCoverPreview = ({
     selectedLayout,
     imageScale,
     imagePosition,
-    isProcessingImage,
-    backCoverText // Pass to useCanvasDrawing
+    isProcessingImage
   });
 
   return (
