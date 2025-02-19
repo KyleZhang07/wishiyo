@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import WizardStep from './WizardStep';
 import { Button } from '@/components/ui/button';
@@ -7,10 +6,16 @@ import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 
+interface Praise {
+  quote: string;
+  source: string;
+}
+
 interface BookIdea {
   title: string;
   author: string;
   description: string;
+  praises: Praise[];
 }
 
 interface IdeaStepProps {
@@ -55,9 +60,22 @@ const IdeaStep = ({
       'learning': 'learningJourneySelectedIdea'
     };
 
+    const praisesStorageKeyMap: { [key: string]: string } = {
+      'funny-biography': 'funnyBiographyPraises',
+      'wild-fantasy': 'wildFantasyPraises',
+      'prank-book': 'prankBookPraises',
+      'love-story': 'loveStoryPraises',
+      'love-poems': 'lovePoemsPraises',
+      'picture-album': 'pictureAlbumPraises',
+      'adventure': 'kidsAdventurePraises',
+      'story-book': 'kidsStoryPraises',
+      'learning': 'learningJourneyPraises'
+    };
+
     return {
       ideasKey: ideaStorageKeyMap[bookType],
-      selectedIdeaKey: selectedIdeaStorageKeyMap[bookType]
+      selectedIdeaKey: selectedIdeaStorageKeyMap[bookType],
+      praisesKey: praisesStorageKeyMap[bookType]
     };
   };
 
@@ -141,8 +159,12 @@ const IdeaStep = ({
     setSelectedIdeaIndex(index);
     const path = window.location.pathname;
     const bookType = path.split('/')[3];
-    const { selectedIdeaKey } = getStorageKeys(bookType);
+    const { selectedIdeaKey, praisesKey } = getStorageKeys(bookType);
     localStorage.setItem(selectedIdeaKey, index.toString());
+    
+    if (ideas[index] && ideas[index].praises) {
+      localStorage.setItem(praisesKey, JSON.stringify(ideas[index].praises));
+    }
   };
 
   const handleContinue = () => {

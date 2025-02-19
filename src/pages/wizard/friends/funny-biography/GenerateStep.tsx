@@ -18,14 +18,15 @@ const FunnyBiographyGenerateStep = () => {
   const [selectedTemplate, setSelectedTemplate] = useState('modern');
   const [selectedFont, setSelectedFont] = useState('playfair');
   const [isProcessingImage, setIsProcessingImage] = useState(false);
+  const [backCoverText, setBackCoverText] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
-    // Load data from localStorage
     const savedAuthor = localStorage.getItem('funnyBiographyAuthorName');
     const savedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
     const savedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
     const savedPhotos = localStorage.getItem('funnyBiographyPhoto');
+    const savedPraises = localStorage.getItem('funnyBiographyPraises');
 
     if (savedAuthor) {
       setAuthorName(savedAuthor);
@@ -40,8 +41,17 @@ const FunnyBiographyGenerateStep = () => {
       }
     }
 
+    if (savedPraises) {
+      const praises = JSON.parse(savedPraises);
+      const formattedPraises = praises
+        .map((praise: { quote: string; source: string }) => 
+          `"${praise.quote}"\n— ${praise.source}`
+        )
+        .join('\n\n');
+      setBackCoverText(formattedPraises);
+    }
+
     if (savedPhotos) {
-      // Use the photo URL directly instead of base64
       handleImageProcessing(savedPhotos);
     }
   }, []);
@@ -53,9 +63,7 @@ const FunnyBiographyGenerateStep = () => {
         body: { imageUrl }
       });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       if (data.success && data.image) {
         setCoverImage(data.image);
@@ -69,7 +77,6 @@ const FunnyBiographyGenerateStep = () => {
         title: "Error processing image",
         description: "Failed to remove background from the image. Please try again."
       });
-      // Set the original image as fallback
       setCoverImage(imageUrl);
     } finally {
       setIsProcessingImage(false);
@@ -95,6 +102,7 @@ const FunnyBiographyGenerateStep = () => {
             selectedTemplate={selectedTemplate}
             selectedLayout={selectedLayout}
             isProcessingImage={isProcessingImage}
+            backCoverText={backCoverText}
           />
           
           <div className="space-y-4">
