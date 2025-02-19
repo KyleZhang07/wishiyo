@@ -1,7 +1,9 @@
+
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { CanvasSize, coverLayouts } from './types';
 import { coverTemplates } from './types';
+import { DEFAULT_CANVAS_SIZE } from './types/canvas';
 import { useImageLoader } from './hooks/useImageLoader';
 import { drawFrontCover, drawSpine, drawBackCover } from './utils/canvasDrawing';
 import ImageAdjustDialog from './ImageAdjustDialog';
@@ -16,13 +18,6 @@ interface CanvasCoverPreviewProps {
   selectedLayout?: string;
   isProcessingImage?: boolean;
 }
-
-const DEFAULT_CANVAS_SIZE: CanvasSize = {
-  width: 2400,
-  height: 1000,
-  spine: 100,
-  gap: 30
-};
 
 const DEFAULT_SUMMARY = "A captivating journey through the pages of this book awaits. Join us on an unforgettable adventure filled with unexpected twists and turns. Every chapter brings new discoveries and insights that will keep you engaged until the very last page.";
 
