@@ -25,7 +25,7 @@ export const wrapText = (
     if (metrics.width > maxWidth) {
       ctx.fillText(line, alignX, currentY);
       line = word + ' ';
-      currentY += lineHeight * 0.8; // Adjusted from 0.6 to 0.8 for better spacing
+      currentY += lineHeight;
     } else {
       line = testLine;
     }
@@ -56,8 +56,8 @@ export const drawFrontCover = (
     selectedFont: string;
   }
 ) => {
-  // Draw title
-  ctx.font = `${template.titleStyle.fontWeight} ${template.titleStyle.fontSize} ${selectedFont}`;
+  // Draw title with larger font size
+  ctx.font = `${template.titleStyle.fontWeight} 4rem ${selectedFont}`; // Increased from 2.5rem
   ctx.fillStyle = template.titleStyle.color;
   const titleY = height * layout.titlePosition.offsetY;
   wrapText(
@@ -66,26 +66,26 @@ export const drawFrontCover = (
     frontX + coverWidth * 0.1, 
     titleY, 
     coverWidth * 0.8, 
-    60,
+    120, // Increased line height from 60
     layout.titlePosition.textAlign
   );
 
-  // Draw subtitle closer to title with adjusted line spacing
-  ctx.font = `${template.subtitleStyle.fontWeight} ${template.subtitleStyle.fontSize} ${selectedFont}`;
+  // Draw subtitle with larger font
+  ctx.font = `${template.subtitleStyle.fontWeight} 2rem ${selectedFont}`; // Increased from 1.25rem
   ctx.fillStyle = template.subtitleStyle.color;
-  const subtitleY = height * (layout.titlePosition.offsetY + 0.15); // Moved closer to title
+  const subtitleY = height * (layout.titlePosition.offsetY + 0.15);
   wrapText(
     ctx, 
     subtitle, 
     frontX + coverWidth * 0.1, 
     subtitleY, 
     coverWidth * 0.8, 
-    35, // Adjusted from 25 to 35 for better line spacing
+    70, // Increased from 35
     layout.subtitlePosition.textAlign
   );
 
   // Draw larger author name
-  ctx.font = `normal 1.5rem ${selectedFont}`; // Increased font size
+  ctx.font = `normal 2rem ${selectedFont}`; // Increased from 1.5rem
   ctx.fillStyle = template.authorStyle.color;
   const authorY = height * layout.authorPosition.offsetY;
   const authorX = frontX + coverWidth * 0.1;
@@ -119,10 +119,10 @@ export const drawSpine = (
   ctx.translate(spineX + (spineWidth / 2), height * 0.5);
   ctx.rotate(-Math.PI / 2);
   ctx.textAlign = 'center';
-  ctx.font = `bold 1rem ${selectedFont}`;
+  ctx.font = `bold 1.5rem ${selectedFont}`; // Increased from 1rem
   ctx.fillStyle = template.spineStyle.titleColor;
   ctx.fillText(title, 0, 0);
-  ctx.font = `normal 0.8rem ${selectedFont}`;
+  ctx.font = `normal 1.2rem ${selectedFont}`; // Increased from 0.8rem
   ctx.fillStyle = template.spineStyle.authorColor;
   ctx.fillText(authorName, 0, spineWidth * 0.6);
   ctx.restore();
@@ -146,7 +146,7 @@ export const drawBackCover = (
   }
 ) => {
   ctx.textAlign = 'left';
-  ctx.font = `normal ${template.backCoverStyle.summaryFontSize} ${selectedFont}`;
+  ctx.font = `normal 1.5rem ${selectedFont}`; // Increased font size for summary
   ctx.fillStyle = template.backCoverStyle.textColor;
-  wrapText(ctx, summary, backX + 40, height * 0.2, coverWidth - 80, 30, 'left');
+  wrapText(ctx, summary, backX + 80, height * 0.2, coverWidth - 160, 60, 'left'); // Increased padding and line height
 };

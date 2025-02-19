@@ -13,8 +13,8 @@ export interface CanvasImage {
 }
 
 export const DEFAULT_CANVAS_SIZE: CanvasSize = {
-  width: 3600, // Increased from 2400
-  height: 1800, // Increased from 1000
-  spine: 180,  // Increased from 100
-  gap: 50      // Increased from 30
+  width: 4800,  // Increased from 3600
+  height: 2400, // Increased from 1800
+  spine: 240,   // Increased from 180
+  gap: 80       // Increased from 50
 };
