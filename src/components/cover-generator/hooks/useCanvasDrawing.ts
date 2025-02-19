@@ -17,6 +17,7 @@ interface UseCanvasDrawingProps {
   imageScale: number;
   imagePosition: { x: number; y: number };
   isProcessingImage: boolean;
+  backCoverText: string; // Add this property
 }
 
 export const useCanvasDrawing = ({
@@ -30,7 +31,8 @@ export const useCanvasDrawing = ({
   selectedLayout,
   imageScale,
   imagePosition,
-  isProcessingImage
+  isProcessingImage,
+  backCoverText = '' // Add default value
 }: UseCanvasDrawingProps) => {
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -99,10 +101,10 @@ export const useCanvasDrawing = ({
       backX,
       coverWidth,
       height: canvas.height,
-      summary: "A captivating journey through the pages of this book awaits. Join us on an unforgettable adventure filled with unexpected twists and turns. Every chapter brings new discoveries and insights that will keep you engaged until the very last page.",
+      summary: backCoverText, // Pass the backCoverText here
       selectedFont
     });
-  }, [canvasRef, coverTitle, subtitle, authorName, image, selectedFont, selectedTemplate, selectedLayout, imageScale, imagePosition, isProcessingImage]);
+  }, [canvasRef, coverTitle, subtitle, authorName, image, selectedFont, selectedTemplate, selectedLayout, imageScale, imagePosition, isProcessingImage, backCoverText]);
 };
 
 const drawLoadingState = (
