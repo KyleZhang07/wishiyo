@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
+
 const FriendsLanding = () => {
-  return <div className="page-transition">
+  return (
+    <div className="page-transition">
       <div className="bg-white shadow-lg">
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/90" />
@@ -65,6 +67,8 @@ const FriendsLanding = () => {
           </div>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default FriendsLanding;
