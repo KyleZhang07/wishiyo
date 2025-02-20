@@ -199,6 +199,14 @@ const IdeaStep = ({
       });
       return;
     }
+    
+    const path = window.location.pathname;
+    const bookType = path.split('/')[3];
+    const { selectedIdeaKey } = getStorageKeys(bookType);
+    
+    if (selectedIdeaKey && selectedIdeaIndex !== null) {
+      localStorage.setItem(selectedIdeaKey, selectedIdeaIndex.toString());
+    }
 
     navigate(nextStep);
   };

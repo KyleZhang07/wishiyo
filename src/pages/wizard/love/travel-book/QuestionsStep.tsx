@@ -54,7 +54,8 @@ const LoveStoryQuestionsStep = () => {
       });
       return;
     }
-    navigate('/create/love/love-story/ideas');
+    localStorage.setItem('loveStoryAnswers', JSON.stringify(questionsAndAnswers));
+    navigate('/create/love/travel-book/ideas');
   };
 
   const handleSubmitAnswer = (question: string, answer: string) => {
@@ -80,7 +81,7 @@ const LoveStoryQuestionsStep = () => {
     <WizardStep
       title="Share Your Travel Dreams"
       description="Tell us about your dream destinations together"
-      previousStep="/create/love/love-story/author"
+      previousStep="/create/love/travel-book/author"
       currentStep={2}
       totalSteps={5}
       onNextClick={handleNext}
