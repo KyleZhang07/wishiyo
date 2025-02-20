@@ -46,24 +46,24 @@ const IdeaStep = ({
       'funny-biography': 'funnyBiographyGeneratedIdeas',
       'wild-fantasy': 'wildFantasyGeneratedIdeas',
       'prank-book': 'prankBookGeneratedIdeas',
-      'love-story': 'travelBookGeneratedIdea',
-      'love-poems': 'timeTravelGeneratedIdea',
-      'picture-album': 'loveLettersGeneratedIdea',
+      'travel-book': 'travelBookGeneratedIdea',
+      'time-travel': 'timeTravelGeneratedIdea',
+      'love-letters': 'loveLettersGeneratedIdea',
       'adventure': 'adventureGeneratedIdea',
-      'story-book': 'careerExplorationGeneratedIdea',
-      'learning': 'learningJourneyGeneratedIdea'
+      'career-exploration': 'careerExplorationGeneratedIdea',
+      'learning-journey': 'learningJourneyGeneratedIdea'
     };
 
     const selectedIdeaStorageKeyMap: { [key: string]: string } = {
       'funny-biography': 'funnyBiographySelectedIdea',
       'wild-fantasy': 'wildFantasySelectedIdea',
       'prank-book': 'prankBookSelectedIdea',
-      'love-story': 'travelBookSelectedIdea',
-      'love-poems': 'timeTravelSelectedIdea',
-      'picture-album': 'loveLettersSelectedIdea',
+      'travel-book': 'travelBookSelectedIdea',
+      'time-travel': 'timeTravelSelectedIdea',
+      'love-letters': 'loveLettersSelectedIdea',
       'adventure': 'adventureSelectedIdea',
-      'story-book': 'careerExplorationSelectedIdea',
-      'learning': 'learningJourneySelectedIdea'
+      'career-exploration': 'careerExplorationSelectedIdea',
+      'learning-journey': 'learningJourneySelectedIdea'
     };
 
     return {
@@ -82,24 +82,24 @@ const IdeaStep = ({
         'funny-biography': 'funnyBiographyAnswers',
         'wild-fantasy': 'wildFantasyAnswers',
         'prank-book': 'prankBookAnswers',
-        'love-story': 'travelBookAnswers',
-        'love-poems': 'timeTravelAnswers',
-        'picture-album': 'loveLettersAnswers',
+        'travel-book': 'travelBookAnswers',
+        'time-travel': 'timeTravelAnswers',
+        'love-letters': 'loveLettersAnswers',
         'adventure': 'adventureAnswers',
-        'story-book': 'careerExplorationAnswers',
-        'learning': 'learningJourneyAnswers'
+        'career-exploration': 'careerExplorationAnswers',
+        'learning-journey': 'learningJourneyAnswers'
       };
 
       const authorNameKeyMap: { [key: string]: string } = {
         'funny-biography': 'funnyBiographyAuthorName',
         'wild-fantasy': 'wildFantasyAuthorName',
         'prank-book': 'prankBookAuthorName',
-        'love-story': 'travelBookAuthorName',
-        'love-poems': 'timeTravelAuthorName',
-        'picture-album': 'loveLettersAuthorName',
+        'travel-book': 'travelBookAuthorName',
+        'time-travel': 'timeTravelAuthorName',
+        'love-letters': 'loveLettersAuthorName',
         'adventure': 'adventureAuthorName',
-        'story-book': 'careerExplorationAuthorName',
-        'learning': 'learningJourneyAuthorName'
+        'career-exploration': 'careerExplorationAuthorName',
+        'learning-journey': 'learningJourneyAuthorName'
       };
 
       const storageKey = storageKeyMap[bookType];
