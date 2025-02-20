@@ -21,7 +21,7 @@ const PictureAlbumAuthorStep = () => {
       return;
     }
 
-    navigate('/create/love/love-letters/photos');
+    navigate('/create/love/picture-album/photos');
   };
 
   return (

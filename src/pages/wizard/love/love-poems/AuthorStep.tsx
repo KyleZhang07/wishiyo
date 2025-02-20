@@ -5,15 +5,15 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { useNavigate } from 'react-router-dom';
 
-const LoveStoryAuthorStep = () => {
+const LovePoemsAuthorStep = () => {
   const [name, setName] = useState('');
   const [partnerName, setPartnerName] = useState('');
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const savedName = localStorage.getItem('loveStoryAuthorName');
-    const savedPartnerName = localStorage.getItem('loveStoryPartnerName');
+    const savedName = localStorage.getItem('lovePoemsAuthorName');
+    const savedPartnerName = localStorage.getItem('lovePoemsPartnerName');
     if (savedName) setName(savedName);
     if (savedPartnerName) setPartnerName(savedPartnerName);
   }, []);
@@ -28,14 +28,14 @@ const LoveStoryAuthorStep = () => {
       return;
     }
 
-    localStorage.setItem('loveStoryAuthorName', name.trim());
-    localStorage.setItem('loveStoryPartnerName', partnerName.trim());
-    navigate('/create/love/travel-book/questions');
+    localStorage.setItem('lovePoemsAuthorName', name.trim());
+    localStorage.setItem('lovePoemsPartnerName', partnerName.trim());
+    navigate('/create/love/love-poems/feelings');
   };
 
   return (
     <WizardStep
-      title="Begin Your Love Story"
+      title="Create Love Poems"
       description="Let's start with your names"
       previousStep="/love"
       currentStep={1}
@@ -64,4 +64,4 @@ const LoveStoryAuthorStep = () => {
   );
 };
 
-export default LoveStoryAuthorStep;
+export default LovePoemsAuthorStep;

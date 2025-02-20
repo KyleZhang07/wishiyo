@@ -5,15 +5,15 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { useNavigate } from 'react-router-dom';
 
-const StoryBookAuthorStep = () => {
+const LearningJourneyAuthorStep = () => {
   const [childName, setChildName] = useState('');
   const [childAge, setChildAge] = useState('');
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const savedName = localStorage.getItem('storyBookChildName');
-    const savedAge = localStorage.getItem('storyBookChildAge');
+    const savedName = localStorage.getItem('learningChildName');
+    const savedAge = localStorage.getItem('learningChildAge');
     if (savedName) setChildName(savedName);
     if (savedAge) setChildAge(savedAge);
   }, []);
@@ -28,15 +28,15 @@ const StoryBookAuthorStep = () => {
       return;
     }
 
-    localStorage.setItem('storyBookChildName', childName.trim());
-    localStorage.setItem('storyBookChildAge', childAge.trim());
-    navigate('/create/kids/career-exploration/theme');
+    localStorage.setItem('learningChildName', childName.trim());
+    localStorage.setItem('learningChildAge', childAge.trim());
+    navigate('/create/kids/learning/subject');
   };
 
   return (
     <WizardStep
-      title="Create a Story Book"
-      description="Let's write a story for your child"
+      title="Start a Learning Journey"
+      description="Let's create an educational adventure"
       previousStep="/kids"
       currentStep={1}
       totalSteps={4}
@@ -67,4 +67,4 @@ const StoryBookAuthorStep = () => {
   );
 };
 
-export default StoryBookAuthorStep;
+export default LearningJourneyAuthorStep;
