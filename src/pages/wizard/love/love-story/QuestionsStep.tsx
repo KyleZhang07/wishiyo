@@ -1,9 +1,10 @@
+
 import { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import QuestionDialog from '@/components/wizard/QuestionDialog';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, X } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
 interface QuestionAnswer {
@@ -58,7 +59,7 @@ const LoveStoryQuestionsStep = () => {
       });
       return;
     }
-    navigate('/create/love/love-story/moments');
+    navigate('/create/love/love-story/ideas');
   };
 
   const handleSubmitAnswer = (question: string, answer: string) => {
@@ -86,7 +87,7 @@ const LoveStoryQuestionsStep = () => {
       description="Tell us about your journey together"
       previousStep="/create/love/love-story/author"
       currentStep={2}
-      totalSteps={4}
+      totalSteps={5}
       onNextClick={handleNext}
     >
       <div className="space-y-6">
