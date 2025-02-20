@@ -1,5 +1,6 @@
+
 import { Link } from 'react-router-dom';
-import { Sparkles } from 'lucide-react';
+
 const KidsLanding = () => {
   return <div className="page-transition">
       <div className="bg-white shadow-lg">
@@ -11,8 +12,7 @@ const KidsLanding = () => {
                 <div className="text-white space-y-6">
                   <h1 className="text-4xl font-display font-bold px-0 mx-0 md:text-4xl text-slate-800">Dreams brought to life. Magically.</h1>
                   <p className="text-xl text-slate-800">Turn your child into the hero of their very own storybook adventure</p>
-                  <a href="#book-types" className="inline-flex items-center gap-2 px-8 py-4 text-lg font-medium text-primary bg-white rounded-full hover:bg-gray-50 transition-colors">
-                    <Sparkles className="w-5 h-5 text-amber-400" />
+                  <a href="#book-types" className="inline-flex items-center px-8 py-4 text-lg font-medium text-white bg-amber-400 rounded-full hover:bg-amber-500 transition-colors">
                     Choose My Book
                   </a>
                 </div>

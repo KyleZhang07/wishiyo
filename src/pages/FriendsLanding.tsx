@@ -1,6 +1,4 @@
-
 import { Link } from 'react-router-dom';
-import { Users } from 'lucide-react';
 
 const FriendsLanding = () => {
   return (
@@ -14,8 +12,7 @@ const FriendsLanding = () => {
                 <div className="text-white space-y-6">
                   <h1 className="text-4xl font-display font-bold px-0 mx-0 md:text-4xl text-slate-800">Hilarious moment. Presented by you.</h1>
                   <p className="text-xl text-slate-800">Use Wishika to give your friends a special book just for them</p>
-                  <a href="#book-types" className="inline-flex items-center gap-2 px-8 py-4 text-lg font-medium text-primary bg-white rounded-full hover:bg-gray-50 transition-colors">
-                    <Users className="w-5 h-5 text-sky-400" />
+                  <a href="#book-types" className="inline-flex items-center px-8 py-4 text-lg font-medium text-white bg-sky-400 rounded-full hover:bg-sky-500 transition-colors">
                     Choose My Book
                   </a>
                 </div>

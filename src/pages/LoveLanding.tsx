@@ -1,5 +1,6 @@
+
 import { Link } from 'react-router-dom';
-import { Heart } from 'lucide-react';
+
 const LoveLanding = () => {
   return <div className="page-transition">
       <div className="bg-white shadow-lg">
@@ -11,8 +12,7 @@ const LoveLanding = () => {
                 <div className="text-white space-y-6">
                   <h1 className="text-4xl font-display font-bold px-0 mx-0 md:text-4xl text-slate-800">Love Story. Magically crafted.</h1>
                   <p className="text-xl text-slate-800">Create a heartfelt book Personalized books that brings your romance to life</p>
-                  <a href="#book-types" className="inline-flex items-center gap-2 px-8 py-4 text-lg font-medium text-primary bg-white rounded-full hover:bg-gray-50 transition-colors">
-                    <Heart className="w-5 h-5 text-red-400" />
+                  <a href="#book-types" className="inline-flex items-center px-8 py-4 text-lg font-medium text-white bg-red-400 rounded-full hover:bg-red-500 transition-colors">
                     Choose My Book
                   </a>
                 </div>
