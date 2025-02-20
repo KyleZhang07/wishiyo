@@ -68,8 +68,8 @@ const IdeaStep = ({
     };
 
     return {
-      ideasKey: ideaStorageKeyMap[bookType],
-      selectedIdeaKey: selectedIdeaStorageKeyMap[bookType]
+      ideasKey: ideaStorageKeyMap[bookType] || '',
+      selectedIdeaKey: selectedIdeaStorageKeyMap[bookType] || ''
     };
   };
 
@@ -123,7 +123,19 @@ const IdeaStep = ({
         return;
       }
 
-      const stories = JSON.parse(savedAnswers);
+      let stories;
+      try {
+        stories = JSON.parse(savedAnswers);
+      } catch (error) {
+        console.error('Error parsing saved answers:', error);
+        toast({
+          title: "Error",
+          description: "Invalid saved answers format. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke('generate-ideas', {
         body: { 
           authorName,
@@ -135,12 +147,22 @@ const IdeaStep = ({
 
       if (error) throw error;
 
+      if (!data) {
+        throw new Error('No data received from the server');
+      }
+
       if (category === 'friends') {
+        if (!data.ideas || !Array.isArray(data.ideas)) {
+          throw new Error('Invalid response format for friends category');
+        }
         setIdeas(data.ideas);
         setSelectedIdeaIndex(null);
         localStorage.setItem(ideasKey, JSON.stringify(data.ideas));
       } else {
         // For love and kids categories, we only need one idea with chapters
+        if (!data.idea || !data.idea.chapters) {
+          throw new Error('Invalid response format for love/kids category');
+        }
         const singleIdea = data.idea;
         setIdeas([singleIdea]);
         setSelectedIdeaIndex(0); // Automatically select the single idea
@@ -163,7 +185,9 @@ const IdeaStep = ({
     const path = window.location.pathname;
     const bookType = path.split('/')[3];
     const { selectedIdeaKey } = getStorageKeys(bookType);
-    localStorage.setItem(selectedIdeaKey, index.toString());
+    if (selectedIdeaKey) {
+      localStorage.setItem(selectedIdeaKey, index.toString());
+    }
   };
 
   const handleContinue = () => {
@@ -184,21 +208,39 @@ const IdeaStep = ({
     const bookType = path.split('/')[3];
     const { ideasKey, selectedIdeaKey } = getStorageKeys(bookType);
     
-    const savedIdeas = localStorage.getItem(ideasKey);
-    const savedIdeaIndex = localStorage.getItem(selectedIdeaKey);
+    if (!ideasKey) {
+      console.error('Invalid book type, no storage key found');
+      return;
+    }
 
-    if (savedIdeas) {
-      if (category === 'friends') {
-        const parsedIdeas = JSON.parse(savedIdeas);
-        setIdeas(parsedIdeas);
-        if (savedIdeaIndex !== null) {
-          setSelectedIdeaIndex(parseInt(savedIdeaIndex));
+    const savedIdeasString = localStorage.getItem(ideasKey);
+    const savedIdeaIndexString = localStorage.getItem(selectedIdeaKey);
+
+    if (savedIdeasString) {
+      try {
+        if (category === 'friends') {
+          const parsedIdeas = JSON.parse(savedIdeasString);
+          if (Array.isArray(parsedIdeas)) {
+            setIdeas(parsedIdeas);
+            if (savedIdeaIndexString) {
+              const index = parseInt(savedIdeaIndexString);
+              if (!isNaN(index)) {
+                setSelectedIdeaIndex(index);
+              }
+            }
+          }
+        } else {
+          // For love and kids categories
+          const parsedIdea = JSON.parse(savedIdeasString);
+          if (parsedIdea && typeof parsedIdea === 'object') {
+            setIdeas([parsedIdea]);
+            setSelectedIdeaIndex(0);
+          }
         }
-      } else {
-        // For love and kids categories
-        const parsedIdea = JSON.parse(savedIdeas);
-        setIdeas([parsedIdea]);
-        setSelectedIdeaIndex(0);
+      } catch (error) {
+        console.error('Error parsing saved ideas:', error);
+        // If there's an error parsing the saved data, generate new ideas
+        generateIdeas();
       }
     } else {
       generateIdeas();
