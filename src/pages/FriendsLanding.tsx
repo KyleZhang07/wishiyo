@@ -6,19 +6,19 @@ const FriendsLanding = () => {
     <div className="page-transition">
       <div className="bg-white shadow-lg">
         <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-sky-400 to-sky-500" />
+          <div className="absolute inset-0 bg-gradient-to-r from-sky-300 to-sky-400" />
           <div className="relative z-10 px-[60px] my-[64px] bg-sky-50 py-[100px]">
             <div className="max-w-6xl mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                 <div className="text-white space-y-6">
                   <h1 className="text-4xl font-display font-bold px-0 mx-0 md:text-4xl text-slate-800">Hilarious moment. Presented by you.</h1>
                   <p className="text-xl text-slate-800">Use Wishika to give your friends a special book just for them</p>
-                  <a href="#book-types" className="inline-flex items-center px-8 py-4 text-lg font-medium text-white bg-sky-400 rounded-full hover:bg-sky-500 transition-colors">
+                  <a href="#book-types" className="inline-flex items-center px-8 py-4 text-lg font-medium text-white bg-sky-300 rounded-full hover:bg-sky-400 transition-colors">
                     Choose My Book
                   </a>
                 </div>
                 <div className="hidden md:block">
-                  <div className="w-64 h-64 mx-auto rounded-full overflow-hidden border-4 border-sky-200">
+                  <div className="w-64 h-64 mx-auto rounded-full overflow-hidden border-4 border-sky-100">
                     <img src="/placeholder.svg" alt="" className="w-full h-full object-cover" />
                   </div>
                 </div>
@@ -37,7 +37,7 @@ const FriendsLanding = () => {
               <h3 className="text-xl font-bold mb-2">Funny Biography</h3>
               <p className="text-gray-600 mb-2">Create a hilarious book full of funny moments and stories</p>
               
-              <Link to="/create/friends/funny-biography/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-sky-500 bg-white border border-sky-500 rounded-full hover:bg-sky-500 hover:text-white transition-colors">
+              <Link to="/create/friends/funny-biography/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-sky-400 bg-white border border-sky-300 rounded-full hover:bg-sky-300 hover:text-white transition-colors">
                 Start Create
               </Link>
             </div>
@@ -49,7 +49,7 @@ const FriendsLanding = () => {
               <h3 className="text-xl font-bold mb-2">Wild Fantasy</h3>
               <p className="text-gray-600 mb-2">Turn your friendship into an epic fantasy adventure</p>
               
-              <Link to="/create/friends/wild-fantasy/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-sky-500 bg-white border border-sky-500 rounded-full hover:bg-sky-500 hover:text-white transition-colors">
+              <Link to="/create/friends/wild-fantasy/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-sky-400 bg-white border border-sky-300 rounded-full hover:bg-sky-300 hover:text-white transition-colors">
                 Start Create
               </Link>
             </div>
@@ -61,7 +61,7 @@ const FriendsLanding = () => {
               <h3 className="text-xl font-bold mb-2">Prank Book</h3>
               <p className="text-gray-600 mb-2">Document all your hilarious pranks and mischief</p>
               
-              <Link to="/create/friends/prank-book/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-sky-500 bg-white border border-sky-500 rounded-full hover:bg-sky-500 hover:text-white transition-colors">
+              <Link to="/create/friends/prank-book/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-sky-400 bg-white border border-sky-300 rounded-full hover:bg-sky-300 hover:text-white transition-colors">
                 Start Create
               </Link>
             </div>
