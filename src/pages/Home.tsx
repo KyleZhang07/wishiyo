@@ -27,10 +27,10 @@ Personalized Books for Every Special Bond</p>
             <Link to="/friends" className="group flex-1 max-w-[280px] block hover:scale-105 transition-transform">
               <div className="glass-card h-full rounded-2xl overflow-hidden">
                 <div className="aspect-[4/3] relative">
-                  <img src="https://images.unsplash.com/photo-1517022812141-23620dba5c23" alt="For Fun" className="w-full h-full object-cover" />
+                  <img src="https://images.unsplash.com/photo-1517022812141-23620dba5c23" alt="Books for Fun" className="w-full h-full object-cover" />
                 </div>
                 <div className="p-6">
-                  <h3 className="text-xl font-semibold mb-4">For Fun</h3>
+                  <h3 className="text-xl font-semibold mb-4">Books for Fun</h3>
                   <p className="text-gray-600">Create entertaining stories filled with humor and friendship</p>
                 </div>
               </div>
@@ -39,10 +39,10 @@ Personalized Books for Every Special Bond</p>
             <Link to="/love" className="group flex-1 max-w-[280px] block hover:scale-105 transition-transform">
               <div className="glass-card h-full rounded-2xl overflow-hidden">
                 <div className="aspect-[4/3] relative">
-                  <img src="https://images.unsplash.com/photo-1582562124811-c09040d0a901" alt="For Love" className="w-full h-full object-cover" />
+                  <img src="https://images.unsplash.com/photo-1582562124811-c09040d0a901" alt="Books for Love" className="w-full h-full object-cover" />
                 </div>
                 <div className="p-6">
-                  <h3 className="text-xl font-semibold mb-4">For Love</h3>
+                  <h3 className="text-xl font-semibold mb-4">Books for Love</h3>
                   <p className="text-gray-600">Share your love story in a beautifully crafted book</p>
                 </div>
               </div>
@@ -51,10 +51,10 @@ Personalized Books for Every Special Bond</p>
             <Link to="/kids" className="group flex-1 max-w-[280px] block hover:scale-105 transition-transform">
               <div className="glass-card h-full rounded-2xl overflow-hidden">
                 <div className="aspect-[4/3] relative">
-                  <img src="https://images.unsplash.com/photo-1535268647677-300dbf3d78d1" alt="For Education" className="w-full h-full object-cover" />
+                  <img src="https://images.unsplash.com/photo-1535268647677-300dbf3d78d1" alt="Books for Kids" className="w-full h-full object-cover" />
                 </div>
                 <div className="p-6">
-                  <h3 className="text-xl font-semibold mb-4">For Education</h3>
+                  <h3 className="text-xl font-semibold mb-4">Books for Kids</h3>
                   <p className="text-gray-600">Make learning fun through personalized educational stories</p>
                 </div>
               </div>
