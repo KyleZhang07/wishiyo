@@ -1,134 +1,173 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+}
 
-const generatePrompt = (authorName: string, stories: Array<{question: string, answer: string}>, bookType: string, category: string) => {
-  const storiesText = stories.map(story => `${story.question}\nAnswer: ${story.answer}`).join('\n\n');
-  
-  if (category === 'friends') {
-    // Keep the original multiple ideas generation for friends category
-    switch(bookType) {
-      case 'funny-biography':
-        return `Create 3 funny book ideas for a biography about ${authorName}, and for each idea, generate 4 praise quotes from fictional but contextually relevant organizations or publications. Base the content on this information:\n\n${storiesText}\n\nEnsure to respond with valid JSON array with exactly 3 objects. Each object must have these exact fields: title (string), author (string), description (string), and praises (array of objects with quote and source fields). No markdown or code block formatting.`;
-      case 'wild-fantasy':
-        return `Create 3 wild fantasy book ideas for ${authorName}, and for each idea, generate 4 praise quotes from fictional but contextually relevant organizations or publications. Base the content on this information:\n\n${storiesText}\n\nEnsure to respond with valid JSON array with exactly 3 objects. Each object must have these exact fields: title (string), author (string), description (string), and praises (array of objects with quote and source fields). No markdown or code block formatting.`;
-      case 'prank-book':
-        return `Create 3 prank book ideas for ${authorName}, and for each idea, generate 4 praise quotes from fictional but contextually relevant organizations or publications. Base the content on this information:\n\n${storiesText}\n\nEnsure to respond with valid JSON array with exactly 3 objects. Each object must have these exact fields: title (string), author (string), description (string), and praises (array of objects with quote and source fields). No markdown or code block formatting.`;
-      default:
-        throw new Error('Invalid book type for friends category');
-    }
-  } else {
-    // Generate single outline with chapters for love and kids categories
-    switch(bookType) {
-      case 'love-story':
-        return `Create a romantic travel story outline based on these memories and preferences:\n\n${storiesText}\n\nGenerate a book outline with a title, author (${authorName}), brief description, and 8-10 chapters. Each chapter should have a title and brief description. The chapters should follow a natural progression of the journey, incorporating the romantic elements and travel experiences mentioned. Ensure to respond with a single JSON object containing these fields: title (string), author (string), description (string), and chapters (array of objects with title and description fields). No markdown formatting.`;
-      case 'love-poems':
-        return `Create a poetry collection outline based on these romantic memories:\n\n${storiesText}\n\nGenerate a book outline with a title, author (${authorName}), brief description, and 8-10 chapters/sections. Each section should have a poetic title and brief description of the poems it will contain. Ensure to respond with a single JSON object containing these fields: title (string), author (string), description (string), and chapters (array of objects with title and description fields). No markdown formatting.`;
-      case 'picture-album':
-        return `Create a romantic photo album outline based on these memories:\n\n${storiesText}\n\nGenerate a book outline with a title, author (${authorName}), brief description, and 8-10 chapters/sections. Each section should represent a theme or period with a title and description of the photos and memories it will showcase. Ensure to respond with a single JSON object containing these fields: title (string), author (string), description (string), and chapters (array of objects with title and description fields). No markdown formatting.`;
-      case 'adventure':
-        return `Create a children's adventure story outline based on these details:\n\n${storiesText}\n\nGenerate a book outline with a title, author (${authorName}), brief description, and 8-10 chapters. Each chapter should have an exciting title and brief description suitable for young readers. Ensure to respond with a single JSON object containing these fields: title (string), author (string), description (string), and chapters (array of objects with title and description fields). No markdown formatting.`;
-      case 'story-book':
-        return `Create a children's story book outline based on these details:\n\n${storiesText}\n\nGenerate a book outline with a title, author (${authorName}), brief description, and 6-8 chapters. Each chapter should have a child-friendly title and brief description that will engage young readers. Ensure to respond with a single JSON object containing these fields: title (string), author (string), description (string), and chapters (array of objects with title and description fields). No markdown formatting.`;
-      case 'learning':
-        return `Create an educational journey book outline based on these details:\n\n${storiesText}\n\nGenerate a book outline with a title, author (${authorName}), brief description, and 6-8 chapters. Each chapter should have an educational yet engaging title and brief description that makes learning fun. Ensure to respond with a single JSON object containing these fields: title (string), author (string), description (string), and chapters (array of objects with title and description fields). No markdown formatting.`;
-      default:
-        throw new Error('Invalid book type');
-    }
-  }
-};
+console.log("Hello from generate ideas!")
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    const { authorName, stories, bookType, category } = await req.json();
+    const { authorName, stories, bookType, category } = await req.json()
 
     if (!authorName || !stories || !bookType || !category) {
-      throw new Error('Missing required parameters');
+      throw new Error('Missing required parameters')
     }
 
-    console.log('Generating ideas for:', { authorName, bookType, category });
-
-    const prompt = generatePrompt(authorName, stories, bookType, category);
-
-    console.log('Sending prompt to OpenAI');
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: category === 'friends' 
-              ? 'You are a creative book idea generator that creates engaging titles, descriptions, and praise quotes. You must respond with valid JSON only, no markdown or code blocks.'
-              : 'You are a creative book outline generator that creates engaging chapter-based outlines. You must respond with valid JSON only, no markdown or code blocks.'
-          },
-          { role: 'user', content: prompt }
-        ],
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
-    }
-
-    const openAIResponse = await response.json();
-    
-    console.log('Raw OpenAI response:', openAIResponse);
-
-    if (!openAIResponse.choices?.[0]?.message?.content) {
-      throw new Error('Invalid response from OpenAI');
-    }
-
-    let parsedContent;
-    try {
-      parsedContent = JSON.parse(openAIResponse.choices[0].message.content.trim());
-    } catch (error) {
-      console.error('JSON parse error:', error);
-      console.error('Content that failed to parse:', openAIResponse.choices[0].message.content);
-      throw new Error('Failed to parse OpenAI response as JSON');
-    }
-
-    // For friends category, expect array of 3 ideas
-    // For love and kids categories, expect single object with chapters
+    // For friends category (multiple ideas)
     if (category === 'friends') {
-      if (!Array.isArray(parsedContent) || parsedContent.length !== 3) {
-        throw new Error('Invalid ideas format: expected array of 3 items');
-      }
+      const ideas = generateFriendsIdeas(authorName, stories, bookType)
       return new Response(
-        JSON.stringify({ ideas: parsedContent }),
+        JSON.stringify({ ideas }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    } else {
-      if (!parsedContent.chapters || !Array.isArray(parsedContent.chapters)) {
-        throw new Error('Invalid idea format: expected object with chapters array');
-      }
-      return new Response(
-        JSON.stringify({ idea: parsedContent }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      )
     }
+    
+    // For love and kids categories (single idea with stories)
+    const idea = generateSingleIdea(authorName, stories, bookType, category)
+    return new Response(
+      JSON.stringify({ idea }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
 
   } catch (error) {
-    console.error('Error in generate-ideas function:', error);
+    console.error('Error:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+      { 
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    )
   }
-});
+})
+
+function generateSingleIdea(authorName: string, stories: any[], bookType: string, category: string) {
+  let title = ''
+  let generatedStories = []
+
+  if (category === 'love') {
+    title = `15 Reasons Why I Love ${authorName}`
+    // Generate 15 love-themed story titles
+    generatedStories = Array(15).fill(null).map((_, i) => ({
+      title: generateLoveStoryTitle(authorName, i)
+    }))
+  } else if (category === 'kids') {
+    title = `Adventures with ${authorName}`
+    // Generate 15 kid-friendly story titles
+    generatedStories = Array(15).fill(null).map((_, i) => ({
+      title: generateKidsStoryTitle(authorName, i)
+    }))
+  }
+
+  return {
+    title,
+    author: "Your Loving Friend",
+    stories: generatedStories
+  }
+}
+
+function generateLoveStoryTitle(authorName: string, index: number) {
+  const loveTitles = [
+    `When ${authorName} Made Me Smile`,
+    `The Day I Knew ${authorName} Was Special`,
+    `${authorName}'s Perfect Surprise`,
+    `Dancing in the Rain with ${authorName}`,
+    `${authorName}'s Warm Embrace`,
+    `Cooking Together with ${authorName}`,
+    `${authorName}'s Beautiful Laughter`,
+    `Stargazing with ${authorName}`,
+    `${authorName}'s Kind Heart`,
+    `Adventures with ${authorName}`,
+    `${authorName}'s Little Acts of Love`,
+    `The Joy ${authorName} Brings`,
+    `${authorName}'s Sweet Words`,
+    `Dreaming with ${authorName}`,
+    `Why ${authorName} Is My Everything`
+  ]
+  return loveTitles[index]
+}
+
+function generateKidsStoryTitle(authorName: string, index: number) {
+  const kidsTitles = [
+    `${authorName}'s Magic Garden Adventure`,
+    `${authorName} and the Flying Dragon`,
+    `${authorName}'s Space Mission`,
+    `${authorName} Discovers a Treasure Map`,
+    `${authorName}'s Underwater Kingdom`,
+    `${authorName} and the Friendly Monster`,
+    `${authorName}'s Time Machine Journey`,
+    `${authorName} Saves the Forest Animals`,
+    `${authorName}'s Cloud Castle`,
+    `${authorName} and the Musical Rainbow`,
+    `${authorName}'s Dinosaur Discovery`,
+    `${authorName}'s Pirate Adventure`,
+    `${authorName} and the Magic Paintbrush`,
+    `${authorName}'s Circus Adventure`,
+    `${authorName}'s Secret Garden`
+  ]
+  return kidsTitles[index]
+}
+
+function generateFriendsIdeas(authorName: string, stories: any[], bookType: string) {
+  const ideas = []
+  
+  if (bookType === 'funny-biography') {
+    ideas.push({
+      title: `The Hilarious Life of ${authorName}`,
+      author: "Your Best Friend",
+      description: `A comedic journey through ${authorName}'s most memorable (and embarrassing) moments, filled with inside jokes and funny stories that only true friends would know.`
+    })
+    ideas.push({
+      title: `${authorName}: A Comedy of Errors`,
+      author: "Your Partner in Crime",
+      description: `From epic fails to legendary victories, this book chronicles the amusing adventures and misadventures of ${authorName} with a healthy dose of humor and friendship.`
+    })
+    ideas.push({
+      title: `The Unofficial Guide to ${authorName}`,
+      author: "Chief Entertainment Officer",
+      description: `A collection of hilarious stories, quirky habits, and legendary moments that make ${authorName} the uniquely entertaining person we all know and love.`
+    })
+  } else if (bookType === 'wild-fantasy') {
+    ideas.push({
+      title: `${authorName}: Hero of the Realm`,
+      author: "The Chronicler of Legends",
+      description: `An epic fantasy tale where ${authorName} becomes a legendary hero, wielding magical powers and embarking on extraordinary quests in a world of wonder and adventure.`
+    })
+    ideas.push({
+      title: `The Mystical Journey of ${authorName}`,
+      author: "Keeper of Tales",
+      description: `A magical story where ${authorName}'s real-life personality traits become extraordinary powers in a fantasy realm filled with mythical creatures and epic challenges.`
+    })
+    ideas.push({
+      title: `${authorName}'s Parallel Universe`,
+      author: "Master of Mysteries",
+      description: `Discover an alternate reality where ${authorName} leads a secret life as a powerful mage, guardian of ancient mysteries, and protector of magical realms.`
+    })
+  } else if (bookType === 'prank-book') {
+    ideas.push({
+      title: `${authorName}'s Greatest Pranks`,
+      author: "The Mischief Maker",
+      description: `A collection of legendary pranks, clever schemes, and hilarious reactions, featuring ${authorName} as both the mastermind and occasional victim of epic practical jokes.`
+    })
+    ideas.push({
+      title: `The Prankster's Guide by ${authorName}`,
+      author: "Minister of Mischief",
+      description: `An illustrated guide to the art of pranking, featuring ${authorName}'s most memorable pranks, complete with planning details and reaction photos.`
+    })
+    ideas.push({
+      title: `${authorName}: Master of Mayhem`,
+      author: "Chief Chaos Coordinator",
+      description: `Chronicles the most outrageous and creative pranks involving ${authorName}, complete with behind-the-scenes stories and photographic evidence.`
+    })
+  }
+
+  return ideas
+}
