@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import WizardStep from './WizardStep';
 import { Button } from '@/components/ui/button';
@@ -11,11 +12,17 @@ interface Praise {
   source: string;
 }
 
+interface Chapter {
+  title: string;
+  description: string;
+}
+
 interface BookIdea {
   title: string;
   author: string;
   description: string;
   praises: Praise[];
+  chapters?: Chapter[];
 }
 
 interface IdeaStepProps {
@@ -30,8 +37,8 @@ const IdeaStep = ({
   nextStep
 }: IdeaStepProps) => {
   const [ideas, setIdeas] = useState<BookIdea[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [selectedIdeaIndex, setSelectedIdeaIndex] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -40,12 +47,12 @@ const IdeaStep = ({
       'funny-biography': 'funnyBiographyGeneratedIdeas',
       'wild-fantasy': 'wildFantasyGeneratedIdeas',
       'prank-book': 'prankBookGeneratedIdeas',
-      'love-story': 'loveStoryGeneratedIdeas',
-      'love-poems': 'lovePoemsGeneratedIdeas',
-      'picture-album': 'pictureAlbumGeneratedIdeas',
-      'adventure': 'kidsAdventureGeneratedIdeas',
-      'story-book': 'kidsStoryGeneratedIdeas',
-      'learning': 'learningJourneyGeneratedIdeas'
+      'love-story': 'loveStoryGeneratedIdea',
+      'love-poems': 'lovePoemsGeneratedIdea',
+      'picture-album': 'pictureAlbumGeneratedIdea',
+      'adventure': 'kidsAdventureGeneratedIdea',
+      'story-book': 'kidsStoryGeneratedIdea',
+      'learning': 'learningJourneyGeneratedIdea'
     };
 
     const selectedIdeaStorageKeyMap: { [key: string]: string } = {
@@ -60,22 +67,9 @@ const IdeaStep = ({
       'learning': 'learningJourneySelectedIdea'
     };
 
-    const praisesStorageKeyMap: { [key: string]: string } = {
-      'funny-biography': 'funnyBiographyPraises',
-      'wild-fantasy': 'wildFantasyPraises',
-      'prank-book': 'prankBookPraises',
-      'love-story': 'loveStoryPraises',
-      'love-poems': 'lovePoemsPraises',
-      'picture-album': 'pictureAlbumPraises',
-      'adventure': 'kidsAdventurePraises',
-      'story-book': 'kidsStoryPraises',
-      'learning': 'learningJourneyPraises'
-    };
-
     return {
       ideasKey: ideaStorageKeyMap[bookType],
-      selectedIdeaKey: selectedIdeaStorageKeyMap[bookType],
-      praisesKey: praisesStorageKeyMap[bookType]
+      selectedIdeaKey: selectedIdeaStorageKeyMap[bookType]
     };
   };
 
@@ -140,9 +134,18 @@ const IdeaStep = ({
       });
 
       if (error) throw error;
-      setIdeas(data.ideas);
-      setSelectedIdeaIndex(null);
-      localStorage.setItem(ideasKey, JSON.stringify(data.ideas));
+
+      if (category === 'friends') {
+        setIdeas(data.ideas);
+        setSelectedIdeaIndex(null);
+        localStorage.setItem(ideasKey, JSON.stringify(data.ideas));
+      } else {
+        // For love and kids categories, we only need one idea with chapters
+        const singleIdea = data.idea;
+        setIdeas([singleIdea]);
+        setSelectedIdeaIndex(0); // Automatically select the single idea
+        localStorage.setItem(ideasKey, JSON.stringify(singleIdea));
+      }
     } catch (error) {
       console.error('Error:', error);
       toast({
@@ -159,16 +162,12 @@ const IdeaStep = ({
     setSelectedIdeaIndex(index);
     const path = window.location.pathname;
     const bookType = path.split('/')[3];
-    const { selectedIdeaKey, praisesKey } = getStorageKeys(bookType);
+    const { selectedIdeaKey } = getStorageKeys(bookType);
     localStorage.setItem(selectedIdeaKey, index.toString());
-    
-    if (ideas[index] && ideas[index].praises) {
-      localStorage.setItem(praisesKey, JSON.stringify(ideas[index].praises));
-    }
   };
 
   const handleContinue = () => {
-    if (selectedIdeaIndex === null) {
+    if (category === 'friends' && selectedIdeaIndex === null) {
       toast({
         title: "No idea selected",
         description: "Please select an idea before continuing.",
@@ -189,21 +188,29 @@ const IdeaStep = ({
     const savedIdeaIndex = localStorage.getItem(selectedIdeaKey);
 
     if (savedIdeas) {
-      const parsedIdeas = JSON.parse(savedIdeas);
-      setIdeas(parsedIdeas);
-      
-      if (savedIdeaIndex !== null) {
-        setSelectedIdeaIndex(parseInt(savedIdeaIndex));
+      if (category === 'friends') {
+        const parsedIdeas = JSON.parse(savedIdeas);
+        setIdeas(parsedIdeas);
+        if (savedIdeaIndex !== null) {
+          setSelectedIdeaIndex(parseInt(savedIdeaIndex));
+        }
+      } else {
+        // For love and kids categories
+        const parsedIdea = JSON.parse(savedIdeas);
+        setIdeas([parsedIdea]);
+        setSelectedIdeaIndex(0);
       }
     } else {
       generateIdeas();
     }
-  }, []);
+  }, [category]);
 
   return (
     <WizardStep
-      title="Let's pick a book idea"
-      description="Choose from these AI-generated book ideas or regenerate for more options."
+      title={category === 'friends' ? "Let's pick a book idea" : "Your Book Outline"}
+      description={category === 'friends' 
+        ? "Choose from these AI-generated book ideas or regenerate for more options."
+        : "Review your AI-generated book outline or regenerate for a different one."}
       previousStep={previousStep}
       currentStep={3}
       totalSteps={4}
@@ -225,7 +232,11 @@ const IdeaStep = ({
         {isLoading && (
           <div className="text-center py-8">
             <RefreshCw className="animate-spin h-8 w-8 mx-auto mb-4" />
-            <p className="text-gray-500">Generating creative ideas...</p>
+            <p className="text-gray-500">
+              {category === 'friends' 
+                ? "Generating creative ideas..." 
+                : "Generating your book outline..."}
+            </p>
           </div>
         )}
 
@@ -233,16 +244,37 @@ const IdeaStep = ({
           {ideas.map((idea, index) => (
             <div 
               key={index} 
-              className={`bg-white rounded-lg p-6 cursor-pointer transition-all ${
-                selectedIdeaIndex === index 
-                  ? 'ring-2 ring-primary shadow-lg scale-[1.02]' 
-                  : 'hover:shadow-md'
+              className={`bg-white rounded-lg p-6 ${
+                category === 'friends' 
+                  ? 'cursor-pointer transition-all hover:shadow-md ' + 
+                    (selectedIdeaIndex === index 
+                      ? 'ring-2 ring-primary shadow-lg scale-[1.02]' 
+                      : '')
+                  : ''
               }`}
-              onClick={() => handleIdeaSelect(index)}
+              onClick={() => category === 'friends' && handleIdeaSelect(index)}
             >
               <h3 className="text-2xl font-bold mb-1">{idea.title}</h3>
-              <p className="text-gray-600 text-sm mb-2">{idea.author}</p>
-              <p className="text-gray-800">{idea.description}</p>
+              <p className="text-gray-600 text-sm mb-4">{idea.author}</p>
+              
+              {category === 'friends' ? (
+                <p className="text-gray-800">{idea.description}</p>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-gray-800">{idea.description}</p>
+                  <div className="mt-6">
+                    <h4 className="text-lg font-semibold mb-3">Table of Contents</h4>
+                    <div className="space-y-3">
+                      {idea.chapters?.map((chapter, idx) => (
+                        <div key={idx} className="border-b pb-3">
+                          <h5 className="font-medium">Chapter {idx + 1}: {chapter.title}</h5>
+                          <p className="text-gray-600 text-sm mt-1">{chapter.description}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
