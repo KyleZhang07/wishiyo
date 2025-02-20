@@ -32,22 +32,17 @@ const LoveStoryQuestionsStep = () => {
   }, []);
 
   const questions = [
-    "How did you first meet?",
-    `What was your first impression of ${partnerName}?`,
-    "What was your first date?",
-    `What is the cutest thing ${partnerName} does without realizing?`,
-    "What's your favorite way to spend time together?",
-    "What's a small thing they do that always makes your day better?",
-    `What is a food ${partnerName} loves?`,
-    `What's the cutest nickname you have for ${partnerName}?`,
-    `What's one thing ${partnerName} always beats you at?`,
-    `What's the most romantic thing ${partnerName} has ever done for you?`,
-    `What's one moment that made you fall even more in love with ${partnerName}?`,
-    `What's something you never get tired of hearing ${partnerName} say?`,
-    `What's ${partnerName}'s favorite song?`,
-    "If you could go on a dream vacation together, where would it be?",
-    "What do you think makes your relationship so special?",
-    `What's one promise you want to make to ${partnerName} forever?`
+    "Are you drawn to cities, nature, or cultural landmarks?",
+    "Which climate excites you the most?",
+    "Would you prefer historical, futuristic, fantasy, or dreamlike destinations?",
+    "Is there a specific country or culture you've always wanted to experience with your partner?",
+    "Which element of travel feels the most romantic to you?",
+    "What type of romantic experiences excite you?",
+    "Would you rather explore hidden alleys of an old European town or stargaze in the middle of the desert?",
+    "Are you more into grand romantic gestures or intimate, quiet moments?",
+    "If your love were a movie, which travel scene would it include?",
+    "What's a dream experience you'd love to share with your partner?",
+    "To describe your dream trip as a love story, what mood should it capture?"
   ];
 
   const handleNext = () => {
@@ -83,8 +78,8 @@ const LoveStoryQuestionsStep = () => {
 
   return (
     <WizardStep
-      title="Share Your Love Story"
-      description="Tell us about your journey together"
+      title="Share Your Travel Dreams"
+      description="Tell us about your dream destinations together"
       previousStep="/create/love/love-story/author"
       currentStep={2}
       totalSteps={5}
@@ -118,8 +113,8 @@ const LoveStoryQuestionsStep = () => {
         >
           <PlusCircle className="mr-2 h-5 w-5" />
           {questionsAndAnswers.length === 0 
-            ? "Share Your First Memory" 
-            : "Add Another Memory"}
+            ? "Share Your First Dream" 
+            : "Add Another Dream"}
         </Button>
       </div>
       <QuestionDialog
