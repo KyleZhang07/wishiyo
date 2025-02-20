@@ -30,7 +30,7 @@ const LovePoemsAuthorStep = () => {
 
     localStorage.setItem('lovePoemsAuthorName', name.trim());
     localStorage.setItem('lovePoemsPartnerName', partnerName.trim());
-    navigate('/create/love/love-poems/feelings');
+    navigate('/create/love/time-travel/feelings');
   };
 
   return (

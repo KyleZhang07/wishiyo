@@ -30,7 +30,7 @@ const StoryBookAuthorStep = () => {
 
     localStorage.setItem('storyBookChildName', childName.trim());
     localStorage.setItem('storyBookChildAge', childAge.trim());
-    navigate('/create/kids/story-book/theme');
+    navigate('/create/kids/career-exploration/theme');
   };
 
   return (

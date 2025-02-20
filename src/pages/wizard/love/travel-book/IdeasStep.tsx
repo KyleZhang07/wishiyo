@@ -5,8 +5,8 @@ const LoveStoryIdeasStep = () => {
   return (
     <IdeaStep
       category="love"
-      previousStep="/create/love/love-story/questions"
-      nextStep="/create/love/love-story/moments"
+      previousStep="/create/love/travel-book/questions"
+      nextStep="/create/love/travel-book/moments"
     />
   );
 };

@@ -30,7 +30,7 @@ const LearningJourneyAuthorStep = () => {
 
     localStorage.setItem('learningChildName', childName.trim());
     localStorage.setItem('learningChildAge', childAge.trim());
-    navigate('/create/kids/learning/subject');
+    navigate('/create/kids/learning-journey/subject');
   };
 
   return (
