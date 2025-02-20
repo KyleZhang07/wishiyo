@@ -58,7 +58,7 @@ const LoveStoryQuestionsStep = () => {
       });
       return;
     }
-    navigate('/create/love/love-story/moments');
+    navigate('/create/love/love-story/ideas');
   };
 
   const handleSubmitAnswer = (question: string, answer: string) => {
@@ -86,7 +86,7 @@ const LoveStoryQuestionsStep = () => {
       description="Tell us about your journey together"
       previousStep="/create/love/love-story/author"
       currentStep={2}
-      totalSteps={4}
+      totalSteps={5}
       onNextClick={handleNext}
     >
       <div className="space-y-6">
