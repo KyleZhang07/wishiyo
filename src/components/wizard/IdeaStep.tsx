@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import WizardStep from './WizardStep';
 import { Button } from '@/components/ui/button';
@@ -46,24 +47,24 @@ const IdeaStep = ({
       'funny-biography': 'funnyBiographyGeneratedIdeas',
       'wild-fantasy': 'wildFantasyGeneratedIdeas',
       'prank-book': 'prankBookGeneratedIdeas',
-      'travel-book': 'travelBookGeneratedIdea',
-      'time-travel': 'timeTravelGeneratedIdea',
-      'love-letters': 'loveLettersGeneratedIdea',
-      'adventure': 'adventureGeneratedIdea',
-      'career-exploration': 'careerExplorationGeneratedIdea',
-      'learning-journey': 'learningJourneyGeneratedIdea'
+      'love-story': 'loveStoryGeneratedIdea',
+      'love-poems': 'lovePoemsGeneratedIdea',
+      'picture-album': 'pictureAlbumGeneratedIdea',
+      'adventure': 'kidsAdventureGeneratedIdea',
+      'story-book': 'kidsStoryGeneratedIdea',
+      'learning': 'learningJourneyGeneratedIdea'
     };
 
     const selectedIdeaStorageKeyMap: { [key: string]: string } = {
       'funny-biography': 'funnyBiographySelectedIdea',
       'wild-fantasy': 'wildFantasySelectedIdea',
       'prank-book': 'prankBookSelectedIdea',
-      'travel-book': 'travelBookSelectedIdea',
-      'time-travel': 'timeTravelSelectedIdea',
-      'love-letters': 'loveLettersSelectedIdea',
-      'adventure': 'adventureSelectedIdea',
-      'career-exploration': 'careerExplorationSelectedIdea',
-      'learning-journey': 'learningJourneySelectedIdea'
+      'love-story': 'loveStorySelectedIdea',
+      'love-poems': 'lovePoemsSelectedIdea',
+      'picture-album': 'pictureAlbumSelectedIdea',
+      'adventure': 'kidsAdventureSelectedIdea',
+      'story-book': 'kidsStorySelectedIdea',
+      'learning': 'learningJourneySelectedIdea'
     };
 
     return {
@@ -82,24 +83,24 @@ const IdeaStep = ({
         'funny-biography': 'funnyBiographyAnswers',
         'wild-fantasy': 'wildFantasyAnswers',
         'prank-book': 'prankBookAnswers',
-        'travel-book': 'travelBookAnswers',
-        'time-travel': 'timeTravelAnswers',
-        'love-letters': 'loveLettersAnswers',
-        'adventure': 'adventureAnswers',
-        'career-exploration': 'careerExplorationAnswers',
-        'learning-journey': 'learningJourneyAnswers'
+        'love-story': 'loveStoryAnswers',
+        'love-poems': 'lovePoemsAnswers',
+        'picture-album': 'pictureAlbumAnswers',
+        'adventure': 'kidsAdventureAnswers',
+        'story-book': 'kidsStoryAnswers',
+        'learning': 'learningJourneyAnswers'
       };
 
       const authorNameKeyMap: { [key: string]: string } = {
         'funny-biography': 'funnyBiographyAuthorName',
         'wild-fantasy': 'wildFantasyAuthorName',
         'prank-book': 'prankBookAuthorName',
-        'travel-book': 'travelBookAuthorName',
-        'time-travel': 'timeTravelAuthorName',
-        'love-letters': 'loveLettersAuthorName',
-        'adventure': 'adventureAuthorName',
-        'career-exploration': 'careerExplorationAuthorName',
-        'learning-journey': 'learningJourneyAuthorName'
+        'love-story': 'loveStoryAuthorName',
+        'love-poems': 'lovePoemsAuthorName',
+        'picture-album': 'pictureAlbumAuthorName',
+        'adventure': 'kidsAdventureAuthorName',
+        'story-book': 'kidsStoryAuthorName',
+        'learning': 'learningJourneyAuthorName'
       };
 
       const storageKey = storageKeyMap[bookType];
@@ -158,12 +159,13 @@ const IdeaStep = ({
         setSelectedIdeaIndex(null);
         localStorage.setItem(ideasKey, JSON.stringify(data.ideas));
       } else {
+        // For love and kids categories, we only need one idea with chapters
         if (!data.idea || !data.idea.chapters) {
           throw new Error('Invalid response format for love/kids category');
         }
         const singleIdea = data.idea;
         setIdeas([singleIdea]);
-        setSelectedIdeaIndex(0);
+        setSelectedIdeaIndex(0); // Automatically select the single idea
         localStorage.setItem(ideasKey, JSON.stringify(singleIdea));
       }
     } catch (error) {
@@ -228,6 +230,7 @@ const IdeaStep = ({
             }
           }
         } else {
+          // For love and kids categories
           const parsedIdea = JSON.parse(savedIdeasString);
           if (parsedIdea && typeof parsedIdea === 'object') {
             setIdeas([parsedIdea]);
@@ -236,6 +239,7 @@ const IdeaStep = ({
         }
       } catch (error) {
         console.error('Error parsing saved ideas:', error);
+        // If there's an error parsing the saved data, generate new ideas
         generateIdeas();
       }
     } else {
