@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import WizardStep from './WizardStep';
 import { Button } from '@/components/ui/button';
@@ -7,22 +6,16 @@ import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 
-interface Praise {
-  quote: string;
-  source: string;
-}
-
-interface Chapter {
+interface Story {
   title: string;
-  description: string;
 }
 
 interface BookIdea {
   title: string;
   author: string;
-  description: string;
-  praises: Praise[];
-  chapters?: Chapter[];
+  stories?: Story[];
+  description?: string;
+  praises?: { quote: string; source: string; }[];
 }
 
 interface IdeaStepProps {
@@ -159,13 +152,13 @@ const IdeaStep = ({
         setSelectedIdeaIndex(null);
         localStorage.setItem(ideasKey, JSON.stringify(data.ideas));
       } else {
-        // For love and kids categories, we only need one idea with chapters
-        if (!data.idea || !data.idea.chapters) {
+        // For love and kids categories
+        if (!data.idea || !data.idea.stories) {
           throw new Error('Invalid response format for love/kids category');
         }
         const singleIdea = data.idea;
         setIdeas([singleIdea]);
-        setSelectedIdeaIndex(0); // Automatically select the single idea
+        setSelectedIdeaIndex(0);
         localStorage.setItem(ideasKey, JSON.stringify(singleIdea));
       }
     } catch (error) {
@@ -239,7 +232,6 @@ const IdeaStep = ({
         }
       } catch (error) {
         console.error('Error parsing saved ideas:', error);
-        // If there's an error parsing the saved data, generate new ideas
         generateIdeas();
       }
     } else {
@@ -249,10 +241,10 @@ const IdeaStep = ({
 
   return (
     <WizardStep
-      title={category === 'friends' ? "Let's pick a book idea" : "Your Book Outline"}
+      title={category === 'friends' ? "Let's pick a book idea" : "Your Story Book"}
       description={category === 'friends' 
         ? "Choose from these AI-generated book ideas or regenerate for more options."
-        : "Review your AI-generated book outline or regenerate for a different one."}
+        : "Review your AI-generated story book or regenerate for a different one."}
       previousStep={previousStep}
       currentStep={3}
       totalSteps={4}
@@ -277,7 +269,7 @@ const IdeaStep = ({
             <p className="text-gray-500">
               {category === 'friends' 
                 ? "Generating creative ideas..." 
-                : "Generating your book outline..."}
+                : "Generating your story book..."}
             </p>
           </div>
         )}
@@ -296,21 +288,19 @@ const IdeaStep = ({
               }`}
               onClick={() => category === 'friends' && handleIdeaSelect(index)}
             >
-              <h3 className="text-2xl font-bold mb-1">{idea.title}</h3>
-              <p className="text-gray-600 text-sm mb-4">{idea.author}</p>
+              <h3 className="text-2xl font-bold mb-4">{idea.title}</h3>
+              <p className="text-gray-600 text-sm mb-6">By {idea.author}</p>
               
               {category === 'friends' ? (
                 <p className="text-gray-800">{idea.description}</p>
               ) : (
                 <div className="space-y-4">
-                  <p className="text-gray-800">{idea.description}</p>
                   <div className="mt-6">
-                    <h4 className="text-lg font-semibold mb-3">Table of Contents</h4>
-                    <div className="space-y-3">
-                      {idea.chapters?.map((chapter, idx) => (
-                        <div key={idx} className="border-b pb-3">
-                          <h5 className="font-medium">Chapter {idx + 1}: {chapter.title}</h5>
-                          <p className="text-gray-600 text-sm mt-1">{chapter.description}</p>
+                    <h4 className="text-lg font-semibold mb-3">Stories</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {idea.stories?.map((story, idx) => (
+                        <div key={idx} className="border p-3 rounded-lg">
+                          <p className="font-medium">Story {idx + 1}: {story.title}</p>
                         </div>
                       ))}
                     </div>
