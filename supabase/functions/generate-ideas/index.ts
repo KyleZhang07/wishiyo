@@ -8,122 +8,103 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const generatePrompt = (authorName: string, stories: Array<{question: string, answer: string}>, bookType: string, category: string) => {
-  const storiesText = stories.map(story => `${story.question}\nAnswer: ${story.answer}`).join('\n\n');
-  
-  if (category === 'friends') {
-    // Keep the original multiple ideas generation for friends category
-    switch(bookType) {
-      case 'funny-biography':
-        return `Create 3 funny book ideas for a biography about ${authorName}, and for each idea, generate 4 praise quotes from fictional but contextually relevant organizations or publications. Base the content on this information:\n\n${storiesText}\n\nEnsure to respond with valid JSON array with exactly 3 objects. Each object must have these exact fields: title (string), author (string), description (string), and praises (array of objects with quote and source fields). No markdown or code block formatting.`;
-      case 'wild-fantasy':
-        return `Create 3 wild fantasy book ideas for ${authorName}, and for each idea, generate 4 praise quotes from fictional but contextually relevant organizations or publications. Base the content on this information:\n\n${storiesText}\n\nEnsure to respond with valid JSON array with exactly 3 objects. Each object must have these exact fields: title (string), author (string), description (string), and praises (array of objects with quote and source fields). No markdown or code block formatting.`;
-      case 'prank-book':
-        return `Create 3 prank book ideas for ${authorName}, and for each idea, generate 4 praise quotes from fictional but contextually relevant organizations or publications. Base the content on this information:\n\n${storiesText}\n\nEnsure to respond with valid JSON array with exactly 3 objects. Each object must have these exact fields: title (string), author (string), description (string), and praises (array of objects with quote and source fields). No markdown or code block formatting.`;
-      default:
-        throw new Error('Invalid book type for friends category');
-    }
-  } else {
-    // Generate single outline with chapters for love and kids categories
-    switch(bookType) {
-      case 'love-story':
-        return `Create a romantic travel story outline based on these memories and preferences:\n\n${storiesText}\n\nGenerate a book outline with a title, author (${authorName}), brief description, and 8-10 chapters. Each chapter should have a title and brief description. The chapters should follow a natural progression of the journey, incorporating the romantic elements and travel experiences mentioned. Ensure to respond with a single JSON object containing these fields: title (string), author (string), description (string), and chapters (array of objects with title and description fields). No markdown formatting.`;
-      case 'love-poems':
-        return `Create a poetry collection outline based on these romantic memories:\n\n${storiesText}\n\nGenerate a book outline with a title, author (${authorName}), brief description, and 8-10 chapters/sections. Each section should have a poetic title and brief description of the poems it will contain. Ensure to respond with a single JSON object containing these fields: title (string), author (string), description (string), and chapters (array of objects with title and description fields). No markdown formatting.`;
-      case 'picture-album':
-        return `Create a romantic photo album outline based on these memories:\n\n${storiesText}\n\nGenerate a book outline with a title, author (${authorName}), brief description, and 8-10 chapters/sections. Each section should represent a theme or period with a title and description of the photos and memories it will showcase. Ensure to respond with a single JSON object containing these fields: title (string), author (string), description (string), and chapters (array of objects with title and description fields). No markdown formatting.`;
-      case 'adventure':
-        return `Create a children's adventure story outline based on these details:\n\n${storiesText}\n\nGenerate a book outline with a title, author (${authorName}), brief description, and 8-10 chapters. Each chapter should have an exciting title and brief description suitable for young readers. Ensure to respond with a single JSON object containing these fields: title (string), author (string), description (string), and chapters (array of objects with title and description fields). No markdown formatting.`;
-      case 'story-book':
-        return `Create a children's story book outline based on these details:\n\n${storiesText}\n\nGenerate a book outline with a title, author (${authorName}), brief description, and 6-8 chapters. Each chapter should have a child-friendly title and brief description that will engage young readers. Ensure to respond with a single JSON object containing these fields: title (string), author (string), description (string), and chapters (array of objects with title and description fields). No markdown formatting.`;
-      case 'learning':
-        return `Create an educational journey book outline based on these details:\n\n${storiesText}\n\nGenerate a book outline with a title, author (${authorName}), brief description, and 6-8 chapters. Each chapter should have an educational yet engaging title and brief description that makes learning fun. Ensure to respond with a single JSON object containing these fields: title (string), author (string), description (string), and chapters (array of objects with title and description fields). No markdown formatting.`;
-      default:
-        throw new Error('Invalid book type');
-    }
-  }
-};
-
 serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
+  const { method } = req;
+  if (method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const { authorName, stories, bookType, category } = await req.json();
 
+    console.log('Generating ideas for:', { authorName, bookType, category });
+
     if (!authorName || !stories || !bookType || !category) {
       throw new Error('Missing required parameters');
     }
 
-    console.log('Generating ideas for:', { authorName, bookType, category });
+    const getBookTypeName = (type: string) => {
+      const bookTypeMap: { [key: string]: string } = {
+        'love-story': 'Travel Book',
+        'love-poems': 'Time Travel',
+        'picture-album': 'Love Letters',
+        'adventure': 'Adventure',
+        'story-book': 'Career Exploration',
+        'learning': 'Learning Journey'
+      };
+      return bookTypeMap[type] || type;
+    };
 
-    const prompt = generatePrompt(authorName, stories, bookType, category);
+    let prompt = '';
+    if (category === 'friends') {
+      prompt = `Create a collection of stories for ${authorName}. Each story should:
+      1. Have a title
+      2. Include a subtitle describing the scene
+      3. Describe the image that should accompany the story
+      4. Provide a one-page story content description
 
-    console.log('Sending prompt to OpenAI');
+      Based on these memories and preferences:
+      ${stories.map(story => `${story.question}\nAnswer: ${story.answer}`).join('\n\n')}
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
+      Respond with a JSON object containing:
+      {
+        "title": "string",
+        "author": "string",
+        "stories": [
+          {
+            "title": "string",
+            "subtitle": "string",
+            "imageDescription": "string",
+            "contentDescription": "string"
+          }
+        ]
+      }`;
+    } else {
+      const bookTypeName = getBookTypeName(bookType);
+      prompt = `Create a ${bookTypeName} with 15 stories for ${authorName}. Each story should:
+      1. Have a location-based title (e.g., "A serendipitous encounter in Paris")
+      2. Include a subtitle describing the scene (e.g., "${authorName} wandering in the streets of Paris")
+      3. Describe the image that should accompany the story
+      4. Provide a one-page story content description
+
+      Based on these memories and preferences:
+      ${stories.map(story => `${story.question}\nAnswer: ${story.answer}`).join('\n\n')}
+
+      Respond with a JSON object containing:
+      {
+        "title": "string",
+        "author": "string",
+        "stories": [
+          {
+            "title": "string (location-based)",
+            "subtitle": "string",
+            "imageDescription": "string",
+            "contentDescription": "string"
+          }
+        ]
+      }`;
+    }
+
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${openAIApiKey}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: category === 'friends' 
-              ? 'You are a creative book idea generator that creates engaging titles, descriptions, and praise quotes. You must respond with valid JSON only, no markdown or code blocks.'
-              : 'You are a creative book outline generator that creates engaging chapter-based outlines. You must respond with valid JSON only, no markdown or code blocks.'
-          },
-          { role: 'user', content: prompt }
-        ],
+        model: "gpt-3.5-turbo",
+        messages: [{ role: "user", content: prompt }],
       }),
     });
 
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
-    }
-
-    const openAIResponse = await response.json();
-    
-    console.log('Raw OpenAI response:', openAIResponse);
-
-    if (!openAIResponse.choices?.[0]?.message?.content) {
-      throw new Error('Invalid response from OpenAI');
-    }
-
-    let parsedContent;
-    try {
-      parsedContent = JSON.parse(openAIResponse.choices[0].message.content.trim());
-    } catch (error) {
-      console.error('JSON parse error:', error);
-      console.error('Content that failed to parse:', openAIResponse.choices[0].message.content);
-      throw new Error('Failed to parse OpenAI response as JSON');
-    }
-
-    // For friends category, expect array of 3 ideas
-    // For love and kids categories, expect single object with chapters
-    if (category === 'friends') {
-      if (!Array.isArray(parsedContent) || parsedContent.length !== 3) {
-        throw new Error('Invalid ideas format: expected array of 3 items');
-      }
-      return new Response(
-        JSON.stringify({ ideas: parsedContent }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    const data = await response.json();
+    if (response.ok) {
+      return new Response(JSON.stringify(data), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     } else {
-      if (!parsedContent.chapters || !Array.isArray(parsedContent.chapters)) {
-        throw new Error('Invalid idea format: expected object with chapters array');
-      }
-      return new Response(
-        JSON.stringify({ idea: parsedContent }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      throw new Error(data.error.message);
     }
-
   } catch (error) {
     console.error('Error in generate-ideas function:', error);
     return new Response(
