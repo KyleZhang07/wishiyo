@@ -27,7 +27,22 @@ const generatePrompt = (authorName: string, stories: Array<{question: string, an
     // Generate single outline with chapters for love and kids categories
     switch(bookType) {
       case 'love-story':
-        return `Create a romantic travel story outline based on these memories and preferences:\n\n${storiesText}\n\nGenerate a book outline with a title, author (${authorName}), brief description, and 8-10 chapters. Each chapter should have a title and brief description. The chapters should follow a natural progression of the journey, incorporating the romantic elements and travel experiences mentioned. Ensure to respond with a single JSON object containing these fields: title (string), author (string), description (string), and chapters (array of objects with title and description fields). No markdown formatting.`;
+        return `Create a romantic anime-style story outline for a gift book from ${authorName} to their partner. The story should be set in various beautiful cities, perfect for anime-style illustrations. Each chapter should be exactly one page long with one accompanying anime-style illustration featuring the couple in that city's setting.
+
+Generate a book outline with:
+- A romantic anime-inspired title
+- Author (${authorName})
+- A brief description that captures the romantic journey through cities
+- 8-10 single-page chapters, where each chapter:
+  * Has a poetic title reflecting the city and mood
+  * Contains a brief but complete story that fits on one page
+  * Describes a scene perfect for an anime illustration of the couple
+  * Specifies the city/location for the scene
+  * Captures a special moment between the couple
+
+The tone should be romantic and dreamy, similar to romantic slice-of-life anime. Each chapter should work as a standalone romantic moment while contributing to the overall love story.
+
+Ensure to respond with a single JSON object containing these fields: title (string), author (string), description (string), and chapters (array of objects with title and description fields). No markdown formatting.`;
       case 'love-poems':
         return `Create a poetry collection outline based on these romantic memories:\n\n${storiesText}\n\nGenerate a book outline with a title, author (${authorName}), brief description, and 8-10 chapters/sections. Each section should have a poetic title and brief description of the poems it will contain. Ensure to respond with a single JSON object containing these fields: title (string), author (string), description (string), and chapters (array of objects with title and description fields). No markdown formatting.`;
       case 'picture-album':
