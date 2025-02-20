@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -26,17 +27,17 @@ const generatePrompt = (authorName: string, stories: Array<{question: string, an
   } else {
     // Generate single outline with chapters for love and kids categories
     switch(bookType) {
-      case 'love-story':
+      case 'travel-book':
         return `Create a romantic travel story outline based on these memories and preferences:\n\n${storiesText}\n\nGenerate a book outline with a title, author (${authorName}), brief description, and 8-10 chapters. Each chapter should have a title and brief description. The chapters should follow a natural progression of the journey, incorporating the romantic elements and travel experiences mentioned. Ensure to respond with a single JSON object containing these fields: title (string), author (string), description (string), and chapters (array of objects with title and description fields). No markdown formatting.`;
-      case 'love-poems':
-        return `Create a poetry collection outline based on these romantic memories:\n\n${storiesText}\n\nGenerate a book outline with a title, author (${authorName}), brief description, and 8-10 chapters/sections. Each section should have a poetic title and brief description of the poems it will contain. Ensure to respond with a single JSON object containing these fields: title (string), author (string), description (string), and chapters (array of objects with title and description fields). No markdown formatting.`;
-      case 'picture-album':
-        return `Create a romantic photo album outline based on these memories:\n\n${storiesText}\n\nGenerate a book outline with a title, author (${authorName}), brief description, and 8-10 chapters/sections. Each section should represent a theme or period with a title and description of the photos and memories it will showcase. Ensure to respond with a single JSON object containing these fields: title (string), author (string), description (string), and chapters (array of objects with title and description fields). No markdown formatting.`;
+      case 'time-travel':
+        return `Create a time travel poetry collection outline based on these romantic memories:\n\n${storiesText}\n\nGenerate a book outline with a title, author (${authorName}), brief description, and 8-10 chapters/sections. Each section should have a poetic title and brief description of the poems it will contain. Ensure to respond with a single JSON object containing these fields: title (string), author (string), description (string), and chapters (array of objects with title and description fields). No markdown formatting.`;
+      case 'love-letters':
+        return `Create a romantic love letters collection outline based on these memories:\n\n${storiesText}\n\nGenerate a book outline with a title, author (${authorName}), brief description, and 8-10 chapters/sections. Each section should represent a theme or period with a title and description of the letters and memories it will showcase. Ensure to respond with a single JSON object containing these fields: title (string), author (string), description (string), and chapters (array of objects with title and description fields). No markdown formatting.`;
       case 'adventure':
         return `Create a children's adventure story outline based on these details:\n\n${storiesText}\n\nGenerate a book outline with a title, author (${authorName}), brief description, and 8-10 chapters. Each chapter should have an exciting title and brief description suitable for young readers. Ensure to respond with a single JSON object containing these fields: title (string), author (string), description (string), and chapters (array of objects with title and description fields). No markdown formatting.`;
-      case 'story-book':
-        return `Create a children's story book outline based on these details:\n\n${storiesText}\n\nGenerate a book outline with a title, author (${authorName}), brief description, and 6-8 chapters. Each chapter should have a child-friendly title and brief description that will engage young readers. Ensure to respond with a single JSON object containing these fields: title (string), author (string), description (string), and chapters (array of objects with title and description fields). No markdown formatting.`;
-      case 'learning':
+      case 'career-exploration':
+        return `Create a career exploration story book outline based on these details:\n\n${storiesText}\n\nGenerate a book outline with a title, author (${authorName}), brief description, and 6-8 chapters. Each chapter should have a child-friendly title and brief description that will engage young readers. Ensure to respond with a single JSON object containing these fields: title (string), author (string), description (string), and chapters (array of objects with title and description fields). No markdown formatting.`;
+      case 'learning-journey':
         return `Create an educational journey book outline based on these details:\n\n${storiesText}\n\nGenerate a book outline with a title, author (${authorName}), brief description, and 6-8 chapters. Each chapter should have an educational yet engaging title and brief description that makes learning fun. Ensure to respond with a single JSON object containing these fields: title (string), author (string), description (string), and chapters (array of objects with title and description fields). No markdown formatting.`;
       default:
         throw new Error('Invalid book type');
