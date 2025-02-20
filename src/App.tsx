@@ -91,24 +91,34 @@ const App = () => {
                 <Route path="/love" element={<LoveLanding />} />
                 <Route path="/kids" element={<KidsLanding />} />
                 
-                {/* Travel Book Routes */}
-                <Route path="/create/love/travel-book/author" element={<LoveStoryAuthorStep />} />
-                <Route path="/create/love/travel-book/questions" element={<LoveStoryQuestionsStep />} />
-                <Route path="/create/love/travel-book/ideas" element={<LoveStoryIdeasStep />} />
-                <Route path="/create/love/travel-book/moments" element={<LoveStoryMomentsStep />} />
-                <Route path="/create/love/travel-book/generate" element={<LoveStoryGenerateStep />} />
-
-                {/* Time Travel Routes */}
-                <Route path="/create/love/time-travel/author" element={<LovePoemsAuthorStep />} />
-                <Route path="/create/love/time-travel/feelings" element={<LovePoemsFeelingsStep />} />
-                <Route path="/create/love/time-travel/style" element={<LovePoemsStyleStep />} />
-                <Route path="/create/love/time-travel/generate" element={<LovePoemsGenerateStep />} />
-
-                {/* Love Letters Routes */}
-                <Route path="/create/love/love-letters/author" element={<PictureAlbumAuthorStep />} />
-                <Route path="/create/love/love-letters/photos" element={<PictureAlbumPhotosStep />} />
-                <Route path="/create/love/love-letters/generate" element={<PictureAlbumGenerateStep />} />
+                {/* Funny Biography Routes */}
+                <Route path="/create/friends/funny-biography/author" element={<FunnyBiographyAuthorStep />} />
+                <Route path="/create/friends/funny-biography/stories" element={<FunnyBiographyStoriesStep />} />
+                <Route path="/create/friends/funny-biography/ideas" element={<FunnyBiographyIdeasStep />} />
+                <Route path="/create/friends/funny-biography/photos" element={<FunnyBiographyPhotosStep />} />
+                <Route path="/create/friends/funny-biography/generate" element={<FunnyBiographyGenerateStep />} />
                 
+                {/* Wild Fantasy Routes */}
+                <Route path="/create/friends/wild-fantasy/author" element={<WildFantasyAuthorStep />} />
+                <Route path="/create/friends/wild-fantasy/adventure" element={<WildFantasyAdventureStep />} />
+                <Route path="/create/friends/wild-fantasy/ideas" element={<WildFantasyIdeasStep />} />
+                <Route path="/create/friends/wild-fantasy/photos" element={<WildFantasyPhotosStep />} />
+                <Route path="/create/friends/wild-fantasy/generate" element={<WildFantasyGenerateStep />} />
+
+                {/* Prank Book Routes */}
+                <Route path="/create/friends/prank-book/author" element={<PrankBookAuthorStep />} />
+                <Route path="/create/friends/prank-book/pranks" element={<PrankBookPranksStep />} />
+                <Route path="/create/friends/prank-book/ideas" element={<PrankBookIdeasStep />} />
+                <Route path="/create/friends/prank-book/evidence" element={<PrankBookEvidenceStep />} />
+                <Route path="/create/friends/prank-book/generate" element={<PrankBookGenerateStep />} />
+
+                {/* Love Story Routes */}
+                <Route path="/create/love/love-story/author" element={<LoveStoryAuthorStep />} />
+                <Route path="/create/love/love-story/questions" element={<LoveStoryQuestionsStep />} />
+                <Route path="/create/love/love-story/ideas" element={<LoveStoryIdeasStep />} />
+                <Route path="/create/love/love-story/moments" element={<LoveStoryMomentsStep />} />
+                <Route path="/create/love/love-story/generate" element={<LoveStoryGenerateStep />} />
+
                 {/* Kids Adventure Routes */}
                 <Route path="/create/kids/adventure/author" element={<KidsAdventureAuthorStep />} />
                 <Route path="/create/kids/adventure/character" element={<KidsAdventureCharacterStep />} />
