@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -35,12 +36,23 @@ import PrankBookIdeasStep from "./pages/wizard/friends/prank-book/IdeasStep";
 import PrankBookEvidenceStep from "./pages/wizard/friends/prank-book/EvidenceStep";
 import PrankBookGenerateStep from "./pages/wizard/friends/prank-book/GenerateStep";
 
-// Love Book Creation Routes - Love Story
-import LoveStoryAuthorStep from "./pages/wizard/love/love-story/AuthorStep";
-import LoveStoryQuestionsStep from "./pages/wizard/love/love-story/QuestionsStep";
-import LoveStoryIdeasStep from "./pages/wizard/love/love-story/IdeasStep";
-import LoveStoryMomentsStep from "./pages/wizard/love/love-story/MomentsStep";
-import LoveStoryGenerateStep from "./pages/wizard/love/love-story/GenerateStep";
+// Love Book Creation Routes - Travel Book
+import TravelBookAuthorStep from "./pages/wizard/love/travel-book/AuthorStep";
+import TravelBookQuestionsStep from "./pages/wizard/love/travel-book/QuestionsStep";
+import TravelBookIdeasStep from "./pages/wizard/love/travel-book/IdeasStep";
+import TravelBookMomentsStep from "./pages/wizard/love/travel-book/MomentsStep";
+import TravelBookGenerateStep from "./pages/wizard/love/travel-book/GenerateStep";
+
+// Love Book Creation Routes - Time Travel
+import TimeTravelAuthorStep from "./pages/wizard/love/time-travel/AuthorStep";
+import TimeTravelFeelingsStep from "./pages/wizard/love/time-travel/FeelingsStep";
+import TimeTravelStyleStep from "./pages/wizard/love/time-travel/StyleStep";
+import TimeTravelGenerateStep from "./pages/wizard/love/time-travel/GenerateStep";
+
+// Love Book Creation Routes - Love Letters
+import LoveLettersAuthorStep from "./pages/wizard/love/love-letters/AuthorStep";
+import LoveLettersPhotosStep from "./pages/wizard/love/love-letters/PhotosStep";
+import LoveLettersGenerateStep from "./pages/wizard/love/love-letters/GenerateStep";
 
 // Kids Book Creation Routes - Adventure
 import KidsAdventureAuthorStep from "./pages/wizard/kids/adventure/AuthorStep";
@@ -48,28 +60,17 @@ import KidsAdventureCharacterStep from "./pages/wizard/kids/adventure/CharacterS
 import KidsAdventureStoryStep from "./pages/wizard/kids/adventure/StoryStep";
 import KidsAdventureGenerateStep from "./pages/wizard/kids/adventure/GenerateStep";
 
-// Love Book Creation Routes - Love Poems
-import LovePoemsAuthorStep from "./pages/wizard/love/love-poems/AuthorStep";
-import LovePoemsFeelingsStep from "./pages/wizard/love/love-poems/FeelingsStep";
-import LovePoemsStyleStep from "./pages/wizard/love/love-poems/StyleStep";
-import LovePoemsGenerateStep from "./pages/wizard/love/love-poems/GenerateStep";
-
-// Love Book Creation Routes - Picture Album
-import PictureAlbumAuthorStep from "./pages/wizard/love/picture-album/AuthorStep";
-import PictureAlbumPhotosStep from "./pages/wizard/love/picture-album/PhotosStep";
-import PictureAlbumGenerateStep from "./pages/wizard/love/picture-album/GenerateStep";
-
-// Kids Book Creation Routes - Story Book
-import StoryBookAuthorStep from "./pages/wizard/kids/story-book/AuthorStep";
-import StoryBookThemeStep from "./pages/wizard/kids/story-book/ThemeStep";
-import StoryBookCharactersStep from "./pages/wizard/kids/story-book/CharactersStep";
-import StoryBookGenerateStep from "./pages/wizard/kids/story-book/GenerateStep";
+// Kids Book Creation Routes - Career Exploration
+import CareerExplorationAuthorStep from "./pages/wizard/kids/career-exploration/AuthorStep";
+import CareerExplorationThemeStep from "./pages/wizard/kids/career-exploration/ThemeStep";
+import CareerExplorationCharactersStep from "./pages/wizard/kids/career-exploration/CharactersStep";
+import CareerExplorationGenerateStep from "./pages/wizard/kids/career-exploration/GenerateStep";
 
 // Kids Book Creation Routes - Learning Journey
-import LearningJourneyAuthorStep from "./pages/wizard/kids/learning/AuthorStep";
-import LearningJourneySubjectStep from "./pages/wizard/kids/learning/SubjectStep";
-import LearningJourneyStyleStep from "./pages/wizard/kids/learning/StyleStep";
-import LearningJourneyGenerateStep from "./pages/wizard/kids/learning/GenerateStep";
+import LearningJourneyAuthorStep from "./pages/wizard/kids/learning-journey/AuthorStep";
+import LearningJourneySubjectStep from "./pages/wizard/kids/learning-journey/SubjectStep";
+import LearningJourneyStyleStep from "./pages/wizard/kids/learning-journey/StyleStep";
+import LearningJourneyGenerateStep from "./pages/wizard/kids/learning-journey/GenerateStep";
 
 const queryClient = new QueryClient();
 
@@ -112,41 +113,41 @@ const App = () => {
                 <Route path="/create/friends/prank-book/evidence" element={<PrankBookEvidenceStep />} />
                 <Route path="/create/friends/prank-book/generate" element={<PrankBookGenerateStep />} />
 
-                {/* Love Story Routes */}
-                <Route path="/create/love/love-story/author" element={<LoveStoryAuthorStep />} />
-                <Route path="/create/love/love-story/questions" element={<LoveStoryQuestionsStep />} />
-                <Route path="/create/love/love-story/ideas" element={<LoveStoryIdeasStep />} />
-                <Route path="/create/love/love-story/moments" element={<LoveStoryMomentsStep />} />
-                <Route path="/create/love/love-story/generate" element={<LoveStoryGenerateStep />} />
+                {/* Travel Book Routes */}
+                <Route path="/create/love/travel-book/author" element={<TravelBookAuthorStep />} />
+                <Route path="/create/love/travel-book/questions" element={<TravelBookQuestionsStep />} />
+                <Route path="/create/love/travel-book/ideas" element={<TravelBookIdeasStep />} />
+                <Route path="/create/love/travel-book/moments" element={<TravelBookMomentsStep />} />
+                <Route path="/create/love/travel-book/generate" element={<TravelBookGenerateStep />} />
 
-                {/* Kids Adventure Routes */}
+                {/* Time Travel Routes */}
+                <Route path="/create/love/time-travel/author" element={<TimeTravelAuthorStep />} />
+                <Route path="/create/love/time-travel/feelings" element={<TimeTravelFeelingsStep />} />
+                <Route path="/create/love/time-travel/style" element={<TimeTravelStyleStep />} />
+                <Route path="/create/love/time-travel/generate" element={<TimeTravelGenerateStep />} />
+
+                {/* Love Letters Routes */}
+                <Route path="/create/love/love-letters/author" element={<LoveLettersAuthorStep />} />
+                <Route path="/create/love/love-letters/photos" element={<LoveLettersPhotosStep />} />
+                <Route path="/create/love/love-letters/generate" element={<LoveLettersGenerateStep />} />
+
+                {/* Adventure Routes */}
                 <Route path="/create/kids/adventure/author" element={<KidsAdventureAuthorStep />} />
                 <Route path="/create/kids/adventure/character" element={<KidsAdventureCharacterStep />} />
                 <Route path="/create/kids/adventure/story" element={<KidsAdventureStoryStep />} />
                 <Route path="/create/kids/adventure/generate" element={<KidsAdventureGenerateStep />} />
-                
-                {/* Love Poems Routes */}
-                <Route path="/create/love/love-poems/author" element={<LovePoemsAuthorStep />} />
-                <Route path="/create/love/love-poems/feelings" element={<LovePoemsFeelingsStep />} />
-                <Route path="/create/love/love-poems/style" element={<LovePoemsStyleStep />} />
-                <Route path="/create/love/love-poems/generate" element={<LovePoemsGenerateStep />} />
-                
-                {/* Picture Album Routes */}
-                <Route path="/create/love/picture-album/author" element={<PictureAlbumAuthorStep />} />
-                <Route path="/create/love/picture-album/photos" element={<PictureAlbumPhotosStep />} />
-                <Route path="/create/love/picture-album/generate" element={<PictureAlbumGenerateStep />} />
-                
-                {/* Story Book Routes */}
-                <Route path="/create/kids/story-book/author" element={<StoryBookAuthorStep />} />
-                <Route path="/create/kids/story-book/theme" element={<StoryBookThemeStep />} />
-                <Route path="/create/kids/story-book/characters" element={<StoryBookCharactersStep />} />
-                <Route path="/create/kids/story-book/generate" element={<StoryBookGenerateStep />} />
-                
+
+                {/* Career Exploration Routes */}
+                <Route path="/create/kids/career-exploration/author" element={<CareerExplorationAuthorStep />} />
+                <Route path="/create/kids/career-exploration/theme" element={<CareerExplorationThemeStep />} />
+                <Route path="/create/kids/career-exploration/characters" element={<CareerExplorationCharactersStep />} />
+                <Route path="/create/kids/career-exploration/generate" element={<CareerExplorationGenerateStep />} />
+
                 {/* Learning Journey Routes */}
-                <Route path="/create/kids/learning/author" element={<LearningJourneyAuthorStep />} />
-                <Route path="/create/kids/learning/subject" element={<LearningJourneySubjectStep />} />
-                <Route path="/create/kids/learning/style" element={<LearningJourneyStyleStep />} />
-                <Route path="/create/kids/learning/generate" element={<LearningJourneyGenerateStep />} />
+                <Route path="/create/kids/learning-journey/author" element={<LearningJourneyAuthorStep />} />
+                <Route path="/create/kids/learning-journey/subject" element={<LearningJourneySubjectStep />} />
+                <Route path="/create/kids/learning-journey/style" element={<LearningJourneyStyleStep />} />
+                <Route path="/create/kids/learning-journey/generate" element={<LearningJourneyGenerateStep />} />
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>
