@@ -1,3 +1,4 @@
+
 import { Link } from 'react-router-dom';
 import { ArrowRight, Book, BookOpen, Pencil, Heart, Gift } from 'lucide-react';
 const Home = () => {
@@ -20,17 +21,17 @@ Personalized Books for Every Special Bond</p>
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-display font-bold text-center mb-12">
-            Who are you buying for?
+            Choose Your Story Type
           </h2>
           <div className="flex justify-center items-stretch gap-8">
             <Link to="/friends" className="group flex-1 max-w-[280px] block hover:scale-105 transition-transform">
               <div className="glass-card h-full rounded-2xl overflow-hidden">
                 <div className="aspect-[4/3] relative">
-                  <img src="https://images.unsplash.com/photo-1517022812141-23620dba5c23" alt="For Friends" className="w-full h-full object-cover" />
+                  <img src="https://images.unsplash.com/photo-1517022812141-23620dba5c23" alt="For Fun" className="w-full h-full object-cover" />
                 </div>
                 <div className="p-6">
-                  <h3 className="text-xl font-semibold mb-4">For Friends</h3>
-                  <p className="text-gray-600">Create a unique book celebrating your friendship</p>
+                  <h3 className="text-xl font-semibold mb-4">For Fun</h3>
+                  <p className="text-gray-600">Create entertaining stories filled with humor and friendship</p>
                 </div>
               </div>
             </Link>
@@ -42,7 +43,7 @@ Personalized Books for Every Special Bond</p>
                 </div>
                 <div className="p-6">
                   <h3 className="text-xl font-semibold mb-4">For Love</h3>
-                  <p className="text-gray-600">Express your feelings in a romantic story</p>
+                  <p className="text-gray-600">Share your love story in a beautifully crafted book</p>
                 </div>
               </div>
             </Link>
@@ -50,11 +51,11 @@ Personalized Books for Every Special Bond</p>
             <Link to="/kids" className="group flex-1 max-w-[280px] block hover:scale-105 transition-transform">
               <div className="glass-card h-full rounded-2xl overflow-hidden">
                 <div className="aspect-[4/3] relative">
-                  <img src="https://images.unsplash.com/photo-1535268647677-300dbf3d78d1" alt="For Kids" className="w-full h-full object-cover" />
+                  <img src="https://images.unsplash.com/photo-1535268647677-300dbf3d78d1" alt="For Education" className="w-full h-full object-cover" />
                 </div>
                 <div className="p-6">
-                  <h3 className="text-xl font-semibold mb-4">For Kids</h3>
-                  <p className="text-gray-600">Create magical stories for children</p>
+                  <h3 className="text-xl font-semibold mb-4">For Education</h3>
+                  <p className="text-gray-600">Make learning fun through personalized educational stories</p>
                 </div>
               </div>
             </Link>
