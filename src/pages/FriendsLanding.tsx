@@ -1,8 +1,6 @@
 import { Link } from 'react-router-dom';
-
 const FriendsLanding = () => {
-  return (
-    <div className="page-transition">
+  return <div className="page-transition">
       <div className="bg-white shadow-lg">
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/90" />
@@ -12,7 +10,7 @@ const FriendsLanding = () => {
                 <div className="text-white space-y-6">
                   <h1 className="text-4xl font-display font-bold px-0 mx-0 md:text-4xl text-slate-800">Hilarious moment. Presented by you.</h1>
                   <p className="text-xl text-slate-800">Use Wishika to give your friends a special book just for them</p>
-                  <a href="#book-types" className="inline-flex items-center px-8 py-4 text-lg font-medium text-white bg-sky-400 rounded-full hover:bg-sky-500 transition-colors">
+                  <a href="#book-types" className="inline-flex items-center px-8 py-4 text-lg font-medium text-white bg-sky-200 rounded-full hover:bg-sky-500 transition-colors">
                     Choose My Book
                   </a>
                 </div>
@@ -67,8 +65,6 @@ const FriendsLanding = () => {
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default FriendsLanding;
