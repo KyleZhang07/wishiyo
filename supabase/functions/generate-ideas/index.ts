@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -12,41 +11,37 @@ const corsHeaders = {
 const generatePrompt = (authorName: string, stories: Array<{question: string, answer: string}>, bookType: string, category: string) => {
   const storiesText = stories.map(story => `${story.question}\nAnswer: ${story.answer}`).join('\n\n');
   
-  let promptTemplate = '';
-  
-  switch(bookType) {
-    case 'funny-biography':
-      promptTemplate = `Create 3 funny book ideas for a biography about ${authorName}, and for each idea, generate 4 praise quotes from fictional but contextually relevant organizations or publications. Base the content on this information:\n\n${storiesText}\n\nEnsure to respond with valid JSON array with exactly 3 objects. Each object must have these exact fields: title (string), author (string), description (string), and praises (array of objects with quote and source fields). No markdown or code block formatting.`;
-      break;
-    case 'wild-fantasy':
-      promptTemplate = `Create 3 wild fantasy book ideas for ${authorName}, and for each idea, generate 4 praise quotes from fictional but contextually relevant organizations or publications. Base the content on this information:\n\n${storiesText}\n\nEnsure to respond with valid JSON array with exactly 3 objects. Each object must have these exact fields: title (string), author (string), description (string), and praises (array of objects with quote and source fields). No markdown or code block formatting.`;
-      break;
-    case 'prank-book':
-      promptTemplate = `Create 3 prank book ideas for ${authorName}, and for each idea, generate 4 praise quotes from fictional but contextually relevant organizations or publications. Base the content on this information:\n\n${storiesText}\n\nEnsure to respond with valid JSON array with exactly 3 objects. Each object must have these exact fields: title (string), author (string), description (string), and praises (array of objects with quote and source fields). No markdown or code block formatting.`;
-      break;
-    case 'love-story':
-      promptTemplate = `Create 3 love story ideas for ${authorName}, and for each idea, generate 4 praise quotes from fictional but contextually relevant organizations or publications. Base the content on this information:\n\n${storiesText}\n\nEnsure to respond with valid JSON array with exactly 3 objects. Each object must have these exact fields: title (string), author (string), description (string), and praises (array of objects with quote and source fields). No markdown or code block formatting.`;
-      break;
-    case 'love-poems':
-      promptTemplate = `Create 3 love poem ideas for ${authorName}, and for each idea, generate 4 praise quotes from fictional but contextually relevant organizations or publications. Base the content on this information:\n\n${storiesText}\n\nEnsure to respond with valid JSON array with exactly 3 objects. Each object must have these exact fields: title (string), author (string), description (string), and praises (array of objects with quote and source fields). No markdown or code block formatting.`;
-      break;
-    case 'picture-album':
-      promptTemplate = `Create 3 picture album ideas for ${authorName}, and for each idea, generate 4 praise quotes from fictional but contextually relevant organizations or publications. Base the content on this information:\n\n${storiesText}\n\nEnsure to respond with valid JSON array with exactly 3 objects. Each object must have these exact fields: title (string), author (string), description (string), and praises (array of objects with quote and source fields). No markdown or code block formatting.`;
-      break;
-    case 'adventure':
-      promptTemplate = `Create 3 adventure book ideas for kids with ${authorName}, and for each idea, generate 4 praise quotes from fictional but contextually relevant organizations or publications. Base the content on this information:\n\n${storiesText}\n\nEnsure to respond with valid JSON array with exactly 3 objects. Each object must have these exact fields: title (string), author (string), description (string), and praises (array of objects with quote and source fields). No markdown or code block formatting.`;
-      break;
-    case 'story-book':
-      promptTemplate = `Create 3 story book ideas for kids with ${authorName}, and for each idea, generate 4 praise quotes from fictional but contextually relevant organizations or publications. Base the content on this information:\n\n${storiesText}\n\nEnsure to respond with valid JSON array with exactly 3 objects. Each object must have these exact fields: title (string), author (string), description (string), and praises (array of objects with quote and source fields). No markdown or code block formatting.`;
-      break;
-    case 'learning':
-      promptTemplate = `Create 3 learning journey ideas for kids with ${authorName}, and for each idea, generate 4 praise quotes from fictional but contextually relevant organizations or publications. Base the content on this information:\n\n${storiesText}\n\nEnsure to respond with valid JSON array with exactly 3 objects. Each object must have these exact fields: title (string), author (string), description (string), and praises (array of objects with quote and source fields). No markdown or code block formatting.`;
-      break;
-    default:
-      throw new Error('Invalid book type');
+  if (category === 'friends') {
+    // Keep the original multiple ideas generation for friends category
+    switch(bookType) {
+      case 'funny-biography':
+        return `Create 3 funny book ideas for a biography about ${authorName}, and for each idea, generate 4 praise quotes from fictional but contextually relevant organizations or publications. Base the content on this information:\n\n${storiesText}\n\nEnsure to respond with valid JSON array with exactly 3 objects. Each object must have these exact fields: title (string), author (string), description (string), and praises (array of objects with quote and source fields). No markdown or code block formatting.`;
+      case 'wild-fantasy':
+        return `Create 3 wild fantasy book ideas for ${authorName}, and for each idea, generate 4 praise quotes from fictional but contextually relevant organizations or publications. Base the content on this information:\n\n${storiesText}\n\nEnsure to respond with valid JSON array with exactly 3 objects. Each object must have these exact fields: title (string), author (string), description (string), and praises (array of objects with quote and source fields). No markdown or code block formatting.`;
+      case 'prank-book':
+        return `Create 3 prank book ideas for ${authorName}, and for each idea, generate 4 praise quotes from fictional but contextually relevant organizations or publications. Base the content on this information:\n\n${storiesText}\n\nEnsure to respond with valid JSON array with exactly 3 objects. Each object must have these exact fields: title (string), author (string), description (string), and praises (array of objects with quote and source fields). No markdown or code block formatting.`;
+      default:
+        throw new Error('Invalid book type for friends category');
+    }
+  } else {
+    // Generate single outline with chapters for love and kids categories
+    switch(bookType) {
+      case 'love-story':
+        return `Create a romantic travel story outline based on these memories and preferences:\n\n${storiesText}\n\nGenerate a book outline with a title, author (${authorName}), brief description, and 8-10 chapters. Each chapter should have a title and brief description. The chapters should follow a natural progression of the journey, incorporating the romantic elements and travel experiences mentioned. Ensure to respond with a single JSON object containing these fields: title (string), author (string), description (string), and chapters (array of objects with title and description fields). No markdown formatting.`;
+      case 'love-poems':
+        return `Create a poetry collection outline based on these romantic memories:\n\n${storiesText}\n\nGenerate a book outline with a title, author (${authorName}), brief description, and 8-10 chapters/sections. Each section should have a poetic title and brief description of the poems it will contain. Ensure to respond with a single JSON object containing these fields: title (string), author (string), description (string), and chapters (array of objects with title and description fields). No markdown formatting.`;
+      case 'picture-album':
+        return `Create a romantic photo album outline based on these memories:\n\n${storiesText}\n\nGenerate a book outline with a title, author (${authorName}), brief description, and 8-10 chapters/sections. Each section should represent a theme or period with a title and description of the photos and memories it will showcase. Ensure to respond with a single JSON object containing these fields: title (string), author (string), description (string), and chapters (array of objects with title and description fields). No markdown formatting.`;
+      case 'adventure':
+        return `Create a children's adventure story outline based on these details:\n\n${storiesText}\n\nGenerate a book outline with a title, author (${authorName}), brief description, and 8-10 chapters. Each chapter should have an exciting title and brief description suitable for young readers. Ensure to respond with a single JSON object containing these fields: title (string), author (string), description (string), and chapters (array of objects with title and description fields). No markdown formatting.`;
+      case 'story-book':
+        return `Create a children's story book outline based on these details:\n\n${storiesText}\n\nGenerate a book outline with a title, author (${authorName}), brief description, and 6-8 chapters. Each chapter should have a child-friendly title and brief description that will engage young readers. Ensure to respond with a single JSON object containing these fields: title (string), author (string), description (string), and chapters (array of objects with title and description fields). No markdown formatting.`;
+      case 'learning':
+        return `Create an educational journey book outline based on these details:\n\n${storiesText}\n\nGenerate a book outline with a title, author (${authorName}), brief description, and 6-8 chapters. Each chapter should have an educational yet engaging title and brief description that makes learning fun. Ensure to respond with a single JSON object containing these fields: title (string), author (string), description (string), and chapters (array of objects with title and description fields). No markdown formatting.`;
+      default:
+        throw new Error('Invalid book type');
+    }
   }
-
-  return promptTemplate;
 };
 
 serve(async (req) => {
@@ -79,7 +74,9 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a creative book idea generator that creates engaging titles, descriptions, and praise quotes. You must respond with valid JSON only, no markdown or code blocks.'
+            content: category === 'friends' 
+              ? 'You are a creative book idea generator that creates engaging titles, descriptions, and praise quotes. You must respond with valid JSON only, no markdown or code blocks.'
+              : 'You are a creative book outline generator that creates engaging chapter-based outlines. You must respond with valid JSON only, no markdown or code blocks.'
           },
           { role: 'user', content: prompt }
         ],
@@ -98,23 +95,34 @@ serve(async (req) => {
       throw new Error('Invalid response from OpenAI');
     }
 
-    let ideas;
+    let parsedContent;
     try {
-      ideas = JSON.parse(openAIResponse.choices[0].message.content.trim());
+      parsedContent = JSON.parse(openAIResponse.choices[0].message.content.trim());
     } catch (error) {
       console.error('JSON parse error:', error);
       console.error('Content that failed to parse:', openAIResponse.choices[0].message.content);
       throw new Error('Failed to parse OpenAI response as JSON');
     }
 
-    if (!Array.isArray(ideas) || ideas.length !== 3) {
-      throw new Error('Invalid ideas format: expected array of 3 items');
+    // For friends category, expect array of 3 ideas
+    // For love and kids categories, expect single object with chapters
+    if (category === 'friends') {
+      if (!Array.isArray(parsedContent) || parsedContent.length !== 3) {
+        throw new Error('Invalid ideas format: expected array of 3 items');
+      }
+      return new Response(
+        JSON.stringify({ ideas: parsedContent }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } else {
+      if (!parsedContent.chapters || !Array.isArray(parsedContent.chapters)) {
+        throw new Error('Invalid idea format: expected object with chapters array');
+      }
+      return new Response(
+        JSON.stringify({ idea: parsedContent }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
-
-    return new Response(
-      JSON.stringify({ ideas }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
 
   } catch (error) {
     console.error('Error in generate-ideas function:', error);
