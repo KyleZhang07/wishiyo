@@ -38,7 +38,6 @@ import PrankBookGenerateStep from "./pages/wizard/friends/prank-book/GenerateSte
 // Love Book Creation Routes - Love Story
 import LoveStoryAuthorStep from "./pages/wizard/love/love-story/AuthorStep";
 import LoveStoryQuestionsStep from "./pages/wizard/love/love-story/QuestionsStep";
-import LoveStoryIdeasStep from "./pages/wizard/love/love-story/IdeasStep";
 import LoveStoryMomentsStep from "./pages/wizard/love/love-story/MomentsStep";
 import LoveStoryGenerateStep from "./pages/wizard/love/love-story/GenerateStep";
 
@@ -115,7 +114,6 @@ const App = () => {
                 {/* Love Story Routes */}
                 <Route path="/create/love/love-story/author" element={<LoveStoryAuthorStep />} />
                 <Route path="/create/love/love-story/questions" element={<LoveStoryQuestionsStep />} />
-                <Route path="/create/love/love-story/ideas" element={<LoveStoryIdeasStep />} />
                 <Route path="/create/love/love-story/moments" element={<LoveStoryMomentsStep />} />
                 <Route path="/create/love/love-story/generate" element={<LoveStoryGenerateStep />} />
 
