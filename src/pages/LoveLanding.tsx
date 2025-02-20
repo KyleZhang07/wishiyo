@@ -5,7 +5,7 @@ const LoveLanding = () => {
   return <div className="page-transition">
       <div className="bg-white shadow-lg">
         <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/90" />
+          <div className="absolute inset-0 bg-gradient-to-r from-red-400 to-red-500" />
           <div className="relative z-10 px-[60px] my-[64px] bg-red-50 py-[100px]">
             <div className="max-w-6xl mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
@@ -17,7 +17,7 @@ const LoveLanding = () => {
                   </a>
                 </div>
                 <div className="hidden md:block">
-                  <div className="w-64 h-64 mx-auto rounded-full overflow-hidden border-4 border-white/20">
+                  <div className="w-64 h-64 mx-auto rounded-full overflow-hidden border-4 border-red-200">
                     <img src="/placeholder.svg" alt="" className="w-full h-full object-cover" />
                   </div>
                 </div>
@@ -36,7 +36,7 @@ const LoveLanding = () => {
               <h3 className="text-xl font-bold mb-2">Love from everywhere</h3>
               <p className="text-gray-600 mb-2">A romantic journey of your relationship</p>
               
-              <Link to="/create/love/love-story/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors">
+              <Link to="/create/love/love-story/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-red-500 bg-white border border-red-500 rounded-full hover:bg-red-500 hover:text-white transition-colors">
                 Start Create
               </Link>
             </div>
@@ -48,7 +48,7 @@ const LoveLanding = () => {
               <h3 className="text-xl font-bold mb-2">Love from anytime</h3>
               <p className="text-gray-600 mb-2">Celebrate your special moments together</p>
               
-              <Link to="/create/love/love-poems/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors">
+              <Link to="/create/love/love-poems/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-red-500 bg-white border border-red-500 rounded-full hover:bg-red-500 hover:text-white transition-colors">
                 Start Create
               </Link>
             </div>
@@ -57,10 +57,10 @@ const LoveLanding = () => {
               <div className="relative aspect-square bg-white rounded-lg shadow-lg overflow-hidden mb-4">
                 <img src="/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png" alt="Wedding Story" className="w-full h-full object-cover" />
               </div>
-              <h3 className="text-xl font-bold mb-2 text-justify">Love if we were</h3>
+              <h3 className="text-xl font-bold mb-2">Love if we were</h3>
               <p className="text-gray-600 mb-2">Capture your wedding memories</p>
               
-              <Link to="/create/love/picture-album/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary bg-white border border-primary rounded-full hover:bg-primary hover:text-white transition-colors">
+              <Link to="/create/love/picture-album/author" className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-red-500 bg-white border border-red-500 rounded-full hover:bg-red-500 hover:text-white transition-colors">
                 Start Create
               </Link>
             </div>
