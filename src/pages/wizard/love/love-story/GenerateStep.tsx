@@ -1,5 +1,5 @@
+
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
 import CanvasCoverPreview from '@/components/cover-generator/CanvasCoverPreview';
@@ -7,12 +7,11 @@ import LayoutSelector from '@/components/cover-generator/LayoutSelector';
 import FontSelector from '@/components/cover-generator/FontSelector';
 import TemplateSelector from '@/components/cover-generator/TemplateSelector';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 
 const LoveStoryGenerateStep = () => {
-  const navigate = useNavigate();
-  const [coverTitle, setCoverTitle] = useState('Our Love Story');
-  const [subtitle, setSubtitle] = useState('A Journey of Love and Connection');
+  const [coverTitle, setCoverTitle] = useState('');
+  const [subtitle, setSubtitle] = useState('');
   const [authorName, setAuthorName] = useState('');
   const [coverImage, setCoverImage] = useState<string>();
   const [selectedLayout, setSelectedLayout] = useState('classic-centered');
@@ -22,124 +21,65 @@ const LoveStoryGenerateStep = () => {
   const [backCoverText, setBackCoverText] = useState('');
   const { toast } = useToast();
 
-  const generateImage = async (promptKeywords: string) => {
-    try {
-      const { data: imageData, error: imageError } = await supabase.functions.invoke('generate-anime-couple', {
-        body: {
-          prompt: `Anime style romantic couple in love, ${promptKeywords}`,
-        }
-      });
+  useEffect(() => {
+    const savedAuthor = localStorage.getItem('loveStoryAuthorName');
+    const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
+    const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
+    const savedMoments = localStorage.getItem('loveStoryMoments');
+    const savedPhoto = localStorage.getItem('loveStoryPhoto');
 
-      if (imageError) {
-        console.error('Supabase function error:', imageError);
-        throw new Error(imageError.message);
-      }
-
-      if (!imageData?.success) {
-        throw new Error(imageData?.error || 'Failed to generate image');
-      }
-
-      const savedUserPhoto = localStorage.getItem('loveStoryUserPhoto');
-      const savedPartnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
-
-      if (savedUserPhoto && savedPartnerPhoto) {
-        const { data: swappedData, error: swapError } = await supabase.functions.invoke('swap-faces', {
-          body: {
-            targetImage: imageData.image,
-            userFace: savedUserPhoto,
-            partnerFace: savedPartnerPhoto
-          }
-        });
-
-        if (swapError) throw swapError;
-        if (!swappedData?.success) throw new Error('Face swap failed');
-
-        return swappedData.image;
-      }
-
-      return imageData.image;
-    } catch (error) {
-      console.error('Error in generateImage:', error);
-      throw error;
-    }
-  };
-
-  const handleGenerateClick = async () => {
-    const savedAnswers = localStorage.getItem('loveStoryAnswers');
-
-    if (!savedAnswers) {
-      toast({
-        variant: "destructive",
-        title: "Missing information",
-        description: "Please complete the questions step first. Redirecting..."
-      });
-      setTimeout(() => {
-        navigate('/create/love/love-story/questions');
-      }, 2000);
-      return;
+    if (savedAuthor) {
+      setAuthorName(savedAuthor);
     }
 
+    if (savedIdeas && savedIdeaIndex) {
+      const ideas = JSON.parse(savedIdeas);
+      const selectedIdea = ideas[parseInt(savedIdeaIndex)];
+      if (selectedIdea) {
+        setCoverTitle(selectedIdea.title || '');
+        setSubtitle(selectedIdea.description || '');
+      }
+    }
+
+    if (savedMoments) {
+      const moments = JSON.parse(savedMoments);
+      const formattedMoments = moments
+        .map((moment: string) => `"${moment}"`)
+        .join('\n\n');
+      setBackCoverText(formattedMoments);
+    }
+
+    if (savedPhoto) {
+      handleImageProcessing(savedPhoto);
+    }
+  }, []);
+
+  const handleImageProcessing = async (imageUrl: string) => {
+    setIsProcessingImage(true);
     try {
-      setIsProcessingImage(true);
-      const answers = JSON.parse(savedAnswers);
-      const promptKeywords = answers.map((qa: any) => qa.answer).join(", ");
-      
-      const generatedImage = await generateImage(promptKeywords);
-      setCoverImage(generatedImage);
-      
-      toast({
-        title: "Success!",
-        description: "Your book cover has been generated.",
+      const { data, error } = await supabase.functions.invoke('remove-background', {
+        body: { imageUrl }
       });
+
+      if (error) throw error;
+
+      if (data.success && data.image) {
+        setCoverImage(data.image);
+      } else {
+        throw new Error('Failed to process image');
+      }
     } catch (error) {
-      console.error('Error generating image:', error);
+      console.error('Error removing background:', error);
       toast({
         variant: "destructive",
-        title: "Error generating image",
-        description: "Failed to generate the cover image. Please try again."
+        title: "Error processing image",
+        description: "Failed to remove background from the image. Please try again."
       });
+      setCoverImage(imageUrl);
     } finally {
       setIsProcessingImage(false);
     }
   };
-
-  useEffect(() => {
-    const loadData = async () => {
-      const savedAuthor = localStorage.getItem('loveStoryAuthorName');
-      const savedMoments = localStorage.getItem('loveStoryMoments');
-      const savedAnswers = localStorage.getItem('loveStoryAnswers');
-
-      if (!savedAnswers) {
-        toast({
-          variant: "destructive",
-          title: "Missing information",
-          description: "Please complete the questions first. Redirecting..."
-        });
-        setTimeout(() => {
-          navigate('/create/love/love-story/questions');
-        }, 2000);
-        return;
-      }
-
-      if (savedAuthor) {
-        setAuthorName(savedAuthor);
-      }
-
-      if (savedMoments) {
-        try {
-          const moments = JSON.parse(savedMoments);
-          const formattedMoments = moments
-            .map((moment: string) => `"${moment}"`)
-            .join('\n\n');
-          setBackCoverText(formattedMoments);
-        } catch (error) {
-          console.error('Error parsing moments:', error);
-        }
-      }
-    };
-
-    loadData();
-  }, [navigate, toast]);
 
   return (
     <WizardStep
@@ -191,10 +131,9 @@ const LoveStoryGenerateStep = () => {
 
           <Button 
             className="w-full py-6 text-lg"
-            onClick={handleGenerateClick}
-            disabled={isProcessingImage}
+            onClick={() => {/* Generate book logic */}}
           >
-            {isProcessingImage ? 'Generating...' : 'Generate Your Love Story'}
+            Generate Your Love Story
           </Button>
         </div>
       </div>
