@@ -1,7 +1,5 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import { HfInference } from 'https://esm.sh/@huggingface/inference@2.3.2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,21 +14,34 @@ serve(async (req) => {
   try {
     const { prompt } = await req.json()
 
-    const hf = new HfInference(Deno.env.get('HUGGING_FACE_ACCESS_TOKEN'))
-
-    const image = await hf.textToImage({
-      inputs: prompt,
-      model: 'black-forest-labs/FLUX.1-schnell',
-      parameters: {
-        negative_prompt: "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry"
-      }
+    // Call getimg.ai API to generate anime couple image
+    const response = await fetch('https://api.getimg.ai/v1/stable-diffusion/text-to-image', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${Deno.env.get('GETIMG_API_KEY')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        prompt,
+        model: 'anime-style',
+        negative_prompt: "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
+        width: 1024,
+        height: 1024,
+        steps: 30,
+        guidance_scale: 7.5,
+        scheduler: "dpmsolver++",
+      }),
     })
 
-    const arrayBuffer = await image.arrayBuffer()
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
+    if (!response.ok) {
+      throw new Error(`getimg.ai API error: ${response.statusText}`)
+    }
+
+    const result = await response.json()
+    console.log('Generated anime image successfully')
 
     return new Response(
-      JSON.stringify({ image: `data:image/png;base64,${base64}` }),
+      JSON.stringify({ image: result.image.url }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {

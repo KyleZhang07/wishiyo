@@ -14,27 +14,33 @@ serve(async (req) => {
   try {
     const { targetImage, userFace, partnerFace } = await req.json()
 
-    // Call PhotoRoom API to swap faces
-    const response = await fetch('https://api.photoroom.com/v1/swap-faces', {
+    // Call PIAI face swap API
+    const response = await fetch('https://api.piai.app/swap-face/v1', {
       method: 'POST',
       headers: {
-        'x-api-key': Deno.env.get('PHOTOROOM_API_KEY') || '',
+        'X-API-KEY': Deno.env.get('PIAI_API_KEY') || '',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         target_image: targetImage,
-        source_images: [userFace, partnerFace],
+        source_faces: [
+          { image: userFace },
+          { image: partnerFace }
+        ],
+        enhance_face: true,
+        pad_face: true
       }),
     })
 
     if (!response.ok) {
-      throw new Error(`PhotoRoom API error: ${response.statusText}`)
+      throw new Error(`PIAI API error: ${response.statusText}`)
     }
 
     const result = await response.json()
+    console.log('Face swap completed successfully')
 
     return new Response(
-      JSON.stringify({ success: true, image: result.resultImage }),
+      JSON.stringify({ success: true, image: result.image }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
