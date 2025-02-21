@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import WizardStep from '@/components/wizard/WizardStep';
@@ -11,8 +12,8 @@ import { useToast } from '@/hooks/use-toast';
 
 const LoveStoryGenerateStep = () => {
   const navigate = useNavigate();
-  const [coverTitle, setCoverTitle] = useState('');
-  const [subtitle, setSubtitle] = useState('');
+  const [coverTitle, setCoverTitle] = useState('Our Love Story');
+  const [subtitle, setSubtitle] = useState('A Journey of Love and Connection');
   const [authorName, setAuthorName] = useState('');
   const [coverImage, setCoverImage] = useState<string>();
   const [selectedLayout, setSelectedLayout] = useState('classic-centered');
@@ -22,11 +23,11 @@ const LoveStoryGenerateStep = () => {
   const [backCoverText, setBackCoverText] = useState('');
   const { toast } = useToast();
 
-  const generateImage = async (promptDescription: string, promptKeywords: string) => {
+  const generateImage = async (promptKeywords: string) => {
     try {
       const { data: imageData, error: imageError } = await supabase.functions.invoke('generate-anime-couple', {
         body: {
-          prompt: `Anime style romantic couple in love, ${promptDescription}, ${promptKeywords}`,
+          prompt: `Anime style romantic couple in love, ${promptKeywords}`,
         }
       });
 
@@ -59,15 +60,13 @@ const LoveStoryGenerateStep = () => {
   };
 
   const handleGenerateClick = async () => {
-    const savedIdeas = localStorage.getItem('loveStoryGeneratedIdea');
-    const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
     const savedAnswers = localStorage.getItem('loveStoryAnswers');
 
-    if (!savedIdeas || !savedIdeaIndex || !savedAnswers) {
+    if (!savedAnswers) {
       toast({
         variant: "destructive",
         title: "Missing information",
-        description: "Please complete the previous steps first. Redirecting..."
+        description: "Please complete the questions step first. Redirecting..."
       });
       setTimeout(() => {
         navigate('/create/love/love-story/questions');
@@ -77,13 +76,10 @@ const LoveStoryGenerateStep = () => {
 
     try {
       setIsProcessingImage(true);
-      const idea = JSON.parse(savedIdeas);
       const answers = JSON.parse(savedAnswers);
-      
-      const promptDescription = idea.description || '';
       const promptKeywords = answers.map((qa: any) => qa.answer).join(", ");
       
-      const generatedImage = await generateImage(promptDescription, promptKeywords);
+      const generatedImage = await generateImage(promptKeywords);
       setCoverImage(generatedImage);
       
       toast({
@@ -105,18 +101,17 @@ const LoveStoryGenerateStep = () => {
   useEffect(() => {
     const loadData = async () => {
       const savedAuthor = localStorage.getItem('loveStoryAuthorName');
-      const savedIdeas = localStorage.getItem('loveStoryGeneratedIdea');
-      const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
       const savedMoments = localStorage.getItem('loveStoryMoments');
+      const savedAnswers = localStorage.getItem('loveStoryAnswers');
 
-      if (!savedIdeas || !savedIdeaIndex) {
+      if (!savedAnswers) {
         toast({
           variant: "destructive",
           title: "Missing information",
-          description: "Please complete the previous steps first. Redirecting..."
+          description: "Please complete the questions first. Redirecting..."
         });
         setTimeout(() => {
-          navigate('/create/love/love-story/ideas');
+          navigate('/create/love/love-story/questions');
         }, 2000);
         return;
       }
@@ -125,28 +120,16 @@ const LoveStoryGenerateStep = () => {
         setAuthorName(savedAuthor);
       }
 
-      try {
-        const idea = JSON.parse(savedIdeas);
-        setCoverTitle(idea.title || '');
-        setSubtitle(idea.description || '');
-
-        if (savedMoments) {
+      if (savedMoments) {
+        try {
           const moments = JSON.parse(savedMoments);
           const formattedMoments = moments
             .map((moment: string) => `"${moment}"`)
             .join('\n\n');
           setBackCoverText(formattedMoments);
+        } catch (error) {
+          console.error('Error parsing moments:', error);
         }
-      } catch (error) {
-        console.error('Error parsing saved data:', error);
-        toast({
-          variant: "destructive",
-          title: "Error loading data",
-          description: "Please try completing the previous steps again."
-        });
-        setTimeout(() => {
-          navigate('/create/love/love-story/ideas');
-        }, 2000);
       }
     };
 
