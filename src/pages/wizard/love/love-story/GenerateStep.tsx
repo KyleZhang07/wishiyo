@@ -56,15 +56,24 @@ const LoveStoryGenerateStep = () => {
   }, []);
 
   const generatePromptFromAnswers = (answers: Array<{ question: string; answer: string }>) => {
+    // Find specific answers
     const locationAnswer = answers.find(a => a.question.includes('drawn to cities, nature'))?.answer || '';
     const climateAnswer = answers.find(a => a.question.includes('climate excites'))?.answer || '';
     const settingAnswer = answers.find(a => a.question.includes('historical, futuristic, fantasy'))?.answer || '';
     const moodAnswer = answers.find(a => a.question.includes('mood should it capture'))?.answer || '';
     const experienceAnswer = answers.find(a => a.question.includes('romantic experiences excite'))?.answer || '';
 
-    return `A romantic couple in ${locationAnswer}, ${climateAnswer} weather, ${settingAnswer} setting. 
-    The scene captures ${moodAnswer} mood with ${experienceAnswer}. 
-    Elegant composition suitable for a book cover, anime art style, detailed character expressions showing deep emotion`;
+    // Ensure all required parts are present
+    if (!locationAnswer || !settingAnswer || !moodAnswer) {
+      throw new Error('Missing required answers for image generation');
+    }
+
+    return `A romantic couple in a ${locationAnswer} setting, 
+      ${climateAnswer ? `with ${climateAnswer} weather atmosphere,` : ''} 
+      ${settingAnswer} style scene.
+      The image captures a ${moodAnswer} mood 
+      ${experienceAnswer ? `with ${experienceAnswer}` : ''}.
+      Focus on emotional connection between the couple, elegant and romantic composition`;
   };
 
   const handleImageGeneration = async (answers: Array<{ question: string; answer: string }>) => {
@@ -77,8 +86,19 @@ const LoveStoryGenerateStep = () => {
         body: { prompt }
       });
 
-      if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || 'Failed to generate image');
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw error;
+      }
+
+      if (!data?.success) {
+        console.error('Image generation failed:', data?.error);
+        throw new Error(data?.error || 'Failed to generate image');
+      }
+
+      if (!data.image) {
+        throw new Error('No image URL in response');
+      }
 
       setCoverImage(data.image);
     } catch (error) {
@@ -86,7 +106,7 @@ const LoveStoryGenerateStep = () => {
       toast({
         variant: "destructive",
         title: "Failed to generate the cover image",
-        description: "Please try again."
+        description: error.message || "Please try again."
       });
     } finally {
       setIsProcessingImage(false);
