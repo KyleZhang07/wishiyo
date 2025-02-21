@@ -7,7 +7,7 @@ import LayoutSelector from '@/components/cover-generator/LayoutSelector';
 import FontSelector from '@/components/cover-generator/FontSelector';
 import TemplateSelector from '@/components/cover-generator/TemplateSelector';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 const LoveStoryGenerateStep = () => {
   const [coverTitle, setCoverTitle] = useState('');
@@ -22,64 +22,89 @@ const LoveStoryGenerateStep = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const savedAuthor = localStorage.getItem('loveStoryAuthorName');
-    const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
-    const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
-    const savedMoments = localStorage.getItem('loveStoryMoments');
-    const savedPhoto = localStorage.getItem('loveStoryPhoto');
+    const loadData = async () => {
+      const savedAuthor = localStorage.getItem('loveStoryAuthorName');
+      const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
+      const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
+      const savedMoments = localStorage.getItem('loveStoryMoments');
+      const savedUserPhoto = localStorage.getItem('loveStoryUserPhoto');
+      const savedPartnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+      const savedAnswers = localStorage.getItem('loveStoryAnswers');
 
-    if (savedAuthor) {
-      setAuthorName(savedAuthor);
-    }
-
-    if (savedIdeas && savedIdeaIndex) {
-      const ideas = JSON.parse(savedIdeas);
-      const selectedIdea = ideas[parseInt(savedIdeaIndex)];
-      if (selectedIdea) {
-        setCoverTitle(selectedIdea.title || '');
-        setSubtitle(selectedIdea.description || '');
+      if (savedAuthor) {
+        setAuthorName(savedAuthor);
       }
-    }
 
-    if (savedMoments) {
-      const moments = JSON.parse(savedMoments);
-      const formattedMoments = moments
-        .map((moment: string) => `"${moment}"`)
-        .join('\n\n');
-      setBackCoverText(formattedMoments);
-    }
-
-    if (savedPhoto) {
-      handleImageProcessing(savedPhoto);
-    }
-  }, []);
-
-  const handleImageProcessing = async (imageUrl: string) => {
-    setIsProcessingImage(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('remove-background', {
-        body: { imageUrl }
-      });
-
-      if (error) throw error;
-
-      if (data.success && data.image) {
-        setCoverImage(data.image);
-      } else {
-        throw new Error('Failed to process image');
+      let promptDescription = "";
+      if (savedIdeas && savedIdeaIndex) {
+        const ideas = JSON.parse(savedIdeas);
+        const selectedIdea = ideas[parseInt(savedIdeaIndex)];
+        if (selectedIdea) {
+          setCoverTitle(selectedIdea.title || '');
+          setSubtitle(selectedIdea.description || '');
+          promptDescription = selectedIdea.description || '';
+        }
       }
-    } catch (error) {
-      console.error('Error removing background:', error);
-      toast({
-        variant: "destructive",
-        title: "Error processing image",
-        description: "Failed to remove background from the image. Please try again."
-      });
-      setCoverImage(imageUrl);
-    } finally {
-      setIsProcessingImage(false);
-    }
-  };
+
+      if (savedMoments) {
+        const moments = JSON.parse(savedMoments);
+        const formattedMoments = moments
+          .map((moment: string) => `"${moment}"`)
+          .join('\n\n');
+        setBackCoverText(formattedMoments);
+      }
+
+      // Generate anime couple image using answers and subtitle
+      if (savedAnswers && promptDescription) {
+        try {
+          setIsProcessingImage(true);
+          const answers = JSON.parse(savedAnswers);
+          const promptKeywords = answers.map((qa: any) => qa.answer).join(", ");
+          
+          // Generate anime couple image
+          const { data: imageData, error: imageError } = await supabase.functions.invoke('generate-anime-couple', {
+            body: {
+              prompt: `Anime style romantic couple, ${promptDescription}, ${promptKeywords}`,
+              style: "anime"
+            }
+          });
+
+          if (imageError) throw imageError;
+
+          // If we have both photos, proceed with face swapping
+          if (savedUserPhoto && savedPartnerPhoto && imageData.image) {
+            const { data: swappedData, error: swapError } = await supabase.functions.invoke('swap-faces', {
+              body: {
+                targetImage: imageData.image,
+                userFace: savedUserPhoto,
+                partnerFace: savedPartnerPhoto
+              }
+            });
+
+            if (swapError) throw swapError;
+
+            if (swappedData.success) {
+              setCoverImage(swappedData.image);
+            }
+          } else {
+            // If no photos available, use the generated image directly
+            setCoverImage(imageData.image);
+          }
+        } catch (error) {
+          console.error('Error processing images:', error);
+          toast({
+            variant: "destructive",
+            title: "Error processing images",
+            description: "Failed to generate or process the cover image. Please try again."
+          });
+        } finally {
+          setIsProcessingImage(false);
+        }
+      }
+    };
+
+    loadData();
+  }, [toast]);
 
   return (
     <WizardStep
@@ -142,3 +167,4 @@ const LoveStoryGenerateStep = () => {
 };
 
 export default LoveStoryGenerateStep;
+
