@@ -46,30 +46,6 @@ const LoveStoryGenerateStep = () => {
     if (savedAnswers) {
       try {
         const answers = JSON.parse(savedAnswers);
-        const requiredQuestions = [
-          'drawn to cities, nature',
-          'historical, futuristic, fantasy',
-          'mood should it capture'
-        ];
-        
-        const hasAllRequired = requiredQuestions.every(q => 
-          answers.some(a => a.question.includes(q) && a.answer.trim())
-        );
-
-        if (!hasAllRequired) {
-          toast({
-            title: "Additional information needed",
-            description: "Please go back and answer all the questions about your story setting and mood.",
-            variant: "destructive",
-            action: (
-              <Button onClick={() => navigate('/create/love/love-story/questions')}>
-                Go to Questions
-              </Button>
-            ),
-          });
-          return;
-        }
-
         handleImageGeneration(answers);
       } catch (error) {
         console.error('Error processing answers:', error);
@@ -91,29 +67,23 @@ const LoveStoryGenerateStep = () => {
   }, [navigate, toast]);
 
   const generatePromptFromAnswers = (answers: Array<{ question: string; answer: string }>) => {
-    // Find specific answers
+    // Find available answers
     const locationAnswer = answers.find(a => a.question.includes('drawn to cities, nature'))?.answer;
     const climateAnswer = answers.find(a => a.question.includes('climate excites'))?.answer;
     const settingAnswer = answers.find(a => a.question.includes('historical, futuristic, fantasy'))?.answer;
     const moodAnswer = answers.find(a => a.question.includes('mood should it capture'))?.answer;
     const experienceAnswer = answers.find(a => a.question.includes('romantic experiences excite'))?.answer;
 
-    // Validate required answers
-    if (!locationAnswer || !settingAnswer || !moodAnswer) {
-      toast({
-        title: "Missing required information",
-        description: "Please answer questions about location, setting, and mood.",
-        variant: "destructive"
-      });
-      throw new Error('Missing required answers for image generation');
-    }
+    // Build prompt from whatever answers are available
+    let prompt = 'A romantic couple';
+    
+    if (locationAnswer) prompt += ` in a ${locationAnswer} setting`;
+    if (climateAnswer) prompt += ` with ${climateAnswer} weather atmosphere`;
+    if (settingAnswer) prompt += ` in a ${settingAnswer} style scene`;
+    if (moodAnswer) prompt += ` capturing a ${moodAnswer} mood`;
+    if (experienceAnswer) prompt += ` with ${experienceAnswer}`;
 
-    return `A romantic couple in a ${locationAnswer} setting, 
-      ${climateAnswer ? `with ${climateAnswer} weather atmosphere,` : ''} 
-      ${settingAnswer} style scene.
-      The image captures a ${moodAnswer} mood 
-      ${experienceAnswer ? `with ${experienceAnswer}` : ''}.
-      Focus on emotional connection between the couple, elegant and romantic composition`;
+    return prompt + ', Focus on emotional connection between the couple, elegant and romantic composition';
   };
 
   const handleImageGeneration = async (answers: Array<{ question: string; answer: string }>) => {
