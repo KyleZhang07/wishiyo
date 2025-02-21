@@ -13,17 +13,24 @@ serve(async (req) => {
 
   try {
     const { prompt } = await req.json()
+    const apiKey = Deno.env.get('GETIMG_API_KEY')
+
+    if (!apiKey) {
+      throw new Error('GETIMG_API_KEY is not set')
+    }
+
+    console.log('Making request to getimg.ai with prompt:', prompt)
 
     // Call getimg.ai API to generate anime couple image
     const response = await fetch('https://api.getimg.ai/v1/stable-diffusion/text-to-image', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${Deno.env.get('GETIMG_API_KEY')}`,
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        prompt,
         model: 'anime-style',
+        prompt,
         negative_prompt: "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
         width: 1024,
         height: 1024,
@@ -34,6 +41,8 @@ serve(async (req) => {
     })
 
     if (!response.ok) {
+      const error = await response.text()
+      console.error('getimg.ai API error response:', error)
       throw new Error(`getimg.ai API error: ${response.statusText}`)
     }
 
