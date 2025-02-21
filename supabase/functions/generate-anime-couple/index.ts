@@ -13,45 +13,43 @@ serve(async (req) => {
 
   try {
     const { prompt } = await req.json()
-    const apiKey = Deno.env.get('GETIMG_API_KEY')
+    const apiKey = Deno.env.get('OPENAI_API_KEY')
 
     if (!apiKey) {
-      throw new Error('GETIMG_API_KEY is not set')
+      throw new Error('OPENAI_API_KEY is not set')
     }
 
-    console.log('Making request to getimg.ai with prompt:', prompt)
+    console.log('Making request to DALL-E with prompt:', prompt)
 
-    // Call getimg.ai API to generate anime couple image
-    const response = await fetch('https://api.getimg.ai/v1/generations/text-to-image', {
+    // Call OpenAI's DALL-E 3 API to generate image
+    const response = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        prompt,
-        model: "stable-diffusion-v1",
-        style_preset: "anime",
-        negative_prompt: "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
-        width: 1024,
-        height: 1024,
-        steps: 30,
-        cfg_scale: 7.5,
-        samples: 1
+        model: "dall-e-3",
+        prompt: `Create a high-quality, artistic anime-style illustration of ${prompt}. The style should be romantic and emotionally expressive, with attention to character details and expressions. Make it suitable for a book cover.`,
+        n: 1,
+        size: "1024x1024",
+        quality: "standard",
+        style: "vivid"
       }),
     })
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('getimg.ai API error response:', errorText)
-      throw new Error(`getimg.ai API error: ${response.statusText}. Details: ${errorText}`)
+      console.error('DALL-E API error response:', errorText)
+      throw new Error(`DALL-E API error: ${response.statusText}. Details: ${errorText}`)
     }
 
     const result = await response.json()
     console.log('Generated image successfully')
 
+    // DALL-E returns an array of image data objects with urls
     return new Response(
-      JSON.stringify({ image: result.image }), // The API returns the image directly in the response
+      JSON.stringify({ image: result.data[0].url }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
