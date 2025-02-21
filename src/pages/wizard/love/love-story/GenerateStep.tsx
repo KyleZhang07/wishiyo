@@ -60,6 +60,48 @@ const LoveStoryGenerateStep = () => {
     }
   };
 
+  const handleGenerateClick = async () => {
+    const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
+    const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
+    const savedAnswers = localStorage.getItem('loveStoryAnswers');
+
+    if (!savedIdeas || !savedIdeaIndex || !savedAnswers) {
+      toast({
+        variant: "destructive",
+        title: "Missing information",
+        description: "Please complete the previous steps first."
+      });
+      return;
+    }
+
+    try {
+      setIsProcessingImage(true);
+      const ideas = JSON.parse(savedIdeas);
+      const selectedIdea = ideas[parseInt(savedIdeaIndex)];
+      const answers = JSON.parse(savedAnswers);
+      
+      const promptDescription = selectedIdea.description || '';
+      const promptKeywords = answers.map((qa: any) => qa.answer).join(", ");
+      
+      const generatedImage = await generateImage(promptDescription, promptKeywords);
+      setCoverImage(generatedImage);
+      
+      toast({
+        title: "Success!",
+        description: "Your book cover has been generated.",
+      });
+    } catch (error) {
+      console.error('Error generating image:', error);
+      toast({
+        variant: "destructive",
+        title: "Error generating image",
+        description: "Failed to generate the cover image. Please try again."
+      });
+    } finally {
+      setIsProcessingImage(false);
+    }
+  };
+
   useEffect(() => {
     const loadData = async () => {
       const savedAuthor = localStorage.getItem('loveStoryAuthorName');
@@ -90,31 +132,10 @@ const LoveStoryGenerateStep = () => {
           .join('\n\n');
         setBackCoverText(formattedMoments);
       }
-
-      // Generate image using answers and subtitle
-      if (savedAnswers && promptDescription) {
-        try {
-          setIsProcessingImage(true);
-          const answers = JSON.parse(savedAnswers);
-          const promptKeywords = answers.map((qa: any) => qa.answer).join(", ");
-          
-          const generatedImage = await generateImage(promptDescription, promptKeywords);
-          setCoverImage(generatedImage);
-        } catch (error) {
-          console.error('Error in loadData:', error);
-          toast({
-            variant: "destructive",
-            title: "Error generating image",
-            description: "Failed to generate the cover image. Please try again."
-          });
-        } finally {
-          setIsProcessingImage(false);
-        }
-      }
     };
 
     loadData();
-  }, [toast]);
+  }, []);
 
   return (
     <WizardStep
@@ -166,9 +187,10 @@ const LoveStoryGenerateStep = () => {
 
           <Button 
             className="w-full py-6 text-lg"
-            onClick={() => {/* Generate book logic */}}
+            onClick={handleGenerateClick}
+            disabled={isProcessingImage}
           >
-            Generate Your Love Story
+            {isProcessingImage ? 'Generating...' : 'Generate Your Love Story'}
           </Button>
         </div>
       </div>
