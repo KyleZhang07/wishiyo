@@ -22,35 +22,36 @@ serve(async (req) => {
     console.log('Making request to getimg.ai with prompt:', prompt)
 
     // Call getimg.ai API to generate anime couple image
-    const response = await fetch('https://api.getimg.ai/v1/stable-diffusion/text-to-image', {
+    const response = await fetch('https://api.getimg.ai/v1/generations/text-to-image', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'anime-style',
         prompt,
+        model: "stable-diffusion-v1",
+        style_preset: "anime",
         negative_prompt: "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
         width: 1024,
         height: 1024,
         steps: 30,
-        guidance_scale: 7.5,
-        scheduler: "dpmsolver++",
+        cfg_scale: 7.5,
+        samples: 1
       }),
     })
 
     if (!response.ok) {
-      const error = await response.text()
-      console.error('getimg.ai API error response:', error)
-      throw new Error(`getimg.ai API error: ${response.statusText}`)
+      const errorText = await response.text()
+      console.error('getimg.ai API error response:', errorText)
+      throw new Error(`getimg.ai API error: ${response.statusText}. Details: ${errorText}`)
     }
 
     const result = await response.json()
-    console.log('Generated anime image successfully')
+    console.log('Generated image successfully')
 
     return new Response(
-      JSON.stringify({ image: result.image.url }),
+      JSON.stringify({ image: result.image }), // The API returns the image directly in the response
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
