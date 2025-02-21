@@ -1,5 +1,5 @@
-
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
 import CanvasCoverPreview from '@/components/cover-generator/CanvasCoverPreview';
@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 const LoveStoryGenerateStep = () => {
+  const navigate = useNavigate();
   const [coverTitle, setCoverTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
   const [authorName, setAuthorName] = useState('');
@@ -23,7 +24,6 @@ const LoveStoryGenerateStep = () => {
 
   const generateImage = async (promptDescription: string, promptKeywords: string) => {
     try {
-      // First generate the anime couple image
       const { data: imageData, error: imageError } = await supabase.functions.invoke('generate-anime-couple', {
         body: {
           prompt: `Anime style romantic couple in love, ${promptDescription}, ${promptKeywords}`,
@@ -36,7 +36,6 @@ const LoveStoryGenerateStep = () => {
       const savedUserPhoto = localStorage.getItem('loveStoryUserPhoto');
       const savedPartnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
 
-      // If we have both photos, proceed with face swapping
       if (savedUserPhoto && savedPartnerPhoto) {
         const { data: swappedData, error: swapError } = await supabase.functions.invoke('swap-faces', {
           body: {
@@ -52,7 +51,6 @@ const LoveStoryGenerateStep = () => {
         return swappedData.image;
       }
 
-      // If no photos, return the generated image directly
       return imageData.image;
     } catch (error) {
       console.error('Error in generateImage:', error);
@@ -69,8 +67,11 @@ const LoveStoryGenerateStep = () => {
       toast({
         variant: "destructive",
         title: "Missing information",
-        description: "Please complete the previous steps first."
+        description: "Please complete the previous steps first. Redirecting..."
       });
+      setTimeout(() => {
+        navigate('/create/love/love-story/questions');
+      }, 2000);
       return;
     }
 
@@ -108,34 +109,53 @@ const LoveStoryGenerateStep = () => {
       const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
       const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
       const savedMoments = localStorage.getItem('loveStoryMoments');
-      const savedAnswers = localStorage.getItem('loveStoryAnswers');
+
+      if (!savedIdeas || !savedIdeaIndex) {
+        toast({
+          variant: "destructive",
+          title: "Missing information",
+          description: "Please complete the previous steps first. Redirecting..."
+        });
+        setTimeout(() => {
+          navigate('/create/love/love-story/ideas');
+        }, 2000);
+        return;
+      }
 
       if (savedAuthor) {
         setAuthorName(savedAuthor);
       }
 
-      let promptDescription = "";
-      if (savedIdeas && savedIdeaIndex) {
+      try {
         const ideas = JSON.parse(savedIdeas);
         const selectedIdea = ideas[parseInt(savedIdeaIndex)];
         if (selectedIdea) {
           setCoverTitle(selectedIdea.title || '');
           setSubtitle(selectedIdea.description || '');
-          promptDescription = selectedIdea.description || '';
         }
-      }
 
-      if (savedMoments) {
-        const moments = JSON.parse(savedMoments);
-        const formattedMoments = moments
-          .map((moment: string) => `"${moment}"`)
-          .join('\n\n');
-        setBackCoverText(formattedMoments);
+        if (savedMoments) {
+          const moments = JSON.parse(savedMoments);
+          const formattedMoments = moments
+            .map((moment: string) => `"${moment}"`)
+            .join('\n\n');
+          setBackCoverText(formattedMoments);
+        }
+      } catch (error) {
+        console.error('Error parsing saved data:', error);
+        toast({
+          variant: "destructive",
+          title: "Error loading data",
+          description: "Please try completing the previous steps again."
+        });
+        setTimeout(() => {
+          navigate('/create/love/love-story/ideas');
+        }, 2000);
       }
     };
 
     loadData();
-  }, []);
+  }, [navigate, toast]);
 
   return (
     <WizardStep
