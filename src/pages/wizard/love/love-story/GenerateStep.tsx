@@ -1,8 +1,86 @@
 
+import { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
+import CanvasCoverPreview from '@/components/cover-generator/CanvasCoverPreview';
+import LayoutSelector from '@/components/cover-generator/LayoutSelector';
+import FontSelector from '@/components/cover-generator/FontSelector';
+import TemplateSelector from '@/components/cover-generator/TemplateSelector';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/components/ui/use-toast';
 
 const LoveStoryGenerateStep = () => {
+  const [coverTitle, setCoverTitle] = useState('');
+  const [subtitle, setSubtitle] = useState('');
+  const [authorName, setAuthorName] = useState('');
+  const [coverImage, setCoverImage] = useState<string>();
+  const [selectedLayout, setSelectedLayout] = useState('classic-centered');
+  const [selectedTemplate, setSelectedTemplate] = useState('modern');
+  const [selectedFont, setSelectedFont] = useState('playfair');
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
+  const [backCoverText, setBackCoverText] = useState('');
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const savedAuthor = localStorage.getItem('loveStoryAuthorName');
+    const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
+    const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
+    const savedMoments = localStorage.getItem('loveStoryMoments');
+    const savedPhoto = localStorage.getItem('loveStoryPhoto');
+
+    if (savedAuthor) {
+      setAuthorName(savedAuthor);
+    }
+
+    if (savedIdeas && savedIdeaIndex) {
+      const ideas = JSON.parse(savedIdeas);
+      const selectedIdea = ideas[parseInt(savedIdeaIndex)];
+      if (selectedIdea) {
+        setCoverTitle(selectedIdea.title || '');
+        setSubtitle(selectedIdea.description || '');
+      }
+    }
+
+    if (savedMoments) {
+      const moments = JSON.parse(savedMoments);
+      const formattedMoments = moments
+        .map((moment: string) => `"${moment}"`)
+        .join('\n\n');
+      setBackCoverText(formattedMoments);
+    }
+
+    if (savedPhoto) {
+      handleImageProcessing(savedPhoto);
+    }
+  }, []);
+
+  const handleImageProcessing = async (imageUrl: string) => {
+    setIsProcessingImage(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('remove-background', {
+        body: { imageUrl }
+      });
+
+      if (error) throw error;
+
+      if (data.success && data.image) {
+        setCoverImage(data.image);
+      } else {
+        throw new Error('Failed to process image');
+      }
+    } catch (error) {
+      console.error('Error removing background:', error);
+      toast({
+        variant: "destructive",
+        title: "Error processing image",
+        description: "Failed to remove background from the image. Please try again."
+      });
+      setCoverImage(imageUrl);
+    } finally {
+      setIsProcessingImage(false);
+    }
+  };
+
   return (
     <WizardStep
       title="Create Your Love Story"
@@ -11,22 +89,53 @@ const LoveStoryGenerateStep = () => {
       currentStep={4}
       totalSteps={4}
     >
-      <div className="space-y-6">
-        <div className="bg-white rounded-lg border p-6">
-          <h3 className="font-medium text-lg mb-4">Your Love Story Includes:</h3>
-          <ul className="space-y-2 text-gray-600">
-            <li>✓ Your Journey Together</li>
-            <li>✓ Special Moments</li>
-            <li>✓ Beautiful Photos</li>
-            <li>✓ Romantic Memories</li>
-          </ul>
+      <div className="glass-card rounded-2xl p-8 py-[40px]">
+        <div className="max-w-xl mx-auto space-y-8">
+          <CanvasCoverPreview
+            coverTitle={coverTitle}
+            subtitle={subtitle}
+            authorName={authorName}
+            coverImage={coverImage}
+            selectedFont={selectedFont}
+            selectedTemplate={selectedTemplate}
+            selectedLayout={selectedLayout}
+            isProcessingImage={isProcessingImage}
+            backCoverText={backCoverText}
+          />
+          
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-lg font-medium text-center mb-2">Choose Your Font</h3>
+              <FontSelector
+                selectedFont={selectedFont}
+                onSelectFont={setSelectedFont}
+              />
+            </div>
+
+            <div>
+              <h3 className="text-lg font-medium text-center mb-2">Choose Your Color Theme</h3>
+              <TemplateSelector
+                selectedTemplate={selectedTemplate}
+                onSelectTemplate={setSelectedTemplate}
+              />
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-medium text-center mb-2">Choose Your Cover Layout</h3>
+              <LayoutSelector
+                selectedLayout={selectedLayout}
+                onSelectLayout={setSelectedLayout}
+              />
+            </div>
+          </div>
+
+          <Button 
+            className="w-full py-6 text-lg"
+            onClick={() => {/* Generate book logic */}}
+          >
+            Generate Your Love Story
+          </Button>
         </div>
-        <Button 
-          className="w-full py-6 text-lg"
-          onClick={() => {/* Generate book logic */}}
-        >
-          Generate Your Love Story
-        </Button>
       </div>
     </WizardStep>
   );
