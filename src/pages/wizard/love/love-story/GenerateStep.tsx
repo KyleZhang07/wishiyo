@@ -25,8 +25,8 @@ const LoveStoryGenerateStep = () => {
     const savedAuthor = localStorage.getItem('loveStoryAuthorName');
     const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
     const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
+    const savedAnswers = localStorage.getItem('loveStoryAnswers');
     const savedMoments = localStorage.getItem('loveStoryMoments');
-    const savedPhoto = localStorage.getItem('loveStoryPhoto');
 
     if (savedAuthor) {
       setAuthorName(savedAuthor);
@@ -41,6 +41,11 @@ const LoveStoryGenerateStep = () => {
       }
     }
 
+    if (savedAnswers) {
+      const answers = JSON.parse(savedAnswers);
+      handleImageGeneration(answers);
+    }
+
     if (savedMoments) {
       const moments = JSON.parse(savedMoments);
       const formattedMoments = moments
@@ -48,34 +53,41 @@ const LoveStoryGenerateStep = () => {
         .join('\n\n');
       setBackCoverText(formattedMoments);
     }
-
-    if (savedPhoto) {
-      handleImageProcessing(savedPhoto);
-    }
   }, []);
 
-  const handleImageProcessing = async (imageUrl: string) => {
+  const generatePromptFromAnswers = (answers: Array<{ question: string; answer: string }>) => {
+    const locationAnswer = answers.find(a => a.question.includes('drawn to cities, nature'))?.answer || '';
+    const climateAnswer = answers.find(a => a.question.includes('climate excites'))?.answer || '';
+    const settingAnswer = answers.find(a => a.question.includes('historical, futuristic, fantasy'))?.answer || '';
+    const moodAnswer = answers.find(a => a.question.includes('mood should it capture'))?.answer || '';
+    const experienceAnswer = answers.find(a => a.question.includes('romantic experiences excite'))?.answer || '';
+
+    return `A romantic couple in ${locationAnswer}, ${climateAnswer} weather, ${settingAnswer} setting. 
+    The scene captures ${moodAnswer} mood with ${experienceAnswer}. 
+    Elegant composition suitable for a book cover, anime art style, detailed character expressions showing deep emotion`;
+  };
+
+  const handleImageGeneration = async (answers: Array<{ question: string; answer: string }>) => {
     setIsProcessingImage(true);
     try {
-      const { data, error } = await supabase.functions.invoke('remove-background', {
-        body: { imageUrl }
+      const prompt = generatePromptFromAnswers(answers);
+      console.log('Generated prompt:', prompt);
+
+      const { data, error } = await supabase.functions.invoke('generate-anime-couple', {
+        body: { prompt }
       });
 
       if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Failed to generate image');
 
-      if (data.success && data.image) {
-        setCoverImage(data.image);
-      } else {
-        throw new Error('Failed to process image');
-      }
+      setCoverImage(data.image);
     } catch (error) {
-      console.error('Error removing background:', error);
+      console.error('Error generating image:', error);
       toast({
         variant: "destructive",
-        title: "Error processing image",
-        description: "Failed to remove background from the image. Please try again."
+        title: "Failed to generate the cover image",
+        description: "Please try again."
       });
-      setCoverImage(imageUrl);
     } finally {
       setIsProcessingImage(false);
     }
