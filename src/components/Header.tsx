@@ -42,12 +42,8 @@ const Header = () => {
           <div className="flex items-center space-x-8">
             <Link to="/" className="text-xl font-display font-semibold">WISHIYO</Link>
             <nav className="hidden md:flex items-center space-x-8">
-              <Link to="/friends" className="text-gray-600 hover:text-primary transition-colors">
-                Books for Fun
-              </Link>
-              <Link to="/love" className="text-gray-600 hover:text-primary transition-colors">
-                Books for Love
-              </Link>
+              <Link to="/friends" className="text-gray-600 hover:text-primary transition-colors">Story Book</Link>
+              <Link to="/love" className="text-gray-600 hover:text-primary transition-colors">Picture Book</Link>
             </nav>
           </div>
 
