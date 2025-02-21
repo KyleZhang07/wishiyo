@@ -8,21 +8,21 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { prompt } = await req.json()
-    const apiKey = Deno.env.get('OPENAI_API_KEY')
+    const { prompt } = await req.json();
+    const apiKey = Deno.env.get('OPENAI_API_KEY');
 
     if (!apiKey) {
-      throw new Error('OPENAI_API_KEY is not set')
+      throw new Error('OPENAI_API_KEY is not set');
     }
 
-    console.log('Making request to DALL-E with prompt:', prompt)
+    console.log('Making request to DALL-E with prompt:', prompt);
 
-    // Call OpenAI's DALL-E 3 API to generate image
     const response = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
       headers: {
@@ -37,57 +37,46 @@ serve(async (req) => {
         quality: "standard",
         style: "vivid"
       }),
-    })
+    });
 
-    let errorMessage = ''
+    const responseData = await response.json();
+    
     if (!response.ok) {
-      const errorData = await response.json().catch(() => null)
-      console.error('DALL-E API error response:', errorData)
-      
-      if (errorData?.error?.message) {
-        errorMessage = errorData.error.message
-      } else {
-        errorMessage = `HTTP ${response.status}: ${response.statusText}`
-      }
-      
-      throw new Error(`DALL-E API error: ${errorMessage}`)
+      console.error('DALL-E API error:', responseData);
+      throw new Error(responseData.error?.message || 'Failed to generate image');
     }
 
-    const result = await response.json()
-    console.log('Generated image successfully:', result)
-
-    if (!result.data?.[0]?.url) {
-      throw new Error('No image URL in DALL-E response')
+    if (!responseData.data?.[0]?.url) {
+      throw new Error('No image URL in response');
     }
 
-    // Return the image URL from DALL-E
     return new Response(
       JSON.stringify({ 
         success: true,
-        image: result.data[0].url 
+        image: responseData.data[0].url 
       }),
       { 
         headers: { 
-          ...corsHeaders, 
+          ...corsHeaders,
           'Content-Type': 'application/json' 
-        } 
+        }
       }
-    )
+    );
+
   } catch (error) {
-    console.error('Error in generate-anime-couple function:', error)
+    console.error('Error in generate-anime-couple function:', error);
+    
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         success: false,
-        error: 'Image generation failed', 
-        details: error.message 
+        error: error.message || 'An unexpected error occurred'
       }),
       { 
         headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        }, 
-        status: 500 
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
       }
-    )
+    );
   }
-})
+});

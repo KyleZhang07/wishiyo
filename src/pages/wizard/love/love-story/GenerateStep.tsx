@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import WizardStep from '@/components/wizard/WizardStep';
@@ -31,8 +30,14 @@ const LoveStoryGenerateStep = () => {
         }
       });
 
-      if (imageError) throw imageError;
-      if (!imageData?.image) throw new Error('No image generated');
+      if (imageError) {
+        console.error('Supabase function error:', imageError);
+        throw new Error(imageError.message);
+      }
+
+      if (!imageData?.success) {
+        throw new Error(imageData?.error || 'Failed to generate image');
+      }
 
       const savedUserPhoto = localStorage.getItem('loveStoryUserPhoto');
       const savedPartnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
