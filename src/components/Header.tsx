@@ -1,4 +1,3 @@
-
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, ShoppingCart, UserRound } from 'lucide-react';
 import { useState, useEffect } from 'react';
@@ -47,14 +46,11 @@ const Header = () => {
           <div className="flex items-center space-x-8">
             <Link to="/" className="text-xl font-display font-semibold">WISHIYO</Link>
             <nav className="hidden md:flex items-center space-x-8">
-              <Link to="/friends" className="text-gray-600 hover:text-primary transition-colors">
+              <Link to="/friends" className="text-amber-600 hover:text-amber-700 transition-colors">
                 Books for Fun
               </Link>
               <Link to="/love" className="text-gray-600 hover:text-primary transition-colors">
                 Books for Love
-              </Link>
-              <Link to="/kids" className="text-gray-600 hover:text-primary transition-colors">
-                Books for Kids
               </Link>
             </nav>
           </div>
@@ -79,14 +75,11 @@ const Header = () => {
 
         {/* Mobile Navigation */}
         {isMenuOpen && <nav className="md:hidden py-4 space-y-4">
-            <Link to="/friends" className="block px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors" onClick={() => setIsMenuOpen(false)}>
+            <Link to="/friends" className="block px-4 py-2 text-amber-600 hover:text-amber-700 transition-colors" onClick={() => setIsMenuOpen(false)}>
               Books for Fun
             </Link>
             <Link to="/love" className="block px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors" onClick={() => setIsMenuOpen(false)}>
               Books for Love
-            </Link>
-            <Link to="/kids" className="block px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors" onClick={() => setIsMenuOpen(false)}>
-              Books for Kids
             </Link>
             <Link to="/user-center" className="block px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors" onClick={() => setIsMenuOpen(false)}>
               Cart
