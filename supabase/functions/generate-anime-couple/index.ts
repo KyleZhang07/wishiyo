@@ -7,6 +7,7 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
@@ -17,10 +18,26 @@ serve(async (req) => {
 
     if (!apiKey) {
       console.error('GETIMG_API_KEY not found in environment variables')
-      throw new Error('API key not configured')
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: 'API key not configured'
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500
+        }
+      )
     }
     
-    console.log('Received prompt:', prompt)
+    console.log('Processing prompt:', prompt)
+
+    // Enhanced prompt for better image generation
+    const enhancedPrompt = `High quality book cover art, ${prompt}, 
+      romantic couple in center frame, dramatic lighting, professional photography style, 
+      cinematic composition, 8k resolution`
+
+    console.log('Enhanced prompt:', enhancedPrompt)
     
     const response = await fetch('https://api.getimg.ai/v1/stable-diffusion/text-to-image', {
       method: 'POST',
@@ -29,36 +46,50 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        prompt: `Book cover art style, centered composition, ${prompt}, anime art style, romantic couple illustration, high quality, detailed, soft lighting, beautiful atmosphere`,
-        negative_prompt: "nsfw, low quality, bad anatomy, text, watermark, signature, blurry, multiple couples, group photo",
+        prompt: enhancedPrompt,
+        negative_prompt: "nsfw, low quality, bad anatomy, text, watermark, signature, blurry, multiple couples, group photo, distorted faces, unrealistic proportions",
         width: 768,
         height: 1024,
-        steps: 30,
-        guidance_scale: 7.5,
+        steps: 35,
+        guidance_scale: 8,
         model_id: "stable-diffusion-v1-5",
         scheduler: "dpmsolver++",
-        samples: 1
+        samples: 1,
+        seed: Math.floor(Math.random() * 1000000) // Random seed for variety
       }),
     })
 
-    const responseText = await response.text()
-    console.log('API Response:', responseText)
-
     if (!response.ok) {
-      throw new Error(`API returned ${response.status}: ${responseText}`)
+      const errorText = await response.text()
+      console.error('GetImg API error:', response.status, errorText)
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: `Image generation API error: ${response.status}`,
+          details: errorText
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500
+        }
+      )
     }
 
-    let result
-    try {
-      result = JSON.parse(responseText)
-    } catch (e) {
-      console.error('Failed to parse API response:', e)
-      throw new Error('Invalid response from image generation API')
-    }
+    const result = await response.json()
 
     if (!result?.output?.image) {
       console.error('No image in response:', result)
-      throw new Error('No image generated')
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: 'No image generated',
+          details: JSON.stringify(result)
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500
+        }
+      )
     }
 
     console.log('Successfully generated image')
