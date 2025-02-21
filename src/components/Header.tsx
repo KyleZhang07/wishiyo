@@ -3,12 +3,10 @@ import { Menu, X, ShoppingCart, UserRound } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
-
   useEffect(() => {
     supabase.auth.getSession().then(({
       data: {
@@ -26,7 +24,6 @@ const Header = () => {
     });
     return () => subscription.unsubscribe();
   }, []);
-
   const handleLogout = async () => {
     try {
       const {
@@ -39,14 +36,13 @@ const Header = () => {
       toast.error(error.message || 'Logout failed, please try again');
     }
   };
-
   return <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-200">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-8">
             <Link to="/" className="text-xl font-display font-semibold">WISHIYO</Link>
             <nav className="hidden md:flex items-center space-x-8">
-              <Link to="/friends" className="text-amber-600 hover:text-amber-700 transition-colors">
+              <Link to="/friends" className="text-gray-600 hover:text-primary transition-colors">
                 Books for Fun
               </Link>
               <Link to="/love" className="text-gray-600 hover:text-primary transition-colors">
@@ -96,5 +92,4 @@ const Header = () => {
       </div>
     </header>;
 };
-
 export default Header;
