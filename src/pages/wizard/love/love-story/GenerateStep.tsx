@@ -21,14 +21,51 @@ const LoveStoryGenerateStep = () => {
   const [backCoverText, setBackCoverText] = useState('');
   const { toast } = useToast();
 
+  const generateImage = async (promptDescription: string, promptKeywords: string) => {
+    try {
+      // First generate the anime couple image
+      const { data: imageData, error: imageError } = await supabase.functions.invoke('generate-anime-couple', {
+        body: {
+          prompt: `Anime style romantic couple in love, ${promptDescription}, ${promptKeywords}`,
+        }
+      });
+
+      if (imageError) throw imageError;
+      if (!imageData?.image) throw new Error('No image generated');
+
+      const savedUserPhoto = localStorage.getItem('loveStoryUserPhoto');
+      const savedPartnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+
+      // If we have both photos, proceed with face swapping
+      if (savedUserPhoto && savedPartnerPhoto) {
+        const { data: swappedData, error: swapError } = await supabase.functions.invoke('swap-faces', {
+          body: {
+            targetImage: imageData.image,
+            userFace: savedUserPhoto,
+            partnerFace: savedPartnerPhoto
+          }
+        });
+
+        if (swapError) throw swapError;
+        if (!swappedData?.success) throw new Error('Face swap failed');
+
+        return swappedData.image;
+      }
+
+      // If no photos, return the generated image directly
+      return imageData.image;
+    } catch (error) {
+      console.error('Error in generateImage:', error);
+      throw error;
+    }
+  };
+
   useEffect(() => {
     const loadData = async () => {
       const savedAuthor = localStorage.getItem('loveStoryAuthorName');
       const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
       const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
       const savedMoments = localStorage.getItem('loveStoryMoments');
-      const savedUserPhoto = localStorage.getItem('loveStoryUserPhoto');
-      const savedPartnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
       const savedAnswers = localStorage.getItem('loveStoryAnswers');
 
       if (savedAuthor) {
@@ -54,48 +91,21 @@ const LoveStoryGenerateStep = () => {
         setBackCoverText(formattedMoments);
       }
 
-      // Generate anime couple image using answers and subtitle
+      // Generate image using answers and subtitle
       if (savedAnswers && promptDescription) {
         try {
           setIsProcessingImage(true);
           const answers = JSON.parse(savedAnswers);
           const promptKeywords = answers.map((qa: any) => qa.answer).join(", ");
           
-          // Generate anime couple image
-          const { data: imageData, error: imageError } = await supabase.functions.invoke('generate-anime-couple', {
-            body: {
-              prompt: `Anime style romantic couple, ${promptDescription}, ${promptKeywords}`,
-              style: "anime"
-            }
-          });
-
-          if (imageError) throw imageError;
-
-          // If we have both photos, proceed with face swapping
-          if (savedUserPhoto && savedPartnerPhoto && imageData.image) {
-            const { data: swappedData, error: swapError } = await supabase.functions.invoke('swap-faces', {
-              body: {
-                targetImage: imageData.image,
-                userFace: savedUserPhoto,
-                partnerFace: savedPartnerPhoto
-              }
-            });
-
-            if (swapError) throw swapError;
-
-            if (swappedData.success) {
-              setCoverImage(swappedData.image);
-            }
-          } else {
-            // If no photos available, use the generated image directly
-            setCoverImage(imageData.image);
-          }
+          const generatedImage = await generateImage(promptDescription, promptKeywords);
+          setCoverImage(generatedImage);
         } catch (error) {
-          console.error('Error processing images:', error);
+          console.error('Error in loadData:', error);
           toast({
             variant: "destructive",
-            title: "Error processing images",
-            description: "Failed to generate or process the cover image. Please try again."
+            title: "Error generating image",
+            description: "Failed to generate the cover image. Please try again."
           });
         } finally {
           setIsProcessingImage(false);
@@ -167,4 +177,3 @@ const LoveStoryGenerateStep = () => {
 };
 
 export default LoveStoryGenerateStep;
-
