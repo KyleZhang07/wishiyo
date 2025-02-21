@@ -59,7 +59,7 @@ const LoveStoryGenerateStep = () => {
   };
 
   const handleGenerateClick = async () => {
-    const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
+    const savedIdeas = localStorage.getItem('loveStoryGeneratedIdea');
     const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
     const savedAnswers = localStorage.getItem('loveStoryAnswers');
 
@@ -77,11 +77,10 @@ const LoveStoryGenerateStep = () => {
 
     try {
       setIsProcessingImage(true);
-      const ideas = JSON.parse(savedIdeas);
-      const selectedIdea = ideas[parseInt(savedIdeaIndex)];
+      const idea = JSON.parse(savedIdeas);
       const answers = JSON.parse(savedAnswers);
       
-      const promptDescription = selectedIdea.description || '';
+      const promptDescription = idea.description || '';
       const promptKeywords = answers.map((qa: any) => qa.answer).join(", ");
       
       const generatedImage = await generateImage(promptDescription, promptKeywords);
@@ -106,7 +105,7 @@ const LoveStoryGenerateStep = () => {
   useEffect(() => {
     const loadData = async () => {
       const savedAuthor = localStorage.getItem('loveStoryAuthorName');
-      const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
+      const savedIdeas = localStorage.getItem('loveStoryGeneratedIdea');
       const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
       const savedMoments = localStorage.getItem('loveStoryMoments');
 
@@ -127,12 +126,9 @@ const LoveStoryGenerateStep = () => {
       }
 
       try {
-        const ideas = JSON.parse(savedIdeas);
-        const selectedIdea = ideas[parseInt(savedIdeaIndex)];
-        if (selectedIdea) {
-          setCoverTitle(selectedIdea.title || '');
-          setSubtitle(selectedIdea.description || '');
-        }
+        const idea = JSON.parse(savedIdeas);
+        setCoverTitle(idea.title || '');
+        setSubtitle(idea.description || '');
 
         if (savedMoments) {
           const moments = JSON.parse(savedMoments);
