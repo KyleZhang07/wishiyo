@@ -8,7 +8,6 @@ import FontSelector from '@/components/cover-generator/FontSelector';
 import TemplateSelector from '@/components/cover-generator/TemplateSelector';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
-import { useNavigate } from 'react-router-dom';
 
 const LoveStoryGenerateStep = () => {
   const [coverTitle, setCoverTitle] = useState('');
@@ -21,14 +20,13 @@ const LoveStoryGenerateStep = () => {
   const [isProcessingImage, setIsProcessingImage] = useState(false);
   const [backCoverText, setBackCoverText] = useState('');
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   useEffect(() => {
     const savedAuthor = localStorage.getItem('loveStoryAuthorName');
     const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
     const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
-    const savedAnswers = localStorage.getItem('loveStoryAnswers');
     const savedMoments = localStorage.getItem('loveStoryMoments');
+    const savedPhoto = localStorage.getItem('loveStoryPhoto');
 
     if (savedAuthor) {
       setAuthorName(savedAuthor);
@@ -43,20 +41,6 @@ const LoveStoryGenerateStep = () => {
       }
     }
 
-    if (savedAnswers) {
-      try {
-        const answers = JSON.parse(savedAnswers);
-        handleImageGeneration(answers);
-      } catch (error) {
-        console.error('Error processing answers:', error);
-        toast({
-          title: "Error loading your answers",
-          description: "Please go back and check your answers.",
-          variant: "destructive"
-        });
-      }
-    }
-
     if (savedMoments) {
       const moments = JSON.parse(savedMoments);
       const formattedMoments = moments
@@ -64,60 +48,34 @@ const LoveStoryGenerateStep = () => {
         .join('\n\n');
       setBackCoverText(formattedMoments);
     }
-  }, [navigate, toast]);
 
-  const generatePromptFromAnswers = (answers: Array<{ question: string; answer: string }>) => {
-    // Find available answers
-    const locationAnswer = answers.find(a => a.question.includes('drawn to cities, nature'))?.answer;
-    const climateAnswer = answers.find(a => a.question.includes('climate excites'))?.answer;
-    const settingAnswer = answers.find(a => a.question.includes('historical, futuristic, fantasy'))?.answer;
-    const moodAnswer = answers.find(a => a.question.includes('mood should it capture'))?.answer;
-    const experienceAnswer = answers.find(a => a.question.includes('romantic experiences excite'))?.answer;
+    if (savedPhoto) {
+      handleImageProcessing(savedPhoto);
+    }
+  }, []);
 
-    // Build prompt from whatever answers are available
-    let prompt = 'A romantic couple';
-    
-    if (locationAnswer) prompt += ` in a ${locationAnswer} setting`;
-    if (climateAnswer) prompt += ` with ${climateAnswer} weather atmosphere`;
-    if (settingAnswer) prompt += ` in a ${settingAnswer} style scene`;
-    if (moodAnswer) prompt += ` capturing a ${moodAnswer} mood`;
-    if (experienceAnswer) prompt += ` with ${experienceAnswer}`;
-
-    return prompt + ', Focus on emotional connection between the couple, elegant and romantic composition';
-  };
-
-  const handleImageGeneration = async (answers: Array<{ question: string; answer: string }>) => {
+  const handleImageProcessing = async (imageUrl: string) => {
     setIsProcessingImage(true);
     try {
-      const prompt = generatePromptFromAnswers(answers);
-      console.log('Generated prompt:', prompt);
-
-      const { data, error } = await supabase.functions.invoke('generate-anime-couple', {
-        body: { prompt }
+      const { data, error } = await supabase.functions.invoke('remove-background', {
+        body: { imageUrl }
       });
 
-      if (error) {
-        console.error('Supabase function error:', error);
-        throw error;
-      }
+      if (error) throw error;
 
-      if (!data?.success) {
-        console.error('Image generation failed:', data?.error);
-        throw new Error(data?.error || 'Failed to generate image');
+      if (data.success && data.image) {
+        setCoverImage(data.image);
+      } else {
+        throw new Error('Failed to process image');
       }
-
-      if (!data.image) {
-        throw new Error('No image URL in response');
-      }
-
-      setCoverImage(data.image);
     } catch (error) {
-      console.error('Error generating image:', error);
+      console.error('Error removing background:', error);
       toast({
         variant: "destructive",
-        title: "Failed to generate the cover image",
-        description: error.message || "Please try again."
+        title: "Error processing image",
+        description: "Failed to remove background from the image. Please try again."
       });
+      setCoverImage(imageUrl);
     } finally {
       setIsProcessingImage(false);
     }
