@@ -8,6 +8,7 @@ import FontSelector from '@/components/cover-generator/FontSelector';
 import TemplateSelector from '@/components/cover-generator/TemplateSelector';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 const LoveStoryGenerateStep = () => {
   const [coverTitle, setCoverTitle] = useState('');
@@ -20,6 +21,7 @@ const LoveStoryGenerateStep = () => {
   const [isProcessingImage, setIsProcessingImage] = useState(false);
   const [backCoverText, setBackCoverText] = useState('');
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const savedAuthor = localStorage.getItem('loveStoryAuthorName');
@@ -42,8 +44,41 @@ const LoveStoryGenerateStep = () => {
     }
 
     if (savedAnswers) {
-      const answers = JSON.parse(savedAnswers);
-      handleImageGeneration(answers);
+      try {
+        const answers = JSON.parse(savedAnswers);
+        const requiredQuestions = [
+          'drawn to cities, nature',
+          'historical, futuristic, fantasy',
+          'mood should it capture'
+        ];
+        
+        const hasAllRequired = requiredQuestions.every(q => 
+          answers.some(a => a.question.includes(q) && a.answer.trim())
+        );
+
+        if (!hasAllRequired) {
+          toast({
+            title: "Additional information needed",
+            description: "Please go back and answer all the questions about your story setting and mood.",
+            variant: "destructive",
+            action: (
+              <Button onClick={() => navigate('/create/love/love-story/questions')}>
+                Go to Questions
+              </Button>
+            ),
+          });
+          return;
+        }
+
+        handleImageGeneration(answers);
+      } catch (error) {
+        console.error('Error processing answers:', error);
+        toast({
+          title: "Error loading your answers",
+          description: "Please go back and check your answers.",
+          variant: "destructive"
+        });
+      }
     }
 
     if (savedMoments) {
@@ -53,18 +88,23 @@ const LoveStoryGenerateStep = () => {
         .join('\n\n');
       setBackCoverText(formattedMoments);
     }
-  }, []);
+  }, [navigate, toast]);
 
   const generatePromptFromAnswers = (answers: Array<{ question: string; answer: string }>) => {
     // Find specific answers
-    const locationAnswer = answers.find(a => a.question.includes('drawn to cities, nature'))?.answer || '';
-    const climateAnswer = answers.find(a => a.question.includes('climate excites'))?.answer || '';
-    const settingAnswer = answers.find(a => a.question.includes('historical, futuristic, fantasy'))?.answer || '';
-    const moodAnswer = answers.find(a => a.question.includes('mood should it capture'))?.answer || '';
-    const experienceAnswer = answers.find(a => a.question.includes('romantic experiences excite'))?.answer || '';
+    const locationAnswer = answers.find(a => a.question.includes('drawn to cities, nature'))?.answer;
+    const climateAnswer = answers.find(a => a.question.includes('climate excites'))?.answer;
+    const settingAnswer = answers.find(a => a.question.includes('historical, futuristic, fantasy'))?.answer;
+    const moodAnswer = answers.find(a => a.question.includes('mood should it capture'))?.answer;
+    const experienceAnswer = answers.find(a => a.question.includes('romantic experiences excite'))?.answer;
 
-    // Ensure all required parts are present
+    // Validate required answers
     if (!locationAnswer || !settingAnswer || !moodAnswer) {
+      toast({
+        title: "Missing required information",
+        description: "Please answer questions about location, setting, and mood.",
+        variant: "destructive"
+      });
       throw new Error('Missing required answers for image generation');
     }
 
