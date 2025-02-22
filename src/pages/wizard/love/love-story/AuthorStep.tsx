@@ -1,64 +1,29 @@
 
 import { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
-import { Input } from '@/components/ui/input';
-import { useToast } from '@/components/ui/use-toast';
+import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
 const LoveStoryAuthorStep = () => {
-  const [name, setName] = useState('');
-  const [partnerName, setPartnerName] = useState('');
-  const { toast } = useToast();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const savedName = localStorage.getItem('loveStoryAuthorName');
-    const savedPartnerName = localStorage.getItem('loveStoryPartnerName');
-    if (savedName) setName(savedName);
-    if (savedPartnerName) setPartnerName(savedPartnerName);
-  }, []);
-
   const handleContinue = () => {
-    if (!name.trim() || !partnerName.trim()) {
-      toast({
-        variant: "destructive",
-        title: "Names required",
-        description: "Please enter both names to continue"
-      });
-      return;
-    }
-
-    localStorage.setItem('loveStoryAuthorName', name.trim());
-    localStorage.setItem('loveStoryPartnerName', partnerName.trim());
     navigate('/create/love/love-story/questions');
   };
 
   return (
     <WizardStep
       title="Begin Your Love Story"
-      description="Let's start with your names"
+      description="Let's create something magical together"
       previousStep="/love"
       currentStep={1}
       totalSteps={4}
       onNextClick={handleContinue}
     >
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-2">Your Name</label>
-          <Input
-            placeholder="Enter your name"
-            value={name}
-            onChange={e => setName(e.target.value)}
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-2">Your Partner's Name</label>
-          <Input
-            placeholder="Enter your partner's name"
-            value={partnerName}
-            onChange={e => setPartnerName(e.target.value)}
-          />
-        </div>
+      <div className="space-y-4 text-center">
+        <p className="text-gray-600">
+          Welcome to your love story journey. Click continue to start creating your personalized story.
+        </p>
       </div>
     </WizardStep>
   );
