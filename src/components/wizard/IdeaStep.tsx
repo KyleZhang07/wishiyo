@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import WizardStep from './WizardStep';
 import { Button } from '@/components/ui/button';
@@ -74,54 +75,77 @@ const IdeaStep = ({
     };
   };
 
+  const checkPreviousSteps = () => {
+    const path = window.location.pathname;
+    const bookType = path.split('/')[3];
+    
+    // Check for partner name (from author step)
+    const partnerName = localStorage.getItem('loveStoryPartnerName');
+    if (!partnerName) {
+      toast({
+        title: "Missing partner's name",
+        description: "Please go back and enter your partner's name first.",
+        variant: "destructive",
+      });
+      navigate(previousStep);
+      return false;
+    }
+
+    // Check for answers (from questions step)
+    const savedAnswers = localStorage.getItem('loveStoryAnswers');
+    if (!savedAnswers) {
+      toast({
+        title: "Missing love story details",
+        description: "Please go back and share some stories about your relationship.",
+        variant: "destructive",
+      });
+      navigate(previousStep);
+      return false;
+    }
+
+    try {
+      const answers = JSON.parse(savedAnswers);
+      if (!Array.isArray(answers) || answers.length === 0) {
+        toast({
+          title: "No stories shared",
+          description: "Please go back and share at least one story about your relationship.",
+          variant: "destructive",
+        });
+        navigate(previousStep);
+        return false;
+      }
+    } catch (error) {
+      toast({
+        title: "Invalid data format",
+        description: "Please go back and fill in the questions again.",
+        variant: "destructive",
+      });
+      navigate(previousStep);
+      return false;
+    }
+
+    return true;
+  };
+
   const generateIdeas = async () => {
+    if (!checkPreviousSteps()) {
+      return;
+    }
+
     setIsLoading(true);
     try {
       const path = window.location.pathname;
       const bookType = path.split('/')[3];
       
-      const storageKeyMap: { [key: string]: string } = {
-        'funny-biography': 'funnyBiographyAnswers',
-        'wild-fantasy': 'wildFantasyAnswers',
-        'prank-book': 'prankBookAnswers',
-        'love-story': 'loveStoryAnswers',
-        'love-poems': 'lovePoemsAnswers',
-        'picture-album': 'pictureAlbumAnswers',
-        'adventure': 'kidsAdventureAnswers',
-        'story-book': 'kidsStoryAnswers',
-        'learning': 'learningJourneyAnswers'
-      };
-
-      const authorNameKeyMap: { [key: string]: string } = {
-        'funny-biography': 'funnyBiographyAuthorName',
-        'wild-fantasy': 'wildFantasyAuthorName',
-        'prank-book': 'prankBookAuthorName',
-        'love-story': 'loveStoryAuthorName',
-        'love-poems': 'lovePoemsAuthorName',
-        'picture-album': 'pictureAlbumAuthorName',
-        'adventure': 'kidsAdventureAuthorName',
-        'story-book': 'kidsStoryAuthorName',
-        'learning': 'learningJourneyAuthorName'
-      };
-
-      const storageKey = storageKeyMap[bookType];
-      const authorNameKey = authorNameKeyMap[bookType];
+      const authorNameKey = 'loveStoryPartnerName';
+      const storageKey = 'loveStoryAnswers';
       const { ideasKey } = getStorageKeys(bookType);
-
-      if (!storageKey || !authorNameKey) {
-        throw new Error('Invalid book type');
-      }
 
       const authorName = localStorage.getItem(authorNameKey);
       const savedAnswers = localStorage.getItem(storageKey);
       
       if (!authorName || !savedAnswers) {
-        toast({
-          title: "Missing information",
-          description: "Please complete the previous steps first.",
-          variant: "destructive",
-        });
-        return;
+        return; // checkPreviousSteps will handle the navigation
       }
 
       let stories;
@@ -129,12 +153,7 @@ const IdeaStep = ({
         stories = JSON.parse(savedAnswers);
       } catch (error) {
         console.error('Error parsing saved answers:', error);
-        toast({
-          title: "Error",
-          description: "Invalid saved answers format. Please try again.",
-          variant: "destructive",
-        });
-        return;
+        return; // checkPreviousSteps will handle the error
       }
 
       const endpoint = category === 'love' && bookType === 'illustrated' 
@@ -156,22 +175,15 @@ const IdeaStep = ({
         throw new Error('No data received from the server');
       }
 
-      if (category === 'friends') {
-        if (!data.ideas || !Array.isArray(data.ideas)) {
-          throw new Error('Invalid response format for friends category');
-        }
-        setIdeas(data.ideas);
-        setSelectedIdeaIndex(null);
-        localStorage.setItem(ideasKey, JSON.stringify(data.ideas));
-      } else {
-        if (!data.idea || !data.idea.chapters) {
-          throw new Error('Invalid response format for love/kids category');
-        }
-        const singleIdea = data.idea;
-        setIdeas([singleIdea]);
-        setSelectedIdeaIndex(0);
-        localStorage.setItem(ideasKey, JSON.stringify(singleIdea));
+      if (!data.idea || !data.idea.chapters) {
+        throw new Error('Invalid response format');
       }
+      
+      const singleIdea = data.idea;
+      setIdeas([singleIdea]);
+      setSelectedIdeaIndex(0);
+      localStorage.setItem(ideasKey, JSON.stringify(singleIdea));
+      
     } catch (error) {
       console.error('Error:', error);
       toast({
@@ -195,15 +207,6 @@ const IdeaStep = ({
   };
 
   const handleContinue = () => {
-    if (category === 'friends' && selectedIdeaIndex === null) {
-      toast({
-        title: "No idea selected",
-        description: "Please select an idea before continuing.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     navigate(nextStep);
   };
 
@@ -218,43 +221,30 @@ const IdeaStep = ({
     }
 
     const savedIdeasString = localStorage.getItem(ideasKey);
-    const savedIdeaIndexString = localStorage.getItem(selectedIdeaKey);
-
     if (savedIdeasString) {
       try {
-        if (category === 'friends') {
-          const parsedIdeas = JSON.parse(savedIdeasString);
-          if (Array.isArray(parsedIdeas)) {
-            setIdeas(parsedIdeas);
-            if (savedIdeaIndexString) {
-              const index = parseInt(savedIdeaIndexString);
-              if (!isNaN(index)) {
-                setSelectedIdeaIndex(index);
-              }
-            }
-          }
-        } else {
-          const parsedIdea = JSON.parse(savedIdeasString);
-          if (parsedIdea && typeof parsedIdea === 'object') {
-            setIdeas([parsedIdea]);
-            setSelectedIdeaIndex(0);
-          }
+        const parsedIdea = JSON.parse(savedIdeasString);
+        if (parsedIdea && typeof parsedIdea === 'object') {
+          setIdeas([parsedIdea]);
+          setSelectedIdeaIndex(0);
         }
       } catch (error) {
         console.error('Error parsing saved ideas:', error);
-        generateIdeas();
+        if (checkPreviousSteps()) {
+          generateIdeas();
+        }
       }
     } else {
-      generateIdeas();
+      if (checkPreviousSteps()) {
+        generateIdeas();
+      }
     }
   }, [category]);
 
   return (
     <WizardStep
-      title={category === 'friends' ? "Let's pick a book idea" : "Your Book Outline"}
-      description={category === 'friends' 
-        ? "Choose from these AI-generated book ideas or regenerate for more options."
-        : "Review your AI-generated book outline or regenerate for a different one."}
+      title="Your Book Outline"
+      description="Review your AI-generated book outline or regenerate for a different one."
       previousStep={previousStep}
       currentStep={3}
       totalSteps={4}
@@ -276,11 +266,7 @@ const IdeaStep = ({
         {isLoading && (
           <div className="text-center py-8">
             <RefreshCw className="animate-spin h-8 w-8 mx-auto mb-4" />
-            <p className="text-gray-500">
-              {category === 'friends' 
-                ? "Generating creative ideas..." 
-                : "Generating your book outline..."}
-            </p>
+            <p className="text-gray-500">Generating your book outline...</p>
           </div>
         )}
 
@@ -288,37 +274,24 @@ const IdeaStep = ({
           {ideas.map((idea, index) => (
             <div 
               key={index} 
-              className={`bg-white rounded-lg p-6 ${
-                category === 'friends' 
-                  ? 'cursor-pointer transition-all hover:shadow-md ' + 
-                    (selectedIdeaIndex === index 
-                      ? 'ring-2 ring-primary shadow-lg scale-[1.02]' 
-                      : '')
-                  : ''
-              }`}
-              onClick={() => category === 'friends' && handleIdeaSelect(index)}
+              className="bg-white rounded-lg p-6"
             >
               <h3 className="text-2xl font-bold mb-1">{idea.title}</h3>
               <p className="text-gray-600 text-sm mb-4">{idea.author}</p>
-              
-              {category === 'friends' ? (
+              <div className="space-y-4">
                 <p className="text-gray-800">{idea.description}</p>
-              ) : (
-                <div className="space-y-4">
-                  <p className="text-gray-800">{idea.description}</p>
-                  <div className="mt-6">
-                    <h4 className="text-lg font-semibold mb-3">Table of Contents</h4>
-                    <div className="space-y-3">
-                      {idea.chapters?.map((chapter, idx) => (
-                        <div key={idx} className="border-b pb-3">
-                          <h5 className="font-medium">Chapter {idx + 1}: {chapter.title}</h5>
-                          <p className="text-gray-600 text-sm mt-1">{chapter.description}</p>
-                        </div>
-                      ))}
-                    </div>
+                <div className="mt-6">
+                  <h4 className="text-lg font-semibold mb-3">Table of Contents</h4>
+                  <div className="space-y-3">
+                    {idea.chapters?.map((chapter, idx) => (
+                      <div key={idx} className="border-b pb-3">
+                        <h5 className="font-medium">Chapter {idx + 1}: {chapter.title}</h5>
+                        <p className="text-gray-600 text-sm mt-1">{chapter.description}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              )}
+              </div>
             </div>
           ))}
         </div>
