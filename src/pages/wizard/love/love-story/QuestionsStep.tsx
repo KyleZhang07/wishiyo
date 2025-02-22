@@ -39,7 +39,11 @@ const LoveStoryQuestionsStep = () => {
     `What is the cutest thing ${partnerName} does without realizing?`,
     "Do you have any unique habits or small rituals in your relationship?",
     "If you could add a small hidden detail (Easter egg) in the book, what would it be?",
-    `Would you like to leave a special message for ${partnerName} at the end of the story?`
+    `Would you like to leave a special message for ${partnerName} at the end of the story?`,
+    "Does your partner prefer the story in the book to be romantic or adventurous?",
+    "Does your partner prefer a modern city or a classic historical setting?",
+    "Does your partner prefer a warm and gentle atmosphere or a passionate and intense scene?",
+    "Would your partner like to include some mystical or fantasy elements (such as magic, otherworldly adventures)?"
   ];
 
   const handleNext = () => {
