@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import WizardStep from './WizardStep';
 import { Button } from '@/components/ui/button';
@@ -79,7 +78,6 @@ const IdeaStep = ({
     const path = window.location.pathname;
     const bookType = path.split('/')[3];
     
-    // Check for partner name (from author step)
     const partnerName = localStorage.getItem('loveStoryPartnerName');
     if (!partnerName) {
       toast({
@@ -91,7 +89,6 @@ const IdeaStep = ({
       return false;
     }
 
-    // Check for answers (from questions step)
     const savedAnswers = localStorage.getItem('loveStoryAnswers');
     if (!savedAnswers) {
       toast({
@@ -156,23 +153,15 @@ const IdeaStep = ({
         return; // checkPreviousSteps will handle the error
       }
 
-      const endpoint = category === 'love' && bookType === 'illustrated' 
-        ? 'generate-love-story'
-        : 'generate-ideas';
-
-      console.log('Using endpoint:', endpoint); // Debug log
-
-      const { data, error } = await supabase.functions.invoke(endpoint, {
+      const { data, error } = await supabase.functions.invoke('generate-love-story', {
         body: { 
           authorName,
-          stories,
-          bookType,
-          category
+          stories
         }
       });
 
       if (error) {
-        console.error('Supabase function error:', error); // Debug log
+        console.error('Supabase function error:', error);
         throw error;
       }
 
@@ -181,7 +170,7 @@ const IdeaStep = ({
       }
 
       if (!data.idea || !data.idea.chapters) {
-        console.error('Invalid response format:', data); // Debug log
+        console.error('Invalid response format:', data);
         throw new Error('Invalid response format');
       }
       
