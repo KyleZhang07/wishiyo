@@ -7,6 +7,7 @@ const LoveStoryIdeasStep = () => {
       category="love"
       previousStep="/create/love/love-story/questions"
       nextStep="/create/love/love-story/moments"
+      bookType="illustrated"
     />
   );
 };

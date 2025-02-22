@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import WizardStep from './WizardStep';
 import { Button } from '@/components/ui/button';
@@ -29,12 +28,14 @@ interface IdeaStepProps {
   category: 'friends' | 'love' | 'kids';
   previousStep: string;
   nextStep: string;
+  bookType?: 'illustrated' | 'regular';
 }
 
 const IdeaStep = ({
   category,
   previousStep,
-  nextStep
+  nextStep,
+  bookType
 }: IdeaStepProps) => {
   const [ideas, setIdeas] = useState<BookIdea[]>([]);
   const [selectedIdeaIndex, setSelectedIdeaIndex] = useState<number | null>(null);
@@ -136,7 +137,11 @@ const IdeaStep = ({
         return;
       }
 
-      const { data, error } = await supabase.functions.invoke('generate-ideas', {
+      const endpoint = category === 'love' && bookType === 'illustrated' 
+        ? 'generate-love-story'
+        : 'generate-ideas';
+
+      const { data, error } = await supabase.functions.invoke(endpoint, {
         body: { 
           authorName,
           stories,
@@ -159,13 +164,12 @@ const IdeaStep = ({
         setSelectedIdeaIndex(null);
         localStorage.setItem(ideasKey, JSON.stringify(data.ideas));
       } else {
-        // For love and kids categories, we only need one idea with chapters
         if (!data.idea || !data.idea.chapters) {
           throw new Error('Invalid response format for love/kids category');
         }
         const singleIdea = data.idea;
         setIdeas([singleIdea]);
-        setSelectedIdeaIndex(0); // Automatically select the single idea
+        setSelectedIdeaIndex(0);
         localStorage.setItem(ideasKey, JSON.stringify(singleIdea));
       }
     } catch (error) {
@@ -230,7 +234,6 @@ const IdeaStep = ({
             }
           }
         } else {
-          // For love and kids categories
           const parsedIdea = JSON.parse(savedIdeasString);
           if (parsedIdea && typeof parsedIdea === 'object') {
             setIdeas([parsedIdea]);
@@ -239,7 +242,6 @@ const IdeaStep = ({
         }
       } catch (error) {
         console.error('Error parsing saved ideas:', error);
-        // If there's an error parsing the saved data, generate new ideas
         generateIdeas();
       }
     } else {
