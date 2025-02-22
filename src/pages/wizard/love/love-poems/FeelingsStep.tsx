@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import QuestionDialog from '@/components/wizard/QuestionDialog';
@@ -32,14 +31,22 @@ const LovePoemsFeelingsStep = () => {
   }, []);
 
   const questions = [
-    "How did you and " + partnerName + " first meet?",
-    "Do you have any special nicknames for each other?",
-    `What is the most romantic thing ${partnerName} has ever done to you?`,
-    `Describe ${partnerName} in three words.`,
+    "How did you first meet?",
+    `What was your first impression of ${partnerName}?`,
+    "What was your first date?",
     `What is the cutest thing ${partnerName} does without realizing?`,
-    "Do you have any unique habits or small rituals in your relationship?",
-    "If you could add a small hidden detail (Easter egg) in the book, what would it be?",
-    `Would you like to leave a special message for ${partnerName} at the end of the story?`
+    "What's your favorite way to spend time together?",
+    "What's a small thing they do that always makes your day better?",
+    `What is a food ${partnerName} loves?`,
+    `What's the cutest nickname you have for ${partnerName}?`,
+    `What's one thing ${partnerName} always beats you at?`,
+    `What's the most romantic thing ${partnerName} has ever done for you?`,
+    `What's one moment that made you fall even more in love with ${partnerName}?`,
+    `What's something you never get tired of hearing ${partnerName} say?`,
+    `What's ${partnerName}'s favorite song?`,
+    "If you could go on a dream vacation together, where would it be?",
+    "What do you think makes your relationship so special?",
+    `What's one promise you want to make to ${partnerName} forever?`
   ];
 
   const handleNext = () => {
