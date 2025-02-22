@@ -32,17 +32,14 @@ const LoveStoryQuestionsStep = () => {
   }, []);
 
   const questions = [
-    "Are you drawn to cities, nature, or cultural landmarks?",
-    "Which climate excites you the most?",
-    "Would you prefer historical, futuristic, fantasy, or dreamlike destinations?",
-    "Is there a specific country or culture you've always wanted to experience with your partner?",
-    "Which element of travel feels the most romantic to you?",
-    "What type of romantic experiences excite you?",
-    "Would you rather explore hidden alleys of an old European town or stargaze in the middle of the desert?",
-    "Are you more into grand romantic gestures or intimate, quiet moments?",
-    "If your love were a movie, which travel scene would it include?",
-    "What's a dream experience you'd love to share with your partner?",
-    "To describe your dream trip as a love story, what mood should it capture?"
+    `How did you and ${partnerName} first meet?`,
+    "Do you have any special nicknames for each other?",
+    `What is the most romantic thing ${partnerName} has ever done to you?`,
+    `Describe ${partnerName} in three words.`,
+    `What is the cutest thing ${partnerName} does without realizing?`,
+    "Do you have any unique habits or small rituals in your relationship?",
+    "If you could add a small hidden detail (Easter egg) in the book, what would it be?",
+    `Would you like to leave a special message for ${partnerName} at the end of the story?`
   ];
 
   const handleNext = () => {
@@ -78,8 +75,8 @@ const LoveStoryQuestionsStep = () => {
 
   return (
     <WizardStep
-      title="Share Your Travel Dreams"
-      description="Tell us about your dream destinations together"
+      title="Share Your Love Story"
+      description="Tell us about your journey together"
       previousStep="/create/love/love-story/author"
       currentStep={2}
       totalSteps={5}
@@ -113,8 +110,8 @@ const LoveStoryQuestionsStep = () => {
         >
           <PlusCircle className="mr-2 h-5 w-5" />
           {questionsAndAnswers.length === 0 
-            ? "Share Your First Dream" 
-            : "Add Another Dream"}
+            ? "Share Your First Memory" 
+            : "Add Another Memory"}
         </Button>
       </div>
       <QuestionDialog
