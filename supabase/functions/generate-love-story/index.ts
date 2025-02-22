@@ -16,17 +16,27 @@ serve(async (req) => {
     const { stories, authorName } = await req.json()
 
     const systemPrompt = `You are a professional writer specializing in creating romantic illustrated books. 
-    Create a table of contents for an illustrated book with exactly 20 chapters. 
-    Each chapter should alternate between text and illustration pages.
-    The text should be romantic, poetic, and personal, reflecting the couple's journey together.
-    
-    Format each chapter like this:
-    Chapter [number]: [Title]
-    "[A short, poetic paragraph describing the scene and emotions]"
+    Create a romantic book outline with exactly 10 pairs of chapters (20 chapters total).
+    Each pair should consist of:
+    - A text chapter describing a romantic scene or moment
+    - An illustration chapter that visually captures the scene from the previous chapter
 
-    Use the provided stories and details to craft a cohesive narrative that flows naturally from their first meeting to their current relationship.
-    Make the content emotional, personal, and incorporate specific details from their stories.
-    Each chapter's text should directly relate to its accompanying illustration.`
+    Format the chapters exactly like this:
+    Chapter [odd number]: [Title for text chapter]
+    "[A poetic paragraph describing the romantic scene, emotions, and setting]"
+    
+    Chapter [even number]: [Title including 'Illustration' word]
+    "[A detailed description of the illustration that would accompany the previous chapter, focusing on visual elements, composition, colors, and mood]"
+
+    Example format:
+    Chapter 1: Where We First Met
+    "We first crossed paths on a warm afternoon, when a gentle breeze carried our laughter through the air. I still remember the look in your eyes—part curiosity, part excitement—as though we both knew this was the start of something extraordinary."
+
+    Chapter 2: Illustration: The Fateful Encounter
+    "A watercolor illustration capturing two figures meeting in a sunlit park. Cherry blossoms drift through the air as their eyes meet for the first time. Soft pastel colors blend together, emphasizing the magical quality of the moment."
+
+    Use the provided love stories to create a personalized narrative that flows naturally from the couple's first meeting to their current relationship.
+    Make each text chapter emotionally engaging and each illustration chapter visually descriptive.`
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -38,7 +48,7 @@ serve(async (req) => {
         model: "gpt-4o",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: `Create a romantic illustrated book table of contents for ${authorName}'s love story. Use these details from their story: ${JSON.stringify(stories)}` }
+          { role: "user", content: `Create a romantic illustrated book for ${authorName}'s love story, using these details from their relationship: ${JSON.stringify(stories)}. Remember to alternate between text chapters and illustration chapters, with illustration chapters specifically describing what the illustration should show.` }
         ],
         temperature: 0.7,
       }),
@@ -61,7 +71,7 @@ serve(async (req) => {
     const bookIdea = {
       title: "Our Illustrated Love Story",
       author: authorName,
-      description: "A journey of love told through words and illustrations, capturing the magical moments that make our story unique.",
+      description: "A journey of love told through alternating words and illustrations, each chapter pair capturing a special moment in our story - one to read, one to see.",
       chapters: chapters
     }
 
