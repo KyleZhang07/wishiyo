@@ -160,6 +160,8 @@ const IdeaStep = ({
         ? 'generate-love-story'
         : 'generate-ideas';
 
+      console.log('Using endpoint:', endpoint); // Debug log
+
       const { data, error } = await supabase.functions.invoke(endpoint, {
         body: { 
           authorName,
@@ -169,13 +171,17 @@ const IdeaStep = ({
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase function error:', error); // Debug log
+        throw error;
+      }
 
       if (!data) {
         throw new Error('No data received from the server');
       }
 
       if (!data.idea || !data.idea.chapters) {
+        console.error('Invalid response format:', data); // Debug log
         throw new Error('Invalid response format');
       }
       
