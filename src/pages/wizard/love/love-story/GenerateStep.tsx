@@ -3,25 +3,19 @@ import { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
 import CanvasCoverPreview from '@/components/cover-generator/CanvasCoverPreview';
-import LayoutSelector from '@/components/cover-generator/LayoutSelector';
-import FontSelector from '@/components/cover-generator/FontSelector';
-import TemplateSelector from '@/components/cover-generator/TemplateSelector';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
+import { Edit } from 'lucide-react';
 
-const LoveStoryGenerateStep = () => {
+const GenerateStep = () => {
   const [coverTitle, setCoverTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
   const [authorName, setAuthorName] = useState('');
   const [coverImage, setCoverImage] = useState<string>();
-  const [selectedLayout, setSelectedLayout] = useState('classic-centered');
-  const [selectedTemplate, setSelectedTemplate] = useState('modern');
-  const [selectedFont, setSelectedFont] = useState('playfair');
-  const [isProcessingImage, setIsProcessingImage] = useState(false);
   const [backCoverText, setBackCoverText] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
+    // Load saved data from previous steps
     const savedAuthor = localStorage.getItem('loveStoryAuthorName');
     const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
     const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
@@ -50,35 +44,22 @@ const LoveStoryGenerateStep = () => {
     }
 
     if (savedPhoto) {
-      handleImageProcessing(savedPhoto);
+      setCoverImage(savedPhoto);
     }
   }, []);
 
-  const handleImageProcessing = async (imageUrl: string) => {
-    setIsProcessingImage(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('remove-background', {
-        body: { imageUrl }
-      });
+  const handleEditCover = () => {
+    toast({
+      title: "Edit Cover",
+      description: "Opening cover editor..."
+    });
+  };
 
-      if (error) throw error;
-
-      if (data.success && data.image) {
-        setCoverImage(data.image);
-      } else {
-        throw new Error('Failed to process image');
-      }
-    } catch (error) {
-      console.error('Error removing background:', error);
-      toast({
-        variant: "destructive",
-        title: "Error processing image",
-        description: "Failed to remove background from the image. Please try again."
-      });
-      setCoverImage(imageUrl);
-    } finally {
-      setIsProcessingImage(false);
-    }
+  const handleEditDedication = () => {
+    toast({
+      title: "Edit Dedication",
+      description: "Opening dedication editor..."
+    });
   };
 
   return (
@@ -89,56 +70,67 @@ const LoveStoryGenerateStep = () => {
       currentStep={4}
       totalSteps={4}
     >
-      <div className="glass-card rounded-2xl p-8 py-[40px]">
-        <div className="max-w-xl mx-auto space-y-8">
-          <CanvasCoverPreview
-            coverTitle={coverTitle}
-            subtitle={subtitle}
-            authorName={authorName}
-            coverImage={coverImage}
-            selectedFont={selectedFont}
-            selectedTemplate={selectedTemplate}
-            selectedLayout={selectedLayout}
-            isProcessingImage={isProcessingImage}
-            backCoverText={backCoverText}
-          />
-          
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-lg font-medium text-center mb-2">Choose Your Font</h3>
-              <FontSelector
-                selectedFont={selectedFont}
-                onSelectFont={setSelectedFont}
-              />
-            </div>
-
-            <div>
-              <h3 className="text-lg font-medium text-center mb-2">Choose Your Color Theme</h3>
-              <TemplateSelector
-                selectedTemplate={selectedTemplate}
-                onSelectTemplate={setSelectedTemplate}
-              />
-            </div>
-            
-            <div>
-              <h3 className="text-lg font-medium text-center mb-2">Choose Your Cover Layout</h3>
-              <LayoutSelector
-                selectedLayout={selectedLayout}
-                onSelectLayout={setSelectedLayout}
-              />
-            </div>
+      <div className="space-y-8">
+        {/* Cover Preview */}
+        <div className="glass-card rounded-2xl p-8 py-[40px] relative">
+          <div className="max-w-xl mx-auto">
+            <CanvasCoverPreview
+              coverTitle={coverTitle}
+              subtitle={subtitle}
+              authorName={authorName}
+              coverImage={coverImage}
+              selectedFont="playfair"
+              selectedTemplate="modern"
+              selectedLayout="centered"
+              backCoverText={backCoverText}
+            />
+            <Button
+              variant="secondary"
+              className="absolute bottom-4 left-1/2 transform -translate-x-1/2"
+              onClick={handleEditCover}
+            >
+              <Edit className="w-4 h-4 mr-2" />
+              Edit cover
+            </Button>
           </div>
-
-          <Button 
-            className="w-full py-6 text-lg"
-            onClick={() => {/* Generate book logic */}}
-          >
-            Generate Your Love Story
-          </Button>
         </div>
+
+        {/* Dedication Preview */}
+        <div className="glass-card rounded-2xl p-8 py-[40px] relative">
+          <div className="max-w-xl mx-auto">
+            <div className="aspect-[3/4] bg-[#FFECD1] rounded-lg p-8">
+              <div className="h-full flex flex-col justify-center items-center text-center space-y-6">
+                <div className="space-y-4">
+                  <p className="text-lg">Dear {coverTitle.split(',')[0]},</p>
+                  <p className="text-lg">
+                    This book is full of the words I have chosen for you.<br/>
+                    Thank you for making the story of us so beautiful.
+                  </p>
+                  <p className="text-lg">Happy Anniversary!</p>
+                  <p className="text-lg">Love,<br/>{authorName}</p>
+                </div>
+              </div>
+            </div>
+            <Button
+              variant="secondary"
+              className="absolute bottom-4 right-4"
+              onClick={handleEditDedication}
+            >
+              <Edit className="w-4 h-4 mr-2" />
+              Edit dedication
+            </Button>
+          </div>
+        </div>
+
+        <Button 
+          className="w-full py-6 text-lg"
+          onClick={() => {/* Generate book logic */}}
+        >
+          Generate Your Love Story
+        </Button>
       </div>
     </WizardStep>
   );
 };
 
-export default LoveStoryGenerateStep;
+export default GenerateStep;

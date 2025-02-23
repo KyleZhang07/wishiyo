@@ -1,41 +1,25 @@
 
 import { useState, useEffect } from 'react';
-import { CanvasImage } from '../types';
 
-export const useImageLoader = (
-  coverImage: string | undefined,
-  imageScale: number,
-  imagePosition: { x: number, y: number }
-) => {
-  const [image, setImage] = useState<CanvasImage | null>(null);
+interface LoadedImage {
+  element: HTMLImageElement;
+}
 
-  const loadImage = (src: string): Promise<HTMLImageElement> => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => resolve(img);
-      img.onerror = reject;
-      img.src = src;
-    });
-  };
+export const useImageLoader = (imageSrc: string | undefined) => {
+  const [image, setImage] = useState<LoadedImage | null>(null);
 
   useEffect(() => {
-    const initImage = async () => {
-      if (coverImage) {
-        try {
-          const img = await loadImage(coverImage);
-          setImage({
-            element: img,
-            scale: imageScale,
-            position: imagePosition
-          });
-        } catch (error) {
-          console.error('Failed to load image:', error);
-        }
-      }
-    };
+    if (!imageSrc) {
+      setImage(null);
+      return;
+    }
 
-    initImage();
-  }, [coverImage, imageScale, imagePosition]);
+    const img = new Image();
+    img.onload = () => {
+      setImage({ element: img });
+    };
+    img.src = imageSrc;
+  }, [imageSrc]);
 
   return image;
 };
