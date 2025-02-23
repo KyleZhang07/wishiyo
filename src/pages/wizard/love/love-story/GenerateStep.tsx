@@ -23,6 +23,7 @@ const GenerateStep = () => {
     const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
     const savedMoments = localStorage.getItem('loveStoryMoments');
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
 
     if (savedAuthor) {
       setAuthorName(savedAuthor);
@@ -45,16 +46,16 @@ const GenerateStep = () => {
       setBackCoverText(formattedMoments);
     }
 
-    // Generate cover image if we have prompts
-    if (savedPrompts) {
+    // Generate cover image if we have prompts and photo
+    if (savedPrompts && partnerPhoto) {
       const prompts = JSON.parse(savedPrompts);
       if (prompts && prompts.length > 0) {
-        generateCoverImage(prompts[0].prompt);
+        generateCoverImage(prompts[0].prompt, partnerPhoto);
       }
     }
   }, []);
 
-  const generateCoverImage = async (prompt: string) => {
+  const generateCoverImage = async (prompt: string, photo: string) => {
     setIsGeneratingCover(true);
     toast({
       title: "Generating cover image",
@@ -64,7 +65,7 @@ const GenerateStep = () => {
     try {
       // Call the edge function to generate the image
       const { data: { output }, error } = await supabase.functions.invoke('generate-love-cover', {
-        body: { prompt }
+        body: { prompt, photo }
       });
 
       if (error) throw error;
@@ -104,10 +105,11 @@ const GenerateStep = () => {
 
   const handleRegenerateCover = async () => {
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
-    if (savedPrompts) {
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    if (savedPrompts && partnerPhoto) {
       const prompts = JSON.parse(savedPrompts);
       if (prompts && prompts.length > 0) {
-        await generateCoverImage(prompts[0].prompt);
+        await generateCoverImage(prompts[0].prompt, partnerPhoto);
       }
     }
   };

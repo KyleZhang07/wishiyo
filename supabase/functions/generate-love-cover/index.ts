@@ -36,9 +36,9 @@ serve(async (req) => {
     }
 
     // If it's a generation request
-    if (!body.prompt) {
+    if (!body.prompt || !body.photo) {
       return new Response(
-        JSON.stringify({ error: "Missing required field: prompt" }), {
+        JSON.stringify({ error: "Missing required fields: prompt and photo are required" }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 400,
         }
@@ -47,18 +47,15 @@ serve(async (req) => {
 
     console.log("Generating image with prompt:", body.prompt)
     const output = await replicate.run(
-      "stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b",
+      "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
       {
         input: {
           prompt: body.prompt,
-          negative_prompt: "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
-          width: 896,
-          height: 1152,
-          num_outputs: 1,
-          scheduler: "K_EULER",
-          num_inference_steps: 50,
-          guidance_scale: 7.5,
-          refine: "no_refiner",
+          num_steps: 50,
+          style_name: "Photographic",
+          input_image: body.photo,
+          guidance_scale: 8.5,
+          negative_prompt: "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry"
         }
       }
     )
