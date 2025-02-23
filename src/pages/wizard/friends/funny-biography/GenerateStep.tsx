@@ -7,7 +7,7 @@ import LayoutSelector from '@/components/cover-generator/LayoutSelector';
 import FontSelector from '@/components/cover-generator/FontSelector';
 import TemplateSelector from '@/components/cover-generator/TemplateSelector';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 const FunnyBiographyGenerateStep = () => {
   const [coverTitle, setCoverTitle] = useState('');
@@ -17,7 +17,6 @@ const FunnyBiographyGenerateStep = () => {
   const [selectedLayout, setSelectedLayout] = useState('classic-centered');
   const [selectedTemplate, setSelectedTemplate] = useState('modern');
   const [selectedFont, setSelectedFont] = useState('playfair');
-  const [isProcessingImage, setIsProcessingImage] = useState(false);
   const [backCoverText, setBackCoverText] = useState('');
   const { toast } = useToast();
 
@@ -57,7 +56,6 @@ const FunnyBiographyGenerateStep = () => {
   }, []);
 
   const handleImageProcessing = async (imageUrl: string) => {
-    setIsProcessingImage(true);
     try {
       const { data, error } = await supabase.functions.invoke('remove-background', {
         body: { imageUrl }
@@ -78,8 +76,6 @@ const FunnyBiographyGenerateStep = () => {
         description: "Failed to remove background from the image. Please try again."
       });
       setCoverImage(imageUrl);
-    } finally {
-      setIsProcessingImage(false);
     }
   };
 
@@ -101,7 +97,6 @@ const FunnyBiographyGenerateStep = () => {
             selectedFont={selectedFont}
             selectedTemplate={selectedTemplate}
             selectedLayout={selectedLayout}
-            isProcessingImage={isProcessingImage}
             backCoverText={backCoverText}
           />
           
