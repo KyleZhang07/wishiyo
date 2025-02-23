@@ -64,14 +64,14 @@ const GenerateStep = () => {
 
     try {
       // Call the edge function to generate the image
-      const { data: { output }, error } = await supabase.functions.invoke('generate-love-cover', {
+      const { data, error } = await supabase.functions.invoke('generate-love-cover', {
         body: { prompt, photo }
       });
 
       if (error) throw error;
 
-      if (output && output[0]) {
-        setCoverImage(output[0]);
+      if (data && data.output && data.output[0]) {
+        setCoverImage(data.output[0]);
         toast({
           title: "Cover image generated",
           description: "Your cover image is ready!",
