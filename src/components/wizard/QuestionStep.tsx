@@ -1,10 +1,10 @@
 
 import { useState } from 'react';
-import { Button } from "@/components/ui/button";
 import WizardStep from './WizardStep';
 import QuestionDialog from './QuestionDialog';
+import { Button } from '@/components/ui/button';
 import { PlusCircle, X } from 'lucide-react';
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from '@/components/ui/use-toast';
 import { useNavigate } from 'react-router-dom';
 
 interface QuestionAnswer {
@@ -13,56 +13,45 @@ interface QuestionAnswer {
 }
 
 interface QuestionStepProps {
-  category: 'friends' | 'love' | 'kids';
+  category: 'fun' | 'fantasy' | 'kids';
   previousStep: string;
   nextStep: string;
 }
 
-const getDefaultQuestions = (category: 'friends' | 'love' | 'kids') => {
-  switch (category) {
-    case 'friends':
-      return [
-        "How did you first meet?",
-        "What makes your friendship special?",
-        "What's your favorite memory together?",
-        "What challenges have you overcome together?",
-        "What do you admire most about your friend?",
-        "What makes your friend unique?"
-      ];
-    case 'love':
-      return [
-        "What's your favorite memory together?",
-        "How did you first meet?",
-        "What makes your relationship special?",
-        "What's the funniest moment you've shared?",
-        "What do you admire most about them?",
-        "What's a challenge you've overcome together?"
-      ];
-    case 'kids':
-      return [
-        "What's your child's favorite story?",
-        "What makes them laugh the most?",
-        "What's their favorite adventure?",
-        "What are their dreams and aspirations?",
-        "What special talents do they have?",
-        "What makes them unique and special?"
-      ];
-  }
-};
-
-const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) => {
+const QuestionStep = ({
+  category,
+  previousStep,
+  nextStep
+}: QuestionStepProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
   const [questionsAndAnswers, setQuestionsAndAnswers] = useState<QuestionAnswer[]>([]);
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  const handleNext = () => {
+    if (questionsAndAnswers.length === 0) {
+      toast({
+        title: "No answers provided",
+        description: "Please share at least one story",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const storageKey = category === 'fun' ? 'funnyBookAnswers' : 'fantasyBookAnswers';
+    localStorage.setItem(storageKey, JSON.stringify(questionsAndAnswers));
+    navigate(nextStep);
+  };
+
   const handleSubmitAnswer = (question: string, answer: string) => {
-    setQuestionsAndAnswers([...questionsAndAnswers, { question, answer }]);
+    const newAnswers = [...questionsAndAnswers, { question, answer }];
+    setQuestionsAndAnswers(newAnswers);
   };
 
   const handleRemoveQA = (index: number) => {
-    setQuestionsAndAnswers(questionsAndAnswers.filter((_, i) => i !== index));
+    const newAnswers = questionsAndAnswers.filter((_, i) => i !== index);
+    setQuestionsAndAnswers(newAnswers);
   };
 
   const handleEditAnswer = (question: string) => {
@@ -70,26 +59,38 @@ const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) =
     setIsDialogOpen(true);
   };
 
+  const getQuestions = () => {
+    if (category === 'fun') {
+      return [
+        "What's the funniest thing that's ever happened to you?",
+        "Tell us about a time you made someone laugh really hard",
+        "What's your most embarrassing but funny moment?",
+        "What's your go-to funny story?",
+        "Share a hilarious misunderstanding",
+      ];
+    } else {
+      return [
+        "Describe your fantasy world and its unique features",
+        "Who is the main character and what makes them special?",
+        "What is the main conflict or quest in your story?",
+        "Tell us about the magical elements in your story",
+        "Describe an exciting scene from your story",
+      ];
+    }
+  };
+
   const answeredQuestions = questionsAndAnswers.map(qa => qa.question);
 
   return (
     <WizardStep
-      title="What's the Story?"
-      description="Answer questions to create your personalized book."
+      title={category === 'fun' ? "Share Your Funny Stories" : "Share Your Fantasy Story"}
+      description={category === 'fun' 
+        ? "Tell us about some funny moments or stories that you want to include in your book."
+        : "Tell us about the fantasy world and characters you want to create."}
       previousStep={previousStep}
       currentStep={2}
-      totalSteps={4}
-      onNextClick={() => {
-        if (questionsAndAnswers.length === 0) {
-          toast({
-            title: "No answers provided",
-            description: "Please answer at least one question to continue.",
-            variant: "destructive",
-          });
-          return;
-        }
-        navigate(nextStep);
-      }}
+      totalSteps={5}
+      onNextClick={handleNext}
     >
       <div className="space-y-6">
         {questionsAndAnswers.map((qa, index) => (
@@ -119,8 +120,8 @@ const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) =
         >
           <PlusCircle className="mr-2 h-5 w-5" />
           {questionsAndAnswers.length === 0 
-            ? "Select a Question and Answer It" 
-            : "Add Another Question"}
+            ? "Share Your First Story" 
+            : "Add Another Story"}
         </Button>
       </div>
       <QuestionDialog
@@ -132,7 +133,7 @@ const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) =
         onSubmitAnswer={handleSubmitAnswer}
         answeredQuestions={answeredQuestions}
         initialQuestion={selectedQuestion}
-        questions={getDefaultQuestions(category)}
+        questions={getQuestions()}
       />
     </WizardStep>
   );
