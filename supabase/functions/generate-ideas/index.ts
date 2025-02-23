@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
@@ -20,8 +21,9 @@ serve(async (req) => {
     }
 
     if (category === 'love') {
-      // First, get the name of the person from the answers
-      const personName = localStorage.getItem('loveStoryPersonName') || 'them';
+      // Get person's name from answers
+      const personName = answers.find((a: any) => a.question.toLowerCase().includes('name'))?.answer || 'them';
+      console.log('Generating prompts for person:', personName);
       
       // Generate image prompts first
       const promptResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -42,30 +44,43 @@ serve(async (req) => {
             },
             {
               role: 'user',
-              content: `Generate 13 creative image prompts based on these answers about ${personName}:\n\n${JSON.stringify(answers, null, 2)}\n\n
+              content: `Generate 13 creative image prompts based on these answers:\n\n${JSON.stringify(answers, null, 2)}\n\n
                 Create: 
-                1. One cover image prompt that captures their essence
+                1. One cover image prompt that captures ${personName}'s essence in a magical setting
                 2. Twelve story image prompts showing ${personName} in various imaginative scenarios
                 Each prompt should be detailed and photo-realistic.
-                Respond with ONLY a JSON array of 13 objects, each with 'question' and 'prompt' fields.
-                Make the prompts creative and magical, mixing reality with imagination.`
+                Format the response as a JSON array of 13 objects, each with 'question' (short description) and 'prompt' (detailed AI image generation prompt) fields.
+                Make the prompts creative and magical, mixing reality with imagination.
+                Example prompt structure:
+                {
+                  "question": "${personName} as a superhero",
+                  "prompt": "Ultra-realistic portrait of ${personName}, wearing a sleek superhero costume, standing atop a skyscraper at sunset, city lights glowing below, dramatic lighting, cinematic composition, high detail"
+                }`
             }
           ],
         }),
       });
 
       const promptData = await promptResponse.json();
-      let imagePrompts = [];
+      console.log('Prompt generation response:', promptData);
       
+      let imagePrompts = [];
       try {
-        imagePrompts = JSON.parse(promptData.choices[0].message.content);
+        if (promptData.choices && promptData.choices[0] && promptData.choices[0].message) {
+          const content = promptData.choices[0].message.content;
+          console.log('Raw content:', content);
+          imagePrompts = JSON.parse(content);
+        } else {
+          throw new Error('Invalid response format from OpenAI');
+        }
       } catch (parseError) {
+        console.error('Parse error:', parseError);
         const contentStr = promptData.choices[0].message.content;
         const jsonMatch = contentStr.match(/\[[\s\S]*\]/);
         if (jsonMatch) {
           imagePrompts = JSON.parse(jsonMatch[0]);
         } else {
-          throw new Error('Failed to parse image prompts');
+          throw new Error('Failed to parse image prompts: ' + parseError.message);
         }
       }
 
@@ -89,25 +104,40 @@ serve(async (req) => {
               role: 'user',
               content: `Generate 3 different emotional book ideas based on these answers:\n\n${JSON.stringify(answers, null, 2)}\n\n
                 The book is written by ${authorName} for ${personName}.\n\n
-                Respond with ONLY a JSON array of 3 objects, each with 'title', 'author', and 'description' fields. 
-                Do not include any other text or formatting.`
+                Return ONLY a JSON array of 3 objects, each with 'title', 'author', and 'description' fields.
+                Example:
+                [
+                  {
+                    "title": "Title of the book",
+                    "author": "${authorName}",
+                    "description": "A heartwarming description..."
+                  }
+                ]`
             }
           ],
         }),
       });
 
       const data = await response.json();
+      console.log('Book ideas response:', data);
+      
       let ideas = [];
-
       try {
-        ideas = JSON.parse(data.choices[0].message.content);
+        if (data.choices && data.choices[0] && data.choices[0].message) {
+          const content = data.choices[0].message.content;
+          console.log('Raw ideas content:', content);
+          ideas = JSON.parse(content);
+        } else {
+          throw new Error('Invalid response format from OpenAI');
+        }
       } catch (parseError) {
+        console.error('Parse error for ideas:', parseError);
         const contentStr = data.choices[0].message.content;
         const jsonMatch = contentStr.match(/\[[\s\S]*\]/);
         if (jsonMatch) {
           ideas = JSON.parse(jsonMatch[0]);
         } else {
-          throw new Error('Failed to parse book ideas');
+          throw new Error('Failed to parse book ideas: ' + parseError.message);
         }
       }
 
@@ -167,9 +197,12 @@ serve(async (req) => {
     throw new Error('Unsupported book type or category');
 
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error in generate-ideas function:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        stack: error.stack 
+      }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
