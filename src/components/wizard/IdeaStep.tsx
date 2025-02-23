@@ -26,7 +26,7 @@ interface BookIdea {
 }
 
 interface IdeaStepProps {
-  category: 'friends' | 'love' | 'kids';
+  category: 'fun' | 'fantasy' | 'kids';
   previousStep: string;
   nextStep: string;
 }
