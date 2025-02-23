@@ -4,9 +4,9 @@ import IdeaStep from '@/components/wizard/IdeaStep';
 const LoveStoryIdeasStep = () => {
   return (
     <IdeaStep
-      category="love"
-      previousStep="/create/love/love-story/questions"
-      nextStep="/create/love/love-story/moments"
+      category="fantasy"
+      previousStep="/create/fantasy/love-story/questions"
+      nextStep="/create/fantasy/love-story/moments"
     />
   );
 };
