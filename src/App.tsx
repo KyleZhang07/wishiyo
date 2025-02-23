@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -28,9 +27,9 @@ import LoveStoryQuestionsStep from "./pages/wizard/love/love-story/QuestionsStep
 import LoveStoryIdeasStep from "./pages/wizard/love/love-story/IdeasStep";
 import LoveStoryMomentsStep from "./pages/wizard/love/love-story/MomentsStep";
 import LoveStoryGenerateStep from "./pages/wizard/love/love-story/GenerateStep";
+import DebugPromptsStep from "./pages/wizard/love/love-story/DebugPromptsStep";
 
 const App = () => {
-  // Move QueryClient inside the component and use useState to persist it
   const [queryClient] = useState(() => new QueryClient());
 
   return (
@@ -60,6 +59,7 @@ const App = () => {
                 <Route path="/create/love/love-story/author" element={<LoveStoryAuthorStep />} />
                 <Route path="/create/love/love-story/questions" element={<LoveStoryQuestionsStep />} />
                 <Route path="/create/love/love-story/ideas" element={<LoveStoryIdeasStep />} />
+                <Route path="/create/love/love-story/debug-prompts" element={<DebugPromptsStep />} />
                 <Route path="/create/love/love-story/moments" element={<LoveStoryMomentsStep />} />
                 <Route path="/create/love/love-story/generate" element={<LoveStoryGenerateStep />} />
                 

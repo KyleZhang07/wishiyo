@@ -13,18 +13,14 @@ serve(async (req) => {
 
   try {
     const { authorName, answers, bookType, category } = await req.json();
+    const personName = localStorage.getItem('loveStoryPersonName') || 'Your Love';
 
     if (category === 'love') {
-      // Generate emotional, supportive book ideas for love category
       const ideas = [];
       const imagePrompts = [];
       
-      // Process answers to create both book ideas and detailed image prompts
+      // Process answers to create detailed image prompts
       for (const answer of answers) {
-        const prompt = `Generate a detailed, artistic scene description for: ${answer.answer}. 
-          Include specific details about lighting, composition, emotions, and setting.`;
-
-        // Generate detailed image prompt for each answer
         const imagePrompt = `A beautiful, emotional photograph capturing ${answer.answer}. 
           Professional photography, soft natural lighting, cinematic composition, 
           shallow depth of field, high resolution, detailed textures, emotional moment`;
@@ -35,21 +31,21 @@ serve(async (req) => {
         });
       }
 
-      // Generate 3 different book ideas
+      // Generate 3 different book ideas using personName
       ideas.push(
         {
-          title: `${authorName.split(' ')[0]}, Our Story Together`,
-          author: `Created with love by ${authorName}`,
+          title: `${personName}, Our Story Together`,
+          author: authorName,
           description: "A heartfelt journey through our most precious moments together, celebrating our unique bond and shared memories.",
         },
         {
-          title: `To ${authorName.split(' ')[0]}, With Love`,
-          author: `From ${authorName}`,
+          title: `To ${personName}, With Love`,
+          author: authorName,
           description: "A collection of cherished memories and heartfelt moments that showcase the beauty of our relationship.",
         },
         {
-          title: `${authorName.split(' ')[0]}, This Is Us`,
-          author: `Lovingly created by ${authorName}`,
+          title: `${personName}, This Is Us`,
+          author: authorName,
           description: "An intimate portrait of our journey together, filled with love, laughter, and unforgettable moments.",
         }
       );
@@ -59,56 +55,40 @@ serve(async (req) => {
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     } else {
-      // Original logic for other categories
-      const configuration = {
-        method: 'post',
-        headers: {
-          'content-type': 'application/json',
-          'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`
+      const ideas = [
+        {
+          title: 'The Funny Biography of a Friend',
+          author: authorName,
+          description: "A hilarious journey through the life of a friend, filled with funny stories and anecdotes.",
         },
-      };
-
-      let prompt = '';
-
-      if (category === 'friends') {
-        prompt = `You are a creative story writer. Your job is to come up with 3 unique ideas for a funny biography about ${authorName} and their friend.
-        The ideas should be funny and creative. The ideas should be no more than 2 sentences long.
-        Here are some details about the friends: ${JSON.stringify(answers)}.
-        Give me 3 ideas in JSON format. The keys should be "title", "author", and "description". The author should be ${authorName}.`;
-      } else if (category === 'kids') {
-        prompt = `You are a creative story writer. Your job is to come up with 1 unique idea for a kids story about ${authorName} and their child.
-        The idea should be heart warming and creative. The idea should be no more than 2 sentences long.
-        Here are some details about the child: ${JSON.stringify(answers)}.
-        Give me 1 idea in JSON format with chapters. The keys should be "title", "author", "description", "chapters". The author should be ${authorName}.
-        Each chapter should have a title and a description. There should be 5 chapters.`;
-      }
-
-      const body = JSON.stringify({
-        model: "gpt-3.5-turbo",
-        messages: [{ role: "user", content: prompt }],
-      });
-
-      const resp = await fetch("https://api.openai.com/v1/chat/completions", {
-        ...configuration,
-        body,
-      });
-
-      if (!resp.ok) {
-        console.error('OpenAI API Error:', resp.status, resp.statusText);
-        try {
-            const errorBody = await resp.json();
-            console.error('Error Body:', JSON.stringify(errorBody, null, 2));
-        } catch (parseError) {
-            console.error('Failed to parse error response:', parseError);
+        {
+          title: 'The Wild Fantasy Adventure',
+          author: authorName,
+          description: "Embark on an epic quest through magical realms, encountering mythical creatures and overcoming challenges.",
+        },
+        {
+          title: 'The Prank Book',
+          author: authorName,
+          description: "A collection of hilarious pranks and practical jokes to play on friends and family.",
+        },
+        {
+          title: 'The Adventure Begins',
+          author: authorName,
+          description: "Embark on an exciting adventure filled with mystery, challenges, and new discoveries.",
+        },
+        {
+          title: 'The Magical Story Book',
+          author: authorName,
+          description: "A collection of enchanting tales filled with wonder, magic, and heartwarming lessons.",
+        },
+        {
+          title: 'The Learning Journey',
+          author: authorName,
+          description: "An educational adventure that makes learning fun and engaging for kids.",
         }
-        throw new Error(`OpenAI API request failed with status ${resp.status}`);
-      }
-
-      const json = await resp.json();
-      const idea = JSON.parse(json.choices[0].message.content);
-
+      ];
       return new Response(
-        JSON.stringify(idea),
+        JSON.stringify({ ideas }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
