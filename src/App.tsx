@@ -21,37 +21,12 @@ import FunnyBiographyIdeasStep from "./pages/wizard/friends/funny-biography/Idea
 import FunnyBiographyPhotosStep from "./pages/wizard/friends/funny-biography/PhotosStep";
 import FunnyBiographyGenerateStep from "./pages/wizard/friends/funny-biography/GenerateStep";
 
-// Friends Book Creation Routes - Wild Fantasy
-import WildFantasyAuthorStep from "./pages/wizard/friends/wild-fantasy/AuthorStep";
-import WildFantasyAdventureStep from "./pages/wizard/friends/wild-fantasy/AdventureStep";
-import WildFantasyIdeasStep from "./pages/wizard/friends/wild-fantasy/IdeasStep";
-import WildFantasyPhotosStep from "./pages/wizard/friends/wild-fantasy/PhotosStep";
-import WildFantasyGenerateStep from "./pages/wizard/friends/wild-fantasy/GenerateStep";
-
-// Friends Book Creation Routes - Prank Book
-import PrankBookAuthorStep from "./pages/wizard/friends/prank-book/AuthorStep";
-import PrankBookPranksStep from "./pages/wizard/friends/prank-book/PranksStep";
-import PrankBookIdeasStep from "./pages/wizard/friends/prank-book/IdeasStep";
-import PrankBookEvidenceStep from "./pages/wizard/friends/prank-book/EvidenceStep";
-import PrankBookGenerateStep from "./pages/wizard/friends/prank-book/GenerateStep";
-
-// Love Book Creation Routes - Love Story
+// Love Story Routes
 import LoveStoryAuthorStep from "./pages/wizard/love/love-story/AuthorStep";
 import LoveStoryQuestionsStep from "./pages/wizard/love/love-story/QuestionsStep";
 import LoveStoryIdeasStep from "./pages/wizard/love/love-story/IdeasStep";
 import LoveStoryMomentsStep from "./pages/wizard/love/love-story/MomentsStep";
 import LoveStoryGenerateStep from "./pages/wizard/love/love-story/GenerateStep";
-
-// Love Book Creation Routes - Love Poems
-import LovePoemsAuthorStep from "./pages/wizard/love/love-poems/AuthorStep";
-import LovePoemsFeelingsStep from "./pages/wizard/love/love-poems/FeelingsStep";
-import LovePoemsStyleStep from "./pages/wizard/love/love-poems/StyleStep";
-import LovePoemsGenerateStep from "./pages/wizard/love/love-poems/GenerateStep";
-
-// Love Book Creation Routes - Picture Album
-import PictureAlbumAuthorStep from "./pages/wizard/love/picture-album/AuthorStep";
-import PictureAlbumPhotosStep from "./pages/wizard/love/picture-album/PhotosStep";
-import PictureAlbumGenerateStep from "./pages/wizard/love/picture-album/GenerateStep";
 
 const queryClient = new QueryClient();
 
@@ -78,20 +53,6 @@ const App = () => {
                 <Route path="/create/friends/funny-biography/ideas" element={<FunnyBiographyIdeasStep />} />
                 <Route path="/create/friends/funny-biography/photos" element={<FunnyBiographyPhotosStep />} />
                 <Route path="/create/friends/funny-biography/generate" element={<FunnyBiographyGenerateStep />} />
-                
-                {/* Wild Fantasy Routes */}
-                <Route path="/create/friends/wild-fantasy/author" element={<WildFantasyAuthorStep />} />
-                <Route path="/create/friends/wild-fantasy/adventure" element={<WildFantasyAdventureStep />} />
-                <Route path="/create/friends/wild-fantasy/ideas" element={<WildFantasyIdeasStep />} />
-                <Route path="/create/friends/wild-fantasy/photos" element={<WildFantasyPhotosStep />} />
-                <Route path="/create/friends/wild-fantasy/generate" element={<WildFantasyGenerateStep />} />
-
-                {/* Prank Book Routes */}
-                <Route path="/create/friends/prank-book/author" element={<PrankBookAuthorStep />} />
-                <Route path="/create/friends/prank-book/pranks" element={<PrankBookPranksStep />} />
-                <Route path="/create/friends/prank-book/ideas" element={<PrankBookIdeasStep />} />
-                <Route path="/create/friends/prank-book/evidence" element={<PrankBookEvidenceStep />} />
-                <Route path="/create/friends/prank-book/generate" element={<PrankBookGenerateStep />} />
 
                 {/* Love Story Routes */}
                 <Route path="/create/love/love-story/author" element={<LoveStoryAuthorStep />} />
@@ -99,17 +60,6 @@ const App = () => {
                 <Route path="/create/love/love-story/ideas" element={<LoveStoryIdeasStep />} />
                 <Route path="/create/love/love-story/moments" element={<LoveStoryMomentsStep />} />
                 <Route path="/create/love/love-story/generate" element={<LoveStoryGenerateStep />} />
-                
-                {/* Love Poems Routes */}
-                <Route path="/create/love/love-poems/author" element={<LovePoemsAuthorStep />} />
-                <Route path="/create/love/love-poems/feelings" element={<LovePoemsFeelingsStep />} />
-                <Route path="/create/love/love-poems/style" element={<LovePoemsStyleStep />} />
-                <Route path="/create/love/love-poems/generate" element={<LovePoemsGenerateStep />} />
-                
-                {/* Picture Album Routes */}
-                <Route path="/create/love/picture-album/author" element={<PictureAlbumAuthorStep />} />
-                <Route path="/create/love/picture-album/photos" element={<PictureAlbumPhotosStep />} />
-                <Route path="/create/love/picture-album/generate" element={<PictureAlbumGenerateStep />} />
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>
