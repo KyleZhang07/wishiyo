@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useState } from "react";
 
 import Header from "./components/Header";
 import Footer from "./components/Footer";
@@ -28,9 +29,10 @@ import LoveStoryIdeasStep from "./pages/wizard/love/love-story/IdeasStep";
 import LoveStoryMomentsStep from "./pages/wizard/love/love-story/MomentsStep";
 import LoveStoryGenerateStep from "./pages/wizard/love/love-story/GenerateStep";
 
-const queryClient = new QueryClient();
-
 const App = () => {
+  // Move QueryClient inside the component and use useState to persist it
+  const [queryClient] = useState(() => new QueryClient());
+
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
