@@ -41,17 +41,42 @@ const CanvasCoverPreview = ({
     ctx.fillStyle = '#FFECD1';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Draw image if available
+    // Draw image if available with proper centering and scaling
     if (image?.element) {
       const { width: imgWidth, height: imgHeight } = image.element;
-      const scale = Math.min(canvas.width / imgWidth, canvas.height / imgHeight);
-      const x = (canvas.width - imgWidth * scale) / 2;
-      const y = (canvas.height - imgHeight * scale) / 2;
       
-      ctx.drawImage(image.element, x, y, imgWidth * scale, imgHeight * scale);
+      // Calculate aspect ratios
+      const canvasAspect = canvas.width / canvas.height;
+      const imageAspect = imgWidth / imgHeight;
+      
+      let drawWidth = canvas.width;
+      let drawHeight = canvas.height;
+      let x = 0;
+      let y = 0;
+
+      // Adjust dimensions to maintain aspect ratio while covering the canvas
+      if (imageAspect > canvasAspect) {
+        drawHeight = canvas.width / imageAspect;
+        y = (canvas.height - drawHeight) / 2;
+      } else {
+        drawWidth = canvas.height * imageAspect;
+        x = (canvas.width - drawWidth) / 2;
+      }
+
+      // Draw the image
+      ctx.drawImage(image.element, x, y, drawWidth, drawHeight);
     }
 
-    // Draw title
+    // Add a semi-transparent overlay
+    ctx.fillStyle = 'rgba(255, 236, 209, 0.3)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw title with shadow
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+    ctx.shadowBlur = 4;
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
+    
     ctx.font = `bold 60px ${selectedFont}`;
     ctx.fillStyle = '#C41E3A';
     ctx.textAlign = 'center';
@@ -61,6 +86,12 @@ const CanvasCoverPreview = ({
     if (titleParts[1]) {
       ctx.fillText(titleParts[1].trim(), canvas.width/2, 280);
     }
+
+    // Reset shadow for other text
+    ctx.shadowColor = 'rgba(0, 0, 0, 0)';
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
 
     // Draw author
     ctx.font = `italic 36px ${selectedFont}`;

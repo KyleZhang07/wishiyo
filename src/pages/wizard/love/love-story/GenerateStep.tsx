@@ -20,7 +20,7 @@ const GenerateStep = () => {
     const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
     const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
     const savedMoments = localStorage.getItem('loveStoryMoments');
-    const savedPhoto = localStorage.getItem('loveStoryPhoto');
+    const savedPhoto = localStorage.getItem('loveStoryPartnerPhoto'); // Updated to use correct key
 
     if (savedAuthor) {
       setAuthorName(savedAuthor);
