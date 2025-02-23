@@ -4,7 +4,8 @@ import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
 import CanvasCoverPreview from '@/components/cover-generator/CanvasCoverPreview';
 import { useToast } from '@/components/ui/use-toast';
-import { Edit } from 'lucide-react';
+import { Edit, RefreshCw } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const GenerateStep = () => {
   const [coverTitle, setCoverTitle] = useState('');
@@ -12,6 +13,7 @@ const GenerateStep = () => {
   const [authorName, setAuthorName] = useState('');
   const [coverImage, setCoverImage] = useState<string>();
   const [backCoverText, setBackCoverText] = useState('');
+  const [isGeneratingCover, setIsGeneratingCover] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -20,7 +22,7 @@ const GenerateStep = () => {
     const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
     const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
     const savedMoments = localStorage.getItem('loveStoryMoments');
-    const savedPhoto = localStorage.getItem('loveStoryPartnerPhoto'); // Updated to use correct key
+    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
 
     if (savedAuthor) {
       setAuthorName(savedAuthor);
@@ -43,10 +45,48 @@ const GenerateStep = () => {
       setBackCoverText(formattedMoments);
     }
 
-    if (savedPhoto) {
-      setCoverImage(savedPhoto);
+    // Generate cover image if we have prompts
+    if (savedPrompts) {
+      const prompts = JSON.parse(savedPrompts);
+      if (prompts && prompts.length > 0) {
+        generateCoverImage(prompts[0].prompt);
+      }
     }
   }, []);
+
+  const generateCoverImage = async (prompt: string) => {
+    setIsGeneratingCover(true);
+    toast({
+      title: "Generating cover image",
+      description: "This may take a minute...",
+    });
+
+    try {
+      // Call the edge function to generate the image
+      const { data: { output }, error } = await supabase.functions.invoke('generate-love-cover', {
+        body: { prompt }
+      });
+
+      if (error) throw error;
+
+      if (output && output[0]) {
+        setCoverImage(output[0]);
+        toast({
+          title: "Cover image generated",
+          description: "Your cover image is ready!",
+        });
+      }
+    } catch (error) {
+      console.error('Error generating cover:', error);
+      toast({
+        title: "Error generating cover",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingCover(false);
+    }
+  };
 
   const handleEditCover = () => {
     toast({
@@ -60,6 +100,16 @@ const GenerateStep = () => {
       title: "Edit Dedication",
       description: "Opening dedication editor..."
     });
+  };
+
+  const handleRegenerateCover = async () => {
+    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    if (savedPrompts) {
+      const prompts = JSON.parse(savedPrompts);
+      if (prompts && prompts.length > 0) {
+        await generateCoverImage(prompts[0].prompt);
+      }
+    }
   };
 
   return (
@@ -83,15 +133,26 @@ const GenerateStep = () => {
               selectedTemplate="modern"
               selectedLayout="centered"
               backCoverText={backCoverText}
+              category="love"
             />
-            <Button
-              variant="secondary"
-              className="absolute bottom-4 left-1/2 transform -translate-x-1/2"
-              onClick={handleEditCover}
-            >
-              <Edit className="w-4 h-4 mr-2" />
-              Edit cover
-            </Button>
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
+              <Button
+                variant="secondary"
+                onClick={handleEditCover}
+                disabled={isGeneratingCover}
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Edit cover
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={handleRegenerateCover}
+                disabled={isGeneratingCover}
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${isGeneratingCover ? 'animate-spin' : ''}`} />
+                Regenerate cover
+              </Button>
+            </div>
           </div>
         </div>
 
