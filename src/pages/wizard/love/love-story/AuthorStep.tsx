@@ -7,12 +7,15 @@ import { useNavigate } from 'react-router-dom';
 
 const LoveStoryAuthorStep = () => {
   const [personName, setPersonName] = useState('');
+  const [authorName, setAuthorName] = useState('');
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
     const savedPersonName = localStorage.getItem('loveStoryPersonName');
+    const savedAuthorName = localStorage.getItem('loveStoryAuthorName');
     if (savedPersonName) setPersonName(savedPersonName);
+    if (savedAuthorName) setAuthorName(savedAuthorName);
   }, []);
 
   const handleContinue = () => {
@@ -25,7 +28,17 @@ const LoveStoryAuthorStep = () => {
       return;
     }
 
+    if (!authorName.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Author name required",
+        description: "Please enter your name to continue"
+      });
+      return;
+    }
+
     localStorage.setItem('loveStoryPersonName', personName.trim());
+    localStorage.setItem('loveStoryAuthorName', authorName.trim());
     navigate('/create/love/love-story/questions');
   };
 
@@ -47,9 +60,14 @@ const LoveStoryAuthorStep = () => {
             onChange={e => setPersonName(e.target.value)}
           />
         </div>
-        <p className="text-gray-600 text-center mt-4">
-          Welcome to your story journey. Enter the name of the person you want to create this story for.
-        </p>
+        <div>
+          <label className="block text-sm font-medium mb-2">Your Name</label>
+          <Input
+            placeholder="Enter your name"
+            value={authorName}
+            onChange={e => setAuthorName(e.target.value)}
+          />
+        </div>
       </div>
     </WizardStep>
   );
