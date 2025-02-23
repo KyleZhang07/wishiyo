@@ -1,6 +1,5 @@
-
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,185 +12,113 @@ serve(async (req) => {
   }
 
   try {
-    const { authorName, stories, bookType, category } = await req.json();
-    console.log('Received request:', { authorName, bookType, category });
-    console.log('Stories:', stories);
+    const { authorName, answers, bookType, category } = await req.json();
 
-    if (!authorName || !stories || !bookType || !category) {
-      throw new Error('Missing required parameters');
-    }
-
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openAIApiKey) {
-      throw new Error('OpenAI API key not configured');
-    }
-
-    // Enhance the prompts to get more structured responses
-    let systemPrompt = "";
-    let userPrompt = "";
-
-    if (category === 'friends' && bookType === 'funny-biography') {
-      systemPrompt = `You are a creative book idea generator. Generate engaging and humorous biography book ideas based on real stories and anecdotes about a person. Always follow this format for each idea:
-
-Title: [The catchy title]
-Description: [A detailed, engaging description of the book idea that captures the essence of the stories in a humorous way. Make it at least 2-3 sentences long.]
-
-Separate multiple ideas with two newlines.`;
+    if (category === 'love') {
+      // Generate emotional, supportive book ideas for love category
+      const ideas = [];
+      const imagePrompts = [];
       
-      userPrompt = `Generate 3 unique and entertaining biography book ideas based on these stories about ${authorName}:\n\n${JSON.stringify(stories)}\n\nMake sure each idea has both a title and description section, properly formatted as specified. Focus on humor and entertainment value.`;
-    } else if (category === 'love' && bookType === 'love-story') {
-      systemPrompt = `You are a romantic book outline generator. Create a detailed chapter outline for a love story.`;
-      userPrompt = `Create a romantic book outline with chapters based on this love story about ${authorName}:\n\n${JSON.stringify(stories)}\n\nFormat your response as:\n\nTitle: [A romantic title]\nDescription: [A heartfelt description]\n\nChapter 1: [Title]\n[Chapter description]\n\n[Continue with 5-7 chapters]`;
-    } else {
-      throw new Error('Unsupported book type or category');
-    }
+      // Process answers to create both book ideas and detailed image prompts
+      for (const answer of answers) {
+        const prompt = `Generate a detailed, artistic scene description for: ${answer.answer}. 
+          Include specific details about lighting, composition, emotions, and setting.`;
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        temperature: 0.9,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('OpenAI API error:', errorData);
-      throw new Error('Failed to generate content');
-    }
-
-    const data = await response.json();
-    console.log('OpenAI response:', data);
-
-    if (!data.choices?.[0]?.message?.content) {
-      throw new Error('Invalid response from OpenAI');
-    }
-
-    const rawContent = data.choices[0].message.content;
-    console.log('Raw content:', rawContent);
-
-    let processedData;
-    
-    if (category === 'friends') {
-      try {
-        // Split content into individual ideas (separated by double newlines)
-        const ideas = rawContent.split(/\n\n+/).filter(Boolean).map(ideaText => {
-          // Extract title using a more robust regex
-          const titleMatch = ideaText.match(/Title:\s*(.+?)(?=\n|$)/);
-          const title = titleMatch ? titleMatch[1].trim() : null;
-
-          // Extract description using a more robust regex
-          const descMatch = ideaText.match(/Description:\s*(.+?)(?=\n\n|$)/s);
-          const description = descMatch ? descMatch[1].trim() : null;
-
-          // Validate both title and description exist
-          if (!title || !description) {
-            console.error('Invalid idea format:', ideaText);
-            return null;
-          }
-
-          return {
-            title,
-            author: authorName,
-            description,
-            praises: []
-          };
-        }).filter(idea => idea !== null);
-
-        if (!ideas.length) {
-          throw new Error('No valid ideas could be parsed from the response');
-        }
-
-        processedData = { ideas };
-      } catch (error) {
-        console.error('Error parsing friends category response:', error);
-        throw new Error('Failed to parse book ideas');
-      }
-    } else {
-      try {
-        const lines = rawContent.split('\n');
-        let title = 'Untitled';
-        let description = '';
-        let chapters = [];
-        let currentSection = '';
-
-        lines.forEach(line => {
-          if (line.startsWith('Title:')) {
-            title = line.replace('Title:', '').trim();
-          } else if (line.startsWith('Description:')) {
-            currentSection = 'description';
-          } else if (line.toLowerCase().includes('chapter')) {
-            if (currentSection === 'description') {
-              description = description.trim();
-            }
-            currentSection = 'chapter';
-            const titleMatch = line.match(/Chapter \d+:?\s*(.+)/i);
-            if (titleMatch) {
-              chapters.push({
-                title: titleMatch[1].trim(),
-                description: ''
-              });
-            }
-          } else if (line.trim() && currentSection === 'description') {
-            description += ' ' + line.trim();
-          } else if (line.trim() && currentSection === 'chapter' && chapters.length > 0) {
-            chapters[chapters.length - 1].description += ' ' + line.trim();
-          }
+        // Generate detailed image prompt for each answer
+        const imagePrompt = `A beautiful, emotional photograph capturing ${answer.answer}. 
+          Professional photography, soft natural lighting, cinematic composition, 
+          shallow depth of field, high resolution, detailed textures, emotional moment`;
+        
+        imagePrompts.push({
+          question: answer.question,
+          prompt: imagePrompt
         });
-
-        chapters = chapters.map(chapter => ({
-          ...chapter,
-          description: chapter.description.trim()
-        }));
-
-        const idea = {
-          title,
-          author: authorName,
-          description: description.trim(),
-          praises: [],
-          chapters
-        };
-
-        processedData = { idea };
-      } catch (error) {
-        console.error('Error parsing love category response:', error);
-        throw new Error('Failed to parse book outline');
       }
+
+      // Generate 3 different book ideas
+      ideas.push(
+        {
+          title: `${authorName.split(' ')[0]}, Our Story Together`,
+          author: `Created with love by ${authorName}`,
+          description: "A heartfelt journey through our most precious moments together, celebrating our unique bond and shared memories.",
+        },
+        {
+          title: `To ${authorName.split(' ')[0]}, With Love`,
+          author: `From ${authorName}`,
+          description: "A collection of cherished memories and heartfelt moments that showcase the beauty of our relationship.",
+        },
+        {
+          title: `${authorName.split(' ')[0]}, This Is Us`,
+          author: `Lovingly created by ${authorName}`,
+          description: "An intimate portrait of our journey together, filled with love, laughter, and unforgettable moments.",
+        }
+      );
+
+      return new Response(
+        JSON.stringify({ ideas, imagePrompts }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } else {
+      // Original logic for other categories
+      const configuration = {
+        method: 'post',
+        headers: {
+          'content-type': 'application/json',
+          'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`
+        },
+      };
+
+      let prompt = '';
+
+      if (category === 'friends') {
+        prompt = `You are a creative story writer. Your job is to come up with 3 unique ideas for a funny biography about ${authorName} and their friend.
+        The ideas should be funny and creative. The ideas should be no more than 2 sentences long.
+        Here are some details about the friends: ${JSON.stringify(answers)}.
+        Give me 3 ideas in JSON format. The keys should be "title", "author", and "description". The author should be ${authorName}.`;
+      } else if (category === 'kids') {
+        prompt = `You are a creative story writer. Your job is to come up with 1 unique idea for a kids story about ${authorName} and their child.
+        The idea should be heart warming and creative. The idea should be no more than 2 sentences long.
+        Here are some details about the child: ${JSON.stringify(answers)}.
+        Give me 1 idea in JSON format with chapters. The keys should be "title", "author", "description", "chapters". The author should be ${authorName}.
+        Each chapter should have a title and a description. There should be 5 chapters.`;
+      }
+
+      const body = JSON.stringify({
+        model: "gpt-3.5-turbo",
+        messages: [{ role: "user", content: prompt }],
+      });
+
+      const resp = await fetch("https://api.openai.com/v1/chat/completions", {
+        ...configuration,
+        body,
+      });
+
+      if (!resp.ok) {
+        console.error('OpenAI API Error:', resp.status, resp.statusText);
+        try {
+            const errorBody = await resp.json();
+            console.error('Error Body:', JSON.stringify(errorBody, null, 2));
+        } catch (parseError) {
+            console.error('Failed to parse error response:', parseError);
+        }
+        throw new Error(`OpenAI API request failed with status ${resp.status}`);
+      }
+
+      const json = await resp.json();
+      const idea = JSON.parse(json.choices[0].message.content);
+
+      return new Response(
+        JSON.stringify(idea),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
-
-    console.log('Processed data:', processedData);
-
-    return new Response(
-      JSON.stringify(processedData),
-      { 
-        headers: { 
-          'Content-Type': 'application/json',
-          ...corsHeaders 
-        } 
-      }
-    );
-
   } catch (error) {
-    console.error('Error in generate-ideas function:', error);
+    console.error('Error:', error);
     return new Response(
-      JSON.stringify({ 
-        error: error.message,
-        details: error.stack
-      }),
+      JSON.stringify({ error: error.message }),
       { 
         status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-          ...corsHeaders
-        }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   }

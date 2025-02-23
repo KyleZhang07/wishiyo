@@ -15,6 +15,7 @@ interface Praise {
 interface Chapter {
   title: string;
   description: string;
+  imagePrompt: string; // Added for storing AI image generation prompts
 }
 
 interface BookIdea {
@@ -47,7 +48,7 @@ const IdeaStep = ({
       'funny-biography': 'funnyBiographyGeneratedIdeas',
       'wild-fantasy': 'wildFantasyGeneratedIdeas',
       'prank-book': 'prankBookGeneratedIdeas',
-      'love-story': 'loveStoryGeneratedIdea',
+      'love-story': 'loveStoryGeneratedIdeas',
       'love-poems': 'lovePoemsGeneratedIdea',
       'picture-album': 'pictureAlbumGeneratedIdea',
       'adventure': 'kidsAdventureGeneratedIdea',
@@ -67,9 +68,16 @@ const IdeaStep = ({
       'learning': 'learningJourneySelectedIdea'
     };
 
+    const promptsStorageKeyMap: { [key: string]: string } = {
+      'love-story': 'loveStoryImagePrompts',
+      'love-poems': 'lovePoemsImagePrompts',
+      'picture-album': 'pictureAlbumImagePrompts',
+    };
+
     return {
       ideasKey: ideaStorageKeyMap[bookType] || '',
-      selectedIdeaKey: selectedIdeaStorageKeyMap[bookType] || ''
+      selectedIdeaKey: selectedIdeaStorageKeyMap[bookType] || '',
+      promptsKey: promptsStorageKeyMap[bookType] || ''
     };
   };
 
@@ -105,7 +113,7 @@ const IdeaStep = ({
 
       const storageKey = storageKeyMap[bookType];
       const authorNameKey = authorNameKeyMap[bookType];
-      const { ideasKey } = getStorageKeys(bookType);
+      const { ideasKey, promptsKey } = getStorageKeys(bookType);
 
       if (!storageKey || !authorNameKey) {
         throw new Error('Invalid book type');
@@ -123,9 +131,9 @@ const IdeaStep = ({
         return;
       }
 
-      let stories;
+      let answers;
       try {
-        stories = JSON.parse(savedAnswers);
+        answers = JSON.parse(savedAnswers);
       } catch (error) {
         console.error('Error parsing saved answers:', error);
         toast({
@@ -139,7 +147,7 @@ const IdeaStep = ({
       const { data, error } = await supabase.functions.invoke('generate-ideas', {
         body: { 
           authorName,
-          stories,
+          answers,
           bookType,
           category
         }
@@ -151,24 +159,19 @@ const IdeaStep = ({
         throw new Error('No data received from the server');
       }
 
-      if (category === 'friends') {
-        if (!data.ideas || !Array.isArray(data.ideas)) {
-          throw new Error('Invalid response format for friends category');
-        }
-        setIdeas(data.ideas);
-        setSelectedIdeaIndex(null);
-        localStorage.setItem(ideasKey, JSON.stringify(data.ideas));
-      } else {
-        if (!data.idea || !data.idea.chapters) {
-          throw new Error('Invalid response format for love/kids category');
-        }
-        const singleIdea = data.idea;
-        setIdeas([singleIdea]);
-        setSelectedIdeaIndex(0);
-        localStorage.setItem(ideasKey, JSON.stringify(singleIdea));
+      if (!Array.isArray(data.ideas)) {
+        throw new Error('Invalid response format: ideas should be an array');
       }
 
-      console.log('Generated ideas:', data);
+      setIdeas(data.ideas);
+      setSelectedIdeaIndex(null);
+      localStorage.setItem(ideasKey, JSON.stringify(data.ideas));
+
+      // Store image prompts separately for love category books
+      if (category === 'love' && data.imagePrompts && promptsKey) {
+        localStorage.setItem(promptsKey, JSON.stringify(data.imagePrompts));
+      }
+
     } catch (error) {
       console.error('Error generating ideas:', error);
       toast({
@@ -192,7 +195,7 @@ const IdeaStep = ({
   };
 
   const handleContinue = () => {
-    if (category === 'friends' && selectedIdeaIndex === null) {
+    if (selectedIdeaIndex === null) {
       toast({
         title: "No idea selected",
         description: "Please select an idea before continuing.",
@@ -219,22 +222,14 @@ const IdeaStep = ({
 
     if (savedIdeasString) {
       try {
-        if (category === 'friends') {
-          const parsedIdeas = JSON.parse(savedIdeasString);
-          if (Array.isArray(parsedIdeas)) {
-            setIdeas(parsedIdeas);
-            if (savedIdeaIndexString) {
-              const index = parseInt(savedIdeaIndexString);
-              if (!isNaN(index)) {
-                setSelectedIdeaIndex(index);
-              }
+        const parsedIdeas = JSON.parse(savedIdeasString);
+        if (Array.isArray(parsedIdeas)) {
+          setIdeas(parsedIdeas);
+          if (savedIdeaIndexString) {
+            const index = parseInt(savedIdeaIndexString);
+            if (!isNaN(index)) {
+              setSelectedIdeaIndex(index);
             }
-          }
-        } else {
-          const parsedIdea = JSON.parse(savedIdeasString);
-          if (parsedIdea && typeof parsedIdea === 'object') {
-            setIdeas([parsedIdea]);
-            setSelectedIdeaIndex(0);
           }
         }
       } catch (error) {
@@ -248,10 +243,8 @@ const IdeaStep = ({
 
   return (
     <WizardStep
-      title={category === 'friends' ? "Let's pick a book idea" : "Your Book Outline"}
-      description={category === 'friends' 
-        ? "Choose from these AI-generated book ideas or regenerate for more options."
-        : "Review your AI-generated book outline or regenerate for a different one."}
+      title="Let's pick a book idea"
+      description="Choose from these AI-generated book ideas or regenerate for more options."
       previousStep={previousStep}
       currentStep={3}
       totalSteps={4}
@@ -273,11 +266,7 @@ const IdeaStep = ({
         {isLoading && (
           <div className="text-center py-8">
             <RefreshCw className="animate-spin h-8 w-8 mx-auto mb-4" />
-            <p className="text-gray-500">
-              {category === 'friends' 
-                ? "Generating creative ideas..." 
-                : "Generating your book outline..."}
-            </p>
+            <p className="text-gray-500">Generating creative ideas...</p>
           </div>
         )}
 
@@ -285,37 +274,16 @@ const IdeaStep = ({
           {ideas.map((idea, index) => (
             <div 
               key={index} 
-              className={`bg-white rounded-lg p-6 ${
-                category === 'friends' 
-                  ? 'cursor-pointer transition-all hover:shadow-md ' + 
-                    (selectedIdeaIndex === index 
-                      ? 'ring-2 ring-primary shadow-lg scale-[1.02]' 
-                      : '')
+              className={`bg-white rounded-lg p-6 cursor-pointer transition-all hover:shadow-md ${
+                selectedIdeaIndex === index 
+                  ? 'ring-2 ring-primary shadow-lg scale-[1.02]' 
                   : ''
               }`}
-              onClick={() => category === 'friends' && handleIdeaSelect(index)}
+              onClick={() => handleIdeaSelect(index)}
             >
               <h3 className="text-2xl font-bold mb-1">{idea.title}</h3>
               <p className="text-gray-600 text-sm mb-4">{idea.author}</p>
-              
-              {category === 'friends' ? (
-                <p className="text-gray-800">{idea.description}</p>
-              ) : (
-                <div className="space-y-4">
-                  <p className="text-gray-800">{idea.description}</p>
-                  <div className="mt-6">
-                    <h4 className="text-lg font-semibold mb-3">Table of Contents</h4>
-                    <div className="space-y-3">
-                      {idea.chapters?.map((chapter, idx) => (
-                        <div key={idx} className="border-b pb-3">
-                          <h5 className="font-medium">Chapter {idx + 1}: {chapter.title}</h5>
-                          <p className="text-gray-600 text-sm mt-1">{chapter.description}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
+              <p className="text-gray-800">{idea.description}</p>
             </div>
           ))}
         </div>
