@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts"
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
@@ -9,23 +8,29 @@ const corsHeaders = {
 
 const generateLovePrompt = (authorName: string, stories: any[], bookType: string) => {
   if (bookType === 'love-story') {
-    return `Create a meaningful personalized book outline for "${authorName}". The book should be heartfelt and touching, expressing appreciation and admiration. Here's how to structure it:
+    return `Create 3 different book outlines for "${authorName}". Each book should have a different style and tone:
 
-    Create a book that:
-    - Has a meaningful and personal title including "${authorName}"
-    - Contains 6-8 chapters that tell a cohesive story
-    - Each chapter should focus on different aspects of their personality, impact, or shared memories
-    - The story should build up to a meaningful conclusion
+    1. First book: Create an encouraging and uplifting children's book style. The title should be motivational and sweet, like "Joey, You Can Reach the Stars!" or "Sarah, Your Dreams Are Beautiful!". The story should be gentle and inspiring.
 
-    Use these memories and details about ${authorName} that were shared to personalize the story:
-    ${JSON.stringify(stories)}
+    2. Second book: Create a deeply loving and appreciative book style. The title should express deep admiration, like "Michael, You Are My Greatest Inspiration" or "Emma, Your Light Shines So Bright". The story should be heartfelt and touching.
 
-    Format the response as a single JSON object with these exact fields:
-    - title (string): A meaningful title including "${authorName}"
-    - author (string): "A Special Story for ${authorName}"
-    - description (string): A touching description of what makes this story special
-    - chapters (array): An array of chapter objects, each with "title" and "description" fields
-    - praises (array): An array of 4 fictional praise quotes, each with "quote" and "source" fields`;
+    3. Third book: Create a humorous yet encouraging book style. The title should be playful but supportive, like "Hey Alex, Time to Rock This!" or "Come On Lucy, Show Them What You've Got!". The story should be fun and motivating.
+
+    For each book idea, provide:
+    - A title that follows the style description
+    - A touching description of the book's theme and purpose
+    - 4 sample chapters that capture the essence of the story
+    - 4 praise quotes from fictional but relevant sources
+
+    Return the results as a valid JSON array with exactly 3 objects. Each object must have these fields: 
+    - title (string)
+    - author (string, use "${authorName}")
+    - description (string)
+    - chapters (array of objects with title and description fields)
+    - praises (array of objects with quote and source fields)
+
+    Base the content on these stories and information about ${authorName}:
+    ${JSON.stringify(stories)}`;
   }
   
   // ... keep existing code for other love book types
@@ -57,7 +62,6 @@ serve(async (req) => {
     }
 
     console.log('Generating ideas for:', { authorName, bookType, category });
-    console.log('Stories provided:', stories);
 
     let prompt;
     if (category === 'love') {
@@ -77,7 +81,7 @@ serve(async (req) => {
         messages: [
           { 
             role: 'system', 
-            content: 'You are a creative book generator that creates personalized book outlines. You must respond with valid JSON only.'
+            content: 'You are a creative book idea generator that creates engaging titles, descriptions, chapters, and praise quotes. You must respond with valid JSON only.'
           },
           { role: 'user', content: prompt }
         ],
@@ -99,28 +103,21 @@ serve(async (req) => {
 
     const content = openAIResponse.choices[0].message.content.trim();
 
+    // Parse as JSON array for both categories now
     let parsedContent;
     try {
       parsedContent = JSON.parse(content);
-      
-      if (category === 'love') {
-        // For love category, we wrap the single idea in an object
-        return new Response(
-          JSON.stringify({ idea: parsedContent }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      } else {
-        // For friends category, we expect an array of ideas
-        return new Response(
-          JSON.stringify({ ideas: parsedContent }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
     } catch (error) {
       console.error('JSON parse error:', error);
       console.error('Content that failed to parse:', content);
       throw new Error('Failed to parse OpenAI response as JSON');
     }
+
+    return new Response(
+      JSON.stringify({ ideas: parsedContent }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+
   } catch (error) {
     console.error('Error in generate-ideas function:', error);
     return new Response(
