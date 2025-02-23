@@ -1,152 +1,144 @@
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { Card } from '@/components/ui/card';
+import CanvasCoverPreview from '@/components/cover-generator/CanvasCoverPreview';
+import LayoutSelector from '@/components/cover-generator/LayoutSelector';
+import FontSelector from '@/components/cover-generator/FontSelector';
+import TemplateSelector from '@/components/cover-generator/TemplateSelector';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
-import { Edit } from 'lucide-react';
 
-const GenerateStep = () => {
-  const [viewMode, setViewMode] = useState<'single' | 'double'>('single');
-  const coverCanvasRef = useRef<HTMLCanvasElement>(null);
-  const contentCanvasRef = useRef<HTMLCanvasElement>(null);
+const LoveStoryGenerateStep = () => {
+  const [coverTitle, setCoverTitle] = useState('');
+  const [subtitle, setSubtitle] = useState('');
+  const [authorName, setAuthorName] = useState('');
+  const [coverImage, setCoverImage] = useState<string>();
+  const [selectedLayout, setSelectedLayout] = useState('classic-centered');
+  const [selectedTemplate, setSelectedTemplate] = useState('modern');
+  const [selectedFont, setSelectedFont] = useState('playfair');
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
+  const [backCoverText, setBackCoverText] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
-    drawCover();
-    drawContent();
-  }, [viewMode]);
+    const savedAuthor = localStorage.getItem('loveStoryAuthorName');
+    const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
+    const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
+    const savedMoments = localStorage.getItem('loveStoryMoments');
+    const savedPhoto = localStorage.getItem('loveStoryPhoto');
 
-  const drawCover = () => {
-    const canvas = coverCanvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (savedAuthor) {
+      setAuthorName(savedAuthor);
+    }
 
-    // Set canvas size
-    canvas.width = 800;
-    canvas.height = 1200;
+    if (savedIdeas && savedIdeaIndex) {
+      const ideas = JSON.parse(savedIdeas);
+      const selectedIdea = ideas[parseInt(savedIdeaIndex)];
+      if (selectedIdea) {
+        setCoverTitle(selectedIdea.title || '');
+        setSubtitle(selectedIdea.description || '');
+      }
+    }
 
-    // Draw background
-    ctx.fillStyle = '#FFECD1';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    if (savedMoments) {
+      const moments = JSON.parse(savedMoments);
+      const formattedMoments = moments
+        .map((moment: string) => `"${moment}"`)
+        .join('\n\n');
+      setBackCoverText(formattedMoments);
+    }
 
-    // Draw title
-    ctx.font = 'bold 60px serif';
-    ctx.fillStyle = '#C41E3A';
-    ctx.textAlign = 'center';
-    ctx.fillText('KK,', canvas.width/2, 200);
-    ctx.fillText('I LOVE YOU', canvas.width/2, 280);
+    if (savedPhoto) {
+      handleImageProcessing(savedPhoto);
+    }
+  }, []);
 
-    // Draw author
-    ctx.font = 'italic 36px serif';
-    ctx.fillText('by ss', canvas.width/2, 350);
+  const handleImageProcessing = async (imageUrl: string) => {
+    setIsProcessingImage(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('remove-background', {
+        body: { imageUrl }
+      });
 
-    // Draw subtitle banner
-    ctx.font = '32px serif';
-    ctx.fillText('On Our 15th Anniversary', canvas.width/2, 900);
-  };
+      if (error) throw error;
 
-  const drawContent = () => {
-    const canvas = contentCanvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Set canvas size based on view mode
-    const width = viewMode === 'single' ? 800 : 1600;
-    canvas.width = width;
-    canvas.height = 1200;
-
-    // Draw background
-    ctx.fillStyle = '#FFECD1';
-    ctx.fillRect(0, 0, width, canvas.height);
-
-    // Draw content
-    ctx.font = '24px serif';
-    ctx.fillStyle = '#333';
-    ctx.textAlign = 'left';
-
-    const text = `Dear kk,
-
-This book is full of the words I have chosen for you.
-Thank you for making the story of us so beautiful.
-
-Happy Anniversary!
-
-Love,
-ss`;
-
-    const lines = text.split('\n');
-    let y = 200;
-    lines.forEach(line => {
-      ctx.fillText(line, 100, y);
-      y += 40;
-    });
-  };
-
-  const handleEditCover = () => {
-    toast({
-      title: "Edit Cover",
-      description: "Opening cover editor..."
-    });
-  };
-
-  const handleEditContent = () => {
-    toast({
-      title: "Edit Content",
-      description: "Opening content editor..."
-    });
+      if (data.success && data.image) {
+        setCoverImage(data.image);
+      } else {
+        throw new Error('Failed to process image');
+      }
+    } catch (error) {
+      console.error('Error removing background:', error);
+      toast({
+        variant: "destructive",
+        title: "Error processing image",
+        description: "Failed to remove background from the image. Please try again."
+      });
+      setCoverImage(imageUrl);
+    } finally {
+      setIsProcessingImage(false);
+    }
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8">
-      <div className="flex justify-end mb-4">
-        <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as 'single' | 'double')}>
-          <ToggleGroupItem value="single">One-page view</ToggleGroupItem>
-          <ToggleGroupItem value="double">Two-page view</ToggleGroupItem>
-        </ToggleGroup>
+    <WizardStep
+      title="Create Your Love Story"
+      description="Let's turn your beautiful moments into a timeless story"
+      previousStep="/create/love/love-story/moments"
+      currentStep={4}
+      totalSteps={4}
+    >
+      <div className="glass-card rounded-2xl p-8 py-[40px]">
+        <div className="max-w-xl mx-auto space-y-8">
+          <CanvasCoverPreview
+            coverTitle={coverTitle}
+            subtitle={subtitle}
+            authorName={authorName}
+            coverImage={coverImage}
+            selectedFont={selectedFont}
+            selectedTemplate={selectedTemplate}
+            selectedLayout={selectedLayout}
+            isProcessingImage={isProcessingImage}
+            backCoverText={backCoverText}
+          />
+          
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-lg font-medium text-center mb-2">Choose Your Font</h3>
+              <FontSelector
+                selectedFont={selectedFont}
+                onSelectFont={setSelectedFont}
+              />
+            </div>
+
+            <div>
+              <h3 className="text-lg font-medium text-center mb-2">Choose Your Color Theme</h3>
+              <TemplateSelector
+                selectedTemplate={selectedTemplate}
+                onSelectTemplate={setSelectedTemplate}
+              />
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-medium text-center mb-2">Choose Your Cover Layout</h3>
+              <LayoutSelector
+                selectedLayout={selectedLayout}
+                onSelectLayout={setSelectedLayout}
+              />
+            </div>
+          </div>
+
+          <Button 
+            className="w-full py-6 text-lg"
+            onClick={() => {/* Generate book logic */}}
+          >
+            Generate Your Love Story
+          </Button>
+        </div>
       </div>
-
-      <Card className="p-8 relative">
-        <canvas
-          ref={coverCanvasRef}
-          className="w-full max-w-2xl mx-auto"
-          style={{ aspectRatio: '3/4' }}
-        />
-        <Button
-          variant="secondary"
-          className="absolute bottom-4 left-1/2 transform -translate-x-1/2"
-          onClick={handleEditCover}
-        >
-          <Edit className="w-4 h-4 mr-2" />
-          Edit cover
-        </Button>
-      </Card>
-
-      <Card className="p-8 relative">
-        <canvas
-          ref={contentCanvasRef}
-          className="w-full max-w-4xl mx-auto"
-          style={{ aspectRatio: viewMode === 'single' ? '3/4' : '6/4' }}
-        />
-        <Button
-          variant="secondary"
-          className="absolute bottom-4 right-4"
-          onClick={handleEditContent}
-        >
-          <Edit className="w-4 h-4 mr-2" />
-          Edit dedication
-        </Button>
-      </Card>
-
-      <div className="flex justify-center mt-8">
-        <Button size="lg" className="w-full max-w-md">
-          Generate Final Book
-        </Button>
-      </div>
-    </div>
+    </WizardStep>
   );
 };
 
-export default GenerateStep;
+export default LoveStoryGenerateStep;

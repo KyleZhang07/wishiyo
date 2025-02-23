@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import WizardStep from './WizardStep';
 import { Button } from '@/components/ui/button';
@@ -25,7 +26,7 @@ interface BookIdea {
 }
 
 interface IdeaStepProps {
-  category: 'friends' | 'love' | 'kids' | 'fun' | 'fantasy';
+  category: 'friends' | 'love' | 'kids';
   previousStep: string;
   nextStep: string;
 }
@@ -150,7 +151,7 @@ const IdeaStep = ({
         throw new Error('No data received from the server');
       }
 
-      if (category === 'friends' || category === 'fun') {
+      if (category === 'friends') {
         if (!data.ideas || !Array.isArray(data.ideas)) {
           throw new Error('Invalid response format for friends category');
         }
@@ -191,7 +192,7 @@ const IdeaStep = ({
   };
 
   const handleContinue = () => {
-    if ((category === 'friends' || category === 'fun') && selectedIdeaIndex === null) {
+    if (category === 'friends' && selectedIdeaIndex === null) {
       toast({
         title: "No idea selected",
         description: "Please select an idea before continuing.",
@@ -218,7 +219,7 @@ const IdeaStep = ({
 
     if (savedIdeasString) {
       try {
-        if (category === 'friends' || category === 'fun') {
+        if (category === 'friends') {
           const parsedIdeas = JSON.parse(savedIdeasString);
           if (Array.isArray(parsedIdeas)) {
             setIdeas(parsedIdeas);
@@ -247,8 +248,8 @@ const IdeaStep = ({
 
   return (
     <WizardStep
-      title={category === 'friends' || category === 'fun' ? "Let's pick a book idea" : "Your Book Outline"}
-      description={category === 'friends' || category === 'fun' 
+      title={category === 'friends' ? "Let's pick a book idea" : "Your Book Outline"}
+      description={category === 'friends' 
         ? "Choose from these AI-generated book ideas or regenerate for more options."
         : "Review your AI-generated book outline or regenerate for a different one."}
       previousStep={previousStep}
@@ -273,7 +274,7 @@ const IdeaStep = ({
           <div className="text-center py-8">
             <RefreshCw className="animate-spin h-8 w-8 mx-auto mb-4" />
             <p className="text-gray-500">
-              {category === 'friends' || category === 'fun' 
+              {category === 'friends' 
                 ? "Generating creative ideas..." 
                 : "Generating your book outline..."}
             </p>
@@ -285,19 +286,19 @@ const IdeaStep = ({
             <div 
               key={index} 
               className={`bg-white rounded-lg p-6 ${
-                category === 'friends' || category === 'fun' 
+                category === 'friends' 
                   ? 'cursor-pointer transition-all hover:shadow-md ' + 
                     (selectedIdeaIndex === index 
                       ? 'ring-2 ring-primary shadow-lg scale-[1.02]' 
                       : '')
                   : ''
               }`}
-              onClick={() => category === 'friends' || category === 'fun' && handleIdeaSelect(index)}
+              onClick={() => category === 'friends' && handleIdeaSelect(index)}
             >
               <h3 className="text-2xl font-bold mb-1">{idea.title}</h3>
               <p className="text-gray-600 text-sm mb-4">{idea.author}</p>
               
-              {category === 'friends' || category === 'fun' ? (
+              {category === 'friends' ? (
                 <p className="text-gray-800">{idea.description}</p>
               ) : (
                 <div className="space-y-4">
