@@ -26,7 +26,7 @@ interface BookIdea {
 }
 
 interface IdeaStepProps {
-  category: 'fun' | 'fantasy' | 'kids';
+  category: 'friends' | 'love' | 'kids';
   previousStep: string;
   nextStep: string;
 }
@@ -44,10 +44,10 @@ const IdeaStep = ({
 
   const getStorageKeys = (bookType: string) => {
     const ideaStorageKeyMap: { [key: string]: string } = {
-      'funny-book': 'funnyBookGeneratedIdeas',
+      'funny-biography': 'funnyBiographyGeneratedIdeas',
       'wild-fantasy': 'wildFantasyGeneratedIdeas',
       'prank-book': 'prankBookGeneratedIdeas',
-      'fantasy-book': 'fantasyBookGeneratedIdea',
+      'love-story': 'loveStoryGeneratedIdea',
       'love-poems': 'lovePoemsGeneratedIdea',
       'picture-album': 'pictureAlbumGeneratedIdea',
       'adventure': 'kidsAdventureGeneratedIdea',
@@ -56,10 +56,10 @@ const IdeaStep = ({
     };
 
     const selectedIdeaStorageKeyMap: { [key: string]: string } = {
-      'funny-book': 'funnyBookSelectedIdea',
+      'funny-biography': 'funnyBiographySelectedIdea',
       'wild-fantasy': 'wildFantasySelectedIdea',
       'prank-book': 'prankBookSelectedIdea',
-      'fantasy-book': 'fantasyBookSelectedIdea',
+      'love-story': 'loveStorySelectedIdea',
       'love-poems': 'lovePoemsSelectedIdea',
       'picture-album': 'pictureAlbumSelectedIdea',
       'adventure': 'kidsAdventureSelectedIdea',
@@ -80,10 +80,10 @@ const IdeaStep = ({
       const bookType = path.split('/')[3];
       
       const storageKeyMap: { [key: string]: string } = {
-        'funny-book': 'funnyBookAnswers',
+        'funny-biography': 'funnyBiographyAnswers',
         'wild-fantasy': 'wildFantasyAnswers',
         'prank-book': 'prankBookAnswers',
-        'fantasy-book': 'fantasyBookAnswers',
+        'love-story': 'loveStoryAnswers',
         'love-poems': 'lovePoemsAnswers',
         'picture-album': 'pictureAlbumAnswers',
         'adventure': 'kidsAdventureAnswers',
@@ -92,10 +92,10 @@ const IdeaStep = ({
       };
 
       const authorNameKeyMap: { [key: string]: string } = {
-        'funny-book': 'funnyBookAuthorName',
+        'funny-biography': 'funnyBiographyAuthorName',
         'wild-fantasy': 'wildFantasyAuthorName',
         'prank-book': 'prankBookAuthorName',
-        'fantasy-book': 'fantasyBookAuthorName',
+        'love-story': 'loveStoryAuthorName',
         'love-poems': 'lovePoemsAuthorName',
         'picture-album': 'pictureAlbumAuthorName',
         'adventure': 'kidsAdventureAuthorName',
@@ -151,16 +151,16 @@ const IdeaStep = ({
         throw new Error('No data received from the server');
       }
 
-      if (category === 'fun') {
+      if (category === 'friends') {
         if (!data.ideas || !Array.isArray(data.ideas)) {
-          throw new Error('Invalid response format for fun category');
+          throw new Error('Invalid response format for friends category');
         }
         setIdeas(data.ideas);
         setSelectedIdeaIndex(null);
         localStorage.setItem(ideasKey, JSON.stringify(data.ideas));
       } else {
         if (!data.idea || !data.idea.chapters) {
-          throw new Error('Invalid response format for fantasy/kids category');
+          throw new Error('Invalid response format for love/kids category');
         }
         const singleIdea = data.idea;
         setIdeas([singleIdea]);
@@ -192,7 +192,7 @@ const IdeaStep = ({
   };
 
   const handleContinue = () => {
-    if (category === 'fun' && selectedIdeaIndex === null) {
+    if (category === 'friends' && selectedIdeaIndex === null) {
       toast({
         title: "No idea selected",
         description: "Please select an idea before continuing.",
@@ -219,7 +219,7 @@ const IdeaStep = ({
 
     if (savedIdeasString) {
       try {
-        if (category === 'fun') {
+        if (category === 'friends') {
           const parsedIdeas = JSON.parse(savedIdeasString);
           if (Array.isArray(parsedIdeas)) {
             setIdeas(parsedIdeas);
@@ -248,8 +248,8 @@ const IdeaStep = ({
 
   return (
     <WizardStep
-      title={category === 'fun' ? "Let's pick a book idea" : "Your Book Outline"}
-      description={category === 'fun' 
+      title={category === 'friends' ? "Let's pick a book idea" : "Your Book Outline"}
+      description={category === 'friends' 
         ? "Choose from these AI-generated book ideas or regenerate for more options."
         : "Review your AI-generated book outline or regenerate for a different one."}
       previousStep={previousStep}
@@ -274,7 +274,7 @@ const IdeaStep = ({
           <div className="text-center py-8">
             <RefreshCw className="animate-spin h-8 w-8 mx-auto mb-4" />
             <p className="text-gray-500">
-              {category === 'fun' 
+              {category === 'friends' 
                 ? "Generating creative ideas..." 
                 : "Generating your book outline..."}
             </p>
@@ -286,19 +286,19 @@ const IdeaStep = ({
             <div 
               key={index} 
               className={`bg-white rounded-lg p-6 ${
-                category === 'fun' 
+                category === 'friends' 
                   ? 'cursor-pointer transition-all hover:shadow-md ' + 
                     (selectedIdeaIndex === index 
                       ? 'ring-2 ring-primary shadow-lg scale-[1.02]' 
                       : '')
                   : ''
               }`}
-              onClick={() => category === 'fun' && handleIdeaSelect(index)}
+              onClick={() => category === 'friends' && handleIdeaSelect(index)}
             >
               <h3 className="text-2xl font-bold mb-1">{idea.title}</h3>
               <p className="text-gray-600 text-sm mb-4">{idea.author}</p>
               
-              {category === 'fun' ? (
+              {category === 'friends' ? (
                 <p className="text-gray-800">{idea.description}</p>
               ) : (
                 <div className="space-y-4">

@@ -26,21 +26,22 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
 
+    // Enhance the prompts to get more structured responses
     let systemPrompt = "";
     let userPrompt = "";
 
-    if (category === 'fun' && bookType === 'funny-book') {
-      systemPrompt = `You are a creative book idea generator. Generate engaging and humorous book ideas based on real stories and anecdotes about a person. Always follow this format for each idea:
+    if (category === 'friends' && bookType === 'funny-biography') {
+      systemPrompt = `You are a creative book idea generator. Generate engaging and humorous biography book ideas based on real stories and anecdotes about a person. Always follow this format for each idea:
 
 Title: [The catchy title]
 Description: [A detailed, engaging description of the book idea that captures the essence of the stories in a humorous way. Make it at least 2-3 sentences long.]
 
 Separate multiple ideas with two newlines.`;
       
-      userPrompt = `Generate 3 unique and entertaining book ideas based on these stories about ${authorName}:\n\n${JSON.stringify(stories)}\n\nMake sure each idea has both a title and description section, properly formatted as specified. Focus on humor and entertainment value.`;
-    } else if (category === 'fantasy' && bookType === 'fantasy-book') {
-      systemPrompt = `You are a fantasy book outline generator. Create a detailed chapter outline for an imaginative story.`;
-      userPrompt = `Create a fantasy book outline with chapters based on this story about ${authorName}:\n\n${JSON.stringify(stories)}\n\nFormat your response as:\n\nTitle: [An imaginative title]\nDescription: [A captivating description]\n\nChapter 1: [Title]\n[Chapter description]\n\n[Continue with 5-7 chapters]`;
+      userPrompt = `Generate 3 unique and entertaining biography book ideas based on these stories about ${authorName}:\n\n${JSON.stringify(stories)}\n\nMake sure each idea has both a title and description section, properly formatted as specified. Focus on humor and entertainment value.`;
+    } else if (category === 'love' && bookType === 'love-story') {
+      systemPrompt = `You are a romantic book outline generator. Create a detailed chapter outline for a love story.`;
+      userPrompt = `Create a romantic book outline with chapters based on this love story about ${authorName}:\n\n${JSON.stringify(stories)}\n\nFormat your response as:\n\nTitle: [A romantic title]\nDescription: [A heartfelt description]\n\nChapter 1: [Title]\n[Chapter description]\n\n[Continue with 5-7 chapters]`;
     } else {
       throw new Error('Unsupported book type or category');
     }
@@ -79,15 +80,19 @@ Separate multiple ideas with two newlines.`;
 
     let processedData;
     
-    if (category === 'fun') {
+    if (category === 'friends') {
       try {
+        // Split content into individual ideas (separated by double newlines)
         const ideas = rawContent.split(/\n\n+/).filter(Boolean).map(ideaText => {
+          // Extract title using a more robust regex
           const titleMatch = ideaText.match(/Title:\s*(.+?)(?=\n|$)/);
           const title = titleMatch ? titleMatch[1].trim() : null;
 
+          // Extract description using a more robust regex
           const descMatch = ideaText.match(/Description:\s*(.+?)(?=\n\n|$)/s);
           const description = descMatch ? descMatch[1].trim() : null;
 
+          // Validate both title and description exist
           if (!title || !description) {
             console.error('Invalid idea format:', ideaText);
             return null;
@@ -107,7 +112,7 @@ Separate multiple ideas with two newlines.`;
 
         processedData = { ideas };
       } catch (error) {
-        console.error('Error parsing fun category response:', error);
+        console.error('Error parsing friends category response:', error);
         throw new Error('Failed to parse book ideas');
       }
     } else {
@@ -157,7 +162,7 @@ Separate multiple ideas with two newlines.`;
 
         processedData = { idea };
       } catch (error) {
-        console.error('Error parsing fantasy category response:', error);
+        console.error('Error parsing love category response:', error);
         throw new Error('Failed to parse book outline');
       }
     }

@@ -11,22 +11,22 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import UserCenter from "./pages/UserCenter";
 import NotFound from "./pages/NotFound";
-import FunLanding from "./pages/FunLanding";
-import FantasyLanding from "./pages/FantasyLanding";
+import FriendsLanding from "./pages/FriendsLanding";
+import LoveLanding from "./pages/LoveLanding";
 
-// Fun Book Creation Routes - Funny Book
-import FunnyBookAuthorStep from "./pages/wizard/fun/funny-book/AuthorStep";
-import FunnyBookStoriesStep from "./pages/wizard/fun/funny-book/StoriesStep";
-import FunnyBookIdeasStep from "./pages/wizard/fun/funny-book/IdeasStep";
-import FunnyBookPhotosStep from "./pages/wizard/fun/funny-book/PhotosStep";
-import FunnyBookGenerateStep from "./pages/wizard/fun/funny-book/GenerateStep";
+// Friends Book Creation Routes - Funny Biography
+import FunnyBiographyAuthorStep from "./pages/wizard/friends/funny-biography/AuthorStep";
+import FunnyBiographyStoriesStep from "./pages/wizard/friends/funny-biography/StoriesStep";
+import FunnyBiographyIdeasStep from "./pages/wizard/friends/funny-biography/IdeasStep";
+import FunnyBiographyPhotosStep from "./pages/wizard/friends/funny-biography/PhotosStep";
+import FunnyBiographyGenerateStep from "./pages/wizard/friends/funny-biography/GenerateStep";
 
-// Fantasy Book Routes
-import FantasyBookAuthorStep from "./pages/wizard/fantasy/fantasy-book/AuthorStep";
-import FantasyBookQuestionsStep from "./pages/wizard/fantasy/fantasy-book/QuestionsStep";
-import FantasyBookIdeasStep from "./pages/wizard/fantasy/fantasy-book/IdeasStep";
-import FantasyBookMomentsStep from "./pages/wizard/fantasy/fantasy-book/MomentsStep";
-import FantasyBookGenerateStep from "./pages/wizard/fantasy/fantasy-book/GenerateStep";
+// Love Story Routes
+import LoveStoryAuthorStep from "./pages/wizard/love/love-story/AuthorStep";
+import LoveStoryQuestionsStep from "./pages/wizard/love/love-story/QuestionsStep";
+import LoveStoryIdeasStep from "./pages/wizard/love/love-story/IdeasStep";
+import LoveStoryMomentsStep from "./pages/wizard/love/love-story/MomentsStep";
+import LoveStoryGenerateStep from "./pages/wizard/love/love-story/GenerateStep";
 
 const queryClient = new QueryClient();
 
@@ -44,22 +44,22 @@ const App = () => {
                 <Route path="/user-center" element={<UserCenter />} />
                 
                 {/* Category Landing Pages */}
-                <Route path="/fun" element={<FunLanding />} />
-                <Route path="/fantasy" element={<FantasyLanding />} />
+                <Route path="/friends" element={<FriendsLanding />} />
+                <Route path="/love" element={<LoveLanding />} />
                 
-                {/* Funny Book Routes */}
-                <Route path="/create/fun/funny-book/author" element={<FunnyBookAuthorStep />} />
-                <Route path="/create/fun/funny-book/stories" element={<FunnyBookStoriesStep />} />
-                <Route path="/create/fun/funny-book/ideas" element={<FunnyBookIdeasStep />} />
-                <Route path="/create/fun/funny-book/photos" element={<FunnyBookPhotosStep />} />
-                <Route path="/create/fun/funny-book/generate" element={<FunnyBookGenerateStep />} />
+                {/* Funny Biography Routes */}
+                <Route path="/create/friends/funny-biography/author" element={<FunnyBiographyAuthorStep />} />
+                <Route path="/create/friends/funny-biography/stories" element={<FunnyBiographyStoriesStep />} />
+                <Route path="/create/friends/funny-biography/ideas" element={<FunnyBiographyIdeasStep />} />
+                <Route path="/create/friends/funny-biography/photos" element={<FunnyBiographyPhotosStep />} />
+                <Route path="/create/friends/funny-biography/generate" element={<FunnyBiographyGenerateStep />} />
 
-                {/* Fantasy Book Routes */}
-                <Route path="/create/fantasy/fantasy-book/author" element={<FantasyBookAuthorStep />} />
-                <Route path="/create/fantasy/fantasy-book/questions" element={<FantasyBookQuestionsStep />} />
-                <Route path="/create/fantasy/fantasy-book/ideas" element={<FantasyBookIdeasStep />} />
-                <Route path="/create/fantasy/fantasy-book/moments" element={<FantasyBookMomentsStep />} />
-                <Route path="/create/fantasy/fantasy-book/generate" element={<FantasyBookGenerateStep />} />
+                {/* Love Story Routes */}
+                <Route path="/create/love/love-story/author" element={<LoveStoryAuthorStep />} />
+                <Route path="/create/love/love-story/questions" element={<LoveStoryQuestionsStep />} />
+                <Route path="/create/love/love-story/ideas" element={<LoveStoryIdeasStep />} />
+                <Route path="/create/love/love-story/moments" element={<LoveStoryMomentsStep />} />
+                <Route path="/create/love/love-story/generate" element={<LoveStoryGenerateStep />} />
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>
