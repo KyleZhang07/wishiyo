@@ -17,7 +17,8 @@ const FunnyBiographyGenerateStep = () => {
   const [selectedLayout, setSelectedLayout] = useState('classic-centered');
   const [selectedTemplate, setSelectedTemplate] = useState('modern');
   const [selectedFont, setSelectedFont] = useState('playfair');
-  const [backCoverText, setBackCoverText] = useState('');
+  const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
+  const [imageScale, setImageScale] = useState(100);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -47,7 +48,6 @@ const FunnyBiographyGenerateStep = () => {
           `"${praise.quote}"\n— ${praise.source}`
         )
         .join('\n\n');
-      setBackCoverText(formattedPraises);
     }
 
     if (savedPhotos) {
@@ -79,6 +79,11 @@ const FunnyBiographyGenerateStep = () => {
     }
   };
 
+  const handleImageAdjust = (position: { x: number; y: number }, scale: number) => {
+    setImagePosition(position);
+    setImageScale(scale);
+  };
+
   return (
     <WizardStep
       title="Create Your Book Cover"
@@ -97,7 +102,10 @@ const FunnyBiographyGenerateStep = () => {
             selectedFont={selectedFont}
             selectedTemplate={selectedTemplate}
             selectedLayout={selectedLayout}
-            backCoverText={backCoverText}
+            category="friends"
+            imagePosition={imagePosition}
+            imageScale={imageScale}
+            onImageAdjust={handleImageAdjust}
           />
           
           <div className="space-y-4">
