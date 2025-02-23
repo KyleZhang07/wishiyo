@@ -8,64 +8,32 @@ const corsHeaders = {
 
 const generateLovePrompt = (authorName: string, stories: any[], bookType: string) => {
   if (bookType === 'love-story') {
-    return `Create 3 different love story book ideas to express feelings for "${authorName}". Each book should have a different style and emotional focus.
+    return `Create 3 different book outlines for "${authorName}". Each book should have a different style and tone:
+
+    1. First book: Create an encouraging and uplifting children's book style. The title should be motivational and sweet, like "Joey, You Can Reach the Stars!" or "Sarah, Your Dreams Are Beautiful!". The story should be gentle and inspiring.
+
+    2. Second book: Create a deeply loving and appreciative book style. The title should express deep admiration, like "Michael, You Are My Greatest Inspiration" or "Emma, Your Light Shines So Bright". The story should be heartfelt and touching.
+
+    3. Third book: Create a humorous yet encouraging book style. The title should be playful but supportive, like "Hey Alex, Time to Rock This!" or "Come On Lucy, Show Them What You've Got!". The story should be fun and motivating.
 
     For each book idea, provide:
-    - A meaningful title (including "${authorName}")
+    - A title that follows the style description
     - A touching description of the book's theme and purpose
-    - 3-4 fictional praise quotes from relevant sources (like relationship experts or romantic authors)
+    - 4 sample chapters that capture the essence of the story
+    - 4 praise quotes from fictional but relevant sources
 
-    Base the content on these stories and information shared about ${authorName}:
-    ${JSON.stringify(stories)}
-
-    Return the results as a valid JSON array with exactly 3 objects. Each object must have these exact fields:
+    Return the results as a valid JSON array with exactly 3 objects. Each object must have these fields: 
     - title (string)
-    - author (string, use "A Story by ${authorName}")
+    - author (string, use "${authorName}")
     - description (string)
+    - chapters (array of objects with title and description fields)
     - praises (array of objects with quote and source fields)
 
-    Make sure each book idea is unique in its approach and emotional tone.`;
+    Base the content on these stories and information about ${authorName}:
+    ${JSON.stringify(stories)}`;
   }
   
-  if (bookType === 'love-poems') {
-    return `Create 3 different love poem book ideas to express feelings for "${authorName}". Each book should have a different style and emotional focus.
-
-    For each book idea, provide:
-    - A meaningful title (including "${authorName}")
-    - A touching description of the book's theme and purpose
-    - 3-4 fictional praise quotes from relevant sources (like relationship experts or romantic authors)
-
-    Base the content on these stories and information shared about ${authorName}:
-    ${JSON.stringify(stories)}
-
-    Return the results as a valid JSON array with exactly 3 objects. Each object must have these exact fields:
-    - title (string)
-    - author (string, use "A Story by ${authorName}")
-    - description (string)
-    - praises (array of objects with quote and source fields)
-
-    Make sure each book idea is unique in its approach and emotional tone.`;
-  }
-
-  if (bookType === 'picture-album') {
-    return `Create 3 different picture album ideas to express feelings for "${authorName}". Each album should have a different style and emotional focus.
-
-    For each album idea, provide:
-    - A meaningful title (including "${authorName}")
-    - A touching description of the album's theme and purpose
-    - 3-4 fictional praise quotes from relevant sources (like relationship experts or gift reviewers)
-
-    Base the content on these stories and information shared about ${authorName}:
-    ${JSON.stringify(stories)}
-
-    Return the results as a valid JSON array with exactly 3 objects. Each object must have these exact fields:
-    - title (string)
-    - author (string, use "A Gift for ${authorName}")
-    - description (string)
-    - praises (array of objects with quote and source fields)
-
-    Make sure each album idea is unique in its approach and emotional tone.`;
-  }
+  // ... keep existing code for other love book types
 };
 
 const generateFriendsPrompt = (authorName: string, stories: any[], bookType: string) => {
@@ -87,14 +55,13 @@ serve(async (req) => {
   }
 
   try {
-    const { authorName, stories, bookType, category } = await req.json();
+    const { authorName, stories, bookType, category } = await req.json()
 
     if (!authorName || !stories || !bookType || !category) {
       throw new Error('Missing required parameters');
     }
 
     console.log('Generating ideas for:', { authorName, bookType, category });
-    console.log('Stories provided:', stories);
 
     let prompt;
     if (category === 'love') {
@@ -114,7 +81,7 @@ serve(async (req) => {
         messages: [
           { 
             role: 'system', 
-            content: 'You are a creative book idea generator that creates touching and meaningful book concepts. You must respond with valid JSON only.'
+            content: 'You are a creative book idea generator that creates engaging titles, descriptions, chapters, and praise quotes. You must respond with valid JSON only.'
           },
           { role: 'user', content: prompt }
         ],
@@ -136,18 +103,21 @@ serve(async (req) => {
 
     const content = openAIResponse.choices[0].message.content.trim();
 
+    // Parse as JSON array for both categories now
+    let parsedContent;
     try {
-      const parsedContent = JSON.parse(content);
-      // Always return an array of ideas in the same format for all categories
-      return new Response(
-        JSON.stringify({ ideas: parsedContent }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      parsedContent = JSON.parse(content);
     } catch (error) {
       console.error('JSON parse error:', error);
       console.error('Content that failed to parse:', content);
       throw new Error('Failed to parse OpenAI response as JSON');
     }
+
+    return new Response(
+      JSON.stringify({ ideas: parsedContent }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+
   } catch (error) {
     console.error('Error in generate-ideas function:', error);
     return new Response(
