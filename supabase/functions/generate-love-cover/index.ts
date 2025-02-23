@@ -50,12 +50,14 @@ serve(async (req) => {
       "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
       {
         input: {
-          prompt: body.prompt,
-          num_steps: 50,
-          style_name: "Photographic",
+          prompt: `${body.prompt} img`, // Adding the required "img" trigger word
+          num_steps: 20,
+          style_name: "Photographic (Default)",
           input_image: body.photo,
-          guidance_scale: 8.5,
-          negative_prompt: "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry"
+          num_outputs: 1,
+          guidance_scale: 5.0,
+          style_strength_ratio: 20,
+          negative_prompt: "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
         }
       }
     )
