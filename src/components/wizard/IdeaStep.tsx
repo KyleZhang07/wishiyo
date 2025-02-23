@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import WizardStep from './WizardStep';
 import { Button } from '@/components/ui/button';
@@ -91,11 +90,11 @@ const IdeaStep = ({
         'learning': 'learningJourneyAnswers'
       };
 
-      const authorNameKeyMap: { [key: string]: string } = {
+      const personNameKeyMap: { [key: string]: string } = {
         'funny-biography': 'funnyBiographyAuthorName',
         'wild-fantasy': 'wildFantasyAuthorName',
         'prank-book': 'prankBookAuthorName',
-        'love-story': 'loveStoryAuthorName',
+        'love-story': 'loveStoryPersonName',
         'love-poems': 'lovePoemsAuthorName',
         'picture-album': 'pictureAlbumAuthorName',
         'adventure': 'kidsAdventureAuthorName',
@@ -104,17 +103,17 @@ const IdeaStep = ({
       };
 
       const storageKey = storageKeyMap[bookType];
-      const authorNameKey = authorNameKeyMap[bookType];
+      const personNameKey = personNameKeyMap[bookType];
       const { ideasKey } = getStorageKeys(bookType);
 
-      if (!storageKey || !authorNameKey) {
+      if (!storageKey || !personNameKey) {
         throw new Error('Invalid book type');
       }
 
-      const authorName = localStorage.getItem(authorNameKey);
+      const personName = localStorage.getItem(personNameKey);
       const savedAnswers = localStorage.getItem(storageKey);
       
-      if (!authorName || !savedAnswers) {
+      if (!personName || !savedAnswers) {
         toast({
           title: "Missing information",
           description: "Please complete the previous steps first.",
@@ -138,7 +137,7 @@ const IdeaStep = ({
 
       const { data, error } = await supabase.functions.invoke('generate-ideas', {
         body: { 
-          authorName,
+          authorName: personName,
           stories,
           bookType,
           category
