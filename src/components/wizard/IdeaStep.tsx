@@ -159,17 +159,18 @@ const IdeaStep = ({
         setSelectedIdeaIndex(null);
         localStorage.setItem(ideasKey, JSON.stringify(data.ideas));
       } else {
-        // For love and kids categories, we only need one idea with chapters
         if (!data.idea || !data.idea.chapters) {
           throw new Error('Invalid response format for love/kids category');
         }
         const singleIdea = data.idea;
         setIdeas([singleIdea]);
-        setSelectedIdeaIndex(0); // Automatically select the single idea
+        setSelectedIdeaIndex(0);
         localStorage.setItem(ideasKey, JSON.stringify(singleIdea));
       }
+
+      console.log('Generated ideas:', data);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error generating ideas:', error);
       toast({
         title: "Error generating ideas",
         description: "Please try again later.",
@@ -230,7 +231,6 @@ const IdeaStep = ({
             }
           }
         } else {
-          // For love and kids categories
           const parsedIdea = JSON.parse(savedIdeasString);
           if (parsedIdea && typeof parsedIdea === 'object') {
             setIdeas([parsedIdea]);
@@ -239,7 +239,6 @@ const IdeaStep = ({
         }
       } catch (error) {
         console.error('Error parsing saved ideas:', error);
-        // If there's an error parsing the saved data, generate new ideas
         generateIdeas();
       }
     } else {
