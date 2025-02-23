@@ -12,7 +12,7 @@ const LoveLanding = () => {
                 <div className="text-white space-y-6">
                   <h1 className="text-4xl font-display font-bold px-0 mx-0 md:text-4xl text-slate-800">Love Story. Magically crafted.</h1>
                   <p className="text-xl text-slate-800">Create a heartfelt book Personalized books that brings your romance to life</p>
-                  <Link to="/create/fantasy/love-story/author" className="inline-flex items-center px-8 py-4 text-lg font-medium text-white bg-red-400 rounded-full hover:bg-red-500 transition-colors">
+                  <Link to="/create/love/love-story/author" className="inline-flex items-center px-8 py-4 text-lg font-medium text-white bg-red-400 rounded-full hover:bg-red-500 transition-colors">
                     Choose My Book
                   </Link>
                 </div>

@@ -13,7 +13,7 @@ const FriendsLanding = () => {
                 <div className="text-white space-y-6">
                   <h1 className="text-4xl font-display font-bold px-0 mx-0 md:text-4xl text-slate-800">Hilarious moment. Presented by you.</h1>
                   <p className="text-xl text-slate-800">Use Wishika to give your friends a special book just for them</p>
-                  <Link to="/create/fun/funny-biography/author" className="inline-flex items-center px-8 py-4 text-lg font-medium text-white bg-amber-400 rounded-full hover:bg-amber-500 transition-colors">
+                  <Link to="/create/friends/funny-biography/author" className="inline-flex items-center px-8 py-4 text-lg font-medium text-white bg-amber-400 rounded-full hover:bg-amber-500 transition-colors">
                     Choose My Book
                   </Link>
                 </div>
