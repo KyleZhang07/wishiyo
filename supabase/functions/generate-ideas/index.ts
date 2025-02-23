@@ -21,15 +21,12 @@ serve(async (req) => {
     }
 
     if (category === 'love') {
-      // Get person name for love story
       let answersText = "";
       const imagePrompts = [];
       
-      // Process answers to create both context and image prompts
       for (const answer of answers) {
         answersText += `Question: ${answer.question}\nAnswer: ${answer.answer}\n\n`;
         
-        // Create detailed image prompt for each answer
         const imagePrompt = `A beautiful, emotional photograph capturing ${answer.answer}. 
           Professional photography, soft natural lighting, cinematic composition, 
           shallow depth of field, high resolution, detailed textures, emotional moment`;
@@ -40,7 +37,6 @@ serve(async (req) => {
         });
       }
 
-      // Generate emotional book ideas using GPT
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -52,25 +48,41 @@ serve(async (req) => {
           messages: [
             {
               role: 'system',
-              content: `You are a creative assistant that generates emotional and meaningful book ideas. The book will be a collection of memories and moments, presented with photos and heartfelt messages.`
+              content: `You are a creative assistant that generates emotional and meaningful book ideas. The book will be a collection of memories and moments, presented with photos and heartfelt messages. You must respond with ONLY a JSON array containing exactly 3 book ideas.`
             },
             {
               role: 'user',
-              content: `Generate 3 different emotional book ideas based on these answers from questions about their relationship/memories:\n\n${answersText}\n\nThe book is written by ${authorName}.\n\nFor each idea, provide:\n- A meaningful, emotional title that shows care and love\n- A warm description that captures the essence of their story\n\nFormat each idea as a JSON object with 'title', 'author', and 'description' fields. Return an array of exactly 3 ideas.`
+              content: `Generate 3 different emotional book ideas based on these answers:\n\n${answersText}\n\nThe book is written by ${authorName}.\n\nRespond with ONLY a JSON array of 3 objects, each with 'title', 'author', and 'description' fields. Do not include any other text or formatting.`
             }
           ],
         }),
       });
 
       const data = await response.json();
-      const ideas = JSON.parse(data.choices[0].message.content);
+      console.log('OpenAI response:', JSON.stringify(data, null, 2));
 
-      return new Response(
-        JSON.stringify({ ideas, imagePrompts }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      try {
+        // Try to parse the content directly first
+        const ideas = JSON.parse(data.choices[0].message.content);
+        return new Response(
+          JSON.stringify({ ideas, imagePrompts }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } catch (parseError) {
+        // If direct parsing fails, try to extract JSON from the content
+        const contentStr = data.choices[0].message.content;
+        const jsonMatch = contentStr.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          const ideas = JSON.parse(jsonMatch[0]);
+          return new Response(
+            JSON.stringify({ ideas, imagePrompts }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        throw new Error('Failed to parse OpenAI response as JSON');
+      }
+
     } else if (category === 'friends' && bookType === 'funny-biography') {
-      // Generate funny biography ideas using GPT
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -82,26 +94,41 @@ serve(async (req) => {
           messages: [
             {
               role: 'system',
-              content: 'You are a creative assistant that generates humorous and entertaining book ideas.'
+              content: `You are a creative assistant that generates humorous and entertaining book ideas. You must respond with ONLY a JSON array containing exactly 3 book ideas.`
             },
             {
               role: 'user',
-              content: `Generate 3 different funny biography book ideas based on these answers:\n\n${JSON.stringify(answers, null, 2)}\n\nThe biography is about ${authorName}.\n\nMake each idea:\n- Have a clever, humorous title\n- Include a funny description that captures their personality\n- Be light-hearted and entertaining\n\nFormat each idea as a JSON object with 'title', 'author', and 'description' fields. Return an array of exactly 3 ideas.`
+              content: `Generate 3 different funny biography book ideas based on these answers:\n\n${JSON.stringify(answers, null, 2)}\n\nThe biography is about ${authorName}.\n\nRespond with ONLY a JSON array of 3 objects, each with 'title', 'author', and 'description' fields. Each idea should be funny and entertaining. Do not include any other text or formatting.`
             }
           ],
         }),
       });
 
       const data = await response.json();
-      const ideas = JSON.parse(data.choices[0].message.content);
+      console.log('OpenAI response:', JSON.stringify(data, null, 2));
 
-      return new Response(
-        JSON.stringify({ ideas }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      try {
+        // Try to parse the content directly first
+        const ideas = JSON.parse(data.choices[0].message.content);
+        return new Response(
+          JSON.stringify({ ideas }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } catch (parseError) {
+        // If direct parsing fails, try to extract JSON from the content
+        const contentStr = data.choices[0].message.content;
+        const jsonMatch = contentStr.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          const ideas = JSON.parse(jsonMatch[0]);
+          return new Response(
+            JSON.stringify({ ideas }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        throw new Error('Failed to parse OpenAI response as JSON');
+      }
     }
 
-    // Handle other categories here if needed
     throw new Error('Unsupported book type or category');
 
   } catch (error) {
