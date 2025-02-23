@@ -16,41 +16,97 @@ const LoveStoryQuestionsStep = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
   const [questionsAndAnswers, setQuestionsAndAnswers] = useState<QuestionAnswer[]>([]);
-  const [partnerName, setPartnerName] = useState('');
+  const [personName, setPersonName] = useState('');
+  const [relationship, setRelationship] = useState('');
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const savedName = localStorage.getItem('loveStoryPartnerName') || '';
-    setPartnerName(savedName);
+    const savedName = localStorage.getItem('loveStoryPersonName') || '';
+    const savedRelationship = localStorage.getItem('loveStoryRelationship') || '';
+    setPersonName(savedName);
+    setRelationship(savedRelationship);
     
-    // Load saved answers
     const savedAnswers = localStorage.getItem('loveStoryAnswers');
     if (savedAnswers) {
       setQuestionsAndAnswers(JSON.parse(savedAnswers));
     }
   }, []);
 
-  const questions = [
-    `How did you and ${partnerName} first meet?`,
-    "Do you have any special nicknames for each other?",
-    `What is the most romantic thing ${partnerName} has ever done to you?`,
-    `Describe ${partnerName} in three words.`,
-    `What is the cutest thing ${partnerName} does without realizing?`,
-    "Do you have any unique habits or small rituals in your relationship?",
-    "If you could add a small hidden detail (Easter egg) in the book, what would it be?",
-    `Would you like to leave a special message for ${partnerName} at the end of the story?`,
-    "Does your partner prefer the story in the book to be romantic or adventurous?",
-    "Does your partner prefer a modern city or a classic historical setting?",
-    "Does your partner prefer a warm and gentle atmosphere or a passionate and intense scene?",
-    "Would your partner like to include some mystical or fantasy elements (such as magic, otherworldly adventures)?"
-  ];
+  const getQuestions = (name: string, relationship: string) => {
+    const commonQuestions = [
+      `How did you and ${name} first meet?`,
+      "What qualities do you admire most about them?",
+      "What is your favorite memory together?",
+      `Describe ${name} in three words.`,
+      "If you could add a small hidden detail (Easter egg) in the book, what would it be?",
+      `Would you like to leave a special message for ${name} at the end of the story?`,
+    ];
+
+    const relationshipSpecificQuestions: Record<string, string[]> = {
+      partner: [
+        "Do you have any special nicknames for each other?",
+        `What is the most romantic thing ${name} has ever done?`,
+        `What is the cutest thing ${name} does without realizing?`,
+        "Do you have any unique habits or small rituals together?",
+      ],
+      friend: [
+        "What adventures have you shared together?",
+        "What inside jokes do you share?",
+        "What makes your friendship special?",
+        "What challenges have you overcome together?",
+      ],
+      child: [
+        "What makes them unique and special?",
+        "What are their current interests and passions?",
+        "What dreams do you have for their future?",
+        "What life lessons would you like to share with them?",
+      ],
+      parent: [
+        "What wisdom have they shared with you?",
+        "What family traditions do you cherish most?",
+        "What life lessons have they taught you?",
+        "What sacrifices have they made for you?",
+      ],
+      sibling: [
+        "What childhood memories do you share?",
+        "What adventures have you had together?",
+        "How has your relationship grown over the years?",
+        "What makes your sibling bond special?",
+      ],
+      mentor: [
+        "What valuable lessons have they taught you?",
+        "How have they influenced your growth?",
+        "What challenges have they helped you overcome?",
+        "What wisdom would you like to share with them?",
+      ],
+      mentee: [
+        "What potential do you see in them?",
+        "What growth have you witnessed?",
+        "What hopes do you have for their future?",
+        "What makes them stand out?",
+      ],
+      other: [
+        "What makes your relationship unique?",
+        "What impact have they had on your life?",
+        "What memories do you cherish most?",
+        "What would you like them to know?",
+      ],
+    };
+
+    return [
+      ...commonQuestions,
+      ...(relationshipSpecificQuestions[relationship] || relationshipSpecificQuestions.other)
+    ];
+  };
+
+  const questions = getQuestions(personName, relationship);
 
   const handleNext = () => {
     if (questionsAndAnswers.length === 0) {
       toast({
         title: "No answers provided",
-        description: "Please share at least one story about your love",
+        description: "Please share at least one story",
         variant: "destructive",
       });
       return;
@@ -79,11 +135,11 @@ const LoveStoryQuestionsStep = () => {
 
   return (
     <WizardStep
-      title="Share Your Love Story"
+      title="Share Your Story"
       description="Tell us about your journey together"
       previousStep="/create/love/love-story/author"
       currentStep={2}
-      totalSteps={5}
+      totalSteps={4}
       onNextClick={handleNext}
     >
       <div className="space-y-6">
