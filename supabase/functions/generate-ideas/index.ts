@@ -1,7 +1,6 @@
 
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
-import { Configuration, OpenAIApi } from "https://esm.sh/openai@3.3.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,18 +14,19 @@ serve(async (req) => {
 
   try {
     const { authorName, stories, bookType, category } = await req.json();
+    console.log('Received request:', { authorName, bookType, category });
+    console.log('Stories:', stories);
 
     if (!authorName || !stories || !bookType || !category) {
       throw new Error('Missing required parameters');
     }
 
-    const configuration = new Configuration({
-      apiKey: Deno.env.get('OPENAI_API_KEY'),
-    });
+    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openAIApiKey) {
+      throw new Error('OpenAI API key not configured');
+    }
 
-    const openai = new OpenAIApi(configuration);
-
-    // Create a system prompt based on the book type and category
+    // Create prompts based on the book type and category
     let systemPrompt = "";
     let userPrompt = "";
 
@@ -40,28 +40,42 @@ serve(async (req) => {
       throw new Error('Unsupported book type or category');
     }
 
-    const response = await openai.createChatCompletion({
-      model: "gpt-3.5-turbo",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt }
-      ],
-      temperature: 0.9,
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.9,
+      }),
     });
 
-    if (!response.data.choices[0].message) {
-      throw new Error('No response from OpenAI');
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('OpenAI API error:', errorData);
+      throw new Error('Failed to generate content');
     }
 
-    const rawContent = response.data.choices[0].message.content;
-    console.log('Raw OpenAI response:', rawContent);
+    const data = await response.json();
+    console.log('OpenAI response:', data);
+
+    if (!data.choices?.[0]?.message?.content) {
+      throw new Error('Invalid response from OpenAI');
+    }
+
+    const rawContent = data.choices[0].message.content;
+    console.log('Raw content:', rawContent);
 
     let processedData;
     
     if (category === 'friends') {
-      // For friends category, parse multiple book ideas
       try {
-        // Extract book ideas from the response
         const ideas = rawContent.split(/(?=Title:)/).filter(Boolean).map(ideaText => {
           const title = (ideaText.match(/Title: (.+)/) || [])[1] || 'Untitled';
           const author = authorName;
@@ -75,18 +89,21 @@ serve(async (req) => {
           };
         });
 
+        if (!ideas.length) {
+          throw new Error('No ideas could be parsed from the response');
+        }
+
         processedData = { ideas };
       } catch (error) {
         console.error('Error parsing friends category response:', error);
         throw new Error('Failed to parse book ideas');
       }
     } else {
-      // For love category, parse single book with chapters
       try {
         const lines = rawContent.split('\n');
         let title = 'Untitled';
         let description = '';
-        let chapters: any[] = [];
+        let chapters = [];
         let currentSection = '';
 
         lines.forEach(line => {
@@ -113,7 +130,6 @@ serve(async (req) => {
           }
         });
 
-        // Clean up chapter descriptions
         chapters = chapters.map(chapter => ({
           ...chapter,
           description: chapter.description.trim()
@@ -147,9 +163,12 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error in generate-ideas function:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: error.stack
+      }),
       { 
         status: 500,
         headers: {
