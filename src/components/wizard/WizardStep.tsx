@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -7,6 +8,7 @@ interface WizardStepProps {
   title: string;
   description: string;
   previousStep: string;
+  nextStep?: string;  // Making nextStep optional since some steps might not have a next step
   currentStep: number;
   totalSteps: number;
   onNextClick?: () => void;
@@ -18,6 +20,7 @@ const WizardStep: React.FC<WizardStepProps> = ({
   title,
   description,
   previousStep,
+  nextStep,
   currentStep,
   totalSteps,
   onNextClick,
@@ -25,6 +28,14 @@ const WizardStep: React.FC<WizardStepProps> = ({
   showNextButton = true,
 }) => {
   const navigate = useNavigate();
+
+  const handleNext = () => {
+    if (onNextClick) {
+      onNextClick();
+    } else if (nextStep) {
+      navigate(nextStep);
+    }
+  };
 
   return (
     <div className="page-transition container mx-auto px-4 py-24">
@@ -46,7 +57,7 @@ const WizardStep: React.FC<WizardStepProps> = ({
               Back
             </Button>
             {showNextButton ? (
-              <Button onClick={onNextClick}>
+              <Button onClick={handleNext}>
                 Next
                 <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
