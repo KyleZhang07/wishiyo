@@ -37,14 +37,22 @@ const DebugPromptsStep = () => {
         </div>
         
         <div className="space-y-4">
-          {prompts.map((prompt, index) => (
-            <div key={index} className="bg-white p-4 rounded-lg shadow">
-              <h3 className="font-bold text-gray-800 mb-2">Question:</h3>
-              <p className="text-gray-600 mb-4">{prompt.question}</p>
-              <h3 className="font-bold text-gray-800 mb-2">Generated Prompt:</h3>
-              <p className="text-gray-600 font-mono text-sm bg-gray-50 p-2 rounded">{prompt.prompt}</p>
-            </div>
-          ))}
+          <div className="bg-white p-4 rounded-lg shadow">
+            <h3 className="font-bold text-gray-800 mb-2">Cover Image Prompt:</h3>
+            <p className="text-gray-600 mb-4">{prompts[0]?.question}</p>
+            <p className="text-gray-600 font-mono text-sm bg-gray-50 p-2 rounded">{prompts[0]?.prompt}</p>
+          </div>
+
+          <div className="grid gap-4">
+            <h3 className="font-bold text-gray-800">Story Image Prompts:</h3>
+            {prompts.slice(1).map((prompt, index) => (
+              <div key={index} className="bg-white p-4 rounded-lg shadow">
+                <h4 className="font-bold text-gray-800 mb-2">Image {index + 1}:</h4>
+                <p className="text-gray-600 mb-4">{prompt.question}</p>
+                <p className="text-gray-600 font-mono text-sm bg-gray-50 p-2 rounded">{prompt.prompt}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </WizardStep>
