@@ -1,4 +1,3 @@
-
 import { useRef, useEffect } from 'react';
 import { useImageLoader } from './hooks/useImageLoader';
 import CoverImageControls from './components/CoverImageControls';
@@ -81,57 +80,7 @@ const CanvasCoverPreview = ({
       ctx.fillStyle = 'rgba(255, 236, 209, 0.3)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      const frontX = 0;
-      const spineX = 800;
-      const backX = 800 + 200;
-      const spineWidth = 200;
-
-      // Draw spine background
-      ctx.fillStyle = '#C41E3A';
-      ctx.fillRect(spineX, 0, spineWidth, canvas.height);
-
-      // Draw spine text
-      ctx.save();
-      ctx.translate(spineX + spineWidth/2, canvas.height/2);
-      ctx.rotate(-Math.PI/2);
-      ctx.font = `bold 48px ${selectedFont}`;
-      ctx.fillStyle = '#FFFFFF';
-      ctx.textAlign = 'center';
-      ctx.fillText(coverTitle, 0, 0);
-      ctx.restore();
-
-      // Draw back cover
-      ctx.fillStyle = '#FFECD1';
-      ctx.fillRect(backX, 0, 800, canvas.height);
-
-      // Draw back cover text
-      if (backCoverText) {
-        ctx.font = `32px ${selectedFont}`;
-        ctx.fillStyle = '#C41E3A';
-        ctx.textAlign = 'left';
-        
-        const words = backCoverText.split(' ');
-        let line = '';
-        let y = 100;
-        const lineHeight = 48;
-        const maxWidth = 700;
-
-        words.forEach(word => {
-          const testLine = line + word + ' ';
-          const metrics = ctx.measureText(testLine);
-          
-          if (metrics.width > maxWidth) {
-            ctx.fillText(line, backX + 50, y);
-            line = word + ' ';
-            y += lineHeight;
-          } else {
-            line = testLine;
-          }
-        });
-        ctx.fillText(line, backX + 50, y);
-      }
-
-      // Draw front cover title with shadow
+      // Draw title with shadow
       ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
       ctx.shadowBlur = 4;
       ctx.shadowOffsetX = 2;
@@ -142,9 +91,9 @@ const CanvasCoverPreview = ({
       ctx.textAlign = 'center';
       
       const titleParts = coverTitle.split(',');
-      ctx.fillText(titleParts[0], frontX + 400, 200);
+      ctx.fillText(titleParts[0], canvas.width/2, 200);
       if (titleParts[1]) {
-        ctx.fillText(titleParts[1].trim(), frontX + 400, 280);
+        ctx.fillText(titleParts[1].trim(), canvas.width/2, 280);
       }
 
       // Reset shadow for other text
@@ -155,12 +104,11 @@ const CanvasCoverPreview = ({
 
       // Draw author
       ctx.font = `italic 36px ${selectedFont}`;
-      ctx.fillText(`by ${authorName}`, frontX + 400, 350);
+      ctx.fillText(`by ${authorName}`, canvas.width/2, 350);
 
       // Draw subtitle banner
       ctx.font = `32px ${selectedFont}`;
-      ctx.fillText(subtitle, frontX + 400, 900);
-
+      ctx.fillText(subtitle, canvas.width/2, 900);
     } else {
       // For funny biography, only show front cover
       canvas.width = 800;
@@ -237,7 +185,6 @@ const CanvasCoverPreview = ({
       ctx.font = `32px ${selectedFont}`;
       ctx.fillText(subtitle, canvas.width/2, 900);
     }
-
   }, [coverTitle, subtitle, authorName, image, selectedFont, selectedTemplate, selectedLayout, category, imagePosition, imageScale, backCoverText]);
 
   return (
