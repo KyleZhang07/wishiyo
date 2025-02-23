@@ -43,7 +43,7 @@ const Header = () => {
             <Link to="/" className="text-xl font-display font-semibold">WISHIYO</Link>
             <nav className="hidden md:flex items-center space-x-8">
               <Link to="/friends" className="text-gray-600 hover:text-primary transition-colors">Books for Fun</Link>
-              <Link to="/love" className="text-gray-600 hover:text-primary transition-colors">Books for Fanatsy</Link>
+              <Link to="/love" className="text-gray-600 hover:text-primary transition-colors">Books for Fantasy</Link>
             </nav>
           </div>
 
