@@ -264,11 +264,13 @@ const GenerateStep = () => {
         throw error;
       }
 
-      console.log('Successfully received data from expand-image function');
-      const blob = await data.blob();
-      const objectUrl = URL.createObjectURL(blob);
-      console.log('Successfully created object URL:', objectUrl);
-      return objectUrl;
+      if (!data?.imageData) {
+        console.error('No image data received from expand-image function');
+        throw new Error('Failed to receive image data');
+      }
+
+      console.log('Successfully received Base64 image data');
+      return data.imageData;
     } catch (error) {
       console.error('Error in expandImage:', error);
       throw error;
@@ -326,15 +328,12 @@ const GenerateStep = () => {
     }
 
     try {
-      console.log(`Starting generation for content ${index}`);
       setIsGenerating(true);
-      
       const prompts = JSON.parse(savedPrompts);
       if (!prompts || !prompts[index]) {
         throw new Error(`No prompt found for index ${index}`);
       }
 
-      // Generate the image
       const { data, error } = await supabase.functions.invoke('generate-love-cover', {
         body: { 
           prompt: prompts[index].prompt, 
@@ -343,26 +342,20 @@ const GenerateStep = () => {
         }
       });
       
-      if (error) {
-        console.error('Error from generate-love-cover:', error);
-        throw error;
-      }
+      if (error) throw error;
       
       let imageUrl = data?.[`contentImage${index}`]?.[0] || data?.output?.[0];
       if (!imageUrl) {
-        console.error('No image URL returned from generation');
         throw new Error('No image generated');
       }
 
       console.log(`Successfully generated image for content ${index}:`, imageUrl);
 
-      // Expand the image
-      console.log(`Starting expansion for content ${index}`);
-      const expandedImage = await expandImage(imageUrl);
+      const expandedImageData = await expandImage(imageUrl);
       console.log(`Successfully expanded image for content ${index}`);
       
-      setContentImage(expandedImage);
-      localStorage.setItem(contentKey, expandedImage);
+      setContentImage(expandedImageData);
+      localStorage.setItem(contentKey, expandedImageData);
       
       toast({
         title: "Image regenerated",
