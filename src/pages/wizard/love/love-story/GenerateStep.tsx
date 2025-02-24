@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
@@ -382,15 +383,15 @@ const GenerateStep = () => {
 
         {[
           { image: contentImage2, isGenerating: isGeneratingContent2, handler: handleRegenerateContent2 },
-          { image: contentImage3, isGenerating: isGeneratingContent3, handler: handleRegenerateContent3 },
-          { image: contentImage4, isGenerating: isGeneratingContent4, handler: handleRegenerateContent4 },
-          { image: contentImage5, isGenerating: isGeneratingContent5, handler: handleRegenerateContent5 },
-          { image: contentImage6, isGenerating: isGeneratingContent6, handler: handleRegenerateContent6 },
-          { image: contentImage7, isGenerating: isGeneratingContent7, handler: handleRegenerateContent7 },
-          { image: contentImage8, isGenerating: isGeneratingContent8, handler: handleRegenerateContent8 },
-          { image: contentImage9, isGenerating: isGeneratingContent9, handler: handleRegenerateContent9 },
-          { image: contentImage10, isGenerating: isGeneratingContent10, handler: handleRegenerateContent10 },
-          { image: contentImage11, isGenerating: isGeneratingContent11, handler: handleRegenerateContent11 },
+          { image: contentImage3, isGenerating: isGeneratingContent3, handler: () => handleGenericContentRegeneration(3) },
+          { image: contentImage4, isGenerating: isGeneratingContent4, handler: () => handleGenericContentRegeneration(4) },
+          { image: contentImage5, isGenerating: isGeneratingContent5, handler: () => handleGenericContentRegeneration(5) },
+          { image: contentImage6, isGenerating: isGeneratingContent6, handler: () => handleGenericContentRegeneration(6) },
+          { image: contentImage7, isGenerating: isGeneratingContent7, handler: () => handleGenericContentRegeneration(7) },
+          { image: contentImage8, isGenerating: isGeneratingContent8, handler: () => handleGenericContentRegeneration(8) },
+          { image: contentImage9, isGenerating: isGeneratingContent9, handler: () => handleGenericContentRegeneration(9) },
+          { image: contentImage10, isGenerating: isGeneratingContent10, handler: () => handleGenericContentRegeneration(10) },
+          { image: contentImage11, isGenerating: isGeneratingContent11, handler: () => handleGenericContentRegeneration(11) },
         ].map((content, index) => (
           <ContentImageCard
             key={index + 2}
