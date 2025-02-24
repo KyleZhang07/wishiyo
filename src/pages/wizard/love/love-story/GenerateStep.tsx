@@ -10,6 +10,7 @@ const GenerateStep = () => {
   const [coverTitle, setCoverTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
   const [authorName, setAuthorName] = useState('');
+  const [backCoverText, setBackCoverText] = useState('');
   const [coverImage, setCoverImage] = useState<string>();
   const [contentImage, setContentImage] = useState<string>();
   // contentImage2~11
@@ -148,7 +149,6 @@ const GenerateStep = () => {
     }
   };
 
-  // 具体的事件函数:
   const handleRegenerateContent2 = () => handleGenericContentRegeneration(2);
   const handleRegenerateContent3 = () => handleGenericContentRegeneration(3);
   const handleRegenerateContent4 = () => handleGenericContentRegeneration(4);
@@ -160,9 +160,58 @@ const GenerateStep = () => {
   const handleRegenerateContent10 = () => handleGenericContentRegeneration(10);
   const handleRegenerateContent11 = () => handleGenericContentRegeneration(11);
 
-  /**
-   * 示例：初次进入时，如果本地没有存封面/内容图，则发起一次生成
-   */
+  const generateInitialImages = async (prompts: string, partnerPhoto: string) => {
+    setIsGeneratingCover(true);
+    setIsGeneratingContent1(true);
+    toast({
+      title: "Generating images",
+      description: "This may take a minute...",
+    });
+
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+        body: { 
+          prompt: prompts, 
+          contentPrompt: prompts,
+          content2Prompt: prompts,
+          photo: partnerPhoto
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.output?.[0]) {
+        setCoverImage(data.output[0]);
+        localStorage.setItem('loveStoryCoverImage', data.output[0]);
+      }
+
+      if (data?.contentImage?.[0]) {
+        setContentImage(data.contentImage[0]);
+        localStorage.setItem('loveStoryContentImage', data.contentImage[0]);
+      }
+
+      if (data?.contentImage2?.[0]) {
+        setContentImage2(data.contentImage2[0]);
+        localStorage.setItem('loveStoryContentImage2', data.contentImage2[0]);
+      }
+
+      toast({
+        title: "Images generated",
+        description: "Your images are ready!",
+      });
+    } catch (error) {
+      console.error('Error generating images:', error);
+      toast({
+        title: "Error generating images",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingCover(false);
+      setIsGeneratingContent1(false);
+    }
+  };
+
   useEffect(() => {
     const savedAuthor = localStorage.getItem('loveStoryAuthorName');
     const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
@@ -240,71 +289,11 @@ const GenerateStep = () => {
     if (savedContentImage11) {
       setContentImage11(savedContentImage11);
     }
-    
+
     if ((!savedCoverImage || !savedContentImage || !savedContentImage2) && savedPrompts && partnerPhoto) {
-      const prompts = JSON.parse(savedPrompts);
-      if (prompts && prompts.length > 2) {
-        generateImages(prompts[0].prompt, prompts[1].prompt, prompts[2].prompt, partnerPhoto);
-      }
+      generateInitialImages(savedPrompts, partnerPhoto);
     }
-
-    // 也可以加载其他 localStorage
-    // ...
   }, []);
-
-  const generateImages = async (coverPrompt: string, content1Prompt: string, content2Prompt: string, photo: string) => {
-    setIsGeneratingCover(true);
-    setIsGeneratingContent1(true);
-    setIsGeneratingContent2(true);
-    toast({
-      title: "Generating images",
-      description: "This may take a minute...",
-    });
-
-    try {
-      const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-        body: { 
-          prompt: coverPrompt, 
-          contentPrompt: content1Prompt,
-          content2Prompt: content2Prompt,
-          photo 
-        }
-      });
-
-      if (error) throw error;
-
-      if (data?.output?.[0]) {
-        setCoverImage(data.output[0]);
-        localStorage.setItem('loveStoryCoverImage', data.output[0]);
-      }
-
-      if (data?.contentImage?.[0]) {
-        setContentImage(data.contentImage[0]);
-        localStorage.setItem('loveStoryContentImage', data.contentImage[0]);
-      }
-
-      if (data?.contentImage2?.[0]) {
-        setContentImage2(data.contentImage2[0]);
-        localStorage.setItem('loveStoryContentImage2', data.contentImage2[0]);
-      }
-
-      toast({
-        title: "Images generated",
-        description: "Your images are ready!",
-      });
-    } catch (error) {
-      console.error('Error generating images:', error);
-      toast({
-        title: "Error generating images",
-        description: "Please try again",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGeneratingCover(false);
-      setIsGeneratingContent1(false);
-      setIsGeneratingContent2(false);
-    }
-  };
 
   const handleEditCover = () => {
     toast({
@@ -320,7 +309,6 @@ const GenerateStep = () => {
     });
   };
 
-  // 下面是封面/内容1 的再生成(示例) - 不扩展
   const handleRegenerateCover = async () => {
     localStorage.removeItem('loveStoryCoverImage');
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
@@ -351,6 +339,7 @@ const GenerateStep = () => {
       }
     }
   };
+
   const handleRegenerateContent1 = async () => {
     localStorage.removeItem('loveStoryContentImage');
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
@@ -391,19 +380,17 @@ const GenerateStep = () => {
       totalSteps={4}
     >
       <div className="space-y-8">
-        {/* 封面 */}
         <CoverPreviewCard
           coverTitle={coverTitle}
           subtitle={subtitle}
           authorName={authorName}
           coverImage={coverImage}
-          backCoverText="..."
+          backCoverText={backCoverText}
           isGeneratingCover={isGeneratingCover}
           onEditCover={handleEditCover}
           onRegenerateCover={handleRegenerateCover}
         />
 
-        {/* 内容页1 (不扩展) */}
         <ContentImageCard
           image={contentImage}
           isGenerating={isGeneratingContent1}
@@ -415,7 +402,6 @@ const GenerateStep = () => {
           coverTitle={coverTitle}
         />
 
-        {/* 内容页2~11 (会扩展) */}
         {[
           { image: contentImage2, isGenerating: isGeneratingContent2, onRegenerate: handleRegenerateContent2 },
           { image: contentImage3, isGenerating: isGeneratingContent3, onRegenerate: handleRegenerateContent3 },
