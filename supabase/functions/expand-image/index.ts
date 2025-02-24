@@ -6,7 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// 正确的 LightX API 端点
 const LIGHTX_API_ENDPOINT = "https://api.lightxeditor.com/external/api/v1/expand-photo";
 
 serve(async (req) => {
@@ -31,11 +30,11 @@ serve(async (req) => {
     const imageBlob = await imageResponse.blob();
     console.log('Image downloaded successfully');
 
-    // 构建 LightX API 请求数据，使用正确的字段
+    // 构建 LightX API 请求数据，使用正确的字段名
     const formData = new FormData();
     formData.append('imageFile', imageBlob, 'image.png');
-    formData.append('prompt', 'clean minimalist background, solid color, empty space for text, no objects, no patterns, simple design, suitable for text overlay, pristine surface, clear area, uncluttered space');
-    formData.append('expand_ratio', '2');  // 扩展到原图的2倍宽度
+    formData.append('prompt', 'extend image to the left: generate a clean, clear, empty background with solid colors and no objects, perfect for text overlay');
+    formData.append('expand_ratio', '2.0');  // 扩展到原图的2倍宽度
     formData.append('expand_direction', 'left');  // 向左扩展
 
     const LIGHTX_API_KEY = Deno.env.get('LIGHTX_API_KEY');
@@ -44,9 +43,9 @@ serve(async (req) => {
     }
 
     console.log('Calling LightX API with params:', {
-      endpoint: LIGHTX_API_ENDPOINT,
-      expand_ratio: '2',
-      expand_direction: 'left'
+      expand_ratio: '2.0',
+      expand_direction: 'left',
+      prompt: formData.get('prompt')
     });
     
     const lightXResponse = await fetch(LIGHTX_API_ENDPOINT, {
@@ -63,7 +62,7 @@ serve(async (req) => {
       throw new Error(`LightX API error: ${lightXResponse.status} ${lightXResponse.statusText}`);
     }
 
-    console.log('Successfully received expanded image');
+    console.log('Successfully received expanded image from LightX API');
     const expandedImage = await lightXResponse.blob();
     
     return new Response(expandedImage, {

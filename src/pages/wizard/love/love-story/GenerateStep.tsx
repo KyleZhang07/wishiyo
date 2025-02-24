@@ -264,11 +264,6 @@ const GenerateStep = () => {
         throw error;
       }
 
-      if (!data) {
-        console.error('No data returned from expand-image function');
-        throw new Error('No data returned from expand-image function');
-      }
-
       console.log('Successfully received data from expand-image function');
       const blob = await data.blob();
       const objectUrl = URL.createObjectURL(blob);
@@ -339,7 +334,7 @@ const GenerateStep = () => {
         throw new Error(`No prompt found for index ${index}`);
       }
 
-      // First generate the image
+      // Generate the image
       const { data, error } = await supabase.functions.invoke('generate-love-cover', {
         body: { 
           prompt: prompts[index].prompt, 
@@ -361,7 +356,7 @@ const GenerateStep = () => {
 
       console.log(`Successfully generated image for content ${index}:`, imageUrl);
 
-      // Then expand it
+      // Expand the image
       console.log(`Starting expansion for content ${index}`);
       const expandedImage = await expandImage(imageUrl);
       console.log(`Successfully expanded image for content ${index}`);
