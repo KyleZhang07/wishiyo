@@ -37,69 +37,160 @@ serve(async (req) => {
     console.log("Received image URL:", imageUrl);
 
     if (!imageUrl) {
-      throw new Error("No image URL provided");
+      return new Response(
+        JSON.stringify({ error: "No image URL provided" }), 
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400 
+        }
+      );
     }
 
     console.log("Downloading image...");
-    const imageBlob = await downloadImageAsBlob(imageUrl);
+    let imageBlob;
+    try {
+      imageBlob = await downloadImageAsBlob(imageUrl);
+    } catch (error) {
+      console.error("Error downloading image:", error);
+      return new Response(
+        JSON.stringify({ error: "Failed to download image" }), 
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400 
+        }
+      );
+    }
     
     const PICSART_API_KEY = Deno.env.get("PICSART_API_KEY");
     if (!PICSART_API_KEY) {
-      throw new Error("PicsArt API key not configured");
+      return new Response(
+        JSON.stringify({ error: "PicsArt API key not configured" }), 
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 500 
+        }
+      );
     }
 
     const formData = new FormData();
     formData.append("image", imageBlob, "image.png");
-    // 设置扩展后的图片尺寸为原图的2倍宽度
-    formData.append("width", "2048");  // 这个值需要足够大以适应各种输入图片
-    formData.append("height", "1024"); // 保持高度不变
+    // 设置宽度为原图的2倍，保持高度不变
+    formData.append("width", "2048");
+    formData.append("height", "1024");
     formData.append("direction", "left");
     formData.append("prompt", "clean, clear, empty background with solid colors and no objects, perfect for text overlay, minimalist design");
 
     console.log("Calling PicsArt API to expand image...");
-    const picsartResponse = await fetch(PICSART_API_ENDPOINT, {
-      method: "POST",
-      headers: {
-        "x-api-key": PICSART_API_KEY,
-      },
-      body: formData,
-    });
+    let picsartResponse;
+    try {
+      picsartResponse = await fetch(PICSART_API_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "x-api-key": PICSART_API_KEY,
+        },
+        body: formData,
+      });
+    } catch (error) {
+      console.error("Network error calling PicsArt API:", error);
+      return new Response(
+        JSON.stringify({ error: "Failed to connect to PicsArt API" }), 
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 500 
+        }
+      );
+    }
 
     if (!picsartResponse.ok) {
       const errorText = await picsartResponse.text();
       console.error("PicsArt API error:", errorText);
-      throw new Error(`PicsArt API error: ${picsartResponse.status} ${picsartResponse.statusText}`);
+      return new Response(
+        JSON.stringify({ 
+          error: `PicsArt API error: ${picsartResponse.status} ${picsartResponse.statusText}`,
+          details: errorText 
+        }), 
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 500 
+        }
+      );
     }
 
-    const responseData = await picsartResponse.json();
+    let responseData;
+    try {
+      responseData = await picsartResponse.json();
+    } catch (error) {
+      console.error("Error parsing PicsArt API response:", error);
+      return new Response(
+        JSON.stringify({ error: "Invalid response from PicsArt API" }), 
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 500 
+        }
+      );
+    }
+
     console.log("PicsArt API response:", responseData);
 
     if (!responseData.data?.images?.[0]) {
-      throw new Error("No image data in PicsArt API response");
+      return new Response(
+        JSON.stringify({ error: "No image data in PicsArt API response" }), 
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 500 
+        }
+      );
     }
 
-    // 下载扩展后的图片
     const expandedImageUrl = responseData.data.images[0];
     console.log("Downloading expanded image...");
-    const expandedImageBlob = await downloadImageAsBlob(expandedImageUrl);
+    let expandedImageBlob;
+    try {
+      expandedImageBlob = await downloadImageAsBlob(expandedImageUrl);
+    } catch (error) {
+      console.error("Error downloading expanded image:", error);
+      return new Response(
+        JSON.stringify({ error: "Failed to download expanded image" }), 
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 500 
+        }
+      );
+    }
 
-    // 转换为Base64
-    const base64Data = await blobToBase64(expandedImageBlob);
-    const response = {
-      imageData: `data:${expandedImageBlob.type};base64,${base64Data}`,
-    };
+    try {
+      const base64Data = await blobToBase64(expandedImageBlob);
+      const response = {
+        imageData: `data:${expandedImageBlob.type};base64,${base64Data}`,
+      };
 
-    return new Response(JSON.stringify(response), {
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "application/json",
-      },
-    });
+      return new Response(
+        JSON.stringify(response), 
+        {
+          headers: { 
+            ...corsHeaders, 
+            "Content-Type": "application/json" 
+          }
+        }
+      );
+    } catch (error) {
+      console.error("Error converting image to base64:", error);
+      return new Response(
+        JSON.stringify({ error: "Failed to convert image to base64" }), 
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 500 
+        }
+      );
+    }
   } catch (error) {
     console.error("Error in expand-image function:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
+    return new Response(
+      JSON.stringify({ error: error.message }), 
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500
+      }
+    );
   }
 });
