@@ -7,72 +7,70 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
     const { imageUrl } = await req.json()
-    console.log('Received image URL:', imageUrl)
-    
+
     if (!imageUrl) {
       throw new Error('No image URL provided')
     }
 
-    // Download the image from URL
-    console.log('Fetching image from URL...')
-    const imageResponse = await fetch(imageUrl)
-    if (!imageResponse.ok) {
-      throw new Error(`Failed to fetch image: ${imageResponse.statusText}`)
+    // Fetch the original image
+    const imageRes = await fetch(imageUrl)
+    if (!imageRes.ok) {
+      throw new Error('Failed to fetch original image')
     }
+    const originalImage = await imageRes.blob()
 
-    const imageBlob = await imageResponse.blob()
-    console.log('Image downloaded successfully')
-
-    // Create form data for PhotoRoom API
+    // Prepare form data for PhotoRoom API
     const formData = new FormData()
-    formData.append('imageFile', imageBlob, 'image.png')
+    formData.append('imageFile', originalImage)
     formData.append('outputSize', '2048x1024') // 2:1 ratio
     formData.append('referenceBox', 'originalImage')
     formData.append('removeBackground', 'false')
     formData.append('expand.mode', 'ai.auto')
     formData.append('horizontalAlignment', 'right')
-    formData.append('verticalAlignment', 'top')
-
-    console.log('Calling PhotoRoom API...')
-    const PHOTOROOM_API_KEY = Deno.env.get('PHOTOROOM_API_KEY')
-    if (!PHOTOROOM_API_KEY) {
-      throw new Error('PhotoRoom API key not configured')
-    }
+    formData.append('verticalAlignment', 'center')
 
     // Call PhotoRoom API
-    const photoRoomResponse = await fetch('https://api.photoroom.com/v1/edit', {
-      method: 'POST',
-      headers: {
-        'x-api-key': PHOTOROOM_API_KEY,
-      },
-      body: formData,
-    })
-
-    if (!photoRoomResponse.ok) {
-      const errorText = await photoRoomResponse.text()
-      console.error('PhotoRoom API error:', errorText)
-      throw new Error(`PhotoRoom API error: ${photoRoomResponse.status} ${photoRoomResponse.statusText}`)
+    const PHOTOROOM_API_KEY = Deno.env.get('PHOTOROOM_API_KEY')
+    if (!PHOTOROOM_API_KEY) {
+      throw new Error('PhotoRoom API key not found')
     }
 
-    console.log('Successfully received expanded image')
-    // Return the processed image directly
-    return new Response(await photoRoomResponse.blob(), {
+    const photoRoomRes = await fetch('https://api.photoroom.com/v1/edit', {
+      method: 'POST',
+      headers: {
+        'x-api-key': PHOTOROOM_API_KEY
+      },
+      body: formData
+    })
+
+    if (!photoRoomRes.ok) {
+      throw new Error(`PhotoRoom API error: ${photoRoomRes.status}`)
+    }
+
+    const expandedImage = await photoRoomRes.blob()
+
+    return new Response(expandedImage, {
       headers: {
         ...corsHeaders,
-        'Content-Type': 'image/png'
+        'Content-Type': expandedImage.type
       }
     })
+
   } catch (error) {
-    console.error('Error in expand-image function:', error)
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500
-    })
+    console.error('Error:', error)
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500
+      }
+    )
   }
 })
