@@ -21,6 +21,7 @@ const GenerateStep = () => {
   const [contentImage8, setContentImage8] = useState<string>();
   const [contentImage9, setContentImage9] = useState<string>();
   const [contentImage10, setContentImage10] = useState<string>();
+  const [contentImage11, setContentImage11] = useState<string>();
   const [backCoverText, setBackCoverText] = useState('');
   const [isGeneratingCover, setIsGeneratingCover] = useState(false);
   const [isGeneratingContent1, setIsGeneratingContent1] = useState(false);
@@ -33,6 +34,7 @@ const GenerateStep = () => {
   const [isGeneratingContent8, setIsGeneratingContent8] = useState(false);
   const [isGeneratingContent9, setIsGeneratingContent9] = useState(false);
   const [isGeneratingContent10, setIsGeneratingContent10] = useState(false);
+  const [isGeneratingContent11, setIsGeneratingContent11] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -494,6 +496,37 @@ const GenerateStep = () => {
     }
   };
 
+  const handleRegenerateContent11 = async () => {
+    localStorage.removeItem('loveStoryContentImage11');
+    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    if (savedPrompts && partnerPhoto) {
+      const prompts = JSON.parse(savedPrompts);
+      if (prompts && prompts.length > 11) {
+        setIsGeneratingContent11(true);
+        try {
+          const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+            body: { content11Prompt: prompts[11].prompt, photo: partnerPhoto }
+          });
+          if (error) throw error;
+          if (data?.contentImage11?.[0]) {
+            setContentImage11(data.contentImage11[0]);
+            localStorage.setItem('loveStoryContentImage11', data.contentImage11[0]);
+          }
+        } catch (error) {
+          console.error('Error regenerating content image 11:', error);
+          toast({
+            title: "Error regenerating image",
+            description: "Please try again",
+            variant: "destructive",
+          });
+        } finally {
+          setIsGeneratingContent11(false);
+        }
+      }
+    }
+  };
+
   return (
     <WizardStep
       title="Create Your Love Story"
@@ -535,6 +568,7 @@ const GenerateStep = () => {
           { image: contentImage8, isGenerating: isGeneratingContent8, handler: handleRegenerateContent8 },
           { image: contentImage9, isGenerating: isGeneratingContent9, handler: handleRegenerateContent9 },
           { image: contentImage10, isGenerating: isGeneratingContent10, handler: handleRegenerateContent10 },
+          { image: contentImage11, isGenerating: isGeneratingContent11, handler: handleRegenerateContent11 },
         ].map((content, index) => (
           <ContentImageCard
             key={index + 2}
