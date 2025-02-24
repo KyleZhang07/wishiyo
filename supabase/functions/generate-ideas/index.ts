@@ -21,9 +21,10 @@ serve(async (req) => {
     }
 
     if (category === 'love') {
-      // Get person's name from answers
+      // Get person's name and gender from answers
+      const personGender = answers.find((a: any) => a.question.toLowerCase().includes('gender'))?.answer || 'them';
       const personName = answers.find((a: any) => a.question.toLowerCase().includes('name'))?.answer || 'them';
-      console.log('Generating prompts for person:', personName);
+      console.log('Generating prompts for person:', personName, 'gender:', personGender);
       
       // Generate image prompts first
       const promptResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -40,21 +41,23 @@ serve(async (req) => {
               content: `You are a creative assistant that generates imaginative image prompts for a love story photo book. 
                 Create 13 unique and creative scenes - 1 cover image and 12 story images. 
                 Each prompt should imagine the person in different scenarios, both realistic and fantastical.
+                Consider the person's gender (${personGender}) when creating prompts.
                 Make the prompts suitable for high-quality photo-realistic AI image generation.`
             },
             {
               role: 'user',
               content: `Generate 13 creative image prompts based on these answers:\n\n${JSON.stringify(answers, null, 2)}\n\n
                 Create: 
-                1. One cover image prompt that captures ${personName}'s essence in a magical setting
+                1. One cover image prompt that captures ${personName}'s essence (${personGender}) in a magical setting
                 2. Twelve story image prompts showing ${personName} in various imaginative scenarios
                 Each prompt should be detailed and photo-realistic.
                 Format the response as a JSON array of 13 objects, each with 'question' (short description) and 'prompt' (detailed AI image generation prompt) fields.
                 Make the prompts creative and magical, mixing reality with imagination.
+                Ensure the prompts are appropriate for the person's gender (${personGender}).
                 Example prompt structure:
                 {
                   "question": "${personName} as a superhero",
-                  "prompt": "Ultra-realistic portrait of ${personName}, wearing a sleek superhero costume, standing atop a skyscraper at sunset, city lights glowing below, dramatic lighting, cinematic composition, high detail"
+                  "prompt": "Ultra-realistic portrait of ${personName}, ${personGender === 'male' ? 'handsome' : 'beautiful'} person wearing a sleek superhero costume, standing atop a skyscraper at sunset, city lights glowing below, dramatic lighting, cinematic composition, high detail"
                 }`
             }
           ],
@@ -98,13 +101,15 @@ serve(async (req) => {
               role: 'system',
               content: `You are a creative assistant that generates emotional and meaningful book ideas. 
                 The book will be a collection of memories and moments, presented with photos and heartfelt messages. 
+                Consider the recipient's gender (${personGender}) when generating ideas.
                 You must respond with ONLY a JSON array containing exactly 3 book ideas.`
             },
             {
               role: 'user',
               content: `Generate 3 different emotional book ideas based on these answers:\n\n${JSON.stringify(answers, null, 2)}\n\n
-                The book is written by ${authorName} for ${personName}.\n\n
+                The book is written by ${authorName} for ${personName} (${personGender}).\n\n
                 Return ONLY a JSON array of 3 objects, each with 'title', 'author', and 'description' fields.
+                Ensure the ideas are appropriate and tailored for a ${personGender} recipient.
                 Example:
                 [
                   {
