@@ -13,10 +13,26 @@ const GenerateStep = () => {
   const [coverImage, setCoverImage] = useState<string>();
   const [contentImage, setContentImage] = useState<string>();
   const [contentImage2, setContentImage2] = useState<string>();
+  const [contentImage3, setContentImage3] = useState<string>();
+  const [contentImage4, setContentImage4] = useState<string>();
+  const [contentImage5, setContentImage5] = useState<string>();
+  const [contentImage6, setContentImage6] = useState<string>();
+  const [contentImage7, setContentImage7] = useState<string>();
+  const [contentImage8, setContentImage8] = useState<string>();
+  const [contentImage9, setContentImage9] = useState<string>();
+  const [contentImage10, setContentImage10] = useState<string>();
   const [backCoverText, setBackCoverText] = useState('');
   const [isGeneratingCover, setIsGeneratingCover] = useState(false);
   const [isGeneratingContent1, setIsGeneratingContent1] = useState(false);
   const [isGeneratingContent2, setIsGeneratingContent2] = useState(false);
+  const [isGeneratingContent3, setIsGeneratingContent3] = useState(false);
+  const [isGeneratingContent4, setIsGeneratingContent4] = useState(false);
+  const [isGeneratingContent5, setIsGeneratingContent5] = useState(false);
+  const [isGeneratingContent6, setIsGeneratingContent6] = useState(false);
+  const [isGeneratingContent7, setIsGeneratingContent7] = useState(false);
+  const [isGeneratingContent8, setIsGeneratingContent8] = useState(false);
+  const [isGeneratingContent9, setIsGeneratingContent9] = useState(false);
+  const [isGeneratingContent10, setIsGeneratingContent10] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -230,6 +246,254 @@ const GenerateStep = () => {
     }
   };
 
+  const handleRegenerateContent3 = async () => {
+    localStorage.removeItem('loveStoryContentImage3');
+    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    if (savedPrompts && partnerPhoto) {
+      const prompts = JSON.parse(savedPrompts);
+      if (prompts && prompts.length > 3) {
+        setIsGeneratingContent3(true);
+        try {
+          const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+            body: { content3Prompt: prompts[3].prompt, photo: partnerPhoto }
+          });
+          if (error) throw error;
+          if (data?.contentImage3?.[0]) {
+            setContentImage3(data.contentImage3[0]);
+            localStorage.setItem('loveStoryContentImage3', data.contentImage3[0]);
+          }
+        } catch (error) {
+          console.error('Error regenerating content image 3:', error);
+          toast({
+            title: "Error regenerating image",
+            description: "Please try again",
+            variant: "destructive",
+          });
+        } finally {
+          setIsGeneratingContent3(false);
+        }
+      }
+    }
+  };
+
+  const handleRegenerateContent4 = async () => {
+    localStorage.removeItem('loveStoryContentImage4');
+    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    if (savedPrompts && partnerPhoto) {
+      const prompts = JSON.parse(savedPrompts);
+      if (prompts && prompts.length > 4) {
+        setIsGeneratingContent4(true);
+        try {
+          const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+            body: { content4Prompt: prompts[4].prompt, photo: partnerPhoto }
+          });
+          if (error) throw error;
+          if (data?.contentImage4?.[0]) {
+            setContentImage4(data.contentImage4[0]);
+            localStorage.setItem('loveStoryContentImage4', data.contentImage4[0]);
+          }
+        } catch (error) {
+          console.error('Error regenerating content image 4:', error);
+          toast({
+            title: "Error regenerating image",
+            description: "Please try again",
+            variant: "destructive",
+          });
+        } finally {
+          setIsGeneratingContent4(false);
+        }
+      }
+    }
+  };
+
+  const handleRegenerateContent5 = async () => {
+    localStorage.removeItem('loveStoryContentImage5');
+    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    if (savedPrompts && partnerPhoto) {
+      const prompts = JSON.parse(savedPrompts);
+      if (prompts && prompts.length > 5) {
+        setIsGeneratingContent5(true);
+        try {
+          const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+            body: { content5Prompt: prompts[5].prompt, photo: partnerPhoto }
+          });
+          if (error) throw error;
+          if (data?.contentImage5?.[0]) {
+            setContentImage5(data.contentImage5[0]);
+            localStorage.setItem('loveStoryContentImage5', data.contentImage5[0]);
+          }
+        } catch (error) {
+          console.error('Error regenerating content image 5:', error);
+          toast({
+            title: "Error regenerating image",
+            description: "Please try again",
+            variant: "destructive",
+          });
+        } finally {
+          setIsGeneratingContent5(false);
+        }
+      }
+    }
+  };
+
+  const handleRegenerateContent6 = async () => {
+    localStorage.removeItem('loveStoryContentImage6');
+    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    if (savedPrompts && partnerPhoto) {
+      const prompts = JSON.parse(savedPrompts);
+      if (prompts && prompts.length > 6) {
+        setIsGeneratingContent6(true);
+        try {
+          const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+            body: { content6Prompt: prompts[6].prompt, photo: partnerPhoto }
+          });
+          if (error) throw error;
+          if (data?.contentImage6?.[0]) {
+            setContentImage6(data.contentImage6[0]);
+            localStorage.setItem('loveStoryContentImage6', data.contentImage6[0]);
+          }
+        } catch (error) {
+          console.error('Error regenerating content image 6:', error);
+          toast({
+            title: "Error regenerating image",
+            description: "Please try again",
+            variant: "destructive",
+          });
+        } finally {
+          setIsGeneratingContent6(false);
+        }
+      }
+    }
+  };
+
+  const handleRegenerateContent7 = async () => {
+    localStorage.removeItem('loveStoryContentImage7');
+    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    if (savedPrompts && partnerPhoto) {
+      const prompts = JSON.parse(savedPrompts);
+      if (prompts && prompts.length > 7) {
+        setIsGeneratingContent7(true);
+        try {
+          const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+            body: { content7Prompt: prompts[7].prompt, photo: partnerPhoto }
+          });
+          if (error) throw error;
+          if (data?.contentImage7?.[0]) {
+            setContentImage7(data.contentImage7[0]);
+            localStorage.setItem('loveStoryContentImage7', data.contentImage7[0]);
+          }
+        } catch (error) {
+          console.error('Error regenerating content image 7:', error);
+          toast({
+            title: "Error regenerating image",
+            description: "Please try again",
+            variant: "destructive",
+          });
+        } finally {
+          setIsGeneratingContent7(false);
+        }
+      }
+    }
+  };
+
+  const handleRegenerateContent8 = async () => {
+    localStorage.removeItem('loveStoryContentImage8');
+    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    if (savedPrompts && partnerPhoto) {
+      const prompts = JSON.parse(savedPrompts);
+      if (prompts && prompts.length > 8) {
+        setIsGeneratingContent8(true);
+        try {
+          const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+            body: { content8Prompt: prompts[8].prompt, photo: partnerPhoto }
+          });
+          if (error) throw error;
+          if (data?.contentImage8?.[0]) {
+            setContentImage8(data.contentImage8[0]);
+            localStorage.setItem('loveStoryContentImage8', data.contentImage8[0]);
+          }
+        } catch (error) {
+          console.error('Error regenerating content image 8:', error);
+          toast({
+            title: "Error regenerating image",
+            description: "Please try again",
+            variant: "destructive",
+          });
+        } finally {
+          setIsGeneratingContent8(false);
+        }
+      }
+    }
+  };
+
+  const handleRegenerateContent9 = async () => {
+    localStorage.removeItem('loveStoryContentImage9');
+    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    if (savedPrompts && partnerPhoto) {
+      const prompts = JSON.parse(savedPrompts);
+      if (prompts && prompts.length > 9) {
+        setIsGeneratingContent9(true);
+        try {
+          const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+            body: { content9Prompt: prompts[9].prompt, photo: partnerPhoto }
+          });
+          if (error) throw error;
+          if (data?.contentImage9?.[0]) {
+            setContentImage9(data.contentImage9[0]);
+            localStorage.setItem('loveStoryContentImage9', data.contentImage9[0]);
+          }
+        } catch (error) {
+          console.error('Error regenerating content image 9:', error);
+          toast({
+            title: "Error regenerating image",
+            description: "Please try again",
+            variant: "destructive",
+          });
+        } finally {
+          setIsGeneratingContent9(false);
+        }
+      }
+    }
+  };
+
+  const handleRegenerateContent10 = async () => {
+    localStorage.removeItem('loveStoryContentImage10');
+    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    if (savedPrompts && partnerPhoto) {
+      const prompts = JSON.parse(savedPrompts);
+      if (prompts && prompts.length > 10) {
+        setIsGeneratingContent10(true);
+        try {
+          const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+            body: { content10Prompt: prompts[10].prompt, photo: partnerPhoto }
+          });
+          if (error) throw error;
+          if (data?.contentImage10?.[0]) {
+            setContentImage10(data.contentImage10[0]);
+            localStorage.setItem('loveStoryContentImage10', data.contentImage10[0]);
+          }
+        } catch (error) {
+          console.error('Error regenerating content image 10:', error);
+          toast({
+            title: "Error regenerating image",
+            description: "Please try again",
+            variant: "destructive",
+          });
+        } finally {
+          setIsGeneratingContent10(false);
+        }
+      }
+    }
+  };
+
   return (
     <WizardStep
       title="Create Your Love Story"
@@ -346,6 +610,278 @@ const GenerateStep = () => {
                 disabled={isGeneratingContent2}
               >
                 <RefreshCw className={`w-4 h-4 mr-2 ${isGeneratingContent2 ? 'animate-spin' : ''}`} />
+                Regenerate image
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <div className="glass-card rounded-2xl p-8 py-[40px] relative">
+          <div className="max-w-xl mx-auto">
+            <div className="aspect-[2/1] bg-[#FFECD1] rounded-lg p-8 relative">
+              {contentImage3 && (
+                <div className="absolute inset-0 rounded-lg overflow-hidden flex items-center justify-center">
+                  <img 
+                    src={contentImage3} 
+                    alt="Additional content" 
+                    className="w-auto h-full object-contain max-w-full" 
+                  />
+                  <div className="absolute inset-0 bg-[#FFECD1] opacity-40" />
+                </div>
+              )}
+            </div>
+            <div className="absolute bottom-4 right-4 flex gap-2">
+              <Button
+                variant="secondary"
+                onClick={handleEditText}
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Edit text
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={handleRegenerateContent3}
+                disabled={isGeneratingContent3}
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${isGeneratingContent3 ? 'animate-spin' : ''}`} />
+                Regenerate image
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <div className="glass-card rounded-2xl p-8 py-[40px] relative">
+          <div className="max-w-xl mx-auto">
+            <div className="aspect-[2/1] bg-[#FFECD1] rounded-lg p-8 relative">
+              {contentImage4 && (
+                <div className="absolute inset-0 rounded-lg overflow-hidden flex items-center justify-center">
+                  <img 
+                    src={contentImage4} 
+                    alt="Additional content" 
+                    className="w-auto h-full object-contain max-w-full" 
+                  />
+                  <div className="absolute inset-0 bg-[#FFECD1] opacity-40" />
+                </div>
+              )}
+            </div>
+            <div className="absolute bottom-4 right-4 flex gap-2">
+              <Button
+                variant="secondary"
+                onClick={handleEditText}
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Edit text
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={handleRegenerateContent4}
+                disabled={isGeneratingContent4}
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${isGeneratingContent4 ? 'animate-spin' : ''}`} />
+                Regenerate image
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <div className="glass-card rounded-2xl p-8 py-[40px] relative">
+          <div className="max-w-xl mx-auto">
+            <div className="aspect-[2/1] bg-[#FFECD1] rounded-lg p-8 relative">
+              {contentImage5 && (
+                <div className="absolute inset-0 rounded-lg overflow-hidden flex items-center justify-center">
+                  <img 
+                    src={contentImage5} 
+                    alt="Additional content" 
+                    className="w-auto h-full object-contain max-w-full" 
+                  />
+                  <div className="absolute inset-0 bg-[#FFECD1] opacity-40" />
+                </div>
+              )}
+            </div>
+            <div className="absolute bottom-4 right-4 flex gap-2">
+              <Button
+                variant="secondary"
+                onClick={handleEditText}
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Edit text
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={handleRegenerateContent5}
+                disabled={isGeneratingContent5}
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${isGeneratingContent5 ? 'animate-spin' : ''}`} />
+                Regenerate image
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <div className="glass-card rounded-2xl p-8 py-[40px] relative">
+          <div className="max-w-xl mx-auto">
+            <div className="aspect-[2/1] bg-[#FFECD1] rounded-lg p-8 relative">
+              {contentImage6 && (
+                <div className="absolute inset-0 rounded-lg overflow-hidden flex items-center justify-center">
+                  <img 
+                    src={contentImage6} 
+                    alt="Additional content" 
+                    className="w-auto h-full object-contain max-w-full" 
+                  />
+                  <div className="absolute inset-0 bg-[#FFECD1] opacity-40" />
+                </div>
+              )}
+            </div>
+            <div className="absolute bottom-4 right-4 flex gap-2">
+              <Button
+                variant="secondary"
+                onClick={handleEditText}
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Edit text
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={handleRegenerateContent6}
+                disabled={isGeneratingContent6}
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${isGeneratingContent6 ? 'animate-spin' : ''}`} />
+                Regenerate image
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <div className="glass-card rounded-2xl p-8 py-[40px] relative">
+          <div className="max-w-xl mx-auto">
+            <div className="aspect-[2/1] bg-[#FFECD1] rounded-lg p-8 relative">
+              {contentImage7 && (
+                <div className="absolute inset-0 rounded-lg overflow-hidden flex items-center justify-center">
+                  <img 
+                    src={contentImage7} 
+                    alt="Additional content" 
+                    className="w-auto h-full object-contain max-w-full" 
+                  />
+                  <div className="absolute inset-0 bg-[#FFECD1] opacity-40" />
+                </div>
+              )}
+            </div>
+            <div className="absolute bottom-4 right-4 flex gap-2">
+              <Button
+                variant="secondary"
+                onClick={handleEditText}
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Edit text
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={handleRegenerateContent7}
+                disabled={isGeneratingContent7}
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${isGeneratingContent7 ? 'animate-spin' : ''}`} />
+                Regenerate image
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <div className="glass-card rounded-2xl p-8 py-[40px] relative">
+          <div className="max-w-xl mx-auto">
+            <div className="aspect-[2/1] bg-[#FFECD1] rounded-lg p-8 relative">
+              {contentImage8 && (
+                <div className="absolute inset-0 rounded-lg overflow-hidden flex items-center justify-center">
+                  <img 
+                    src={contentImage8} 
+                    alt="Additional content" 
+                    className="w-auto h-full object-contain max-w-full" 
+                  />
+                  <div className="absolute inset-0 bg-[#FFECD1] opacity-40" />
+                </div>
+              )}
+            </div>
+            <div className="absolute bottom-4 right-4 flex gap-2">
+              <Button
+                variant="secondary"
+                onClick={handleEditText}
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Edit text
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={handleRegenerateContent8}
+                disabled={isGeneratingContent8}
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${isGeneratingContent8 ? 'animate-spin' : ''}`} />
+                Regenerate image
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <div className="glass-card rounded-2xl p-8 py-[40px] relative">
+          <div className="max-w-xl mx-auto">
+            <div className="aspect-[2/1] bg-[#FFECD1] rounded-lg p-8 relative">
+              {contentImage9 && (
+                <div className="absolute inset-0 rounded-lg overflow-hidden flex items-center justify-center">
+                  <img 
+                    src={contentImage9} 
+                    alt="Additional content" 
+                    className="w-auto h-full object-contain max-w-full" 
+                  />
+                  <div className="absolute inset-0 bg-[#FFECD1] opacity-40" />
+                </div>
+              )}
+            </div>
+            <div className="absolute bottom-4 right-4 flex gap-2">
+              <Button
+                variant="secondary"
+                onClick={handleEditText}
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Edit text
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={handleRegenerateContent9}
+                disabled={isGeneratingContent9}
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${isGeneratingContent9 ? 'animate-spin' : ''}`} />
+                Regenerate image
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <div className="glass-card rounded-2xl p-8 py-[40px] relative">
+          <div className="max-w-xl mx-auto">
+            <div className="aspect-[2/1] bg-[#FFECD1] rounded-lg p-8 relative">
+              {contentImage10 && (
+                <div className="absolute inset-0 rounded-lg overflow-hidden flex items-center justify-center">
+                  <img 
+                    src={contentImage10} 
+                    alt="Additional content" 
+                    className="w-auto h-full object-contain max-w-full" 
+                  />
+                  <div className="absolute inset-0 bg-[#FFECD1] opacity-40" />
+                </div>
+              )}
+            </div>
+            <div className="absolute bottom-4 right-4 flex gap-2">
+              <Button
+                variant="secondary"
+                onClick={handleEditText}
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Edit text
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={handleRegenerateContent10}
+                disabled={isGeneratingContent10}
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${isGeneratingContent10 ? 'animate-spin' : ''}`} />
                 Regenerate image
               </Button>
             </div>
