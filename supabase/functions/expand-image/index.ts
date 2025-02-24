@@ -6,10 +6,10 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const PICSART_API_ENDPOINT = "https://api.picsart.io/tools/1.0/ai/background/generate";
+const PICSART_API_ENDPOINT = "https://genai-api.picsart.io/v1/painting/expand";
 
 serve(async (req) => {
-  // 处理 CORS 预检请求
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -18,36 +18,39 @@ serve(async (req) => {
     const { imageUrl } = await req.json();
     console.log('Received request to expand image:', imageUrl);
 
-    // 下载原始图片
+    // Download original image
     const imageResponse = await fetch(imageUrl);
     if (!imageResponse.ok) {
       throw new Error(`Failed to fetch original image: ${imageResponse.statusText}`);
     }
 
-    // 获取图片数据
+    // Get image blob
     const imageBlob = await imageResponse.blob();
+    
+    // Get image dimensions
+    const imgData = await createImageBitmap(imageBlob);
+    const originalWidth = imgData.width;
+    const originalHeight = imgData.height;
+    console.log(`Original image dimensions: ${originalWidth}x${originalHeight}`);
+
     const formData = new FormData();
     formData.append('image', imageBlob);
-    
-    // 添加清晰的扩展提示
-    formData.append('prompt', 'clean, clear, empty background with solid colors, no objects, perfect for text overlay');
-    formData.append('format', 'json');
-
-    // 设置扩展参数（向左扩展至1:2）
-    formData.append('expand_ratio', '2');
-    formData.append('expand_direction', 'left');
+    formData.append('width', String(originalWidth * 2)); // Double the width
+    formData.append('height', String(originalHeight));   // Keep height the same
+    formData.append('direction', 'left');               // Expand to the left
+    formData.append('prompt', 'clean minimalist solid color background, perfect for text overlay'); // Prompt for clean expansion
 
     const PICSART_API_KEY = Deno.env.get('PICSART_API_KEY');
     if (!PICSART_API_KEY) {
       throw new Error('Picsart API key not configured');
     }
 
-    // 调用 Picsart API
+    // Call Picsart API
     console.log('Calling Picsart API for image expansion...');
     const picsartResponse = await fetch(PICSART_API_ENDPOINT, {
       method: 'POST',
       headers: {
-        'x-picsart-api-key': PICSART_API_KEY
+        'X-Picsart-API-Key': PICSART_API_KEY
       },
       body: formData
     });
@@ -58,10 +61,20 @@ serve(async (req) => {
       throw new Error(`Picsart API error: ${picsartResponse.status}`);
     }
 
-    const expandedImageData = await picsartResponse.arrayBuffer();
-    console.log('Successfully received expanded image');
+    const result = await picsartResponse.json();
+    console.log('Successfully received expanded image data');
 
-    // 转换为 base64
+    if (!result.url) {
+      throw new Error('No image URL in Picsart response');
+    }
+
+    // Download the expanded image
+    const expandedImageResponse = await fetch(result.url);
+    if (!expandedImageResponse.ok) {
+      throw new Error('Failed to fetch expanded image from Picsart');
+    }
+
+    const expandedImageData = await expandedImageResponse.arrayBuffer();
     const base64 = btoa(String.fromCharCode(...new Uint8Array(expandedImageData)));
     
     return new Response(
