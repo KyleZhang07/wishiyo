@@ -254,7 +254,7 @@ const GenerateStep = () => {
 
   const expandImage = async (imageUrl: string): Promise<string> => {
     try {
-      console.log('Expanding image:', imageUrl);
+      console.log('Starting image expansion for:', imageUrl);
       const { data, error } = await supabase.functions.invoke('expand-image', {
         body: { imageUrl }
       });
@@ -265,18 +265,23 @@ const GenerateStep = () => {
       }
 
       if (!data) {
+        console.error('No data returned from expand-image function');
         throw new Error('No data returned from expand-image function');
       }
 
+      console.log('Successfully received data from expand-image function');
       const blob = await data.blob();
-      return URL.createObjectURL(blob);
+      const objectUrl = URL.createObjectURL(blob);
+      console.log('Successfully created object URL:', objectUrl);
+      return objectUrl;
     } catch (error) {
-      console.error('Error expanding image:', error);
+      console.error('Error in expandImage:', error);
       throw error;
     }
   };
 
   const handleGenericContentRegeneration = async (index: number) => {
+    console.log(`Starting content regeneration for index ${index}`);
     const stateSetters = {
       3: setContentImage3,
       4: setContentImage4,
@@ -304,7 +309,10 @@ const GenerateStep = () => {
     const setContentImage = stateSetters[index as keyof typeof stateSetters];
     const setIsGenerating = loadingSetters[index as keyof typeof loadingSetters];
 
-    if (!setContentImage || !setIsGenerating) return;
+    if (!setContentImage || !setIsGenerating) {
+      console.error(`Invalid index ${index} for content regeneration`);
+      return;
+    }
 
     const contentKey = `loveStoryContentImage${index}`;
     localStorage.removeItem(contentKey);
@@ -312,40 +320,68 @@ const GenerateStep = () => {
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
     const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
     
-    if (savedPrompts && partnerPhoto) {
-      const prompts = JSON.parse(savedPrompts);
-      if (prompts && prompts.length > index) {
-        setIsGenerating(true);
-        try {
-          const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-            body: { 
-              prompt: prompts[index].prompt, 
-              photo: partnerPhoto,
-              contentIndex: index 
-            }
-          });
-          
-          if (error) throw error;
-          
-          let contentImage = data?.[`contentImage${index}`]?.[0] || data?.output?.[0];
-          if (!contentImage) throw new Error('No image generated');
+    if (!savedPrompts || !partnerPhoto) {
+      console.error('Missing required prompts or partner photo');
+      toast({
+        title: "Error regenerating image",
+        description: "Missing required information",
+        variant: "destructive",
+      });
+      return;
+    }
 
-          console.log(`Expanding content image ${index}...`);
-          const expandedImage = await expandImage(contentImage);
-          console.log(`Content ${index} image expanded successfully`);
-          setContentImage(expandedImage);
-          localStorage.setItem(contentKey, expandedImage);
-        } catch (error) {
-          console.error(`Error regenerating/expanding content image ${index}:`, error);
-          toast({
-            title: "Error regenerating image",
-            description: "Please try again",
-            variant: "destructive",
-          });
-        } finally {
-          setIsGenerating(false);
-        }
+    try {
+      console.log(`Starting generation for content ${index}`);
+      setIsGenerating(true);
+      
+      const prompts = JSON.parse(savedPrompts);
+      if (!prompts || !prompts[index]) {
+        throw new Error(`No prompt found for index ${index}`);
       }
+
+      // First generate the image
+      const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+        body: { 
+          prompt: prompts[index].prompt, 
+          photo: partnerPhoto,
+          contentIndex: index 
+        }
+      });
+      
+      if (error) {
+        console.error('Error from generate-love-cover:', error);
+        throw error;
+      }
+      
+      let imageUrl = data?.[`contentImage${index}`]?.[0] || data?.output?.[0];
+      if (!imageUrl) {
+        console.error('No image URL returned from generation');
+        throw new Error('No image generated');
+      }
+
+      console.log(`Successfully generated image for content ${index}:`, imageUrl);
+
+      // Then expand it
+      console.log(`Starting expansion for content ${index}`);
+      const expandedImage = await expandImage(imageUrl);
+      console.log(`Successfully expanded image for content ${index}`);
+      
+      setContentImage(expandedImage);
+      localStorage.setItem(contentKey, expandedImage);
+      
+      toast({
+        title: "Image regenerated",
+        description: "Your image has been successfully updated",
+      });
+    } catch (error) {
+      console.error(`Error in content regeneration for index ${index}:`, error);
+      toast({
+        title: "Error regenerating image",
+        description: error instanceof Error ? error.message : "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -360,10 +396,16 @@ const GenerateStep = () => {
     
     const additionalConfigs = Array.from({ length: 9 }, (_, i) => {
       const index = i + 3;
+      const imageKey = `contentImage${index}` as keyof typeof GenerateStep.prototype;
+      const loadingKey = `isGeneratingContent${index}` as keyof typeof GenerateStep.prototype;
+      
       return {
         image: eval(`contentImage${index}`),
         isGenerating: eval(`isGeneratingContent${index}`),
-        handler: () => handleGenericContentRegeneration(index)
+        handler: () => {
+          console.log(`Triggering regeneration for content ${index}`);
+          return handleGenericContentRegeneration(index);
+        }
       };
     });
 
