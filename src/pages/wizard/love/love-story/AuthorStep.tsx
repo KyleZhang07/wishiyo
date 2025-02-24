@@ -53,7 +53,7 @@ const LoveStoryAuthorStep = () => {
   return <WizardStep title="Begin Your Story" description="Let's start with some basic information" previousStep="/love" currentStep={1} totalSteps={4} onNextClick={handleContinue}>
       <div className="space-y-6">
         <div>
-          <label className="block text-sm font-medium mb-2">First Name</label>
+          <label className="block text-sm font-medium mb-2">Recipient's Name</label>
           <Input placeholder="Enter their first name" value={firstName} onChange={e => setFirstName(e.target.value)} />
         </div>
         <div>
