@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
-import CanvasCoverPreview from '@/components/cover-generator/CanvasCoverPreview';
 import { useToast } from '@/components/ui/use-toast';
-import { Edit, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { CoverPreviewCard } from './components/CoverPreviewCard';
+import { ContentImageCard } from './components/ContentImageCard';
 
 const GenerateStep = () => {
   const [coverTitle, setCoverTitle] = useState('');
@@ -503,390 +503,48 @@ const GenerateStep = () => {
       totalSteps={4}
     >
       <div className="space-y-8">
-        <div className="glass-card rounded-2xl p-8 py-[40px] relative">
-          <div className="max-w-xl mx-auto">
-            <CanvasCoverPreview
-              coverTitle={coverTitle}
-              subtitle={subtitle}
-              authorName={authorName}
-              coverImage={coverImage}
-              selectedFont="playfair"
-              selectedTemplate="modern"
-              selectedLayout="centered"
-              backCoverText={backCoverText}
-              category="love"
-            />
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
-              <Button
-                variant="secondary"
-                onClick={handleEditCover}
-                disabled={isGeneratingCover}
-              >
-                <Edit className="w-4 h-4 mr-2" />
-                Edit cover
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={handleRegenerateCover}
-                disabled={isGeneratingCover}
-              >
-                <RefreshCw className={`w-4 h-4 mr-2 ${isGeneratingCover ? 'animate-spin' : ''}`} />
-                Regenerate cover
-              </Button>
-            </div>
-          </div>
-        </div>
+        <CoverPreviewCard
+          coverTitle={coverTitle}
+          subtitle={subtitle}
+          authorName={authorName}
+          coverImage={coverImage}
+          backCoverText={backCoverText}
+          isGeneratingCover={isGeneratingCover}
+          onEditCover={handleEditCover}
+          onRegenerateCover={handleRegenerateCover}
+        />
 
-        <div className="glass-card rounded-2xl p-8 py-[40px] relative">
-          <div className="max-w-xl mx-auto">
-            <div className="aspect-[2/1] bg-[#FFECD1] rounded-lg p-8 relative">
-              <div className="h-full flex flex-col justify-center items-center text-center space-y-6">
-                {contentImage && (
-                  <div className="absolute inset-0 rounded-lg overflow-hidden flex items-center justify-center">
-                    <img 
-                      src={contentImage} 
-                      alt="Story content" 
-                      className="w-auto h-full object-contain max-w-full"
-                    />
-                    <div className="absolute inset-0 bg-[#FFECD1] opacity-40" />
-                  </div>
-                )}
-                <div className="space-y-4 relative z-10">
-                  <p className="text-lg">Dear {coverTitle.split(',')[0]},</p>
-                  <p className="text-lg">
-                    This book is full of the words I have chosen for you.<br/>
-                    Thank you for making the story of us so beautiful.
-                  </p>
-                  <p className="text-lg">Happy Anniversary!</p>
-                  <p className="text-lg">Love,<br/>{authorName}</p>
-                </div>
-              </div>
-            </div>
-            <div className="absolute bottom-4 right-4 flex gap-2">
-              <Button
-                variant="secondary"
-                onClick={handleEditText}
-              >
-                <Edit className="w-4 h-4 mr-2" />
-                Edit text
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={handleRegenerateContent1}
-                disabled={isGeneratingContent1}
-              >
-                <RefreshCw className={`w-4 h-4 mr-2 ${isGeneratingContent1 ? 'animate-spin' : ''}`} />
-                Regenerate image
-              </Button>
-            </div>
-          </div>
-        </div>
+        <ContentImageCard
+          image={contentImage}
+          isGenerating={isGeneratingContent1}
+          onEditText={handleEditText}
+          onRegenerate={handleRegenerateContent1}
+          index={1}
+          authorName={authorName}
+          coverTitle={coverTitle}
+          showDedicationText={true}
+        />
 
-        <div className="glass-card rounded-2xl p-8 py-[40px] relative">
-          <div className="max-w-xl mx-auto">
-            <div className="aspect-[2/1] bg-[#FFECD1] rounded-lg p-8 relative">
-              {contentImage2 && (
-                <div className="absolute inset-0 rounded-lg overflow-hidden flex items-center justify-center">
-                  <img 
-                    src={contentImage2} 
-                    alt="Additional content" 
-                    className="w-auto h-full object-contain max-w-full" 
-                  />
-                  <div className="absolute inset-0 bg-[#FFECD1] opacity-40" />
-                </div>
-              )}
-            </div>
-            <div className="absolute bottom-4 right-4 flex gap-2">
-              <Button
-                variant="secondary"
-                onClick={handleEditText}
-              >
-                <Edit className="w-4 h-4 mr-2" />
-                Edit text
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={handleRegenerateContent2}
-                disabled={isGeneratingContent2}
-              >
-                <RefreshCw className={`w-4 h-4 mr-2 ${isGeneratingContent2 ? 'animate-spin' : ''}`} />
-                Regenerate image
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <div className="glass-card rounded-2xl p-8 py-[40px] relative">
-          <div className="max-w-xl mx-auto">
-            <div className="aspect-[2/1] bg-[#FFECD1] rounded-lg p-8 relative">
-              {contentImage3 && (
-                <div className="absolute inset-0 rounded-lg overflow-hidden flex items-center justify-center">
-                  <img 
-                    src={contentImage3} 
-                    alt="Additional content" 
-                    className="w-auto h-full object-contain max-w-full" 
-                  />
-                  <div className="absolute inset-0 bg-[#FFECD1] opacity-40" />
-                </div>
-              )}
-            </div>
-            <div className="absolute bottom-4 right-4 flex gap-2">
-              <Button
-                variant="secondary"
-                onClick={handleEditText}
-              >
-                <Edit className="w-4 h-4 mr-2" />
-                Edit text
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={handleRegenerateContent3}
-                disabled={isGeneratingContent3}
-              >
-                <RefreshCw className={`w-4 h-4 mr-2 ${isGeneratingContent3 ? 'animate-spin' : ''}`} />
-                Regenerate image
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <div className="glass-card rounded-2xl p-8 py-[40px] relative">
-          <div className="max-w-xl mx-auto">
-            <div className="aspect-[2/1] bg-[#FFECD1] rounded-lg p-8 relative">
-              {contentImage4 && (
-                <div className="absolute inset-0 rounded-lg overflow-hidden flex items-center justify-center">
-                  <img 
-                    src={contentImage4} 
-                    alt="Additional content" 
-                    className="w-auto h-full object-contain max-w-full" 
-                  />
-                  <div className="absolute inset-0 bg-[#FFECD1] opacity-40" />
-                </div>
-              )}
-            </div>
-            <div className="absolute bottom-4 right-4 flex gap-2">
-              <Button
-                variant="secondary"
-                onClick={handleEditText}
-              >
-                <Edit className="w-4 h-4 mr-2" />
-                Edit text
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={handleRegenerateContent4}
-                disabled={isGeneratingContent4}
-              >
-                <RefreshCw className={`w-4 h-4 mr-2 ${isGeneratingContent4 ? 'animate-spin' : ''}`} />
-                Regenerate image
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <div className="glass-card rounded-2xl p-8 py-[40px] relative">
-          <div className="max-w-xl mx-auto">
-            <div className="aspect-[2/1] bg-[#FFECD1] rounded-lg p-8 relative">
-              {contentImage5 && (
-                <div className="absolute inset-0 rounded-lg overflow-hidden flex items-center justify-center">
-                  <img 
-                    src={contentImage5} 
-                    alt="Additional content" 
-                    className="w-auto h-full object-contain max-w-full" 
-                  />
-                  <div className="absolute inset-0 bg-[#FFECD1] opacity-40" />
-                </div>
-              )}
-            </div>
-            <div className="absolute bottom-4 right-4 flex gap-2">
-              <Button
-                variant="secondary"
-                onClick={handleEditText}
-              >
-                <Edit className="w-4 h-4 mr-2" />
-                Edit text
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={handleRegenerateContent5}
-                disabled={isGeneratingContent5}
-              >
-                <RefreshCw className={`w-4 h-4 mr-2 ${isGeneratingContent5 ? 'animate-spin' : ''}`} />
-                Regenerate image
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <div className="glass-card rounded-2xl p-8 py-[40px] relative">
-          <div className="max-w-xl mx-auto">
-            <div className="aspect-[2/1] bg-[#FFECD1] rounded-lg p-8 relative">
-              {contentImage6 && (
-                <div className="absolute inset-0 rounded-lg overflow-hidden flex items-center justify-center">
-                  <img 
-                    src={contentImage6} 
-                    alt="Additional content" 
-                    className="w-auto h-full object-contain max-w-full" 
-                  />
-                  <div className="absolute inset-0 bg-[#FFECD1] opacity-40" />
-                </div>
-              )}
-            </div>
-            <div className="absolute bottom-4 right-4 flex gap-2">
-              <Button
-                variant="secondary"
-                onClick={handleEditText}
-              >
-                <Edit className="w-4 h-4 mr-2" />
-                Edit text
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={handleRegenerateContent6}
-                disabled={isGeneratingContent6}
-              >
-                <RefreshCw className={`w-4 h-4 mr-2 ${isGeneratingContent6 ? 'animate-spin' : ''}`} />
-                Regenerate image
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <div className="glass-card rounded-2xl p-8 py-[40px] relative">
-          <div className="max-w-xl mx-auto">
-            <div className="aspect-[2/1] bg-[#FFECD1] rounded-lg p-8 relative">
-              {contentImage7 && (
-                <div className="absolute inset-0 rounded-lg overflow-hidden flex items-center justify-center">
-                  <img 
-                    src={contentImage7} 
-                    alt="Additional content" 
-                    className="w-auto h-full object-contain max-w-full" 
-                  />
-                  <div className="absolute inset-0 bg-[#FFECD1] opacity-40" />
-                </div>
-              )}
-            </div>
-            <div className="absolute bottom-4 right-4 flex gap-2">
-              <Button
-                variant="secondary"
-                onClick={handleEditText}
-              >
-                <Edit className="w-4 h-4 mr-2" />
-                Edit text
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={handleRegenerateContent7}
-                disabled={isGeneratingContent7}
-              >
-                <RefreshCw className={`w-4 h-4 mr-2 ${isGeneratingContent7 ? 'animate-spin' : ''}`} />
-                Regenerate image
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <div className="glass-card rounded-2xl p-8 py-[40px] relative">
-          <div className="max-w-xl mx-auto">
-            <div className="aspect-[2/1] bg-[#FFECD1] rounded-lg p-8 relative">
-              {contentImage8 && (
-                <div className="absolute inset-0 rounded-lg overflow-hidden flex items-center justify-center">
-                  <img 
-                    src={contentImage8} 
-                    alt="Additional content" 
-                    className="w-auto h-full object-contain max-w-full" 
-                  />
-                  <div className="absolute inset-0 bg-[#FFECD1] opacity-40" />
-                </div>
-              )}
-            </div>
-            <div className="absolute bottom-4 right-4 flex gap-2">
-              <Button
-                variant="secondary"
-                onClick={handleEditText}
-              >
-                <Edit className="w-4 h-4 mr-2" />
-                Edit text
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={handleRegenerateContent8}
-                disabled={isGeneratingContent8}
-              >
-                <RefreshCw className={`w-4 h-4 mr-2 ${isGeneratingContent8 ? 'animate-spin' : ''}`} />
-                Regenerate image
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <div className="glass-card rounded-2xl p-8 py-[40px] relative">
-          <div className="max-w-xl mx-auto">
-            <div className="aspect-[2/1] bg-[#FFECD1] rounded-lg p-8 relative">
-              {contentImage9 && (
-                <div className="absolute inset-0 rounded-lg overflow-hidden flex items-center justify-center">
-                  <img 
-                    src={contentImage9} 
-                    alt="Additional content" 
-                    className="w-auto h-full object-contain max-w-full" 
-                  />
-                  <div className="absolute inset-0 bg-[#FFECD1] opacity-40" />
-                </div>
-              )}
-            </div>
-            <div className="absolute bottom-4 right-4 flex gap-2">
-              <Button
-                variant="secondary"
-                onClick={handleEditText}
-              >
-                <Edit className="w-4 h-4 mr-2" />
-                Edit text
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={handleRegenerateContent9}
-                disabled={isGeneratingContent9}
-              >
-                <RefreshCw className={`w-4 h-4 mr-2 ${isGeneratingContent9 ? 'animate-spin' : ''}`} />
-                Regenerate image
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <div className="glass-card rounded-2xl p-8 py-[40px] relative">
-          <div className="max-w-xl mx-auto">
-            <div className="aspect-[2/1] bg-[#FFECD1] rounded-lg p-8 relative">
-              {contentImage10 && (
-                <div className="absolute inset-0 rounded-lg overflow-hidden flex items-center justify-center">
-                  <img 
-                    src={contentImage10} 
-                    alt="Additional content" 
-                    className="w-auto h-full object-contain max-w-full" 
-                  />
-                  <div className="absolute inset-0 bg-[#FFECD1] opacity-40" />
-                </div>
-              )}
-            </div>
-            <div className="absolute bottom-4 right-4 flex gap-2">
-              <Button
-                variant="secondary"
-                onClick={handleEditText}
-              >
-                <Edit className="w-4 h-4 mr-2" />
-                Edit text
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={handleRegenerateContent10}
-                disabled={isGeneratingContent10}
-              >
-                <RefreshCw className={`w-4 h-4 mr-2 ${isGeneratingContent10 ? 'animate-spin' : ''}`} />
-                Regenerate image
-              </Button>
-            </div>
-          </div>
-        </div>
+        {[
+          { image: contentImage2, isGenerating: isGeneratingContent2, handler: handleRegenerateContent2 },
+          { image: contentImage3, isGenerating: isGeneratingContent3, handler: handleRegenerateContent3 },
+          { image: contentImage4, isGenerating: isGeneratingContent4, handler: handleRegenerateContent4 },
+          { image: contentImage5, isGenerating: isGeneratingContent5, handler: handleRegenerateContent5 },
+          { image: contentImage6, isGenerating: isGeneratingContent6, handler: handleRegenerateContent6 },
+          { image: contentImage7, isGenerating: isGeneratingContent7, handler: handleRegenerateContent7 },
+          { image: contentImage8, isGenerating: isGeneratingContent8, handler: handleRegenerateContent8 },
+          { image: contentImage9, isGenerating: isGeneratingContent9, handler: handleRegenerateContent9 },
+          { image: contentImage10, isGenerating: isGeneratingContent10, handler: handleRegenerateContent10 },
+        ].map((content, index) => (
+          <ContentImageCard
+            key={index + 2}
+            image={content.image}
+            isGenerating={content.isGenerating}
+            onEditText={handleEditText}
+            onRegenerate={content.handler}
+            index={index + 2}
+          />
+        ))}
 
         <Button 
           className="w-full py-6 text-lg"
