@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
@@ -200,13 +201,11 @@ const GenerateStep = () => {
           });
           if (error) throw error;
           if (data?.contentImage?.[0]) {
-            console.log('Expanding content image 1...');
-            const expandedImage = await expandImage(data.contentImage[0]);
-            setContentImage(expandedImage);
-            localStorage.setItem('loveStoryContentImage', expandedImage);
+            setContentImage(data.contentImage[0]);
+            localStorage.setItem('loveStoryContentImage', data.contentImage[0]);
           }
         } catch (error) {
-          console.error('Error regenerating/expanding content image 1:', error);
+          console.error('Error regenerating content image 1:', error);
           toast({
             title: "Error regenerating image",
             description: "Please try again",
@@ -233,13 +232,11 @@ const GenerateStep = () => {
           });
           if (error) throw error;
           if (data?.contentImage2?.[0]) {
-            console.log('Expanding content image 2...');
-            const expandedImage = await expandImage(data.contentImage2[0]);
-            setContentImage2(expandedImage);
-            localStorage.setItem('loveStoryContentImage2', expandedImage);
+            setContentImage2(data.contentImage2[0]);
+            localStorage.setItem('loveStoryContentImage2', data.contentImage2[0]);
           }
         } catch (error) {
-          console.error('Error regenerating/expanding content image 2:', error);
+          console.error('Error regenerating content image 2:', error);
           toast({
             title: "Error regenerating image",
             description: "Please try again",
@@ -252,152 +249,328 @@ const GenerateStep = () => {
     }
   };
 
-  const expandImage = async (imageUrl: string): Promise<string> => {
-    try {
-      console.log('Starting image expansion for:', imageUrl);
-      const { data, error } = await supabase.functions.invoke('expand-image', {
-        body: { imageUrl }
-      });
-
-      if (error) {
-        console.error('Error from expand-image function:', error);
-        throw error;
-      }
-
-      if (!data?.imageData) {
-        console.error('No image data received from expand-image function');
-        throw new Error('Failed to receive image data');
-      }
-
-      console.log('Successfully received Base64 image data');
-      return data.imageData;
-    } catch (error) {
-      console.error('Error in expandImage:', error);
-      throw error;
-    }
-  };
-
-  const handleGenericContentRegeneration = async (index: number) => {
-    console.log(`Starting content regeneration for index ${index}`);
-    const stateSetters = {
-      3: setContentImage3,
-      4: setContentImage4,
-      5: setContentImage5,
-      6: setContentImage6,
-      7: setContentImage7,
-      8: setContentImage8,
-      9: setContentImage9,
-      10: setContentImage10,
-      11: setContentImage11
-    };
-
-    const loadingSetters = {
-      3: setIsGeneratingContent3,
-      4: setIsGeneratingContent4,
-      5: setIsGeneratingContent5,
-      6: setIsGeneratingContent6,
-      7: setIsGeneratingContent7,
-      8: setIsGeneratingContent8,
-      9: setIsGeneratingContent9,
-      10: setIsGeneratingContent10,
-      11: setIsGeneratingContent11
-    };
-
-    const setContentImage = stateSetters[index as keyof typeof stateSetters];
-    const setIsGenerating = loadingSetters[index as keyof typeof loadingSetters];
-
-    if (!setContentImage || !setIsGenerating) {
-      console.error(`Invalid index ${index} for content regeneration`);
-      return;
-    }
-
-    const contentKey = `loveStoryContentImage${index}`;
-    localStorage.removeItem(contentKey);
-    
+  const handleRegenerateContent3 = async () => {
+    localStorage.removeItem('loveStoryContentImage3');
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
     const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
-    
-    if (!savedPrompts || !partnerPhoto) {
-      console.error('Missing required prompts or partner photo');
-      toast({
-        title: "Error regenerating image",
-        description: "Missing required information",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      setIsGenerating(true);
+    if (savedPrompts && partnerPhoto) {
       const prompts = JSON.parse(savedPrompts);
-      if (!prompts || !prompts[index]) {
-        throw new Error(`No prompt found for index ${index}`);
-      }
-
-      const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-        body: { 
-          prompt: prompts[index].prompt, 
-          photo: partnerPhoto,
-          contentIndex: index 
+      if (prompts && prompts.length > 3) {
+        setIsGeneratingContent3(true);
+        try {
+          console.log('Generating content 3 with prompt:', prompts[3].prompt);
+          const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+            body: { prompt: prompts[3].prompt, photo: partnerPhoto, contentIndex: 3 }
+          });
+          
+          if (error) throw error;
+          console.log('Content 3 generation response:', data);
+          
+          const contentImage = data?.contentImage3?.[0] || data?.output?.[0];
+          if (contentImage) {
+            setContentImage3(contentImage);
+            localStorage.setItem('loveStoryContentImage3', contentImage);
+          }
+        } catch (error) {
+          console.error('Error regenerating content image 3:', error);
+          toast({
+            title: "Error regenerating image",
+            description: "Please try again",
+            variant: "destructive",
+          });
+        } finally {
+          setIsGeneratingContent3(false);
         }
-      });
-      
-      if (error) throw error;
-      
-      let imageUrl = data?.[`contentImage${index}`]?.[0] || data?.output?.[0];
-      if (!imageUrl) {
-        throw new Error('No image generated');
       }
-
-      console.log(`Successfully generated image for content ${index}:`, imageUrl);
-
-      const expandedImageData = await expandImage(imageUrl);
-      console.log(`Successfully expanded image for content ${index}`);
-      
-      setContentImage(expandedImageData);
-      localStorage.setItem(contentKey, expandedImageData);
-      
-      toast({
-        title: "Image regenerated",
-        description: "Your image has been successfully updated",
-      });
-    } catch (error) {
-      console.error(`Error in content regeneration for index ${index}:`, error);
-      toast({
-        title: "Error regenerating image",
-        description: error instanceof Error ? error.message : "Please try again",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGenerating(false);
     }
   };
 
-  const generateContentConfigs = () => {
-    const configs = [
-      {
-        image: contentImage2,
-        isGenerating: isGeneratingContent2,
-        handler: handleRegenerateContent2
-      }
-    ];
-    
-    const additionalConfigs = Array.from({ length: 9 }, (_, i) => {
-      const index = i + 3;
-      const imageKey = `contentImage${index}` as keyof typeof GenerateStep.prototype;
-      const loadingKey = `isGeneratingContent${index}` as keyof typeof GenerateStep.prototype;
-      
-      return {
-        image: eval(`contentImage${index}`),
-        isGenerating: eval(`isGeneratingContent${index}`),
-        handler: () => {
-          console.log(`Triggering regeneration for content ${index}`);
-          return handleGenericContentRegeneration(index);
+  const handleRegenerateContent4 = async () => {
+    localStorage.removeItem('loveStoryContentImage4');
+    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    if (savedPrompts && partnerPhoto) {
+      const prompts = JSON.parse(savedPrompts);
+      if (prompts && prompts.length > 4) {
+        setIsGeneratingContent4(true);
+        try {
+          console.log('Generating content 4 with prompt:', prompts[4].prompt);
+          const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+            body: { prompt: prompts[4].prompt, photo: partnerPhoto, contentIndex: 4 }
+          });
+          
+          if (error) throw error;
+          console.log('Content 4 generation response:', data);
+          
+          const contentImage = data?.contentImage4?.[0] || data?.output?.[0];
+          if (contentImage) {
+            setContentImage4(contentImage);
+            localStorage.setItem('loveStoryContentImage4', contentImage);
+          }
+        } catch (error) {
+          console.error('Error regenerating content image 4:', error);
+          toast({
+            title: "Error regenerating image",
+            description: "Please try again",
+            variant: "destructive",
+          });
+        } finally {
+          setIsGeneratingContent4(false);
         }
-      };
-    });
+      }
+    }
+  };
 
-    return [...configs, ...additionalConfigs];
+  const handleRegenerateContent5 = async () => {
+    localStorage.removeItem('loveStoryContentImage5');
+    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    if (savedPrompts && partnerPhoto) {
+      const prompts = JSON.parse(savedPrompts);
+      if (prompts && prompts.length > 5) {
+        setIsGeneratingContent5(true);
+        try {
+          console.log('Generating content 5 with prompt:', prompts[5].prompt);
+          const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+            body: { prompt: prompts[5].prompt, photo: partnerPhoto, contentIndex: 5 }
+          });
+          
+          if (error) throw error;
+          console.log('Content 5 generation response:', data);
+          
+          const contentImage = data?.contentImage5?.[0] || data?.output?.[0];
+          if (contentImage) {
+            setContentImage5(contentImage);
+            localStorage.setItem('loveStoryContentImage5', contentImage);
+          }
+        } catch (error) {
+          console.error('Error regenerating content image 5:', error);
+          toast({
+            title: "Error regenerating image",
+            description: "Please try again",
+            variant: "destructive",
+          });
+        } finally {
+          setIsGeneratingContent5(false);
+        }
+      }
+    }
+  };
+
+  const handleRegenerateContent6 = async () => {
+    localStorage.removeItem('loveStoryContentImage6');
+    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    if (savedPrompts && partnerPhoto) {
+      const prompts = JSON.parse(savedPrompts);
+      if (prompts && prompts.length > 6) {
+        setIsGeneratingContent6(true);
+        try {
+          console.log('Generating content 6 with prompt:', prompts[6].prompt);
+          const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+            body: { prompt: prompts[6].prompt, photo: partnerPhoto, contentIndex: 6 }
+          });
+          
+          if (error) throw error;
+          console.log('Content 6 generation response:', data);
+          
+          const contentImage = data?.contentImage6?.[0] || data?.output?.[0];
+          if (contentImage) {
+            setContentImage6(contentImage);
+            localStorage.setItem('loveStoryContentImage6', contentImage);
+          }
+        } catch (error) {
+          console.error('Error regenerating content image 6:', error);
+          toast({
+            title: "Error regenerating image",
+            description: "Please try again",
+            variant: "destructive",
+          });
+        } finally {
+          setIsGeneratingContent6(false);
+        }
+      }
+    }
+  };
+
+  const handleRegenerateContent7 = async () => {
+    localStorage.removeItem('loveStoryContentImage7');
+    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    if (savedPrompts && partnerPhoto) {
+      const prompts = JSON.parse(savedPrompts);
+      if (prompts && prompts.length > 7) {
+        setIsGeneratingContent7(true);
+        try {
+          console.log('Generating content 7 with prompt:', prompts[7].prompt);
+          const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+            body: { prompt: prompts[7].prompt, photo: partnerPhoto, contentIndex: 7 }
+          });
+          
+          if (error) throw error;
+          console.log('Content 7 generation response:', data);
+          
+          const contentImage = data?.contentImage7?.[0] || data?.output?.[0];
+          if (contentImage) {
+            setContentImage7(contentImage);
+            localStorage.setItem('loveStoryContentImage7', contentImage);
+          }
+        } catch (error) {
+          console.error('Error regenerating content image 7:', error);
+          toast({
+            title: "Error regenerating image",
+            description: "Please try again",
+            variant: "destructive",
+          });
+        } finally {
+          setIsGeneratingContent7(false);
+        }
+      }
+    }
+  };
+
+  const handleRegenerateContent8 = async () => {
+    localStorage.removeItem('loveStoryContentImage8');
+    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    if (savedPrompts && partnerPhoto) {
+      const prompts = JSON.parse(savedPrompts);
+      if (prompts && prompts.length > 8) {
+        setIsGeneratingContent8(true);
+        try {
+          console.log('Generating content 8 with prompt:', prompts[8].prompt);
+          const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+            body: { prompt: prompts[8].prompt, photo: partnerPhoto, contentIndex: 8 }
+          });
+          
+          if (error) throw error;
+          console.log('Content 8 generation response:', data);
+          
+          const contentImage = data?.contentImage8?.[0] || data?.output?.[0];
+          if (contentImage) {
+            setContentImage8(contentImage);
+            localStorage.setItem('loveStoryContentImage8', contentImage);
+          }
+        } catch (error) {
+          console.error('Error regenerating content image 8:', error);
+          toast({
+            title: "Error regenerating image",
+            description: "Please try again",
+            variant: "destructive",
+          });
+        } finally {
+          setIsGeneratingContent8(false);
+        }
+      }
+    }
+  };
+
+  const handleRegenerateContent9 = async () => {
+    localStorage.removeItem('loveStoryContentImage9');
+    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    if (savedPrompts && partnerPhoto) {
+      const prompts = JSON.parse(savedPrompts);
+      if (prompts && prompts.length > 9) {
+        setIsGeneratingContent9(true);
+        try {
+          console.log('Generating content 9 with prompt:', prompts[9].prompt);
+          const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+            body: { prompt: prompts[9].prompt, photo: partnerPhoto, contentIndex: 9 }
+          });
+          
+          if (error) throw error;
+          console.log('Content 9 generation response:', data);
+          
+          const contentImage = data?.contentImage9?.[0] || data?.output?.[0];
+          if (contentImage) {
+            setContentImage9(contentImage);
+            localStorage.setItem('loveStoryContentImage9', contentImage);
+          }
+        } catch (error) {
+          console.error('Error regenerating content image 9:', error);
+          toast({
+            title: "Error regenerating image",
+            description: "Please try again",
+            variant: "destructive",
+          });
+        } finally {
+          setIsGeneratingContent9(false);
+        }
+      }
+    }
+  };
+
+  const handleRegenerateContent10 = async () => {
+    localStorage.removeItem('loveStoryContentImage10');
+    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    if (savedPrompts && partnerPhoto) {
+      const prompts = JSON.parse(savedPrompts);
+      if (prompts && prompts.length > 10) {
+        setIsGeneratingContent10(true);
+        try {
+          console.log('Generating content 10 with prompt:', prompts[10].prompt);
+          const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+            body: { prompt: prompts[10].prompt, photo: partnerPhoto, contentIndex: 10 }
+          });
+          
+          if (error) throw error;
+          console.log('Content 10 generation response:', data);
+          
+          const contentImage = data?.contentImage10?.[0] || data?.output?.[0];
+          if (contentImage) {
+            setContentImage10(contentImage);
+            localStorage.setItem('loveStoryContentImage10', contentImage);
+          }
+        } catch (error) {
+          console.error('Error regenerating content image 10:', error);
+          toast({
+            title: "Error regenerating image",
+            description: "Please try again",
+            variant: "destructive",
+          });
+        } finally {
+          setIsGeneratingContent10(false);
+        }
+      }
+    }
+  };
+
+  const handleRegenerateContent11 = async () => {
+    localStorage.removeItem('loveStoryContentImage11');
+    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    if (savedPrompts && partnerPhoto) {
+      const prompts = JSON.parse(savedPrompts);
+      if (prompts && prompts.length > 11) {
+        setIsGeneratingContent11(true);
+        try {
+          console.log('Generating content 11 with prompt:', prompts[11].prompt);
+          const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+            body: { prompt: prompts[11].prompt, photo: partnerPhoto, contentIndex: 11 }
+          });
+          
+          if (error) throw error;
+          console.log('Content 11 generation response:', data);
+          
+          const contentImage = data?.contentImage11?.[0] || data?.output?.[0];
+          if (contentImage) {
+            setContentImage11(contentImage);
+            localStorage.setItem('loveStoryContentImage11', contentImage);
+          }
+        } catch (error) {
+          console.error('Error regenerating content image 11:', error);
+          toast({
+            title: "Error regenerating image",
+            description: "Please try again",
+            variant: "destructive",
+          });
+        } finally {
+          setIsGeneratingContent11(false);
+        }
+      }
+    }
   };
 
   return (
@@ -431,7 +604,18 @@ const GenerateStep = () => {
           showDedicationText={true}
         />
 
-        {generateContentConfigs().map((content, index) => (
+        {[
+          { image: contentImage2, isGenerating: isGeneratingContent2, handler: handleRegenerateContent2 },
+          { image: contentImage3, isGenerating: isGeneratingContent3, handler: handleRegenerateContent3 },
+          { image: contentImage4, isGenerating: isGeneratingContent4, handler: handleRegenerateContent4 },
+          { image: contentImage5, isGenerating: isGeneratingContent5, handler: handleRegenerateContent5 },
+          { image: contentImage6, isGenerating: isGeneratingContent6, handler: handleRegenerateContent6 },
+          { image: contentImage7, isGenerating: isGeneratingContent7, handler: handleRegenerateContent7 },
+          { image: contentImage8, isGenerating: isGeneratingContent8, handler: handleRegenerateContent8 },
+          { image: contentImage9, isGenerating: isGeneratingContent9, handler: handleRegenerateContent9 },
+          { image: contentImage10, isGenerating: isGeneratingContent10, handler: handleRegenerateContent10 },
+          { image: contentImage11, isGenerating: isGeneratingContent11, handler: handleRegenerateContent11 },
+        ].map((content, index) => (
           <ContentImageCard
             key={index + 2}
             image={content.image}
