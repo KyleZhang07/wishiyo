@@ -6,8 +6,19 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// 正确的 LightX API 端点
 const LIGHTX_API_ENDPOINT = "https://api.lightxeditor.com/external/api/v1/expand-photo";
+
+// 可靠的二进制转Base64函数
+async function blobToBase64(blob: Blob): Promise<string> {
+  const buffer = await blob.arrayBuffer();
+  // 使用更可靠的Uint8Array方法处理二进制数据
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -16,54 +27,36 @@ serve(async (req) => {
 
   try {
     const { imageUrl } = await req.json();
-    console.log('Received image URL:', imageUrl);
+    console.log('Processing request for URL:', imageUrl);
     
     if (!imageUrl) {
       throw new Error('No image URL provided');
     }
 
-    console.log('Fetching image from URL...');
+    // 下载原始图片
+    console.log('Fetching original image...');
     const imageResponse = await fetch(imageUrl);
     if (!imageResponse.ok) {
       throw new Error(`Failed to fetch image: ${imageResponse.statusText}`);
     }
-
+    
     const imageBlob = await imageResponse.blob();
-    console.log('Image downloaded successfully');
+    console.log('Original image downloaded, size:', imageBlob.size);
 
-    // 创建一个临时的 img 元素来获取图片尺寸
-    const img = new Image();
-    const imgLoaded = new Promise((resolve, reject) => {
-      img.onload = () => resolve(null);
-      img.onerror = () => reject(new Error('Failed to load image'));
-    });
-    img.src = URL.createObjectURL(imageBlob);
-    await imgLoaded;
-
-    // 计算需要扩展的像素值使其达到 1:2 的比例
-    const width = img.width;
-    const targetWidth = width * 2; // 目标宽度是原始宽度的2倍
-    const paddingLeft = targetWidth - width; // 需要向左扩展的像素值
-
-    // 准备 LightX API 请求数据
+    // 准备LightX API请求
     const formData = new FormData();
     formData.append('imageFile', imageBlob, 'image.png');
-    // 使用详细的提示词来确保生成干净的背景
-    formData.append('textPrompt', 'clean minimalist background, solid color, empty space for text, no objects, no patterns, simple design, suitable for text overlay, pristine surface, clear area, uncluttered space');
-    // 设置扩展参数：只向左扩展到1:2比例
-    formData.append('leftPadding', paddingLeft.toString());
-    formData.append('rightPadding', '0');
-    formData.append('topPadding', '0');
-    formData.append('bottomPadding', '0');
+    formData.append('prompt', 'extend image to the left: generate a clean, clear, empty background with solid colors and no objects, perfect for text overlay');
+    formData.append('expand_ratio', '2.0');
+    formData.append('expand_direction', 'left');
 
     const LIGHTX_API_KEY = Deno.env.get('LIGHTX_API_KEY');
     if (!LIGHTX_API_KEY) {
       throw new Error('LightX API key not configured');
     }
 
+    // 调用LightX API
     console.log('Calling LightX API...');
-    console.log('Left padding:', paddingLeft);
-    
     const lightXResponse = await fetch(LIGHTX_API_ENDPOINT, {
       method: 'POST',
       headers: {
@@ -78,20 +71,44 @@ serve(async (req) => {
       throw new Error(`LightX API error: ${lightXResponse.status} ${lightXResponse.statusText}`);
     }
 
-    console.log('Successfully received expanded image');
-    const expandedImage = await lightXResponse.blob();
+    // 处理扩展后的图片
+    console.log('Processing expanded image...');
+    const expandedBlob = await lightXResponse.blob();
+    console.log('Expanded image received, size:', expandedBlob.size, 'type:', expandedBlob.type);
+
+    // 转换为Base64
+    const base64Data = await blobToBase64(expandedBlob);
+    const contentType = expandedBlob.type || 'image/png';
+    const dataUri = `data:${contentType};base64,${base64Data}`;
     
-    return new Response(expandedImage, {
-      headers: {
-        ...corsHeaders,
-        'Content-Type': expandedImage.type,
+    console.log('Image successfully converted to Base64, length:', dataUri.length);
+    
+    // 验证数据格式
+    if (!dataUri.startsWith('data:image/')) {
+      throw new Error('Invalid conversion result: data URI does not start with data:image/');
+    }
+
+    return new Response(
+      JSON.stringify({ imageData: dataUri }),
+      {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
       }
-    });
+    );
+
   } catch (error) {
     console.error('Error in expand-image function:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500
-    });
+    return new Response(
+      JSON.stringify({ 
+        error: error.message,
+        details: error.stack 
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500
+      }
+    );
   }
 });
