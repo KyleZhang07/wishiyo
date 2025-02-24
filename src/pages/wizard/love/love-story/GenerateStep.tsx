@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
@@ -568,6 +567,103 @@ const GenerateStep = () => {
           });
         } finally {
           setIsGeneratingContent11(false);
+        }
+      }
+    }
+  };
+
+  const expandImage = async (imageUrl: string): Promise<string> => {
+    try {
+      console.log('Expanding image:', imageUrl);
+      const response = await supabase.functions.invoke('expand-image', {
+        body: { imageUrl }
+      });
+
+      if (response.error) {
+        throw response.error;
+      }
+
+      return URL.createObjectURL(await response.data.blob());
+    } catch (error) {
+      console.error('Error expanding image:', error);
+      throw error;
+    }
+  };
+
+  const handleGenericContentRegeneration = async (index: number) => {
+    const stateSetters = {
+      3: setContentImage3,
+      4: setContentImage4,
+      5: setContentImage5,
+      6: setContentImage6,
+      7: setContentImage7,
+      8: setContentImage8,
+      9: setContentImage9,
+      10: setContentImage10,
+      11: setContentImage11
+    };
+
+    const loadingSetters = {
+      3: setIsGeneratingContent3,
+      4: setIsGeneratingContent4,
+      5: setIsGeneratingContent5,
+      6: setIsGeneratingContent6,
+      7: setIsGeneratingContent7,
+      8: setIsGeneratingContent8,
+      9: setIsGeneratingContent9,
+      10: setIsGeneratingContent10,
+      11: setIsGeneratingContent11
+    };
+
+    const setContentImage = stateSetters[index as keyof typeof stateSetters];
+    const setIsGenerating = loadingSetters[index as keyof typeof loadingSetters];
+
+    if (!setContentImage || !setIsGenerating) return;
+
+    const contentKey = `loveStoryContentImage${index}`;
+    localStorage.removeItem(contentKey);
+    
+    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    
+    if (savedPrompts && partnerPhoto) {
+      const prompts = JSON.parse(savedPrompts);
+      if (prompts && prompts.length > index) {
+        setIsGenerating(true);
+        try {
+          const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+            body: { 
+              prompt: prompts[index].prompt, 
+              photo: partnerPhoto,
+              contentIndex: index 
+            }
+          });
+          
+          if (error) throw error;
+          
+          let contentImage = data?.[`contentImage${index}`]?.[0] || data?.output?.[0];
+          if (!contentImage) throw new Error('No image generated');
+
+          console.log(`Expanding content image ${index}...`);
+          try {
+            const expandedImage = await expandImage(contentImage);
+            console.log(`Content ${index} image expanded successfully`);
+            setContentImage(expandedImage);
+            localStorage.setItem(contentKey, expandedImage);
+          } catch (expandError) {
+            console.error(`Error expanding content ${index} image:`, expandError);
+            setContentImage(contentImage);
+            localStorage.setItem(contentKey, contentImage);
+          }
+        } catch (error) {
+          console.error(`Error regenerating content image ${index}:`, error);
+          toast({
+            title: "Error regenerating image",
+            description: "Please try again",
+            variant: "destructive",
+          });
+        } finally {
+          setIsGenerating(false);
         }
       }
     }
