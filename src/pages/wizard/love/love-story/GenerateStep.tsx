@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
@@ -255,7 +256,7 @@ const GenerateStep = () => {
   const expandImage = async (imageUrl: string): Promise<string> => {
     try {
       console.log('Starting image expansion for:', imageUrl);
-      const { data, error } = await supabase.functions.invoke('expand-image', {
+      const { data: responseData, error } = await supabase.functions.invoke('expand-image', {
         body: { imageUrl }
       });
 
@@ -264,13 +265,13 @@ const GenerateStep = () => {
         throw error;
       }
 
-      if (!data?.imageData) {
+      if (!responseData?.imageData) {
         console.error('No image data received from expand-image function');
         throw new Error('Failed to receive image data');
       }
 
       console.log('Successfully received Base64 image data');
-      return data.imageData;
+      return responseData.imageData;
     } catch (error) {
       console.error('Error in expandImage:', error);
       throw error;
@@ -350,9 +351,14 @@ const GenerateStep = () => {
       }
 
       console.log(`Successfully generated image for content ${index}:`, imageUrl);
-
+      
+      // 扩展图片并检查返回的数据
+      console.log(`Starting expansion for content ${index}`);
       const expandedImageData = await expandImage(imageUrl);
-      console.log(`Successfully expanded image for content ${index}`);
+      console.log(`Successfully expanded image for content ${index}`, {
+        dataLength: expandedImageData.length,
+        dataStart: expandedImageData.substring(0, 50)
+      });
       
       setContentImage(expandedImageData);
       localStorage.setItem(contentKey, expandedImageData);

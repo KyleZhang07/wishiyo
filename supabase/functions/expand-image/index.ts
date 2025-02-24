@@ -8,14 +8,6 @@ const corsHeaders = {
 
 const LIGHTX_API_ENDPOINT = "https://api.lightxeditor.com/external/api/v1/expand-photo";
 
-// Helper function to convert Blob to Base64
-async function blobToBase64(blob: Blob): Promise<string> {
-  const arrayBuffer = await blob.arrayBuffer();
-  const uint8Array = new Uint8Array(arrayBuffer);
-  const binary = uint8Array.reduce((acc, byte) => acc + String.fromCharCode(byte), '');
-  return btoa(binary);
-}
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -49,12 +41,7 @@ serve(async (req) => {
       throw new Error('LightX API key not configured');
     }
 
-    console.log('Calling LightX API with params:', {
-      expand_ratio: '2.0',
-      expand_direction: 'left',
-      prompt: formData.get('prompt')
-    });
-    
+    console.log('Calling LightX API...');
     const lightXResponse = await fetch(LIGHTX_API_ENDPOINT, {
       method: 'POST',
       headers: {
@@ -71,25 +58,29 @@ serve(async (req) => {
 
     console.log('Successfully received expanded image from LightX API');
     const expandedImageBlob = await lightXResponse.blob();
+    const arrayBuffer = await expandedImageBlob.arrayBuffer();
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
     
-    // Convert Blob to Base64 and return as JSON
-    const base64Data = await blobToBase64(expandedImageBlob);
-    const response = {
-      imageData: `data:${expandedImageBlob.type};base64,${base64Data}`
-    };
-
-    return new Response(JSON.stringify(response), {
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'application/json'
+    return new Response(
+      JSON.stringify({ 
+        imageData: `data:${expandedImageBlob.type};base64,${base64}` 
+      }), 
+      {
+        headers: { 
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
       }
-    });
+    );
 
   } catch (error) {
     console.error('Error in expand-image function:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500
-    });
+    return new Response(
+      JSON.stringify({ error: error.message }), 
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500
+      }
+    );
   }
 });
