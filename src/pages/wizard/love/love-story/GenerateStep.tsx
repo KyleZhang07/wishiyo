@@ -91,17 +91,20 @@ const GenerateStep = () => {
   const expandImage = async (imageUrl: string): Promise<string> => {
     try {
       console.log('Expanding image:', imageUrl);
-      const response = await supabase.functions.invoke('expand-image', {
+      const { data, error } = await supabase.functions.invoke('expand-image', {
         body: { imageUrl }
       });
 
-      if (response.error) {
-        throw response.error;
+      if (error) {
+        throw error;
       }
 
-      // 创建一个新的 Blob 对象
-      const base64Data = response.data;
-      const binaryString = window.atob(base64Data);
+      if (!data || !data.base64) {
+        throw new Error('Invalid response from expand-image function');
+      }
+
+      // 从 base64 字符串创建 Blob
+      const binaryString = window.atob(data.base64);
       const bytes = new Uint8Array(binaryString.length);
       for (let i = 0; i < binaryString.length; i++) {
         bytes[i] = binaryString.charCodeAt(i);

@@ -17,7 +17,6 @@ serve(async (req) => {
     if (!imageUrl) {
       throw new Error('No image URL provided');
     }
-    // 下载图片
     console.log('Fetching image from URL...');
     const imageResponse = await fetch(imageUrl);
     if (!imageResponse.ok) {
@@ -26,15 +25,14 @@ serve(async (req) => {
     const imageBlob = await imageResponse.blob();
     console.log('Image downloaded successfully');
     
-    // 构建 PhotoRoom API 的 FormData 数据
     const formData = new FormData();
     formData.append('imageFile', imageBlob, 'image.png');
-    formData.append('outputSize', '2048x1024'); // 输出尺寸（格式为 "宽x高"，可根据需求修改）
+    formData.append('outputSize', '2048x1024');
     formData.append('referenceBox', 'originalImage');
     formData.append('removeBackground', 'false');
     formData.append('expand.mode', 'ai.auto');
-    formData.append('horizontalAlignment', 'right'); // 可选值：left, center, right
-    formData.append('verticalAlignment', 'top');       // 可选值：top, center, bottom
+    formData.append('horizontalAlignment', 'right');
+    formData.append('verticalAlignment', 'top');
     
     console.log('Calling PhotoRoom API...');
     const PHOTOROOM_API_KEY = Deno.env.get('PHOTOROOM_API_KEY');
@@ -42,7 +40,6 @@ serve(async (req) => {
       throw new Error('PhotoRoom API key not configured');
     }
     
-    // 调用正确的 PhotoRoom API 端点（v2）
     const photoRoomResponse = await fetch('https://image-api.photoroom.com/v2/edit', {
       method: 'POST',
       headers: {
@@ -58,12 +55,19 @@ serve(async (req) => {
     }
     console.log('Successfully received expanded image');
     
-    // 返回处理后的图片
-    return new Response(await photoRoomResponse.blob(), {
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'image/png'
-      }
+    // 将返回的 Blob 转换为 Base64 字符串
+    const blob = await photoRoomResponse.blob();
+    const arrayBuffer = await blob.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
+    let binaryString = "";
+    for (let i = 0; i < uint8Array.length; i++) {
+      binaryString += String.fromCharCode(uint8Array[i]);
+    }
+    const base64 = btoa(binaryString);
+    
+    // 返回 JSON 格式数据
+    return new Response(JSON.stringify({ base64 }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   } catch (error) {
     console.error('Error in expand-image function:', error);
