@@ -257,13 +257,18 @@ const GenerateStep = () => {
       if (prompts && prompts.length > 3) {
         setIsGeneratingContent3(true);
         try {
+          console.log('Generating content 3 with prompt:', prompts[3].prompt);
           const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-            body: { content3Prompt: prompts[3].prompt, photo: partnerPhoto }
+            body: { prompt: prompts[3].prompt, photo: partnerPhoto, contentIndex: 3 }
           });
+          
           if (error) throw error;
-          if (data?.contentImage3?.[0]) {
-            setContentImage3(data.contentImage3[0]);
-            localStorage.setItem('loveStoryContentImage3', data.contentImage3[0]);
+          console.log('Content 3 generation response:', data);
+          
+          const contentImage = data?.contentImage3?.[0] || data?.output?.[0];
+          if (contentImage) {
+            setContentImage3(contentImage);
+            localStorage.setItem('loveStoryContentImage3', contentImage);
           }
         } catch (error) {
           console.error('Error regenerating content image 3:', error);
@@ -288,13 +293,18 @@ const GenerateStep = () => {
       if (prompts && prompts.length > 4) {
         setIsGeneratingContent4(true);
         try {
+          console.log('Generating content 4 with prompt:', prompts[4].prompt);
           const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-            body: { content4Prompt: prompts[4].prompt, photo: partnerPhoto }
+            body: { prompt: prompts[4].prompt, photo: partnerPhoto, contentIndex: 4 }
           });
+          
           if (error) throw error;
-          if (data?.contentImage4?.[0]) {
-            setContentImage4(data.contentImage4[0]);
-            localStorage.setItem('loveStoryContentImage4', data.contentImage4[0]);
+          console.log('Content 4 generation response:', data);
+          
+          const contentImage = data?.contentImage4?.[0] || data?.output?.[0];
+          if (contentImage) {
+            setContentImage4(contentImage);
+            localStorage.setItem('loveStoryContentImage4', contentImage);
           }
         } catch (error) {
           console.error('Error regenerating content image 4:', error);
@@ -319,13 +329,18 @@ const GenerateStep = () => {
       if (prompts && prompts.length > 5) {
         setIsGeneratingContent5(true);
         try {
+          console.log('Generating content 5 with prompt:', prompts[5].prompt);
           const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-            body: { content5Prompt: prompts[5].prompt, photo: partnerPhoto }
+            body: { prompt: prompts[5].prompt, photo: partnerPhoto, contentIndex: 5 }
           });
+          
           if (error) throw error;
-          if (data?.contentImage5?.[0]) {
-            setContentImage5(data.contentImage5[0]);
-            localStorage.setItem('loveStoryContentImage5', data.contentImage5[0]);
+          console.log('Content 5 generation response:', data);
+          
+          const contentImage = data?.contentImage5?.[0] || data?.output?.[0];
+          if (contentImage) {
+            setContentImage5(contentImage);
+            localStorage.setItem('loveStoryContentImage5', contentImage);
           }
         } catch (error) {
           console.error('Error regenerating content image 5:', error);
@@ -350,13 +365,18 @@ const GenerateStep = () => {
       if (prompts && prompts.length > 6) {
         setIsGeneratingContent6(true);
         try {
+          console.log('Generating content 6 with prompt:', prompts[6].prompt);
           const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-            body: { content6Prompt: prompts[6].prompt, photo: partnerPhoto }
+            body: { prompt: prompts[6].prompt, photo: partnerPhoto, contentIndex: 6 }
           });
+          
           if (error) throw error;
-          if (data?.contentImage6?.[0]) {
-            setContentImage6(data.contentImage6[0]);
-            localStorage.setItem('loveStoryContentImage6', data.contentImage6[0]);
+          console.log('Content 6 generation response:', data);
+          
+          const contentImage = data?.contentImage6?.[0] || data?.output?.[0];
+          if (contentImage) {
+            setContentImage6(contentImage);
+            localStorage.setItem('loveStoryContentImage6', contentImage);
           }
         } catch (error) {
           console.error('Error regenerating content image 6:', error);
