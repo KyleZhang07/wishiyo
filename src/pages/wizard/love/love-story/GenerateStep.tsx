@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
@@ -88,6 +87,23 @@ const GenerateStep = () => {
     }
   }, []);
 
+  const expandImage = async (imageUrl: string): Promise<string> => {
+    try {
+      const response = await supabase.functions.invoke('expand-image', {
+        body: { imageUrl }
+      });
+
+      if (response.error) throw response.error;
+
+      // Convert the response to a blob URL
+      const blob = await response.data.blob();
+      return URL.createObjectURL(blob);
+    } catch (error) {
+      console.error('Error expanding image:', error);
+      throw error;
+    }
+  };
+
   const generateImages = async (coverPrompt: string, content1Prompt: string, content2Prompt: string, photo: string) => {
     setIsGeneratingCover(true);
     setIsGeneratingContent1(true);
@@ -120,8 +136,10 @@ const GenerateStep = () => {
       }
 
       if (data?.contentImage2?.[0]) {
-        setContentImage2(data.contentImage2[0]);
-        localStorage.setItem('loveStoryContentImage2', data.contentImage2[0]);
+        let contentImage2 = data.contentImage2[0];
+        contentImage2 = await expandImage(contentImage2);
+        setContentImage2(contentImage2);
+        localStorage.setItem('loveStoryContentImage2', contentImage2);
       }
 
       toast({
@@ -227,14 +245,21 @@ const GenerateStep = () => {
       if (prompts && prompts.length > 2) {
         setIsGeneratingContent2(true);
         try {
+          // First generate the image
           const { data, error } = await supabase.functions.invoke('generate-love-cover', {
             body: { content2Prompt: prompts[2].prompt, photo: partnerPhoto }
           });
+          
           if (error) throw error;
-          if (data?.contentImage2?.[0]) {
-            setContentImage2(data.contentImage2[0]);
-            localStorage.setItem('loveStoryContentImage2', data.contentImage2[0]);
-          }
+          
+          let contentImage = data?.contentImage2?.[0];
+          if (!contentImage) throw new Error('No image generated');
+
+          // Then expand the image
+          contentImage = await expandImage(contentImage);
+          
+          setContentImage2(contentImage);
+          localStorage.setItem('loveStoryContentImage2', contentImage);
         } catch (error) {
           console.error('Error regenerating content image 2:', error);
           toast({
@@ -249,6 +274,7 @@ const GenerateStep = () => {
     }
   };
 
+  // Similar pattern for content3 through content11
   const handleRegenerateContent3 = async () => {
     localStorage.removeItem('loveStoryContentImage3');
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
@@ -264,13 +290,15 @@ const GenerateStep = () => {
           });
           
           if (error) throw error;
-          console.log('Content 3 generation response:', data);
           
-          const contentImage = data?.contentImage3?.[0] || data?.output?.[0];
-          if (contentImage) {
-            setContentImage3(contentImage);
-            localStorage.setItem('loveStoryContentImage3', contentImage);
-          }
+          let contentImage = data?.contentImage3?.[0] || data?.output?.[0];
+          if (!contentImage) throw new Error('No image generated');
+
+          // Expand the image
+          contentImage = await expandImage(contentImage);
+          
+          setContentImage3(contentImage);
+          localStorage.setItem('loveStoryContentImage3', contentImage);
         } catch (error) {
           console.error('Error regenerating content image 3:', error);
           toast({
@@ -303,10 +331,13 @@ const GenerateStep = () => {
           console.log('Content 4 generation response:', data);
           
           const contentImage = data?.contentImage4?.[0] || data?.output?.[0];
-          if (contentImage) {
-            setContentImage4(contentImage);
-            localStorage.setItem('loveStoryContentImage4', contentImage);
+          if (!contentImage) {
+            throw new Error('No image generated');
           }
+
+          const expandedImage = await expandImage(contentImage);
+          setContentImage4(expandedImage);
+          localStorage.setItem('loveStoryContentImage4', expandedImage);
         } catch (error) {
           console.error('Error regenerating content image 4:', error);
           toast({
@@ -339,10 +370,13 @@ const GenerateStep = () => {
           console.log('Content 5 generation response:', data);
           
           const contentImage = data?.contentImage5?.[0] || data?.output?.[0];
-          if (contentImage) {
-            setContentImage5(contentImage);
-            localStorage.setItem('loveStoryContentImage5', contentImage);
+          if (!contentImage) {
+            throw new Error('No image generated');
           }
+
+          const expandedImage = await expandImage(contentImage);
+          setContentImage5(expandedImage);
+          localStorage.setItem('loveStoryContentImage5', expandedImage);
         } catch (error) {
           console.error('Error regenerating content image 5:', error);
           toast({
@@ -375,10 +409,13 @@ const GenerateStep = () => {
           console.log('Content 6 generation response:', data);
           
           const contentImage = data?.contentImage6?.[0] || data?.output?.[0];
-          if (contentImage) {
-            setContentImage6(contentImage);
-            localStorage.setItem('loveStoryContentImage6', contentImage);
+          if (!contentImage) {
+            throw new Error('No image generated');
           }
+
+          const expandedImage = await expandImage(contentImage);
+          setContentImage6(expandedImage);
+          localStorage.setItem('loveStoryContentImage6', expandedImage);
         } catch (error) {
           console.error('Error regenerating content image 6:', error);
           toast({
@@ -411,10 +448,13 @@ const GenerateStep = () => {
           console.log('Content 7 generation response:', data);
           
           const contentImage = data?.contentImage7?.[0] || data?.output?.[0];
-          if (contentImage) {
-            setContentImage7(contentImage);
-            localStorage.setItem('loveStoryContentImage7', contentImage);
+          if (!contentImage) {
+            throw new Error('No image generated');
           }
+
+          const expandedImage = await expandImage(contentImage);
+          setContentImage7(expandedImage);
+          localStorage.setItem('loveStoryContentImage7', expandedImage);
         } catch (error) {
           console.error('Error regenerating content image 7:', error);
           toast({
@@ -447,10 +487,13 @@ const GenerateStep = () => {
           console.log('Content 8 generation response:', data);
           
           const contentImage = data?.contentImage8?.[0] || data?.output?.[0];
-          if (contentImage) {
-            setContentImage8(contentImage);
-            localStorage.setItem('loveStoryContentImage8', contentImage);
+          if (!contentImage) {
+            throw new Error('No image generated');
           }
+
+          const expandedImage = await expandImage(contentImage);
+          setContentImage8(expandedImage);
+          localStorage.setItem('loveStoryContentImage8', expandedImage);
         } catch (error) {
           console.error('Error regenerating content image 8:', error);
           toast({
@@ -483,10 +526,13 @@ const GenerateStep = () => {
           console.log('Content 9 generation response:', data);
           
           const contentImage = data?.contentImage9?.[0] || data?.output?.[0];
-          if (contentImage) {
-            setContentImage9(contentImage);
-            localStorage.setItem('loveStoryContentImage9', contentImage);
+          if (!contentImage) {
+            throw new Error('No image generated');
           }
+
+          const expandedImage = await expandImage(contentImage);
+          setContentImage9(expandedImage);
+          localStorage.setItem('loveStoryContentImage9', expandedImage);
         } catch (error) {
           console.error('Error regenerating content image 9:', error);
           toast({
@@ -519,10 +565,13 @@ const GenerateStep = () => {
           console.log('Content 10 generation response:', data);
           
           const contentImage = data?.contentImage10?.[0] || data?.output?.[0];
-          if (contentImage) {
-            setContentImage10(contentImage);
-            localStorage.setItem('loveStoryContentImage10', contentImage);
+          if (!contentImage) {
+            throw new Error('No image generated');
           }
+
+          const expandedImage = await expandImage(contentImage);
+          setContentImage10(expandedImage);
+          localStorage.setItem('loveStoryContentImage10', expandedImage);
         } catch (error) {
           console.error('Error regenerating content image 10:', error);
           toast({
@@ -555,10 +604,13 @@ const GenerateStep = () => {
           console.log('Content 11 generation response:', data);
           
           const contentImage = data?.contentImage11?.[0] || data?.output?.[0];
-          if (contentImage) {
-            setContentImage11(contentImage);
-            localStorage.setItem('loveStoryContentImage11', contentImage);
+          if (!contentImage) {
+            throw new Error('No image generated');
           }
+
+          const expandedImage = await expandImage(contentImage);
+          setContentImage11(expandedImage);
+          localStorage.setItem('loveStoryContentImage11', expandedImage);
         } catch (error) {
           console.error('Error regenerating content image 11:', error);
           toast({
