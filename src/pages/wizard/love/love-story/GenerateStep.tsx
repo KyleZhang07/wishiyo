@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
@@ -264,11 +265,12 @@ const GenerateStep = () => {
         throw error;
       }
 
+      if (!data?.imageData) {
+        throw new Error('No image data received from expand-image function');
+      }
+
       console.log('Successfully received data from expand-image function');
-      const blob = await data.blob();
-      const objectUrl = URL.createObjectURL(blob);
-      console.log('Successfully created object URL:', objectUrl);
-      return objectUrl;
+      return data.imageData;  // 现在直接返回 Base64 格式的图片数据
     } catch (error) {
       console.error('Error in expandImage:', error);
       throw error;

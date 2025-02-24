@@ -8,6 +8,14 @@ const corsHeaders = {
 
 const LIGHTX_API_ENDPOINT = "https://api.lightxeditor.com/external/api/v1/expand-photo";
 
+// 将 Blob 转换为 Base64 字符串
+async function blobToBase64(blob: Blob): Promise<string> {
+  const arrayBuffer = await blob.arrayBuffer();
+  const uint8Array = new Uint8Array(arrayBuffer);
+  const binary = uint8Array.reduce((acc, byte) => acc + String.fromCharCode(byte), '');
+  return btoa(binary);
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -30,12 +38,12 @@ serve(async (req) => {
     const imageBlob = await imageResponse.blob();
     console.log('Image downloaded successfully');
 
-    // 构建 LightX API 请求数据，使用正确的字段名
+    // 构建 LightX API 请求数据
     const formData = new FormData();
     formData.append('imageFile', imageBlob, 'image.png');
     formData.append('prompt', 'extend image to the left: generate a clean, clear, empty background with solid colors and no objects, perfect for text overlay');
-    formData.append('expand_ratio', '2.0');  // 扩展到原图的2倍宽度
-    formData.append('expand_direction', 'left');  // 向左扩展
+    formData.append('expand_ratio', '2.0');
+    formData.append('expand_direction', 'left');
 
     const LIGHTX_API_KEY = Deno.env.get('LIGHTX_API_KEY');
     if (!LIGHTX_API_KEY) {
@@ -63,12 +71,16 @@ serve(async (req) => {
     }
 
     console.log('Successfully received expanded image from LightX API');
-    const expandedImage = await lightXResponse.blob();
+    const expandedImageBlob = await lightXResponse.blob();
     
-    return new Response(expandedImage, {
+    // 将 Blob 转换为 Base64 字符串
+    const base64Image = await blobToBase64(expandedImageBlob);
+    console.log('Successfully converted image to Base64');
+
+    return new Response(JSON.stringify({ imageData: `data:${expandedImageBlob.type};base64,${base64Image}` }), {
       headers: {
         ...corsHeaders,
-        'Content-Type': expandedImage.type,
+        'Content-Type': 'application/json',
       }
     });
   } catch (error) {
