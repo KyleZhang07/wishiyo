@@ -6,7 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const LIGHTX_API_ENDPOINT = "https://api.lightx.ai/v1/image-editing/expand-image";
+// 正确的 LightX API 端点
+const LIGHTX_API_ENDPOINT = "https://api.lightxeditor.com/external/api/v1/expand-photo";
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -30,12 +31,30 @@ serve(async (req) => {
     const imageBlob = await imageResponse.blob();
     console.log('Image downloaded successfully');
 
+    // 创建一个临时的 img 元素来获取图片尺寸
+    const img = new Image();
+    const imgLoaded = new Promise((resolve, reject) => {
+      img.onload = () => resolve(null);
+      img.onerror = () => reject(new Error('Failed to load image'));
+    });
+    img.src = URL.createObjectURL(imageBlob);
+    await imgLoaded;
+
+    // 计算需要扩展的像素值使其达到 1:2 的比例
+    const width = img.width;
+    const targetWidth = width * 2; // 目标宽度是原始宽度的2倍
+    const paddingLeft = targetWidth - width; // 需要向左扩展的像素值
+
     // 准备 LightX API 请求数据
     const formData = new FormData();
-    formData.append('image', imageBlob);
-    formData.append('prompt', 'clean background, empty space, suitable for text, minimal, simple, no objects, no distractions, solid colors');
-    formData.append('expand_ratio', '2');
-    formData.append('expand_direction', 'left');
+    formData.append('imageFile', imageBlob, 'image.png');
+    // 使用详细的提示词来确保生成干净的背景
+    formData.append('textPrompt', 'clean minimalist background, solid color, empty space for text, no objects, no patterns, simple design, suitable for text overlay, pristine surface, clear area, uncluttered space');
+    // 设置扩展参数：只向左扩展到1:2比例
+    formData.append('leftPadding', paddingLeft.toString());
+    formData.append('rightPadding', '0');
+    formData.append('topPadding', '0');
+    formData.append('bottomPadding', '0');
 
     const LIGHTX_API_KEY = Deno.env.get('LIGHTX_API_KEY');
     if (!LIGHTX_API_KEY) {
@@ -43,10 +62,12 @@ serve(async (req) => {
     }
 
     console.log('Calling LightX API...');
+    console.log('Left padding:', paddingLeft);
+    
     const lightXResponse = await fetch(LIGHTX_API_ENDPOINT, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LIGHTX_API_KEY}`,
+        'x-api-key': LIGHTX_API_KEY,
       },
       body: formData,
     });
