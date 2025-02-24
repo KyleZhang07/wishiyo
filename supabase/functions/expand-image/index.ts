@@ -8,14 +8,11 @@ const corsHeaders = {
 
 const LIGHTX_API_ENDPOINT = "https://api.lightxeditor.com/external/api/v1/expand-photo";
 
-// 将 Blob 转为 Base64 的辅助函数
+// Helper function to convert Blob to Base64
 async function blobToBase64(blob: Blob): Promise<string> {
   const arrayBuffer = await blob.arrayBuffer();
-  const bytes = new Uint8Array(arrayBuffer);
-  let binary = "";
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
+  const uint8Array = new Uint8Array(arrayBuffer);
+  const binary = uint8Array.reduce((acc, byte) => acc + String.fromCharCode(byte), '');
   return btoa(binary);
 }
 
@@ -26,23 +23,21 @@ serve(async (req) => {
 
   try {
     const { imageUrl } = await req.json();
-    console.log('Processing image URL:', imageUrl);
+    console.log('Received image URL:', imageUrl);
     
     if (!imageUrl) {
       throw new Error('No image URL provided');
     }
 
-    // 下载原始图片
-    console.log('Downloading original image...');
+    console.log('Fetching image from URL...');
     const imageResponse = await fetch(imageUrl);
     if (!imageResponse.ok) {
       throw new Error(`Failed to fetch image: ${imageResponse.statusText}`);
     }
     
     const imageBlob = await imageResponse.blob();
-    console.log('Original image downloaded, size:', imageBlob.size);
+    console.log('Image downloaded successfully');
 
-    // 准备LightX请求
     const formData = new FormData();
     formData.append('imageFile', imageBlob, 'image.png');
     formData.append('prompt', 'extend image to the left: generate a clean, clear, empty background with solid colors and no objects, perfect for text overlay');
@@ -54,8 +49,12 @@ serve(async (req) => {
       throw new Error('LightX API key not configured');
     }
 
-    // 调用LightX API
-    console.log('Calling LightX API...');
+    console.log('Calling LightX API with params:', {
+      expand_ratio: '2.0',
+      expand_direction: 'left',
+      prompt: formData.get('prompt')
+    });
+    
     const lightXResponse = await fetch(LIGHTX_API_ENDPOINT, {
       method: 'POST',
       headers: {
@@ -70,41 +69,27 @@ serve(async (req) => {
       throw new Error(`LightX API error: ${lightXResponse.status} ${lightXResponse.statusText}`);
     }
 
-    // 处理扩展后的图片
-    const expandedBlob = await lightXResponse.blob();
-    console.log('Expanded image received, size:', expandedBlob.size);
-
-    // 转换为Base64（不带前缀）
-    const base64Data = await blobToBase64(expandedBlob);
-    const contentType = expandedBlob.type || 'image/png';
+    console.log('Successfully received expanded image from LightX API');
+    const expandedImageBlob = await lightXResponse.blob();
     
-    console.log('Successfully converted to Base64');
+    // Convert Blob to Base64 and return as JSON
+    const base64Data = await blobToBase64(expandedImageBlob);
+    const response = {
+      imageData: `data:${expandedImageBlob.type};base64,${base64Data}`
+    };
 
-    // 返回Base64数据和内容类型
-    return new Response(
-      JSON.stringify({
-        base64: base64Data,
-        contentType
-      }),
-      {
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        }
+    return new Response(JSON.stringify(response), {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json'
       }
-    );
+    });
 
   } catch (error) {
     console.error('Error in expand-image function:', error);
-    return new Response(
-      JSON.stringify({ 
-        error: error.message,
-        details: error.stack 
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500
-      }
-    );
+    return new Response(JSON.stringify({ error: error.message }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 500
+    });
   }
 });

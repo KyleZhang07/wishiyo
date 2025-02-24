@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
@@ -265,22 +264,13 @@ const GenerateStep = () => {
         throw error;
       }
 
-      // 验证响应数据
-      if (!data?.base64 || !data?.contentType) {
-        console.error('Invalid response from expand-image function:', data);
-        throw new Error('Invalid response from expand-image function');
+      if (!data?.imageData) {
+        console.error('No image data received from expand-image function');
+        throw new Error('Failed to receive image data');
       }
 
-      // 创建完整的dataURL
-      const dataUrl = `data:${data.contentType};base64,${data.base64}`;
-      console.log('Successfully created dataURL, length:', dataUrl.length);
-
-      // 验证dataURL格式
-      if (!dataUrl.startsWith('data:image/')) {
-        throw new Error('Invalid image data format');
-      }
-
-      return dataUrl;
+      console.log('Successfully received Base64 image data');
+      return data.imageData;
     } catch (error) {
       console.error('Error in expandImage:', error);
       throw error;
@@ -321,19 +311,24 @@ const GenerateStep = () => {
       return;
     }
 
+    const contentKey = `loveStoryContentImage${index}`;
+    localStorage.removeItem(contentKey);
+    
+    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    
+    if (!savedPrompts || !partnerPhoto) {
+      console.error('Missing required prompts or partner photo');
+      toast({
+        title: "Error regenerating image",
+        description: "Missing required information",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       setIsGenerating(true);
-
-      const contentKey = `loveStoryContentImage${index}`;
-      localStorage.removeItem(contentKey);
-      
-      const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
-      const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
-      
-      if (!savedPrompts || !partnerPhoto) {
-        throw new Error('Missing required prompts or partner photo');
-      }
-
       const prompts = JSON.parse(savedPrompts);
       if (!prompts || !prompts[index]) {
         throw new Error(`No prompt found for index ${index}`);
@@ -355,17 +350,12 @@ const GenerateStep = () => {
       }
 
       console.log(`Successfully generated image for content ${index}:`, imageUrl);
+
+      const expandedImageData = await expandImage(imageUrl);
+      console.log(`Successfully expanded image for content ${index}`);
       
-      // 扩展图片
-      console.log(`Starting expansion for content ${index}`);
-      const dataUrl = await expandImage(imageUrl);
-      console.log(`Successfully expanded image for content ${index}`, {
-        dataLength: dataUrl.length,
-        format: dataUrl.substring(0, dataUrl.indexOf(';'))
-      });
-      
-      setContentImage(dataUrl);
-      localStorage.setItem(contentKey, dataUrl);
+      setContentImage(expandedImageData);
+      localStorage.setItem(contentKey, expandedImageData);
       
       toast({
         title: "Image regenerated",
