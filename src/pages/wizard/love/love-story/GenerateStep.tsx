@@ -231,6 +231,24 @@ const GenerateStep = () => {
     const savedContentImage10 = localStorage.getItem('loveStoryContentImage10');
     const savedContentImage11 = localStorage.getItem('loveStoryContentImage11');
     const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    
+    // Ensure we have a recipient name stored
+    const savedQuestions = localStorage.getItem('loveStoryQuestions');
+    if (savedQuestions) {
+      try {
+        const questions = JSON.parse(savedQuestions);
+        const nameQuestion = questions.find((q: any) => 
+          q.question.toLowerCase().includes('name') && 
+          !q.question.toLowerCase().includes('your name')
+        );
+        
+        if (nameQuestion && nameQuestion.answer) {
+          localStorage.setItem('loveStoryRecipientName', nameQuestion.answer);
+        }
+      } catch (error) {
+        console.error('Error parsing questions:', error);
+      }
+    }
 
     if (savedAuthor) {
       setAuthorName(savedAuthor);

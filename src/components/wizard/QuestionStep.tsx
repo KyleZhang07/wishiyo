@@ -13,12 +13,12 @@ interface QuestionAnswer {
 }
 
 interface QuestionStepProps {
-  category: 'friends' | 'love' | 'kids';
+  category: 'friends' | 'love';
   previousStep: string;
   nextStep: string;
 }
 
-const getDefaultQuestions = (category: 'friends' | 'love' | 'kids') => {
+const getDefaultQuestions = (category: 'friends' | 'love') => {
   switch (category) {
     case 'friends':
       return [
@@ -37,15 +37,6 @@ const getDefaultQuestions = (category: 'friends' | 'love' | 'kids') => {
         "What's the funniest moment you've shared?",
         "What do you admire most about them?",
         "What's a challenge you've overcome together?"
-      ];
-    case 'kids':
-      return [
-        "What's your child's favorite story?",
-        "What makes them laugh the most?",
-        "What's their favorite adventure?",
-        "What are their dreams and aspirations?",
-        "What special talents do they have?",
-        "What makes them unique and special?"
       ];
   }
 };

@@ -1,4 +1,3 @@
-
 export type TemplateType = {
   id: string;
   name: string;
@@ -60,7 +59,7 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     imageStyle: {
       filter: 'brightness(0.7)',
       opacity: '0.9',
-      borderRadius: '50%'
+      borderRadius: '0'
     },
     spineStyle: {
       backgroundColor: '#1A1F2C',
@@ -96,7 +95,7 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     imageStyle: {
       filter: 'brightness(0.9)',
       opacity: '0.8',
-      borderRadius: '50%'
+      borderRadius: '0'
     },
     spineStyle: {
       backgroundColor: '#F1F0FB',
@@ -112,9 +111,9 @@ export const coverTemplates: { [key: string]: TemplateType } = {
   vibrant: {
     id: 'vibrant',
     name: 'Vibrant',
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#4361EE',
     titleStyle: {
-      color: '#ffffff',
+      color: '#FFCA3A',
       fontSize: '2.5rem',
       fontWeight: 'bold',
       textAlign: 'center',
@@ -132,16 +131,88 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     imageStyle: {
       filter: 'brightness(0.6) contrast(1.2)',
       opacity: '0.85',
-      borderRadius: '50%'
+      borderRadius: '0'
     },
     spineStyle: {
-      backgroundColor: '#8B5CF6',
-      titleColor: '#ffffff',
+      backgroundColor: '#4361EE',
+      titleColor: '#FFCA3A',
       authorColor: '#F2FCE2'
     },
     backCoverStyle: {
-      backgroundColor: '#8B5CF6',
+      backgroundColor: '#4361EE',
       textColor: '#FDE1D3',
+      summaryFontSize: '1rem'
+    }
+  },
+  classic: {
+    id: 'classic',
+    name: 'Classic',
+    backgroundColor: '#FFECD1',
+    titleStyle: {
+      color: '#C41E3A',
+      fontSize: '2.5rem',
+      fontWeight: 'bold',
+      textAlign: 'center',
+      offsetY: 0.3
+    },
+    subtitleStyle: {
+      color: '#333333',
+      fontSize: '1.25rem',
+      fontWeight: 'normal'
+    },
+    authorStyle: {
+      color: '#333333',
+      fontSize: '1rem'
+    },
+    imageStyle: {
+      filter: 'sepia(0.2)',
+      opacity: '0.9',
+      borderRadius: '0'
+    },
+    spineStyle: {
+      backgroundColor: '#C41E3A',
+      titleColor: '#FFFFFF',
+      authorColor: '#FFECD1'
+    },
+    backCoverStyle: {
+      backgroundColor: '#FFECD1',
+      textColor: '#333333',
+      summaryFontSize: '1rem'
+    }
+  },
+  'vibrant-green': {
+    id: 'vibrant-green',
+    name: 'Vibrant Green',
+    backgroundColor: '#121212',
+    titleStyle: {
+      color: '#7CFC00',
+      fontSize: '3rem',
+      fontWeight: 'bold',
+      textAlign: 'center',
+      offsetY: 0.7
+    },
+    subtitleStyle: {
+      color: '#FFFFFF',
+      fontSize: '1.25rem',
+      fontWeight: 'normal'
+    },
+    authorStyle: {
+      color: '#FFFFFF',
+      fontSize: '1rem'
+    },
+    imageStyle: {
+      filter: 'brightness(1.1) contrast(1.1)',
+      opacity: '1.0',
+      borderRadius: '0'
+    },
+    spineStyle: {
+      backgroundColor: '#121212',
+      titleColor: '#7CFC00',
+      authorColor: '#FFFFFF'
+    },
+    backCoverStyle: {
+      backgroundColor: '#121212',
+      textColor: '#7CFC00',
       summaryFontSize: '1rem'
     }
   }

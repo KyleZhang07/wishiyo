@@ -27,7 +27,7 @@ interface BookIdea {
 }
 
 interface IdeaStepProps {
-  category: 'friends' | 'love' | 'kids';
+  category: 'friends' | 'love';
   previousStep: string;
   nextStep: string;
 }
@@ -46,32 +46,16 @@ const IdeaStep = ({
   const getStorageKeys = (bookType: string) => {
     const ideaStorageKeyMap: { [key: string]: string } = {
       'funny-biography': 'funnyBiographyGeneratedIdeas',
-      'wild-fantasy': 'wildFantasyGeneratedIdeas',
-      'prank-book': 'prankBookGeneratedIdeas',
       'love-story': 'loveStoryGeneratedIdeas',
-      'love-poems': 'lovePoemsGeneratedIdea',
-      'picture-album': 'pictureAlbumGeneratedIdea',
-      'adventure': 'kidsAdventureGeneratedIdea',
-      'story-book': 'kidsStoryGeneratedIdea',
-      'learning': 'learningJourneyGeneratedIdea'
     };
 
     const selectedIdeaStorageKeyMap: { [key: string]: string } = {
       'funny-biography': 'funnyBiographySelectedIdea',
-      'wild-fantasy': 'wildFantasySelectedIdea',
-      'prank-book': 'prankBookSelectedIdea',
       'love-story': 'loveStorySelectedIdea',
-      'love-poems': 'lovePoemsSelectedIdea',
-      'picture-album': 'pictureAlbumSelectedIdea',
-      'adventure': 'kidsAdventureSelectedIdea',
-      'story-book': 'kidsStorySelectedIdea',
-      'learning': 'learningJourneySelectedIdea'
     };
 
     const promptsStorageKeyMap: { [key: string]: string } = {
       'love-story': 'loveStoryImagePrompts',
-      'love-poems': 'lovePoemsImagePrompts',
-      'picture-album': 'pictureAlbumImagePrompts',
     };
 
     return {
@@ -89,26 +73,12 @@ const IdeaStep = ({
       
       const storageKeyMap: { [key: string]: string } = {
         'funny-biography': 'funnyBiographyAnswers',
-        'wild-fantasy': 'wildFantasyAnswers',
-        'prank-book': 'prankBookAnswers',
         'love-story': 'loveStoryAnswers',
-        'love-poems': 'lovePoemsAnswers',
-        'picture-album': 'pictureAlbumAnswers',
-        'adventure': 'kidsAdventureAnswers',
-        'story-book': 'kidsStoryAnswers',
-        'learning': 'learningJourneyAnswers'
       };
 
       const authorNameKeyMap: { [key: string]: string } = {
         'funny-biography': 'funnyBiographyAuthorName',
-        'wild-fantasy': 'wildFantasyAuthorName',
-        'prank-book': 'prankBookAuthorName',
         'love-story': 'loveStoryAuthorName',
-        'love-poems': 'lovePoemsAuthorName',
-        'picture-album': 'pictureAlbumAuthorName',
-        'adventure': 'kidsAdventureAuthorName',
-        'story-book': 'kidsStoryAuthorName',
-        'learning': 'learningJourneyAuthorName'
       };
 
       const storageKey = storageKeyMap[bookType];

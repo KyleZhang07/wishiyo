@@ -1,4 +1,3 @@
-
 export interface CoverLayout {
   id: string;
   name: string;
@@ -31,16 +30,16 @@ export const coverLayouts: { [key: string]: CoverLayout } = {
       textAlign: 'center'
     },
     subtitlePosition: {
-      offsetY: 0.35,
+      offsetY: 0.85,
       textAlign: 'center'
     },
     authorPosition: {
-      offsetY: 0.9,
+      offsetY: 0.3,
       textAlign: 'center'
     },
     imageContainerStyle: {
       width: '80%',
-      height: '50%',
+      height: '45%',
       position: 'center'
     }
   },
@@ -52,16 +51,16 @@ export const coverLayouts: { [key: string]: CoverLayout } = {
       textAlign: 'left'
     },
     subtitlePosition: {
-      offsetY: 0.3,
+      offsetY: 0.8,
       textAlign: 'left'
     },
     authorPosition: {
-      offsetY: 0.9,
-      textAlign: 'right'
+      offsetY: 0.25,
+      textAlign: 'left'
     },
     imageContainerStyle: {
       width: '100%',
-      height: '60%',
+      height: '55%',
       position: 'bottom'
     }
   },
@@ -73,16 +72,16 @@ export const coverLayouts: { [key: string]: CoverLayout } = {
       textAlign: 'center'
     },
     subtitlePosition: {
-      offsetY: 0.25,
+      offsetY: 0.85,
       textAlign: 'center'
     },
     authorPosition: {
-      offsetY: 0.95,
+      offsetY: 0.2,
       textAlign: 'center'
     },
     imageContainerStyle: {
       width: '70%',
-      height: '70%',
+      height: '60%',
       borderRadius: '50%',
       position: 'center'
     }
@@ -104,8 +103,50 @@ export const coverLayouts: { [key: string]: CoverLayout } = {
     },
     imageContainerStyle: {
       width: '100%',
-      height: '60%',
+      height: '55%',
       position: 'top'
+    }
+  },
+  'left-align': {
+    id: 'left-align',
+    name: 'Left Align',
+    titlePosition: {
+      offsetY: 0.2,
+      textAlign: 'left'
+    },
+    subtitlePosition: {
+      offsetY: 0.85,
+      textAlign: 'left'
+    },
+    authorPosition: {
+      offsetY: 0.3,
+      textAlign: 'left'
+    },
+    imageContainerStyle: {
+      width: '80%',
+      height: '45%',
+      position: 'center'
+    }
+  },
+  'right-align': {
+    id: 'right-align',
+    name: 'Right Align',
+    titlePosition: {
+      offsetY: 0.2,
+      textAlign: 'right'
+    },
+    subtitlePosition: {
+      offsetY: 0.85,
+      textAlign: 'right'
+    },
+    authorPosition: {
+      offsetY: 0.3,
+      textAlign: 'right'
+    },
+    imageContainerStyle: {
+      width: '80%',
+      height: '45%',
+      position: 'center'
     }
   }
 };

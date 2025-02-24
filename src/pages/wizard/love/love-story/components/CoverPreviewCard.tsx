@@ -1,7 +1,6 @@
-
 import { Button } from '@/components/ui/button';
 import { Edit, RefreshCw } from 'lucide-react';
-import CanvasCoverPreview from '@/components/cover-generator/CanvasCoverPreview';
+import LoveStoryCoverPreview from '@/components/cover-generator/LoveStoryCoverPreview';
 
 interface CoverPreviewCardProps {
   coverTitle: string;
@@ -24,19 +23,19 @@ export const CoverPreviewCard = ({
   onEditCover,
   onRegenerateCover
 }: CoverPreviewCardProps) => {
+  // Get recipient name from localStorage
+  const recipientName = localStorage.getItem('loveStoryRecipientName') || 'My Love';
+
   return (
     <div className="glass-card rounded-2xl p-8 py-[40px] relative">
       <div className="max-w-xl mx-auto">
-        <CanvasCoverPreview
+        <LoveStoryCoverPreview
           coverTitle={coverTitle}
           subtitle={subtitle}
           authorName={authorName}
+          recipientName={recipientName}
           coverImage={coverImage}
           selectedFont="playfair"
-          selectedTemplate="modern"
-          selectedLayout="centered"
-          backCoverText={backCoverText}
-          category="love"
         />
         <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
           <Button

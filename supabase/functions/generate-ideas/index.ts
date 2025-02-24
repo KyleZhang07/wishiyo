@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
@@ -157,7 +156,8 @@ serve(async (req) => {
       );
 
     } else if (category === 'friends' && bookType === 'funny-biography') {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      // First, generate book ideas
+      const ideasResponse = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${openAIApiKey}`,
@@ -183,13 +183,13 @@ serve(async (req) => {
         }),
       });
 
-      const data = await response.json();
+      const ideasData = await ideasResponse.json();
       let ideas = [];
 
       try {
-        ideas = JSON.parse(data.choices[0].message.content);
+        ideas = JSON.parse(ideasData.choices[0].message.content);
       } catch (parseError) {
-        const contentStr = data.choices[0].message.content;
+        const contentStr = ideasData.choices[0].message.content;
         const jsonMatch = contentStr.match(/\[[\s\S]*\]/);
         if (jsonMatch) {
           ideas = JSON.parse(jsonMatch[0]);
@@ -197,6 +197,72 @@ serve(async (req) => {
           throw new Error('Failed to parse book ideas');
         }
       }
+
+      // Now, generate praise quotes for each book idea
+      const praisesPromises = ideas.map(async (idea: any, index: number) => {
+        const praisesResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${openAIApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+              {
+                role: 'system',
+                content: `You are a creative assistant that generates fictional praise quotes for a humorous biography book.
+                  Generate 4 fictional praise quotes from different sources (magazines, journals, etc.).
+                  Each quote should highlight different aspects of the book's humor, storytelling, and relatability.
+                  The quotes should be witty, engaging, and sound like real book reviews.
+                  You must respond with ONLY a JSON array containing exactly 4 praise quotes.`
+              },
+              {
+                role: 'user',
+                content: `Generate 4 fictional praise quotes for this book idea:
+                  Title: "${idea.title}"
+                  Description: "${idea.description}"
+                  Author: "${idea.author}"
+                  
+                  The quotes should mention "Family Feuds & Food Fights" as the book title regardless of the actual title above.
+                  Make the quotes sound like they're from reputable sources like "The Gastronomy Gazette", "Sibling Saga Monthly", etc.
+                  Each quote should highlight different aspects: humor, storytelling, relatability, and insight.
+                  
+                  Respond with ONLY a JSON array of 4 objects, each with 'quote' and 'source' fields.
+                  Example format:
+                  [
+                    {
+                      "quote": "An explosively entertaining read. 'Family Feuds & Food Fights' is a delectable mix of humor and heart...",
+                      "source": "The Gastronomy Gazette"
+                    }
+                  ]`
+              }
+            ],
+          }),
+        });
+
+        const praisesData = await praisesResponse.json();
+        let praises = [];
+
+        try {
+          praises = JSON.parse(praisesData.choices[0].message.content);
+        } catch (parseError) {
+          const contentStr = praisesData.choices[0].message.content;
+          const jsonMatch = contentStr.match(/\[[\s\S]*\]/);
+          if (jsonMatch) {
+            praises = JSON.parse(jsonMatch[0]);
+          } else {
+            throw new Error('Failed to parse praise quotes');
+          }
+        }
+
+        // Add praises to the idea object
+        ideas[index].praises = praises;
+        return praises;
+      });
+
+      // Wait for all praise quotes to be generated
+      await Promise.all(praisesPromises);
 
       return new Response(
         JSON.stringify({ ideas }),
