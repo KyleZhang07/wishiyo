@@ -58,25 +58,35 @@ serve(async (req) => {
 
     console.log('Successfully received expanded image from LightX API');
     const expandedImageBlob = await lightXResponse.blob();
-    const arrayBuffer = await expandedImageBlob.arrayBuffer();
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+    const imageBuffer = await expandedImageBlob.arrayBuffer();
+    const contentType = expandedImageBlob.type || 'image/png';
     
-    return new Response(
-      JSON.stringify({ 
-        imageData: `data:${expandedImageBlob.type};base64,${base64}` 
-      }), 
-      {
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        }
-      }
+    // 转换为 Base64
+    const base64String = btoa(
+      Array.from(new Uint8Array(imageBuffer))
+        .map(byte => String.fromCharCode(byte))
+        .join('')
     );
+    
+    console.log('Successfully converted image to Base64');
+    const response = {
+      imageData: `data:${contentType};base64,${base64String}`
+    };
+
+    return new Response(JSON.stringify(response), {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json'
+      }
+    });
 
   } catch (error) {
     console.error('Error in expand-image function:', error);
     return new Response(
-      JSON.stringify({ error: error.message }), 
+      JSON.stringify({ 
+        error: error.message,
+        details: error.stack 
+      }), 
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500

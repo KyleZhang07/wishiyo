@@ -270,6 +270,11 @@ const GenerateStep = () => {
         throw new Error('Failed to receive image data');
       }
 
+      if (!responseData.imageData.startsWith('data:image/')) {
+        console.error('Invalid image data format:', responseData.imageData.substring(0, 50));
+        throw new Error('Invalid image data format received');
+      }
+
       console.log('Successfully received Base64 image data');
       return responseData.imageData;
     } catch (error) {
@@ -318,18 +323,13 @@ const GenerateStep = () => {
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
     const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
     
-    if (!savedPrompts || !partnerPhoto) {
-      console.error('Missing required prompts or partner photo');
-      toast({
-        title: "Error regenerating image",
-        description: "Missing required information",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
       setIsGenerating(true);
+
+      if (!savedPrompts || !partnerPhoto) {
+        throw new Error('Missing required prompts or partner photo');
+      }
+
       const prompts = JSON.parse(savedPrompts);
       if (!prompts || !prompts[index]) {
         throw new Error(`No prompt found for index ${index}`);
@@ -352,12 +352,18 @@ const GenerateStep = () => {
 
       console.log(`Successfully generated image for content ${index}:`, imageUrl);
       
-      // 扩展图片并检查返回的数据
+      // 扩展图片
       console.log(`Starting expansion for content ${index}`);
       const expandedImageData = await expandImage(imageUrl);
+      
+      // 验证扩展后的图片数据
+      if (!expandedImageData.startsWith('data:image/')) {
+        throw new Error('Invalid expanded image data format');
+      }
+      
       console.log(`Successfully expanded image for content ${index}`, {
         dataLength: expandedImageData.length,
-        dataStart: expandedImageData.substring(0, 50)
+        format: expandedImageData.substring(0, expandedImageData.indexOf(';'))
       });
       
       setContentImage(expandedImageData);
