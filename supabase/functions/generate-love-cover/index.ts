@@ -23,20 +23,9 @@ serve(async (req) => {
       auth: REPLICATE_API_KEY,
     })
 
-    const body = await req.json()
+    const { prompt, photo, contentPrompt } = await req.json()
 
-    // If it's a status check request
-    if (body.predictionId) {
-      console.log("Checking status for prediction:", body.predictionId)
-      const prediction = await replicate.predictions.get(body.predictionId)
-      console.log("Status check response:", prediction)
-      return new Response(JSON.stringify(prediction), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-
-    // If it's a generation request
-    if (!body.prompt || !body.photo) {
+    if (!prompt || !photo) {
       return new Response(
         JSON.stringify({ error: "Missing required fields: prompt and photo are required" }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -45,25 +34,50 @@ serve(async (req) => {
       )
     }
 
-    console.log("Generating image with prompt:", body.prompt)
-    const output = await replicate.run(
-      "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
-      {
-        input: {
-          prompt: `${body.prompt} img`, // Adding the required "img" trigger word
-          num_steps: 20,
-          style_name: "Photographic (Default)",
-          input_image: body.photo,
-          num_outputs: 1,
-          guidance_scale: 5.0,
-          style_strength_ratio: 20,
-          negative_prompt: "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
-        }
-      }
-    )
+    console.log("Generating cover image with prompt:", prompt)
+    console.log("Generating content image with prompt:", contentPrompt)
 
-    console.log("Generation response:", output)
-    return new Response(JSON.stringify({ output }), {
+    // Generate both images in parallel
+    const [coverOutput, contentOutput] = await Promise.all([
+      replicate.run(
+        "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
+        {
+          input: {
+            prompt: `${prompt} img`,
+            num_steps: 20,
+            style_name: "Photographic (Default)",
+            input_image: photo,
+            num_outputs: 1,
+            guidance_scale: 5.0,
+            style_strength_ratio: 20,
+            negative_prompt: "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
+          }
+        }
+      ),
+      replicate.run(
+        "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
+        {
+          input: {
+            prompt: `${contentPrompt || prompt} img, story moment, emotional scene`,
+            num_steps: 20,
+            style_name: "Photographic (Default)",
+            input_image: photo,
+            num_outputs: 1,
+            guidance_scale: 5.0,
+            style_strength_ratio: 20,
+            negative_prompt: "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
+          }
+        }
+      )
+    ])
+
+    console.log("Generation response for cover:", coverOutput)
+    console.log("Generation response for content:", contentOutput)
+
+    return new Response(JSON.stringify({ 
+      output: coverOutput,
+      contentImage: contentOutput
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     })

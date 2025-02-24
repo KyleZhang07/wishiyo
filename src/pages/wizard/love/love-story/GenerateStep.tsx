@@ -12,6 +12,7 @@ const GenerateStep = () => {
   const [subtitle, setSubtitle] = useState('');
   const [authorName, setAuthorName] = useState('');
   const [coverImage, setCoverImage] = useState<string>();
+  const [contentImage, setContentImage] = useState<string>();
   const [backCoverText, setBackCoverText] = useState('');
   const [isGeneratingCover, setIsGeneratingCover] = useState(false);
   const { toast } = useToast();
@@ -24,6 +25,7 @@ const GenerateStep = () => {
     const savedMoments = localStorage.getItem('loveStoryMoments');
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
     const savedCoverImage = localStorage.getItem('loveStoryCoverImage');
+    const savedContentImage = localStorage.getItem('loveStoryContentImage');
     const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
 
     if (savedAuthor) {
@@ -47,46 +49,55 @@ const GenerateStep = () => {
       setBackCoverText(formattedMoments);
     }
 
-    // Check if we already have a generated cover image
+    // Check if we already have generated images
     if (savedCoverImage) {
       setCoverImage(savedCoverImage);
-    } else if (savedPrompts && partnerPhoto) {
-      // Only generate if we don't have a saved cover image
+    }
+    if (savedContentImage) {
+      setContentImage(savedContentImage);
+    }
+    
+    // Generate both images if they don't exist
+    if ((!savedCoverImage || !savedContentImage) && savedPrompts && partnerPhoto) {
       const prompts = JSON.parse(savedPrompts);
-      if (prompts && prompts.length > 0) {
-        generateCoverImage(prompts[0].prompt, partnerPhoto);
+      if (prompts && prompts.length > 1) {
+        generateImages(prompts[0].prompt, prompts[1].prompt, partnerPhoto);
       }
     }
   }, []);
 
-  const generateCoverImage = async (prompt: string, photo: string) => {
+  const generateImages = async (coverPrompt: string, contentPrompt: string, photo: string) => {
     setIsGeneratingCover(true);
     toast({
-      title: "Generating cover image",
+      title: "Generating images",
       description: "This may take a minute...",
     });
 
     try {
       const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-        body: { prompt, photo }
+        body: { prompt: coverPrompt, contentPrompt, photo }
       });
 
       if (error) throw error;
 
-      if (data && data.output && data.output[0]) {
-        const generatedImage = data.output[0];
-        setCoverImage(generatedImage);
-        // Store the generated image in localStorage
-        localStorage.setItem('loveStoryCoverImage', generatedImage);
-        toast({
-          title: "Cover image generated",
-          description: "Your cover image is ready!",
-        });
+      if (data?.output?.[0]) {
+        setCoverImage(data.output[0]);
+        localStorage.setItem('loveStoryCoverImage', data.output[0]);
       }
-    } catch (error) {
-      console.error('Error generating cover:', error);
+
+      if (data?.contentImage?.[0]) {
+        setContentImage(data.contentImage[0]);
+        localStorage.setItem('loveStoryContentImage', data.contentImage[0]);
+      }
+
       toast({
-        title: "Error generating cover",
+        title: "Images generated",
+        description: "Your images are ready!",
+      });
+    } catch (error) {
+      console.error('Error generating images:', error);
+      toast({
+        title: "Error generating images",
         description: "Please try again",
         variant: "destructive",
       });
@@ -109,16 +120,17 @@ const GenerateStep = () => {
     });
   };
 
-  const handleRegenerateCover = async () => {
-    // Remove the saved cover image when regenerating
+  const handleRegenerateImages = async () => {
+    // Remove saved images when regenerating
     localStorage.removeItem('loveStoryCoverImage');
+    localStorage.removeItem('loveStoryContentImage');
     
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
     const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
     if (savedPrompts && partnerPhoto) {
       const prompts = JSON.parse(savedPrompts);
-      if (prompts && prompts.length > 0) {
-        await generateCoverImage(prompts[0].prompt, partnerPhoto);
+      if (prompts && prompts.length > 1) {
+        await generateImages(prompts[0].prompt, prompts[1].prompt, partnerPhoto);
       }
     }
   };
@@ -157,11 +169,11 @@ const GenerateStep = () => {
               </Button>
               <Button
                 variant="secondary"
-                onClick={handleRegenerateCover}
+                onClick={handleRegenerateImages}
                 disabled={isGeneratingCover}
               >
                 <RefreshCw className={`w-4 h-4 mr-2 ${isGeneratingCover ? 'animate-spin' : ''}`} />
-                Regenerate cover
+                Regenerate images
               </Button>
             </div>
           </div>
@@ -170,9 +182,15 @@ const GenerateStep = () => {
         {/* Dedication Preview */}
         <div className="glass-card rounded-2xl p-8 py-[40px] relative">
           <div className="max-w-xl mx-auto">
-            <div className="aspect-[3/4] bg-[#FFECD1] rounded-lg p-8">
+            <div className="aspect-[3/4] bg-[#FFECD1] rounded-lg p-8 relative">
               <div className="h-full flex flex-col justify-center items-center text-center space-y-6">
-                <div className="space-y-4">
+                {contentImage && (
+                  <div className="absolute inset-0 rounded-lg overflow-hidden">
+                    <img src={contentImage} alt="Story content" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-[#FFECD1] opacity-40" />
+                  </div>
+                )}
+                <div className="space-y-4 relative z-10">
                   <p className="text-lg">Dear {coverTitle.split(',')[0]},</p>
                   <p className="text-lg">
                     This book is full of the words I have chosen for you.<br/>
