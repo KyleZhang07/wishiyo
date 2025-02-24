@@ -13,18 +13,25 @@ serve(async (req) => {
 
   try {
     const { imageUrl } = await req.json()
+    console.log('Received image URL:', imageUrl)
+    
     if (!imageUrl) {
       throw new Error('No image URL provided')
     }
 
     // Download the image from URL
     const imageResponse = await fetch(imageUrl)
+    if (!imageResponse.ok) {
+      throw new Error(`Failed to fetch image: ${imageResponse.statusText}`)
+    }
+
     const imageBlob = await imageResponse.blob()
+    console.log('Image downloaded, size:', imageBlob.size)
 
     // Create form data
     const formData = new FormData()
     formData.append('imageFile', imageBlob, 'image.png')
-    formData.append('outputSize', '2048x1024') // 2:1 aspect ratio
+    formData.append('outputSize', '2048x1024')
     formData.append('referenceBox', 'originalImage')
     formData.append('removeBackground', 'false')
     formData.append('expand.mode', 'ai.auto')
@@ -41,16 +48,23 @@ serve(async (req) => {
     })
 
     if (!photoRoomResponse.ok) {
+      const errorText = await photoRoomResponse.text()
+      console.error('PhotoRoom API error:', errorText)
       throw new Error(`PhotoRoom API error: ${photoRoomResponse.statusText}`)
     }
 
-    // Get the expanded image as blob
+    // Get the expanded image URL from PhotoRoom
     const expandedImageBlob = await photoRoomResponse.blob()
+    const expandedImageArrayBuffer = await expandedImageBlob.arrayBuffer()
     
-    return new Response(expandedImageBlob, {
+    // Convert to base64
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(expandedImageArrayBuffer)))
+    const dataUrl = `data:image/png;base64,${base64}`
+    
+    return new Response(JSON.stringify({ url: dataUrl }), {
       headers: {
         ...corsHeaders,
-        'Content-Type': 'image/png'
+        'Content-Type': 'application/json'
       }
     })
   } catch (error) {

@@ -94,11 +94,12 @@ const GenerateStep = () => {
       });
       
       if (error) throw error;
+      if (!data?.url) throw new Error('No expanded image URL returned');
       
       return data.url;
     } catch (error) {
       console.error('Error expanding image:', error);
-      return null;
+      throw error;
     }
   };
 
@@ -314,8 +315,9 @@ const GenerateStep = () => {
           if (!contentImage) throw new Error('No image generated');
 
           // Step 2: Expand the generated image using PhotoRoom API
+          console.log('Expanding image:', contentImage);
           const expandedImageUrl = await expandImage(contentImage);
-          if (!expandedImageUrl) throw new Error('Failed to expand image');
+          console.log('Expanded image URL:', expandedImageUrl);
 
           // Step 3: Save and display the expanded image
           setContentImage(expandedImageUrl);
@@ -334,7 +336,6 @@ const GenerateStep = () => {
     }
   };
 
-  // Replace individual handlers with calls to handleRegenerateContent
   const handleRegenerateContent3 = () => handleRegenerateContent(3);
   const handleRegenerateContent4 = () => handleRegenerateContent(4);
   const handleRegenerateContent5 = () => handleRegenerateContent(5);
