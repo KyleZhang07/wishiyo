@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
@@ -81,12 +80,84 @@ const GenerateStep = () => {
     }
     
     if ((!savedCoverImage || !savedContentImage || !savedContentImage2) && savedPrompts && partnerPhoto) {
-      const prompts = JSON.parse(savedPrompts);
-      if (prompts && prompts.length > 2) {
-        generateImages(prompts[0].prompt, prompts[1].prompt, prompts[2].prompt, partnerPhoto);
-      }
+      generateInitialImages(savedPrompts, partnerPhoto);
     }
   }, []);
+
+  const generateInitialImages = async (savedPrompts: string, partnerPhoto: string) => {
+    setIsGeneratingCover(true);
+    setIsGeneratingContent1(true);
+    setIsGeneratingContent2(true);
+    toast({
+      title: "Generating initial images",
+      description: "This may take a minute...",
+    });
+
+    try {
+      const prompts = JSON.parse(savedPrompts);
+      if (!prompts || prompts.length < 3) {
+        throw new Error('Invalid prompts data');
+      }
+
+      // Generate cover image
+      const { data: coverData, error: coverError } = await supabase.functions.invoke('generate-love-cover', {
+        body: { prompt: prompts[0].prompt, photo: partnerPhoto }
+      });
+      if (coverError) throw coverError;
+      if (coverData?.output?.[0]) {
+        setCoverImage(coverData.output[0]);
+        localStorage.setItem('loveStoryCoverImage', coverData.output[0]);
+      }
+
+      // Generate content image 1 (dedication page)
+      const { data: content1Data, error: content1Error } = await supabase.functions.invoke('generate-love-cover', {
+        body: { 
+          prompt: prompts[1].prompt, 
+          photo: partnerPhoto,
+          contentIndex: 1
+        }
+      });
+      if (content1Error) throw content1Error;
+      if (content1Data?.contentImage?.[0]) {
+        setContentImage(content1Data.contentImage[0]);
+        localStorage.setItem('loveStoryContentImage', content1Data.contentImage[0]);
+      }
+
+      // Generate content image 2
+      const { data: content2Data, error: content2Error } = await supabase.functions.invoke('generate-love-cover', {
+        body: { 
+          prompt: prompts[2].prompt, 
+          photo: partnerPhoto,
+          contentIndex: 2
+        }
+      });
+      if (content2Error) throw content2Error;
+
+      if (content2Data?.contentImage2?.[0]) {
+        const originalImageUrl = content2Data.contentImage2[0];
+        // Expand content image 2
+        const expandedImageData = await expandImage(originalImageUrl);
+        setContentImage2(expandedImageData);
+        localStorage.setItem('loveStoryContentImage2', expandedImageData);
+      }
+
+      toast({
+        title: "Images generated",
+        description: "Your initial images are ready!",
+      });
+    } catch (error) {
+      console.error('Error generating initial images:', error);
+      toast({
+        title: "Error generating images",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingCover(false);
+      setIsGeneratingContent1(false);
+      setIsGeneratingContent2(false);
+    }
+  };
 
   const expandImage = async (imageUrl: string): Promise<string> => {
     console.log('Starting image expansion for:', imageUrl);
@@ -109,15 +180,11 @@ const GenerateStep = () => {
   };
 
   const handleEditCover = () => {
-    // Navigate to cover edit page or open dialog
     console.log('Edit cover clicked');
-    // 实现编辑封面的逻辑，暂时只打印日志
   };
 
   const handleEditText = () => {
-    // Handle text editing
     console.log('Edit text clicked');
-    // 实现编辑文本的逻辑，暂时只打印日志
   };
 
   const handleRegenerateContent1 = async () => {
