@@ -27,42 +27,27 @@ serve(async (req) => {
     if (!imageResponse.ok) {
       throw new Error(`Failed to fetch image: ${imageResponse.statusText}`);
     }
-
+    
     const imageBlob = await imageResponse.blob();
     console.log('Image downloaded successfully');
 
-    // 创建一个临时的 img 元素来获取图片尺寸
-    const img = new Image();
-    const imgLoaded = new Promise((resolve, reject) => {
-      img.onload = () => resolve(null);
-      img.onerror = () => reject(new Error('Failed to load image'));
-    });
-    img.src = URL.createObjectURL(imageBlob);
-    await imgLoaded;
-
-    // 计算需要扩展的像素值使其达到 1:2 的比例
-    const width = img.width;
-    const targetWidth = width * 2; // 目标宽度是原始宽度的2倍
-    const paddingLeft = targetWidth - width; // 需要向左扩展的像素值
-
-    // 准备 LightX API 请求数据
+    // 构建 LightX API 请求数据，使用正确的字段
     const formData = new FormData();
     formData.append('imageFile', imageBlob, 'image.png');
-    // 使用详细的提示词来确保生成干净的背景
-    formData.append('textPrompt', 'clean minimalist background, solid color, empty space for text, no objects, no patterns, simple design, suitable for text overlay, pristine surface, clear area, uncluttered space');
-    // 设置扩展参数：只向左扩展到1:2比例
-    formData.append('leftPadding', paddingLeft.toString());
-    formData.append('rightPadding', '0');
-    formData.append('topPadding', '0');
-    formData.append('bottomPadding', '0');
+    formData.append('prompt', 'clean minimalist background, solid color, empty space for text, no objects, no patterns, simple design, suitable for text overlay, pristine surface, clear area, uncluttered space');
+    formData.append('expand_ratio', '2');  // 扩展到原图的2倍宽度
+    formData.append('expand_direction', 'left');  // 向左扩展
 
     const LIGHTX_API_KEY = Deno.env.get('LIGHTX_API_KEY');
     if (!LIGHTX_API_KEY) {
       throw new Error('LightX API key not configured');
     }
 
-    console.log('Calling LightX API...');
-    console.log('Left padding:', paddingLeft);
+    console.log('Calling LightX API with params:', {
+      endpoint: LIGHTX_API_ENDPOINT,
+      expand_ratio: '2',
+      expand_direction: 'left'
+    });
     
     const lightXResponse = await fetch(LIGHTX_API_ENDPOINT, {
       method: 'POST',
