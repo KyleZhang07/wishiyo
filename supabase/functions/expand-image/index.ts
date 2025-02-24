@@ -6,97 +6,90 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const PICSART_API_ENDPOINT = "https://genai-api.picsart.io/v1/painting/expand";
+const LIGHTX_API_ENDPOINT = "https://api.lightxeditor.com/external/api/v1/expand-photo";
+
+// Helper function to convert Blob to Base64
+async function blobToBase64(blob: Blob): Promise<string> {
+  const arrayBuffer = await blob.arrayBuffer();
+  const uint8Array = new Uint8Array(arrayBuffer);
+  const binary = uint8Array.reduce((acc, byte) => acc + String.fromCharCode(byte), '');
+  return btoa(binary);
+}
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const { imageUrl } = await req.json();
-    console.log('Received request to expand image:', imageUrl);
+    console.log('Received image URL:', imageUrl);
+    
+    if (!imageUrl) {
+      throw new Error('No image URL provided');
+    }
 
-    // Download original image
+    console.log('Fetching image from URL...');
     const imageResponse = await fetch(imageUrl);
     if (!imageResponse.ok) {
-      throw new Error(`Failed to fetch original image: ${imageResponse.statusText}`);
+      throw new Error(`Failed to fetch image: ${imageResponse.statusText}`);
     }
-
-    // Get image blob
-    const imageBlob = await imageResponse.blob();
     
-    // Get image dimensions
-    const imgData = await createImageBitmap(imageBlob);
-    const originalWidth = imgData.width;
-    const originalHeight = imgData.height;
-    console.log(`Original image dimensions: ${originalWidth}x${originalHeight}`);
+    const imageBlob = await imageResponse.blob();
+    console.log('Image downloaded successfully');
 
     const formData = new FormData();
-    formData.append('image', imageBlob);
-    formData.append('width', String(originalWidth * 2)); // Double the width
-    formData.append('height', String(originalHeight));   // Keep height the same
-    formData.append('direction', 'left');               // Expand to the left
-    formData.append('prompt', 'clean minimalist solid color background, perfect for text overlay'); // Prompt for clean expansion
+    formData.append('imageFile', imageBlob, 'image.png');
+    formData.append('prompt', 'extend image to the left: generate a clean, clear, empty background with solid colors and no objects, perfect for text overlay');
+    formData.append('expand_ratio', '2.0');
+    formData.append('expand_direction', 'left');
 
-    const PICSART_API_KEY = Deno.env.get('PICSART_API_KEY');
-    if (!PICSART_API_KEY) {
-      throw new Error('Picsart API key not configured');
+    const LIGHTX_API_KEY = Deno.env.get('LIGHTX_API_KEY');
+    if (!LIGHTX_API_KEY) {
+      throw new Error('LightX API key not configured');
     }
 
-    // Call Picsart API
-    console.log('Calling Picsart API for image expansion...');
-    const picsartResponse = await fetch(PICSART_API_ENDPOINT, {
+    console.log('Calling LightX API with params:', {
+      expand_ratio: '2.0',
+      expand_direction: 'left',
+      prompt: formData.get('prompt')
+    });
+    
+    const lightXResponse = await fetch(LIGHTX_API_ENDPOINT, {
       method: 'POST',
       headers: {
-        'X-Picsart-API-Key': PICSART_API_KEY
+        'x-api-key': LIGHTX_API_KEY,
       },
-      body: formData
+      body: formData,
     });
 
-    if (!picsartResponse.ok) {
-      const errorText = await picsartResponse.text();
-      console.error('Picsart API error:', errorText);
-      throw new Error(`Picsart API error: ${picsartResponse.status}`);
+    if (!lightXResponse.ok) {
+      const errorText = await lightXResponse.text();
+      console.error('LightX API error:', errorText);
+      throw new Error(`LightX API error: ${lightXResponse.status} ${lightXResponse.statusText}`);
     }
 
-    const result = await picsartResponse.json();
-    console.log('Successfully received expanded image data');
-
-    if (!result.url) {
-      throw new Error('No image URL in Picsart response');
-    }
-
-    // Download the expanded image
-    const expandedImageResponse = await fetch(result.url);
-    if (!expandedImageResponse.ok) {
-      throw new Error('Failed to fetch expanded image from Picsart');
-    }
-
-    const expandedImageData = await expandedImageResponse.arrayBuffer();
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(expandedImageData)));
+    console.log('Successfully received expanded image from LightX API');
+    const expandedImageBlob = await lightXResponse.blob();
     
-    return new Response(
-      JSON.stringify({ 
-        imageData: `data:image/png;base64,${base64}`
-      }),
-      {
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        }
+    // Convert Blob to Base64 and return as JSON
+    const base64Data = await blobToBase64(expandedImageBlob);
+    const response = {
+      imageData: `data:${expandedImageBlob.type};base64,${base64Data}`
+    };
+
+    return new Response(JSON.stringify(response), {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json'
       }
-    );
+    });
 
   } catch (error) {
     console.error('Error in expand-image function:', error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500
-      }
-    );
+    return new Response(JSON.stringify({ error: error.message }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 500
+    });
   }
 });

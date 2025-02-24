@@ -141,120 +141,6 @@ const GenerateStep = () => {
     }
   };
 
-  const expandImage = async (imageUrl: string): Promise<string> => {
-    try {
-      console.log('Starting image expansion for:', imageUrl);
-      const { data, error } = await supabase.functions.invoke('expand-image', {
-        body: { imageUrl }
-      });
-
-      if (error) throw error;
-
-      if (!data?.imageData) {
-        throw new Error('No image data received from expand-image function');
-      }
-
-      return data.imageData;
-    } catch (error) {
-      console.error('Error in expandImage:', error);
-      throw error;
-    }
-  };
-
-  const handleGenericContentRegeneration = async (index: number) => {
-    const stateSetters = {
-      3: setContentImage3,
-      4: setContentImage4,
-      5: setContentImage5,
-      6: setContentImage6,
-      7: setContentImage7,
-      8: setContentImage8,
-      9: setContentImage9,
-      10: setContentImage10,
-      11: setContentImage11
-    };
-
-    const loadingSetters = {
-      3: setIsGeneratingContent3,
-      4: setIsGeneratingContent4,
-      5: setIsGeneratingContent5,
-      6: setIsGeneratingContent6,
-      7: setIsGeneratingContent7,
-      8: setIsGeneratingContent8,
-      9: setIsGeneratingContent9,
-      10: setIsGeneratingContent10,
-      11: setIsGeneratingContent11
-    };
-
-    const setContentImage = stateSetters[index as keyof typeof stateSetters];
-    const setIsGenerating = loadingSetters[index as keyof typeof loadingSetters];
-
-    if (!setContentImage || !setIsGenerating) {
-      console.error(`Invalid index ${index} for content regeneration`);
-      return;
-    }
-
-    setIsGenerating(true);
-    const contentKey = `loveStoryContentImage${index}`;
-
-    try {
-      localStorage.removeItem(contentKey);
-      const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
-      const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
-      
-      if (!savedPrompts || !partnerPhoto) {
-        throw new Error('Missing required prompts or partner photo');
-      }
-
-      const prompts = JSON.parse(savedPrompts);
-      if (!prompts || !prompts[index]) {
-        throw new Error(`No prompt found for index ${index}`);
-      }
-
-      console.log(`Generating content ${index} with prompt:`, prompts[index].prompt);
-      
-      // 1. 生成原始图片
-      const { data: genData, error: genError } = await supabase.functions.invoke('generate-love-cover', {
-        body: { 
-          prompt: prompts[index].prompt, 
-          photo: partnerPhoto,
-          contentIndex: index 
-        }
-      });
-      
-      if (genError) throw genError;
-
-      const generatedImageUrl = genData?.[`contentImage${index}`]?.[0] || genData?.output?.[0];
-      if (!generatedImageUrl) {
-        throw new Error('No image generated');
-      }
-
-      console.log(`Successfully generated image for content ${index}:`, generatedImageUrl);
-
-      // 2. 扩展图片
-      console.log(`Expanding image for content ${index}`);
-      const expandedImageData = await expandImage(generatedImageUrl);
-      
-      // 3. 保存并展示扩展后的图片
-      setContentImage(expandedImageData);
-      localStorage.setItem(contentKey, expandedImageData);
-      
-      toast({
-        title: "Image generated and expanded",
-        description: "Your image has been successfully created",
-      });
-    } catch (error) {
-      console.error(`Error in content regeneration for index ${index}:`, error);
-      toast({
-        title: "Error generating image",
-        description: error instanceof Error ? error.message : "Please try again",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
   const handleEditCover = () => {
     toast({
       title: "Edit Cover",
@@ -314,11 +200,13 @@ const GenerateStep = () => {
           });
           if (error) throw error;
           if (data?.contentImage?.[0]) {
-            setContentImage(data.contentImage[0]);
-            localStorage.setItem('loveStoryContentImage', data.contentImage[0]);
+            console.log('Expanding content image 1...');
+            const expandedImage = await expandImage(data.contentImage[0]);
+            setContentImage(expandedImage);
+            localStorage.setItem('loveStoryContentImage', expandedImage);
           }
         } catch (error) {
-          console.error('Error regenerating content image 1:', error);
+          console.error('Error regenerating/expanding content image 1:', error);
           toast({
             title: "Error regenerating image",
             description: "Please try again",
@@ -345,11 +233,13 @@ const GenerateStep = () => {
           });
           if (error) throw error;
           if (data?.contentImage2?.[0]) {
-            setContentImage2(data.contentImage2[0]);
-            localStorage.setItem('loveStoryContentImage2', data.contentImage2[0]);
+            console.log('Expanding content image 2...');
+            const expandedImage = await expandImage(data.contentImage2[0]);
+            setContentImage2(expandedImage);
+            localStorage.setItem('loveStoryContentImage2', expandedImage);
           }
         } catch (error) {
-          console.error('Error regenerating content image 2:', error);
+          console.error('Error regenerating/expanding content image 2:', error);
           toast({
             title: "Error regenerating image",
             description: "Please try again",
@@ -362,40 +252,152 @@ const GenerateStep = () => {
     }
   };
 
-  const handleRegenerateContent3 = async () => {
-    handleGenericContentRegeneration(3);
+  const expandImage = async (imageUrl: string): Promise<string> => {
+    try {
+      console.log('Starting image expansion for:', imageUrl);
+      const { data, error } = await supabase.functions.invoke('expand-image', {
+        body: { imageUrl }
+      });
+
+      if (error) {
+        console.error('Error from expand-image function:', error);
+        throw error;
+      }
+
+      if (!data?.imageData) {
+        console.error('No image data received from expand-image function');
+        throw new Error('Failed to receive image data');
+      }
+
+      console.log('Successfully received Base64 image data');
+      return data.imageData;
+    } catch (error) {
+      console.error('Error in expandImage:', error);
+      throw error;
+    }
   };
 
-  const handleRegenerateContent4 = async () => {
-    handleGenericContentRegeneration(4);
+  const handleGenericContentRegeneration = async (index: number) => {
+    console.log(`Starting content regeneration for index ${index}`);
+    const stateSetters = {
+      3: setContentImage3,
+      4: setContentImage4,
+      5: setContentImage5,
+      6: setContentImage6,
+      7: setContentImage7,
+      8: setContentImage8,
+      9: setContentImage9,
+      10: setContentImage10,
+      11: setContentImage11
+    };
+
+    const loadingSetters = {
+      3: setIsGeneratingContent3,
+      4: setIsGeneratingContent4,
+      5: setIsGeneratingContent5,
+      6: setIsGeneratingContent6,
+      7: setIsGeneratingContent7,
+      8: setIsGeneratingContent8,
+      9: setIsGeneratingContent9,
+      10: setIsGeneratingContent10,
+      11: setIsGeneratingContent11
+    };
+
+    const setContentImage = stateSetters[index as keyof typeof stateSetters];
+    const setIsGenerating = loadingSetters[index as keyof typeof loadingSetters];
+
+    if (!setContentImage || !setIsGenerating) {
+      console.error(`Invalid index ${index} for content regeneration`);
+      return;
+    }
+
+    const contentKey = `loveStoryContentImage${index}`;
+    localStorage.removeItem(contentKey);
+    
+    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    
+    if (!savedPrompts || !partnerPhoto) {
+      console.error('Missing required prompts or partner photo');
+      toast({
+        title: "Error regenerating image",
+        description: "Missing required information",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsGenerating(true);
+      const prompts = JSON.parse(savedPrompts);
+      if (!prompts || !prompts[index]) {
+        throw new Error(`No prompt found for index ${index}`);
+      }
+
+      const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+        body: { 
+          prompt: prompts[index].prompt, 
+          photo: partnerPhoto,
+          contentIndex: index 
+        }
+      });
+      
+      if (error) throw error;
+      
+      let imageUrl = data?.[`contentImage${index}`]?.[0] || data?.output?.[0];
+      if (!imageUrl) {
+        throw new Error('No image generated');
+      }
+
+      console.log(`Successfully generated image for content ${index}:`, imageUrl);
+
+      const expandedImageData = await expandImage(imageUrl);
+      console.log(`Successfully expanded image for content ${index}`);
+      
+      setContentImage(expandedImageData);
+      localStorage.setItem(contentKey, expandedImageData);
+      
+      toast({
+        title: "Image regenerated",
+        description: "Your image has been successfully updated",
+      });
+    } catch (error) {
+      console.error(`Error in content regeneration for index ${index}:`, error);
+      toast({
+        title: "Error regenerating image",
+        description: error instanceof Error ? error.message : "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
-  const handleRegenerateContent5 = async () => {
-    handleGenericContentRegeneration(5);
-  };
+  const generateContentConfigs = () => {
+    const configs = [
+      {
+        image: contentImage2,
+        isGenerating: isGeneratingContent2,
+        handler: handleRegenerateContent2
+      }
+    ];
+    
+    const additionalConfigs = Array.from({ length: 9 }, (_, i) => {
+      const index = i + 3;
+      const imageKey = `contentImage${index}` as keyof typeof GenerateStep.prototype;
+      const loadingKey = `isGeneratingContent${index}` as keyof typeof GenerateStep.prototype;
+      
+      return {
+        image: eval(`contentImage${index}`),
+        isGenerating: eval(`isGeneratingContent${index}`),
+        handler: () => {
+          console.log(`Triggering regeneration for content ${index}`);
+          return handleGenericContentRegeneration(index);
+        }
+      };
+    });
 
-  const handleRegenerateContent6 = async () => {
-    handleGenericContentRegeneration(6);
-  };
-
-  const handleRegenerateContent7 = async () => {
-    handleGenericContentRegeneration(7);
-  };
-
-  const handleRegenerateContent8 = async () => {
-    handleGenericContentRegeneration(8);
-  };
-
-  const handleRegenerateContent9 = async () => {
-    handleGenericContentRegeneration(9);
-  };
-
-  const handleRegenerateContent10 = async () => {
-    handleGenericContentRegeneration(10);
-  };
-
-  const handleRegenerateContent11 = async () => {
-    handleGenericContentRegeneration(11);
+    return [...configs, ...additionalConfigs];
   };
 
   return (
@@ -429,18 +431,7 @@ const GenerateStep = () => {
           showDedicationText={true}
         />
 
-        {[
-          { image: contentImage2, isGenerating: isGeneratingContent2, handler: handleRegenerateContent2 },
-          { image: contentImage3, isGenerating: isGeneratingContent3, handler: handleRegenerateContent3 },
-          { image: contentImage4, isGenerating: isGeneratingContent4, handler: handleRegenerateContent4 },
-          { image: contentImage5, isGenerating: isGeneratingContent5, handler: handleRegenerateContent5 },
-          { image: contentImage6, isGenerating: isGeneratingContent6, handler: handleRegenerateContent6 },
-          { image: contentImage7, isGenerating: isGeneratingContent7, handler: handleRegenerateContent7 },
-          { image: contentImage8, isGenerating: isGeneratingContent8, handler: handleRegenerateContent8 },
-          { image: contentImage9, isGenerating: isGeneratingContent9, handler: handleRegenerateContent9 },
-          { image: contentImage10, isGenerating: isGeneratingContent10, handler: handleRegenerateContent10 },
-          { image: contentImage11, isGenerating: isGeneratingContent11, handler: handleRegenerateContent11 },
-        ].map((content, index) => (
+        {generateContentConfigs().map((content, index) => (
           <ContentImageCard
             key={index + 2}
             image={content.image}
