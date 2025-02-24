@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -6,8 +5,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const LIGHTX_API_EXPAND_ENDPOINT = "https://api.lightxeditor.com/external/api/v1/expand-photo";
-const LIGHTX_API_STATUS_ENDPOINT = "https://api.lightxeditor.com/external/api/v1/expand-photo/status";
+const LIGHTX_EXPAND_ENDPOINT = "https://api.lightxeditor.com/external/api/v1/expand-photo";
+const LIGHTX_STATUS_ENDPOINT = "https://api.lightxeditor.com/external/api/v1/expand-photo/status";
 
 /**
  * 将 Blob 转为 Base64
@@ -55,7 +54,7 @@ serve(async (req) => {
     // 3. 调用"expand-photo"接口，让 LightX 开始处理
     console.log("Calling LightX API to expand image...");
     const leftPadding = 1024; // 演示：向左扩展 1024 像素
-    const startResp = await fetch(LIGHTX_API_EXPAND_ENDPOINT, {
+    const startResp = await fetch(LIGHTX_EXPAND_ENDPOINT, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -105,7 +104,7 @@ serve(async (req) => {
     // 如果 LightX 是同步立即返回"已完成"的情况，这里可能直接有 url
     // 但根据你的贴图显示 status="init"，所以要继续轮询
 
-    // 5. 轮询获取最终结果 (假设 LightX 提供一个 /expand-photo/status?orderId=xxx 的 GET / POST 接口)
+    // 5. 轮询获取最终结果
     let finalImageUrl: string | null = null;
     let attempt = 0;
     const maxAttempts = 10; // 最多轮询 10 次
@@ -114,8 +113,7 @@ serve(async (req) => {
     while (attempt < maxAttempts) {
       attempt++;
       console.log(`Polling LightX expand status... attempt #${attempt}`);
-      // 假设：GET /expand-photo/status?orderId=xxx
-      const statusUrl = `${LIGHTX_API_STATUS_ENDPOINT}?orderId=${orderId}`;
+      const statusUrl = `${LIGHTX_STATUS_ENDPOINT}?orderId=${orderId}`;
       const statusResp = await fetch(statusUrl, {
         method: "GET",
         headers: {
