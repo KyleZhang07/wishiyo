@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
@@ -401,13 +402,18 @@ const GenerateStep = () => {
       if (prompts && prompts.length > 7) {
         setIsGeneratingContent7(true);
         try {
+          console.log('Generating content 7 with prompt:', prompts[7].prompt);
           const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-            body: { content7Prompt: prompts[7].prompt, photo: partnerPhoto }
+            body: { prompt: prompts[7].prompt, photo: partnerPhoto, contentIndex: 7 }
           });
+          
           if (error) throw error;
-          if (data?.contentImage7?.[0]) {
-            setContentImage7(data.contentImage7[0]);
-            localStorage.setItem('loveStoryContentImage7', data.contentImage7[0]);
+          console.log('Content 7 generation response:', data);
+          
+          const contentImage = data?.contentImage7?.[0] || data?.output?.[0];
+          if (contentImage) {
+            setContentImage7(contentImage);
+            localStorage.setItem('loveStoryContentImage7', contentImage);
           }
         } catch (error) {
           console.error('Error regenerating content image 7:', error);
@@ -432,13 +438,18 @@ const GenerateStep = () => {
       if (prompts && prompts.length > 8) {
         setIsGeneratingContent8(true);
         try {
+          console.log('Generating content 8 with prompt:', prompts[8].prompt);
           const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-            body: { content8Prompt: prompts[8].prompt, photo: partnerPhoto }
+            body: { prompt: prompts[8].prompt, photo: partnerPhoto, contentIndex: 8 }
           });
+          
           if (error) throw error;
-          if (data?.contentImage8?.[0]) {
-            setContentImage8(data.contentImage8[0]);
-            localStorage.setItem('loveStoryContentImage8', data.contentImage8[0]);
+          console.log('Content 8 generation response:', data);
+          
+          const contentImage = data?.contentImage8?.[0] || data?.output?.[0];
+          if (contentImage) {
+            setContentImage8(contentImage);
+            localStorage.setItem('loveStoryContentImage8', contentImage);
           }
         } catch (error) {
           console.error('Error regenerating content image 8:', error);
@@ -463,13 +474,18 @@ const GenerateStep = () => {
       if (prompts && prompts.length > 9) {
         setIsGeneratingContent9(true);
         try {
+          console.log('Generating content 9 with prompt:', prompts[9].prompt);
           const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-            body: { content9Prompt: prompts[9].prompt, photo: partnerPhoto }
+            body: { prompt: prompts[9].prompt, photo: partnerPhoto, contentIndex: 9 }
           });
+          
           if (error) throw error;
-          if (data?.contentImage9?.[0]) {
-            setContentImage9(data.contentImage9[0]);
-            localStorage.setItem('loveStoryContentImage9', data.contentImage9[0]);
+          console.log('Content 9 generation response:', data);
+          
+          const contentImage = data?.contentImage9?.[0] || data?.output?.[0];
+          if (contentImage) {
+            setContentImage9(contentImage);
+            localStorage.setItem('loveStoryContentImage9', contentImage);
           }
         } catch (error) {
           console.error('Error regenerating content image 9:', error);
@@ -494,13 +510,18 @@ const GenerateStep = () => {
       if (prompts && prompts.length > 10) {
         setIsGeneratingContent10(true);
         try {
+          console.log('Generating content 10 with prompt:', prompts[10].prompt);
           const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-            body: { content10Prompt: prompts[10].prompt, photo: partnerPhoto }
+            body: { prompt: prompts[10].prompt, photo: partnerPhoto, contentIndex: 10 }
           });
+          
           if (error) throw error;
-          if (data?.contentImage10?.[0]) {
-            setContentImage10(data.contentImage10[0]);
-            localStorage.setItem('loveStoryContentImage10', data.contentImage10[0]);
+          console.log('Content 10 generation response:', data);
+          
+          const contentImage = data?.contentImage10?.[0] || data?.output?.[0];
+          if (contentImage) {
+            setContentImage10(contentImage);
+            localStorage.setItem('loveStoryContentImage10', contentImage);
           }
         } catch (error) {
           console.error('Error regenerating content image 10:', error);
@@ -525,13 +546,18 @@ const GenerateStep = () => {
       if (prompts && prompts.length > 11) {
         setIsGeneratingContent11(true);
         try {
+          console.log('Generating content 11 with prompt:', prompts[11].prompt);
           const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-            body: { content11Prompt: prompts[11].prompt, photo: partnerPhoto }
+            body: { prompt: prompts[11].prompt, photo: partnerPhoto, contentIndex: 11 }
           });
+          
           if (error) throw error;
-          if (data?.contentImage11?.[0]) {
-            setContentImage11(data.contentImage11[0]);
-            localStorage.setItem('loveStoryContentImage11', data.contentImage11[0]);
+          console.log('Content 11 generation response:', data);
+          
+          const contentImage = data?.contentImage11?.[0] || data?.output?.[0];
+          if (contentImage) {
+            setContentImage11(contentImage);
+            localStorage.setItem('loveStoryContentImage11', contentImage);
           }
         } catch (error) {
           console.error('Error regenerating content image 11:', error);
