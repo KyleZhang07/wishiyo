@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import Replicate from "https://esm.sh/replicate@0.25.2"
 
@@ -65,27 +66,6 @@ serve(async (req) => {
           }
         }
       )
-      if (contentImage) {
-        try {
-          const expandResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/expand-image`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`
-            },
-            body: JSON.stringify({
-              imageUrl: contentImage[0]
-            })
-          });
-
-          if (expandResponse.ok) {
-            const expandResult = await expandResponse.json();
-            contentImage = [expandResult.imageData];
-          }
-        } catch (error) {
-          console.error('Error expanding content image 1:', error);
-        }
-      }
       return new Response(JSON.stringify({ contentImage }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -109,27 +89,6 @@ serve(async (req) => {
           }
         }
       )
-      if (contentImage2) {
-        try {
-          const expandResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/expand-image`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`
-            },
-            body: JSON.stringify({
-              imageUrl: contentImage2[0]
-            })
-          });
-
-          if (expandResponse.ok) {
-            const expandResult = await expandResponse.json();
-            contentImage2 = [expandResult.imageData];
-          }
-        } catch (error) {
-          console.error('Error expanding content image 2:', error);
-        }
-      }
       return new Response(JSON.stringify({ contentImage2 }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
