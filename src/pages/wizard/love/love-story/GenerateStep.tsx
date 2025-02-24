@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
@@ -87,60 +88,6 @@ const GenerateStep = () => {
     }
   }, []);
 
-  const generateImages = async (coverPrompt: string, content1Prompt: string, content2Prompt: string, photo: string) => {
-    setIsGeneratingCover(true);
-    setIsGeneratingContent1(true);
-    setIsGeneratingContent2(true);
-    toast({
-      title: "Generating images",
-      description: "This may take a minute...",
-    });
-
-    try {
-      const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-        body: { 
-          prompt: coverPrompt, 
-          contentPrompt: content1Prompt,
-          content2Prompt: content2Prompt,
-          photo 
-        }
-      });
-
-      if (error) throw error;
-
-      if (data?.output?.[0]) {
-        setCoverImage(data.output[0]);
-        localStorage.setItem('loveStoryCoverImage', data.output[0]);
-      }
-
-      if (data?.contentImage?.[0]) {
-        setContentImage(data.contentImage[0]);
-        localStorage.setItem('loveStoryContentImage', data.contentImage[0]);
-      }
-
-      if (data?.contentImage2?.[0]) {
-        setContentImage2(data.contentImage2[0]);
-        localStorage.setItem('loveStoryContentImage2', data.contentImage2[0]);
-      }
-
-      toast({
-        title: "Images generated",
-        description: "Your images are ready!",
-      });
-    } catch (error) {
-      console.error('Error generating images:', error);
-      toast({
-        title: "Error generating images",
-        description: "Please try again",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGeneratingCover(false);
-      setIsGeneratingContent1(false);
-      setIsGeneratingContent2(false);
-    }
-  };
-
   const expandImage = async (imageUrl: string): Promise<string> => {
     console.log('Starting image expansion for:', imageUrl);
     const { data, error } = await supabase.functions.invoke('expand-image', {
@@ -159,6 +106,67 @@ const GenerateStep = () => {
 
     console.log('Successfully received expanded image data');
     return data.imageData;
+  };
+
+  const handleEditCover = () => {
+    // Navigate to cover edit page or open dialog
+    console.log('Edit cover clicked');
+    // 实现编辑封面的逻辑，暂时只打印日志
+  };
+
+  const handleEditText = () => {
+    // Handle text editing
+    console.log('Edit text clicked');
+    // 实现编辑文本的逻辑，暂时只打印日志
+  };
+
+  const handleRegenerateContent1 = async () => {
+    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+
+    if (!savedPrompts || !partnerPhoto) {
+      toast({
+        title: "Error regenerating image",
+        description: "Missing required information",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGeneratingContent1(true);
+    try {
+      const prompts = JSON.parse(savedPrompts);
+      if (prompts && prompts.length > 1) {
+        const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+          body: { 
+            prompt: prompts[1].prompt, 
+            photo: partnerPhoto,
+            contentIndex: 1
+          }
+        });
+
+        if (error) throw error;
+
+        if (data?.contentImage?.[0]) {
+          setContentImage(data.contentImage[0]);
+          localStorage.setItem('loveStoryContentImage', data.contentImage[0]);
+        }
+
+        toast({
+          title: "Image regenerated",
+          description: "Your dedication page image has been updated",
+        });
+      }
+    } catch (error) {
+      console.error('Error regenerating content image 1:', error);
+      toast({
+        title: "Error regenerating image",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingContent1(false);
+    }
   };
 
   const handleGenericContentRegeneration = async (index: number) => {
