@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
@@ -98,8 +99,14 @@ const GenerateStep = () => {
         throw response.error;
       }
 
-      // 使用 response.data 创建 Blob
-      const blob = await response.data.blob();
+      // 创建一个新的 Blob 对象
+      const base64Data = response.data;
+      const binaryString = window.atob(base64Data);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], { type: 'image/png' });
       return URL.createObjectURL(blob);
     } catch (error) {
       console.error('Error expanding image:', error);
