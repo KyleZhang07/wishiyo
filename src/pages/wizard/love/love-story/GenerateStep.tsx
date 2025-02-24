@@ -270,12 +270,23 @@ const GenerateStep = () => {
         throw new Error('Failed to receive image data');
       }
 
+      // 详细验证返回的数据格式
+      if (typeof responseData.imageData !== 'string') {
+        console.error('Invalid response type:', typeof responseData.imageData);
+        throw new Error('Invalid response type received');
+      }
+
       if (!responseData.imageData.startsWith('data:image/')) {
         console.error('Invalid image data format:', responseData.imageData.substring(0, 50));
         throw new Error('Invalid image data format received');
       }
 
-      console.log('Successfully received Base64 image data');
+      const base64Start = responseData.imageData.indexOf('base64,');
+      if (base64Start === -1) {
+        throw new Error('Invalid Base64 data format');
+      }
+
+      console.log('Successfully validated image data');
       return responseData.imageData;
     } catch (error) {
       console.error('Error in expandImage:', error);
