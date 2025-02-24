@@ -13,8 +13,11 @@ const GenerateStep = () => {
   const [authorName, setAuthorName] = useState('');
   const [coverImage, setCoverImage] = useState<string>();
   const [contentImage, setContentImage] = useState<string>();
+  const [contentImage2, setContentImage2] = useState<string>();
   const [backCoverText, setBackCoverText] = useState('');
   const [isGeneratingCover, setIsGeneratingCover] = useState(false);
+  const [isGeneratingContent1, setIsGeneratingContent1] = useState(false);
+  const [isGeneratingContent2, setIsGeneratingContent2] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -26,6 +29,7 @@ const GenerateStep = () => {
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
     const savedCoverImage = localStorage.getItem('loveStoryCoverImage');
     const savedContentImage = localStorage.getItem('loveStoryContentImage');
+    const savedContentImage2 = localStorage.getItem('loveStoryContentImage2');
     const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
 
     if (savedAuthor) {
@@ -56,18 +60,23 @@ const GenerateStep = () => {
     if (savedContentImage) {
       setContentImage(savedContentImage);
     }
+    if (savedContentImage2) {
+      setContentImage2(savedContentImage2);
+    }
     
-    // Generate both images if they don't exist
-    if ((!savedCoverImage || !savedContentImage) && savedPrompts && partnerPhoto) {
+    // Generate images if they don't exist
+    if ((!savedCoverImage || !savedContentImage || !savedContentImage2) && savedPrompts && partnerPhoto) {
       const prompts = JSON.parse(savedPrompts);
-      if (prompts && prompts.length > 1) {
-        generateImages(prompts[0].prompt, prompts[1].prompt, partnerPhoto);
+      if (prompts && prompts.length > 2) {
+        generateImages(prompts[0].prompt, prompts[1].prompt, prompts[2].prompt, partnerPhoto);
       }
     }
   }, []);
 
-  const generateImages = async (coverPrompt: string, contentPrompt: string, photo: string) => {
+  const generateImages = async (coverPrompt: string, content1Prompt: string, content2Prompt: string, photo: string) => {
     setIsGeneratingCover(true);
+    setIsGeneratingContent1(true);
+    setIsGeneratingContent2(true);
     toast({
       title: "Generating images",
       description: "This may take a minute...",
@@ -75,7 +84,12 @@ const GenerateStep = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-        body: { prompt: coverPrompt, contentPrompt, photo }
+        body: { 
+          prompt: coverPrompt, 
+          contentPrompt: content1Prompt,
+          content2Prompt: content2Prompt,
+          photo 
+        }
       });
 
       if (error) throw error;
@@ -88,6 +102,11 @@ const GenerateStep = () => {
       if (data?.contentImage?.[0]) {
         setContentImage(data.contentImage[0]);
         localStorage.setItem('loveStoryContentImage', data.contentImage[0]);
+      }
+
+      if (data?.contentImage2?.[0]) {
+        setContentImage2(data.contentImage2[0]);
+        localStorage.setItem('loveStoryContentImage2', data.contentImage2[0]);
       }
 
       toast({
@@ -103,6 +122,8 @@ const GenerateStep = () => {
       });
     } finally {
       setIsGeneratingCover(false);
+      setIsGeneratingContent1(false);
+      setIsGeneratingContent2(false);
     }
   };
 
@@ -113,24 +134,102 @@ const GenerateStep = () => {
     });
   };
 
-  const handleEditDedication = () => {
+  const handleEditText = () => {
     toast({
-      title: "Edit Dedication",
-      description: "Opening dedication editor..."
+      title: "Edit Text",
+      description: "Opening text editor..."
     });
   };
 
-  const handleRegenerateImages = async () => {
-    // Remove saved images when regenerating
+  const handleRegenerateCover = async () => {
     localStorage.removeItem('loveStoryCoverImage');
+    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    if (savedPrompts && partnerPhoto) {
+      const prompts = JSON.parse(savedPrompts);
+      if (prompts && prompts.length > 0) {
+        setIsGeneratingCover(true);
+        try {
+          const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+            body: { prompt: prompts[0].prompt, photo: partnerPhoto }
+          });
+          if (error) throw error;
+          if (data?.output?.[0]) {
+            setCoverImage(data.output[0]);
+            localStorage.setItem('loveStoryCoverImage', data.output[0]);
+          }
+        } catch (error) {
+          console.error('Error regenerating cover:', error);
+          toast({
+            title: "Error regenerating cover",
+            description: "Please try again",
+            variant: "destructive",
+          });
+        } finally {
+          setIsGeneratingCover(false);
+        }
+      }
+    }
+  };
+
+  const handleRegenerateContent1 = async () => {
     localStorage.removeItem('loveStoryContentImage');
-    
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
     const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
     if (savedPrompts && partnerPhoto) {
       const prompts = JSON.parse(savedPrompts);
       if (prompts && prompts.length > 1) {
-        await generateImages(prompts[0].prompt, prompts[1].prompt, partnerPhoto);
+        setIsGeneratingContent1(true);
+        try {
+          const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+            body: { contentPrompt: prompts[1].prompt, photo: partnerPhoto }
+          });
+          if (error) throw error;
+          if (data?.contentImage?.[0]) {
+            setContentImage(data.contentImage[0]);
+            localStorage.setItem('loveStoryContentImage', data.contentImage[0]);
+          }
+        } catch (error) {
+          console.error('Error regenerating content image 1:', error);
+          toast({
+            title: "Error regenerating image",
+            description: "Please try again",
+            variant: "destructive",
+          });
+        } finally {
+          setIsGeneratingContent1(false);
+        }
+      }
+    }
+  };
+
+  const handleRegenerateContent2 = async () => {
+    localStorage.removeItem('loveStoryContentImage2');
+    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    if (savedPrompts && partnerPhoto) {
+      const prompts = JSON.parse(savedPrompts);
+      if (prompts && prompts.length > 2) {
+        setIsGeneratingContent2(true);
+        try {
+          const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+            body: { content2Prompt: prompts[2].prompt, photo: partnerPhoto }
+          });
+          if (error) throw error;
+          if (data?.contentImage2?.[0]) {
+            setContentImage2(data.contentImage2[0]);
+            localStorage.setItem('loveStoryContentImage2', data.contentImage2[0]);
+          }
+        } catch (error) {
+          console.error('Error regenerating content image 2:', error);
+          toast({
+            title: "Error regenerating image",
+            description: "Please try again",
+            variant: "destructive",
+          });
+        } finally {
+          setIsGeneratingContent2(false);
+        }
       }
     }
   };
@@ -169,20 +268,20 @@ const GenerateStep = () => {
               </Button>
               <Button
                 variant="secondary"
-                onClick={handleRegenerateImages}
+                onClick={handleRegenerateCover}
                 disabled={isGeneratingCover}
               >
                 <RefreshCw className={`w-4 h-4 mr-2 ${isGeneratingCover ? 'animate-spin' : ''}`} />
-                Regenerate images
+                Regenerate cover
               </Button>
             </div>
           </div>
         </div>
 
-        {/* Dedication Preview */}
+        {/* Image One */}
         <div className="glass-card rounded-2xl p-8 py-[40px] relative">
           <div className="max-w-xl mx-auto">
-            <div className="aspect-[3/4] bg-[#FFECD1] rounded-lg p-8 relative">
+            <div className="aspect-[2.5/1] bg-[#FFECD1] rounded-lg p-8 relative">
               <div className="h-full flex flex-col justify-center items-center text-center space-y-6">
                 {contentImage && (
                   <div className="absolute inset-0 rounded-lg overflow-hidden">
@@ -201,14 +300,47 @@ const GenerateStep = () => {
                 </div>
               </div>
             </div>
-            <Button
-              variant="secondary"
-              className="absolute bottom-4 right-4"
-              onClick={handleEditDedication}
-            >
-              <Edit className="w-4 h-4 mr-2" />
-              Edit dedication
-            </Button>
+            <div className="absolute bottom-4 right-4 flex gap-2">
+              <Button
+                variant="secondary"
+                onClick={handleEditText}
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Edit text
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={handleRegenerateContent1}
+                disabled={isGeneratingContent1}
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${isGeneratingContent1 ? 'animate-spin' : ''}`} />
+                Regenerate image
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Image Two */}
+        <div className="glass-card rounded-2xl p-8 py-[40px] relative">
+          <div className="max-w-xl mx-auto">
+            <div className="aspect-[2.5/1] bg-[#FFECD1] rounded-lg p-8 relative">
+              {contentImage2 && (
+                <div className="absolute inset-0 rounded-lg overflow-hidden">
+                  <img src={contentImage2} alt="Additional content" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-[#FFECD1] opacity-40" />
+                </div>
+              )}
+            </div>
+            <div className="absolute bottom-4 right-4">
+              <Button
+                variant="secondary"
+                onClick={handleRegenerateContent2}
+                disabled={isGeneratingContent2}
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${isGeneratingContent2 ? 'animate-spin' : ''}`} />
+                Regenerate image
+              </Button>
+            </div>
           </div>
         </div>
 
