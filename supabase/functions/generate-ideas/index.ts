@@ -39,25 +39,27 @@ serve(async (req) => {
             {
               role: 'system',
               content: `You are a creative assistant that generates imaginative image prompts for a love story photo book. 
-                Create 13 unique and creative scenes - 1 cover image and 12 story images. 
-                Each prompt should imagine the person in different scenarios, both realistic and fantastical.
+                Create 13 unique and creative scenes focusing solely on one person - the recipient.
+                Each prompt should imagine the person in different scenarios that highlight their individual qualities.
                 Consider the person's gender (${personGender}) when creating prompts.
-                Make the prompts suitable for high-quality photo-realistic AI image generation.`
+                Make the prompts suitable for high-quality photo-realistic AI image generation.
+                Focus on solo portraits and scenes that showcase the person's character.`
             },
             {
               role: 'user',
               content: `Generate 13 creative image prompts based on these answers:\n\n${JSON.stringify(answers, null, 2)}\n\n
                 Create: 
                 1. One cover image prompt that captures ${personName}'s essence (${personGender}) in a magical setting
-                2. Twelve story image prompts showing ${personName} in various imaginative scenarios
+                2. Twelve story image prompts showing ${personName} in various imaginative solo scenarios
                 Each prompt should be detailed and photo-realistic.
                 Format the response as a JSON array of 13 objects, each with 'question' (short description) and 'prompt' (detailed AI image generation prompt) fields.
-                Make the prompts creative and magical, mixing reality with imagination.
+                Make the prompts creative and magical, focusing on ${personName} as an individual.
                 Ensure the prompts are appropriate for the person's gender (${personGender}).
+                Do not include other people in the scenes.
                 Example prompt structure:
                 {
-                  "question": "${personName} as a superhero",
-                  "prompt": "Ultra-realistic portrait of ${personName}, ${personGender === 'male' ? 'handsome' : 'beautiful'} person wearing a sleek superhero costume, standing atop a skyscraper at sunset, city lights glowing below, dramatic lighting, cinematic composition, high detail"
+                  "question": "${personName} as a dreamer",
+                  "prompt": "Ultra-realistic portrait of ${personName}, ${personGender === 'male' ? 'handsome' : 'beautiful'} person in a magical garden at twilight, surrounded by floating lights and butterflies, soft ethereal lighting, dreamy atmosphere, solo portrait, high detail"
                 }`
             }
           ],
@@ -100,22 +102,25 @@ serve(async (req) => {
             {
               role: 'system',
               content: `You are a creative assistant that generates emotional and meaningful book ideas. 
-                The book will be a collection of memories and moments, presented with photos and heartfelt messages. 
+                The book will be a celebration of one person, focusing on their individual qualities and characteristics.
                 Consider the recipient's gender (${personGender}) when generating ideas.
+                Create ideas that highlight the person's unique traits and experiences.
                 You must respond with ONLY a JSON array containing exactly 3 book ideas.`
             },
             {
               role: 'user',
-              content: `Generate 3 different emotional book ideas based on these answers:\n\n${JSON.stringify(answers, null, 2)}\n\n
-                The book is written by ${authorName} for ${personName} (${personGender}).\n\n
+              content: `Generate 3 different emotional book ideas celebrating ${personName} based on these answers:\n\n${JSON.stringify(answers, null, 2)}\n\n
+                The book is a tribute written by ${authorName} for ${personName} (${personGender}).\n\n
                 Return ONLY a JSON array of 3 objects, each with 'title', 'author', and 'description' fields.
+                Focus on ${personName}'s individual qualities and experiences.
                 Ensure the ideas are appropriate and tailored for a ${personGender} recipient.
+                The book should be a celebration of ${personName} as an individual.
                 Example:
                 [
                   {
-                    "title": "Title of the book",
+                    "title": "The Magic of ${personName}",
                     "author": "${authorName}",
-                    "description": "A heartwarming description..."
+                    "description": "A celebration of ${personName}'s unique spirit and extraordinary qualities..."
                   }
                 ]`
             }

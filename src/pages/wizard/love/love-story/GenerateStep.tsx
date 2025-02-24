@@ -23,6 +23,7 @@ const GenerateStep = () => {
     const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
     const savedMoments = localStorage.getItem('loveStoryMoments');
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const savedCoverImage = localStorage.getItem('loveStoryCoverImage');
     const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
 
     if (savedAuthor) {
@@ -46,8 +47,11 @@ const GenerateStep = () => {
       setBackCoverText(formattedMoments);
     }
 
-    // Generate cover image if we have prompts and photo
-    if (savedPrompts && partnerPhoto) {
+    // Check if we already have a generated cover image
+    if (savedCoverImage) {
+      setCoverImage(savedCoverImage);
+    } else if (savedPrompts && partnerPhoto) {
+      // Only generate if we don't have a saved cover image
       const prompts = JSON.parse(savedPrompts);
       if (prompts && prompts.length > 0) {
         generateCoverImage(prompts[0].prompt, partnerPhoto);
@@ -63,7 +67,6 @@ const GenerateStep = () => {
     });
 
     try {
-      // Call the edge function to generate the image
       const { data, error } = await supabase.functions.invoke('generate-love-cover', {
         body: { prompt, photo }
       });
@@ -71,7 +74,10 @@ const GenerateStep = () => {
       if (error) throw error;
 
       if (data && data.output && data.output[0]) {
-        setCoverImage(data.output[0]);
+        const generatedImage = data.output[0];
+        setCoverImage(generatedImage);
+        // Store the generated image in localStorage
+        localStorage.setItem('loveStoryCoverImage', generatedImage);
         toast({
           title: "Cover image generated",
           description: "Your cover image is ready!",
@@ -104,6 +110,9 @@ const GenerateStep = () => {
   };
 
   const handleRegenerateCover = async () => {
+    // Remove the saved cover image when regenerating
+    localStorage.removeItem('loveStoryCoverImage');
+    
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
     const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
     if (savedPrompts && partnerPhoto) {
