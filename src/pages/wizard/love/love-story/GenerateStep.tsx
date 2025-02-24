@@ -332,7 +332,14 @@ const GenerateStep = () => {
                 </div>
               )}
             </div>
-            <div className="absolute bottom-4 right-4">
+            <div className="absolute bottom-4 right-4 flex gap-2">
+              <Button
+                variant="secondary"
+                onClick={handleEditText}
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Edit text
+              </Button>
               <Button
                 variant="secondary"
                 onClick={handleRegenerateContent2}
