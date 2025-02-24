@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
@@ -21,7 +20,6 @@ const GenerateStep = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Load saved data from previous steps
     const savedAuthor = localStorage.getItem('loveStoryAuthorName');
     const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
     const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
@@ -53,7 +51,6 @@ const GenerateStep = () => {
       setBackCoverText(formattedMoments);
     }
 
-    // Check if we already have generated images
     if (savedCoverImage) {
       setCoverImage(savedCoverImage);
     }
@@ -64,7 +61,6 @@ const GenerateStep = () => {
       setContentImage2(savedContentImage2);
     }
     
-    // Generate images if they don't exist
     if ((!savedCoverImage || !savedContentImage || !savedContentImage2) && savedPrompts && partnerPhoto) {
       const prompts = JSON.parse(savedPrompts);
       if (prompts && prompts.length > 2) {
@@ -243,7 +239,6 @@ const GenerateStep = () => {
       totalSteps={4}
     >
       <div className="space-y-8">
-        {/* Cover Preview */}
         <div className="glass-card rounded-2xl p-8 py-[40px] relative">
           <div className="max-w-xl mx-auto">
             <CanvasCoverPreview
@@ -278,14 +273,17 @@ const GenerateStep = () => {
           </div>
         </div>
 
-        {/* Image One */}
         <div className="glass-card rounded-2xl p-8 py-[40px] relative">
           <div className="max-w-xl mx-auto">
-            <div className="aspect-[2.5/1] bg-[#FFECD1] rounded-lg p-8 relative">
+            <div className="aspect-[2/1] bg-[#FFECD1] rounded-lg p-8 relative">
               <div className="h-full flex flex-col justify-center items-center text-center space-y-6">
                 {contentImage && (
-                  <div className="absolute inset-0 rounded-lg overflow-hidden">
-                    <img src={contentImage} alt="Story content" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 rounded-lg overflow-hidden flex items-center justify-center">
+                    <img 
+                      src={contentImage} 
+                      alt="Story content" 
+                      className="w-auto h-full object-contain max-w-full"
+                    />
                     <div className="absolute inset-0 bg-[#FFECD1] opacity-40" />
                   </div>
                 )}
@@ -320,13 +318,16 @@ const GenerateStep = () => {
           </div>
         </div>
 
-        {/* Image Two */}
         <div className="glass-card rounded-2xl p-8 py-[40px] relative">
           <div className="max-w-xl mx-auto">
-            <div className="aspect-[2.5/1] bg-[#FFECD1] rounded-lg p-8 relative">
+            <div className="aspect-[2/1] bg-[#FFECD1] rounded-lg p-8 relative">
               {contentImage2 && (
-                <div className="absolute inset-0 rounded-lg overflow-hidden">
-                  <img src={contentImage2} alt="Additional content" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 rounded-lg overflow-hidden flex items-center justify-center">
+                  <img 
+                    src={contentImage2} 
+                    alt="Additional content" 
+                    className="w-auto h-full object-contain max-w-full" 
+                  />
                   <div className="absolute inset-0 bg-[#FFECD1] opacity-40" />
                 </div>
               )}
