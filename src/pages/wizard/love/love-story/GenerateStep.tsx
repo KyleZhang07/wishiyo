@@ -236,46 +236,17 @@ const GenerateStep = () => {
     }
   };
 
-  const handleRegenerateContent2 = async () => {
-    localStorage.removeItem('loveStoryContentImage2');
-    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
-    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
-    
-    if (savedPrompts && partnerPhoto) {
-      const prompts = JSON.parse(savedPrompts);
-      if (prompts && prompts.length > 2) {
-        setIsGeneratingContent2(true);
-        try {
-          const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-            body: { content2Prompt: prompts[2].prompt, photo: partnerPhoto }
-          });
-          
-          if (error) throw error;
-          
-          let contentImage = data?.contentImage2?.[0];
-          if (!contentImage) throw new Error('No image generated');
+  const handleRegenerateContent2 = () => handleGenericContentRegeneration(2);
+  const handleRegenerateContent3 = () => handleGenericContentRegeneration(3);
+  const handleRegenerateContent4 = () => handleGenericContentRegeneration(4);
+  const handleRegenerateContent5 = () => handleGenericContentRegeneration(5);
+  const handleRegenerateContent6 = () => handleGenericContentRegeneration(6);
+  const handleRegenerateContent7 = () => handleGenericContentRegeneration(7);
+  const handleRegenerateContent8 = () => handleGenericContentRegeneration(8);
+  const handleRegenerateContent9 = () => handleGenericContentRegeneration(9);
+  const handleRegenerateContent10 = () => handleGenericContentRegeneration(10);
+  const handleRegenerateContent11 = () => handleGenericContentRegeneration(11);
 
-          // Expand the image using PhotoRoom
-          contentImage = await expandImage(contentImage);
-          
-          setContentImage2(contentImage);
-          localStorage.setItem('loveStoryContentImage2', contentImage);
-          
-        } catch (error) {
-          console.error('Error regenerating content image 2:', error);
-          toast({
-            title: "Error regenerating image",
-            description: "Please try again",
-            variant: "destructive",
-          });
-        } finally {
-          setIsGeneratingContent2(false);
-        }
-      }
-    }
-  };
-
-  // 处理 content3-11 的函数
   const handleGenericContentRegeneration = async (index: number) => {
     const stateSetters = {
       3: setContentImage3,
@@ -329,9 +300,17 @@ const GenerateStep = () => {
           
           let contentImage = data?.[`contentImage${index}`]?.[0] || data?.output?.[0];
           if (!contentImage) throw new Error('No image generated');
+          
+          console.log(`Content ${index} image generated:`, contentImage);
 
-          // Expand the image using PhotoRoom
-          contentImage = await expandImage(contentImage);
+          try {
+            console.log(`Expanding content ${index} image...`);
+            contentImage = await expandImage(contentImage);
+            console.log(`Content ${index} image expanded successfully`);
+          } catch (expandError) {
+            console.error(`Error expanding content ${index} image:`, expandError);
+            throw expandError;
+          }
           
           setContentImage(contentImage);
           localStorage.setItem(contentKey, contentImage);
@@ -349,16 +328,6 @@ const GenerateStep = () => {
       }
     }
   };
-
-  const handleRegenerateContent3 = () => handleGenericContentRegeneration(3);
-  const handleRegenerateContent4 = () => handleGenericContentRegeneration(4);
-  const handleRegenerateContent5 = () => handleGenericContentRegeneration(5);
-  const handleRegenerateContent6 = () => handleGenericContentRegeneration(6);
-  const handleRegenerateContent7 = () => handleGenericContentRegeneration(7);
-  const handleRegenerateContent8 = () => handleGenericContentRegeneration(8);
-  const handleRegenerateContent9 = () => handleGenericContentRegeneration(9);
-  const handleRegenerateContent10 = () => handleGenericContentRegeneration(10);
-  const handleRegenerateContent11 = () => handleGenericContentRegeneration(11);
 
   return (
     <WizardStep
