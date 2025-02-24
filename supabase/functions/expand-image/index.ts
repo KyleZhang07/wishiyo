@@ -29,20 +29,24 @@ async function uploadImage(imageBlob: Blob, apiKey: string): Promise<string> {
   });
 
   if (!uploadUrlResponse.ok) {
-    throw new Error(`Failed to get upload URL: ${await uploadUrlResponse.text()}`);
+    const errorText = await uploadUrlResponse.text();
+    console.error('Upload URL error response:', errorText);
+    throw new Error(`Failed to get upload URL: ${errorText}`);
   }
 
-  const { uploadImage, imageUrl } = await uploadUrlResponse.json();
+  const { uploadImage: uploadUrl, imageUrl } = await uploadUrlResponse.json();
   console.log('Received upload URL and future public URL');
 
   // Step 2: Upload image to the temporary URL
-  const uploadResponse = await fetch(uploadImage, {
+  const uploadResponse = await fetch(uploadUrl, {
     method: 'PUT',
     body: imageBlob
   });
 
   if (!uploadResponse.ok) {
-    throw new Error('Failed to upload image');
+    const errorText = await uploadResponse.text();
+    console.error('Upload error response:', errorText);
+    throw new Error(`Failed to upload image: ${errorText}`);
   }
 
   console.log('Successfully uploaded image, public URL:', imageUrl);
@@ -69,7 +73,9 @@ async function expandImage(publicUrl: string, apiKey: string): Promise<string> {
   });
 
   if (!expandResponse.ok) {
-    throw new Error(`Failed to start expansion: ${await expandResponse.text()}`);
+    const errorText = await expandResponse.text();
+    console.error('Expand error response:', errorText);
+    throw new Error(`Failed to start expansion: ${errorText}`);
   }
 
   const { orderId } = await expandResponse.json();
@@ -89,7 +95,9 @@ async function expandImage(publicUrl: string, apiKey: string): Promise<string> {
     });
 
     if (!statusResponse.ok) {
-      throw new Error('Failed to check status');
+      const errorText = await statusResponse.text();
+      console.error('Status check error response:', errorText);
+      throw new Error(`Failed to check status: ${errorText}`);
     }
 
     const { body } = await statusResponse.json();
@@ -131,6 +139,7 @@ serve(async (req) => {
       throw new Error(`Failed to fetch original image: ${imageResponse.statusText}`);
     }
     const imageBlob = await imageResponse.blob();
+    console.log('Successfully downloaded original image, size:', imageBlob.size);
 
     // Step 2: Upload to LightX and get public URL
     const publicUrl = await uploadImage(imageBlob, LIGHTX_API_KEY);
