@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
@@ -256,7 +255,7 @@ const GenerateStep = () => {
   const expandImage = async (imageUrl: string): Promise<string> => {
     try {
       console.log('Starting image expansion for:', imageUrl);
-      const { data: responseData, error } = await supabase.functions.invoke('expand-image', {
+      const { data, error } = await supabase.functions.invoke('expand-image', {
         body: { imageUrl }
       });
 
@@ -265,29 +264,13 @@ const GenerateStep = () => {
         throw error;
       }
 
-      if (!responseData?.imageData) {
+      if (!data?.imageData) {
         console.error('No image data received from expand-image function');
         throw new Error('Failed to receive image data');
       }
 
-      // 详细验证返回的数据格式
-      if (typeof responseData.imageData !== 'string') {
-        console.error('Invalid response type:', typeof responseData.imageData);
-        throw new Error('Invalid response type received');
-      }
-
-      if (!responseData.imageData.startsWith('data:image/')) {
-        console.error('Invalid image data format:', responseData.imageData.substring(0, 50));
-        throw new Error('Invalid image data format received');
-      }
-
-      const base64Start = responseData.imageData.indexOf('base64,');
-      if (base64Start === -1) {
-        throw new Error('Invalid Base64 data format');
-      }
-
-      console.log('Successfully validated image data');
-      return responseData.imageData;
+      console.log('Successfully received Base64 image data');
+      return data.imageData;
     } catch (error) {
       console.error('Error in expandImage:', error);
       throw error;
@@ -334,13 +317,18 @@ const GenerateStep = () => {
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
     const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
     
+    if (!savedPrompts || !partnerPhoto) {
+      console.error('Missing required prompts or partner photo');
+      toast({
+        title: "Error regenerating image",
+        description: "Missing required information",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       setIsGenerating(true);
-
-      if (!savedPrompts || !partnerPhoto) {
-        throw new Error('Missing required prompts or partner photo');
-      }
-
       const prompts = JSON.parse(savedPrompts);
       if (!prompts || !prompts[index]) {
         throw new Error(`No prompt found for index ${index}`);
@@ -362,20 +350,9 @@ const GenerateStep = () => {
       }
 
       console.log(`Successfully generated image for content ${index}:`, imageUrl);
-      
-      // 扩展图片
-      console.log(`Starting expansion for content ${index}`);
+
       const expandedImageData = await expandImage(imageUrl);
-      
-      // 验证扩展后的图片数据
-      if (!expandedImageData.startsWith('data:image/')) {
-        throw new Error('Invalid expanded image data format');
-      }
-      
-      console.log(`Successfully expanded image for content ${index}`, {
-        dataLength: expandedImageData.length,
-        format: expandedImageData.substring(0, expandedImageData.indexOf(';'))
-      });
+      console.log(`Successfully expanded image for content ${index}`);
       
       setContentImage(expandedImageData);
       localStorage.setItem(contentKey, expandedImageData);
