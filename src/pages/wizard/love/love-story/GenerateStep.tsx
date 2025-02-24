@@ -90,14 +90,16 @@ const GenerateStep = () => {
   const expandImage = async (imageUrl: string): Promise<string> => {
     try {
       console.log('Expanding image:', imageUrl);
-      const { data, error } = await supabase.functions.invoke('expand-image', {
+      const response = await supabase.functions.invoke('expand-image', {
         body: { imageUrl }
       });
 
-      if (error) throw error;
-      
-      // Create a blob URL from the response
-      const blob = new Blob([data], { type: 'image/png' });
+      if (response.error) {
+        throw response.error;
+      }
+
+      // 使用 response.data 创建 Blob
+      const blob = await response.data.blob();
       return URL.createObjectURL(blob);
     } catch (error) {
       console.error('Error expanding image:', error);
@@ -282,7 +284,7 @@ const GenerateStep = () => {
       if (prompts && prompts.length > index) {
         setIsGenerating(true);
         try {
-          // 首��生成原始图片
+          // 首先生成原始图片
           const { data, error } = await supabase.functions.invoke('generate-love-cover', {
             body: { 
               prompt: prompts[index].prompt, 
@@ -297,7 +299,14 @@ const GenerateStep = () => {
           if (!contentImage) throw new Error('No image generated');
 
           // 对生成的图片进行扩展处理
-          contentImage = await expandImage(contentImage);
+          console.log(`Expanding content image ${index}...`);
+          try {
+            contentImage = await expandImage(contentImage);
+            console.log(`Content ${index} image expanded successfully`);
+          } catch (expandError) {
+            console.error(`Error expanding content ${index} image:`, expandError);
+            throw expandError;
+          }
           
           setContentImage(contentImage);
           localStorage.setItem(contentKey, contentImage);
@@ -335,7 +344,14 @@ const GenerateStep = () => {
           if (!contentImage) throw new Error('No image generated');
 
           // 对生成的图片进行扩展处理
-          contentImage = await expandImage(contentImage);
+          console.log('Expanding content image 2...');
+          try {
+            contentImage = await expandImage(contentImage);
+            console.log('Content 2 image expanded successfully');
+          } catch (expandError) {
+            console.error('Error expanding content 2 image:', expandError);
+            throw expandError;
+          }
           
           setContentImage2(contentImage);
           localStorage.setItem('loveStoryContentImage2', contentImage);
