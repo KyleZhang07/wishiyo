@@ -7,7 +7,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-const PICSART_API_ENDPOINT = "https://api.picsart.io/tools/1.0/photos/enhance";
+const LIGHTX_API_ENDPOINT = "https://api.lightxeditor.com/external/api/v1/expand-photo";
 
 async function blobToBase64(blob: Blob): Promise<string> {
   const arrayBuffer = await blob.arrayBuffer();
@@ -38,32 +38,37 @@ serve(async (req) => {
       );
     }
 
-    const PICSART_API_KEY = Deno.env.get("PICSART_API_KEY");
-    if (!PICSART_API_KEY) {
-      throw new Error("PicsArt API key not configured");
+    const LIGHTX_API_KEY = Deno.env.get("LIGHTX_API_KEY");
+    if (!LIGHTX_API_KEY) {
+      throw new Error("LightX API key not configured");
     }
 
-    console.log("Calling PicsArt API to expand image...");
-    const picsartResponse = await fetch(PICSART_API_ENDPOINT, {
+    const leftPadding = 1024;
+
+    console.log("Calling LightX API to expand image...");
+    const lightxResponse = await fetch(LIGHTX_API_ENDPOINT, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-picsart-api-key": PICSART_API_KEY,
+        "x-api-key": LIGHTX_API_KEY,
       },
       body: JSON.stringify({
-        image_url: imageUrl,
-        format: "json",
-        output_type: "url",
-        upscale: 2
+        imageUrl,
+        leftPadding,
+        rightPadding: 0,
+        topPadding: 0,
+        bottomPadding: 0,
+        textPrompt:
+          "clean, clear, empty background with solid colors and no objects, perfect for text overlay, minimalist design",
       }),
     });
 
-    if (!picsartResponse.ok) {
-      const errorText = await picsartResponse.text();
-      console.error("PicsArt API error:", errorText);
+    if (!lightxResponse.ok) {
+      const errorText = await lightxResponse.text();
+      console.error("LightX API error:", errorText);
       return new Response(
         JSON.stringify({
-          error: `PicsArt API error: ${picsartResponse.status} ${picsartResponse.statusText}`,
+          error: `LightX API error: ${lightxResponse.status} ${lightxResponse.statusText}`,
           details: errorText,
         }),
         {
@@ -73,13 +78,13 @@ serve(async (req) => {
       );
     }
 
-    const responseData = await picsartResponse.json();
-    console.log("PicsArt API response data:", responseData);
+    const responseData = await lightxResponse.json();
+    console.log("LightX API response data:", responseData);
 
-    const expandedImageUrl = responseData.data?.url;
+    const expandedImageUrl = responseData.data?.url || responseData.url;
     if (!expandedImageUrl) {
       return new Response(
-        JSON.stringify({ error: "No image URL found in PicsArt response" }),
+        JSON.stringify({ error: "No image URL found in LightX response" }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 500,
