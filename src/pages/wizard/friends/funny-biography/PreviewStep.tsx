@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import WizardStep from '@/components/wizard/WizardStep';
 import CanvasCoverPreview from '@/components/cover-generator/CanvasCoverPreview';
-import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Chapter {
   title: string;
   description: string;
+  startPage: number;
 }
 
 const PreviewStep = () => {
@@ -21,61 +22,64 @@ const PreviewStep = () => {
   const [chapters, setChapters] = useState<Chapter[]>([]);
 
   useEffect(() => {
-    // Load data from localStorage
-    const savedAuthor = localStorage.getItem('funnyBiographyAuthorName');
-    const savedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
-    const savedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
-    const savedPhotos = localStorage.getItem('funnyBiographyPhoto');
-    const savedStyle = localStorage.getItem('funnyBiographySelectedStyle');
-    
-    if (savedAuthor) {
-      setAuthorName(savedAuthor);
-    }
+    const loadData = async () => {
+      // Load data from localStorage
+      const savedAuthor = localStorage.getItem('funnyBiographyAuthorName');
+      const savedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
+      const savedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
+      const savedPhotos = localStorage.getItem('funnyBiographyPhoto');
+      const savedStyle = localStorage.getItem('funnyBiographySelectedStyle');
+      const savedChapters = localStorage.getItem('funnyBiographyChapters');
+      
+      if (savedAuthor) {
+        setAuthorName(savedAuthor);
+      }
 
-    if (savedIdeas && savedIdeaIndex) {
-      const ideas = JSON.parse(savedIdeas);
-      const selectedIdea = ideas[parseInt(savedIdeaIndex)];
-      if (selectedIdea) {
-        setCoverTitle(selectedIdea.title || '');
-        setSubtitle(selectedIdea.description || '');
-        // Always use the authorName from localStorage
-        if (savedAuthor) {
-          setAuthorName(savedAuthor);
+      if (savedIdeas && savedIdeaIndex) {
+        const ideas = JSON.parse(savedIdeas);
+        const selectedIdea = ideas[parseInt(savedIdeaIndex)];
+        if (selectedIdea) {
+          setCoverTitle(selectedIdea.title || '');
+          setSubtitle(selectedIdea.description || '');
         }
       }
-    }
 
-    if (savedPhotos) {
-      setCoverImage(savedPhotos);
-    }
-
-    if (savedStyle) {
-      setSelectedStyle(savedStyle);
-    }
-
-    // Mock chapters data - this would be replaced with real generated chapters
-    setChapters([
-      {
-        title: "Early Days: The Making of a Legend",
-        description: "Childhood adventures and formative experiences that shaped the quirky personality everyone knows today."
-      },
-      {
-        title: "The College Years: Academic Chaos",
-        description: "From late-night study sessions to legendary parties, how education took a backseat to life lessons."
-      },
-      {
-        title: "Professional Mishaps and Triumphs",
-        description: "Career highlights featuring ingenious solutions to workplace problems and remarkable failures turned into wins."
-      },
-      {
-        title: "Relationships: Hearts Broken and Mended",
-        description: "A candid look at romantic escapades, friendship dramas, and family feuds that define human connections."
-      },
-      {
-        title: "Legacy of Laughter: Life Philosophies",
-        description: "Words of wisdom, terrible advice, and the unique outlook on life that makes this biography worth reading."
+      if (savedPhotos) {
+        setCoverImage(savedPhotos);
       }
-    ]);
+
+      if (savedStyle) {
+        setSelectedStyle(savedStyle);
+      }
+
+      // If we have saved chapters, use them
+      if (savedChapters) {
+        setChapters(JSON.parse(savedChapters));
+      } else {
+        // Otherwise generate new ones
+        try {
+          const { data: { chapters: generatedChapters }, error } = await supabase.functions.invoke('generate-chapters', {
+            body: {
+              authorName: savedAuthor,
+              bookTitle: coverTitle,
+              selectedIdea: savedIdeas ? JSON.parse(savedIdeas)[parseInt(savedIdeaIndex || '0')] : null
+            }
+          });
+
+          if (error) throw error;
+          
+          if (generatedChapters) {
+            setChapters(generatedChapters);
+            // Save to localStorage to avoid regenerating
+            localStorage.setItem('funnyBiographyChapters', JSON.stringify(generatedChapters));
+          }
+        } catch (error) {
+          console.error('Error generating chapters:', error);
+        }
+      }
+    };
+
+    loadData();
   }, []);
 
   const handleContinue = () => {
@@ -155,7 +159,7 @@ const PreviewStep = () => {
               <h1 className="text-3xl font-bold">{coverTitle}</h1>
               <p className="text-xl mt-2 text-gray-600">{subtitle}</p>
               <p className="mt-4">by <span className="font-medium">{authorName}</span></p>
-              <p className="mt-2 text-gray-500">180 pages</p>
+              <p className="mt-2 text-gray-500">240 pages</p>
             </div>
           </div>
 
@@ -170,23 +174,16 @@ const PreviewStep = () => {
                       <h3 className="text-xl font-semibold">Chapter {index + 1}: {chapter.title}</h3>
                       <p className="text-gray-600 mt-2">{chapter.description}</p>
                     </div>
-                    <span className="text-gray-400">pg. {(index * 30) + 1}</span>
+                    <span className="text-gray-400">pg. {chapter.startPage}</span>
                   </div>
                 </div>
               ))}
             </div>
           </div>
-
-          <Button 
-            className="w-full py-6 text-lg mt-8"
-            onClick={handleContinue}
-          >
-            Continue
-          </Button>
         </div>
       </div>
     </WizardStep>
   );
 };
 
-export default PreviewStep; 
+export default PreviewStep;
