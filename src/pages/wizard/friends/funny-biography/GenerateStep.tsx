@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
 import CanvasCoverPreview from '@/components/cover-generator/CanvasCoverPreview';
@@ -42,6 +43,7 @@ const stylePresets = [
 ];
 
 const FunnyBiographyGenerateStep = () => {
+  const navigate = useNavigate();
   const [coverTitle, setCoverTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
   const [authorName, setAuthorName] = useState('');
@@ -49,7 +51,6 @@ const FunnyBiographyGenerateStep = () => {
   const [selectedStyle, setSelectedStyle] = useState('modern-green');
   const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
   const [imageScale, setImageScale] = useState(100);
-  const [praises, setPraises] = useState<string>('');
   const { toast } = useToast();
 
   // Get the current style preset
@@ -62,7 +63,6 @@ const FunnyBiographyGenerateStep = () => {
     const savedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
     const savedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
     const savedPhotos = localStorage.getItem('funnyBiographyPhoto');
-    const savedPraises = localStorage.getItem('funnyBiographyPraises');
 
     if (savedAuthor) {
       setAuthorName(savedAuthor);
@@ -74,71 +74,11 @@ const FunnyBiographyGenerateStep = () => {
       if (selectedIdea) {
         setCoverTitle(selectedIdea.title || '');
         setSubtitle(selectedIdea.description || '');
-        
-        // If the selected idea has praises, use them
-        if (selectedIdea.praises && Array.isArray(selectedIdea.praises)) {
-          const formattedPraises = selectedIdea.praises
-            .map((praise: { quote: string; source: string }) => 
-              `"${praise.quote}"\n— ${praise.source}`
-            )
-            .join('\n\n');
-          setPraises(formattedPraises);
-          
-          // Save formatted praises to localStorage for CanvasCoverPreview
-          localStorage.setItem('funnyBiographyFormattedPraises', formattedPraises);
+        // Always use the authorName from localStorage, ignore any author field from the idea
+        if (savedAuthor) {
+          setAuthorName(savedAuthor);
         }
       }
-    }
-
-    // If we didn't get praises from the selected idea, try the separate praises storage
-    if (!praises && savedPraises) {
-      try {
-        const praisesData = JSON.parse(savedPraises);
-        if (Array.isArray(praisesData)) {
-          // Store in local component state for easy access
-          const formattedPraises = praisesData
-            .map((praise: { quote: string; source: string }) => 
-              `"${praise.quote}"\n— ${praise.source}`
-            )
-            .join('\n\n');
-          setPraises(formattedPraises);
-          
-          // Save formatted praises to localStorage for CanvasCoverPreview
-          localStorage.setItem('funnyBiographyFormattedPraises', formattedPraises);
-        }
-      } catch (error) {
-        console.error('Error parsing praises:', error);
-      }
-    }
-
-    // If still no praises available, add mock praise words
-    if (!praises && !localStorage.getItem('funnyBiographyFormattedPraises')) {
-      const mockPraises = [
-        {
-          quote: "A hilarious romp through family dynamics that had me laughing until I cried. 'Family Feuds & Food Fights' brilliantly captures the chaos of sibling relationships.",
-          source: "The Gastronomy Gazette"
-        },
-        {
-          quote: "Equal parts heartwarming and hysterical. This book serves up family drama with a side of wit that's impossible to resist.",
-          source: "Sibling Saga Monthly"
-        },
-        {
-          quote: "A masterclass in storytelling that transforms everyday family squabbles into literary gold. Relatable, insightful, and genuinely funny.",
-          source: "Family Feud Review"
-        },
-        {
-          quote: "The perfect blend of humor and heart. 'Family Feuds & Food Fights' dishes out insights about family dynamics that are as nourishing as they are entertaining.",
-          source: "Culinary Chronicles"
-        }
-      ];
-      
-      const formattedPraises = mockPraises
-        .map((praise) => `"${praise.quote}"\n— ${praise.source}`)
-        .join('\n\n');
-      
-      setPraises(formattedPraises);
-      localStorage.setItem('funnyBiographyFormattedPraises', formattedPraises);
-      localStorage.setItem('funnyBiographyPraises', JSON.stringify(mockPraises));
     }
 
     if (savedPhotos) {
@@ -177,6 +117,15 @@ const FunnyBiographyGenerateStep = () => {
 
   const handleStyleChange = (styleId: string) => {
     setSelectedStyle(styleId);
+    localStorage.setItem('funnyBiographySelectedStyle', styleId);
+  };
+
+  const handleGenerateBook = () => {
+    // Save current style selection to localStorage
+    localStorage.setItem('funnyBiographySelectedStyle', selectedStyle);
+    
+    // Navigate to the preview page
+    navigate('/create/friends/funny-biography/preview');
   };
 
   const currentStyle = getCurrentStyle();
@@ -187,7 +136,7 @@ const FunnyBiographyGenerateStep = () => {
       description="Design the perfect cover for your funny biography"
       previousStep="/create/friends/funny-biography/photos"
       currentStep={4}
-      totalSteps={4}
+      totalSteps={5}
     >
       <div className="glass-card rounded-2xl p-8 py-[40px]">
         <div className="max-w-xl mx-auto space-y-8">
@@ -200,7 +149,6 @@ const FunnyBiographyGenerateStep = () => {
             selectedTemplate={currentStyle.template}
             selectedLayout={currentStyle.layout}
             category="friends"
-            backCoverText={praises}
             imagePosition={imagePosition}
             imageScale={imageScale}
             onImageAdjust={handleImageAdjust}
@@ -230,7 +178,7 @@ const FunnyBiographyGenerateStep = () => {
 
           <Button 
             className="w-full py-6 text-lg"
-            onClick={() => {/* Generate book logic */}}
+            onClick={handleGenerateBook}
           >
             Generate Your Book
           </Button>

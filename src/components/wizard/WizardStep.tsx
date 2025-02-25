@@ -38,7 +38,7 @@ const WizardStep = ({
   }
   
   return (
-    <div className={`page-transition min-h-screen ${bgClass}`}>
+    <div className={`min-h-screen ${bgClass}`}>
       <div className="container mx-auto px-4 pt-8 pb-16 max-w-4xl">
         <div className="text-center mb-8">
           <p className="text-sm text-gray-600">Step {currentStep} of {totalSteps}</p>

@@ -161,7 +161,6 @@ serve(async (req) => {
         title: string;
         author: string;
         description: string;
-        praises?: Array<{ quote: string; source: string }>;
       }
 
       // First, generate book ideas
@@ -176,16 +175,33 @@ serve(async (req) => {
           messages: [
             {
               role: 'system',
-              content: `You are a creative assistant that generates funny and engaging book ideas for a biography. 
-                The biography will be a humorous take on the person's life, highlighting funny stories and memorable moments. 
+              content: `You are a creative assistant that generates funny and engaging book ideas for a biography.
+                Your task is to STRICTLY follow these requirements:
+                1. Create a humorous book title that reflects the person's life
+                2. For the 'description' field, create a SHORT, PUNCHY, and FUNNY opening line (8-12 words max)
+                3. The description should start with action verbs like "Join...", "Follow...", "Laugh..." or similar
+                4. Focus on HUMOR rather than detailed description - be witty, not wordy!
+                5. The description should give just enough context to be intriguing and amusing
+                6. Every word in the description must earn its place - no filler words or unnecessary details
+                7. The author field MUST always be exactly the provided authorName - do not modify it
+                
                 You must respond with ONLY a JSON array containing exactly 3 book ideas.`
             },
             {
               role: 'user',
               content: `Generate 3 different funny book ideas based on these answers:\n\n${JSON.stringify(answers, null, 2)}\n\n
-                The biography is about ${authorName}.\n\n
-                Respond with ONLY a JSON array of 3 objects, each with 'title', 'author', and 'description' fields. 
-                Do not include any other text or formatting.`
+                The biography is about ${authorName}, who is also the author.
+                
+                Respond with ONLY a JSON array of 3 objects, each with 'title', 'author', and 'description' fields where:
+                - The 'author' field MUST be exactly "${authorName}" for all ideas
+                - The 'description' field should be a SHORT, FUNNY opening line (8-12 words max) that:
+                  * Starts with action verbs like "Join...", "Follow...", "Laugh..." 
+                  * Focuses on humor rather than detailed explanation
+                  * Examples of good descriptions: "Join Kyle on his ridiculous journey from flatland to avalanche" or "Dive into the whimsical world of Kyle"
+                
+                Make the descriptions FUNNY, CONCISE, and PUNCHY. Humor is more important than length or completeness.
+                DO NOT use ${authorName}'s name in the description.
+                DO NOT include any explanatory text or formatting.`
             }
           ],
         }),
@@ -196,82 +212,32 @@ serve(async (req) => {
 
       try {
         ideas = JSON.parse(ideasData.choices[0].message.content);
+        
+        // Force the author field to be exactly authorName for all ideas
+        ideas = ideas.map(idea => ({
+          ...idea,
+          author: authorName,
+          // No truncation of descriptions
+        }));
+        
       } catch (parseError) {
         const contentStr = ideasData.choices[0].message.content;
         const jsonMatch = contentStr.match(/\[[\s\S]*\]/);
         if (jsonMatch) {
           ideas = JSON.parse(jsonMatch[0]);
+          
+          // Force the author field to be exactly authorName for all ideas
+          ideas = ideas.map(idea => ({
+            ...idea,
+            author: authorName,
+            // No truncation of descriptions
+          }));
         } else {
           throw new Error('Failed to parse book ideas');
         }
       }
 
-      // Now, generate praise quotes for each book idea
-      const praisesPromises = ideas.map(async (idea: BookIdea, index: number) => {
-        const praisesResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${openAIApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'gpt-4o-mini',
-            messages: [
-              {
-                role: 'system',
-                content: `You are a creative assistant that generates fictional praise quotes for a humorous biography book.
-                  Generate 4 fictional praise quotes from different sources (magazines, journals, etc.).
-                  Each quote should highlight different aspects of the book's humor, storytelling, and relatability.
-                  The quotes should be witty, engaging, and sound like real book reviews.
-                  You must respond with ONLY a JSON array containing exactly 4 praise quotes.`
-              },
-              {
-                role: 'user',
-                content: `Generate 4 fictional praise quotes for this book idea:
-                  Title: "${idea.title}"
-                  Description: "${idea.description}"
-                  Author: "${idea.author}"
-                  
-                  The quotes should mention "Family Feuds & Food Fights" as the book title regardless of the actual title above.
-                  Make the quotes sound like they're from reputable sources like "The Gastronomy Gazette", "Sibling Saga Monthly", etc.
-                  Each quote should highlight different aspects: humor, storytelling, relatability, and insight.
-                  
-                  Respond with ONLY a JSON array of 4 objects, each with 'quote' and 'source' fields.
-                  Example format:
-                  [
-                    {
-                      "quote": "An explosively entertaining read. 'Family Feuds & Food Fights' is a delectable mix of humor and heart...",
-                      "source": "The Gastronomy Gazette"
-                    }
-                  ]`
-              }
-            ],
-          }),
-        });
-
-        const praisesData = await praisesResponse.json();
-        let praises = [];
-
-        try {
-          praises = JSON.parse(praisesData.choices[0].message.content);
-        } catch (parseError) {
-          const contentStr = praisesData.choices[0].message.content;
-          const jsonMatch = contentStr.match(/\[[\s\S]*\]/);
-          if (jsonMatch) {
-            praises = JSON.parse(jsonMatch[0]);
-          } else {
-            throw new Error('Failed to parse praise quotes');
-          }
-        }
-
-        // Add praises to the idea object
-        ideas[index].praises = praises;
-        return praises;
-      });
-
-      // Wait for all praise quotes to be generated
-      await Promise.all(praisesPromises);
-
+      // Return the ideas directly without generating praise quotes
       return new Response(
         JSON.stringify({ ideas }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

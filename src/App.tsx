@@ -20,6 +20,8 @@ import FunnyBiographyStoriesStep from "./pages/wizard/friends/funny-biography/St
 import FunnyBiographyIdeasStep from "./pages/wizard/friends/funny-biography/IdeasStep";
 import FunnyBiographyPhotosStep from "./pages/wizard/friends/funny-biography/PhotosStep";
 import FunnyBiographyGenerateStep from "./pages/wizard/friends/funny-biography/GenerateStep";
+import FunnyBiographyPreviewStep from "./pages/wizard/friends/funny-biography/PreviewStep";
+import FunnyBiographyCompletePage from "./pages/wizard/friends/funny-biography/CompletePage";
 
 // Love Story Routes
 import LoveStoryAuthorStep from "./pages/wizard/love/love-story/AuthorStep";
@@ -33,15 +35,13 @@ import DebugPromptsStep from "./pages/wizard/love/love-story/DebugPromptsStep";
 const AppLayout = () => {
   const location = useLocation();
   
-  // Check if the current path is a book creation path or a landing page
+  // Check if the current path is a book creation path
   const isCreationPath = location.pathname.includes('/create/');
-  const isLandingPath = location.pathname === '/friends' || location.pathname === '/love';
-  const shouldAdjustPadding = isCreationPath || isLandingPath;
   
   return (
     <div className="min-h-screen flex flex-col">
       {!isCreationPath && <Header />}
-      <main className={`flex-grow ${shouldAdjustPadding ? 'pt-0' : 'pt-16'}`}>
+      <main className={`flex-grow ${isCreationPath ? 'pt-0' : 'pt-0'}`}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
@@ -57,6 +57,8 @@ const AppLayout = () => {
           <Route path="/create/friends/funny-biography/ideas" element={<FunnyBiographyIdeasStep />} />
           <Route path="/create/friends/funny-biography/photos" element={<FunnyBiographyPhotosStep />} />
           <Route path="/create/friends/funny-biography/generate" element={<FunnyBiographyGenerateStep />} />
+          <Route path="/create/friends/funny-biography/preview" element={<FunnyBiographyPreviewStep />} />
+          <Route path="/create/friends/funny-biography/complete" element={<FunnyBiographyCompletePage />} />
 
           {/* Love Story Routes */}
           <Route path="/create/love/love-story/author" element={<LoveStoryAuthorStep />} />

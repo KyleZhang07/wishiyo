@@ -3,8 +3,8 @@ import { ArrowRight, Book, BookOpen, Pencil, Heart, Gift } from 'lucide-react';
 const Home = () => {
   return <div className="page-transition">
       {/* Hero Section */}
-      <section className="min-h-[50vh] flex items-center justify-center bg-gradient-to-b from-primary/5 to-transparent">
-        <div className="container mx-auto px-4 py-12 md:py-16">
+      <section className="min-h-[30vh] flex items-center justify-center bg-gradient-to-b from-primary/5 to-transparent">
+        <div className="container mx-auto px-4 py-6 md:py-8">
           <div className="text-center max-w-3xl mx-auto">
             <h1 className="text-4xl font-display font-bold mb-6 slide-in md:text-6xl">Turn memories into magical stories</h1>
             <p className="text-xl text-gray-600 mb-8 slide-in">

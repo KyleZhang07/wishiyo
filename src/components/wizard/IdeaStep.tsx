@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import WizardStep from './WizardStep';
 import { Button } from '@/components/ui/button';
@@ -6,11 +5,6 @@ import { RefreshCw } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-
-interface Praise {
-  quote: string;
-  source: string;
-}
 
 interface Chapter {
   title: string;
@@ -22,7 +16,6 @@ interface BookIdea {
   title: string;
   author: string;
   description: string;
-  praises: Praise[];
   chapters?: Chapter[];
 }
 
@@ -133,9 +126,16 @@ const IdeaStep = ({
         throw new Error('Invalid response format: ideas should be an array');
       }
 
-      setIdeas(data.ideas);
+      // Force correct author name and subtitle length
+      const processedIdeas = data.ideas.map(idea => ({
+        ...idea,
+        author: authorName, // Force author to be exactly authorName
+        description: idea.description || '' // Keep complete description without truncation
+      }));
+
+      setIdeas(processedIdeas);
       setSelectedIdeaIndex(null);
-      localStorage.setItem(ideasKey, JSON.stringify(data.ideas));
+      localStorage.setItem(ideasKey, JSON.stringify(processedIdeas));
 
       // Store image prompts separately for love category books
       if (category === 'love' && data.imagePrompts && promptsKey) {

@@ -5,7 +5,7 @@ const LoveLanding = () => {
       <div className="bg-white shadow-lg">
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-red-400 to-red-500" />
-          <div className="relative z-10 px-[60px] mt-8 mb-[32px] bg-red-50 py-[60px]">
+          <div className="relative z-10 px-[60px] my-[64px] bg-red-50 py-[100px]">
             <div className="max-w-6xl mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                 <div className="text-white space-y-6">

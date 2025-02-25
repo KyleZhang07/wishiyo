@@ -11,7 +11,6 @@ interface CanvasCoverPreviewProps {
   selectedFont: string;
   selectedTemplate: string;
   selectedLayout: string;
-  backCoverText?: string;
   category?: 'friends' | 'love';
   imagePosition?: { x: number; y: number };
   imageScale?: number;
@@ -26,7 +25,6 @@ const CanvasCoverPreview = ({
   selectedFont,
   selectedTemplate,
   selectedLayout,
-  backCoverText = '',
   category = 'friends',
   imagePosition = { x: 0, y: 0 },
   imageScale = 100,
@@ -34,44 +32,6 @@ const CanvasCoverPreview = ({
 }: CanvasCoverPreviewProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const image = useImageLoader(coverImage);
-
-  // Get praise words from props or local storage
-  const getPraiseWords = (): string => {
-    // First, use the backCoverText prop if available
-    if (backCoverText) {
-      return backCoverText;
-    }
-    
-    // Otherwise, try to get from storage
-    try {
-      // Check for formatted praises first (already formatted by parent)
-      const formattedPraises = localStorage.getItem('funnyBiographyFormattedPraises');
-      if (formattedPraises) {
-        return formattedPraises;
-      }
-      
-      // Fall back to raw praises data
-      const bookType = window.location.pathname.split('/')[3];
-      const storageKey = bookType === 'funny-biography' ? 'funnyBiographyPraises' : '';
-      
-      if (!storageKey) return '';
-      
-      const savedPraises = localStorage.getItem(storageKey);
-      if (!savedPraises) return '';
-      
-      const praises = JSON.parse(savedPraises);
-      if (!Array.isArray(praises)) return '';
-      
-      return praises
-        .map((praise: { quote: string; source: string }) => 
-          `"${praise.quote}"\n— ${praise.source}`
-        )
-        .join('\n\n');
-    } catch (error) {
-      console.error('Error getting praise words:', error);
-      return '';
-    }
-  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -86,22 +46,20 @@ const CanvasCoverPreview = ({
 
     const template = coverTemplates[selectedTemplate] || coverTemplates.modern;
     const layout = coverLayouts[selectedLayout] || coverLayouts['classic-centered'];
-    const praiseWords = getPraiseWords();
 
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Draw all three parts
-    drawFullBookCover(ctx, canvas, template, layout, praiseWords);
+    drawFullBookCover(ctx, canvas, template, layout);
     
-  }, [coverTitle, subtitle, authorName, image, selectedFont, selectedTemplate, selectedLayout, category, imagePosition, imageScale, backCoverText]);
+  }, [coverTitle, subtitle, authorName, image, selectedFont, selectedTemplate, selectedLayout, category, imagePosition, imageScale]);
 
   const drawFullBookCover = (
     ctx: CanvasRenderingContext2D, 
     canvas: HTMLCanvasElement, 
     template: any, 
-    layout: any,
-    praiseWords: string
+    layout: any
   ) => {
     const frontCoverWidth = 800;
     const spineWidth = 100;
@@ -129,7 +87,7 @@ const CanvasCoverPreview = ({
     // Draw back cover (right side)
     ctx.save();
     ctx.translate(frontCoverWidth + gapWidth + spineWidth + gapWidth, 0);
-    drawBackCover(ctx, backCoverWidth, height, template, praiseWords);
+    drawBackCover(ctx, backCoverWidth, height, template);
     ctx.restore();
   };
 
@@ -336,60 +294,12 @@ const CanvasCoverPreview = ({
     ctx: CanvasRenderingContext2D, 
     width: number, 
     height: number, 
-    template: any,
-    praiseWords: string
+    template: any
   ) => {
     // Draw background
     ctx.fillStyle = template.backCoverStyle.backgroundColor;
     ctx.fillRect(0, 0, width, height);
 
-    // Draw "Praises for Family Feuds & Food Fights" header
-    ctx.font = `bold 28px ${selectedFont}`;
-    ctx.fillStyle = '#7CFC00'; // Bright green for header
-    ctx.textAlign = 'left';
-    ctx.fillText("Praises for Family Feuds & Food Fights", 40, 80);
-
-    // Draw praise words
-    ctx.font = `16px ${selectedFont}`;
-    ctx.fillStyle = '#FFFFFF'; // White text for quotes
-    ctx.textAlign = 'left';
-
-    const maxWidth = width - 80;
-    const lineHeight = 24; // Fixed line height for better spacing
-    
-    // Format praise words with proper spacing
-    if (praiseWords) {
-      const quotes = praiseWords.split('\n\n');
-      let y = 140;
-      
-      quotes.forEach(quote => {
-        const parts = quote.split('\n—');
-        if (parts.length === 2) {
-          // Draw the quote
-          const quoteLines = wrapText(ctx, parts[0], maxWidth);
-          quoteLines.forEach(line => {
-            ctx.fillText(line, 40, y);
-            y += lineHeight;
-          });
-          
-          // Add spacing before source
-          y += 10;
-          
-          // Draw the source with dash
-          ctx.fillText(`— ${parts[1].trim()}`, 40, y);
-          
-          // Add spacing between quotes
-          y += lineHeight * 2;
-        }
-      });
-    } else {
-      ctx.fillText("No praise words available", 40, 140);
-    }
-
-    // Draw barcode at the bottom right
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(width - 180, height - 100, 140, 60);
-    
     // Draw book info at the bottom
     ctx.textAlign = 'left';
     ctx.fillStyle = '#FFFFFF'; // White text
@@ -399,35 +309,10 @@ const CanvasCoverPreview = ({
     ctx.font = `bold 18px ${selectedFont}`;
     ctx.fillStyle = '#FF6B35'; // Orange for BOOK BY ANYONE
     ctx.fillText("BOOK BY ANYONE", 40, height - 50);
-    
-    // Draw price
-    ctx.textAlign = 'left';
-    ctx.fillStyle = '#FFFFFF'; // White text
-    ctx.font = `14px ${selectedFont}`;
-    ctx.fillText("US $32.00", 780 - 100, height - 80);
-    ctx.fillText("UK £25.00", 780 - 100, height - 60);
-  };
 
-  // Utility to wrap text
-  const wrapText = (ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] => {
-    const words = text.split(' ');
-    const lines: string[] = [];
-    let currentLine = words[0];
-
-    for (let i = 1; i < words.length; i++) {
-      const word = words[i];
-      const width = ctx.measureText(currentLine + ' ' + word).width;
-      
-      if (width < maxWidth) {
-        currentLine += ' ' + word;
-      } else {
-        lines.push(currentLine);
-        currentLine = word;
-      }
-    }
-    
-    lines.push(currentLine);
-    return lines;
+    // Draw barcode at the bottom right
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(width - 180, height - 100, 140, 60);
   };
 
   return (
