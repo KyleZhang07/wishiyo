@@ -46,7 +46,7 @@ const Header = () => {
                 Home
               </Link>
               <Link to="/friends" className="text-gray-600 hover:text-primary transition-colors">Books for Fun</Link>
-              <Link to="/love" className="text-gray-600 hover:text-primary transition-colors">Books for Fantasy</Link>
+              <Link to="/love" className="text-gray-600 hover:text-primary transition-colors">Books for Fanatsy</Link>
             </nav>
           </div>
 
