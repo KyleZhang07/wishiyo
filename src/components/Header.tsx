@@ -42,8 +42,11 @@ const Header = () => {
           <div className="flex items-center space-x-8">
             <Link to="/" className="text-xl font-display font-semibold">WISHIYO</Link>
             <nav className="hidden md:flex items-center space-x-8">
+              <Link to="/" className="text-gray-600 hover:text-primary transition-colors">
+                Home
+              </Link>
               <Link to="/friends" className="text-gray-600 hover:text-primary transition-colors">Books for Fun</Link>
-              <Link to="/love" className="text-gray-600 hover:text-primary transition-colors">Books for Fanatsy</Link>
+              <Link to="/love" className="text-gray-600 hover:text-primary transition-colors">Books for Fantasy</Link>
             </nav>
           </div>
 
@@ -67,6 +70,9 @@ const Header = () => {
 
         {/* Mobile Navigation */}
         {isMenuOpen && <nav className="md:hidden py-4 space-y-4">
+            <Link to="/" className="block px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors" onClick={() => setIsMenuOpen(false)}>
+              Home
+            </Link>
             <Link to="/friends" className="block px-4 py-2 text-amber-600 hover:text-amber-700 transition-colors" onClick={() => setIsMenuOpen(false)}>
               Books for Fun
             </Link>
