@@ -33,13 +33,15 @@ import DebugPromptsStep from "./pages/wizard/love/love-story/DebugPromptsStep";
 const AppLayout = () => {
   const location = useLocation();
   
-  // Check if the current path is a book creation path
+  // Check if the current path is a book creation path or a landing page
   const isCreationPath = location.pathname.includes('/create/');
+  const isLandingPath = location.pathname === '/friends' || location.pathname === '/love';
+  const shouldAdjustPadding = isCreationPath || isLandingPath;
   
   return (
     <div className="min-h-screen flex flex-col">
       {!isCreationPath && <Header />}
-      <main className={`flex-grow ${isCreationPath ? 'pt-0' : 'pt-16'}`}>
+      <main className={`flex-grow ${shouldAdjustPadding ? 'pt-0' : 'pt-16'}`}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
