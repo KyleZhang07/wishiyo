@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { useState } from "react";
 
 import Header from "./components/Header";
@@ -29,6 +29,49 @@ import LoveStoryMomentsStep from "./pages/wizard/love/love-story/MomentsStep";
 import LoveStoryGenerateStep from "./pages/wizard/love/love-story/GenerateStep";
 import DebugPromptsStep from "./pages/wizard/love/love-story/DebugPromptsStep";
 
+// Layout wrapper component that conditionally renders the header
+const AppLayout = () => {
+  const location = useLocation();
+  
+  // Check if the current path is a book creation path
+  const isCreationPath = location.pathname.includes('/create/');
+  
+  return (
+    <div className="min-h-screen flex flex-col">
+      {!isCreationPath && <Header />}
+      <main className={`flex-grow ${isCreationPath ? 'pt-0' : 'pt-16'}`}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/user-center" element={<UserCenter />} />
+          
+          {/* Category Landing Pages */}
+          <Route path="/friends" element={<FriendsLanding />} />
+          <Route path="/love" element={<LoveLanding />} />
+          
+          {/* Funny Biography Routes */}
+          <Route path="/create/friends/funny-biography/author" element={<FunnyBiographyAuthorStep />} />
+          <Route path="/create/friends/funny-biography/stories" element={<FunnyBiographyStoriesStep />} />
+          <Route path="/create/friends/funny-biography/ideas" element={<FunnyBiographyIdeasStep />} />
+          <Route path="/create/friends/funny-biography/photos" element={<FunnyBiographyPhotosStep />} />
+          <Route path="/create/friends/funny-biography/generate" element={<FunnyBiographyGenerateStep />} />
+
+          {/* Love Story Routes */}
+          <Route path="/create/love/love-story/author" element={<LoveStoryAuthorStep />} />
+          <Route path="/create/love/love-story/questions" element={<LoveStoryQuestionsStep />} />
+          <Route path="/create/love/love-story/ideas" element={<LoveStoryIdeasStep />} />
+          <Route path="/create/love/love-story/debug-prompts" element={<DebugPromptsStep />} />
+          <Route path="/create/love/love-story/moments" element={<LoveStoryMomentsStep />} />
+          <Route path="/create/love/love-story/generate" element={<LoveStoryGenerateStep />} />
+          
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </main>
+      {!isCreationPath && <Footer />}
+    </div>
+  );
+};
+
 const App = () => {
   const [queryClient] = useState(() => new QueryClient());
 
@@ -36,38 +79,7 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <TooltipProvider>
-          <div className="min-h-screen flex flex-col">
-            <Header />
-            <main className="flex-grow">
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/user-center" element={<UserCenter />} />
-                
-                {/* Category Landing Pages */}
-                <Route path="/friends" element={<FriendsLanding />} />
-                <Route path="/love" element={<LoveLanding />} />
-                
-                {/* Funny Biography Routes */}
-                <Route path="/create/friends/funny-biography/author" element={<FunnyBiographyAuthorStep />} />
-                <Route path="/create/friends/funny-biography/stories" element={<FunnyBiographyStoriesStep />} />
-                <Route path="/create/friends/funny-biography/ideas" element={<FunnyBiographyIdeasStep />} />
-                <Route path="/create/friends/funny-biography/photos" element={<FunnyBiographyPhotosStep />} />
-                <Route path="/create/friends/funny-biography/generate" element={<FunnyBiographyGenerateStep />} />
-
-                {/* Love Story Routes */}
-                <Route path="/create/love/love-story/author" element={<LoveStoryAuthorStep />} />
-                <Route path="/create/love/love-story/questions" element={<LoveStoryQuestionsStep />} />
-                <Route path="/create/love/love-story/ideas" element={<LoveStoryIdeasStep />} />
-                <Route path="/create/love/love-story/debug-prompts" element={<DebugPromptsStep />} />
-                <Route path="/create/love/love-story/moments" element={<LoveStoryMomentsStep />} />
-                <Route path="/create/love/love-story/generate" element={<LoveStoryGenerateStep />} />
-                
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </main>
-            <Footer />
-          </div>
+          <AppLayout />
           <Toaster />
           <Sonner />
         </TooltipProvider>
