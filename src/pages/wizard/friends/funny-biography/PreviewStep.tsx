@@ -4,8 +4,6 @@ import WizardStep from '@/components/wizard/WizardStep';
 import CanvasCoverPreview from '@/components/cover-generator/CanvasCoverPreview';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
-import { Button } from '@/components/ui/button';
-import { RefreshCw } from 'lucide-react';
 
 interface Chapter {
   title: string;
@@ -25,56 +23,6 @@ const PreviewStep = () => {
   const [imageScale, setImageScale] = useState(100);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [generationError, setGenerationError] = useState(false);
-
-  // Function to generate chapters
-  const generateChapters = async () => {
-    setIsLoading(true);
-    setGenerationError(false);
-    
-    try {
-      const savedAuthor = localStorage.getItem('funnyBiographyAuthorName');
-      const savedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
-      const savedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
-      const savedAnswers = localStorage.getItem('funnyBiographyAnswers');
-
-      // Parse the data we need for chapter generation
-      const answers = savedAnswers ? JSON.parse(savedAnswers) : [];
-      const selectedIdea = savedIdeas && savedIdeaIndex ? 
-        JSON.parse(savedIdeas)[parseInt(savedIdeaIndex)] : null;
-      
-      // Call the Supabase function to generate chapters
-      const { data, error } = await supabase.functions.invoke('generate-chapters', {
-        body: {
-          authorName: savedAuthor,
-          bookTitle: coverTitle || "Untitled Biography",
-          selectedIdea,
-          answers
-        }
-      });
-
-      if (error) throw error;
-      
-      if (data?.chapters) {
-        setChapters(data.chapters);
-        // Save to localStorage to avoid regenerating
-        localStorage.setItem('funnyBiographyChapters', JSON.stringify(data.chapters));
-        setGenerationError(false);
-      } else {
-        throw new Error("No chapters returned from API");
-      }
-    } catch (error) {
-      console.error('Error generating chapters:', error);
-      setGenerationError(true);
-      toast({
-        title: "Error generating chapters",
-        description: "There was a problem generating your book chapters. Please try the regenerate button.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -85,21 +33,18 @@ const PreviewStep = () => {
       const savedPhotos = localStorage.getItem('funnyBiographyPhoto');
       const savedStyle = localStorage.getItem('funnyBiographySelectedStyle');
       const savedChapters = localStorage.getItem('funnyBiographyChapters');
+      const savedAnswers = localStorage.getItem('funnyBiographyAnswers');
       
       if (savedAuthor) {
         setAuthorName(savedAuthor);
       }
 
       if (savedIdeas && savedIdeaIndex) {
-        try {
-          const ideas = JSON.parse(savedIdeas);
-          const selectedIdea = ideas[parseInt(savedIdeaIndex)];
-          if (selectedIdea) {
-            setCoverTitle(selectedIdea.title || '');
-            setSubtitle(selectedIdea.description || '');
-          }
-        } catch (e) {
-          console.error("Error parsing saved ideas:", e);
+        const ideas = JSON.parse(savedIdeas);
+        const selectedIdea = ideas[parseInt(savedIdeaIndex)];
+        if (selectedIdea) {
+          setCoverTitle(selectedIdea.title || '');
+          setSubtitle(selectedIdea.description || '');
         }
       }
 
@@ -113,17 +58,41 @@ const PreviewStep = () => {
 
       // If we have saved chapters, use them
       if (savedChapters) {
-        try {
-          const parsedChapters = JSON.parse(savedChapters);
-          setChapters(parsedChapters);
-        } catch (e) {
-          console.error("Error parsing saved chapters:", e);
-          // If we can't parse saved chapters, generate new ones
-          await generateChapters();
-        }
+        setChapters(JSON.parse(savedChapters));
       } else {
         // Otherwise generate new ones
-        await generateChapters();
+        setIsLoading(true);
+        try {
+          const answers = savedAnswers ? JSON.parse(savedAnswers) : [];
+          const selectedIdea = savedIdeas && savedIdeaIndex ? 
+            JSON.parse(savedIdeas)[parseInt(savedIdeaIndex)] : null;
+
+          const { data: { chapters: generatedChapters }, error } = await supabase.functions.invoke('generate-chapters', {
+            body: {
+              authorName: savedAuthor,
+              bookTitle: coverTitle,
+              selectedIdea,
+              answers
+            }
+          });
+
+          if (error) throw error;
+          
+          if (generatedChapters) {
+            setChapters(generatedChapters);
+            // Save to localStorage to avoid regenerating
+            localStorage.setItem('funnyBiographyChapters', JSON.stringify(generatedChapters));
+          }
+        } catch (error) {
+          console.error('Error generating chapters:', error);
+          toast({
+            title: "Error generating chapters",
+            description: "There was a problem generating your book chapters. Please try again.",
+            variant: "destructive"
+          });
+        } finally {
+          setIsLoading(false);
+        }
       }
     };
 
@@ -213,57 +182,28 @@ const PreviewStep = () => {
 
           {/* Table of Contents */}
           <div>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-center">Table of Contents</h2>
-              {(generationError || chapters.length === 0) && !isLoading && (
-                <Button 
-                  variant="outline" 
-                  onClick={generateChapters}
-                  className="flex items-center gap-2"
-                >
-                  <RefreshCw className="h-4 w-4" />
-                  Regenerate
-                </Button>
-              )}
-            </div>
-            
+            <h2 className="text-2xl font-bold mb-6 text-center">Table of Contents</h2>
             {isLoading ? (
               <div className="text-center py-8">
-                <div className="animate-spin inline-block w-8 h-8 border-4 border-current border-t-transparent text-primary rounded-full"></div>
+                <div className="animate-spin inline-block w-8 h-8 border-4 border-current border-t-transparent rounded-full"></div>
                 <p className="mt-4 text-gray-600">Generating your chapter outlines...</p>
               </div>
-            ) : chapters.length > 0 ? (
+            ) : (
               <div className="space-y-6">
                 {chapters.map((chapter, index) => (
                   <div key={index} className="border-b border-gray-200 pb-4">
                     <div className="flex justify-between items-start">
                       <div>
-                        <h3 className="text-xl font-semibold">
-                          Chapter {index + 1}: {chapter.title || `Chapter ${index + 1}`}
-                        </h3>
-                        <p className="text-gray-600 mt-2">
-                          {chapter.description || "Content generation error. Please try again."}
-                        </p>
+                        <h3 className="text-xl font-semibold">Chapter {index + 1}: {chapter.title}</h3>
+                        <p className="text-gray-600 mt-2">{chapter.description}</p>
                       </div>
-                      <span className="text-gray-400">pg. {chapter.startPage || (index * 20) + 1}</span>
+                      <span className="text-gray-400">pg. {chapter.startPage}</span>
                     </div>
                   </div>
                 ))}
               </div>
-            ) : (
-              <div className="text-center py-8 border rounded-lg">
-                <p className="text-gray-600">No chapters generated. Please click the regenerate button.</p>
-              </div>
             )}
           </div>
-
-          <Button 
-            className="w-full py-6 text-lg mt-8"
-            onClick={handleContinue}
-            disabled={isLoading || chapters.length === 0}
-          >
-            Continue
-          </Button>
         </div>
       </div>
     </WizardStep>
