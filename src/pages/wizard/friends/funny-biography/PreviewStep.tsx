@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import WizardStep from '@/components/wizard/WizardStep';
 import CanvasCoverPreview from '@/components/cover-generator/CanvasCoverPreview';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/components/ui/use-toast';
 
 interface Chapter {
   title: string;
@@ -12,6 +13,7 @@ interface Chapter {
 
 const PreviewStep = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [coverTitle, setCoverTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
   const [authorName, setAuthorName] = useState('');
@@ -20,6 +22,7 @@ const PreviewStep = () => {
   const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
   const [imageScale, setImageScale] = useState(100);
   const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -30,6 +33,7 @@ const PreviewStep = () => {
       const savedPhotos = localStorage.getItem('funnyBiographyPhoto');
       const savedStyle = localStorage.getItem('funnyBiographySelectedStyle');
       const savedChapters = localStorage.getItem('funnyBiographyChapters');
+      const savedAnswers = localStorage.getItem('funnyBiographyAnswers');
       
       if (savedAuthor) {
         setAuthorName(savedAuthor);
@@ -57,12 +61,18 @@ const PreviewStep = () => {
         setChapters(JSON.parse(savedChapters));
       } else {
         // Otherwise generate new ones
+        setIsLoading(true);
         try {
+          const answers = savedAnswers ? JSON.parse(savedAnswers) : [];
+          const selectedIdea = savedIdeas && savedIdeaIndex ? 
+            JSON.parse(savedIdeas)[parseInt(savedIdeaIndex)] : null;
+
           const { data: { chapters: generatedChapters }, error } = await supabase.functions.invoke('generate-chapters', {
             body: {
               authorName: savedAuthor,
               bookTitle: coverTitle,
-              selectedIdea: savedIdeas ? JSON.parse(savedIdeas)[parseInt(savedIdeaIndex || '0')] : null
+              selectedIdea,
+              answers
             }
           });
 
@@ -75,6 +85,13 @@ const PreviewStep = () => {
           }
         } catch (error) {
           console.error('Error generating chapters:', error);
+          toast({
+            title: "Error generating chapters",
+            description: "There was a problem generating your book chapters. Please try again.",
+            variant: "destructive"
+          });
+        } finally {
+          setIsLoading(false);
         }
       }
     };
@@ -166,19 +183,26 @@ const PreviewStep = () => {
           {/* Table of Contents */}
           <div>
             <h2 className="text-2xl font-bold mb-6 text-center">Table of Contents</h2>
-            <div className="space-y-6">
-              {chapters.map((chapter, index) => (
-                <div key={index} className="border-b border-gray-200 pb-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="text-xl font-semibold">Chapter {index + 1}: {chapter.title}</h3>
-                      <p className="text-gray-600 mt-2">{chapter.description}</p>
+            {isLoading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin inline-block w-8 h-8 border-4 border-current border-t-transparent rounded-full"></div>
+                <p className="mt-4 text-gray-600">Generating your chapter outlines...</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {chapters.map((chapter, index) => (
+                  <div key={index} className="border-b border-gray-200 pb-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="text-xl font-semibold">Chapter {index + 1}: {chapter.title}</h3>
+                        <p className="text-gray-600 mt-2">{chapter.description}</p>
+                      </div>
+                      <span className="text-gray-400">pg. {chapter.startPage}</span>
                     </div>
-                    <span className="text-gray-400">pg. {chapter.startPage}</span>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
