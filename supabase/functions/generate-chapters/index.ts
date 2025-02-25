@@ -21,19 +21,21 @@ serve(async (req) => {
       throw new Error("OpenAI API key not configured");
     }
 
-    // Construct a prompt that explicitly requests JSON format
-    const systemPrompt = `Generate exactly 10 funny chapters for a humorous biography book. Return ONLY a JSON array where each object has these exact fields:
-    - "title": string (the chapter title)
-    - "description": string (1-2 sentence funny description)
-    - "startPage": number (starting from page 1, each chapter is about 20 pages)
+    // Construct a prompt based on user inputs
+    const systemPrompt = `As a humorous biography writer, generate 10 funny chapters for a book. Each chapter should tell a part of ${authorName}'s story in a light-hearted way.
 
-Use these details to personalize the content:
-- Author: ${authorName}
-- Book Title: ${bookTitle}
-- Theme: ${selectedIdea?.description || 'A funny biography'}
-${answers?.map((qa: any) => `- ${qa.question}: ${qa.answer}`).join('\n') || ''}
+The book title is: "${bookTitle}"
+The main theme/idea: "${selectedIdea?.description || 'A funny biography'}"
 
-The response must be a valid JSON array that can be parsed. Do not include any other text or explanations.`;
+Use these details about ${authorName} to create relevant chapters:
+${answers?.map((qa: any) => `- ${qa.question}: ${qa.answer}`).join('\n') || 'No specific details provided'}
+
+For each chapter, provide:
+1. A humorous title
+2. A funny description (1-2 sentences)
+3. A starting page number (start from page 1, each chapter should be about 20-25 pages)
+
+Format as a JSON array of chapters.`;
 
     // Call OpenAI API
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -47,14 +49,14 @@ The response must be a valid JSON array that can be parsed. Do not include any o
         messages: [
           {
             role: "system",
-            content: "You are an AI that generates chapter outlines in JSON format. Always return valid JSON arrays."
+            content: "You are a humorous biography writer who specializes in creating funny chapter outlines."
           },
           {
             role: "user",
             content: systemPrompt
           }
         ],
-        temperature: 0.7,
+        temperature: 0.8,
       }),
     });
 
@@ -65,34 +67,18 @@ The response must be a valid JSON array that can be parsed. Do not include any o
     const data = await response.json();
     const generatedText = data.choices[0].message.content;
     
-    console.log("Raw OpenAI response:", generatedText); // Add logging for debugging
-
-    // Try to parse the JSON response
+    // Parse the generated JSON
     let chapters;
     try {
-      // Clean the response by removing any markdown formatting if present
-      const cleanedText = generatedText.replace(/```json\n?|\n?```/g, '').trim();
-      chapters = JSON.parse(cleanedText);
-      
-      // Validate the structure of each chapter
-      if (!Array.isArray(chapters) || chapters.length !== 10) {
-        throw new Error("Invalid chapter array structure");
-      }
-
-      chapters = chapters.map((chapter, index) => ({
-        title: chapter.title || `Chapter ${index + 1}`,
-        description: chapter.description || "An exciting chapter in this story",
-        startPage: chapter.startPage || (index * 20 + 1)
-      }));
-
+      chapters = JSON.parse(generatedText);
     } catch (e) {
       console.error("Error parsing OpenAI response:", e);
-      console.log("Attempted to parse:", generatedText);
+      console.log("Raw response:", generatedText);
       
-      // Create fallback chapters with incrementing page numbers
+      // Fallback structure if parsing fails
       chapters = Array(10).fill(null).map((_, i) => ({
-        title: `Chapter ${i + 1}: A New Adventure`,
-        description: "This chapter is being regenerated. Please refresh to try again.",
+        title: `Chapter ${i + 1}`,
+        description: "Content generation error. Please try again.",
         startPage: i * 20 + 1
       }));
     }
@@ -105,14 +91,7 @@ The response must be a valid JSON array that can be parsed. Do not include any o
   } catch (error) {
     console.error("Error in generate-chapters function:", error);
     return new Response(
-      JSON.stringify({ 
-        error: error.message,
-        chapters: Array(10).fill(null).map((_, i) => ({
-          title: `Chapter ${i + 1}`,
-          description: "An error occurred while generating this chapter. Please try again.",
-          startPage: i * 20 + 1
-        }))
-      }),
+      JSON.stringify({ error: error.message }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
     );
   }
