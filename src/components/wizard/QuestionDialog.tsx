@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,7 @@ interface QuestionDialogProps {
   answeredQuestions?: string[];
   initialQuestion?: string | null;
   questions: string[];
+  storageKey?: string;
 }
 
 const QuestionDialog = ({
@@ -21,7 +21,8 @@ const QuestionDialog = ({
   onSubmitAnswer,
   answeredQuestions = [],
   initialQuestion = null,
-  questions
+  questions,
+  storageKey = 'funnyBiographyAnswers'
 }: QuestionDialogProps) => {
   const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
   const [answer, setAnswer] = useState('');
@@ -30,32 +31,42 @@ const QuestionDialog = ({
     if (initialQuestion) {
       setSelectedQuestion(initialQuestion);
       // Find the existing answer for this question
-      const existingQA = answeredQuestions.includes(initialQuestion);
-      if (existingQA) {
-        const savedAnswers = localStorage.getItem('funnyBiographyAnswers');
+      if (answeredQuestions.includes(initialQuestion)) {
+        const savedAnswers = localStorage.getItem(storageKey);
         if (savedAnswers) {
-          const answers = JSON.parse(savedAnswers);
-          const existingAnswer = answers.find((qa: any) => qa.question === initialQuestion);
-          if (existingAnswer) {
-            setAnswer(existingAnswer.answer);
+          try {
+            const answers = JSON.parse(savedAnswers);
+            const existingAnswer = answers.find((qa: any) => qa.question === initialQuestion);
+            if (existingAnswer) {
+              setAnswer(existingAnswer.answer);
+            }
+          } catch (error) {
+            console.error('Error parsing saved answers:', error);
           }
         }
       }
     }
-  }, [initialQuestion, answeredQuestions]);
+  }, [initialQuestion, answeredQuestions, storageKey]);
 
   const handleQuestionSelect = (question: string) => {
     setSelectedQuestion(question);
     // Find existing answer if this question was already answered
-    const savedAnswers = localStorage.getItem('funnyBiographyAnswers');
+    const savedAnswers = localStorage.getItem(storageKey);
     if (savedAnswers) {
-      const answers = JSON.parse(savedAnswers);
-      const existingAnswer = answers.find((qa: any) => qa.question === question);
-      if (existingAnswer) {
-        setAnswer(existingAnswer.answer);
-      } else {
+      try {
+        const answers = JSON.parse(savedAnswers);
+        const existingAnswer = answers.find((qa: any) => qa.question === question);
+        if (existingAnswer) {
+          setAnswer(existingAnswer.answer);
+        } else {
+          setAnswer('');
+        }
+      } catch (error) {
+        console.error('Error parsing saved answers:', error);
         setAnswer('');
       }
+    } else {
+      setAnswer('');
     }
   };
   
@@ -105,13 +116,14 @@ const QuestionDialog = ({
                       variant="outline"
                       className={`justify-start h-auto py-3 px-4 whitespace-normal text-left text-base w-full
                         ${isAnswered 
-                          ? 'bg-gray-50 text-gray-400 cursor-default pointer-events-none hover:bg-gray-50' 
+                          ? 'bg-gray-50 hover:bg-gray-100 transition-transform hover:scale-[1.02] active:scale-100' 
                           : 'transition-transform hover:scale-[1.02] active:scale-100'
                         }
                       `}
-                      onClick={() => !isAnswered && handleQuestionSelect(question)}
+                      onClick={() => handleQuestionSelect(question)}
                     >
                       {question}
+                      {isAnswered && <span className="ml-2 text-sm text-gray-500">(Edit)</span>}
                     </Button>
                   );
                 })}

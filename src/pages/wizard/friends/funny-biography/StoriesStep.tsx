@@ -35,6 +35,7 @@ const FunnyBiographyStoriesStep = () => {
   const [authorName, setAuthorName] = useState<string>('');
   const { toast } = useToast();
   const navigate = useNavigate();
+  const storageKey = 'funnyBiographyAnswers';
 
   useEffect(() => {
     const savedName = localStorage.getItem('funnyBiographyAuthorName') || '';
@@ -42,7 +43,7 @@ const FunnyBiographyStoriesStep = () => {
     setQuestions(getQuestions(savedName));
     
     // Load saved answers
-    const savedAnswers = localStorage.getItem('funnyBiographyAnswers');
+    const savedAnswers = localStorage.getItem(storageKey);
     if (savedAnswers) {
       setQuestionsAndAnswers(JSON.parse(savedAnswers));
     }
@@ -61,15 +62,28 @@ const FunnyBiographyStoriesStep = () => {
   };
 
   const handleSubmitAnswer = (question: string, answer: string) => {
-    const newAnswers = [...questionsAndAnswers, { question, answer }];
+    // Check if the question has already been answered
+    const existingIndex = questionsAndAnswers.findIndex(qa => qa.question === question);
+    
+    let newAnswers: QuestionAnswer[];
+    
+    if (existingIndex !== -1) {
+      // Update existing answer
+      newAnswers = [...questionsAndAnswers];
+      newAnswers[existingIndex] = { question, answer };
+    } else {
+      // Add new answer
+      newAnswers = [...questionsAndAnswers, { question, answer }];
+    }
+    
     setQuestionsAndAnswers(newAnswers);
-    localStorage.setItem('funnyBiographyAnswers', JSON.stringify(newAnswers));
+    localStorage.setItem(storageKey, JSON.stringify(newAnswers));
   };
 
   const handleRemoveQA = (index: number) => {
     const newAnswers = questionsAndAnswers.filter((_, i) => i !== index);
     setQuestionsAndAnswers(newAnswers);
-    localStorage.setItem('funnyBiographyAnswers', JSON.stringify(newAnswers));
+    localStorage.setItem(storageKey, JSON.stringify(newAnswers));
   };
 
   const handleEditAnswer = (question: string) => {
@@ -130,6 +144,7 @@ const FunnyBiographyStoriesStep = () => {
         answeredQuestions={answeredQuestions}
         initialQuestion={selectedQuestion}
         questions={questions}
+        storageKey={storageKey}
       />
     </WizardStep>
   );

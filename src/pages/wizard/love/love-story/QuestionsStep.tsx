@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import QuestionDialog from '@/components/wizard/QuestionDialog';
@@ -19,12 +18,13 @@ const LoveStoryQuestionsStep = () => {
   const [personName, setPersonName] = useState('');
   const { toast } = useToast();
   const navigate = useNavigate();
+  const storageKey = 'loveStoryAnswers';
 
   useEffect(() => {
     const savedName = localStorage.getItem('loveStoryPersonName') || '';
     setPersonName(savedName);
     
-    const savedAnswers = localStorage.getItem('loveStoryAnswers');
+    const savedAnswers = localStorage.getItem(storageKey);
     if (savedAnswers) {
       setQuestionsAndAnswers(JSON.parse(savedAnswers));
     }
@@ -58,15 +58,28 @@ const LoveStoryQuestionsStep = () => {
   };
 
   const handleSubmitAnswer = (question: string, answer: string) => {
-    const newAnswers = [...questionsAndAnswers, { question, answer }];
+    // Check if this question has already been answered
+    const existingIndex = questionsAndAnswers.findIndex(qa => qa.question === question);
+    
+    let newAnswers: QuestionAnswer[];
+    
+    if (existingIndex >= 0) {
+      // Update existing answer
+      newAnswers = [...questionsAndAnswers];
+      newAnswers[existingIndex] = { question, answer };
+    } else {
+      // Add new answer
+      newAnswers = [...questionsAndAnswers, { question, answer }];
+    }
+    
     setQuestionsAndAnswers(newAnswers);
-    localStorage.setItem('loveStoryAnswers', JSON.stringify(newAnswers));
+    localStorage.setItem(storageKey, JSON.stringify(newAnswers));
   };
 
   const handleRemoveQA = (index: number) => {
     const newAnswers = questionsAndAnswers.filter((_, i) => i !== index);
     setQuestionsAndAnswers(newAnswers);
-    localStorage.setItem('loveStoryAnswers', JSON.stringify(newAnswers));
+    localStorage.setItem(storageKey, JSON.stringify(newAnswers));
   };
 
   const handleEditAnswer = (question: string) => {
@@ -127,6 +140,7 @@ const LoveStoryQuestionsStep = () => {
         answeredQuestions={answeredQuestions}
         initialQuestion={selectedQuestion}
         questions={questions}
+        storageKey={storageKey}
       />
     </WizardStep>
   );

@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
 
 @tailwind base;
@@ -49,7 +48,7 @@
 }
 
 .glass-card {
-  @apply bg-white/70 backdrop-blur-lg border border-white/20 shadow-lg;
+  @apply bg-white shadow-md border border-gray-100 rounded-lg;
 }
 
 .page-transition {

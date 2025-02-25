@@ -156,6 +156,14 @@ serve(async (req) => {
       );
 
     } else if (category === 'friends' && bookType === 'funny-biography') {
+      // Define interface for book ideas
+      interface BookIdea {
+        title: string;
+        author: string;
+        description: string;
+        praises?: Array<{ quote: string; source: string }>;
+      }
+
       // First, generate book ideas
       const ideasResponse = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -184,7 +192,7 @@ serve(async (req) => {
       });
 
       const ideasData = await ideasResponse.json();
-      let ideas = [];
+      let ideas: BookIdea[] = [];
 
       try {
         ideas = JSON.parse(ideasData.choices[0].message.content);
@@ -199,7 +207,7 @@ serve(async (req) => {
       }
 
       // Now, generate praise quotes for each book idea
-      const praisesPromises = ideas.map(async (idea: any, index: number) => {
+      const praisesPromises = ideas.map(async (idea: BookIdea, index: number) => {
         const praisesResponse = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: {
