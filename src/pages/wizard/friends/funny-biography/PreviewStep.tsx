@@ -1,9 +1,12 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import WizardStep from '@/components/wizard/WizardStep';
 import CanvasCoverPreview from '@/components/cover-generator/CanvasCoverPreview';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
+import { Button } from '@/components/ui/button';
+import { RefreshCw } from 'lucide-react';
 
 interface Chapter {
   title: string;
@@ -24,16 +27,57 @@ const PreviewStep = () => {
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  const generateChapters = async () => {
+    setIsLoading(true);
+    try {
+      const savedAuthor = localStorage.getItem('funnyBiographyAuthorName');
+      const savedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
+      const savedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
+      const savedAnswers = localStorage.getItem('funnyBiographyAnswers');
+
+      const answers = savedAnswers ? JSON.parse(savedAnswers) : [];
+      const selectedIdea = savedIdeas && savedIdeaIndex ? 
+        JSON.parse(savedIdeas)[parseInt(savedIdeaIndex)] : null;
+
+      const { data, error } = await supabase.functions.invoke('generate-chapters', {
+        body: {
+          authorName: savedAuthor,
+          bookTitle: coverTitle,
+          selectedIdea,
+          answers
+        }
+      });
+
+      if (error) throw error;
+      
+      if (data.chapters) {
+        setChapters(data.chapters);
+        localStorage.setItem('funnyBiographyChapters', JSON.stringify(data.chapters));
+        toast({
+          title: "Chapters generated successfully",
+          description: "Your table of contents has been updated.",
+        });
+      }
+    } catch (error) {
+      console.error('Error generating chapters:', error);
+      toast({
+        title: "Error generating chapters",
+        description: "There was a problem generating your book chapters. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     const loadData = async () => {
-      // Load data from localStorage
       const savedAuthor = localStorage.getItem('funnyBiographyAuthorName');
       const savedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
       const savedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
       const savedPhotos = localStorage.getItem('funnyBiographyPhoto');
       const savedStyle = localStorage.getItem('funnyBiographySelectedStyle');
       const savedChapters = localStorage.getItem('funnyBiographyChapters');
-      const savedAnswers = localStorage.getItem('funnyBiographyAnswers');
       
       if (savedAuthor) {
         setAuthorName(savedAuthor);
@@ -56,43 +100,10 @@ const PreviewStep = () => {
         setSelectedStyle(savedStyle);
       }
 
-      // If we have saved chapters, use them
       if (savedChapters) {
         setChapters(JSON.parse(savedChapters));
       } else {
-        // Otherwise generate new ones
-        setIsLoading(true);
-        try {
-          const answers = savedAnswers ? JSON.parse(savedAnswers) : [];
-          const selectedIdea = savedIdeas && savedIdeaIndex ? 
-            JSON.parse(savedIdeas)[parseInt(savedIdeaIndex)] : null;
-
-          const { data: { chapters: generatedChapters }, error } = await supabase.functions.invoke('generate-chapters', {
-            body: {
-              authorName: savedAuthor,
-              bookTitle: coverTitle,
-              selectedIdea,
-              answers
-            }
-          });
-
-          if (error) throw error;
-          
-          if (generatedChapters) {
-            setChapters(generatedChapters);
-            // Save to localStorage to avoid regenerating
-            localStorage.setItem('funnyBiographyChapters', JSON.stringify(generatedChapters));
-          }
-        } catch (error) {
-          console.error('Error generating chapters:', error);
-          toast({
-            title: "Error generating chapters",
-            description: "There was a problem generating your book chapters. Please try again.",
-            variant: "destructive"
-          });
-        } finally {
-          setIsLoading(false);
-        }
+        generateChapters();
       }
     };
 
@@ -182,7 +193,19 @@ const PreviewStep = () => {
 
           {/* Table of Contents */}
           <div>
-            <h2 className="text-2xl font-bold mb-6 text-center">Table of Contents</h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold">Table of Contents</h2>
+              <Button
+                onClick={generateChapters}
+                disabled={isLoading}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                Regenerate Chapters
+              </Button>
+            </div>
+            
             {isLoading ? (
               <div className="text-center py-8">
                 <div className="animate-spin inline-block w-8 h-8 border-4 border-current border-t-transparent rounded-full"></div>
