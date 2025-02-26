@@ -205,7 +205,7 @@ serve(async (req) => {
                 - "The Accidental Hero"
                 - "Falling Upward"
                 - "Perfectly Imperfect"
-                - "Chaos and Glory"
+                - "Kyle's Chaos and Glory"
                 
                 You must respond with ONLY a JSON array containing exactly 3 book ideas.`
             },
@@ -214,13 +214,14 @@ serve(async (req) => {
               content: `Generate 3 different funny book ideas based on these answers:\n\n${JSON.stringify(answers, null, 2)}\n\n
                 The biography is about ${authorName}, who is also the author.
                 
-                Respond with ONLY a JSON array of 3 objects, each with 'title', 'author', and 'subtitle' fields where:
+                Respond with ONLY a JSON array of 3 objects, each with 'title', 'author', and 'description' fields where:
                 - The 'title' field must be SHORT, MEMORABLE, and NEVER use parentheses or subtitle formats
                 - The 'author' field MUST be exactly "${authorName}" for all ideas
-                - The 'subtitle' field should be ENGAGING, FUNNY, and FOCUSED ONLY on ${authorName}:
+                - The 'description' field should be ENGAGING, FUNNY, and FOCUSED ONLY on ${authorName}:
                   * Use action verbs and vivid language that draw the reader in
-                  * Create subtitles that would make people curious and want to read more
+                  * Create descriptions that would make people curious and want to read more
                   * Focus EXCLUSIVELY on ${authorName}'s personal journey and experiences
+                  * Description should be 1 sentence long
                 
                 Make the ideas FUNNY but also MEANINGFUL - they should sound like real biography books people would enjoy reading.
                 Each idea should be ABOUT ${authorName} ONLY, even if other people are mentioned in the answers.
