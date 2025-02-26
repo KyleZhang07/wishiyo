@@ -50,14 +50,21 @@ const LoveStoryAuthorStep = () => {
     localStorage.setItem('loveStoryAuthorName', authorName.trim());
     navigate('/create/love/love-story/questions');
   };
-  return <WizardStep title="Begin Your Story" description="Let's start with some basic information" previousStep="/love" currentStep={1} totalSteps={4} onNextClick={handleContinue}>
+  return <WizardStep 
+    title="Begin Your Fantasy" 
+    description="Let's create a dream life story for someone special" 
+    previousStep="/love" 
+    currentStep={1} 
+    totalSteps={4} 
+    onNextClick={handleContinue}
+  >
       <div className="space-y-6">
         <div>
-          <label className="block text-sm font-medium mb-2">Recipient's Name</label>
+          <label className="block text-sm font-medium mb-2">Who's the Star?</label>
           <Input placeholder="Enter their first name" value={firstName} onChange={e => setFirstName(e.target.value)} />
         </div>
         <div>
-          
+          <label className="block text-sm font-medium mb-2">Their Gender</label>
           <div className="grid grid-cols-2 gap-4">
             <Button type="button" variant={gender === 'male' ? 'default' : 'outline'} className="w-full py-6 text-lg" onClick={() => setGender('male')}>
               Male
@@ -68,7 +75,7 @@ const LoveStoryAuthorStep = () => {
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium mb-2">Your Name</label>
+          <label className="block text-sm font-medium mb-2">Author Name</label>
           <Input placeholder="Enter your name" value={authorName} onChange={e => setAuthorName(e.target.value)} />
         </div>
       </div>

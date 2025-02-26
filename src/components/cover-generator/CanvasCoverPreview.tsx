@@ -30,66 +30,49 @@ const CanvasCoverPreview = ({
   imageScale = 100,
   onImageAdjust
 }: CanvasCoverPreviewProps) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const frontCoverRef = useRef<HTMLCanvasElement>(null);
+  const spineRef = useRef<HTMLCanvasElement>(null);
+  const backCoverRef = useRef<HTMLCanvasElement>(null);
   const image = useImageLoader(coverImage);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    // Get all canvas elements
+    const frontCanvas = frontCoverRef.current;
+    const spineCanvas = spineRef.current;
+    const backCanvas = backCoverRef.current;
     
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!frontCanvas || !spineCanvas || !backCanvas) return;
+    
+    const frontCtx = frontCanvas.getContext('2d');
+    const spineCtx = spineCanvas.getContext('2d');
+    const backCtx = backCanvas.getContext('2d');
+    
+    if (!frontCtx || !spineCtx || !backCtx) return;
 
-    // Set canvas dimensions for full book display (front, spine, back)
-    canvas.width = 800 * 2.5 + 40; // Increased width to accommodate wider gaps
-    canvas.height = 1200;
+    // Set canvas dimensions for each part
+    frontCanvas.width = 800;
+    frontCanvas.height = 1200;
+    
+    spineCanvas.width = 60;  // Make spine narrower
+    spineCanvas.height = 1200;
+    
+    backCanvas.width = 800;
+    backCanvas.height = 1200;
 
     const template = coverTemplates[selectedTemplate] || coverTemplates.modern;
     const layout = coverLayouts[selectedLayout] || coverLayouts['classic-centered'];
 
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Clear each canvas
+    frontCtx.clearRect(0, 0, frontCanvas.width, frontCanvas.height);
+    spineCtx.clearRect(0, 0, spineCanvas.width, spineCanvas.height);
+    backCtx.clearRect(0, 0, backCanvas.width, backCanvas.height);
 
-    // Draw all three parts
-    drawFullBookCover(ctx, canvas, template, layout);
+    // Draw each part separately
+    drawFrontCover(frontCtx, frontCanvas.width, frontCanvas.height, template, layout);
+    drawSpine(spineCtx, spineCanvas.width, spineCanvas.height, template);
+    drawBackCover(backCtx, backCanvas.width, backCanvas.height, template);
     
   }, [coverTitle, subtitle, authorName, image, selectedFont, selectedTemplate, selectedLayout, category, imagePosition, imageScale]);
-
-  const drawFullBookCover = (
-    ctx: CanvasRenderingContext2D, 
-    canvas: HTMLCanvasElement, 
-    template: any, 
-    layout: any
-  ) => {
-    const frontCoverWidth = 800;
-    const spineWidth = 100;
-    const backCoverWidth = 800;
-    const gapWidth = 40; // Increased from 20 to 40 for more visible gaps
-    const totalWidth = frontCoverWidth + (gapWidth * 2) + spineWidth + backCoverWidth;
-    const height = 1200;
-
-    // Fill the entire canvas with white background to make gaps more visible
-    ctx.fillStyle = '#FFFFFF'; // White background for gaps
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Draw front cover (left side)
-    ctx.save();
-    ctx.translate(0, 0);
-    drawFrontCover(ctx, frontCoverWidth, height, template, layout);
-    ctx.restore();
-
-    // Draw spine (middle)
-    ctx.save();
-    ctx.translate(frontCoverWidth + gapWidth, 0);
-    drawSpine(ctx, spineWidth, height, template);
-    ctx.restore();
-
-    // Draw back cover (right side)
-    ctx.save();
-    ctx.translate(frontCoverWidth + gapWidth + spineWidth + gapWidth, 0);
-    drawBackCover(ctx, backCoverWidth, height, template);
-    ctx.restore();
-  };
 
   const drawFrontCover = (
     ctx: CanvasRenderingContext2D, 
@@ -201,24 +184,41 @@ const CanvasCoverPreview = ({
     ctx.fillStyle = `${template.backgroundColor}33`; // 20% opacity
     ctx.fillRect(0, 0, width, height);
 
-    // Draw "SS" author initials at the top left
+    // Get author initials
+    const initials = authorName
+      .split(' ')
+      .map(name => name.charAt(0))
+      .join('')
+      .toUpperCase();
+
+    // Draw author initials at the top left
     ctx.font = `bold 48px ${selectedFont}`;
     ctx.fillStyle = '#FFFFFF'; // White text
     ctx.textAlign = 'left';
-    ctx.fillText("SS", 40, 80);
+    ctx.fillText(initials, 40, 80);
 
     // Draw title at the bottom in green
     ctx.font = `bold 48px ${selectedFont}`;
     ctx.fillStyle = '#7CFC00'; // Bright green
     ctx.textAlign = 'left';
-    ctx.fillText("FAMILY FEUDS", 40, height - 140);
-    ctx.fillText("& FOOD FIGHTS", 40, height - 80);
+    
+    // Split title into lines if needed
+    const titleLines = coverTitle.toUpperCase().split(' ');
+    const midPoint = Math.ceil(titleLines.length / 2);
+    
+    const firstLine = titleLines.slice(0, midPoint).join(' ');
+    const secondLine = titleLines.slice(midPoint).join(' ');
+    
+    ctx.fillText(firstLine, 40, height - 140);
+    if (secondLine) {
+      ctx.fillText(secondLine, 40, height - 80);
+    }
 
     // Draw subtitle below title
     ctx.font = `18px ${selectedFont}`;
     ctx.fillStyle = '#FFFFFF'; // White text
     ctx.textAlign = 'left';
-    ctx.fillText("Navigating Sibling Rivalry and Savage Supper Showdowns, One Meal at a Time", 40, height - 40);
+    ctx.fillText(subtitle, 40, height - 40);
 
     // Draw bestseller badge (like in the reference image)
     if (category === 'friends') {
@@ -267,25 +267,38 @@ const CanvasCoverPreview = ({
     ctx.fillStyle = template.spineStyle.backgroundColor;
     ctx.fillRect(0, 0, width, height);
 
+    // Get author initials
+    const initials = authorName
+      .split(' ')
+      .map(name => name.charAt(0))
+      .join('')
+      .toUpperCase();
+    
     // Draw spine text vertically
     ctx.save();
     ctx.translate(width/2, height/2);
     ctx.rotate(-Math.PI/2);
     
-    // Draw "FAMILY FEUDS & FOOD FIGHTS" text vertically
-    ctx.font = `bold 24px ${selectedFont}`;
+    // Draw title text vertically - use shorter text if too long
+    ctx.font = `bold 14px ${selectedFont}`;  // Even smaller font
     ctx.fillStyle = '#7CFC00'; // Bright green
     ctx.textAlign = 'center';
     
+    // Limit the title length for the spine
+    const maxSpineLength = 25; // Characters
+    let spineText = coverTitle.toUpperCase();
+    if (spineText.length > maxSpineLength) {
+      spineText = spineText.substring(0, maxSpineLength - 3) + '...';
+    }
+    
     // Draw the text in the spine
-    const spineText = "FAMILY FEUDS & FOOD FIGHTS";
     ctx.fillText(spineText, 0, 0);
     
-    // Draw author initials at the bottom
-    ctx.font = `bold 36px ${selectedFont}`;
+    // Draw author initials at the bottom - positioned higher up
+    ctx.font = `bold 20px ${selectedFont}`;
     ctx.fillStyle = '#FFFFFF'; // White text
     ctx.textAlign = 'center';
-    ctx.fillText("SS", 0, -height/2 + 100);
+    ctx.fillText(initials, 0, -height/2 + 50);
     
     ctx.restore();
   };
@@ -317,11 +330,27 @@ const CanvasCoverPreview = ({
 
   return (
     <div className="space-y-4">
-      <div className="relative rounded-lg overflow-hidden shadow-xl">
-        <canvas
-          ref={canvasRef}
-          className="w-full h-full object-contain"
-        />
+      <div className="flex justify-center items-start gap-10">
+        <div className="relative rounded-lg overflow-hidden shadow-xl" style={{ width: '250px', height: '375px' }}>
+          <canvas
+            ref={frontCoverRef}
+            className="w-full h-full object-contain"
+          />
+        </div>
+        
+        <div className="relative rounded-lg overflow-hidden shadow-xl" style={{ width: '25px', height: '375px' }}>
+          <canvas
+            ref={spineRef}
+            className="w-full h-full"
+          />
+        </div>
+        
+        <div className="relative rounded-lg overflow-hidden shadow-xl" style={{ width: '250px', height: '375px' }}>
+          <canvas
+            ref={backCoverRef}
+            className="w-full h-full object-contain"
+          />
+        </div>
       </div>
       
       {category === 'friends' && coverImage && onImageAdjust && (

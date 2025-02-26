@@ -9,8 +9,8 @@ const LoveLanding = () => {
             <div className="max-w-6xl mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                 <div className="text-white space-y-6">
-                  <h1 className="text-4xl font-display font-bold px-0 mx-0 md:text-4xl text-slate-800">Love Story. Magically crafted.</h1>
-                  <p className="text-xl text-slate-800">Create a heartfelt book Personalized books that brings your romance to life</p>
+                  <h1 className="text-4xl font-display font-bold px-0 mx-0 md:text-4xl text-slate-800">Dream Life. Magically crafted.</h1>
+                  <p className="text-xl text-slate-800">Create a personalized fantasy autobiography that brings your dream life to vivid reality</p>
                   <Link to="/create/love/love-story/author" className="inline-flex items-center px-8 py-4 text-lg font-medium text-white bg-red-400 rounded-md hover:bg-red-500 transition-colors">
                     Create My Book
                   </Link>
@@ -30,10 +30,10 @@ const LoveLanding = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="group">
               <div className="relative aspect-square bg-white rounded-lg shadow-lg overflow-hidden mb-4">
-                <img src="/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png" alt="Love Story" className="w-full h-full object-cover" />
+                <img src="/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png" alt="Fantasy Autobiography" className="w-full h-full object-cover" />
               </div>
-              <h3 className="text-xl font-bold mb-2">Love Story</h3>
-              <p className="text-gray-600 mb-2">A romantic journey of your relationship</p>
+              <h3 className="text-xl font-bold mb-2">Fantasy Autobiography</h3>
+              <p className="text-gray-600 mb-2">A personalized journey through your dream life</p>
             </div>
 
             <div className="group">

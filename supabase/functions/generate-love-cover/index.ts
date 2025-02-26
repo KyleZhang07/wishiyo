@@ -33,7 +33,7 @@ serve(async (req) => {
         {
           input: {
             prompt: `${prompt} img`,
-            num_steps: 20,
+            num_steps: 40,
             style_name: "Photographic (Default)",
             input_image: photo,
             num_outputs: 1,
@@ -58,7 +58,7 @@ serve(async (req) => {
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
         {
           input: {
-            prompt: `${contentPrompt} img, story moment, emotional scene`,
+            prompt: `${contentPrompt} single-person img, story moment`,
             num_steps: 20,
             style_name: "Photographic (Default)",
             input_image: photo,
@@ -84,7 +84,7 @@ serve(async (req) => {
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
         {
           input: {
-            prompt: `${content2Prompt} img, story moment, emotional scene`,
+            prompt: `${content2Prompt} single-person img, story moment`,
             num_steps: 20,
             style_name: "Photographic (Default)",
             input_image: photo,
@@ -130,7 +130,7 @@ serve(async (req) => {
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
         {
           input: {
-            prompt: `${contentPrompt} img, story moment, emotional scene`,
+            prompt: `${contentPrompt} single-person img, story moment`,
             num_steps: 20,
             style_name: "Photographic (Default)",
             input_image: photo,
@@ -146,7 +146,7 @@ serve(async (req) => {
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
         {
           input: {
-            prompt: `${content2Prompt} img, story moment, emotional scene`,
+            prompt: `${content2Prompt} single-person img, story moment`,
             num_steps: 20,
             style_name: "Photographic (Default)",
             input_image: photo,

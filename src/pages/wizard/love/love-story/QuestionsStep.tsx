@@ -31,16 +31,26 @@ const LoveStoryQuestionsStep = () => {
   }, []);
 
   const getQuestions = (name: string) => [
-    `How did you and ${name} first meet?`,
-    "What qualities do you admire most about them?",
-    "What is your favorite memory together?",
-    `Describe ${name} in three words.`,
-    "What makes them special to you?",
-    "What memories do you cherish most?",
-    "What impact have they had on your life?",
-    `What would you like ${name} to know?`,
-    "What dreams and hopes do you have for them?",
-    `Would you like to leave a special message for ${name}?`,
+    `What's a hobby or activity that ${name} is passionate about?`,
+    `Where is ${name}'s favorite place to relax or unwind?`,
+    `If ${name} could travel anywhere in the world, where would they go?`,
+    `What's an outdoor activity ${name} enjoys?`,
+    `Describe an outfit or style of clothing that ${name} looks particularly good in.`,
+    `What kind of environment makes ${name} feel most at home? (Nature, city, etc.)`,
+    `What's something ${name} does that always makes you smile?`,
+    `If ${name} were a character in a fantasy world, what role would they play?`,
+    `What's ${name}'s idea of a perfect evening?`,
+    `What natural setting does ${name}'s personality remind you of? (Ocean, forest, mountains, etc.)`,
+    `What's an achievement or moment in ${name}'s life they're particularly proud of?`,
+    `Is there a specific season or time of year that reminds you of ${name}?`,
+    `What kind of music does ${name} love to listen to or dance to?`,
+    `If ${name} could have any superpower, what would it be?`,
+    `What's a small, everyday gesture or habit that's uniquely ${name}?`,
+    `What's a dream or goal ${name} is working towards?`,
+    `If ${name} could be surrounded by one thing, what would it be?`,
+    `What color or palette of colors represents ${name}'s personality?`,
+    `What's a special talent or skill ${name} has?`,
+    `If you could capture one perfect moment with ${name}, what would it be?`,
   ];
 
   const questions = getQuestions(personName);

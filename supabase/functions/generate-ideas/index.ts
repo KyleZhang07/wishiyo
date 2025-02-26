@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { authorName, answers, bookType, category } = await req.json();
+    const { authorName, answers, bookType, category, personName, personGender } = await req.json();
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
     if (!openAIApiKey) {
@@ -20,10 +20,12 @@ serve(async (req) => {
     }
 
     if (category === 'love') {
-      // Get person's name and gender from answers
-      const personGender = answers.find((a: any) => a.question.toLowerCase().includes('gender'))?.answer || 'them';
-      const personName = answers.find((a: any) => a.question.toLowerCase().includes('name'))?.answer || 'them';
-      console.log('Generating prompts for person:', personName, 'gender:', personGender);
+      // Use the personName and personGender from the request directly
+      // Fallback to extraction from answers if not provided (for backward compatibility)
+      const recipientName = personName || answers.find((a: any) => a.question.toLowerCase().includes('name'))?.answer || 'them';
+      const recipientGender = personGender || answers.find((a: any) => a.question.toLowerCase().includes('gender'))?.answer || 'them';
+      
+      console.log('Generating prompts for person:', recipientName, 'gender:', recipientGender);
       
       // Generate image prompts first
       const promptResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -37,28 +39,33 @@ serve(async (req) => {
           messages: [
             {
               role: 'system',
-              content: `You are a creative assistant that generates imaginative image prompts for a love story photo book. 
+              content: `You are a creative assistant that generates imaginative image prompts for a fantasy autobiography book. 
                 Create 13 unique and creative scenes focusing solely on one person - the recipient.
-                Each prompt should imagine the person in different scenarios that highlight their individual qualities.
-                Consider the person's gender (${personGender}) when creating prompts.
+                Each prompt should imagine the person in different fantasy scenarios that represent their ideal dream life.
+                Consider the person's gender (${recipientGender}) when creating prompts.
                 Make the prompts suitable for high-quality photo-realistic AI image generation.
-                Focus on solo portraits and scenes that showcase the person's character.`
+                Focus on solo portraits and scenes that showcase the person living their fantasy dream life.
+                Include a variety of settings: adventure scenarios, career achievements, lifestyle dreams, and aspirational moments.`
             },
             {
               role: 'user',
               content: `Generate 13 creative image prompts based on these answers:\n\n${JSON.stringify(answers, null, 2)}\n\n
                 Create: 
-                1. One cover image prompt that captures ${personName}'s essence (${personGender}) in a magical setting
-                2. Twelve story image prompts showing ${personName} in various imaginative solo scenarios
+                1. One cover image prompt that captures ${recipientName}'s essence (${recipientGender}) in an aspirational setting
+                2. Twelve fantasy autobiography image prompts showing ${recipientName} in various dream life scenarios
                 Each prompt should be detailed and photo-realistic.
                 Format the response as a JSON array of 13 objects, each with 'question' (short description) and 'prompt' (detailed AI image generation prompt) fields.
-                Make the prompts creative and magical, focusing on ${personName} as an individual.
-                Ensure the prompts are appropriate for the person's gender (${personGender}).
-                Do not include other people in the scenes.
+                Make the prompts reflect fantasy scenarios like:
+                - ${recipientName} achieving career dreams
+                - ${recipientName} in adventure settings (exploring exotic locations, etc.)
+                - ${recipientName} living luxury lifestyle moments
+                - ${recipientName} accomplishing personal goals
+                Ensure the prompts are appropriate for the person's gender (${recipientGender}).
+                Do not include other people in the scenes - focus solely on ${recipientName}.
                 Example prompt structure:
                 {
-                  "question": "${personName} as a dreamer",
-                  "prompt": "Ultra-realistic portrait of ${personName}, ${personGender === 'male' ? 'handsome' : 'beautiful'} person in a magical garden at twilight, surrounded by floating lights and butterflies, soft ethereal lighting, dreamy atmosphere, solo portrait, high detail"
+                  "question": "${recipientName} living their dream",
+                  "prompt": "Ultra-realistic portrait of ${recipientName}, ${recipientGender === 'male' ? 'handsome' : 'beautiful'} person standing on a private yacht in crystal blue waters, luxurious setting, golden hour lighting, successful lifestyle, solo portrait, high detail"
                 }`
             }
           ],
@@ -100,26 +107,35 @@ serve(async (req) => {
           messages: [
             {
               role: 'system',
-              content: `You are a creative assistant that generates emotional and meaningful book ideas. 
-                The book will be a celebration of one person, focusing on their individual qualities and characteristics.
-                Consider the recipient's gender (${personGender}) when generating ideas.
-                Create ideas that highlight the person's unique traits and experiences.
+              content: `You are a creative assistant that generates imaginative and aspirational fantasy autobiography book ideas. 
+                The book will be a showcase of ONE PERSON ONLY - the recipient - living their dream life.
+                Your ideas must focus EXCLUSIVELY on the recipient's fantasy journey, dream achievements, and ideal experiences.
+                Consider the recipient's gender (${recipientGender}) when generating ideas.
+                Create compelling, specific, and highly personal book concepts that showcase the recipient in their ideal life scenarios.
+                Each idea should read like an engaging fantasy autobiography premise that draws readers in.
+                IGNORE any information about other people mentioned in the answers - focus solely on ${recipientName}.
                 You must respond with ONLY a JSON array containing exactly 3 book ideas.`
             },
             {
               role: 'user',
-              content: `Generate 3 different emotional book ideas celebrating ${personName} based on these answers:\n\n${JSON.stringify(answers, null, 2)}\n\n
-                The book is a tribute written by ${authorName} for ${personName} (${personGender}).\n\n
+              content: `Generate 3 different fantasy autobiography book ideas for ${recipientName} based on these answers:\n\n${JSON.stringify(answers, null, 2)}\n\n
+                The book is a dream life visualization created by ${authorName} for ${recipientName} (${recipientGender}).\n\n
                 Return ONLY a JSON array of 3 objects, each with 'title', 'author', and 'description' fields.
-                Focus on ${personName}'s individual qualities and experiences.
-                Ensure the ideas are appropriate and tailored for a ${personGender} recipient.
-                The book should be a celebration of ${personName} as an individual.
+                CREATE HIGHLY ENGAGING IDEAS - make each description sound like an enticing fantasy autobiography that people would want to read.
+                Focus EXCLUSIVELY on ${recipientName}'s dream life, aspirational achievements, and fantasy experiences.
+                Even if other people are mentioned in the answers, your ideas should be only about ${recipientName}.
+                Each book should represent different aspects of ${recipientName}'s ideal life:
+                - Career and achievement dreams
+                - Adventure and exploration fantasies
+                - Lifestyle and personal fulfillment aspirations
+                Create titles and descriptions that would genuinely intrigue and captivate a reader.
+                Make each description specific, personal, and aspirational.
                 Example:
                 [
                   {
-                    "title": "The Magic of ${personName}",
+                    "title": "The Extraordinary Life of ${recipientName}",
                     "author": "${authorName}",
-                    "description": "A celebration of ${personName}'s unique spirit and extraordinary qualities..."
+                    "description": "An intimate journey through ${recipientName}'s dream life, revealing the extraordinary adventures and remarkable achievements of a life lived to its fullest potential."
                   }
                 ]`
             }
@@ -177,12 +193,12 @@ serve(async (req) => {
               role: 'system',
               content: `You are a creative assistant that generates funny and engaging book ideas for a biography.
                 Your task is to STRICTLY follow these requirements:
-                1. Create a humorous book title that reflects the person's life
-                2. For the 'description' field, create a SHORT, PUNCHY, and FUNNY opening line (8-12 words max)
-                3. The description should start with action verbs like "Join...", "Follow...", "Laugh..." or similar
-                4. Focus on HUMOR rather than detailed description - be witty, not wordy!
-                5. The description should give just enough context to be intriguing and amusing
-                6. Every word in the description must earn its place - no filler words or unnecessary details
+                1. Create a humorous book title that reflects the MAIN CHARACTER'S personal life and experiences
+                2. Make the book about ONE PERSON ONLY - ignore any mentions of other people in the answers
+                3. Create descriptions that are HIGHLY ENGAGING and would make readers want to pick up the book
+                4. Focus on humor that centers on the main character's personal quirks, life experiences, and unique journey
+                5. Make the ideas SPECIFIC and PERSONAL to the main character, not generic
+                6. Ensure the ideas are immediately accessible and entertaining to readers
                 7. The author field MUST always be exactly the provided authorName - do not modify it
                 
                 You must respond with ONLY a JSON array containing exactly 3 book ideas.`
@@ -194,13 +210,14 @@ serve(async (req) => {
                 
                 Respond with ONLY a JSON array of 3 objects, each with 'title', 'author', and 'description' fields where:
                 - The 'author' field MUST be exactly "${authorName}" for all ideas
-                - The 'description' field should be a SHORT, FUNNY opening line (8-12 words max) that:
-                  * Starts with action verbs like "Join...", "Follow...", "Laugh..." 
-                  * Focuses on humor rather than detailed explanation
-                  * Examples of good descriptions: "Join Kyle on his ridiculous journey from flatland to avalanche" or "Dive into the whimsical world of Kyle"
+                - The 'description' field should be ENGAGING, FUNNY, and FOCUSED ONLY on ${authorName}:
+                  * Use action verbs and vivid language that draw the reader in
+                  * Create descriptions that would make people curious and want to read more
+                  * Focus EXCLUSIVELY on ${authorName}'s personal journey and experiences
+                  * Examples: "Surviving family dinners and awkward situations: one person's hilarious guide to social navigation" or "How one introvert conquered the world without leaving their comfort zone"
                 
-                Make the descriptions FUNNY, CONCISE, and PUNCHY. Humor is more important than length or completeness.
-                DO NOT use ${authorName}'s name in the description.
+                Make the ideas FUNNY but also MEANINGFUL - they should sound like real books people would enjoy reading.
+                Each idea should be ABOUT ${authorName} ONLY, even if other people are mentioned in the answers.
                 DO NOT include any explanatory text or formatting.`
             }
           ],

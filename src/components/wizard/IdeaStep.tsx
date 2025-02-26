@@ -74,8 +74,18 @@ const IdeaStep = ({
         'love-story': 'loveStoryAuthorName',
       };
 
+      const personNameKeyMap: { [key: string]: string } = {
+        'love-story': 'loveStoryPersonName',
+      };
+
+      const personGenderKeyMap: { [key: string]: string } = {
+        'love-story': 'loveStoryPersonGender',
+      };
+
       const storageKey = storageKeyMap[bookType];
       const authorNameKey = authorNameKeyMap[bookType];
+      const personNameKey = personNameKeyMap[bookType];
+      const personGenderKey = personGenderKeyMap[bookType];
       const { ideasKey, promptsKey } = getStorageKeys(bookType);
 
       if (!storageKey || !authorNameKey) {
@@ -84,6 +94,23 @@ const IdeaStep = ({
 
       const authorName = localStorage.getItem(authorNameKey);
       const savedAnswers = localStorage.getItem(storageKey);
+      
+      // Get person name and gender for love-story category
+      let personName = null;
+      let personGender = null;
+      if (category === 'love') {
+        personName = localStorage.getItem(personNameKey);
+        personGender = localStorage.getItem(personGenderKey);
+        
+        if (!personName || !personGender) {
+          toast({
+            title: "Missing recipient information",
+            description: "Please complete the author step with recipient information first.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
       
       if (!authorName || !savedAnswers) {
         toast({
@@ -112,7 +139,9 @@ const IdeaStep = ({
           authorName,
           answers,
           bookType,
-          category
+          category,
+          personName,
+          personGender
         }
       });
 
@@ -213,8 +242,8 @@ const IdeaStep = ({
 
   return (
     <WizardStep
-      title="Let's pick a book idea"
-      description="Choose from these AI-generated book ideas or regenerate for more options."
+      title="Let's pick a fantasy life story"
+      description="Choose from these AI-generated fantasy autobiography ideas or regenerate for more options."
       previousStep={previousStep}
       currentStep={3}
       totalSteps={4}
