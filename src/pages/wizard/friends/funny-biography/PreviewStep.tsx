@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import WizardStep from '@/components/wizard/WizardStep';
@@ -177,6 +176,8 @@ const PreviewStep = () => {
                 category="friends"
                 imagePosition={imagePosition}
                 imageScale={imageScale}
+                previewMode={true}
+                scaleFactor={0.4}
               />
             </div>
           </div>
@@ -217,7 +218,7 @@ const PreviewStep = () => {
                   <div key={index} className="border-b border-gray-200 pb-4">
                     <div className="flex justify-between items-start">
                       <div>
-                        <h3 className="text-xl font-semibold">Chapter {index + 1}: {chapter.title}</h3>
+                        <h3 className="text-xl font-semibold">Chapter {index + 1}: {chapter.title.replace(/^Chapter \d+:\s*/i, '')}</h3>
                         <p className="text-gray-600 mt-2">{chapter.description}</p>
                       </div>
                       <span className="text-gray-400">pg. {chapter.startPage}</span>

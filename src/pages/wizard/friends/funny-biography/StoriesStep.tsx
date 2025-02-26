@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import WizardStep from '@/components/wizard/WizardStep';
 import QuestionDialog from '@/components/wizard/QuestionDialog';
-import { PlusCircle, X } from 'lucide-react';
+import { PlusCircle, X, Edit2, MessageSquare } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
 interface QuestionAnswer {
   question: string;
@@ -93,6 +94,22 @@ const FunnyBiographyStoriesStep = () => {
 
   const answeredQuestions = questionsAndAnswers.map(qa => qa.question);
 
+  // Animation variants for list items
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+  
+  const item = {
+    hidden: { y: 20, opacity: 0 },
+    show: { y: 0, opacity: 1 }
+  };
+
   return (
     <WizardStep
       title={`What's ${authorName}'s Story?`}
@@ -102,37 +119,77 @@ const FunnyBiographyStoriesStep = () => {
       totalSteps={4}
       onNextClick={handleNext}
     >
-      <div className="space-y-6">
-        {questionsAndAnswers.map((qa, index) => (
-          <div key={index} className="bg-white rounded-lg border p-4 relative transition-transform hover:scale-[1.02] cursor-pointer" onClick={() => handleEditAnswer(qa.question)}>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute -right-2 -top-2 rounded-full bg-white border shadow-sm hover:bg-gray-50 h-8 w-8 p-0"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleRemoveQA(index);
-              }}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-            <h3 className="font-medium mb-2 text-gray-500">{qa.question}</h3>
-            <p className="text-lg">{qa.answer}</p>
+      <div className="glass-card rounded-2xl p-8">
+        {questionsAndAnswers.length > 0 ? (
+          <motion.div 
+            className="space-y-6 mb-6"
+            variants={container}
+            initial="hidden"
+            animate="show"
+          >
+            <h3 className="text-lg font-medium text-gray-700 flex items-center">
+              <MessageSquare className="mr-2 h-5 w-5 text-primary" />
+              {authorName}'s Stories
+            </h3>
+            
+            {questionsAndAnswers.map((qa, index) => (
+              <motion.div 
+                key={index} 
+                variants={item}
+                className="bg-white/90 backdrop-blur-sm rounded-xl border border-gray-200 p-5 relative transition-all duration-200 
+                           hover:shadow-md hover:border-primary/20 group"
+              >
+                <div className="absolute right-3 top-3 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 rounded-full bg-white/80 border shadow-sm hover:bg-primary/10"
+                    onClick={() => handleEditAnswer(qa.question)}
+                  >
+                    <Edit2 className="h-4 w-4 text-gray-600" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 rounded-full bg-white/80 border shadow-sm hover:bg-red-50"
+                    onClick={() => handleRemoveQA(index)}
+                  >
+                    <X className="h-4 w-4 text-red-500" />
+                  </Button>
+                </div>
+                <h3 className="font-medium mb-3 text-primary/80 text-sm uppercase tracking-wide">{qa.question}</h3>
+                <p className="text-lg text-gray-800">{qa.answer}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+        ) : (
+          <div className="text-center py-10 text-gray-500">
+            <MessageSquare className="mx-auto h-12 w-12 mb-4 opacity-40" />
+            <p className="text-lg">No stories added yet.</p>
+            <p className="text-sm">Start by selecting a question below.</p>
           </div>
-        ))}
-        <Button
-          variant="outline"
-          className="w-full h-16 border-dashed text-lg"
-          onClick={() => {
-            setSelectedQuestion(null);
-            setIsDialogOpen(true);
-          }}
+        )}
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
         >
-          <PlusCircle className="mr-2 h-5 w-5" />
-          {questionsAndAnswers.length === 0 
-            ? "Select a Question and Answer It" 
-            : "Add Another Story"}
-        </Button>
+          <Button
+            variant="outline"
+            className="w-full py-6 border-2 border-dashed bg-gradient-to-r from-primary/5 to-primary/10 hover:from-primary/10 hover:to-primary/20 
+                     text-lg font-medium text-gray-700 hover:text-primary transition-all duration-300 shadow-sm hover:shadow"
+            onClick={() => {
+              setSelectedQuestion(null);
+              setIsDialogOpen(true);
+            }}
+          >
+            <PlusCircle className="mr-3 h-5 w-5 text-primary" />
+            {questionsAndAnswers.length === 0 
+              ? "Select a Question and Share a Story" 
+              : "Add Another Story"}
+          </Button>
+        </motion.div>
       </div>
       <QuestionDialog
         isOpen={isDialogOpen}

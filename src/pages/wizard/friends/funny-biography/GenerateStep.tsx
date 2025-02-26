@@ -152,6 +152,7 @@ const FunnyBiographyGenerateStep = () => {
             imagePosition={imagePosition}
             imageScale={imageScale}
             onImageAdjust={handleImageAdjust}
+            scaleFactor={0.4}
           />
           
           <div className="space-y-4">

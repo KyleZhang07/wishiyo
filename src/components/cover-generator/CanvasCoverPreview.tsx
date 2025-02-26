@@ -15,6 +15,8 @@ interface CanvasCoverPreviewProps {
   imagePosition?: { x: number; y: number };
   imageScale?: number;
   onImageAdjust?: (position: { x: number; y: number }, scale: number) => void;
+  previewMode?: boolean;
+  scaleFactor?: number;
 }
 
 const CanvasCoverPreview = ({
@@ -28,7 +30,9 @@ const CanvasCoverPreview = ({
   category = 'friends',
   imagePosition = { x: 0, y: 0 },
   imageScale = 100,
-  onImageAdjust
+  onImageAdjust,
+  previewMode = false,
+  scaleFactor = 0.5
 }: CanvasCoverPreviewProps) => {
   const frontCoverRef = useRef<HTMLCanvasElement>(null);
   const spineRef = useRef<HTMLCanvasElement>(null);
@@ -41,38 +45,63 @@ const CanvasCoverPreview = ({
     const spineCanvas = spineRef.current;
     const backCanvas = backCoverRef.current;
     
-    if (!frontCanvas || !spineCanvas || !backCanvas) return;
+    if (!frontCanvas) return;
     
     const frontCtx = frontCanvas.getContext('2d');
-    const spineCtx = spineCanvas.getContext('2d');
-    const backCtx = backCanvas.getContext('2d');
-    
-    if (!frontCtx || !spineCtx || !backCtx) return;
+    if (!frontCtx) return;
 
-    // Set canvas dimensions for each part
-    frontCanvas.width = 800;
-    frontCanvas.height = 1200;
+    // Base dimensions
+    const baseWidth = 800;
+    const baseHeight = 1200;
     
-    spineCanvas.width = 60;  // Make spine narrower
-    spineCanvas.height = 1200;
-    
-    backCanvas.width = 800;
-    backCanvas.height = 1200;
+    // Apply scale factor to dimensions
+    const scaledWidth = Math.floor(baseWidth * scaleFactor);
+    const scaledHeight = Math.floor(baseHeight * scaleFactor);
 
+    // Set canvas dimensions for front cover with scaling
+    frontCanvas.width = scaledWidth;
+    frontCanvas.height = scaledHeight;
+    
+    // Scale the context to maintain correct drawing proportions
+    frontCtx.scale(scaleFactor, scaleFactor);
+    
+    // Clear and draw front canvas (at base size, context scaling will handle the rest)
+    frontCtx.clearRect(0, 0, baseWidth, baseHeight);
+    
     const template = coverTemplates[selectedTemplate] || coverTemplates.modern;
     const layout = coverLayouts[selectedLayout] || coverLayouts['classic-centered'];
-
-    // Clear each canvas
-    frontCtx.clearRect(0, 0, frontCanvas.width, frontCanvas.height);
-    spineCtx.clearRect(0, 0, spineCanvas.width, spineCanvas.height);
-    backCtx.clearRect(0, 0, backCanvas.width, backCanvas.height);
-
-    // Draw each part separately
-    drawFrontCover(frontCtx, frontCanvas.width, frontCanvas.height, template, layout);
-    drawSpine(spineCtx, spineCanvas.width, spineCanvas.height, template);
-    drawBackCover(backCtx, backCanvas.width, backCanvas.height, template);
     
-  }, [coverTitle, subtitle, authorName, image, selectedFont, selectedTemplate, selectedLayout, category, imagePosition, imageScale]);
+    drawFrontCover(frontCtx, baseWidth, baseHeight, template, layout);
+    
+    // Only draw spine and back cover if not in preview mode and if the refs exist
+    if (!previewMode && spineCanvas && backCanvas) {
+      const spineCtx = spineCanvas.getContext('2d');
+      const backCtx = backCanvas.getContext('2d');
+      
+      if (spineCtx && backCtx) {
+        // Base spine width
+        const baseSpineWidth = 60;
+        
+        // Set canvas dimensions for spine and back with scaling
+        spineCanvas.width = Math.floor(baseSpineWidth * scaleFactor);
+        spineCanvas.height = scaledHeight;
+        
+        backCanvas.width = scaledWidth;
+        backCanvas.height = scaledHeight;
+        
+        // Scale the contexts
+        spineCtx.scale(scaleFactor, scaleFactor);
+        backCtx.scale(scaleFactor, scaleFactor);
+        
+        // Clear and draw spine and back canvases
+        spineCtx.clearRect(0, 0, baseSpineWidth, baseHeight);
+        backCtx.clearRect(0, 0, baseWidth, baseHeight);
+        
+        drawSpine(spineCtx, baseSpineWidth, baseHeight, template);
+        drawBackCover(backCtx, baseWidth, baseHeight, template);
+      }
+    }
+  }, [coverTitle, subtitle, authorName, image, selectedFont, selectedTemplate, selectedLayout, category, imagePosition, imageScale, previewMode, scaleFactor]);
 
   const drawFrontCover = (
     ctx: CanvasRenderingContext2D, 
@@ -329,38 +358,44 @@ const CanvasCoverPreview = ({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-center items-start gap-10">
-        <div className="relative rounded-lg overflow-hidden shadow-xl" style={{ width: '250px', height: '375px' }}>
-          <canvas
+    <div className="w-full">
+      <div className="relative flex justify-center">
+        <div className="flex">
+          {/* Front Cover is always visible */}
+          <canvas 
             ref={frontCoverRef}
-            className="w-full h-full object-contain"
-          />
+            className="border border-gray-300 shadow-lg"
+            style={{ maxWidth: '100%', height: 'auto', objectFit: 'contain' }}
+          ></canvas>
+          
+          {/* Spine and Back Cover only visible when not in preview mode */}
+          {!previewMode && (
+            <>
+              <canvas 
+                ref={spineRef}
+                className="border-t border-b border-r border-gray-300 shadow-lg"
+                style={{ maxWidth: '100%', height: 'auto', objectFit: 'contain' }}
+              ></canvas>
+              <canvas 
+                ref={backCoverRef}
+                className="border-t border-b border-r border-gray-300 shadow-lg"
+                style={{ maxWidth: '100%', height: 'auto', objectFit: 'contain' }}
+              ></canvas>
+            </>
+          )}
         </div>
         
-        <div className="relative rounded-lg overflow-hidden shadow-xl" style={{ width: '25px', height: '375px' }}>
-          <canvas
-            ref={spineRef}
-            className="w-full h-full"
-          />
-        </div>
-        
-        <div className="relative rounded-lg overflow-hidden shadow-xl" style={{ width: '250px', height: '375px' }}>
-          <canvas
-            ref={backCoverRef}
-            className="w-full h-full object-contain"
-          />
-        </div>
+        {onImageAdjust && coverImage && (
+          <div className="absolute bottom-0 left-0 right-0 flex justify-center pb-4">
+            <CoverImageControls 
+              coverImage={coverImage}
+              imagePosition={imagePosition}
+              imageScale={imageScale}
+              onImageAdjust={onImageAdjust}
+            />
+          </div>
+        )}
       </div>
-      
-      {category === 'friends' && coverImage && onImageAdjust && (
-        <CoverImageControls
-          coverImage={coverImage}
-          imagePosition={imagePosition}
-          imageScale={imageScale}
-          onImageAdjust={onImageAdjust}
-        />
-      )}
     </div>
   );
 };

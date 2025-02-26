@@ -187,19 +187,25 @@ serve(async (req) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
+          model: 'gpt-4o',
           messages: [
             {
               role: 'system',
-              content: `You are a creative assistant that generates funny and engaging book ideas for a biography.
-                Your task is to STRICTLY follow these requirements:
-                1. Create a humorous book title that reflects the MAIN CHARACTER'S personal life and experiences
+              content: `
+                1. In 3-7 words (exactly), create a concise, punchy biography title that reflects the MAIN CHARACTER'S personal life
                 2. Make the book about ONE PERSON ONLY - ignore any mentions of other people in the answers
-                3. Create descriptions that are HIGHLY ENGAGING and would make readers want to pick up the book
-                4. Focus on humor that centers on the main character's personal quirks, life experiences, and unique journey
-                5. Make the ideas SPECIFIC and PERSONAL to the main character, not generic
-                6. Ensure the ideas are immediately accessible and entertaining to readers
-                7. The author field MUST always be exactly the provided authorName - do not modify it
+                3. Focus on humor that centers on the main character's personal quirks, life experiences, and unique journey
+                4. Make the ideas SPECIFIC and PERSONAL to the main character, not generic
+                5. Ensure the ideas are immediately accessible and entertaining to readers
+                6. The author field MUST always be exactly the provided authorName - do not modify it
+                
+                Biography title examples to follow:
+                - "The Last Laugh"
+                - "Life Against All Odds"
+                - "The Accidental Hero"
+                - "Falling Upward"
+                - "Perfectly Imperfect"
+                - "Chaos and Glory"
                 
                 You must respond with ONLY a JSON array containing exactly 3 book ideas.`
             },
@@ -208,17 +214,18 @@ serve(async (req) => {
               content: `Generate 3 different funny book ideas based on these answers:\n\n${JSON.stringify(answers, null, 2)}\n\n
                 The biography is about ${authorName}, who is also the author.
                 
-                Respond with ONLY a JSON array of 3 objects, each with 'title', 'author', and 'description' fields where:
+                Respond with ONLY a JSON array of 3 objects, each with 'title', 'author', and 'subtitle' fields where:
+                - The 'title' field must be SHORT, MEMORABLE, and NEVER use parentheses or subtitle formats
                 - The 'author' field MUST be exactly "${authorName}" for all ideas
-                - The 'description' field should be ENGAGING, FUNNY, and FOCUSED ONLY on ${authorName}:
+                - The 'subtitle' field should be ENGAGING, FUNNY, and FOCUSED ONLY on ${authorName}:
                   * Use action verbs and vivid language that draw the reader in
-                  * Create descriptions that would make people curious and want to read more
+                  * Create subtitles that would make people curious and want to read more
                   * Focus EXCLUSIVELY on ${authorName}'s personal journey and experiences
-                  * Examples: "Surviving family dinners and awkward situations: one person's hilarious guide to social navigation" or "How one introvert conquered the world without leaving their comfort zone"
                 
-                Make the ideas FUNNY but also MEANINGFUL - they should sound like real books people would enjoy reading.
+                Make the ideas FUNNY but also MEANINGFUL - they should sound like real biography books people would enjoy reading.
                 Each idea should be ABOUT ${authorName} ONLY, even if other people are mentioned in the answers.
-                DO NOT include any explanatory text or formatting.`
+                DO NOT include any explanatory text or formatting.
+                NEVER use parentheses, brackets, or subtitle formats in titles.`
             }
           ],
         }),

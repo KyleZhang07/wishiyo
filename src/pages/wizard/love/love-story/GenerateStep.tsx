@@ -46,7 +46,7 @@ const GenerateStep = () => {
       const { data, error } = await supabase.functions.invoke('expand-image', {
         body: { 
           imageUrl,
-          textPrompt: "The expanded area should have: soft gradient background matching the original image tone; very clean with no objects; seamless transition; suitable for text placement; natural extension of the original background if any."
+          textPrompt: "The expanded area should be: very clean with no objects and shapes; suitable for text placement(clean background); soft gradient background matching the original image tone; seamless transition"
         }
       });
       

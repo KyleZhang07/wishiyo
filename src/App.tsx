@@ -8,7 +8,6 @@ import { useState } from "react";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
-import Login from "./pages/Login";
 import UserCenter from "./pages/UserCenter";
 import NotFound from "./pages/NotFound";
 import FriendsLanding from "./pages/FriendsLanding";
@@ -44,7 +43,6 @@ const AppLayout = () => {
       <main className={`flex-grow ${isCreationPath ? 'pt-0' : 'pt-0'}`}>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
           <Route path="/user-center" element={<UserCenter />} />
           
           {/* Category Landing Pages */}

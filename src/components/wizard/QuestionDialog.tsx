@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, MessageSquare, Check } from 'lucide-react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface QuestionDialogProps {
@@ -87,59 +87,92 @@ const QuestionDialog = ({
   
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader className="relative">
-          <DialogTitle className="text-xl text-center">
+      <DialogContent className="sm:max-w-xl md:max-w-2xl lg:max-w-3xl bg-white/95 backdrop-blur-sm border-gray-200 shadow-xl">
+        <DialogHeader className="relative border-b pb-4">
+          <DialogTitle className="text-2xl font-bold text-gray-800 flex items-center justify-center">
             {selectedQuestion ? (
               <>
                 <Button 
                   variant="ghost" 
-                  className="absolute -top-1 left-0 p-2" 
+                  className="absolute left-0 p-2 text-gray-600 hover:text-primary hover:bg-primary/10 rounded-full" 
                   onClick={() => setSelectedQuestion(null)}
                 >
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
-                Enter Your Answer
+                <MessageSquare className="mr-2 h-6 w-6 text-primary" />
+                Share a Story
               </>
-            ) : "Pick a Question"}
+            ) : (
+              <>
+                <MessageSquare className="mr-2 h-6 w-6 text-primary" />
+                Pick a Question
+              </>
+            )}
           </DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4">
+        
+        <div className="grid gap-4 pt-4">
           {!selectedQuestion ? (
-            <ScrollArea className="h-[300px] pr-4">
-              <div className="space-y-2">
+            <ScrollArea className="h-[420px] pr-4">
+              <div className="grid grid-cols-1 gap-4">
                 {questions.map((question, index) => {
                   const isAnswered = answeredQuestions.includes(question);
                   return (
-                    <Button
+                    <div
                       key={index}
-                      variant="outline"
-                      className={`justify-start h-auto py-3 px-4 whitespace-normal text-left text-base w-full
+                      className={`
+                        group rounded-xl border p-4 hover:border-primary/30 transition-all cursor-pointer
                         ${isAnswered 
-                          ? 'bg-gray-50 hover:bg-gray-100 transition-transform hover:scale-[1.02] active:scale-100' 
-                          : 'transition-transform hover:scale-[1.02] active:scale-100'
+                          ? 'bg-primary/5 border-primary/20' 
+                          : 'bg-white border-gray-200 hover:bg-gray-50'
                         }
                       `}
                       onClick={() => handleQuestionSelect(question)}
                     >
-                      {question}
-                      {isAnswered && <span className="ml-2 text-sm text-gray-500">(Edit)</span>}
-                    </Button>
+                      <div className="flex justify-between items-center">
+                        <div className="flex-1">
+                          <p className="text-lg text-gray-800 font-medium">{question}</p>
+                        </div>
+                        {isAnswered && (
+                          <span className="ml-3 flex-shrink-0 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary/20 text-primary">
+                            <Check className="mr-1 h-3.5 w-3.5" />
+                            Answered
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   );
                 })}
               </div>
             </ScrollArea>
           ) : (
-            <div className="space-y-4">
-              <p className="font-medium text-lg">{selectedQuestion}</p>
+            <div className="space-y-6 py-2">
+              <div className="bg-gray-50 p-5 rounded-lg border border-gray-200">
+                <p className="font-medium text-lg text-gray-800">{selectedQuestion}</p>
+              </div>
+              
               <Textarea 
                 placeholder="Write your answer here..." 
                 value={answer} 
                 onChange={e => setAnswer(e.target.value)} 
-                className="min-h-[150px]" 
+                className="min-h-[220px] text-lg border-gray-200 focus:border-primary focus:ring-primary" 
               />
-              <div className="flex justify-end">
-                <Button onClick={handleSubmit}>Submit</Button>
+              
+              <div className="flex justify-end space-x-4 pt-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setSelectedQuestion(null)}
+                  className="border-gray-200 text-gray-700 px-6 py-5 text-base"
+                >
+                  Back
+                </Button>
+                <Button 
+                  onClick={handleSubmit}
+                  disabled={!answer.trim()}
+                  className="bg-primary hover:bg-primary/90 px-6 py-5 text-base"
+                >
+                  Save Story
+                </Button>
               </div>
             </div>
           )}
