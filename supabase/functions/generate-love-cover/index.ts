@@ -34,7 +34,25 @@ serve(async (req) => {
       auth: REPLICATE_API_KEY,
     });
 
-    const { prompt, contentPrompt, content2Prompt, photo, style } = await req.json();
+    const { prompt, contentPrompt, content2Prompt, photos, style } = await req.json();
+    
+    // Handle legacy single photo format
+    let photoArray: string[] = [];
+    if (Array.isArray(photos)) {
+      photoArray = photos;
+    } else if (req.json().photo) {
+      // For backward compatibility
+      photoArray = [req.json().photo];
+    } else {
+      throw new Error("No photos provided");
+    }
+
+    // Validate photos
+    if (photoArray.length === 0) {
+      throw new Error("At least one photo is required");
+    }
+    
+    console.log(`Number of character photos provided: ${photoArray.length}`);
     
     // Get the style name to use with the API
     console.log(`Requested style from client: "${style}"`);
@@ -78,22 +96,29 @@ serve(async (req) => {
     
     console.log(`Mapped to API style_name: "${styleName}"`);
 
+    // Prepare the common input parameters
+    const baseInputParams = {
+      num_steps: 40,
+      style_name: styleName,
+      // Using all uploaded photos for better quality
+      input_image: photoArray[0], // Primary image (required)
+      additional_input_images: photoArray.length > 1 ? photoArray.slice(1) : undefined, // Only include if we have multiple photos
+      num_outputs: 1,
+      guidance_scale: 5.0,
+      style_strength_ratio: 20,
+      negative_prompt:
+        "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
+    };
+
     // 仅生成封面
-    if (!contentPrompt && !content2Prompt && prompt && photo) {
+    if (!contentPrompt && !content2Prompt && prompt) {
       console.log("Generating single cover image with prompt:", prompt);
       const output = await replicate.run(
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
         {
           input: {
+            ...baseInputParams,
             prompt: `${prompt} img`,
-            num_steps: 40,
-            style_name: styleName,
-            input_image: photo,
-            num_outputs: 1,
-            guidance_scale: 5.0,
-            style_strength_ratio: 20,
-            negative_prompt:
-              "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
           },
         }
       );
@@ -105,21 +130,14 @@ serve(async (req) => {
     }
 
     // 仅生成内容图1
-    if (!prompt && !content2Prompt && contentPrompt && photo) {
+    if (!prompt && !content2Prompt && contentPrompt) {
       console.log("Generating content image 1 with prompt:", contentPrompt);
       const contentImage = await replicate.run(
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
         {
           input: {
+            ...baseInputParams,
             prompt: `${contentPrompt} single-person img, story moment`,
-            num_steps: 40,
-            style_name: styleName,
-            input_image: photo,
-            num_outputs: 1,
-            guidance_scale: 5.0,
-            style_strength_ratio: 20,
-            negative_prompt:
-              "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
           },
         }
       );
@@ -131,21 +149,14 @@ serve(async (req) => {
     }
 
     // 仅生成内容图2
-    if (!prompt && !contentPrompt && content2Prompt && photo) {
+    if (!prompt && !contentPrompt && content2Prompt) {
       console.log("Generating content image 2 with prompt:", content2Prompt);
       const contentImage2 = await replicate.run(
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
         {
           input: {
+            ...baseInputParams,
             prompt: `${content2Prompt} single-person img, story moment`,
-            num_steps: 40,
-            style_name: styleName,
-            input_image: photo,
-            num_outputs: 1,
-            guidance_scale: 5.0,
-            style_strength_ratio: 20,
-            negative_prompt:
-              "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
           },
         }
       );
@@ -168,15 +179,8 @@ serve(async (req) => {
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
         {
           input: {
+            ...baseInputParams,
             prompt: `${prompt} img`,
-            num_steps: 40,
-            style_name: styleName,
-            input_image: photo,
-            num_outputs: 1,
-            guidance_scale: 5.0,
-            style_strength_ratio: 20,
-            negative_prompt:
-              "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
           },
         }
       ),
@@ -184,15 +188,8 @@ serve(async (req) => {
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
         {
           input: {
+            ...baseInputParams,
             prompt: `${contentPrompt} single-person img, story moment`,
-            num_steps: 40,
-            style_name: styleName,
-            input_image: photo,
-            num_outputs: 1,
-            guidance_scale: 5.0,
-            style_strength_ratio: 20,
-            negative_prompt:
-              "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
           },
         }
       ),
@@ -200,15 +197,8 @@ serve(async (req) => {
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
         {
           input: {
+            ...baseInputParams,
             prompt: `${content2Prompt} single-person img, story moment`,
-            num_steps: 40,
-            style_name: styleName,
-            input_image: photo,
-            num_outputs: 1,
-            guidance_scale: 5.0,
-            style_strength_ratio: 20,
-            negative_prompt:
-              "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
           },
         }
       ),
