@@ -9,9 +9,9 @@ const corsHeaders = {
 
 // Map of style names from UI to API style names
 const styleMap: { [key: string]: string } = {
-  "Comic Book": "Comic Book",
-  "Line Art": "Line Art",
-  "Fantasy Art": "Fantasy",
+  "Comic Book": "Comic book",
+  "Line Art": "Line art",
+  "Fantasy Art": "Fantasy art",
   "Photographic": "Photographic (Default)",
   "Cinematic": "Cinematic",
 };
@@ -37,8 +37,46 @@ serve(async (req) => {
     const { prompt, contentPrompt, content2Prompt, photo, style } = await req.json();
     
     // Get the style name to use with the API
-    const styleName = style && styleMap[style] ? styleMap[style] : DEFAULT_STYLE;
-    console.log(`Using style: ${styleName}`);
+    console.log(`Requested style from client: "${style}"`);
+    
+    // Define valid API style names for reference
+    const validApiStyles = [
+      "(No style)", 
+      "Cinematic", 
+      "Disney Charactor", 
+      "Digital Art", 
+      "Photographic (Default)", 
+      "Fantasy art", 
+      "Neonpunk", 
+      "Enhance", 
+      "Comic book", 
+      "Lowpoly", 
+      "Line art"
+    ];
+    
+    // Find appropriate style or use default
+    let styleName = DEFAULT_STYLE;
+    
+    if (style) {
+      // First try the mapping
+      if (styleMap[style]) {
+        styleName = styleMap[style];
+      } 
+      // If the exact style name is in valid styles, use it directly
+      else if (validApiStyles.includes(style)) {
+        styleName = style;
+      }
+      // Check for case insensitive matches as fallback
+      else {
+        const lowerStyle = style.toLowerCase();
+        const matchingStyle = validApiStyles.find(s => s.toLowerCase() === lowerStyle);
+        if (matchingStyle) {
+          styleName = matchingStyle;
+        }
+      }
+    }
+    
+    console.log(`Mapped to API style_name: "${styleName}"`);
 
     // 仅生成封面
     if (!contentPrompt && !content2Prompt && prompt && photo) {

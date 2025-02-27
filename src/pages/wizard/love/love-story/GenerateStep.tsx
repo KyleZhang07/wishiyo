@@ -43,7 +43,7 @@ const GenerateStep = () => {
   const [isGeneratingContent10, setIsGeneratingContent10] = useState(false);
   const [isGeneratingContent11, setIsGeneratingContent11] = useState(false);
 
-  const [selectedStyle, setSelectedStyle] = useState<string>('Photographic');
+  const [selectedStyle, setSelectedStyle] = useState<string>('Photographic (Default)');
   const [imageTexts, setImageTexts] = useState<ImageText[]>([]);
 
   const { toast } = useToast();
@@ -284,7 +284,23 @@ const GenerateStep = () => {
     }
 
     if (savedStyle) {
-      setSelectedStyle(savedStyle);
+      // Map old style names to new API-compatible style names
+      const styleMapping: Record<string, string> = {
+        'Comic Book': 'Comic book',
+        'Line Art': 'Line art',
+        'Fantasy Art': 'Fantasy art',
+        'Photographic': 'Photographic (Default)',
+        'Cinematic': 'Cinematic'
+      };
+      
+      // Use the mapping or the original value
+      const normalizedStyle = styleMapping[savedStyle] || savedStyle;
+      setSelectedStyle(normalizedStyle);
+      
+      // Update localStorage with the normalized style if it changed
+      if (normalizedStyle !== savedStyle) {
+        localStorage.setItem('loveStoryStyle', normalizedStyle);
+      }
     }
 
     if (savedTexts) {

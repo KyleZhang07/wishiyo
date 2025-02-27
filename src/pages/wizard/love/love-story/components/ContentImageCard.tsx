@@ -25,10 +25,10 @@ interface ContentImageCardProps {
 
 // Image style options for love story
 const STYLE_OPTIONS = [
-  'Comic Book',
-  'Line Art',
-  'Fantasy Art',
-  'Photographic',
+  'Comic book',
+  'Line art',
+  'Fantasy art',
+  'Photographic (Default)',
   'Cinematic'
 ];
 
@@ -45,13 +45,29 @@ export const ContentImageCard = ({
 }: ContentImageCardProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedStyle, setSelectedStyle] = useState<string>('Photographic');
+  const [selectedStyle, setSelectedStyle] = useState<string>('Photographic (Default)');
 
   useEffect(() => {
     // Load the current style from localStorage
     const savedStyle = localStorage.getItem('loveStoryStyle');
     if (savedStyle) {
-      setSelectedStyle(savedStyle);
+      // Map old style names to new API-compatible style names
+      const styleMapping: Record<string, string> = {
+        'Comic Book': 'Comic book',
+        'Line Art': 'Line art',
+        'Fantasy Art': 'Fantasy art',
+        'Photographic': 'Photographic (Default)',
+        'Cinematic': 'Cinematic'
+      };
+      
+      // Use the mapping or the original value
+      const normalizedStyle = styleMapping[savedStyle] || savedStyle;
+      setSelectedStyle(normalizedStyle);
+      
+      // Update localStorage with the normalized style if it changed
+      if (normalizedStyle !== savedStyle) {
+        localStorage.setItem('loveStoryStyle', normalizedStyle);
+      }
     }
   }, []);
 
@@ -272,10 +288,10 @@ export const ContentImageCard = ({
                       <div>
                         <h4 className="font-medium text-gray-900">{style}</h4>
                         <p className="text-sm text-gray-500">
-                          {style === 'Comic Book' && 'Bold outlines and vibrant colors'}
-                          {style === 'Line Art' && 'Elegant, minimalist black and white illustration'}
-                          {style === 'Fantasy Art' && 'Dreamlike and magical aesthetic'}
-                          {style === 'Photographic' && 'Realistic, photography-like images'}
+                          {style === 'Comic book' && 'Bold outlines and vibrant colors'}
+                          {style === 'Line art' && 'Elegant, minimalist black and white illustration'}
+                          {style === 'Fantasy art' && 'Dreamlike and magical aesthetic'}
+                          {style === 'Photographic (Default)' && 'Realistic, photography-like images'}
                           {style === 'Cinematic' && 'Film-like with dramatic lighting and composition'}
                         </p>
                       </div>
