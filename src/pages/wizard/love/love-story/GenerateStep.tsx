@@ -127,8 +127,8 @@ const GenerateStep = () => {
     setIsGenerating(true);
     try {
       const prompts = JSON.parse(savedPrompts);
-      // 重要：恢复正确的索引映射，prompts索引需要加2，因为0是封面、1是献词页
-      const promptIndex = index + 2;
+      // 保持正确的索引映射，保留index + 1，因为内容图片1应该使用prompts[2]
+      const promptIndex = index + 1;
       if (!prompts[promptIndex]) {
         throw new Error(`No prompt found for content index ${index} (prompt index ${promptIndex})`);
       }
@@ -180,11 +180,14 @@ const GenerateStep = () => {
         });
       } catch (expandError) {
         console.error(`Error expanding content image ${index}:`, expandError);
-        // 扩展失败：保留原始图片在状态中但不保存到localStorage
+        // 扩展失败：保留原始图片在状态中，同时存储到localStorage保证刷新后仍能看到
         setContentFn(imageUrl);
+        localStorage.setItem(lsKey, imageUrl);
+        console.log(`Content${index} expansion failed - saving original image to localStorage`);
+        
         toast({
           title: "Image expansion failed",
-          description: `Content ${index} was generated but expansion failed. The original image is displayed.`,
+          description: `Content ${index} was generated but expansion failed. The original image is displayed and saved.`,
           variant: "destructive",
         });
       }
@@ -267,10 +270,14 @@ const GenerateStep = () => {
           console.log('Saved expanded content image 1 to localStorage, length:', expandedBase64.length);
         } catch (expandError) {
           console.error('Error expanding content image 1:', expandError);
-          // 如果扩展失败，保留原始图片但不存储到localStorage
+          // 如果扩展失败，保留原始图片并存储到localStorage
+          setContentImage1(contentImage1Url);
+          localStorage.setItem('loveStoryContentImage1', contentImage1Url);
+          console.log('Content image 1 expansion failed - saving original image to localStorage, length:', contentImage1Url.length);
+          
           toast({
             title: "Image expansion warning",
-            description: "Content image 1 was generated but expansion failed. The original image is displayed.",
+            description: "Content image 1 was generated but expansion failed. The original image is displayed and saved.",
             variant: "destructive",
           });
         }
