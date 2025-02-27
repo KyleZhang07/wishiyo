@@ -127,7 +127,7 @@ const GenerateStep = () => {
     setIsGenerating(true);
     try {
       const prompts = JSON.parse(savedPrompts);
-      // 保持正确的索引映射，保留index + 1，因为内容图片1应该使用prompts[2]
+      // 注释表明+1才是对的，所以我们使用index + 1
       const promptIndex = index + 1;
       if (!prompts[promptIndex]) {
         throw new Error(`No prompt found for content index ${index} (prompt index ${promptIndex})`);
@@ -160,7 +160,7 @@ const GenerateStep = () => {
         throw new Error("No image generated from generate-love-cover");
       }
 
-      // 临时保存原始图片用于显示加载状态，但不保存到localStorage
+      // 临时保存原始图片用于显示加载状态，不保存到localStorage
       setContentFn(imageUrl);
       console.log(`Start expanding image for content ${index}...`);
 
@@ -180,15 +180,15 @@ const GenerateStep = () => {
         });
       } catch (expandError) {
         console.error(`Error expanding content image ${index}:`, expandError);
-        // 扩展失败：保留原始图片在状态中，同时存储到localStorage保证刷新后仍能看到
+        // 扩展失败：根据客户需求，保存原始图片到localStorage作为备用
         setContentFn(imageUrl);
         localStorage.setItem(lsKey, imageUrl);
-        console.log(`Content${index} expansion failed - saving original image to localStorage`);
+        console.log(`Content${index} expansion failed - storing original image to localStorage as fallback, length:`, imageUrl.length);
         
         toast({
-          title: "Image expansion failed",
-          description: `Content ${index} was generated but expansion failed. The original image is displayed and saved.`,
-          variant: "destructive",
+          title: "Image expansion note",
+          description: `Content ${index} was generated but couldn't be expanded. Using original image instead.`,
+          variant: "default",
         });
       }
     } catch (err: any) {
@@ -270,15 +270,14 @@ const GenerateStep = () => {
           console.log('Saved expanded content image 1 to localStorage, length:', expandedBase64.length);
         } catch (expandError) {
           console.error('Error expanding content image 1:', expandError);
-          // 如果扩展失败，保留原始图片并存储到localStorage
-          setContentImage1(contentImage1Url);
+          // 如果扩展失败，保存原始图片到localStorage作为备用
           localStorage.setItem('loveStoryContentImage1', contentImage1Url);
-          console.log('Content image 1 expansion failed - saving original image to localStorage, length:', contentImage1Url.length);
+          console.log('Content1 expansion failed - storing original image to localStorage as fallback, length:', contentImage1Url.length);
           
           toast({
-            title: "Image expansion warning",
-            description: "Content image 1 was generated but expansion failed. The original image is displayed and saved.",
-            variant: "destructive",
+            title: "Image expansion note",
+            description: "Content image 1 couldn't be expanded. Using original image instead.",
+            variant: "default",
           });
         }
       }
