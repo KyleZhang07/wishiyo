@@ -34,7 +34,7 @@ serve(async (req) => {
       auth: REPLICATE_API_KEY,
     });
 
-    const { prompt, contentPrompt, content2Prompt, photo, style } = await req.json();
+    const { prompt, contentPrompt, content2Prompt, photo, photo2, photo3, photo4, style } = await req.json();
     
     // Get the style name to use with the API
     console.log(`Requested style from client: "${style}"`);
@@ -78,6 +78,9 @@ serve(async (req) => {
     
     console.log(`Mapped to API style_name: "${styleName}"`);
 
+    // 检查额外照片
+    console.log(`额外照片: photo2=${!!photo2}, photo3=${!!photo3}, photo4=${!!photo4}`);
+
     // 仅生成封面
     if (!contentPrompt && !content2Prompt && prompt && photo) {
       console.log("Generating single cover image with prompt:", prompt);
@@ -89,6 +92,9 @@ serve(async (req) => {
             num_steps: 40,
             style_name: styleName,
             input_image: photo,
+            ...(photo2 && { input_image2: photo2 }),
+            ...(photo3 && { input_image3: photo3 }),
+            ...(photo4 && { input_image4: photo4 }),
             num_outputs: 1,
             guidance_scale: 5.0,
             style_strength_ratio: 20,
@@ -115,6 +121,9 @@ serve(async (req) => {
             num_steps: 40,
             style_name: styleName,
             input_image: photo,
+            ...(photo2 && { input_image2: photo2 }),
+            ...(photo3 && { input_image3: photo3 }),
+            ...(photo4 && { input_image4: photo4 }),
             num_outputs: 1,
             guidance_scale: 5.0,
             style_strength_ratio: 20,
@@ -141,6 +150,9 @@ serve(async (req) => {
             num_steps: 40,
             style_name: styleName,
             input_image: photo,
+            ...(photo2 && { input_image2: photo2 }),
+            ...(photo3 && { input_image3: photo3 }),
+            ...(photo4 && { input_image4: photo4 }),
             num_outputs: 1,
             guidance_scale: 5.0,
             style_strength_ratio: 20,
@@ -172,6 +184,9 @@ serve(async (req) => {
             num_steps: 40,
             style_name: styleName,
             input_image: photo,
+            ...(photo2 && { input_image2: photo2 }),
+            ...(photo3 && { input_image3: photo3 }),
+            ...(photo4 && { input_image4: photo4 }),
             num_outputs: 1,
             guidance_scale: 5.0,
             style_strength_ratio: 20,
@@ -188,6 +203,9 @@ serve(async (req) => {
             num_steps: 40,
             style_name: styleName,
             input_image: photo,
+            ...(photo2 && { input_image2: photo2 }),
+            ...(photo3 && { input_image3: photo3 }),
+            ...(photo4 && { input_image4: photo4 }),
             num_outputs: 1,
             guidance_scale: 5.0,
             style_strength_ratio: 20,
@@ -204,6 +222,9 @@ serve(async (req) => {
             num_steps: 40,
             style_name: styleName,
             input_image: photo,
+            ...(photo2 && { input_image2: photo2 }),
+            ...(photo3 && { input_image3: photo3 }),
+            ...(photo4 && { input_image4: photo4 }),
             num_outputs: 1,
             guidance_scale: 5.0,
             style_strength_ratio: 20,
