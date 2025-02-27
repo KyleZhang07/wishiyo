@@ -5,6 +5,7 @@ import { RefreshCw } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { Check } from 'lucide-react';
 
 interface Chapter {
   title: string;
@@ -24,6 +25,29 @@ interface ImagePrompt {
   prompt: string;
 }
 
+interface ImageText {
+  text: string;
+  tone: string;
+}
+
+// Text tone options for love story
+const TONE_OPTIONS = [
+  'Humorous',
+  'Poetic',
+  'Dramatic',
+  'Heartfelt',
+  'Encouraging'
+];
+
+// Image style options for love story
+const STYLE_OPTIONS = [
+  'Comic Book',
+  'Line Art',
+  'Fantasy Art',
+  'Photographic',
+  'Cinematic'
+];
+
 interface IdeaStepProps {
   category: 'friends' | 'love';
   previousStep: string;
@@ -39,6 +63,10 @@ const IdeaStep = ({
   const [selectedIdeaIndex, setSelectedIdeaIndex] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [imagePrompts, setImagePrompts] = useState<ImagePrompt[]>([]);
+  const [selectedTone, setSelectedTone] = useState<string>('Heartfelt');
+  const [selectedStyle, setSelectedStyle] = useState<string>('Photographic');
+  const [isGeneratingTexts, setIsGeneratingTexts] = useState(false);
+  const [imageTexts, setImageTexts] = useState<ImageText[]>([]);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -57,10 +85,25 @@ const IdeaStep = ({
       'love-story': 'loveStoryImagePrompts',
     };
 
+    const toneStorageKeyMap: { [key: string]: string } = {
+      'love-story': 'loveStoryTone',
+    };
+
+    const styleStorageKeyMap: { [key: string]: string } = {
+      'love-story': 'loveStoryStyle',
+    };
+
+    const textsStorageKeyMap: { [key: string]: string } = {
+      'love-story': 'loveStoryImageTexts',
+    };
+
     return {
       ideasKey: ideaStorageKeyMap[bookType] || '',
       selectedIdeaKey: selectedIdeaStorageKeyMap[bookType] || '',
-      promptsKey: promptsStorageKeyMap[bookType] || ''
+      promptsKey: promptsStorageKeyMap[bookType] || '',
+      toneKey: toneStorageKeyMap[bookType] || '',
+      styleKey: styleStorageKeyMap[bookType] || '',
+      textsKey: textsStorageKeyMap[bookType] || '',
     };
   };
 
@@ -162,31 +205,34 @@ const IdeaStep = ({
       }
 
       // Process ideas differently based on category
-      let processedIdeas;
       if (category === 'love') {
-        // For love story, keep only the title
-        processedIdeas = data.ideas.map(idea => ({
-          ...idea,
+        // For love story, we only need one idea and we won't display it
+        const processedIdea = {
+          ...data.ideas[0],
           author: authorName,
-          // Keep description for internal use but won't display it
-        }));
+        };
+        setIdeas([processedIdea]);
+        setSelectedIdeaIndex(0);
+        localStorage.setItem(ideasKey, JSON.stringify([processedIdea]));
+        localStorage.setItem(getStorageKeys(bookType).selectedIdeaKey, "0");
+        
+        // Store image prompts separately for love category books
+        if (data.imagePrompts && promptsKey) {
+          setImagePrompts(data.imagePrompts);
+          localStorage.setItem(promptsKey, JSON.stringify(data.imagePrompts));
+          // After image prompts are set, generate texts for them
+          generateImageTexts(data.imagePrompts, selectedTone);
+        }
       } else {
-        // For other categories, keep everything
-        processedIdeas = data.ideas.map(idea => ({
+        // For other categories, handle normally
+        const processedIdeas = data.ideas.map(idea => ({
           ...idea,
           author: authorName,
           description: idea.description || ''
         }));
-      }
-
-      setIdeas(processedIdeas);
-      setSelectedIdeaIndex(null);
-      localStorage.setItem(ideasKey, JSON.stringify(processedIdeas));
-
-      // Store image prompts separately for love category books
-      if (category === 'love' && data.imagePrompts && promptsKey) {
-        setImagePrompts(data.imagePrompts);
-        localStorage.setItem(promptsKey, JSON.stringify(data.imagePrompts));
+        setIdeas(processedIdeas);
+        setSelectedIdeaIndex(null);
+        localStorage.setItem(ideasKey, JSON.stringify(processedIdeas));
       }
 
     } catch (error) {
@@ -201,6 +247,56 @@ const IdeaStep = ({
     }
   };
 
+  const generateImageTexts = async (prompts: ImagePrompt[], tone: string) => {
+    setIsGeneratingTexts(true);
+    try {
+      const path = window.location.pathname;
+      const bookType = path.split('/')[3];
+      const { textsKey } = getStorageKeys(bookType);
+
+      const personName = localStorage.getItem('loveStoryPersonName');
+      if (!personName) {
+        throw new Error('Missing person name');
+      }
+
+      const { data, error } = await supabase.functions.invoke('generate-image-texts', {
+        body: { 
+          prompts,
+          tone,
+          personName
+        }
+      });
+
+      if (error) throw error;
+
+      if (!data || !data.texts) {
+        throw new Error('No texts received from the server');
+      }
+
+      setImageTexts(data.texts);
+      localStorage.setItem(textsKey, JSON.stringify(data.texts));
+
+    } catch (error) {
+      console.error('Error generating image texts:', error);
+      toast({
+        title: "Error generating text accompaniments",
+        description: "Using default text instead.",
+        variant: "destructive",
+      });
+      
+      // Create default texts as fallback
+      const defaultTexts = prompts.map(prompt => ({
+        text: "A special moment captured in time.",
+        tone: tone
+      }));
+      
+      setImageTexts(defaultTexts);
+      localStorage.setItem(getStorageKeys('love-story').textsKey, JSON.stringify(defaultTexts));
+    } finally {
+      setIsGeneratingTexts(false);
+    }
+  };
+
   const handleIdeaSelect = (index: number) => {
     setSelectedIdeaIndex(index);
     const path = window.location.pathname;
@@ -211,14 +307,50 @@ const IdeaStep = ({
     }
   };
 
+  const handleToneSelect = (tone: string) => {
+    setSelectedTone(tone);
+    const path = window.location.pathname;
+    const bookType = path.split('/')[3];
+    const { toneKey } = getStorageKeys(bookType);
+    
+    localStorage.setItem(toneKey, tone);
+    
+    // Generate new texts when tone changes
+    if (imagePrompts.length > 0) {
+      generateImageTexts(imagePrompts, tone);
+    }
+  };
+
+  const handleStyleSelect = (style: string) => {
+    setSelectedStyle(style);
+    const path = window.location.pathname;
+    const bookType = path.split('/')[3];
+    const { styleKey } = getStorageKeys(bookType);
+    
+    localStorage.setItem(styleKey, style);
+  };
+
   const handleContinue = () => {
-    if (selectedIdeaIndex === null) {
-      toast({
-        title: "No idea selected",
-        description: "Please select an idea before continuing.",
-        variant: "destructive",
-      });
-      return;
+    if (category === 'love') {
+      // For love story, we need to check if tone and style are selected
+      if (!selectedTone || !selectedStyle) {
+        toast({
+          title: "Selection required",
+          description: "Please select both a text tone and image style.",
+          variant: "destructive",
+        });
+        return;
+      }
+    } else {
+      // For other categories, check if an idea is selected
+      if (selectedIdeaIndex === null) {
+        toast({
+          title: "No idea selected",
+          description: "Please select an idea before continuing.",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     navigate(nextStep);
@@ -227,15 +359,36 @@ const IdeaStep = ({
   useEffect(() => {
     const path = window.location.pathname;
     const bookType = path.split('/')[3];
-    const { ideasKey, selectedIdeaKey, promptsKey } = getStorageKeys(bookType);
+    const { ideasKey, selectedIdeaKey, promptsKey, toneKey, styleKey, textsKey } = getStorageKeys(bookType);
     
     if (!ideasKey) {
       console.error('Invalid book type, no storage key found');
       return;
     }
 
-    const savedIdeasString = localStorage.getItem(ideasKey);
-    const savedIdeaIndexString = localStorage.getItem(selectedIdeaKey);
+    // Load saved tone and style for love story
+    if (category === 'love') {
+      const savedTone = localStorage.getItem(toneKey);
+      const savedStyle = localStorage.getItem(styleKey);
+      
+      if (savedTone) {
+        setSelectedTone(savedTone);
+      }
+      
+      if (savedStyle) {
+        setSelectedStyle(savedStyle);
+      }
+      
+      // Load saved image texts
+      const savedTexts = localStorage.getItem(textsKey);
+      if (savedTexts) {
+        try {
+          setImageTexts(JSON.parse(savedTexts));
+        } catch (error) {
+          console.error('Error parsing saved texts:', error);
+        }
+      }
+    }
 
     // Load image prompts for love story
     if (category === 'love' && promptsKey) {
@@ -251,6 +404,9 @@ const IdeaStep = ({
         }
       }
     }
+
+    const savedIdeasString = localStorage.getItem(ideasKey);
+    const savedIdeaIndexString = localStorage.getItem(selectedIdeaKey);
 
     if (savedIdeasString) {
       try {
@@ -275,37 +431,153 @@ const IdeaStep = ({
 
   return (
     <WizardStep
-      title="Let's pick a fantasy life story"
-      description="Choose from these AI-generated fantasy autobiography ideas or regenerate for more options."
+      title={category === 'love' ? "Customize Your Love Story" : "Let's pick a fantasy life story"}
+      description={category === 'love' 
+        ? "Choose a writing tone and visual style for your personalized love story."
+        : "Choose from these AI-generated fantasy autobiography ideas or regenerate for more options."}
       previousStep={previousStep}
       currentStep={3}
       totalSteps={4}
       onNextClick={handleContinue}
     >
-      <div className="space-y-4">
-        <div className="flex justify-end mb-4">
-          <Button 
-            variant="outline" 
-            className="bg-black text-white hover:bg-black/90" 
-            onClick={generateIdeas}
-            disabled={isLoading}
-          >
-            <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-            {isLoading ? 'Generating...' : 'Regenerate'}
-          </Button>
-        </div>
-
-        {isLoading && (
-          <div className="text-center py-8">
-            <RefreshCw className="animate-spin h-8 w-8 mx-auto mb-4" />
-            <p className="text-gray-500">Generating creative ideas...</p>
-          </div>
-        )}
-
+      <div className="space-y-6">
         {category === 'love' ? (
-          <div className="space-y-6">
-            {/* Horizontal layout for love story ideas */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <>
+            {/* Love story tone and style selector */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Text Tone Selection */}
+              <div className="bg-white rounded-lg p-6 shadow-md">
+                <h3 className="text-xl font-bold text-gray-900 mb-4">Select a Writing Tone</h3>
+                <p className="text-gray-500 mb-6">
+                  This determines how the text accompanying each image will be written.
+                </p>
+                
+                <div className="space-y-3">
+                  {TONE_OPTIONS.map((tone) => (
+                    <div 
+                      key={tone}
+                      onClick={() => handleToneSelect(tone)}
+                      className={`
+                        flex items-center p-3 rounded-md cursor-pointer transition-all
+                        ${selectedTone === tone 
+                          ? 'bg-primary/10 border border-primary' 
+                          : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'}
+                      `}
+                    >
+                      <div className="flex-shrink-0 mr-3">
+                        {selectedTone === tone ? (
+                          <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                            <Check className="w-3 h-3 text-white" />
+                          </div>
+                        ) : (
+                          <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
+                        )}
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-gray-900">{tone}</h4>
+                        <p className="text-sm text-gray-500">
+                          {tone === 'Humorous' && 'Light-hearted and witty captions'}
+                          {tone === 'Poetic' && 'Lyrical and expressive language'}
+                          {tone === 'Dramatic' && 'Intense and emotionally charged'}
+                          {tone === 'Heartfelt' && 'Warm, sincere, and emotionally genuine'}
+                          {tone === 'Encouraging' && 'Positive, uplifting, and supportive'}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Image Style Selection */}
+              <div className="bg-white rounded-lg p-6 shadow-md">
+                <h3 className="text-xl font-bold text-gray-900 mb-4">Select an Image Style</h3>
+                <p className="text-gray-500 mb-6">
+                  This determines the visual aesthetic of the generated images.
+                </p>
+                
+                <div className="space-y-3">
+                  {STYLE_OPTIONS.map((style) => (
+                    <div 
+                      key={style}
+                      onClick={() => handleStyleSelect(style)}
+                      className={`
+                        flex items-center p-3 rounded-md cursor-pointer transition-all
+                        ${selectedStyle === style 
+                          ? 'bg-primary/10 border border-primary' 
+                          : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'}
+                      `}
+                    >
+                      <div className="flex-shrink-0 mr-3">
+                        {selectedStyle === style ? (
+                          <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                            <Check className="w-3 h-3 text-white" />
+                          </div>
+                        ) : (
+                          <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
+                        )}
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-gray-900">{style}</h4>
+                        <p className="text-sm text-gray-500">
+                          {style === 'Comic Book' && 'Bold outlines and vibrant colors'}
+                          {style === 'Line Art' && 'Elegant, minimalist black and white illustration'}
+                          {style === 'Fantasy Art' && 'Dreamlike and magical aesthetic'}
+                          {style === 'Photographic' && 'Realistic, photography-like images'}
+                          {style === 'Cinematic' && 'Film-like with dramatic lighting and composition'}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Loading states */}
+            {(isLoading || isGeneratingTexts) && (
+              <div className="text-center py-4">
+                <RefreshCw className="animate-spin h-6 w-6 mx-auto mb-2" />
+                <p className="text-gray-500 text-sm">
+                  {isLoading ? 'Generating story elements...' : 'Creating text accompaniments...'}
+                </p>
+              </div>
+            )}
+
+            {/* Regenerate button */}
+            <div className="flex justify-end">
+              <Button 
+                variant="outline" 
+                className="bg-black text-white hover:bg-black/90" 
+                onClick={generateIdeas}
+                disabled={isLoading || isGeneratingTexts}
+              >
+                <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                {isLoading ? 'Generating...' : 'Regenerate Story'}
+              </Button>
+            </div>
+          </>
+        ) : (
+          // Original layout for other categories
+          <>
+            <div className="flex justify-end mb-4">
+              <Button 
+                variant="outline" 
+                className="bg-black text-white hover:bg-black/90" 
+                onClick={generateIdeas}
+                disabled={isLoading}
+              >
+                <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                {isLoading ? 'Generating...' : 'Regenerate'}
+              </Button>
+            </div>
+
+            {isLoading && (
+              <div className="text-center py-8">
+                <RefreshCw className="animate-spin h-8 w-8 mx-auto mb-4" />
+                <p className="text-gray-500">Generating creative ideas...</p>
+              </div>
+            )}
+
+            <div className="space-y-4">
               {ideas.map((idea, index) => (
                 <div 
                   key={index} 
@@ -316,53 +588,13 @@ const IdeaStep = ({
                   }`}
                   onClick={() => handleIdeaSelect(index)}
                 >
-                  <h3 className="text-2xl font-bold">{idea.title}</h3>
+                  <h3 className="text-2xl font-bold mb-1">{idea.title}</h3>
+                  <p className="text-gray-600 text-sm mb-4">{idea.author}</p>
+                  <p className="text-gray-800">{idea.description}</p>
                 </div>
               ))}
             </div>
-            
-            {/* Single box for all image prompts */}
-            {selectedIdeaIndex !== null && imagePrompts.length > 0 && (
-              <div className="bg-white rounded-lg p-6 shadow-md border border-gray-100">
-                <div className="mb-6">
-                  <h3 className="text-xl font-bold text-gray-900">
-                    Images for "{ideas[selectedIdeaIndex].title}"
-                  </h3>
-                  <p className="text-gray-500 mt-1">Below are the images that will be generated for this story</p>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                  {imagePrompts.map((prompt, promptIndex) => (
-                    <div key={promptIndex} className="bg-gray-50 p-4 rounded-lg border border-gray-100">
-                      <h4 className="text-sm font-semibold text-gray-800 mb-2">
-                        Image {promptIndex + 1}:
-                      </h4>
-                      <p className="text-gray-600">{prompt.question}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        ) : (
-          // Original vertical layout for other categories
-          <div className="space-y-4">
-            {ideas.map((idea, index) => (
-              <div 
-                key={index} 
-                className={`bg-white rounded-lg p-6 cursor-pointer transition-all hover:shadow-md ${
-                  selectedIdeaIndex === index 
-                    ? 'ring-2 ring-primary shadow-lg scale-[1.02]' 
-                    : ''
-                }`}
-                onClick={() => handleIdeaSelect(index)}
-              >
-                <h3 className="text-2xl font-bold mb-1">{idea.title}</h3>
-                <p className="text-gray-600 text-sm mb-4">{idea.author}</p>
-                <p className="text-gray-800">{idea.description}</p>
-              </div>
-            ))}
-          </div>
+          </>
         )}
       </div>
     </WizardStep>

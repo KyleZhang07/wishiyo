@@ -6,6 +6,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { CoverPreviewCard } from './components/CoverPreviewCard';
 import { ContentImageCard } from './components/ContentImageCard';
 
+interface ImageText {
+  text: string;
+  tone: string;
+}
+
 const GenerateStep = () => {
   const [coverTitle, setCoverTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
@@ -38,6 +43,9 @@ const GenerateStep = () => {
   const [isGeneratingContent10, setIsGeneratingContent10] = useState(false);
   const [isGeneratingContent11, setIsGeneratingContent11] = useState(false);
 
+  const [selectedStyle, setSelectedStyle] = useState<string>('Photographic');
+  const [imageTexts, setImageTexts] = useState<ImageText[]>([]);
+
   const { toast } = useToast();
 
   const expandImage = async (imageUrl: string): Promise<string> => {
@@ -62,7 +70,7 @@ const GenerateStep = () => {
     }
   };
 
-  const handleGenericContentRegeneration = async (index: number) => {
+  const handleGenericContentRegeneration = async (index: number, style?: string) => {
     if (index < 2) return;
 
     const stateSetters = {
@@ -115,10 +123,23 @@ const GenerateStep = () => {
       if (!prompts[index]) {
         throw new Error(`No prompt found for content index ${index}`);
       }
+      
+      // Use the provided style or fall back to the stored/default style
+      const imageStyle = style || selectedStyle;
+      
+      // Update the stored style if a new one is provided
+      if (style) {
+        setSelectedStyle(style);
+        localStorage.setItem('loveStoryStyle', style);
+      }
 
-      // 1) 调用后端 generate-love-cover 生成原图
+      // Include style in the request
       const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-        body: { prompt: prompts[index].prompt, photo: partnerPhoto }
+        body: { 
+          prompt: prompts[index].prompt, 
+          photo: partnerPhoto,
+          style: imageStyle
+        }
       });
       if (error) throw error;
 
@@ -138,7 +159,7 @@ const GenerateStep = () => {
 
       toast({
         title: "Image regenerated & expanded",
-        description: `Content ${index} successfully updated`,
+        description: `Content ${index} successfully updated with ${imageStyle} style`,
       });
     } catch (err: any) {
       console.error("Error in handleGenericContentRegeneration:", err);
@@ -152,16 +173,16 @@ const GenerateStep = () => {
     }
   };
 
-  const handleRegenerateContent2 = () => handleGenericContentRegeneration(2);
-  const handleRegenerateContent3 = () => handleGenericContentRegeneration(3);
-  const handleRegenerateContent4 = () => handleGenericContentRegeneration(4);
-  const handleRegenerateContent5 = () => handleGenericContentRegeneration(5);
-  const handleRegenerateContent6 = () => handleGenericContentRegeneration(6);
-  const handleRegenerateContent7 = () => handleGenericContentRegeneration(7);
-  const handleRegenerateContent8 = () => handleGenericContentRegeneration(8);
-  const handleRegenerateContent9 = () => handleGenericContentRegeneration(9);
-  const handleRegenerateContent10 = () => handleGenericContentRegeneration(10);
-  const handleRegenerateContent11 = () => handleGenericContentRegeneration(11);
+  const handleRegenerateContent2 = (style?: string) => handleGenericContentRegeneration(2, style);
+  const handleRegenerateContent3 = (style?: string) => handleGenericContentRegeneration(3, style);
+  const handleRegenerateContent4 = (style?: string) => handleGenericContentRegeneration(4, style);
+  const handleRegenerateContent5 = (style?: string) => handleGenericContentRegeneration(5, style);
+  const handleRegenerateContent6 = (style?: string) => handleGenericContentRegeneration(6, style);
+  const handleRegenerateContent7 = (style?: string) => handleGenericContentRegeneration(7, style);
+  const handleRegenerateContent8 = (style?: string) => handleGenericContentRegeneration(8, style);
+  const handleRegenerateContent9 = (style?: string) => handleGenericContentRegeneration(9, style);
+  const handleRegenerateContent10 = (style?: string) => handleGenericContentRegeneration(10, style);
+  const handleRegenerateContent11 = (style?: string) => handleGenericContentRegeneration(11, style);
 
   const generateInitialImages = async (prompts: string, partnerPhoto: string) => {
     setIsGeneratingCover(true);
@@ -177,7 +198,8 @@ const GenerateStep = () => {
           prompt: prompts, 
           contentPrompt: prompts,
           content2Prompt: prompts,
-          photo: partnerPhoto
+          photo: partnerPhoto,
+          style: selectedStyle
         }
       });
 
@@ -221,6 +243,10 @@ const GenerateStep = () => {
     const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
     const savedMoments = localStorage.getItem('loveStoryMoments');
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const savedStyle = localStorage.getItem('loveStoryStyle');
+    const savedTexts = localStorage.getItem('loveStoryImageTexts');
+    
+    // Load images
     const savedCoverImage = localStorage.getItem('loveStoryCoverImage');
     const savedContentImage = localStorage.getItem('loveStoryContentImage');
     const savedContentImage2 = localStorage.getItem('loveStoryContentImage2');
@@ -255,6 +281,18 @@ const GenerateStep = () => {
 
     if (savedAuthor) {
       setAuthorName(savedAuthor);
+    }
+
+    if (savedStyle) {
+      setSelectedStyle(savedStyle);
+    }
+
+    if (savedTexts) {
+      try {
+        setImageTexts(JSON.parse(savedTexts));
+      } catch (error) {
+        console.error('Error parsing saved texts:', error);
+      }
     }
 
     if (savedIdeas && savedIdeaIndex) {
@@ -330,7 +368,7 @@ const GenerateStep = () => {
     });
   };
 
-  const handleRegenerateCover = async () => {
+  const handleRegenerateCover = async (style?: string) => {
     localStorage.removeItem('loveStoryCoverImage');
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
     const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
@@ -338,14 +376,33 @@ const GenerateStep = () => {
       const prompts = JSON.parse(savedPrompts);
       if (prompts && prompts.length > 0) {
         setIsGeneratingCover(true);
+        
+        // Use the provided style or fall back to the stored/default style
+        const imageStyle = style || selectedStyle;
+        
+        // Update the stored style if a new one is provided
+        if (style) {
+          setSelectedStyle(style);
+          localStorage.setItem('loveStoryStyle', style);
+        }
+        
         try {
           const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-            body: { prompt: prompts[0].prompt, photo: partnerPhoto }
+            body: { 
+              prompt: prompts[0].prompt, 
+              photo: partnerPhoto,
+              style: imageStyle
+            }
           });
           if (error) throw error;
           if (data?.output?.[0]) {
             setCoverImage(data.output[0]);
             localStorage.setItem('loveStoryCoverImage', data.output[0]);
+            
+            toast({
+              title: "Cover image regenerated",
+              description: `Cover updated with ${imageStyle} style`,
+            });
           }
         } catch (error) {
           console.error('Error regenerating cover:', error);
@@ -361,7 +418,7 @@ const GenerateStep = () => {
     }
   };
 
-  const handleRegenerateContent1 = async () => {
+  const handleRegenerateContent1 = async (style?: string) => {
     localStorage.removeItem('loveStoryContentImage');
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
     const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
@@ -369,14 +426,33 @@ const GenerateStep = () => {
       const prompts = JSON.parse(savedPrompts);
       if (prompts && prompts.length > 1) {
         setIsGeneratingContent1(true);
+        
+        // Use the provided style or fall back to the stored/default style
+        const imageStyle = style || selectedStyle;
+        
+        // Update the stored style if a new one is provided
+        if (style) {
+          setSelectedStyle(style);
+          localStorage.setItem('loveStoryStyle', style);
+        }
+        
         try {
           const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-            body: { contentPrompt: prompts[1].prompt, photo: partnerPhoto }
+            body: { 
+              contentPrompt: prompts[1].prompt, 
+              photo: partnerPhoto,
+              style: imageStyle
+            }
           });
           if (error) throw error;
           if (data?.contentImage?.[0]) {
             setContentImage(data.contentImage[0]);
             localStorage.setItem('loveStoryContentImage', data.contentImage[0]);
+            
+            toast({
+              title: "Image regenerated",
+              description: `Image 1 updated with ${imageStyle} style`,
+            });
           }
         } catch (error) {
           console.error('Error regenerating content image 1:', error);
@@ -392,68 +468,110 @@ const GenerateStep = () => {
     }
   };
 
+  // Render content images with text inside the canvas
+  const renderContentImage = (imageIndex: number) => {
+    const imageStateMap: Record<number, string | undefined> = {
+      1: contentImage,
+      2: contentImage2,
+      3: contentImage3,
+      4: contentImage4,
+      5: contentImage5,
+      6: contentImage6,
+      7: contentImage7,
+      8: contentImage8,
+      9: contentImage9,
+      10: contentImage10,
+      11: contentImage11,
+    };
+    
+    const loadingStateMap: Record<number, boolean> = {
+      1: isGeneratingContent1,
+      2: isGeneratingContent2,
+      3: isGeneratingContent3,
+      4: isGeneratingContent4, 
+      5: isGeneratingContent5,
+      6: isGeneratingContent6,
+      7: isGeneratingContent7,
+      8: isGeneratingContent8,
+      9: isGeneratingContent9,
+      10: isGeneratingContent10,
+      11: isGeneratingContent11,
+    };
+    
+    const handleRegenerateMap: Record<number, () => void> = {
+      1: handleRegenerateContent1,
+      2: handleRegenerateContent2,
+      3: handleRegenerateContent3,
+      4: handleRegenerateContent4,
+      5: handleRegenerateContent5,
+      6: handleRegenerateContent6,
+      7: handleRegenerateContent7,
+      8: handleRegenerateContent8,
+      9: handleRegenerateContent9,
+      10: handleRegenerateContent10,
+      11: handleRegenerateContent11,
+    };
+    
+    const image = imageStateMap[imageIndex];
+    const isLoading = loadingStateMap[imageIndex];
+    const handleRegenerate = handleRegenerateMap[imageIndex];
+    // Get the text for this image, adjusting for zero-based array index
+    const imageText = imageTexts && imageTexts.length > imageIndex - 1 ? imageTexts[imageIndex - 1] : null;
+    
+    return (
+      <div className="mb-10">
+        <ContentImageCard 
+          image={image} 
+          isGenerating={isLoading}
+          onRegenerate={handleRegenerate}
+          index={imageIndex}
+          onEditText={() => {}}
+          text={imageText?.text}
+        />
+      </div>
+    );
+  };
+
   return (
     <WizardStep
-      title="Create Your Love Story"
-      description="Let's turn your beautiful moments into a timeless story"
+      title="Your Love Story Images"
+      description="Here are your personalized love story images with accompanying text."
       previousStep="/create/love/love-story/moments"
+      nextStep="/create/love/love-story/preview"
       currentStep={4}
       totalSteps={4}
     >
-      <div className="space-y-8">
-        <CoverPreviewCard
-          coverTitle={coverTitle}
-          subtitle={subtitle}
-          authorName={authorName}
-          coverImage={coverImage}
-          backCoverText={backCoverText}
-          isGeneratingCover={isGeneratingCover}
-          onEditCover={handleEditCover}
-          onRegenerateCover={handleRegenerateCover}
-        />
-
-        <ContentImageCard
-          image={contentImage}
-          isGenerating={isGeneratingContent1}
-          onEditText={handleEditText}
-          onRegenerate={handleRegenerateContent1}
-          index={1}
-          showDedicationText={true}
-          authorName={authorName}
-          coverTitle={coverTitle}
-        />
-
-        {[
-          { image: contentImage2, isGenerating: isGeneratingContent2, onRegenerate: handleRegenerateContent2 },
-          { image: contentImage3, isGenerating: isGeneratingContent3, onRegenerate: handleRegenerateContent3 },
-          { image: contentImage4, isGenerating: isGeneratingContent4, onRegenerate: handleRegenerateContent4 },
-          { image: contentImage5, isGenerating: isGeneratingContent5, onRegenerate: handleRegenerateContent5 },
-          { image: contentImage6, isGenerating: isGeneratingContent6, onRegenerate: handleRegenerateContent6 },
-          { image: contentImage7, isGenerating: isGeneratingContent7, onRegenerate: handleRegenerateContent7 },
-          { image: contentImage8, isGenerating: isGeneratingContent8, onRegenerate: handleRegenerateContent8 },
-          { image: contentImage9, isGenerating: isGeneratingContent9, onRegenerate: handleRegenerateContent9 },
-          { image: contentImage10, isGenerating: isGeneratingContent10, onRegenerate: handleRegenerateContent10 },
-          { image: contentImage11, isGenerating: isGeneratingContent11, onRegenerate: handleRegenerateContent11 },
-        ].map((item, i) => {
-          const actualIndex = i + 2;  
-          return (
-            <ContentImageCard
-              key={actualIndex}
-              image={item.image}
-              isGenerating={item.isGenerating}
-              onEditText={handleEditText}
-              onRegenerate={item.onRegenerate}
-              index={actualIndex}
-            />
-          );
-        })}
-
-        <Button 
-          className="w-full py-6 text-lg"
-          onClick={() => {/* e.g. Generate book logic */}}
-        >
-          Generate Your Love Story
-        </Button>
+      <div className="max-w-5xl mx-auto">
+        {/* Cover section */}
+        <div className="mb-12">
+          <h2 className="text-2xl font-bold mb-4">Cover</h2>
+          <CoverPreviewCard 
+            coverImage={coverImage}
+            coverTitle={coverTitle}
+            subtitle={subtitle}
+            authorName={authorName}
+            backCoverText={backCoverText}
+            isGeneratingCover={isGeneratingCover}
+            onRegenerateCover={handleRegenerateCover}
+            onEditCover={() => {}}
+          />
+        </div>
+        
+        <h2 className="text-2xl font-bold mb-6">Story Images with Text</h2>
+        <div className="space-y-8">
+          {/* Render content images with text inside canvas */}
+          {renderContentImage(1)}
+          {renderContentImage(2)}
+          {renderContentImage(3)}
+          {renderContentImage(4)}
+          {renderContentImage(5)}
+          {renderContentImage(6)}
+          {renderContentImage(7)}
+          {renderContentImage(8)}
+          {renderContentImage(9)}
+          {renderContentImage(10)}
+          {renderContentImage(11)}
+        </div>
       </div>
     </WizardStep>
   );

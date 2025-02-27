@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Replicate from "https://esm.sh/replicate@0.25.2";
 
@@ -7,6 +6,18 @@ const corsHeaders = {
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };
+
+// Map of style names from UI to API style names
+const styleMap: { [key: string]: string } = {
+  "Comic Book": "Comic Book",
+  "Line Art": "Line Art",
+  "Fantasy Art": "Fantasy",
+  "Photographic": "Photographic (Default)",
+  "Cinematic": "Cinematic",
+};
+
+// Default style if none is specified
+const DEFAULT_STYLE = "Photographic (Default)";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -23,7 +34,11 @@ serve(async (req) => {
       auth: REPLICATE_API_KEY,
     });
 
-    const { prompt, contentPrompt, content2Prompt, photo } = await req.json();
+    const { prompt, contentPrompt, content2Prompt, photo, style } = await req.json();
+    
+    // Get the style name to use with the API
+    const styleName = style && styleMap[style] ? styleMap[style] : DEFAULT_STYLE;
+    console.log(`Using style: ${styleName}`);
 
     // 仅生成封面
     if (!contentPrompt && !content2Prompt && prompt && photo) {
@@ -34,7 +49,7 @@ serve(async (req) => {
           input: {
             prompt: `${prompt} img`,
             num_steps: 40,
-            style_name: "Photographic (Default)",
+            style_name: styleName,
             input_image: photo,
             num_outputs: 1,
             guidance_scale: 5.0,
@@ -59,8 +74,8 @@ serve(async (req) => {
         {
           input: {
             prompt: `${contentPrompt} single-person img, story moment`,
-            num_steps: 20,
-            style_name: "Photographic (Default)",
+            num_steps: 40,
+            style_name: styleName,
             input_image: photo,
             num_outputs: 1,
             guidance_scale: 5.0,
@@ -85,8 +100,8 @@ serve(async (req) => {
         {
           input: {
             prompt: `${content2Prompt} single-person img, story moment`,
-            num_steps: 20,
-            style_name: "Photographic (Default)",
+            num_steps: 40,
+            style_name: styleName,
             input_image: photo,
             num_outputs: 1,
             guidance_scale: 5.0,
@@ -108,6 +123,7 @@ serve(async (req) => {
     console.log("Cover prompt:", prompt);
     console.log("Content 1 prompt:", contentPrompt);
     console.log("Content 2 prompt:", content2Prompt);
+    console.log("Using style:", styleName);
 
     const [output, contentImage, contentImage2] = await Promise.all([
       replicate.run(
@@ -115,8 +131,8 @@ serve(async (req) => {
         {
           input: {
             prompt: `${prompt} img`,
-            num_steps: 20,
-            style_name: "Photographic (Default)",
+            num_steps: 40,
+            style_name: styleName,
             input_image: photo,
             num_outputs: 1,
             guidance_scale: 5.0,
@@ -131,8 +147,8 @@ serve(async (req) => {
         {
           input: {
             prompt: `${contentPrompt} single-person img, story moment`,
-            num_steps: 20,
-            style_name: "Photographic (Default)",
+            num_steps: 40,
+            style_name: styleName,
             input_image: photo,
             num_outputs: 1,
             guidance_scale: 5.0,
@@ -147,8 +163,8 @@ serve(async (req) => {
         {
           input: {
             prompt: `${content2Prompt} single-person img, story moment`,
-            num_steps: 20,
-            style_name: "Photographic (Default)",
+            num_steps: 40,
+            style_name: styleName,
             input_image: photo,
             num_outputs: 1,
             guidance_scale: 5.0,
