@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Replicate from "https://esm.sh/replicate@0.25.2";
 
@@ -22,20 +23,11 @@ serve(async (req) => {
       auth: REPLICATE_API_KEY,
     });
 
-    const { prompt, contentPrompt, content2Prompt, photo, photos } = await req.json();
-    
-    // Use multiple photos if available, otherwise fallback to single photo
-    const inputImages = photos || (photo ? [photo] : []);
-    
-    if (inputImages.length === 0) {
-      throw new Error("No photos provided");
-    }
+    const { prompt, contentPrompt, content2Prompt, photo } = await req.json();
 
     // 仅生成封面
-    if (!contentPrompt && !content2Prompt && prompt && inputImages.length > 0) {
+    if (!contentPrompt && !content2Prompt && prompt && photo) {
       console.log("Generating single cover image with prompt:", prompt);
-      console.log(`Using ${inputImages.length} input photos`);
-      
       const output = await replicate.run(
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
         {
@@ -43,7 +35,7 @@ serve(async (req) => {
             prompt: `${prompt} img`,
             num_steps: 40,
             style_name: "Photographic (Default)",
-            input_image: inputImages,
+            input_image: photo,
             num_outputs: 1,
             guidance_scale: 5.0,
             style_strength_ratio: 20,
@@ -60,10 +52,8 @@ serve(async (req) => {
     }
 
     // 仅生成内容图1
-    if (!prompt && !content2Prompt && contentPrompt && inputImages.length > 0) {
+    if (!prompt && !content2Prompt && contentPrompt && photo) {
       console.log("Generating content image 1 with prompt:", contentPrompt);
-      console.log(`Using ${inputImages.length} input photos`);
-      
       const contentImage = await replicate.run(
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
         {
@@ -71,7 +61,7 @@ serve(async (req) => {
             prompt: `${contentPrompt} single-person img, story moment`,
             num_steps: 20,
             style_name: "Photographic (Default)",
-            input_image: inputImages,
+            input_image: photo,
             num_outputs: 1,
             guidance_scale: 5.0,
             style_strength_ratio: 20,
@@ -88,10 +78,8 @@ serve(async (req) => {
     }
 
     // 仅生成内容图2
-    if (!prompt && !contentPrompt && content2Prompt && inputImages.length > 0) {
+    if (!prompt && !contentPrompt && content2Prompt && photo) {
       console.log("Generating content image 2 with prompt:", content2Prompt);
-      console.log(`Using ${inputImages.length} input photos`);
-      
       const contentImage2 = await replicate.run(
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
         {
@@ -99,7 +87,7 @@ serve(async (req) => {
             prompt: `${content2Prompt} single-person img, story moment`,
             num_steps: 20,
             style_name: "Photographic (Default)",
-            input_image: inputImages,
+            input_image: photo,
             num_outputs: 1,
             guidance_scale: 5.0,
             style_strength_ratio: 20,
@@ -120,7 +108,6 @@ serve(async (req) => {
     console.log("Cover prompt:", prompt);
     console.log("Content 1 prompt:", contentPrompt);
     console.log("Content 2 prompt:", content2Prompt);
-    console.log(`Using ${inputImages.length} input photos`);
 
     const [output, contentImage, contentImage2] = await Promise.all([
       replicate.run(
@@ -130,7 +117,7 @@ serve(async (req) => {
             prompt: `${prompt} img`,
             num_steps: 20,
             style_name: "Photographic (Default)",
-            input_image: inputImages,
+            input_image: photo,
             num_outputs: 1,
             guidance_scale: 5.0,
             style_strength_ratio: 20,
@@ -146,7 +133,7 @@ serve(async (req) => {
             prompt: `${contentPrompt} single-person img, story moment`,
             num_steps: 20,
             style_name: "Photographic (Default)",
-            input_image: inputImages,
+            input_image: photo,
             num_outputs: 1,
             guidance_scale: 5.0,
             style_strength_ratio: 20,
@@ -162,7 +149,7 @@ serve(async (req) => {
             prompt: `${content2Prompt} single-person img, story moment`,
             num_steps: 20,
             style_name: "Photographic (Default)",
-            input_image: inputImages,
+            input_image: photo,
             num_outputs: 1,
             guidance_scale: 5.0,
             style_strength_ratio: 20,

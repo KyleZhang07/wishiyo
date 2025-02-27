@@ -221,7 +221,7 @@ serve(async (req) => {
                   * Use action verbs and vivid language that draw the reader in
                   * Create descriptions that would make people curious and want to read more
                   * Focus EXCLUSIVELY on ${authorName}'s personal journey and experiences
-                  * Description should be 1 sentence long
+                  * Description should be 1 sentence long, 10-15 words
                 
                 Make the ideas FUNNY but also MEANINGFUL - they should sound like real biography books people would enjoy reading.
                 Each idea should be ABOUT ${authorName} ONLY, even if other people are mentioned in the answers.

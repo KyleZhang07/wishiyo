@@ -19,6 +19,11 @@ interface BookIdea {
   chapters?: Chapter[];
 }
 
+interface ImagePrompt {
+  question: string;
+  prompt: string;
+}
+
 interface IdeaStepProps {
   category: 'friends' | 'love';
   previousStep: string;
@@ -33,6 +38,7 @@ const IdeaStep = ({
   const [ideas, setIdeas] = useState<BookIdea[]>([]);
   const [selectedIdeaIndex, setSelectedIdeaIndex] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [imagePrompts, setImagePrompts] = useState<ImagePrompt[]>([]);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -155,12 +161,23 @@ const IdeaStep = ({
         throw new Error('Invalid response format: ideas should be an array');
       }
 
-      // Force correct author name and subtitle length
-      const processedIdeas = data.ideas.map(idea => ({
-        ...idea,
-        author: authorName, // Force author to be exactly authorName
-        description: idea.description || '' // Keep complete description without truncation
-      }));
+      // Process ideas differently based on category
+      let processedIdeas;
+      if (category === 'love') {
+        // For love story, keep only the title
+        processedIdeas = data.ideas.map(idea => ({
+          ...idea,
+          author: authorName,
+          // Keep description for internal use but won't display it
+        }));
+      } else {
+        // For other categories, keep everything
+        processedIdeas = data.ideas.map(idea => ({
+          ...idea,
+          author: authorName,
+          description: idea.description || ''
+        }));
+      }
 
       setIdeas(processedIdeas);
       setSelectedIdeaIndex(null);
@@ -168,6 +185,7 @@ const IdeaStep = ({
 
       // Store image prompts separately for love category books
       if (category === 'love' && data.imagePrompts && promptsKey) {
+        setImagePrompts(data.imagePrompts);
         localStorage.setItem(promptsKey, JSON.stringify(data.imagePrompts));
       }
 
@@ -209,7 +227,7 @@ const IdeaStep = ({
   useEffect(() => {
     const path = window.location.pathname;
     const bookType = path.split('/')[3];
-    const { ideasKey, selectedIdeaKey } = getStorageKeys(bookType);
+    const { ideasKey, selectedIdeaKey, promptsKey } = getStorageKeys(bookType);
     
     if (!ideasKey) {
       console.error('Invalid book type, no storage key found');
@@ -218,6 +236,21 @@ const IdeaStep = ({
 
     const savedIdeasString = localStorage.getItem(ideasKey);
     const savedIdeaIndexString = localStorage.getItem(selectedIdeaKey);
+
+    // Load image prompts for love story
+    if (category === 'love' && promptsKey) {
+      const savedPromptsString = localStorage.getItem(promptsKey);
+      if (savedPromptsString) {
+        try {
+          const parsedPrompts = JSON.parse(savedPromptsString);
+          if (Array.isArray(parsedPrompts)) {
+            setImagePrompts(parsedPrompts);
+          }
+        } catch (error) {
+          console.error('Error parsing saved prompts:', error);
+        }
+      }
+    }
 
     if (savedIdeasString) {
       try {
@@ -269,23 +302,68 @@ const IdeaStep = ({
           </div>
         )}
 
-        <div className="space-y-4">
-          {ideas.map((idea, index) => (
-            <div 
-              key={index} 
-              className={`bg-white rounded-lg p-6 cursor-pointer transition-all hover:shadow-md ${
-                selectedIdeaIndex === index 
-                  ? 'ring-2 ring-primary shadow-lg scale-[1.02]' 
-                  : ''
-              }`}
-              onClick={() => handleIdeaSelect(index)}
-            >
-              <h3 className="text-2xl font-bold mb-1">{idea.title}</h3>
-              <p className="text-gray-600 text-sm mb-4">{idea.author}</p>
-              <p className="text-gray-800">{idea.description}</p>
+        {category === 'love' ? (
+          <div className="space-y-6">
+            {/* Horizontal layout for love story ideas */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {ideas.map((idea, index) => (
+                <div 
+                  key={index} 
+                  className={`bg-white rounded-lg p-6 cursor-pointer transition-all hover:shadow-md ${
+                    selectedIdeaIndex === index 
+                      ? 'ring-2 ring-primary shadow-lg scale-[1.02]' 
+                      : ''
+                  }`}
+                  onClick={() => handleIdeaSelect(index)}
+                >
+                  <h3 className="text-2xl font-bold">{idea.title}</h3>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+            
+            {/* Single box for all image prompts */}
+            {selectedIdeaIndex !== null && imagePrompts.length > 0 && (
+              <div className="bg-white rounded-lg p-6 shadow-md border border-gray-100">
+                <div className="mb-6">
+                  <h3 className="text-xl font-bold text-gray-900">
+                    Images for "{ideas[selectedIdeaIndex].title}"
+                  </h3>
+                  <p className="text-gray-500 mt-1">Below are the images that will be generated for this story</p>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                  {imagePrompts.map((prompt, promptIndex) => (
+                    <div key={promptIndex} className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                      <h4 className="text-sm font-semibold text-gray-800 mb-2">
+                        Image {promptIndex + 1}:
+                      </h4>
+                      <p className="text-gray-600">{prompt.question}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          // Original vertical layout for other categories
+          <div className="space-y-4">
+            {ideas.map((idea, index) => (
+              <div 
+                key={index} 
+                className={`bg-white rounded-lg p-6 cursor-pointer transition-all hover:shadow-md ${
+                  selectedIdeaIndex === index 
+                    ? 'ring-2 ring-primary shadow-lg scale-[1.02]' 
+                    : ''
+                }`}
+                onClick={() => handleIdeaSelect(index)}
+              >
+                <h3 className="text-2xl font-bold mb-1">{idea.title}</h3>
+                <p className="text-gray-600 text-sm mb-4">{idea.author}</p>
+                <p className="text-gray-800">{idea.description}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </WizardStep>
   );
