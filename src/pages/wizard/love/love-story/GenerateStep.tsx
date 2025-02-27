@@ -206,44 +206,45 @@ const GenerateStep = () => {
       if (error) throw error;
 
       if (data?.output?.[0]) {
-        // 处理封面图片
-        try {
-          const expandedCoverImage = await expandImage(data.output[0]);
-          setCoverImage(expandedCoverImage);
-          localStorage.setItem('loveStoryCoverImage', expandedCoverImage);
-        } catch (err) {
-          console.error("Error expanding cover image:", err);
-          // 如果扩展失败，仍然使用原始图片
-          setCoverImage(data.output[0]);
-          localStorage.setItem('loveStoryCoverImage', data.output[0]);
-        }
+        // 获取封面图片URL
+        const coverImageUrl = data.output[0];
+        
+        // 封面图片不需要扩展，直接保存
+        setCoverImage(coverImageUrl);
+        localStorage.setItem('loveStoryCoverImage', coverImageUrl);
       }
 
       if (data?.contentImage?.[0]) {
-        // 处理内容图片1
+        // 获取content1图片URL
+        const contentImageUrl = data.contentImage[0];
+        
+        // 扩展content1图片
         try {
-          const expandedContentImage = await expandImage(data.contentImage[0]);
-          setContentImage(expandedContentImage);
-          localStorage.setItem('loveStoryContentImage', expandedContentImage);
-        } catch (err) {
-          console.error("Error expanding content image 1:", err);
+          const expandedBase64 = await expandImage(contentImageUrl);
+          setContentImage(expandedBase64);
+          localStorage.setItem('loveStoryContentImage', expandedBase64);
+        } catch (expandError) {
+          console.error('Error expanding content image 1:', expandError);
           // 如果扩展失败，仍然使用原始图片
-          setContentImage(data.contentImage[0]);
-          localStorage.setItem('loveStoryContentImage', data.contentImage[0]);
+          setContentImage(contentImageUrl);
+          localStorage.setItem('loveStoryContentImage', contentImageUrl);
         }
       }
 
       if (data?.contentImage2?.[0]) {
-        // 处理内容图片2
+        // 获取content2图片URL
+        const contentImage2Url = data.contentImage2[0];
+        
+        // 扩展content2图片
         try {
-          const expandedContentImage2 = await expandImage(data.contentImage2[0]);
-          setContentImage2(expandedContentImage2);
-          localStorage.setItem('loveStoryContentImage2', expandedContentImage2);
-        } catch (err) {
-          console.error("Error expanding content image 2:", err);
+          const expandedBase64 = await expandImage(contentImage2Url);
+          setContentImage2(expandedBase64);
+          localStorage.setItem('loveStoryContentImage2', expandedBase64);
+        } catch (expandError) {
+          console.error('Error expanding content image 2:', expandError);
           // 如果扩展失败，仍然使用原始图片
-          setContentImage2(data.contentImage2[0]);
-          localStorage.setItem('loveStoryContentImage2', data.contentImage2[0]);
+          setContentImage2(contentImage2Url);
+          localStorage.setItem('loveStoryContentImage2', contentImage2Url);
         }
       }
 
@@ -440,17 +441,8 @@ const GenerateStep = () => {
           });
           if (error) throw error;
           if (data?.output?.[0]) {
-            // 处理封面图片
-            try {
-              const expandedCoverImage = await expandImage(data.output[0]);
-              setCoverImage(expandedCoverImage);
-              localStorage.setItem('loveStoryCoverImage', expandedCoverImage);
-            } catch (err) {
-              console.error("Error expanding cover image:", err);
-              // 如果扩展失败，仍然使用原始图片
-              setCoverImage(data.output[0]);
-              localStorage.setItem('loveStoryCoverImage', data.output[0]);
-            }
+            setCoverImage(data.output[0]);
+            localStorage.setItem('loveStoryCoverImage', data.output[0]);
             
             toast({
               title: "Cover image regenerated",
@@ -499,16 +491,19 @@ const GenerateStep = () => {
           });
           if (error) throw error;
           if (data?.contentImage?.[0]) {
-            // 处理内容图片1
+            // 获取原始图片URL
+            const imageUrl = data.contentImage[0];
+            
+            // 扩展图片
             try {
-              const expandedContentImage = await expandImage(data.contentImage[0]);
-              setContentImage(expandedContentImage);
-              localStorage.setItem('loveStoryContentImage', expandedContentImage);
-            } catch (err) {
-              console.error("Error expanding content image 1:", err);
+              const expandedBase64 = await expandImage(imageUrl);
+              setContentImage(expandedBase64);
+              localStorage.setItem('loveStoryContentImage', expandedBase64);
+            } catch (expandError) {
+              console.error('Error expanding content image 1:', expandError);
               // 如果扩展失败，仍然使用原始图片
-              setContentImage(data.contentImage[0]);
-              localStorage.setItem('loveStoryContentImage', data.contentImage[0]);
+              setContentImage(imageUrl);
+              localStorage.setItem('loveStoryContentImage', imageUrl);
             }
             
             toast({
