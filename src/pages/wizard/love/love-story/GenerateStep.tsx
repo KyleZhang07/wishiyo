@@ -48,8 +48,6 @@ const GenerateStep = () => {
 
   const { toast } = useToast();
 
-  const [characterPhotos, setCharacterPhotos] = useState<string[]>([]);
-
   const expandImage = async (imageUrl: string): Promise<string> => {
     try {
       console.log('Starting image expansion for:', imageUrl);
@@ -73,19 +71,7 @@ const GenerateStep = () => {
   };
 
   const handleGenericContentRegeneration = async (index: number, style?: string) => {
-    if (index < 2 || index > 11) return;
-
-    setIsGeneratingContent1(true);
-    setIsGeneratingContent2(true);
-    setIsGeneratingContent3(true);
-    setIsGeneratingContent4(true);
-    setIsGeneratingContent5(true);
-    setIsGeneratingContent6(true);
-    setIsGeneratingContent7(true);
-    setIsGeneratingContent8(true);
-    setIsGeneratingContent9(true);
-    setIsGeneratingContent10(true);
-    setIsGeneratingContent11(true);
+    if (index < 2) return;
 
     const stateSetters = {
       2: setContentImage2,
@@ -121,60 +107,70 @@ const GenerateStep = () => {
     localStorage.removeItem(lsKey);
 
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
-    if (!savedPrompts) {
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    if (!savedPrompts || !partnerPhoto) {
       toast({
         title: "Missing info",
-        description: "No prompts found",
+        description: "No prompts or partner photo found",
         variant: "destructive",
       });
-      setIsGenerating(false);
       return;
     }
 
-    const prompts = JSON.parse(savedPrompts);
-    if (!prompts[index]) {
-      throw new Error(`No prompt found for content index ${index}`);
-    }
-    
-    // Use the provided style or fall back to the stored/default style
-    const imageStyle = style || selectedStyle;
-    
-    // Update the stored style if a new one is provided
-    if (style) {
-      setSelectedStyle(style);
-      localStorage.setItem('loveStoryStyle', style);
-    }
-
-    // Include style in the request
-    const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-      body: { 
-        prompt: prompts[index].prompt, 
-        photos: characterPhotos,
-        style: imageStyle
+    setIsGenerating(true);
+    try {
+      const prompts = JSON.parse(savedPrompts);
+      if (!prompts[index]) {
+        throw new Error(`No prompt found for content index ${index}`);
       }
-    });
-    if (error) throw error;
+      
+      // Use the provided style or fall back to the stored/default style
+      const imageStyle = style || selectedStyle;
+      
+      // Update the stored style if a new one is provided
+      if (style) {
+        setSelectedStyle(style);
+        localStorage.setItem('loveStoryStyle', style);
+      }
 
-    // 后端可能返回 { output: [...]} 或 { contentImageX: [...] }
-    // 具体看你的generate-love-cover实现
-    const imageUrl = data?.[`contentImage${index}`]?.[0] || data?.output?.[0];
-    if (!imageUrl) {
-      throw new Error("No image generated from generate-love-cover");
+      // Include style in the request
+      const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+        body: { 
+          prompt: prompts[index].prompt, 
+          photo: partnerPhoto,
+          style: imageStyle
+        }
+      });
+      if (error) throw error;
+
+      // 后端可能返回 { output: [...]} 或 { contentImageX: [...] }
+      // 具体看你的generate-love-cover实现
+      const imageUrl = data?.[`contentImage${index}`]?.[0] || data?.output?.[0];
+      if (!imageUrl) {
+        throw new Error("No image generated from generate-love-cover");
+      }
+
+      // 2) 调用expand-image进行扩展
+      const expandedBase64 = await expandImage(imageUrl);
+
+      // 3) 存到state & localStorage
+      setContentFn(expandedBase64);
+      localStorage.setItem(lsKey, expandedBase64);
+
+      toast({
+        title: "Image regenerated & expanded",
+        description: `Content ${index} successfully updated with ${imageStyle} style`,
+      });
+    } catch (err: any) {
+      console.error("Error in handleGenericContentRegeneration:", err);
+      toast({
+        title: "Error regenerating image",
+        description: err.message || "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
     }
-
-    // 2) 调用expand-image进行扩展
-    const expandedBase64 = await expandImage(imageUrl);
-
-    // 3) 存到state & localStorage
-    setContentFn(expandedBase64);
-    localStorage.setItem(lsKey, expandedBase64);
-
-    toast({
-      title: "Image regenerated & expanded",
-      description: `Content ${index} successfully updated with ${imageStyle} style`,
-    });
-
-    setIsGenerating(false);
   };
 
   const handleRegenerateContent2 = (style?: string) => handleGenericContentRegeneration(2, style);
@@ -188,90 +184,57 @@ const GenerateStep = () => {
   const handleRegenerateContent10 = (style?: string) => handleGenericContentRegeneration(10, style);
   const handleRegenerateContent11 = (style?: string) => handleGenericContentRegeneration(11, style);
 
-  const generateInitialImages = async () => {
+  const generateInitialImages = async (prompts: string, partnerPhoto: string) => {
     setIsGeneratingCover(true);
     setIsGeneratingContent1(true);
-    setIsGeneratingContent2(true);
+    toast({
+      title: "Generating images",
+      description: "This may take a minute...",
+    });
 
-    // Use character photos if available, or display error if none
-    if (characterPhotos.length === 0) {
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+        body: { 
+          prompt: prompts, 
+          contentPrompt: prompts,
+          content2Prompt: prompts,
+          photo: partnerPhoto,
+          style: selectedStyle
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.output?.[0]) {
+        setCoverImage(data.output[0]);
+        localStorage.setItem('loveStoryCoverImage', data.output[0]);
+      }
+
+      if (data?.contentImage?.[0]) {
+        setContentImage(data.contentImage[0]);
+        localStorage.setItem('loveStoryContentImage', data.contentImage[0]);
+      }
+
+      if (data?.contentImage2?.[0]) {
+        setContentImage2(data.contentImage2[0]);
+        localStorage.setItem('loveStoryContentImage2', data.contentImage2[0]);
+      }
+
       toast({
-        title: "Character photos missing",
-        description: "Please upload at least one character photo in the moments step",
+        title: "Images generated",
+        description: "Your images are ready!",
+      });
+    } catch (error) {
+      console.error('Error generating images:', error);
+      toast({
+        title: "Error generating images",
+        description: "Please try again",
         variant: "destructive",
       });
+    } finally {
       setIsGeneratingCover(false);
       setIsGeneratingContent1(false);
-      setIsGeneratingContent2(false);
-      return;
     }
-
-    // Check if saved prompts exist
-    const savedPrompts = localStorage.getItem("loveStoryImagePrompts");
-    if (!savedPrompts) {
-      toast({
-        title: "Prompts missing",
-        description: "Please complete the ideas step first",
-        variant: "destructive",
-      });
-      setIsGeneratingCover(false);
-      setIsGeneratingContent1(false);
-      setIsGeneratingContent2(false);
-      return;
-    }
-
-    const parsedPrompts = JSON.parse(savedPrompts);
-    const coverPrompt = parsedPrompts?.cover || "";
-    const content1Prompt = parsedPrompts?.content1 || "";
-    const content2Prompt = parsedPrompts?.content2 || "";
-
-    // Call the API with multiple photos
-    supabase.functions
-      .invoke("generate-love-cover", {
-        body: {
-          prompt: coverPrompt,
-          contentPrompt: content1Prompt,
-          content2Prompt: content2Prompt,
-          photos: characterPhotos,
-          style: selectedStyle,
-        },
-      })
-      .then(({ data, error }) => {
-        if (error) throw error;
-
-        if (data?.output?.[0]) {
-          setCoverImage(data.output[0]);
-          localStorage.setItem('loveStoryCoverImage', data.output[0]);
-        }
-
-        if (data?.contentImage?.[0]) {
-          setContentImage(data.contentImage[0]);
-          localStorage.setItem('loveStoryContentImage', data.contentImage[0]);
-        }
-
-        if (data?.contentImage2?.[0]) {
-          setContentImage2(data.contentImage2[0]);
-          localStorage.setItem('loveStoryContentImage2', data.contentImage2[0]);
-        }
-
-        toast({
-          title: "Images generated",
-          description: "Your images are ready!",
-        });
-      })
-      .catch((error) => {
-        console.error('Error generating images:', error);
-        toast({
-          title: "Error generating images",
-          description: "Please try again",
-          variant: "destructive",
-        });
-      })
-      .finally(() => {
-        setIsGeneratingCover(false);
-        setIsGeneratingContent1(false);
-        setIsGeneratingContent2(false);
-      });
   };
 
   useEffect(() => {
@@ -403,18 +366,8 @@ const GenerateStep = () => {
     }
 
     if ((!savedCoverImage || !savedContentImage || !savedContentImage2) && savedPrompts && partnerPhoto) {
-      generateInitialImages();
+      generateInitialImages(savedPrompts, partnerPhoto);
     }
-
-    // Load character photos from localStorage (up to 4)
-    const loadedPhotos: string[] = [];
-    for (let i = 1; i <= 4; i++) {
-      const photo = localStorage.getItem(`loveStoryCharacterPhoto${i}`);
-      if (photo) {
-        loadedPhotos.push(photo);
-      }
-    }
-    setCharacterPhotos(loadedPhotos);
   }, []);
 
   const handleEditCover = () => {
@@ -431,132 +384,104 @@ const GenerateStep = () => {
     });
   };
 
-  const handleRegenerateCover = (style?: string) => {
-    setIsGeneratingCover(true);
-    localStorage.removeItem("loveStoryCover");
-
-    // Use character photos if available, or display error if none
-    if (characterPhotos.length === 0) {
-      toast({
-        title: "Character photos missing",
-        description: "Please upload at least one character photo in the moments step",
-        variant: "destructive",
-      });
-      setIsGeneratingCover(false);
-      return;
-    }
-
-    // Check if saved prompts exist
-    const savedPrompts = localStorage.getItem("loveStoryImagePrompts");
-    if (!savedPrompts) {
-      toast({
-        title: "Prompts missing",
-        description: "Please complete the ideas step first",
-        variant: "destructive",
-      });
-      setIsGeneratingCover(false);
-      return;
-    }
-
-    const parsedPrompts = JSON.parse(savedPrompts);
-    const coverPrompt = parsedPrompts?.cover || "";
-
-    // Call the API with multiple photos
-    supabase.functions
-      .invoke("generate-love-cover", {
-        body: {
-          prompt: coverPrompt,
-          photos: characterPhotos,
-          style: style || selectedStyle,
-        },
-      })
-      .then(({ data, error }) => {
-        if (error) throw error;
-        if (data?.output?.[0]) {
-          setCoverImage(data.output[0]);
-          localStorage.setItem('loveStoryCoverImage', data.output[0]);
-          
-          toast({
-            title: "Cover image regenerated",
-            description: `Cover updated with ${style || selectedStyle} style`,
-          });
+  const handleRegenerateCover = async (style?: string) => {
+    localStorage.removeItem('loveStoryCoverImage');
+    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    if (savedPrompts && partnerPhoto) {
+      const prompts = JSON.parse(savedPrompts);
+      if (prompts && prompts.length > 0) {
+        setIsGeneratingCover(true);
+        
+        // Use the provided style or fall back to the stored/default style
+        const imageStyle = style || selectedStyle;
+        
+        // Update the stored style if a new one is provided
+        if (style) {
+          setSelectedStyle(style);
+          localStorage.setItem('loveStoryStyle', style);
         }
-      })
-      .catch((error) => {
-        console.error('Error regenerating cover:', error);
-        toast({
-          title: "Error regenerating cover",
-          description: "Please try again",
-          variant: "destructive",
-        });
-      })
-      .finally(() => {
-        setIsGeneratingCover(false);
-      });
+        
+        try {
+          const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+            body: { 
+              prompt: prompts[0].prompt, 
+              photo: partnerPhoto,
+              style: imageStyle
+            }
+          });
+          if (error) throw error;
+          if (data?.output?.[0]) {
+            setCoverImage(data.output[0]);
+            localStorage.setItem('loveStoryCoverImage', data.output[0]);
+            
+            toast({
+              title: "Cover image regenerated",
+              description: `Cover updated with ${imageStyle} style`,
+            });
+          }
+        } catch (error) {
+          console.error('Error regenerating cover:', error);
+          toast({
+            title: "Error regenerating cover",
+            description: "Please try again",
+            variant: "destructive",
+          });
+        } finally {
+          setIsGeneratingCover(false);
+        }
+      }
+    }
   };
 
-  const handleRegenerateContent1 = (style?: string) => {
-    setIsGeneratingContent1(true);
-    localStorage.removeItem("loveStoryContent1");
-
-    // Use character photos if available, or display error if none
-    if (characterPhotos.length === 0) {
-      toast({
-        title: "Character photos missing",
-        description: "Please upload at least one character photo in the moments step",
-        variant: "destructive",
-      });
-      setIsGeneratingContent1(false);
-      return;
-    }
-
-    // Check if saved prompts exist
-    const savedPrompts = localStorage.getItem("loveStoryImagePrompts");
-    if (!savedPrompts) {
-      toast({
-        title: "Prompts missing",
-        description: "Please complete the ideas step first",
-        variant: "destructive",
-      });
-      setIsGeneratingContent1(false);
-      return;
-    }
-
-    const parsedPrompts = JSON.parse(savedPrompts);
-    const contentPrompt = parsedPrompts?.content1 || "";
-
-    // Call the API with multiple photos
-    supabase.functions
-      .invoke("generate-love-cover", {
-        body: {
-          contentPrompt: contentPrompt,
-          photos: characterPhotos,
-          style: style || selectedStyle,
-        },
-      })
-      .then(({ data, error }) => {
-        if (error) throw error;
-        if (data?.contentImage?.[0]) {
-          setContentImage(data.contentImage[0]);
-          localStorage.setItem('loveStoryContentImage', data.contentImage[0]);
-          
-          toast({
-            title: "Image regenerated",
-            description: `Image 1 updated with ${style || selectedStyle} style`,
-          });
+  const handleRegenerateContent1 = async (style?: string) => {
+    localStorage.removeItem('loveStoryContentImage');
+    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    if (savedPrompts && partnerPhoto) {
+      const prompts = JSON.parse(savedPrompts);
+      if (prompts && prompts.length > 1) {
+        setIsGeneratingContent1(true);
+        
+        // Use the provided style or fall back to the stored/default style
+        const imageStyle = style || selectedStyle;
+        
+        // Update the stored style if a new one is provided
+        if (style) {
+          setSelectedStyle(style);
+          localStorage.setItem('loveStoryStyle', style);
         }
-      })
-      .catch((error) => {
-        console.error('Error regenerating content image 1:', error);
-        toast({
-          title: "Error regenerating image",
-          description: "Please try again",
-          variant: "destructive",
-        });
-      })
-      .finally(() => {
-        setIsGeneratingContent1(false);
-      });
+        
+        try {
+          const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+            body: { 
+              contentPrompt: prompts[1].prompt, 
+              photo: partnerPhoto,
+              style: imageStyle
+            }
+          });
+          if (error) throw error;
+          if (data?.contentImage?.[0]) {
+            setContentImage(data.contentImage[0]);
+            localStorage.setItem('loveStoryContentImage', data.contentImage[0]);
+            
+            toast({
+              title: "Image regenerated",
+              description: `Image 1 updated with ${imageStyle} style`,
+            });
+          }
+        } catch (error) {
+          console.error('Error regenerating content image 1:', error);
+          toast({
+            title: "Error regenerating image",
+            description: "Please try again",
+            variant: "destructive",
+          });
+        } finally {
+          setIsGeneratingContent1(false);
+        }
+      }
+    }
   };
 
   // Render content images with text inside the canvas

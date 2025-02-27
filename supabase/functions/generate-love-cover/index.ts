@@ -34,7 +34,7 @@ serve(async (req) => {
       auth: REPLICATE_API_KEY,
     });
 
-    const { prompt, contentPrompt, content2Prompt, photo, photos, style } = await req.json();
+    const { prompt, contentPrompt, content2Prompt, photo, style } = await req.json();
     
     // Get the style name to use with the API
     console.log(`Requested style from client: "${style}"`);
@@ -78,56 +78,23 @@ serve(async (req) => {
     
     console.log(`Mapped to API style_name: "${styleName}"`);
 
-    // Process multiple photos if available, or fall back to single photo
-    // For backward compatibility
-    const characterPhotos = photos && Array.isArray(photos) ? photos.filter(Boolean) : [];
-    if (characterPhotos.length === 0 && photo) {
-      characterPhotos.push(photo);
-    }
-    
-    if (characterPhotos.length === 0) {
-      throw new Error("No character photos provided");
-    }
-    
-    console.log(`Using ${characterPhotos.length} character photo(s)`);
-
-    // Prepare API input with multiple photos if available
-    const prepareApiInput = (promptText: string) => {
-      const input: any = {
-        prompt: `${promptText} img`,
-        num_steps: 40,
-        style_name: styleName,
-        input_image: characterPhotos[0], // Primary photo is always required
-        num_outputs: 1,
-        guidance_scale: 5.0,
-        style_strength_ratio: 20,
-        negative_prompt:
-          "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
-      };
-      
-      // Add additional photos if available
-      if (characterPhotos.length > 1 && characterPhotos[1]) {
-        input.input_image2 = characterPhotos[1];
-      }
-      
-      if (characterPhotos.length > 2 && characterPhotos[2]) {
-        input.input_image3 = characterPhotos[2];
-      }
-      
-      if (characterPhotos.length > 3 && characterPhotos[3]) {
-        input.input_image4 = characterPhotos[3];
-      }
-      
-      return input;
-    };
-
     // 仅生成封面
-    if (!contentPrompt && !content2Prompt && prompt && characterPhotos.length > 0) {
+    if (!contentPrompt && !content2Prompt && prompt && photo) {
       console.log("Generating single cover image with prompt:", prompt);
       const output = await replicate.run(
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
         {
-          input: prepareApiInput(prompt)
+          input: {
+            prompt: `${prompt} img`,
+            num_steps: 40,
+            style_name: styleName,
+            input_image: photo,
+            num_outputs: 1,
+            guidance_scale: 5.0,
+            style_strength_ratio: 20,
+            negative_prompt:
+              "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
+          },
         }
       );
 
@@ -138,12 +105,22 @@ serve(async (req) => {
     }
 
     // 仅生成内容图1
-    if (!prompt && !content2Prompt && contentPrompt && characterPhotos.length > 0) {
+    if (!prompt && !content2Prompt && contentPrompt && photo) {
       console.log("Generating content image 1 with prompt:", contentPrompt);
       const contentImage = await replicate.run(
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
         {
-          input: prepareApiInput(`${contentPrompt} single-person, story moment`)
+          input: {
+            prompt: `${contentPrompt} single-person img, story moment`,
+            num_steps: 40,
+            style_name: styleName,
+            input_image: photo,
+            num_outputs: 1,
+            guidance_scale: 5.0,
+            style_strength_ratio: 20,
+            negative_prompt:
+              "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
+          },
         }
       );
 
@@ -154,12 +131,22 @@ serve(async (req) => {
     }
 
     // 仅生成内容图2
-    if (!prompt && !contentPrompt && content2Prompt && characterPhotos.length > 0) {
+    if (!prompt && !contentPrompt && content2Prompt && photo) {
       console.log("Generating content image 2 with prompt:", content2Prompt);
       const contentImage2 = await replicate.run(
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
         {
-          input: prepareApiInput(`${content2Prompt} single-person, story moment`)
+          input: {
+            prompt: `${content2Prompt} single-person img, story moment`,
+            num_steps: 40,
+            style_name: styleName,
+            input_image: photo,
+            num_outputs: 1,
+            guidance_scale: 5.0,
+            style_strength_ratio: 20,
+            negative_prompt:
+              "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
+          },
         }
       );
 
@@ -175,25 +162,54 @@ serve(async (req) => {
     console.log("Content 1 prompt:", contentPrompt);
     console.log("Content 2 prompt:", content2Prompt);
     console.log("Using style:", styleName);
-    console.log(`Using ${characterPhotos.length} character photos`);
 
     const [output, contentImage, contentImage2] = await Promise.all([
       replicate.run(
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
         {
-          input: prepareApiInput(prompt)
+          input: {
+            prompt: `${prompt} img`,
+            num_steps: 40,
+            style_name: styleName,
+            input_image: photo,
+            num_outputs: 1,
+            guidance_scale: 5.0,
+            style_strength_ratio: 20,
+            negative_prompt:
+              "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
+          },
         }
       ),
       replicate.run(
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
         {
-          input: prepareApiInput(`${contentPrompt} single-person, story moment`)
+          input: {
+            prompt: `${contentPrompt} single-person img, story moment`,
+            num_steps: 40,
+            style_name: styleName,
+            input_image: photo,
+            num_outputs: 1,
+            guidance_scale: 5.0,
+            style_strength_ratio: 20,
+            negative_prompt:
+              "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
+          },
         }
       ),
       replicate.run(
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
         {
-          input: prepareApiInput(`${content2Prompt} single-person, story moment`)
+          input: {
+            prompt: `${content2Prompt} single-person img, story moment`,
+            num_steps: 40,
+            style_name: styleName,
+            input_image: photo,
+            num_outputs: 1,
+            guidance_scale: 5.0,
+            style_strength_ratio: 20,
+            negative_prompt:
+              "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
+          },
         }
       ),
     ]);
