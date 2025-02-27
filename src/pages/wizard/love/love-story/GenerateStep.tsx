@@ -45,7 +45,6 @@ const GenerateStep = () => {
 
   const [selectedStyle, setSelectedStyle] = useState<string>('Photographic (Default)');
   const [imageTexts, setImageTexts] = useState<ImageText[]>([]);
-  const [partnerPhotos, setPartnerPhotos] = useState<string[]>([]);
 
   const { toast } = useToast();
 
@@ -72,25 +71,8 @@ const GenerateStep = () => {
   };
 
   const handleGenericContentRegeneration = async (index: number, style?: string) => {
-    // Find the right prompt for this content image
-    const key = `promptForContent${index}`;
-    const prompt = localStorage.getItem(key);
-    const lsKey = `loveStoryContentImage${index}`;
-    
-    if (!prompt) {
-      toast({
-        title: "No prompt found",
-        description: `Prompt for content ${index} is missing. Please try again.`,
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    // Determine which function to use for setting state
-    let setIsGenerating;
-    let setContentFn;
-    
-    // Logic to determine the right state setters based on index
+    if (index < 2) return;
+
     const stateSetters = {
       2: setContentImage2,
       3: setContentImage3,
@@ -117,9 +99,12 @@ const GenerateStep = () => {
       11: setIsGeneratingContent11
     };
 
-    setIsGenerating = loadingSetters[index as keyof typeof loadingSetters];
-    setContentFn = stateSetters[index as keyof typeof stateSetters];
+    const setContentFn = stateSetters[index as keyof typeof stateSetters];
+    const setIsGenerating = loadingSetters[index as keyof typeof loadingSetters];
     if (!setContentFn || !setIsGenerating) return;
+
+    const lsKey = `loveStoryContentImage${index}`;
+    localStorage.removeItem(lsKey);
 
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
     const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
@@ -148,22 +133,11 @@ const GenerateStep = () => {
         localStorage.setItem('loveStoryStyle', style);
       }
 
-      // Ensure photos are properly serializable (avoid cyclic structures)
-      const sanitizedPhotos = partnerPhotos.map(photo => {
-        // Ensure each photo is a simple string, not an object with circular references
-        if (typeof photo === 'string') {
-          return photo;
-        }
-        return null; // Skip non-string values
-      }).filter(Boolean); // Remove null values
-      
-      console.log(`Sending ${sanitizedPhotos.length} photos for content ${index} regeneration`);
-
       // Include style in the request
       const { data, error } = await supabase.functions.invoke('generate-love-cover', {
         body: { 
-          content2Prompt: prompt,
-          photos: sanitizedPhotos,
+          prompt: prompts[index].prompt, 
+          photo: partnerPhoto,
           style: imageStyle
         }
       });
@@ -210,17 +184,7 @@ const GenerateStep = () => {
   const handleRegenerateContent10 = (style?: string) => handleGenericContentRegeneration(10, style);
   const handleRegenerateContent11 = (style?: string) => handleGenericContentRegeneration(11, style);
 
-  const generateInitialImages = async (prompts: string) => {
-    // Check if we have partner photos
-    if (partnerPhotos.length === 0) {
-      toast({
-        title: "No partner photos",
-        description: "Please go back and upload at least one photo",
-        variant: "destructive",
-      });
-      return;
-    }
-    
+  const generateInitialImages = async (prompts: string, partnerPhoto: string) => {
     setIsGeneratingCover(true);
     setIsGeneratingContent1(true);
     toast({
@@ -229,23 +193,12 @@ const GenerateStep = () => {
     });
 
     try {
-      // Ensure photos are properly serializable (avoid cyclic structures)
-      const sanitizedPhotos = partnerPhotos.map(photo => {
-        // Ensure each photo is a simple string, not an object with circular references
-        if (typeof photo === 'string') {
-          return photo;
-        }
-        return null; // Skip non-string values
-      }).filter(Boolean); // Remove null values
-      
-      console.log(`Sending ${sanitizedPhotos.length} photos for initial image generation`);
-      
       const { data, error } = await supabase.functions.invoke('generate-love-cover', {
         body: { 
           prompt: prompts, 
           contentPrompt: prompts,
           content2Prompt: prompts,
-          photos: sanitizedPhotos,
+          photo: partnerPhoto,
           style: selectedStyle
         }
       });
@@ -306,26 +259,25 @@ const GenerateStep = () => {
     const savedContentImage9 = localStorage.getItem('loveStoryContentImage9');
     const savedContentImage10 = localStorage.getItem('loveStoryContentImage10');
     const savedContentImage11 = localStorage.getItem('loveStoryContentImage11');
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
     
-    // Load partner photos (support multiple photos)
-    const photos: string[] = [];
-    // Try loading from new format first (indexed)
-    for (let i = 1; i <= 4; i++) {
-      const photo = localStorage.getItem(`loveStoryPartnerPhoto${i}`);
-      if (photo) {
-        photos.push(photo);
+    // Ensure we have a recipient name stored
+    const savedQuestions = localStorage.getItem('loveStoryQuestions');
+    if (savedQuestions) {
+      try {
+        const questions = JSON.parse(savedQuestions);
+        const nameQuestion = questions.find((q: any) => 
+          q.question.toLowerCase().includes('name') && 
+          !q.question.toLowerCase().includes('your name')
+        );
+        
+        if (nameQuestion && nameQuestion.answer) {
+          localStorage.setItem('loveStoryRecipientName', nameQuestion.answer);
+        }
+      } catch (error) {
+        console.error('Error parsing questions:', error);
       }
     }
-    
-    // If no photos found, try the legacy format
-    if (photos.length === 0) {
-      const legacyPhoto = localStorage.getItem('loveStoryPartnerPhoto');
-      if (legacyPhoto) {
-        photos.push(legacyPhoto);
-      }
-    }
-    
-    setPartnerPhotos(photos);
 
     if (savedAuthor) {
       setAuthorName(savedAuthor);
@@ -413,13 +365,8 @@ const GenerateStep = () => {
       setContentImage11(savedContentImage11);
     }
 
-    // Load images if not already present
-    if (
-      (!savedCoverImage || !savedContentImage || !savedContentImage2) && 
-      savedPrompts && 
-      partnerPhotos.length > 0
-    ) {
-      generateInitialImages(savedPrompts);
+    if ((!savedCoverImage || !savedContentImage || !savedContentImage2) && savedPrompts && partnerPhoto) {
+      generateInitialImages(savedPrompts, partnerPhoto);
     }
   }, []);
 
@@ -438,139 +385,102 @@ const GenerateStep = () => {
   };
 
   const handleRegenerateCover = async (style?: string) => {
-    const prompt = localStorage.getItem('loveStorySelectedIdea');
-    if (!prompt) {
-      toast({
-        title: "No idea selected",
-        description: "Please go back and select an idea first",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    setIsGeneratingCover(true);
-    
-    try {
-      const imageStyle = style || selectedStyle;
-      toast({
-        title: "Regenerating cover",
-        description: `Using style: ${imageStyle}`,
-      });
-      
-      // Save the selected style to localStorage if it's different
-      if (style && style !== selectedStyle) {
-        localStorage.setItem('loveStoryStyle', style);
-        setSelectedStyle(style);
-      }
-      
-      // Ensure photos are properly serializable (avoid cyclic structures)
-      const sanitizedPhotos = partnerPhotos.map(photo => {
-        // Ensure each photo is a simple string, not an object with circular references
-        if (typeof photo === 'string') {
-          return photo;
+    localStorage.removeItem('loveStoryCoverImage');
+    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    if (savedPrompts && partnerPhoto) {
+      const prompts = JSON.parse(savedPrompts);
+      if (prompts && prompts.length > 0) {
+        setIsGeneratingCover(true);
+        
+        // Use the provided style or fall back to the stored/default style
+        const imageStyle = style || selectedStyle;
+        
+        // Update the stored style if a new one is provided
+        if (style) {
+          setSelectedStyle(style);
+          localStorage.setItem('loveStoryStyle', style);
         }
-        return null; // Skip non-string values
-      }).filter(Boolean); // Remove null values
-      
-      console.log(`Sending ${sanitizedPhotos.length} photos for cover regeneration`);
-      
-      const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-        body: { 
-          prompt: prompt,
-          photos: sanitizedPhotos,
-          style: imageStyle
+        
+        try {
+          const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+            body: { 
+              prompt: prompts[0].prompt, 
+              photo: partnerPhoto,
+              style: imageStyle
+            }
+          });
+          if (error) throw error;
+          if (data?.output?.[0]) {
+            setCoverImage(data.output[0]);
+            localStorage.setItem('loveStoryCoverImage', data.output[0]);
+            
+            toast({
+              title: "Cover image regenerated",
+              description: `Cover updated with ${imageStyle} style`,
+            });
+          }
+        } catch (error) {
+          console.error('Error regenerating cover:', error);
+          toast({
+            title: "Error regenerating cover",
+            description: "Please try again",
+            variant: "destructive",
+          });
+        } finally {
+          setIsGeneratingCover(false);
         }
-      });
-      
-      if (error) throw error;
-      
-      if (data?.output?.[0]) {
-        setCoverImage(data.output[0]);
-        localStorage.setItem('loveStoryCoverImage', data.output[0]);
       }
-      
-      toast({
-        title: "Cover regenerated",
-        description: `Cover successfully updated with ${imageStyle} style`,
-      });
-    } catch (err: any) {
-      console.error("Error in handleRegenerateCover:", err);
-      toast({
-        title: "Error regenerating cover",
-        description: err.message || "Please try again",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGeneratingCover(false);
     }
   };
 
   const handleRegenerateContent1 = async (style?: string) => {
-    const prompt = localStorage.getItem('promptForContent1');
-    if (!prompt) {
-      toast({
-        title: "No prompt found",
-        description: "Prompt for content image 1 is missing",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    setIsGeneratingContent1(true);
-    
-    try {
-      const imageStyle = style || selectedStyle;
-      toast({
-        title: "Regenerating image",
-        description: `Using style: ${imageStyle}`,
-      });
-      
-      // Save the selected style to localStorage if it's different
-      if (style && style !== selectedStyle) {
-        localStorage.setItem('loveStoryStyle', style);
-        setSelectedStyle(style);
-      }
-      
-      // Ensure photos are properly serializable (avoid cyclic structures)
-      const sanitizedPhotos = partnerPhotos.map(photo => {
-        // Ensure each photo is a simple string, not an object with circular references
-        if (typeof photo === 'string') {
-          return photo;
+    localStorage.removeItem('loveStoryContentImage');
+    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    if (savedPrompts && partnerPhoto) {
+      const prompts = JSON.parse(savedPrompts);
+      if (prompts && prompts.length > 1) {
+        setIsGeneratingContent1(true);
+        
+        // Use the provided style or fall back to the stored/default style
+        const imageStyle = style || selectedStyle;
+        
+        // Update the stored style if a new one is provided
+        if (style) {
+          setSelectedStyle(style);
+          localStorage.setItem('loveStoryStyle', style);
         }
-        return null; // Skip non-string values
-      }).filter(Boolean); // Remove null values
-      
-      console.log(`Sending ${sanitizedPhotos.length} photos for content 1 regeneration`);
-      
-      const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-        body: { 
-          contentPrompt: prompt,
-          photos: sanitizedPhotos,
-          style: imageStyle
+        
+        try {
+          const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+            body: { 
+              contentPrompt: prompts[1].prompt, 
+              photo: partnerPhoto,
+              style: imageStyle
+            }
+          });
+          if (error) throw error;
+          if (data?.contentImage?.[0]) {
+            setContentImage(data.contentImage[0]);
+            localStorage.setItem('loveStoryContentImage', data.contentImage[0]);
+            
+            toast({
+              title: "Image regenerated",
+              description: `Image 1 updated with ${imageStyle} style`,
+            });
+          }
+        } catch (error) {
+          console.error('Error regenerating content image 1:', error);
+          toast({
+            title: "Error regenerating image",
+            description: "Please try again",
+            variant: "destructive",
+          });
+        } finally {
+          setIsGeneratingContent1(false);
         }
-      });
-      
-      if (error) throw error;
-      
-      if (data?.contentImage?.[0]) {
-        const expandedBase64 = await expandImage(data.contentImage[0]);
-        setContentImage(expandedBase64);
-        localStorage.setItem('loveStoryContentImage', expandedBase64);
       }
-      
-      toast({
-        title: "Image regenerated & expanded",
-        description: `Content 1 successfully updated with ${imageStyle} style`,
-      });
-    } catch (err: any) {
-      console.error("Error in handleRegenerateContent1:", err);
-      toast({
-        title: "Error regenerating image",
-        description: err.message || "Please try again",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGeneratingContent1(false);
     }
   };
 
