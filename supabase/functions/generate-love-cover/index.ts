@@ -14,58 +14,53 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, contentPrompt, content2Prompt, photo, photos, style } = await req.json();
+    const { prompt, contentPrompt, content2Prompt, photo, style } = await req.json();
 
-    // Get primary photo and additional photos
-    let mainPhoto = photo;
-    let additionalPhotos: string[] = [];
-    
-    // If photos array is provided, use it instead
-    if (photos && Array.isArray(photos) && photos.length > 0) {
-      mainPhoto = photos[0]; // Use first photo as main photo
-      additionalPhotos = photos.slice(1); // Use remaining photos as additional input
-    }
+    // Log the style parameter for debugging
+    console.log("Using style:", style);
 
-    if (!mainPhoto) {
-      throw new Error("No photos provided for image generation");
-    }
-
-    // Map style name to API format if needed
-    const styleName = mapStyleName(style || "Photographic (Default)");
-    
     // Default placeholder image URL
     let coverImageUrl = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
     let contentImageUrl = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
     let contentImage2Url = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
 
+    // Get all additional photos
+    const additionalPhotos = [];
+    try {
+      const additionalPhotosStr = req.headers.get('x-additional-photos') || '[]';
+      const parsed = JSON.parse(additionalPhotosStr);
+      if (Array.isArray(parsed)) {
+        additionalPhotos.push(...parsed);
+      }
+    } catch (e) {
+      console.error("Error parsing additional photos:", e);
+    }
+
     // Process cover image
-    if (mainPhoto && prompt) {
-      coverImageUrl = await generateImageWithReplicate(
-        mainPhoto, 
-        additionalPhotos, 
-        prompt,
-        styleName
-      );
+    if (photo && prompt) {
+      try {
+        coverImageUrl = await generateImage(photo, prompt, style);
+      } catch (error) {
+        console.error("Error generating cover image:", error);
+      }
     }
 
     // Process content image 1
-    if (mainPhoto && contentPrompt) {
-      contentImageUrl = await generateImageWithReplicate(
-        mainPhoto, 
-        additionalPhotos, 
-        contentPrompt,
-        styleName
-      );
+    if (photo && contentPrompt) {
+      try {
+        contentImageUrl = await generateImage(photo, contentPrompt, style);
+      } catch (error) {
+        console.error("Error generating content image 1:", error);
+      }
     }
 
     // Process content image 2
-    if (mainPhoto && content2Prompt) {
-      contentImage2Url = await generateImageWithReplicate(
-        mainPhoto, 
-        additionalPhotos, 
-        content2Prompt,
-        styleName
-      );
+    if (photo && content2Prompt) {
+      try {
+        contentImage2Url = await generateImage(photo, content2Prompt, style);
+      } catch (error) {
+        console.error("Error generating content image 2:", error);
+      }
     }
 
     return new Response(
@@ -85,138 +80,60 @@ serve(async (req) => {
   }
 });
 
-// Map style name to the API-compatible format
-function mapStyleName(style: string): string {
-  // Some APIs might use different style names, map to consistent format
-  const styleMap: Record<string, string> = {
-    "Comic Book": "Comic book",
-    "Line Art": "Line art",
-    "Fantasy Art": "Fantasy art",
-    "Photographic": "Photographic (Default)",
-    "Cinematic": "Cinematic"
-  };
-  
-  return styleMap[style] || style;
-}
-
-async function generateImageWithReplicate(
-  mainPhoto: string,
-  additionalPhotos: string[] = [],
-  promptText: string,
-  styleName: string
-): Promise<string> {
-  const replicateApiKey = Deno.env.get("REPLICATE_API_KEY");
-  if (!replicateApiKey) {
-    throw new Error("Replicate API key not configured");
+// Simplified image generation function using PhotoRoom API for reliability
+async function generateImage(photoBase64: string, promptText: string, style?: string): Promise<string> {
+  const photoRoomApiKey = Deno.env.get("PHOTOROOM_API_KEY");
+  if (!photoRoomApiKey) {
+    throw new Error("PhotoRoom API key not configured");
   }
 
-  // This API requires base64 without the prefix
-  const cleanBase64 = (dataUrl: string) => {
-    return dataUrl.includes("base64,") ? dataUrl.split("base64,")[1] : dataUrl;
-  };
-
-  // Process the main photo
-  const mainPhotoBase64 = cleanBase64(mainPhoto);
-  
-  // Process additional photos if available
-  const additionalPhotosBase64 = additionalPhotos.map(cleanBase64);
-  
-  // Create the request payload
-  const payload: Record<string, any> = {
-    input: {
-      prompt: `${promptText} img`,
-      input_image: `data:image/jpeg;base64,${mainPhotoBase64}`,
-      style_name: styleName,
-      negative_prompt: "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry"
-    }
-  };
-  
-  // Add additional photos if available
-  if (additionalPhotosBase64.length > 0 && additionalPhotosBase64[0]) {
-    payload.input.input_image2 = `data:image/jpeg;base64,${additionalPhotosBase64[0]}`;
-  }
-  
-  if (additionalPhotosBase64.length > 1 && additionalPhotosBase64[1]) {
-    payload.input.input_image3 = `data:image/jpeg;base64,${additionalPhotosBase64[1]}`;
-  }
-  
-  if (additionalPhotosBase64.length > 2 && additionalPhotosBase64[2]) {
-    payload.input.input_image4 = `data:image/jpeg;base64,${additionalPhotosBase64[2]}`;
+  // Style modifier based on selected style
+  let styleModifier = "";
+  if (style) {
+    const styleMap: Record<string, string> = {
+      'Comic book': 'in comic book style with bold outlines and vibrant colors',
+      'Line art': 'as minimalist line art with clean outlines',
+      'Fantasy art': 'in fantasy art style with magical, dreamlike quality',
+      'Photographic (Default)': 'as a high-quality, realistic photograph',
+      'Cinematic': 'as a cinematic shot with dramatic lighting'
+    };
+    styleModifier = styleMap[style] || '';
   }
 
-  // Use the Replicate API
+  // Enhance prompt with style
+  const enhancedPrompt = styleModifier 
+    ? `${promptText}, ${styleModifier}` 
+    : promptText;
+
+  // Remove data:image/... prefix if present
+  const base64Data = photoBase64.includes("base64,")
+    ? photoBase64.split("base64,")[1]
+    : photoBase64;
+
   try {
-    const response = await fetch("https://api.replicate.com/v1/predictions", {
+    const response = await fetch("https://api.photoroom.com/v1/custom-generations", {
       method: "POST",
       headers: {
-        "Authorization": `Token ${replicateApiKey}`,
+        "Authorization": `Bearer ${photoRoomApiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        version: "ce5ff613b0060029a5aad07fe97bf5ad8e086197c9a7ed3f7c3b52d1ea9c539a", // Stable Diffusion XL IP Adapter with Face Restoration
-        input: payload.input,
+        prompt: enhancedPrompt,
+        image_base64: base64Data,
+        negative_prompt: "blurry, bad quality, distorted, deformed",
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Replicate API error:", errorText);
-      throw new Error(`Replicate API error: ${response.statusText}`);
+      console.error("PhotoRoom API error:", errorText);
+      throw new Error(`PhotoRoom API error: ${response.statusText}`);
     }
 
-    const prediction = await response.json();
-    console.log("Prediction ID:", prediction.id);
-
-    // Poll for results
-    let result = await pollForResults(prediction.id, replicateApiKey);
-    
-    // Return the image URL
-    if (result && result.output && result.output.length > 0) {
-      return result.output[0];
-    } else {
-      throw new Error("No output generated by image API");
-    }
+    const data = await response.json();
+    return data.result_image_url || data.result_image_base64;
   } catch (error) {
-    console.error("Error in image generation API call:", error);
+    console.error("Error in PhotoRoom API call:", error);
     throw error;
   }
-}
-
-// Poll for results until the prediction is complete
-async function pollForResults(predictionId: string, apiKey: string, maxAttempts = 30): Promise<any> {
-  let attempts = 0;
-  while (attempts < maxAttempts) {
-    attempts++;
-    
-    try {
-      const response = await fetch(`https://api.replicate.com/v1/predictions/${predictionId}`, {
-        method: "GET",
-        headers: {
-          "Authorization": `Token ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.statusText}`);
-      }
-
-      const prediction = await response.json();
-      
-      if (prediction.status === "succeeded") {
-        return prediction;
-      } else if (prediction.status === "failed") {
-        throw new Error(`Prediction failed: ${prediction.error || "Unknown error"}`);
-      }
-      
-      // Wait before polling again
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-    } catch (error) {
-      console.error("Error polling for prediction:", error);
-      throw error;
-    }
-  }
-  
-  throw new Error("Prediction timed out");
 }
