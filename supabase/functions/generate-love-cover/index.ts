@@ -90,23 +90,39 @@ serve(async (req) => {
     // For multi-photo mode, use the 'photos' array
     const photoInputs: { [key: string]: string } = {};
     
-    // Primary photo (required)
-    if (photo) {
-      photoInputs.input_image = photo;
-    } else if (photos && photos.length > 0) {
-      photoInputs.input_image = photos[0];
-    } else {
-      throw new Error("At least one photo is required");
+    try {
+      // Primary photo (required)
+      if (photo) {
+        if (typeof photo === 'string') {
+          photoInputs.input_image = photo;
+        } else {
+          console.warn("Photo parameter is not a string, trying to stringify");
+          photoInputs.input_image = String(photo);
+        }
+      } else if (photos && Array.isArray(photos) && photos.length > 0) {
+        // Ensure we have valid string photos
+        const validPhotos = photos.filter(p => typeof p === 'string');
+        console.log(`Received ${photos.length} photos, ${validPhotos.length} are valid strings`);
+        
+        if (validPhotos.length > 0) {
+          photoInputs.input_image = validPhotos[0];
+          
+          // Additional photos (optional)
+          if (validPhotos.length > 1) photoInputs.input_image2 = validPhotos[1];
+          if (validPhotos.length > 2) photoInputs.input_image3 = validPhotos[2];
+          if (validPhotos.length > 3) photoInputs.input_image4 = validPhotos[3];
+        } else {
+          throw new Error("No valid photo strings found in photos array");
+        }
+      } else {
+        throw new Error("At least one photo is required");
+      }
+      
+      console.log(`Processing with ${Object.keys(photoInputs).length} photos`);
+    } catch (photoError) {
+      console.error("Error processing photos:", photoError);
+      throw new Error(`Failed to process photos: ${photoError.message}`);
     }
-    
-    // Additional photos (optional)
-    if (photos) {
-      if (photos.length > 1) photoInputs.input_image2 = photos[1];
-      if (photos.length > 2) photoInputs.input_image3 = photos[2];
-      if (photos.length > 3) photoInputs.input_image4 = photos[3];
-    }
-    
-    console.log(`Processing with ${Object.keys(photoInputs).length} photos`);
 
     // 仅生成封面
     if (!contentPrompt && !content2Prompt && prompt) {

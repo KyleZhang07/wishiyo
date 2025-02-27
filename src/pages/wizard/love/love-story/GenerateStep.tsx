@@ -148,11 +148,22 @@ const GenerateStep = () => {
         localStorage.setItem('loveStoryStyle', style);
       }
 
+      // Ensure photos are properly serializable (avoid cyclic structures)
+      const sanitizedPhotos = partnerPhotos.map(photo => {
+        // Ensure each photo is a simple string, not an object with circular references
+        if (typeof photo === 'string') {
+          return photo;
+        }
+        return null; // Skip non-string values
+      }).filter(Boolean); // Remove null values
+      
+      console.log(`Sending ${sanitizedPhotos.length} photos for content ${index} regeneration`);
+
       // Include style in the request
       const { data, error } = await supabase.functions.invoke('generate-love-cover', {
         body: { 
           content2Prompt: prompt,
-          photos: partnerPhotos,
+          photos: sanitizedPhotos,
           style: imageStyle
         }
       });
@@ -218,12 +229,23 @@ const GenerateStep = () => {
     });
 
     try {
+      // Ensure photos are properly serializable (avoid cyclic structures)
+      const sanitizedPhotos = partnerPhotos.map(photo => {
+        // Ensure each photo is a simple string, not an object with circular references
+        if (typeof photo === 'string') {
+          return photo;
+        }
+        return null; // Skip non-string values
+      }).filter(Boolean); // Remove null values
+      
+      console.log(`Sending ${sanitizedPhotos.length} photos for initial image generation`);
+      
       const { data, error } = await supabase.functions.invoke('generate-love-cover', {
         body: { 
           prompt: prompts, 
           contentPrompt: prompts,
           content2Prompt: prompts,
-          photos: partnerPhotos,
+          photos: sanitizedPhotos,
           style: selectedStyle
         }
       });
@@ -441,10 +463,21 @@ const GenerateStep = () => {
         setSelectedStyle(style);
       }
       
+      // Ensure photos are properly serializable (avoid cyclic structures)
+      const sanitizedPhotos = partnerPhotos.map(photo => {
+        // Ensure each photo is a simple string, not an object with circular references
+        if (typeof photo === 'string') {
+          return photo;
+        }
+        return null; // Skip non-string values
+      }).filter(Boolean); // Remove null values
+      
+      console.log(`Sending ${sanitizedPhotos.length} photos for cover regeneration`);
+      
       const { data, error } = await supabase.functions.invoke('generate-love-cover', {
         body: { 
           prompt: prompt,
-          photos: partnerPhotos,
+          photos: sanitizedPhotos,
           style: imageStyle
         }
       });
@@ -498,10 +531,21 @@ const GenerateStep = () => {
         setSelectedStyle(style);
       }
       
+      // Ensure photos are properly serializable (avoid cyclic structures)
+      const sanitizedPhotos = partnerPhotos.map(photo => {
+        // Ensure each photo is a simple string, not an object with circular references
+        if (typeof photo === 'string') {
+          return photo;
+        }
+        return null; // Skip non-string values
+      }).filter(Boolean); // Remove null values
+      
+      console.log(`Sending ${sanitizedPhotos.length} photos for content 1 regeneration`);
+      
       const { data, error } = await supabase.functions.invoke('generate-love-cover', {
         body: { 
           contentPrompt: prompt,
-          photos: partnerPhotos,
+          photos: sanitizedPhotos,
           style: imageStyle
         }
       });
