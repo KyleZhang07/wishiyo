@@ -150,12 +150,22 @@ const GenerateStep = () => {
         throw new Error("No image generated from generate-love-cover");
       }
 
-      // 2) 调用expand-image进行扩展
-      const expandedBase64 = await expandImage(imageUrl);
+      try {
+        // 2) 调用expand-image进行扩展
+        const expandedBase64 = await expandImage(imageUrl);
 
-      // 3) 存到state & localStorage
-      setContentFn(expandedBase64);
-      localStorage.setItem(lsKey, expandedBase64);
+        // 3) 存到state & localStorage
+        setContentFn(expandedBase64);
+        localStorage.setItem(lsKey, expandedBase64);
+        
+        console.log(`Successfully saved expanded image for content${index} to localStorage`);
+      } catch (expandError) {
+        console.error(`Error expanding content image ${index}:`, expandError);
+        // 如果扩展失败，使用原始图片
+        setContentFn(imageUrl);
+        localStorage.setItem(lsKey, imageUrl);
+        console.log(`Saved original image for content${index} to localStorage due to expansion error`);
+      }
 
       toast({
         title: "Image regenerated & expanded",
@@ -289,6 +299,20 @@ const GenerateStep = () => {
     const savedContentImage11 = localStorage.getItem('loveStoryContentImage11');
     const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
     
+    console.log('Loading images from localStorage...');
+    console.log('Cover image exists:', !!savedCoverImage);
+    console.log('Content image 1 exists:', !!savedContentImage);
+    console.log('Content image 2 exists:', !!savedContentImage2);
+    console.log('Content image 3 exists:', !!savedContentImage3);
+    console.log('Content image 4 exists:', !!savedContentImage4);
+    console.log('Content image 5 exists:', !!savedContentImage5);
+    console.log('Content image 6 exists:', !!savedContentImage6);
+    console.log('Content image 7 exists:', !!savedContentImage7);
+    console.log('Content image 8 exists:', !!savedContentImage8);
+    console.log('Content image 9 exists:', !!savedContentImage9);
+    console.log('Content image 10 exists:', !!savedContentImage10);
+    console.log('Content image 11 exists:', !!savedContentImage11);
+    
     // Ensure we have a recipient name stored
     const savedQuestions = localStorage.getItem('loveStoryQuestions');
     if (savedQuestions) {
@@ -358,39 +382,51 @@ const GenerateStep = () => {
 
     if (savedCoverImage) {
       setCoverImage(savedCoverImage);
+      console.log('Loaded cover image from localStorage, length:', savedCoverImage.length);
     }
     if (savedContentImage) {
       setContentImage(savedContentImage);
+      console.log('Loaded content image 1 from localStorage, length:', savedContentImage.length);
     }
     if (savedContentImage2) {
       setContentImage2(savedContentImage2);
+      console.log('Loaded content image 2 from localStorage, length:', savedContentImage2.length);
     }
     if (savedContentImage3) {
       setContentImage3(savedContentImage3);
+      console.log('Loaded content image 3 from localStorage, length:', savedContentImage3.length);
     }
     if (savedContentImage4) {
       setContentImage4(savedContentImage4);
+      console.log('Loaded content image 4 from localStorage, length:', savedContentImage4.length);
     }
     if (savedContentImage5) {
       setContentImage5(savedContentImage5);
+      console.log('Loaded content image 5 from localStorage, length:', savedContentImage5.length);
     }
     if (savedContentImage6) {
       setContentImage6(savedContentImage6);
+      console.log('Loaded content image 6 from localStorage, length:', savedContentImage6.length);
     }
     if (savedContentImage7) {
       setContentImage7(savedContentImage7);
+      console.log('Loaded content image 7 from localStorage, length:', savedContentImage7.length);
     }
     if (savedContentImage8) {
       setContentImage8(savedContentImage8);
+      console.log('Loaded content image 8 from localStorage, length:', savedContentImage8.length);
     }
     if (savedContentImage9) {
       setContentImage9(savedContentImage9);
+      console.log('Loaded content image 9 from localStorage, length:', savedContentImage9.length);
     }
     if (savedContentImage10) {
       setContentImage10(savedContentImage10);
+      console.log('Loaded content image 10 from localStorage, length:', savedContentImage10.length);
     }
     if (savedContentImage11) {
       setContentImage11(savedContentImage11);
+      console.log('Loaded content image 11 from localStorage, length:', savedContentImage11.length);
     }
 
     // Temporarily commented out for testing purposes
@@ -599,6 +635,42 @@ const GenerateStep = () => {
       totalSteps={4}
     >
       <div className="max-w-5xl mx-auto">
+        {/* 生成所有图片的按钮 */}
+        <div className="mb-4">
+          <h2 className="text-xl font-semibold mb-2">Image Generation</h2>
+          <p className="text-sm text-gray-500 mb-4">If your images are missing after refresh, click the button below to generate all images.</p>
+          <Button 
+            variant="default" 
+            className="w-full"
+            onClick={() => {
+              const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+              const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+              if (savedPrompts && partnerPhoto) {
+                // 生成封面和content1
+                generateInitialImages(savedPrompts, partnerPhoto);
+                
+                // 生成content2-11
+                for(let i = 2; i <= 11; i++) {
+                  handleGenericContentRegeneration(i);
+                }
+                
+                toast({
+                  title: "Generating all images",
+                  description: "This may take a minute...",
+                });
+              } else {
+                toast({
+                  title: "Missing info",
+                  description: "No prompts or partner photo found",
+                  variant: "destructive",
+                });
+              }
+            }}
+          >
+            Generate All Missing Images
+          </Button>
+        </div>
+
         {/* Cover section */}
         <div className="mb-12">
           <h2 className="text-2xl font-bold mb-4">Cover</h2>
