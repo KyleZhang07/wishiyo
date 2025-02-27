@@ -1,33 +1,24 @@
-import React, { useState, useRef, useEffect } from "react";
-import { useToast } from "@/components/ui/use-toast";
-import { Button } from "@/components/ui/button";
-import { Trash2, Upload, Plus, X } from "lucide-react";
-import WizardStep from "@/components/wizard/WizardStep";
-import { cn } from "@/lib/utils";
+import { useState, useRef, useEffect } from 'react';
+import WizardStep from '@/components/wizard/WizardStep';
+import { Button } from '@/components/ui/button';
+import { ImagePlus, X, PlusCircle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
-export function LoveStoryMomentsStep() {
+const MAX_PHOTOS = 4;
+
+const LoveStoryMomentsStep = () => {
   const [characterPhotos, setCharacterPhotos] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-  const MAX_PHOTOS = 4; // Maximum number of photos allowed
 
-  // Check for existing character photos or migrate legacy photos on mount
   useEffect(() => {
-    const savedPhotos = localStorage.getItem("love-story-character-photos");
+    // Load saved photos from localStorage
+    const savedPhotos = localStorage.getItem('loveStoryCharacterPhotos');
     if (savedPhotos) {
       try {
         setCharacterPhotos(JSON.parse(savedPhotos));
-      } catch (error) {
-        console.error("Error parsing saved character photos:", error);
-      }
-    } else {
-      // Check for legacy partner photo
-      const legacyPhoto = localStorage.getItem("loveStoryPartnerPhoto");
-      if (legacyPhoto) {
-        // Migrate the legacy photo to the new format
-        const migratedPhotos = [legacyPhoto];
-        setCharacterPhotos(migratedPhotos);
-        localStorage.setItem("love-story-character-photos", JSON.stringify(migratedPhotos));
+      } catch (e) {
+        console.error('Error parsing saved character photos', e);
       }
     }
   }, []);
@@ -36,139 +27,166 @@ export function LoveStoryMomentsStep() {
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
-    // Check if adding new photos would exceed the limit
-    if (characterPhotos.length + files.length > MAX_PHOTOS) {
+    // Convert FileList to array for easier handling
+    const filesArray = Array.from(files);
+    
+    // Check if adding these would exceed the maximum
+    if (characterPhotos.length + filesArray.length > MAX_PHOTOS) {
       toast({
-        title: "Too many photos",
-        description: `You can upload a maximum of ${MAX_PHOTOS} photos. Please select fewer images.`,
         variant: "destructive",
+        title: "Too many photos",
+        description: `You can upload a maximum of ${MAX_PHOTOS} photos. Please select fewer images.`
       });
       return;
     }
 
-    Array.from(files).forEach(file => {
-      if (!file.type.startsWith("image/")) {
-        toast({
-          title: "Invalid file type",
-          description: "Please upload only image files",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = (e: ProgressEvent<FileReader>) => {
-        if (e.target?.result) {
-          const newPhotos = [...characterPhotos, e.target.result as string];
-          setCharacterPhotos(newPhotos);
-          localStorage.setItem("love-story-character-photos", JSON.stringify(newPhotos));
-          
-          toast({
-            title: "Photo uploaded",
-            description: `Character photo ${newPhotos.length} added successfully`,
-          });
+    // Process each file
+    const promises = filesArray.map(file => {
+      return new Promise<string>((resolve, reject) => {
+        if (!file.type.startsWith('image/')) {
+          reject(`File ${file.name} is not an image`);
+          return;
         }
-      };
 
-      reader.readAsDataURL(file);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const dataUrl = e.target?.result as string;
+          resolve(dataUrl);
+        };
+        reader.onerror = () => reject(`Error reading file ${file.name}`);
+        reader.readAsDataURL(file);
+      });
     });
 
-    // Reset the input
+    // Process all files and update state
+    Promise.allSettled(promises).then(results => {
+      const newPhotos = results
+        .filter((result): result is PromiseFulfilledResult<string> => result.status === 'fulfilled')
+        .map(result => result.value);
+
+      if (newPhotos.length > 0) {
+        const updatedPhotos = [...characterPhotos, ...newPhotos];
+        setCharacterPhotos(updatedPhotos);
+        localStorage.setItem('loveStoryCharacterPhotos', JSON.stringify(updatedPhotos));
+        
+        toast({
+          title: "Photos uploaded successfully",
+          description: `Added ${newPhotos.length} ${newPhotos.length === 1 ? 'photo' : 'photos'}`
+        });
+      }
+
+      // Log failed uploads if any
+      const failed = results.filter(result => result.status === 'rejected');
+      if (failed.length > 0) {
+        toast({
+          variant: "destructive",
+          title: "Some files could not be uploaded",
+          description: `${failed.length} ${failed.length === 1 ? 'file' : 'files'} could not be processed`
+        });
+      }
+    });
+
+    // Reset the file input
     if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+      fileInputRef.current.value = '';
     }
   };
 
-  const handleRemovePhoto = (index: number) => {
-    const newPhotos = characterPhotos.filter((_, i) => i !== index);
-    setCharacterPhotos(newPhotos);
-    localStorage.setItem("love-story-character-photos", JSON.stringify(newPhotos));
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const removePhoto = (index: number) => {
+    const updatedPhotos = characterPhotos.filter((_, i) => i !== index);
+    setCharacterPhotos(updatedPhotos);
+    localStorage.setItem('loveStoryCharacterPhotos', JSON.stringify(updatedPhotos));
     
     toast({
       title: "Photo removed",
-      description: "Character photo removed successfully",
+      description: "The photo has been removed"
     });
   };
 
   return (
     <WizardStep
-      title="Character Photos"
-      description="Upload photos of the main character for your love story. These photos will be used to generate personalized story images."
+      title="Upload Character Photos"
+      description="Add up to 4 photos of your story's character for better quality results"
       previousStep="/create/love/love-story/ideas"
       nextStep="/create/love/love-story/generate"
-      currentStep={3}
+      currentStep={4}
       totalSteps={5}
     >
-      <div className="flex flex-col max-w-[720px] mx-auto">
-        <h2 className="text-lg font-medium mb-4">Upload Photos</h2>
-        <p className="text-muted-foreground mb-6">
-          For best results, upload 2-4 clear, close-up photos of the same person.
-        </p>
-
-        {/* Display existing photos */}
-        {characterPhotos.length > 0 && (
-          <div className="mb-6">
-            <h3 className="text-lg font-medium mb-2">Uploaded Photos ({characterPhotos.length}/{MAX_PHOTOS})</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {characterPhotos.map((photo, index) => (
-                <div key={index} className="relative rounded-lg overflow-hidden border aspect-square">
-                  <img 
-                    src={photo} 
-                    alt={`Character photo ${index + 1}`} 
-                    className="w-full h-full object-cover"
-                  />
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    className="absolute top-2 right-2 w-8 h-8"
-                    onClick={() => handleRemovePhoto(index)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Upload new photo button */}
-        {characterPhotos.length < MAX_PHOTOS && (
-          <div className="mb-6">
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileSelect}
-              accept="image/*"
-              multiple
-              className="hidden"
-            />
-            <Button 
-              onClick={() => fileInputRef.current?.click()} 
-              className="flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Add Character Photo
-            </Button>
-            <p className="text-sm text-muted-foreground mt-2">
-              {characterPhotos.length === 0 
-                ? "Add at least one photo to continue. For best results, upload 2-4 photos." 
-                : `${MAX_PHOTOS - characterPhotos.length} more photos can be added for better quality results.`}
+      <div className="space-y-6">
+        <div className="max-w-3xl mx-auto">
+          <div className="mb-4 text-center">
+            <h3 className="text-lg font-medium">Character Photos</h3>
+            <p className="text-sm text-gray-500">
+              For best results, upload 1-4 clear face photos of the same person
             </p>
           </div>
-        )}
-
-        {/* Tips for good photos */}
-        <div className="rounded-lg border bg-muted/50 p-4">
-          <h3 className="font-medium mb-2">Tips for best results:</h3>
-          <ul className="list-disc pl-5 space-y-1 text-sm">
-            <li>Use clear, well-lit photos of the same person</li>
-            <li>Choose photos with different expressions</li>
-            <li>Close-up face shots work best</li>
-            <li>Avoid group photos or images with multiple people</li>
-            <li>Upload 2-4 photos for higher quality results</li>
-          </ul>
+          
+          <input 
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            accept="image/*"
+            onChange={handleFileSelect}
+            multiple
+          />
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Render existing photos */}
+            {characterPhotos.map((photo, index) => (
+              <div 
+                key={index} 
+                className="aspect-square border border-gray-300 rounded-lg relative group overflow-hidden"
+              >
+                <img 
+                  src={photo} 
+                  alt={`Character ${index + 1}`} 
+                  className="w-full h-full object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => removePhoto(index)}
+                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                  aria-label="Remove photo"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+            
+            {/* Add more photos button if under max limit */}
+            {characterPhotos.length < MAX_PHOTOS && (
+              <button
+                className="aspect-square w-full border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center hover:bg-gray-50 transition-colors"
+                onClick={handleUploadClick}
+              >
+                <PlusCircle className="h-10 w-10 text-gray-400 mb-2" />
+                <span className="text-gray-500 text-sm">
+                  {characterPhotos.length === 0 
+                    ? "Add character photos" 
+                    : "Add more photos"}
+                </span>
+                <span className="text-xs text-gray-400 mt-1">
+                  {characterPhotos.length}/{MAX_PHOTOS}
+                </span>
+              </button>
+            )}
+          </div>
+          
+          {characterPhotos.length > 0 && (
+            <div className="mt-6 text-center">
+              <p className="text-sm text-gray-500">
+                These photos will be used to create personalized images in your love story
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </WizardStep>
   );
-}
+};
+
+export default LoveStoryMomentsStep;
