@@ -207,7 +207,7 @@ const GenerateStep = () => {
     }
 
     // Check if saved prompts exist
-    const savedPrompts = localStorage.getItem("loveStoryPrompts");
+    const savedPrompts = localStorage.getItem("loveStoryImagePrompts");
     if (!savedPrompts) {
       toast({
         title: "Prompts missing",
@@ -447,7 +447,7 @@ const GenerateStep = () => {
     }
 
     // Check if saved prompts exist
-    const savedPrompts = localStorage.getItem("loveStoryPrompts");
+    const savedPrompts = localStorage.getItem("loveStoryImagePrompts");
     if (!savedPrompts) {
       toast({
         title: "Prompts missing",
@@ -511,7 +511,7 @@ const GenerateStep = () => {
     }
 
     // Check if saved prompts exist
-    const savedPrompts = localStorage.getItem("loveStoryPrompts");
+    const savedPrompts = localStorage.getItem("loveStoryImagePrompts");
     if (!savedPrompts) {
       toast({
         title: "Prompts missing",
