@@ -1,10 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
-import { ImagePlus, X, PlusCircle } from 'lucide-react';
+import { ImagePlus, X, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
-const MAX_PHOTOS = 4;
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const LoveStoryMomentsStep = () => {
   const [characterPhotos, setCharacterPhotos] = useState<string[]>([]);
@@ -12,117 +11,129 @@ const LoveStoryMomentsStep = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Load saved photos from localStorage
-    const savedPhotos = localStorage.getItem('loveStoryCharacterPhotos');
-    if (savedPhotos) {
-      try {
-        setCharacterPhotos(JSON.parse(savedPhotos));
-      } catch (e) {
-        console.error('Error parsing saved character photos', e);
+    // Load previously saved character photos
+    for (let i = 1; i <= 4; i++) {
+      const savedPhoto = localStorage.getItem(`loveStoryCharacterPhoto${i}`);
+      if (savedPhoto) {
+        setCharacterPhotos(prev => {
+          const newPhotos = [...prev];
+          newPhotos[i-1] = savedPhoto;
+          return newPhotos;
+        });
       }
     }
   }, []);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-    // Convert FileList to array for easier handling
-    const filesArray = Array.from(files);
-    
-    // Check if adding these would exceed the maximum
-    if (characterPhotos.length + filesArray.length > MAX_PHOTOS) {
+    if (!file.type.startsWith('image/')) {
       toast({
         variant: "destructive",
-        title: "Too many photos",
-        description: `You can upload a maximum of ${MAX_PHOTOS} photos. Please select fewer images.`
+        title: "Invalid file type",
+        description: "Please upload an image file (PNG, JPG, etc.)"
       });
       return;
     }
 
-    // Process each file
-    const promises = filesArray.map(file => {
-      return new Promise<string>((resolve, reject) => {
-        if (!file.type.startsWith('image/')) {
-          reject(`File ${file.name} is not an image`);
-          return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const dataUrl = e.target?.result as string;
-          resolve(dataUrl);
-        };
-        reader.onerror = () => reject(`Error reading file ${file.name}`);
-        reader.readAsDataURL(file);
+    // Check if we already have 4 photos
+    if (characterPhotos.filter(Boolean).length >= 4) {
+      toast({
+        variant: "destructive",
+        title: "Maximum photos reached",
+        description: "You can upload a maximum of 4 photos. Please remove one before adding another."
       });
-    });
-
-    // Process all files and update state
-    Promise.allSettled(promises).then(results => {
-      const newPhotos = results
-        .filter((result): result is PromiseFulfilledResult<string> => result.status === 'fulfilled')
-        .map(result => result.value);
-
-      if (newPhotos.length > 0) {
-        const updatedPhotos = [...characterPhotos, ...newPhotos];
-        setCharacterPhotos(updatedPhotos);
-        localStorage.setItem('loveStoryCharacterPhotos', JSON.stringify(updatedPhotos));
-        
-        toast({
-          title: "Photos uploaded successfully",
-          description: `Added ${newPhotos.length} ${newPhotos.length === 1 ? 'photo' : 'photos'}`
-        });
-      }
-
-      // Log failed uploads if any
-      const failed = results.filter(result => result.status === 'rejected');
-      if (failed.length > 0) {
-        toast({
-          variant: "destructive",
-          title: "Some files could not be uploaded",
-          description: `${failed.length} ${failed.length === 1 ? 'file' : 'files'} could not be processed`
-        });
-      }
-    });
-
-    // Reset the file input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      return;
     }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      
+      setCharacterPhotos(prev => {
+        const newPhotos = [...prev];
+        // Find the first empty slot
+        const emptyIndex = newPhotos.findIndex(photo => !photo);
+        const index = emptyIndex !== -1 ? emptyIndex : newPhotos.length;
+        
+        // Add the new photo
+        newPhotos[index] = dataUrl;
+        
+        // Save to localStorage
+        localStorage.setItem(`loveStoryCharacterPhoto${index + 1}`, dataUrl);
+        
+        // Also save the first photo to the old key for backward compatibility
+        if (index === 0) {
+          localStorage.setItem('loveStoryPartnerPhoto', dataUrl);
+        }
+        
+        return newPhotos;
+      });
+
+      toast({
+        title: "Photo uploaded successfully",
+        description: "Your character photo has been saved"
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemovePhoto = (index: number) => {
+    setCharacterPhotos(prev => {
+      const newPhotos = [...prev];
+      newPhotos[index] = '';
+      
+      // Remove from localStorage
+      localStorage.removeItem(`loveStoryCharacterPhoto${index + 1}`);
+      
+      // Also remove from the old key if it's the first photo
+      if (index === 0) {
+        localStorage.removeItem('loveStoryPartnerPhoto');
+      }
+      
+      return newPhotos;
+    });
+
+    toast({
+      title: "Photo removed",
+      description: "The character photo has been removed"
+    });
   };
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
   };
 
-  const removePhoto = (index: number) => {
-    const updatedPhotos = characterPhotos.filter((_, i) => i !== index);
-    setCharacterPhotos(updatedPhotos);
-    localStorage.setItem('loveStoryCharacterPhotos', JSON.stringify(updatedPhotos));
-    
-    toast({
-      title: "Photo removed",
-      description: "The photo has been removed"
-    });
-  };
-
   return (
     <WizardStep
-      title="Upload Character Photos"
-      description="Add up to 4 photos of your story's character for better quality results"
+      title="Upload character photos"
+      description="Add up to 4 photos of your character for better quality generated images"
       previousStep="/create/love/love-story/ideas"
       nextStep="/create/love/love-story/generate"
       currentStep={4}
       totalSteps={5}
     >
       <div className="space-y-6">
-        <div className="max-w-3xl mx-auto">
-          <div className="mb-4 text-center">
-            <h3 className="text-lg font-medium">Character Photos</h3>
-            <p className="text-sm text-gray-500">
-              For best results, upload 1-4 clear face photos of the same person
-            </p>
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center mb-4">
+            <h3 className="text-lg font-medium text-center">Character Photos</h3>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" className="ml-2">
+                    <Info className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="max-w-xs">
+                    Upload up to 4 different photos of the same person. 
+                    Multiple photos help create better quality images. 
+                    At least one photo is required.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
           
           <input 
@@ -131,56 +142,61 @@ const LoveStoryMomentsStep = () => {
             className="hidden"
             accept="image/*"
             onChange={handleFileSelect}
-            multiple
           />
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Render existing photos */}
-            {characterPhotos.map((photo, index) => (
-              <div 
-                key={index} 
-                className="aspect-square border border-gray-300 rounded-lg relative group overflow-hidden"
-              >
-                <img 
-                  src={photo} 
-                  alt={`Character ${index + 1}`} 
-                  className="w-full h-full object-cover"
-                />
-                <button
-                  type="button"
-                  onClick={() => removePhoto(index)}
-                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                  aria-label="Remove photo"
-                >
-                  <X className="h-4 w-4" />
-                </button>
+            {/* Display existing photos and upload button */}
+            {[...Array(4)].map((_, index) => (
+              <div key={index} className="aspect-square w-full border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center relative">
+                {!characterPhotos[index] ? (
+                  <Button
+                    variant="ghost"
+                    className="w-full h-full flex flex-col items-center justify-center gap-4"
+                    onClick={handleUploadClick}
+                  >
+                    <ImagePlus className="h-12 w-12 text-gray-400" />
+                    <span className="text-gray-500">{index === 0 ? "Upload primary photo (required)" : "Add another photo"}</span>
+                  </Button>
+                ) : (
+                  <div className="w-full h-full relative group">
+                    <img src={characterPhotos[index]} alt={`Character ${index + 1}`} className="w-full h-full object-cover rounded-lg" />
+                    
+                    <Button 
+                      variant="destructive" 
+                      size="icon" 
+                      className="absolute top-2 right-2 rounded-full h-8 w-8 p-0 opacity-70 hover:opacity-100"
+                      onClick={() => handleRemovePhoto(index)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                    
+                    <div 
+                      className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg cursor-pointer"
+                      onClick={handleUploadClick}
+                    >
+                      <span className="text-white font-medium">Click to replace photo</span>
+                    </div>
+                  </div>
+                )}
+                
+                {index === 0 && (
+                  <div className="absolute -top-3 -left-1 bg-primary text-white text-xs px-2 py-1 rounded">
+                    Primary
+                  </div>
+                )}
               </div>
             ))}
-            
-            {/* Add more photos button if under max limit */}
-            {characterPhotos.length < MAX_PHOTOS && (
-              <button
-                className="aspect-square w-full border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center hover:bg-gray-50 transition-colors"
-                onClick={handleUploadClick}
-              >
-                <PlusCircle className="h-10 w-10 text-gray-400 mb-2" />
-                <span className="text-gray-500 text-sm">
-                  {characterPhotos.length === 0 
-                    ? "Add character photos" 
-                    : "Add more photos"}
-                </span>
-                <span className="text-xs text-gray-400 mt-1">
-                  {characterPhotos.length}/{MAX_PHOTOS}
-                </span>
-              </button>
-            )}
           </div>
           
-          {characterPhotos.length > 0 && (
-            <div className="mt-6 text-center">
-              <p className="text-sm text-gray-500">
-                These photos will be used to create personalized images in your love story
-              </p>
+          {characterPhotos.filter(Boolean).length === 0 && (
+            <div className="mt-6 text-center text-yellow-600 bg-yellow-50 p-4 rounded-lg">
+              <p>At least one character photo is required to generate images</p>
+            </div>
+          )}
+          
+          {characterPhotos.filter(Boolean).length > 0 && (
+            <div className="mt-6 text-center text-green-600 bg-green-50 p-4 rounded-lg">
+              <p>{characterPhotos.filter(Boolean).length} of 4 photos uploaded. {characterPhotos.filter(Boolean).length > 1 ? "Multiple photos will help generate better quality images." : "Adding more photos will help generate better quality images."}</p>
             </div>
           )}
         </div>

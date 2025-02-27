@@ -34,9 +34,7 @@ serve(async (req) => {
       auth: REPLICATE_API_KEY,
     });
 
-    // Parse request body once
-    const requestBody = await req.json();
-    const { prompt, contentPrompt, content2Prompt, photos, photo, style } = requestBody;
+    const { prompt, contentPrompt, content2Prompt, photo, photos, style } = await req.json();
     
     // Get the style name to use with the API
     console.log(`Requested style from client: "${style}"`);
@@ -80,47 +78,56 @@ serve(async (req) => {
     
     console.log(`Mapped to API style_name: "${styleName}"`);
 
-    // Handle both legacy single photo or new multiple photos format
-    let photoArray: string[] = [];
-    
-    // Check for 'photos' in array form first
-    if (Array.isArray(photos) && photos.length > 0) {
-      photoArray = photos;
-    } 
-    // Check for 'photos' as a single string
-    else if (typeof photos === 'string') {
-      photoArray = [photos];
-    }
-    // Fallback to 'photo' parameter for legacy support
-    else if (typeof photo === 'string') {
-      photoArray = [photo];
+    // Process multiple photos if available, or fall back to single photo
+    // For backward compatibility
+    const characterPhotos = photos && Array.isArray(photos) ? photos.filter(Boolean) : [];
+    if (characterPhotos.length === 0 && photo) {
+      characterPhotos.push(photo);
     }
     
-    if (photoArray.length === 0) {
-      throw new Error("No character photos provided. Please add at least one photo.");
+    if (characterPhotos.length === 0) {
+      throw new Error("No character photos provided");
     }
     
-    console.log(`Processing with ${photoArray.length} character photo(s), using first photo for API call`);
-    // Always use the first photo for the API call since PhotoMaker only accepts a single image
-    const photoToUse = photoArray[0];
+    console.log(`Using ${characterPhotos.length} character photo(s)`);
+
+    // Prepare API input with multiple photos if available
+    const prepareApiInput = (promptText: string) => {
+      const input: any = {
+        prompt: `${promptText} img`,
+        num_steps: 40,
+        style_name: styleName,
+        input_image: characterPhotos[0], // Primary photo is always required
+        num_outputs: 1,
+        guidance_scale: 5.0,
+        style_strength_ratio: 20,
+        negative_prompt:
+          "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
+      };
+      
+      // Add additional photos if available
+      if (characterPhotos.length > 1 && characterPhotos[1]) {
+        input.input_image2 = characterPhotos[1];
+      }
+      
+      if (characterPhotos.length > 2 && characterPhotos[2]) {
+        input.input_image3 = characterPhotos[2];
+      }
+      
+      if (characterPhotos.length > 3 && characterPhotos[3]) {
+        input.input_image4 = characterPhotos[3];
+      }
+      
+      return input;
+    };
 
     // 仅生成封面
-    if (!contentPrompt && !content2Prompt && prompt && photoArray.length > 0) {
+    if (!contentPrompt && !content2Prompt && prompt && characterPhotos.length > 0) {
       console.log("Generating single cover image with prompt:", prompt);
       const output = await replicate.run(
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
         {
-          input: {
-            prompt: `${prompt} img`,
-            num_steps: 40,
-            style_name: styleName,
-            input_image: photoToUse, // Always use the first photo
-            num_outputs: 1,
-            guidance_scale: 5.0,
-            style_strength_ratio: 20,
-            negative_prompt:
-              "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
-          },
+          input: prepareApiInput(prompt)
         }
       );
 
@@ -131,22 +138,12 @@ serve(async (req) => {
     }
 
     // 仅生成内容图1
-    if (!prompt && !content2Prompt && contentPrompt && photoArray.length > 0) {
+    if (!prompt && !content2Prompt && contentPrompt && characterPhotos.length > 0) {
       console.log("Generating content image 1 with prompt:", contentPrompt);
       const contentImage = await replicate.run(
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
         {
-          input: {
-            prompt: `${contentPrompt} single-person img, story moment`,
-            num_steps: 40,
-            style_name: styleName,
-            input_image: photoToUse, // Always use the first photo
-            num_outputs: 1,
-            guidance_scale: 5.0,
-            style_strength_ratio: 20,
-            negative_prompt:
-              "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
-          },
+          input: prepareApiInput(`${contentPrompt} single-person, story moment`)
         }
       );
 
@@ -157,22 +154,12 @@ serve(async (req) => {
     }
 
     // 仅生成内容图2
-    if (!prompt && !contentPrompt && content2Prompt && photoArray.length > 0) {
+    if (!prompt && !contentPrompt && content2Prompt && characterPhotos.length > 0) {
       console.log("Generating content image 2 with prompt:", content2Prompt);
       const contentImage2 = await replicate.run(
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
         {
-          input: {
-            prompt: `${content2Prompt} single-person img, story moment`,
-            num_steps: 40,
-            style_name: styleName,
-            input_image: photoToUse, // Always use the first photo
-            num_outputs: 1,
-            guidance_scale: 5.0,
-            style_strength_ratio: 20,
-            negative_prompt:
-              "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
-          },
+          input: prepareApiInput(`${content2Prompt} single-person, story moment`)
         }
       );
 
@@ -182,129 +169,50 @@ serve(async (req) => {
       );
     }
 
-    // Handle dynamic content image generation (contentXPrompt)
-    for (let i = 3; i <= 11; i++) {
-      const contentPromptKey = `content${i}Prompt`;
-      if (requestBody[contentPromptKey] && photoArray.length > 0) {
-        console.log(`Generating content image ${i} with prompt:`, requestBody[contentPromptKey]);
-        const result = await replicate.run(
-          "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
-          {
-            input: {
-              prompt: `${requestBody[contentPromptKey]} single-person img, story moment`,
-              num_steps: 40,
-              style_name: styleName,
-              input_image: photoToUse, // Always use the first photo
-              num_outputs: 1,
-              guidance_scale: 5.0,
-              style_strength_ratio: 20,
-              negative_prompt:
-                "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
-            },
-          }
-        );
-
-        const responseKey = `contentImage${i}`;
-        return new Response(
-          JSON.stringify({ [responseKey]: result }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-    }
-
     // 同时生成封面、内容1、内容2
     console.log("Generating all images...");
     console.log("Cover prompt:", prompt);
     console.log("Content 1 prompt:", contentPrompt);
     console.log("Content 2 prompt:", content2Prompt);
     console.log("Using style:", styleName);
-    console.log("Using photo:", photoToUse.substring(0, 50) + "...");
+    console.log(`Using ${characterPhotos.length} character photos`);
 
-    try {
-      const [output, contentImage, contentImage2] = await Promise.all([
-        replicate.run(
-          "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
-          {
-            input: {
-              prompt: `${prompt} img`,
-              num_steps: 40,
-              style_name: styleName,
-              input_image: photoToUse, // Always use the first photo
-              num_outputs: 1,
-              guidance_scale: 5.0,
-              style_strength_ratio: 20,
-              negative_prompt:
-                "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
-            },
-          }
-        ),
-        replicate.run(
-          "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
-          {
-            input: {
-              prompt: `${contentPrompt} single-person img, story moment`,
-              num_steps: 40,
-              style_name: styleName,
-              input_image: photoToUse, // Always use the first photo
-              num_outputs: 1,
-              guidance_scale: 5.0,
-              style_strength_ratio: 20,
-              negative_prompt:
-                "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
-            },
-          }
-        ),
-        replicate.run(
-          "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
-          {
-            input: {
-              prompt: `${content2Prompt} single-person img, story moment`,
-              num_steps: 40,
-              style_name: styleName,
-              input_image: photoToUse, // Always use the first photo
-              num_outputs: 1,
-              guidance_scale: 5.0,
-              style_strength_ratio: 20,
-              negative_prompt:
-                "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
-            },
-          }
-        ),
-      ]);
+    const [output, contentImage, contentImage2] = await Promise.all([
+      replicate.run(
+        "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
+        {
+          input: prepareApiInput(prompt)
+        }
+      ),
+      replicate.run(
+        "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
+        {
+          input: prepareApiInput(`${contentPrompt} single-person, story moment`)
+        }
+      ),
+      replicate.run(
+        "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
+        {
+          input: prepareApiInput(`${content2Prompt} single-person, story moment`)
+        }
+      ),
+    ]);
 
-      return new Response(
-        JSON.stringify({
-          output,
-          contentImage,
-          contentImage2,
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 200,
-        }
-      );
-    } catch (error) {
-      // Handle the API error properly to avoid cyclic structure serialization
-      console.error("Error in API call:", error.message || "Unknown error");
-      return new Response(
-        JSON.stringify({ 
-          error: error.message || "Unknown error",
-          details: error.detail || null
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 500,
-        }
-      );
-    }
-  } catch (error) {
-    // Safe error serialization to avoid cyclic structure issues
-    console.error("Error in replicate function:", error.message || "Unknown error");
     return new Response(
-      JSON.stringify({ 
-        error: error.message || "Unknown error",
-        details: error.detail || null
+      JSON.stringify({
+        output,
+        contentImage,
+        contentImage2,
       }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      }
+    );
+  } catch (error) {
+    console.error("Error in replicate function:", error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,
