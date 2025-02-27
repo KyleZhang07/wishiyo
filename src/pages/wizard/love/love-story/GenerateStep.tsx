@@ -45,6 +45,7 @@ const GenerateStep = () => {
 
   const [selectedStyle, setSelectedStyle] = useState<string>('Photographic (Default)');
   const [imageTexts, setImageTexts] = useState<ImageText[]>([]);
+  const [partnerPhotos, setPartnerPhotos] = useState<string[]>([]);
 
   const { toast } = useToast();
 
@@ -71,8 +72,25 @@ const GenerateStep = () => {
   };
 
   const handleGenericContentRegeneration = async (index: number, style?: string) => {
-    if (index < 2) return;
-
+    // Find the right prompt for this content image
+    const key = `promptForContent${index}`;
+    const prompt = localStorage.getItem(key);
+    const lsKey = `loveStoryContentImage${index}`;
+    
+    if (!prompt) {
+      toast({
+        title: "No prompt found",
+        description: `Prompt for content ${index} is missing. Please try again.`,
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Determine which function to use for setting state
+    let setIsGenerating;
+    let setContentFn;
+    
+    // Logic to determine the right state setters based on index
     const stateSetters = {
       2: setContentImage2,
       3: setContentImage3,
@@ -99,25 +117,16 @@ const GenerateStep = () => {
       11: setIsGeneratingContent11
     };
 
-    const setContentFn = stateSetters[index as keyof typeof stateSetters];
-    const setIsGenerating = loadingSetters[index as keyof typeof loadingSetters];
+    setIsGenerating = loadingSetters[index as keyof typeof loadingSetters];
+    setContentFn = stateSetters[index as keyof typeof stateSetters];
     if (!setContentFn || !setIsGenerating) return;
-
-    const lsKey = `loveStoryContentImage${index}`;
-    localStorage.removeItem(lsKey);
 
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
     const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
-    
-    // 获取额外照片
-    const partnerPhoto2 = localStorage.getItem('loveStoryPartnerPhoto2');
-    const partnerPhoto3 = localStorage.getItem('loveStoryPartnerPhoto3');
-    const partnerPhoto4 = localStorage.getItem('loveStoryPartnerPhoto4');
-    
     if (!savedPrompts || !partnerPhoto) {
       toast({
-        title: "缺少信息",
-        description: "未找到提示词或主照片",
+        title: "Missing info",
+        description: "No prompts or partner photo found",
         variant: "destructive",
       });
       return;
@@ -139,23 +148,13 @@ const GenerateStep = () => {
         localStorage.setItem('loveStoryStyle', style);
       }
 
-      // 构建请求体，包含所有可用的照片
-      const requestBody: any = { 
-        prompt: prompts[index].prompt, 
-        photo: partnerPhoto,
-        style: imageStyle
-      };
-      
-      // 添加额外照片（如果有）
-      if (partnerPhoto2) requestBody.photo2 = partnerPhoto2;
-      if (partnerPhoto3) requestBody.photo3 = partnerPhoto3;
-      if (partnerPhoto4) requestBody.photo4 = partnerPhoto4;
-      
-      console.log("使用的照片数量:", 1 + (partnerPhoto2 ? 1 : 0) + (partnerPhoto3 ? 1 : 0) + (partnerPhoto4 ? 1 : 0));
-      
       // Include style in the request
       const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-        body: requestBody
+        body: { 
+          content2Prompt: prompt,
+          photos: partnerPhotos,
+          style: imageStyle
+        }
       });
       if (error) throw error;
 
@@ -200,96 +199,61 @@ const GenerateStep = () => {
   const handleRegenerateContent10 = (style?: string) => handleGenericContentRegeneration(10, style);
   const handleRegenerateContent11 = (style?: string) => handleGenericContentRegeneration(11, style);
 
-  const generateInitialImages = async () => {
-    setIsGeneratingCover(true);
-    setIsGeneratingContent1(true);
-
-    const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
-    const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
-    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
-    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
-    
-    // 获取额外照片
-    const partnerPhoto2 = localStorage.getItem('loveStoryPartnerPhoto2');
-    const partnerPhoto3 = localStorage.getItem('loveStoryPartnerPhoto3');
-    const partnerPhoto4 = localStorage.getItem('loveStoryPartnerPhoto4');
-    
-    if (!savedIdeas || !savedIdeaIndex || !savedPrompts || !partnerPhoto) {
+  const generateInitialImages = async (prompts: string) => {
+    // Check if we have partner photos
+    if (partnerPhotos.length === 0) {
       toast({
-        title: "缺少信息",
-        description: "未找到创意、提示词或主照片",
+        title: "No partner photos",
+        description: "Please go back and upload at least one photo",
         variant: "destructive",
       });
-      setIsGeneratingCover(false);
-      setIsGeneratingContent1(false);
       return;
     }
+    
+    setIsGeneratingCover(true);
+    setIsGeneratingContent1(true);
+    toast({
+      title: "Generating images",
+      description: "This may take a minute...",
+    });
 
     try {
-      const ideas = JSON.parse(savedIdeas);
-      const selectedIdea = parseInt(savedIdeaIndex);
-      const idea = ideas[selectedIdea];
-      const prompts = JSON.parse(savedPrompts);
-      
-      // 使用存储的样式或默认样式
-      const imageStyle = selectedStyle;
-      
-      // 构建请求体，包含所有可用的照片
-      const requestBody: any = { 
-        prompt: idea.title, 
-        contentPrompt: prompts[1]?.prompt,
-        content2Prompt: prompts[2]?.prompt,
-        photo: partnerPhoto,
-        style: imageStyle
-      };
-      
-      // 添加额外照片（如果有）
-      if (partnerPhoto2) requestBody.photo2 = partnerPhoto2;
-      if (partnerPhoto3) requestBody.photo3 = partnerPhoto3;
-      if (partnerPhoto4) requestBody.photo4 = partnerPhoto4;
-      
-      console.log("使用的照片数量:", 1 + (partnerPhoto2 ? 1 : 0) + (partnerPhoto3 ? 1 : 0) + (partnerPhoto4 ? 1 : 0));
-
       const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-        body: requestBody
+        body: { 
+          prompt: prompts, 
+          contentPrompt: prompts,
+          content2Prompt: prompts,
+          photos: partnerPhotos,
+          style: selectedStyle
+        }
       });
 
       if (error) throw error;
 
-      // Handle cover image
-      const coverImageUrl = data?.output?.[0];
-      if (coverImageUrl) {
-        try {
-          // 扩展图像用于封面
-          const expandedImage = await expandImage(coverImageUrl);
-          setCoverImage(expandedImage);
-          localStorage.setItem('loveStoryCoverImage', expandedImage);
-        } catch (expandError) {
-          console.error("Error expanding image, using original:", expandError);
-          setCoverImage(coverImageUrl);
-          localStorage.setItem('loveStoryCoverImage', coverImageUrl);
-        }
+      if (data?.output?.[0]) {
+        setCoverImage(data.output[0]);
+        localStorage.setItem('loveStoryCoverImage', data.output[0]);
       }
 
-      // Handle content image 1
-      const contentImageUrl = data?.contentImage?.[0];
-      if (contentImageUrl) {
-        setContentImage(contentImageUrl);
-        localStorage.setItem('loveStoryContentImage', contentImageUrl);
+      if (data?.contentImage?.[0]) {
+        setContentImage(data.contentImage[0]);
+        localStorage.setItem('loveStoryContentImage', data.contentImage[0]);
       }
 
-      // Handle content image 2
-      const contentImage2Url = data?.contentImage2?.[0];
-      if (contentImage2Url) {
-        setContentImage2(contentImage2Url);
-        localStorage.setItem('loveStoryContentImage2', contentImage2Url);
+      if (data?.contentImage2?.[0]) {
+        setContentImage2(data.contentImage2[0]);
+        localStorage.setItem('loveStoryContentImage2', data.contentImage2[0]);
       }
 
-    } catch (err) {
-      console.error("Error generating initial images:", err);
       toast({
-        title: "生成失败",
-        description: "无法生成初始图片",
+        title: "Images generated",
+        description: "Your images are ready!",
+      });
+    } catch (error) {
+      console.error('Error generating images:', error);
+      toast({
+        title: "Error generating images",
+        description: "Please try again",
         variant: "destructive",
       });
     } finally {
@@ -320,25 +284,26 @@ const GenerateStep = () => {
     const savedContentImage9 = localStorage.getItem('loveStoryContentImage9');
     const savedContentImage10 = localStorage.getItem('loveStoryContentImage10');
     const savedContentImage11 = localStorage.getItem('loveStoryContentImage11');
-    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
     
-    // Ensure we have a recipient name stored
-    const savedQuestions = localStorage.getItem('loveStoryQuestions');
-    if (savedQuestions) {
-      try {
-        const questions = JSON.parse(savedQuestions);
-        const nameQuestion = questions.find((q: any) => 
-          q.question.toLowerCase().includes('name') && 
-          !q.question.toLowerCase().includes('your name')
-        );
-        
-        if (nameQuestion && nameQuestion.answer) {
-          localStorage.setItem('loveStoryRecipientName', nameQuestion.answer);
-        }
-      } catch (error) {
-        console.error('Error parsing questions:', error);
+    // Load partner photos (support multiple photos)
+    const photos: string[] = [];
+    // Try loading from new format first (indexed)
+    for (let i = 1; i <= 4; i++) {
+      const photo = localStorage.getItem(`loveStoryPartnerPhoto${i}`);
+      if (photo) {
+        photos.push(photo);
       }
     }
+    
+    // If no photos found, try the legacy format
+    if (photos.length === 0) {
+      const legacyPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+      if (legacyPhoto) {
+        photos.push(legacyPhoto);
+      }
+    }
+    
+    setPartnerPhotos(photos);
 
     if (savedAuthor) {
       setAuthorName(savedAuthor);
@@ -426,8 +391,13 @@ const GenerateStep = () => {
       setContentImage11(savedContentImage11);
     }
 
-    if ((!savedCoverImage || !savedContentImage || !savedContentImage2) && savedPrompts && partnerPhoto) {
-      generateInitialImages();
+    // Load images if not already present
+    if (
+      (!savedCoverImage || !savedContentImage || !savedContentImage2) && 
+      savedPrompts && 
+      partnerPhotos.length > 0
+    ) {
+      generateInitialImages(savedPrompts);
     }
   }, []);
 
@@ -446,83 +416,55 @@ const GenerateStep = () => {
   };
 
   const handleRegenerateCover = async (style?: string) => {
-    localStorage.removeItem('loveStoryCoverImage');
-    setIsGeneratingCover(true);
-
-    const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
-    const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
-    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
-    
-    // 获取额外照片
-    const partnerPhoto2 = localStorage.getItem('loveStoryPartnerPhoto2');
-    const partnerPhoto3 = localStorage.getItem('loveStoryPartnerPhoto3');
-    const partnerPhoto4 = localStorage.getItem('loveStoryPartnerPhoto4');
-    
-    if (!savedIdeas || !savedIdeaIndex || !partnerPhoto) {
+    const prompt = localStorage.getItem('loveStorySelectedIdea');
+    if (!prompt) {
       toast({
-        title: "缺少信息",
-        description: "未找到创意或主照片",
-        variant: "destructive",
+        title: "No idea selected",
+        description: "Please go back and select an idea first",
+        variant: "destructive"
       });
-      setIsGeneratingCover(false);
       return;
     }
-
+    
+    setIsGeneratingCover(true);
+    
     try {
-      const ideas = JSON.parse(savedIdeas);
-      const selectedIdea = parseInt(savedIdeaIndex);
-      const idea = ideas[selectedIdea];
-
-      // 使用提供的样式或使用存储的默认样式
       const imageStyle = style || selectedStyle;
-      
-      // 如果提供了新样式，则更新存储的样式
-      if (style) {
-        setSelectedStyle(style);
-        localStorage.setItem('loveStoryStyle', style);
-      }
-      
-      // 构建请求体，包含所有可用的照片
-      const requestBody: any = { 
-        prompt: idea.title, 
-        photo: partnerPhoto,
-        style: imageStyle
-      };
-      
-      // 添加额外照片（如果有）
-      if (partnerPhoto2) requestBody.photo2 = partnerPhoto2;
-      if (partnerPhoto3) requestBody.photo3 = partnerPhoto3;
-      if (partnerPhoto4) requestBody.photo4 = partnerPhoto4;
-      
-      console.log("使用的照片数量:", 1 + (partnerPhoto2 ? 1 : 0) + (partnerPhoto3 ? 1 : 0) + (partnerPhoto4 ? 1 : 0));
-
-      const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-        body: requestBody
-      });
-
-      if (error) throw error;
-
-      const imageUrl = data?.output?.[0];
-      if (!imageUrl) {
-        throw new Error("No image returned from generate-love-cover");
-      }
-
-      try {
-        // 扩展图像用于封面
-        const expandedImage = await expandImage(imageUrl);
-        setCoverImage(expandedImage);
-        localStorage.setItem('loveStoryCoverImage', expandedImage);
-      } catch (expandError) {
-        console.error("Error expanding image, using original:", expandError);
-        setCoverImage(imageUrl);
-        localStorage.setItem('loveStoryCoverImage', imageUrl);
-      }
-
-    } catch (err) {
-      console.error("Error generating cover:", err);
       toast({
-        title: "生成失败",
-        description: "无法生成封面图片",
+        title: "Regenerating cover",
+        description: `Using style: ${imageStyle}`,
+      });
+      
+      // Save the selected style to localStorage if it's different
+      if (style && style !== selectedStyle) {
+        localStorage.setItem('loveStoryStyle', style);
+        setSelectedStyle(style);
+      }
+      
+      const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+        body: { 
+          prompt: prompt,
+          photos: partnerPhotos,
+          style: imageStyle
+        }
+      });
+      
+      if (error) throw error;
+      
+      if (data?.output?.[0]) {
+        setCoverImage(data.output[0]);
+        localStorage.setItem('loveStoryCoverImage', data.output[0]);
+      }
+      
+      toast({
+        title: "Cover regenerated",
+        description: `Cover successfully updated with ${imageStyle} style`,
+      });
+    } catch (err: any) {
+      console.error("Error in handleRegenerateCover:", err);
+      toast({
+        title: "Error regenerating cover",
+        description: err.message || "Please try again",
         variant: "destructive",
       });
     } finally {
@@ -531,74 +473,56 @@ const GenerateStep = () => {
   };
 
   const handleRegenerateContent1 = async (style?: string) => {
-    localStorage.removeItem('loveStoryContentImage');
-    setIsGeneratingContent1(true);
-
-    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
-    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
-    
-    // 获取额外照片
-    const partnerPhoto2 = localStorage.getItem('loveStoryPartnerPhoto2');
-    const partnerPhoto3 = localStorage.getItem('loveStoryPartnerPhoto3');
-    const partnerPhoto4 = localStorage.getItem('loveStoryPartnerPhoto4');
-    
-    if (!savedPrompts || !partnerPhoto) {
+    const prompt = localStorage.getItem('promptForContent1');
+    if (!prompt) {
       toast({
-        title: "缺少信息",
-        description: "未找到提示词或主照片",
-        variant: "destructive",
+        title: "No prompt found",
+        description: "Prompt for content image 1 is missing",
+        variant: "destructive"
       });
-      setIsGeneratingContent1(false);
       return;
     }
-
+    
+    setIsGeneratingContent1(true);
+    
     try {
-      const prompts = JSON.parse(savedPrompts);
-      if (!prompts[1]) {
-        throw new Error("No prompt found for content index 1");
-      }
-      
-      // 使用提供的样式或使用存储的默认样式
       const imageStyle = style || selectedStyle;
-      
-      // 如果提供了新样式，则更新存储的样式
-      if (style) {
-        setSelectedStyle(style);
-        localStorage.setItem('loveStoryStyle', style);
-      }
-      
-      // 构建请求体，包含所有可用的照片
-      const requestBody: any = { 
-        contentPrompt: prompts[1].prompt, 
-        photo: partnerPhoto,
-        style: imageStyle
-      };
-      
-      // 添加额外照片（如果有）
-      if (partnerPhoto2) requestBody.photo2 = partnerPhoto2;
-      if (partnerPhoto3) requestBody.photo3 = partnerPhoto3;
-      if (partnerPhoto4) requestBody.photo4 = partnerPhoto4;
-      
-      console.log("使用的照片数量:", 1 + (partnerPhoto2 ? 1 : 0) + (partnerPhoto3 ? 1 : 0) + (partnerPhoto4 ? 1 : 0));
-
-      const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-        body: requestBody
-      });
-
-      if (error) throw error;
-
-      const imageUrl = data?.contentImage?.[0];
-      if (!imageUrl) {
-        throw new Error("No image returned from generate-love-cover");
-      }
-
-      setContentImage(imageUrl);
-      localStorage.setItem('loveStoryContentImage', imageUrl);
-    } catch (err) {
-      console.error("Error generating content image 1:", err);
       toast({
-        title: "生成失败",
-        description: "无法生成内容图片",
+        title: "Regenerating image",
+        description: `Using style: ${imageStyle}`,
+      });
+      
+      // Save the selected style to localStorage if it's different
+      if (style && style !== selectedStyle) {
+        localStorage.setItem('loveStoryStyle', style);
+        setSelectedStyle(style);
+      }
+      
+      const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+        body: { 
+          contentPrompt: prompt,
+          photos: partnerPhotos,
+          style: imageStyle
+        }
+      });
+      
+      if (error) throw error;
+      
+      if (data?.contentImage?.[0]) {
+        const expandedBase64 = await expandImage(data.contentImage[0]);
+        setContentImage(expandedBase64);
+        localStorage.setItem('loveStoryContentImage', expandedBase64);
+      }
+      
+      toast({
+        title: "Image regenerated & expanded",
+        description: `Content 1 successfully updated with ${imageStyle} style`,
+      });
+    } catch (err: any) {
+      console.error("Error in handleRegenerateContent1:", err);
+      toast({
+        title: "Error regenerating image",
+        description: err.message || "Please try again",
         variant: "destructive",
       });
     } finally {
