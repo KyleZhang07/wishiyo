@@ -205,19 +205,49 @@ const GenerateStep = () => {
 
       if (error) throw error;
 
+      // 处理封面图片
       if (data?.output?.[0]) {
-        setCoverImage(data.output[0]);
-        localStorage.setItem('loveStoryCoverImage', data.output[0]);
+        try {
+          // 尝试扩展封面图片
+          const expandedCover = await expandImage(data.output[0]);
+          setCoverImage(expandedCover);
+          localStorage.setItem('loveStoryCoverImage', expandedCover);
+        } catch (expandError) {
+          console.error('Error expanding cover image:', expandError);
+          // 如果扩展失败，保存原始图片
+          setCoverImage(data.output[0]);
+          localStorage.setItem('loveStoryCoverImage', data.output[0]);
+        }
       }
 
+      // 处理内容图片1
       if (data?.contentImage?.[0]) {
-        setContentImage(data.contentImage[0]);
-        localStorage.setItem('loveStoryContentImage', data.contentImage[0]);
+        try {
+          // 尝试扩展内容图片1
+          const expandedContent = await expandImage(data.contentImage[0]);
+          setContentImage(expandedContent);
+          localStorage.setItem('loveStoryContentImage', expandedContent);
+        } catch (expandError) {
+          console.error('Error expanding content image 1:', expandError);
+          // 如果扩展失败，保存原始图片
+          setContentImage(data.contentImage[0]);
+          localStorage.setItem('loveStoryContentImage', data.contentImage[0]);
+        }
       }
 
+      // 处理内容图片2
       if (data?.contentImage2?.[0]) {
-        setContentImage2(data.contentImage2[0]);
-        localStorage.setItem('loveStoryContentImage2', data.contentImage2[0]);
+        try {
+          // 尝试扩展内容图片2
+          const expandedContent2 = await expandImage(data.contentImage2[0]);
+          setContentImage2(expandedContent2);
+          localStorage.setItem('loveStoryContentImage2', expandedContent2);
+        } catch (expandError) {
+          console.error('Error expanding content image 2:', expandError);
+          // 如果扩展失败，保存原始图片
+          setContentImage2(data.contentImage2[0]);
+          localStorage.setItem('loveStoryContentImage2', data.contentImage2[0]);
+        }
       }
 
       toast({
@@ -371,6 +401,39 @@ const GenerateStep = () => {
     // }
   }, []);
 
+  // 添加一个手动生成所有图片的函数
+  const handleGenerateAllImages = async () => {
+    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    
+    if (!savedPrompts || !partnerPhoto) {
+      toast({
+        title: "Missing information",
+        description: "No prompts or partner photo found. Please complete previous steps first.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // 生成初始图片（封面、内容1和内容2）
+    await generateInitialImages(savedPrompts, partnerPhoto);
+    
+    // 解析提示词
+    const prompts = JSON.parse(savedPrompts);
+    
+    // 生成其他内容图片（3-11）
+    for (let i = 3; i <= 11; i++) {
+      if (prompts && prompts.length > i - 1) {
+        await handleGenericContentRegeneration(i);
+      }
+    }
+    
+    toast({
+      title: "All images generated",
+      description: "Your love story images are ready!",
+    });
+  };
+
   const handleEditCover = () => {
     toast({
       title: "Edit Cover",
@@ -463,8 +526,22 @@ const GenerateStep = () => {
           });
           if (error) throw error;
           if (data?.contentImage?.[0]) {
-            setContentImage(data.contentImage[0]);
-            localStorage.setItem('loveStoryContentImage', data.contentImage[0]);
+            // 获取原始图片
+            const imageUrl = data.contentImage[0];
+            
+            try {
+              // 扩展图片
+              const expandedBase64 = await expandImage(imageUrl);
+              
+              // 保存扩展后的图片到state和localStorage
+              setContentImage(expandedBase64);
+              localStorage.setItem('loveStoryContentImage', expandedBase64);
+            } catch (expandError) {
+              console.error('Error expanding image:', expandError);
+              // 如果扩展失败，至少保存原始图片
+              setContentImage(imageUrl);
+              localStorage.setItem('loveStoryContentImage', imageUrl);
+            }
             
             toast({
               title: "Image regenerated",
@@ -574,7 +651,22 @@ const GenerateStep = () => {
           />
         </div>
         
-        <h2 className="text-2xl font-bold mb-6">Story Images with Text</h2>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold">Story Images with Text</h2>
+          <Button 
+            onClick={handleGenerateAllImages}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-refresh-cw">
+              <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+              <path d="M21 3v5h-5"></path>
+              <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+              <path d="M3 21v-5h5"></path>
+            </svg>
+            Generate All Images
+          </Button>
+        </div>
         <div className="space-y-8">
           {/* Render content images with text inside canvas */}
           {renderContentImage(1)}
