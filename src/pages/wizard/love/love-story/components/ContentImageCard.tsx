@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Check } from 'lucide-react';
+import { Check, Pencil, Sparkles } from 'lucide-react';
 
 interface ContentImageCardProps {
   image?: string;
@@ -220,6 +220,38 @@ export const ContentImageCard = ({
 
   return (
     <div className="glass-card rounded-2xl p-8 py-[40px] relative">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-semibold">Image {index}</h3>
+        <div className="flex space-x-2">
+          {image ? (
+            <Button
+              variant="outline"
+              onClick={() => setIsDialogOpen(true)}
+              className="flex items-center gap-1 text-gray-700"
+            >
+              <Pencil className="h-4 w-4" />
+              Edit image
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              onClick={() => onRegenerate()}
+              disabled={isGenerating}
+              className="flex items-center gap-1 text-gray-700"
+            >
+              <Sparkles className="h-4 w-4" />
+              {isGenerating ? (
+                <>
+                  <span className="animate-pulse">Generating...</span>
+                </>
+              ) : (
+                'Generate Image'
+              )}
+            </Button>
+          )}
+        </div>
+      </div>
+      
       <div className="max-w-xl mx-auto">
         <div className="aspect-[2/1] bg-[#FFECD1] rounded-lg overflow-hidden relative">
           {isGenerating ? (

@@ -45,6 +45,7 @@ const GenerateStep = () => {
 
   const [selectedStyle, setSelectedStyle] = useState<string>('Photographic (Default)');
   const [imageTexts, setImageTexts] = useState<ImageText[]>([]);
+  const [needsGeneration, setNeedsGeneration] = useState(false);
 
   const { toast } = useToast();
 
@@ -104,7 +105,6 @@ const GenerateStep = () => {
     if (!setContentFn || !setIsGenerating) return;
 
     const lsKey = `loveStoryContentImage${index}`;
-    console.log(`Regenerating image ${index}, removing old image from localStorage: ${lsKey}`);
     localStorage.removeItem(lsKey);
 
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
@@ -127,11 +127,9 @@ const GenerateStep = () => {
       
       // Use the provided style or fall back to the stored/default style
       const imageStyle = style || selectedStyle;
-      console.log(`Using style for image ${index}: "${imageStyle}"`);
       
       // Update the stored style if a new one is provided
       if (style) {
-        console.log(`Updating selected style to: "${style}"`);
         setSelectedStyle(style);
         localStorage.setItem('loveStoryStyle', style);
       }
@@ -152,16 +150,13 @@ const GenerateStep = () => {
       if (!imageUrl) {
         throw new Error("No image generated from generate-love-cover");
       }
-      console.log(`Image ${index} generated successfully, proceeding to expansion`);
 
       // 2) 调用expand-image进行扩展
       const expandedBase64 = await expandImage(imageUrl);
-      console.log(`Image ${index} expanded successfully`);
 
       // 3) 存到state & localStorage
       setContentFn(expandedBase64);
       localStorage.setItem(lsKey, expandedBase64);
-      console.log(`Image ${index} saved to localStorage with key: ${lsKey}`);
 
       toast({
         title: "Image regenerated & expanded",
@@ -193,7 +188,6 @@ const GenerateStep = () => {
   const generateInitialImages = async (prompts: string, partnerPhoto: string) => {
     setIsGeneratingCover(true);
     setIsGeneratingContent1(true);
-    console.log('Starting to generate initial images with style:', selectedStyle);
     toast({
       title: "Generating images",
       description: "This may take a minute...",
@@ -212,58 +206,19 @@ const GenerateStep = () => {
 
       if (error) throw error;
 
-      // 处理封面图像
       if (data?.output?.[0]) {
-        console.log('Cover image generated successfully');
         setCoverImage(data.output[0]);
         localStorage.setItem('loveStoryCoverImage', data.output[0]);
-        console.log('Cover image saved to localStorage');
-      } else {
-        console.warn('No cover image was returned from the API');
       }
 
-      // 处理内容图像1
       if (data?.contentImage?.[0]) {
-        console.log('Content image 1 generated successfully');
-        
-        // 尝试扩展图像以更好地显示文本
-        try {
-          const expandedBase64 = await expandImage(data.contentImage[0]);
-          console.log('Content image 1 expanded successfully');
-          setContentImage(expandedBase64);
-          localStorage.setItem('loveStoryContentImage', expandedBase64);
-        } catch (expandError) {
-          console.error('Error expanding content image 1:', expandError);
-          // 扩展失败时使用原始图像
-          setContentImage(data.contentImage[0]);
-          localStorage.setItem('loveStoryContentImage', data.contentImage[0]);
-        }
-        
-        console.log('Content image 1 saved to localStorage');
-      } else {
-        console.warn('No content image 1 was returned from the API');
+        setContentImage(data.contentImage[0]);
+        localStorage.setItem('loveStoryContentImage', data.contentImage[0]);
       }
 
-      // 处理内容图像2
       if (data?.contentImage2?.[0]) {
-        console.log('Content image 2 generated successfully');
-        
-        // 尝试扩展图像以更好地显示文本
-        try {
-          const expandedBase64 = await expandImage(data.contentImage2[0]);
-          console.log('Content image 2 expanded successfully');
-          setContentImage2(expandedBase64);
-          localStorage.setItem('loveStoryContentImage2', expandedBase64);
-        } catch (expandError) {
-          console.error('Error expanding content image 2:', expandError);
-          // 扩展失败时使用原始图像
-          setContentImage2(data.contentImage2[0]);
-          localStorage.setItem('loveStoryContentImage2', data.contentImage2[0]);
-        }
-        
-        console.log('Content image 2 saved to localStorage');
-      } else {
-        console.warn('No content image 2 was returned from the API');
+        setContentImage2(data.contentImage2[0]);
+        localStorage.setItem('loveStoryContentImage2', data.contentImage2[0]);
       }
 
       toast({
@@ -305,6 +260,7 @@ const GenerateStep = () => {
     const savedContentImage9 = localStorage.getItem('loveStoryContentImage9');
     const savedContentImage10 = localStorage.getItem('loveStoryContentImage10');
     const savedContentImage11 = localStorage.getItem('loveStoryContentImage11');
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
     
     // Ensure we have a recipient name stored
     const savedQuestions = localStorage.getItem('loveStoryQuestions');
@@ -409,6 +365,19 @@ const GenerateStep = () => {
     if (savedContentImage11) {
       setContentImage11(savedContentImage11);
     }
+
+    // Remove automatic generation and replace with a check that sets flags
+    if (!savedCoverImage || !savedContentImage || !savedContentImage2) {
+      // Don't automatically generate images, just set a flag or state to show a message
+      console.log('Images need to be generated. Please click the generate button.');
+      // Set the flag to show the generate button
+      setNeedsGeneration(true);
+      
+      toast({
+        title: "Images Need Generation",
+        description: "Click the 'Generate Images' button below to create your love story images.",
+      });
+    }
   }, []);
 
   const handleEditCover = () => {
@@ -426,7 +395,6 @@ const GenerateStep = () => {
   };
 
   const handleRegenerateCover = async (style?: string) => {
-    console.log(`Regenerating cover image, removing old image from localStorage`);
     localStorage.removeItem('loveStoryCoverImage');
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
     const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
@@ -437,11 +405,9 @@ const GenerateStep = () => {
         
         // Use the provided style or fall back to the stored/default style
         const imageStyle = style || selectedStyle;
-        console.log(`Using style for cover image: "${imageStyle}"`);
         
         // Update the stored style if a new one is provided
         if (style) {
-          console.log(`Updating selected style to: "${style}"`);
           setSelectedStyle(style);
           localStorage.setItem('loveStoryStyle', style);
         }
@@ -456,11 +422,8 @@ const GenerateStep = () => {
           });
           if (error) throw error;
           if (data?.output?.[0]) {
-            const imageUrl = data.output[0];
-            console.log(`Cover image generated successfully`);
-            setCoverImage(imageUrl);
-            localStorage.setItem('loveStoryCoverImage', imageUrl);
-            console.log(`Cover image saved to localStorage`);
+            setCoverImage(data.output[0]);
+            localStorage.setItem('loveStoryCoverImage', data.output[0]);
             
             toast({
               title: "Cover image regenerated",
@@ -482,7 +445,6 @@ const GenerateStep = () => {
   };
 
   const handleRegenerateContent1 = async (style?: string) => {
-    console.log(`Regenerating content image 1, removing old image from localStorage`);
     localStorage.removeItem('loveStoryContentImage');
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
     const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
@@ -493,11 +455,9 @@ const GenerateStep = () => {
         
         // Use the provided style or fall back to the stored/default style
         const imageStyle = style || selectedStyle;
-        console.log(`Using style for content image 1: "${imageStyle}"`);
         
         // Update the stored style if a new one is provided
         if (style) {
-          console.log(`Updating selected style to: "${style}"`);
           setSelectedStyle(style);
           localStorage.setItem('loveStoryStyle', style);
         }
@@ -512,23 +472,8 @@ const GenerateStep = () => {
           });
           if (error) throw error;
           if (data?.contentImage?.[0]) {
-            const imageUrl = data.contentImage[0];
-            console.log(`Content image 1 generated successfully`);
-            
-            // Optionally expand the image for better text display
-            try {
-              const expandedBase64 = await expandImage(imageUrl);
-              console.log(`Content image 1 expanded successfully`);
-              setContentImage(expandedBase64);
-              localStorage.setItem('loveStoryContentImage', expandedBase64);
-            } catch (expandError) {
-              console.error('Error expanding image:', expandError);
-              // Fall back to the original image if expansion fails
-              setContentImage(imageUrl);
-              localStorage.setItem('loveStoryContentImage', imageUrl);
-            }
-            
-            console.log(`Content image 1 saved to localStorage`);
+            setContentImage(data.contentImage[0]);
+            localStorage.setItem('loveStoryContentImage', data.contentImage[0]);
             
             toast({
               title: "Image regenerated",
@@ -623,29 +568,40 @@ const GenerateStep = () => {
       totalSteps={4}
     >
       <div className="max-w-5xl mx-auto">
-        {/* 添加手动生成按钮 */}
-        <div className="mb-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
-          <h2 className="text-lg font-semibold mb-2">Image Generation</h2>
-          <p className="text-gray-600 mb-4">If your images are not showing, you can generate them manually.</p>
-          <Button
-            onClick={() => {
-              const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
-              const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
-              if (savedPrompts && partnerPhoto) {
-                generateInitialImages(savedPrompts, partnerPhoto);
-              } else {
-                toast({
-                  title: "Missing information",
-                  description: "Cannot find prompts or partner photo. Please go back to previous steps.",
-                  variant: "destructive",
-                });
-              }
-            }}
-            disabled={isGeneratingCover || isGeneratingContent1}
-          >
-            {(isGeneratingCover || isGeneratingContent1) ? 'Generating...' : 'Generate Images'}
-          </Button>
-        </div>
+        {/* Manual generation button */}
+        {needsGeneration && (
+          <div className="mb-8 p-6 border border-yellow-200 bg-yellow-50 rounded-lg">
+            <h3 className="text-lg font-semibold mb-2">Generate Images for Your Love Story</h3>
+            <p className="mb-4">You need to generate images for your love story. Click the button below to create all your story images.</p>
+            <Button 
+              onClick={() => {
+                const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+                const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+                if (savedPrompts && partnerPhoto) {
+                  generateInitialImages(savedPrompts, partnerPhoto);
+                  setNeedsGeneration(false);
+                } else {
+                  toast({
+                    title: "Missing information",
+                    description: "Prompts or partner photo missing. Please go back and complete previous steps.",
+                    variant: "destructive",
+                  });
+                }
+              }}
+              disabled={isGeneratingCover || isGeneratingContent1}
+              className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600"
+            >
+              {(isGeneratingCover || isGeneratingContent1) ? (
+                <>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-t-transparent"></div>
+                  Generating...
+                </>
+              ) : (
+                'Generate All Images'
+              )}
+            </Button>
+          </div>
+        )}
 
         {/* Cover section */}
         <div className="mb-12">
