@@ -423,8 +423,36 @@ const GenerateStep = () => {
   const handleRegenerateCover = async (style?: string) => {
     localStorage.removeItem('loveStoryCoverImage');
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
-    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
-    if (savedPrompts && partnerPhoto) {
+    
+    // Get character photos from localStorage
+    const characterPhotosString = localStorage.getItem('loveStoryCharacterPhotos');
+    const legacyPartnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    
+    // Use either the new character photos array or the legacy partner photo
+    let photos: string[] = [];
+    if (characterPhotosString) {
+      try {
+        photos = JSON.parse(characterPhotosString);
+      } catch (e) {
+        console.error('Error parsing character photos', e);
+      }
+    }
+    
+    // Fallback to legacy partner photo if no character photos found
+    if (photos.length === 0 && legacyPartnerPhoto) {
+      photos = [legacyPartnerPhoto];
+    }
+    
+    if (photos.length === 0) {
+      toast({
+        title: "Missing photos",
+        description: "No character photos found. Please add photos in the previous step.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (savedPrompts) {
       const prompts = JSON.parse(savedPrompts);
       if (prompts && prompts.length > 0) {
         setIsGeneratingCover(true);
@@ -439,14 +467,27 @@ const GenerateStep = () => {
         }
         
         try {
+          console.log("Regenerating cover with:", { 
+            prompt: prompts[0].prompt, 
+            photos, 
+            style: imageStyle
+          });
+          
           const { data, error } = await supabase.functions.invoke('generate-love-cover', {
             body: { 
               prompt: prompts[0].prompt, 
-              photo: partnerPhoto,
+              photos: photos,
               style: imageStyle
             }
           });
-          if (error) throw error;
+          
+          if (error) {
+            console.error("API error:", error);
+            throw error;
+          }
+          
+          console.log("Cover regeneration response:", data);
+          
           if (data?.output?.[0]) {
             setCoverImage(data.output[0]);
             localStorage.setItem('loveStoryCoverImage', data.output[0]);
@@ -455,12 +496,15 @@ const GenerateStep = () => {
               title: "Cover image regenerated",
               description: `Cover updated with ${imageStyle} style`,
             });
+          } else {
+            console.error("No output in response:", data);
+            throw new Error("No output returned from image generation");
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error('Error regenerating cover:', error);
           toast({
             title: "Error regenerating cover",
-            description: "Please try again",
+            description: error.message || "Please try again",
             variant: "destructive",
           });
         } finally {
@@ -473,8 +517,36 @@ const GenerateStep = () => {
   const handleRegenerateContent1 = async (style?: string) => {
     localStorage.removeItem('loveStoryContentImage');
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
-    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
-    if (savedPrompts && partnerPhoto) {
+    
+    // Get character photos from localStorage
+    const characterPhotosString = localStorage.getItem('loveStoryCharacterPhotos');
+    const legacyPartnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    
+    // Use either the new character photos array or the legacy partner photo
+    let photos: string[] = [];
+    if (characterPhotosString) {
+      try {
+        photos = JSON.parse(characterPhotosString);
+      } catch (e) {
+        console.error('Error parsing character photos', e);
+      }
+    }
+    
+    // Fallback to legacy partner photo if no character photos found
+    if (photos.length === 0 && legacyPartnerPhoto) {
+      photos = [legacyPartnerPhoto];
+    }
+    
+    if (photos.length === 0) {
+      toast({
+        title: "Missing photos",
+        description: "No character photos found. Please add photos in the previous step.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (savedPrompts) {
       const prompts = JSON.parse(savedPrompts);
       if (prompts && prompts.length > 1) {
         setIsGeneratingContent1(true);
@@ -489,14 +561,27 @@ const GenerateStep = () => {
         }
         
         try {
+          console.log("Regenerating content image 1 with:", { 
+            contentPrompt: prompts[1].prompt, 
+            photos, 
+            style: imageStyle
+          });
+          
           const { data, error } = await supabase.functions.invoke('generate-love-cover', {
             body: { 
               contentPrompt: prompts[1].prompt, 
-              photo: partnerPhoto,
+              photos: photos,
               style: imageStyle
             }
           });
-          if (error) throw error;
+          
+          if (error) {
+            console.error("API error:", error);
+            throw error;
+          }
+          
+          console.log("Content image 1 regeneration response:", data);
+          
           if (data?.contentImage?.[0]) {
             setContentImage(data.contentImage[0]);
             localStorage.setItem('loveStoryContentImage', data.contentImage[0]);
@@ -505,12 +590,15 @@ const GenerateStep = () => {
               title: "Image regenerated",
               description: `Image 1 updated with ${imageStyle} style`,
             });
+          } else {
+            console.error("No contentImage in response:", data);
+            throw new Error("No image returned from image generation");
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error('Error regenerating content image 1:', error);
           toast({
             title: "Error regenerating image",
-            description: "Please try again",
+            description: error.message || "Please try again",
             variant: "destructive",
           });
         } finally {

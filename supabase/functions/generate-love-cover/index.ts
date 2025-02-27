@@ -34,7 +34,9 @@ serve(async (req) => {
       auth: REPLICATE_API_KEY,
     });
 
-    const { prompt, contentPrompt, content2Prompt, photos, style } = await req.json();
+    // Parse request body once
+    const requestBody = await req.json();
+    const { prompt, contentPrompt, content2Prompt, photos, photo, style } = requestBody;
     
     // Get the style name to use with the API
     console.log(`Requested style from client: "${style}"`);
@@ -79,15 +81,23 @@ serve(async (req) => {
     console.log(`Mapped to API style_name: "${styleName}"`);
 
     // Handle both legacy single photo or new multiple photos format
-    const photoArray = Array.isArray(photos) ? photos : (photos ? [photos] : []);
+    let photoArray: string[] = [];
     
-    // For backward compatibility, also check for 'photo' parameter
-    if (!photoArray.length && req.json().photo) {
-      photoArray.push(req.json().photo);
+    // Check for 'photos' in array form first
+    if (Array.isArray(photos) && photos.length > 0) {
+      photoArray = photos;
+    } 
+    // Check for 'photos' as a single string
+    else if (typeof photos === 'string') {
+      photoArray = [photos];
+    }
+    // Fallback to 'photo' parameter for legacy support
+    else if (typeof photo === 'string') {
+      photoArray = [photo];
     }
     
-    if (!photoArray.length) {
-      throw new Error("No character photos provided");
+    if (photoArray.length === 0) {
+      throw new Error("No character photos provided. Please add at least one photo.");
     }
     
     console.log(`Processing with ${photoArray.length} character photo(s)`);
@@ -168,6 +178,36 @@ serve(async (req) => {
         JSON.stringify({ contentImage2 }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // Handle dynami content image generation (contentXPrompt)
+    for (let i = 3; i <= 11; i++) {
+      const contentPromptKey = `content${i}Prompt`;
+      if (requestBody[contentPromptKey] && photoArray.length > 0) {
+        console.log(`Generating content image ${i} with prompt:`, requestBody[contentPromptKey]);
+        const result = await replicate.run(
+          "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
+          {
+            input: {
+              prompt: `${requestBody[contentPromptKey]} single-person img, story moment`,
+              num_steps: 40,
+              style_name: styleName,
+              input_image: photoArray.length === 1 ? photoArray[0] : photoArray,
+              num_outputs: 1,
+              guidance_scale: 5.0,
+              style_strength_ratio: 20,
+              negative_prompt:
+                "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
+            },
+          }
+        );
+
+        const responseKey = `contentImage${i}`;
+        return new Response(
+          JSON.stringify({ [responseKey]: result }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // 同时生成封面、内容1、内容2
