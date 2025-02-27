@@ -166,23 +166,27 @@ const GenerateStep = () => {
         // 调用expand-image进行扩展
         const expandedBase64 = await expandImage(imageUrl);
 
-        // 存到state & localStorage
+        // 只将扩展后的图片存到state和localStorage
         setContentFn(expandedBase64);
         localStorage.setItem(lsKey, expandedBase64);
         
         console.log(`Successfully saved expanded image for content${index} to localStorage`);
+        
+        toast({
+          title: "Image regenerated",
+          description: `Content ${index} successfully updated with ${imageStyle} style`,
+        });
       } catch (expandError) {
         console.error(`Error expanding content image ${index}:`, expandError);
-        // 如果扩展失败，使用原始图片
+        // 如果扩展失败，仍然显示原始图片但不保存到localStorage
         setContentFn(imageUrl);
-        localStorage.setItem(lsKey, imageUrl);
-        console.log(`Saved original image for content${index} to localStorage due to expansion error`);
+        
+        toast({
+          title: "Error expanding image",
+          description: "Image was generated but expansion failed. The image will not be saved.",
+          variant: "destructive",
+        });
       }
-
-      toast({
-        title: "Image regenerated",
-        description: `Content ${index} successfully updated with ${imageStyle} style`,
-      });
     } catch (err: any) {
       console.error("Error in handleGenericContentRegeneration:", err);
       toast({
@@ -256,10 +260,13 @@ const GenerateStep = () => {
           console.log('Saved expanded content image 1 to localStorage');
         } catch (expandError) {
           console.error('Error expanding content image 1:', expandError);
-          // 如果扩展失败，仍然使用原始图片
+          // 如果扩展失败，显示原始图片但不保存到localStorage
           setContentImage1(contentImage1Url);
-          localStorage.setItem('loveStoryContentImage1', contentImage1Url);
-          console.log('Saved original content image 1 to localStorage due to expansion error');
+          toast({
+            title: "Error expanding image",
+            description: "Content image 1 was generated but expansion failed. The image will not be saved.",
+            variant: "destructive",
+          });
         }
       }
 
