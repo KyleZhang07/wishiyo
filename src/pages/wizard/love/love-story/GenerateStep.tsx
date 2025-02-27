@@ -484,6 +484,7 @@ const GenerateStep = () => {
     }
   };
 
+  // Render content images with text inside the canvas
   const renderContentImage = (imageIndex: number) => {
     const imageStateMap: Record<number, string | undefined> = {
       1: contentImage,
@@ -530,6 +531,7 @@ const GenerateStep = () => {
     const image = imageStateMap[imageIndex];
     const isLoading = loadingStateMap[imageIndex];
     const handleRegenerate = handleRegenerateMap[imageIndex];
+    // Get the text for this image, adjusting for zero-based array index
     const imageText = imageTexts && imageTexts.length > imageIndex - 1 ? imageTexts[imageIndex - 1] : null;
     
     return (
