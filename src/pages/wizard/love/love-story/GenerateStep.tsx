@@ -161,32 +161,36 @@ const GenerateStep = () => {
         throw new Error("No image generated from generate-love-cover");
       }
 
+      // 临时保存原始图片用于显示加载状态，但不保存到localStorage
+      // 这确保了在扩展过程中有图片显示
+      setContentFn(imageUrl);
+
       // 内容图片1-10需要执行扩展(对应旧的content2-11)
       try {
         // 调用expand-image进行扩展
         const expandedBase64 = await expandImage(imageUrl);
 
-        // 只将扩展后的图片存到state和localStorage
+        // 将扩展后的图片更新到state & localStorage
         setContentFn(expandedBase64);
         localStorage.setItem(lsKey, expandedBase64);
         
         console.log(`Successfully saved expanded image for content${index} to localStorage`);
-        
-        toast({
-          title: "Image regenerated",
-          description: `Content ${index} successfully updated with ${imageStyle} style`,
-        });
       } catch (expandError) {
         console.error(`Error expanding content image ${index}:`, expandError);
-        // 如果扩展失败，仍然显示原始图片但不保存到localStorage
-        setContentFn(imageUrl);
-        
+        // 如果扩展失败，移除原始图片的状态设置，确保不显示未扩展的图片
+        localStorage.removeItem(lsKey);
         toast({
-          title: "Error expanding image",
-          description: "Image was generated but expansion failed. The image will not be saved.",
+          title: "Image expansion failed",
+          description: `Unable to expand content image ${index}. Please try regenerating.`,
           variant: "destructive",
         });
+        return;
       }
+
+      toast({
+        title: "Image regenerated",
+        description: `Content ${index} successfully updated with ${imageStyle} style`,
+      });
     } catch (err: any) {
       console.error("Error in handleGenericContentRegeneration:", err);
       toast({
@@ -252,19 +256,24 @@ const GenerateStep = () => {
         // 获取内容图片1 URL - 需要扩展(对应旧的content2)
         const contentImage1Url = data.contentImage2[0];
         
+        // 临时显示原始图片以指示正在加载中
+        setContentImage1(contentImage1Url);
+        
         // 扩展内容图片1
         try {
           const expandedBase64 = await expandImage(contentImage1Url);
+          // 更新状态和localStorage为扩展后的图片
           setContentImage1(expandedBase64);
           localStorage.setItem('loveStoryContentImage1', expandedBase64);
           console.log('Saved expanded content image 1 to localStorage');
         } catch (expandError) {
           console.error('Error expanding content image 1:', expandError);
-          // 如果扩展失败，显示原始图片但不保存到localStorage
-          setContentImage1(contentImage1Url);
+          // 如果扩展失败，清除状态和localStorage，确保不显示原始图片
+          setContentImage1(undefined);
+          localStorage.removeItem('loveStoryContentImage1');
           toast({
-            title: "Error expanding image",
-            description: "Content image 1 was generated but expansion failed. The image will not be saved.",
+            title: "Image expansion failed",
+            description: "Unable to expand content image 1. Please try regenerating.",
             variant: "destructive",
           });
         }
