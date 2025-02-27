@@ -1,184 +1,110 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import Replicate from "https://esm.sh/replicate@0.25.2";
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const REPLICATE_API_KEY = Deno.env.get("REPLICATE_API_KEY");
-    if (!REPLICATE_API_KEY) {
-      throw new Error("REPLICATE_API_KEY is not set");
+    const { prompt, contentPrompt, content2Prompt, photo, imageStyle } = await req.json();
+
+    // Translate our style selections to PhotoRoom API styles
+    const styleModifier = getStyleModifier(imageStyle);
+    
+    // Default placeholder image URL
+    let coverImageUrl = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+    let contentImageUrl = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+    let contentImage2Url = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+
+    // Process images with PhotoRoom API
+    if (photo && prompt) {
+      coverImageUrl = await generateImageWithPhotoRoom(photo, prompt, styleModifier);
     }
 
-    const replicate = new Replicate({
-      auth: REPLICATE_API_KEY,
-    });
-
-    const { prompt, contentPrompt, content2Prompt, photo } = await req.json();
-
-    // 仅生成封面
-    if (!contentPrompt && !content2Prompt && prompt && photo) {
-      console.log("Generating single cover image with prompt:", prompt);
-      const output = await replicate.run(
-        "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
-        {
-          input: {
-            prompt: `${prompt} img`,
-            num_steps: 40,
-            style_name: "Photographic (Default)",
-            input_image: photo,
-            num_outputs: 1,
-            guidance_scale: 5.0,
-            style_strength_ratio: 20,
-            negative_prompt:
-              "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
-          },
-        }
-      );
-
-      return new Response(
-        JSON.stringify({ output }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    if (photo && contentPrompt) {
+      contentImageUrl = await generateImageWithPhotoRoom(photo, contentPrompt, styleModifier);
     }
 
-    // 仅生成内容图1
-    if (!prompt && !content2Prompt && contentPrompt && photo) {
-      console.log("Generating content image 1 with prompt:", contentPrompt);
-      const contentImage = await replicate.run(
-        "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
-        {
-          input: {
-            prompt: `${contentPrompt} single-person img, story moment`,
-            num_steps: 20,
-            style_name: "Photographic (Default)",
-            input_image: photo,
-            num_outputs: 1,
-            guidance_scale: 5.0,
-            style_strength_ratio: 20,
-            negative_prompt:
-              "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
-          },
-        }
-      );
-
-      return new Response(
-        JSON.stringify({ contentImage }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    if (photo && content2Prompt) {
+      contentImage2Url = await generateImageWithPhotoRoom(photo, content2Prompt, styleModifier);
     }
-
-    // 仅生成内容图2
-    if (!prompt && !contentPrompt && content2Prompt && photo) {
-      console.log("Generating content image 2 with prompt:", content2Prompt);
-      const contentImage2 = await replicate.run(
-        "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
-        {
-          input: {
-            prompt: `${content2Prompt} single-person img, story moment`,
-            num_steps: 20,
-            style_name: "Photographic (Default)",
-            input_image: photo,
-            num_outputs: 1,
-            guidance_scale: 5.0,
-            style_strength_ratio: 20,
-            negative_prompt:
-              "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
-          },
-        }
-      );
-
-      return new Response(
-        JSON.stringify({ contentImage2 }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // 同时生成封面、内容1、内容2
-    console.log("Generating all images...");
-    console.log("Cover prompt:", prompt);
-    console.log("Content 1 prompt:", contentPrompt);
-    console.log("Content 2 prompt:", content2Prompt);
-
-    const [output, contentImage, contentImage2] = await Promise.all([
-      replicate.run(
-        "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
-        {
-          input: {
-            prompt: `${prompt} img`,
-            num_steps: 20,
-            style_name: "Photographic (Default)",
-            input_image: photo,
-            num_outputs: 1,
-            guidance_scale: 5.0,
-            style_strength_ratio: 20,
-            negative_prompt:
-              "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
-          },
-        }
-      ),
-      replicate.run(
-        "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
-        {
-          input: {
-            prompt: `${contentPrompt} single-person img, story moment`,
-            num_steps: 20,
-            style_name: "Photographic (Default)",
-            input_image: photo,
-            num_outputs: 1,
-            guidance_scale: 5.0,
-            style_strength_ratio: 20,
-            negative_prompt:
-              "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
-          },
-        }
-      ),
-      replicate.run(
-        "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
-        {
-          input: {
-            prompt: `${content2Prompt} single-person img, story moment`,
-            num_steps: 20,
-            style_name: "Photographic (Default)",
-            input_image: photo,
-            num_outputs: 1,
-            guidance_scale: 5.0,
-            style_strength_ratio: 20,
-            negative_prompt:
-              "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
-          },
-        }
-      ),
-    ]);
 
     return new Response(
       JSON.stringify({
-        output,
-        contentImage,
-        contentImage2,
+        output: [coverImageUrl],
+        contentImage: [contentImageUrl],
+        contentImage2: [contentImage2Url],
       }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("Error in replicate function:", error);
+    console.error("Error generating cover:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
-      }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
     );
   }
 });
+
+// Helper function to map our style selections to appropriate PhotoRoom prompts
+function getStyleModifier(style: string): string {
+  const styleMap: Record<string, string> = {
+    'comic': 'in comic book style with bold lines and vibrant colors',
+    'line-art': 'as minimalist line art with clean outlines',
+    'fantasy': 'in fantasy art style with magical, dreamlike quality',
+    'photographic': 'as a high-quality, realistic photograph',
+    'cinematic': 'as a cinematic shot with dramatic lighting'
+  };
+
+  return styleMap[style] || '';
+}
+
+async function generateImageWithPhotoRoom(photoBase64: string, promptText: string, styleModifier: string): Promise<string> {
+  const photoRoomApiKey = Deno.env.get("PHOTOROOM_API_KEY");
+  if (!photoRoomApiKey) {
+    throw new Error("PhotoRoom API key not configured");
+  }
+
+  // Add style modifier to the prompt if provided
+  const enhancedPrompt = styleModifier ? `${promptText}, ${styleModifier}` : promptText;
+  
+  // Remove data:image/... prefix if present
+  const base64Data = photoBase64.includes("base64,")
+    ? photoBase64.split("base64,")[1]
+    : photoBase64;
+
+  try {
+    const response = await fetch("https://api.photoroom.com/v1/custom-generations", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${photoRoomApiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        prompt: enhancedPrompt,
+        image_base64: base64Data,
+        negative_prompt: "blurry, bad quality, distorted, deformed",
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("PhotoRoom API error:", errorText);
+      throw new Error(`PhotoRoom API error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.result_image_url || data.result_image_base64;
+  } catch (error) {
+    console.error("Error in PhotoRoom API call:", error);
+    throw error;
+  }
+}
