@@ -127,7 +127,7 @@ const GenerateStep = () => {
     setIsGenerating(true);
     try {
       const prompts = JSON.parse(savedPrompts);
-      // 调整索引映射，prompts索引需要加2，因为0是封面、1是献词页
+      // 重要：恢复正确的索引映射，prompts索引需要加2，因为0是封面、1是献词页
       const promptIndex = index + 2;
       if (!prompts[promptIndex]) {
         throw new Error(`No prompt found for content index ${index} (prompt index ${promptIndex})`);
@@ -153,7 +153,6 @@ const GenerateStep = () => {
       if (error) throw error;
 
       // 适配后端返回数据的键名
-      // 注意：后端可能仍使用旧的命名约定(contentImage2-11)，需相应调整
       const oldIndex = index + 2; // 将新索引(1-10)转换为旧索引(3-12)用于API请求
       const imageUrl = data?.[`contentImage${oldIndex}`]?.[0] || data?.output?.[0];
       
@@ -162,35 +161,33 @@ const GenerateStep = () => {
       }
 
       // 临时保存原始图片用于显示加载状态，但不保存到localStorage
-      // 这确保了在扩展过程中有图片显示
       setContentFn(imageUrl);
+      console.log(`Start expanding image for content ${index}...`);
 
-      // 内容图片1-10需要执行扩展(对应旧的content2-11)
+      // 内容图片1-10需要执行扩展
       try {
         // 调用expand-image进行扩展
         const expandedBase64 = await expandImage(imageUrl);
 
-        // 将扩展后的图片更新到state & localStorage
+        // 成功扩展：将扩展后的图片更新到state & localStorage
         setContentFn(expandedBase64);
         localStorage.setItem(lsKey, expandedBase64);
+        console.log(`Successfully saved expanded image for content${index} to localStorage, length:`, expandedBase64.length);
         
-        console.log(`Successfully saved expanded image for content${index} to localStorage`);
+        toast({
+          title: "Image regenerated",
+          description: `Content ${index} successfully updated with ${imageStyle} style`,
+        });
       } catch (expandError) {
         console.error(`Error expanding content image ${index}:`, expandError);
-        // 如果扩展失败，移除原始图片的状态设置，确保不显示未扩展的图片
-        localStorage.removeItem(lsKey);
+        // 扩展失败：保留原始图片在状态中但不保存到localStorage
+        setContentFn(imageUrl);
         toast({
           title: "Image expansion failed",
-          description: `Unable to expand content image ${index}. Please try regenerating.`,
+          description: `Content ${index} was generated but expansion failed. The original image is displayed.`,
           variant: "destructive",
         });
-        return;
       }
-
-      toast({
-        title: "Image regenerated",
-        description: `Content ${index} successfully updated with ${imageStyle} style`,
-      });
     } catch (err: any) {
       console.error("Error in handleGenericContentRegeneration:", err);
       toast({
@@ -218,6 +215,7 @@ const GenerateStep = () => {
   const generateInitialImages = async (prompts: string, partnerPhoto: string) => {
     setIsGeneratingCover(true);
     setIsGeneratingDedication(true);
+    setIsGeneratingContent1(true); // 添加content1的加载状态
     toast({
       title: "Generating images",
       description: "This may take a minute...",
@@ -258,6 +256,7 @@ const GenerateStep = () => {
         
         // 临时显示原始图片以指示正在加载中
         setContentImage1(contentImage1Url);
+        console.log('Start expanding content image 1...');
         
         // 扩展内容图片1
         try {
@@ -265,15 +264,13 @@ const GenerateStep = () => {
           // 更新状态和localStorage为扩展后的图片
           setContentImage1(expandedBase64);
           localStorage.setItem('loveStoryContentImage1', expandedBase64);
-          console.log('Saved expanded content image 1 to localStorage');
+          console.log('Saved expanded content image 1 to localStorage, length:', expandedBase64.length);
         } catch (expandError) {
           console.error('Error expanding content image 1:', expandError);
-          // 如果扩展失败，清除状态和localStorage，确保不显示原始图片
-          setContentImage1(undefined);
-          localStorage.removeItem('loveStoryContentImage1');
+          // 如果扩展失败，保留原始图片但不存储到localStorage
           toast({
-            title: "Image expansion failed",
-            description: "Unable to expand content image 1. Please try regenerating.",
+            title: "Image expansion warning",
+            description: "Content image 1 was generated but expansion failed. The original image is displayed.",
             variant: "destructive",
           });
         }
@@ -293,10 +290,14 @@ const GenerateStep = () => {
     } finally {
       setIsGeneratingCover(false);
       setIsGeneratingDedication(false);
+      setIsGeneratingContent1(false);
     }
   };
 
   useEffect(() => {
+    // 添加日志，查看是否正确执行加载逻辑
+    console.log('Initializing component and loading data from localStorage...');
+    
     const savedAuthor = localStorage.getItem('loveStoryAuthorName');
     const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
     const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
@@ -338,16 +339,16 @@ const GenerateStep = () => {
     console.log('Loading images from localStorage...');
     console.log('Cover image exists:', !!savedCoverImage);
     console.log('Dedication image exists:', !!savedDedicationImage);
-    console.log('Content image 1 exists:', !!savedContentImage1);
-    console.log('Content image 2 exists:', !!savedContentImage2);
-    console.log('Content image 3 exists:', !!savedContentImage3);
-    console.log('Content image 4 exists:', !!savedContentImage4);
-    console.log('Content image 5 exists:', !!savedContentImage5);
-    console.log('Content image 6 exists:', !!savedContentImage6);
-    console.log('Content image 7 exists:', !!savedContentImage7);
-    console.log('Content image 8 exists:', !!savedContentImage8);
-    console.log('Content image 9 exists:', !!savedContentImage9);
-    console.log('Content image 10 exists:', !!savedContentImage10);
+    console.log('Content image 1 exists:', !!savedContentImage1, 'Length:', savedContentImage1?.length);
+    console.log('Content image 2 exists:', !!savedContentImage2, 'Length:', savedContentImage2?.length);
+    console.log('Content image 3 exists:', !!savedContentImage3, 'Length:', savedContentImage3?.length);
+    console.log('Content image 4 exists:', !!savedContentImage4, 'Length:', savedContentImage4?.length);
+    console.log('Content image 5 exists:', !!savedContentImage5, 'Length:', savedContentImage5?.length);
+    console.log('Content image 6 exists:', !!savedContentImage6, 'Length:', savedContentImage6?.length);
+    console.log('Content image 7 exists:', !!savedContentImage7, 'Length:', savedContentImage7?.length);
+    console.log('Content image 8 exists:', !!savedContentImage8, 'Length:', savedContentImage8?.length);
+    console.log('Content image 9 exists:', !!savedContentImage9, 'Length:', savedContentImage9?.length);
+    console.log('Content image 10 exists:', !!savedContentImage10, 'Length:', savedContentImage10?.length);
     
     // 确保我们存储了收件人姓名
     const savedQuestions = localStorage.getItem('loveStoryQuestions');
@@ -416,6 +417,7 @@ const GenerateStep = () => {
       setBackCoverText(formattedMoments);
     }
 
+    // 统一设置所有图片状态
     if (savedCoverImage) {
       setCoverImage(savedCoverImage);
       console.log('Loaded cover image from localStorage, length:', savedCoverImage.length);
@@ -520,7 +522,7 @@ const GenerateStep = () => {
       }
     }
 
-    // Temporarily commented out for testing purposes
+    // 如果缺少图片，可以取消下面的注释以自动生成
     // if ((!savedCoverImage || !savedDedicationImage || !savedContentImage1) && savedPrompts && partnerPhoto) {
     //   generateInitialImages(savedPrompts, partnerPhoto);
     // }
