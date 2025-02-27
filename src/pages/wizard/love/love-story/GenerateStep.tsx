@@ -45,7 +45,6 @@ const GenerateStep = () => {
 
   const [selectedStyle, setSelectedStyle] = useState<string>('Photographic (Default)');
   const [imageTexts, setImageTexts] = useState<ImageText[]>([]);
-  const [needsGeneration, setNeedsGeneration] = useState(false);
 
   const { toast } = useToast();
 
@@ -366,18 +365,10 @@ const GenerateStep = () => {
       setContentImage11(savedContentImage11);
     }
 
-    // Remove automatic generation and replace with a check that sets flags
-    if (!savedCoverImage || !savedContentImage || !savedContentImage2) {
-      // Don't automatically generate images, just set a flag or state to show a message
-      console.log('Images need to be generated. Please click the generate button.');
-      // Set the flag to show the generate button
-      setNeedsGeneration(true);
-      
-      toast({
-        title: "Images Need Generation",
-        description: "Click the 'Generate Images' button below to create your love story images.",
-      });
-    }
+    // Temporarily commented out for testing purposes
+    // if ((!savedCoverImage || !savedContentImage || !savedContentImage2) && savedPrompts && partnerPhoto) {
+    //   generateInitialImages(savedPrompts, partnerPhoto);
+    // }
   }, []);
 
   const handleEditCover = () => {
@@ -568,41 +559,6 @@ const GenerateStep = () => {
       totalSteps={4}
     >
       <div className="max-w-5xl mx-auto">
-        {/* Manual generation button */}
-        {needsGeneration && (
-          <div className="mb-8 p-6 border border-yellow-200 bg-yellow-50 rounded-lg">
-            <h3 className="text-lg font-semibold mb-2">Generate Images for Your Love Story</h3>
-            <p className="mb-4">You need to generate images for your love story. Click the button below to create all your story images.</p>
-            <Button 
-              onClick={() => {
-                const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
-                const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
-                if (savedPrompts && partnerPhoto) {
-                  generateInitialImages(savedPrompts, partnerPhoto);
-                  setNeedsGeneration(false);
-                } else {
-                  toast({
-                    title: "Missing information",
-                    description: "Prompts or partner photo missing. Please go back and complete previous steps.",
-                    variant: "destructive",
-                  });
-                }
-              }}
-              disabled={isGeneratingCover || isGeneratingContent1}
-              className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600"
-            >
-              {(isGeneratingCover || isGeneratingContent1) ? (
-                <>
-                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-t-transparent"></div>
-                  Generating...
-                </>
-              ) : (
-                'Generate All Images'
-              )}
-            </Button>
-          </div>
-        )}
-
         {/* Cover section */}
         <div className="mb-12">
           <h2 className="text-2xl font-bold mb-4">Cover</h2>
