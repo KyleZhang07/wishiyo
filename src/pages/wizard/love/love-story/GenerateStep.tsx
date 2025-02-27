@@ -17,8 +17,12 @@ const GenerateStep = () => {
   const [authorName, setAuthorName] = useState('');
   const [backCoverText, setBackCoverText] = useState('');
   const [coverImage, setCoverImage] = useState<string>();
-  const [contentImage, setContentImage] = useState<string>();
-  // contentImage2~11
+  
+  // 更改名称 - 将 contentImage 改为 dedicationImage(献词页)
+  const [dedicationImage, setDedicationImage] = useState<string>();
+  
+  // 重命名 contentImage2~11 为 contentImage1~10
+  const [contentImage1, setContentImage1] = useState<string>();
   const [contentImage2, setContentImage2] = useState<string>();
   const [contentImage3, setContentImage3] = useState<string>();
   const [contentImage4, setContentImage4] = useState<string>();
@@ -28,9 +32,11 @@ const GenerateStep = () => {
   const [contentImage8, setContentImage8] = useState<string>();
   const [contentImage9, setContentImage9] = useState<string>();
   const [contentImage10, setContentImage10] = useState<string>();
-  const [contentImage11, setContentImage11] = useState<string>();
 
   const [isGeneratingCover, setIsGeneratingCover] = useState(false);
+  
+  // 重命名 loading 状态变量
+  const [isGeneratingDedication, setIsGeneratingDedication] = useState(false);
   const [isGeneratingContent1, setIsGeneratingContent1] = useState(false);
   const [isGeneratingContent2, setIsGeneratingContent2] = useState(false);
   const [isGeneratingContent3, setIsGeneratingContent3] = useState(false);
@@ -41,7 +47,6 @@ const GenerateStep = () => {
   const [isGeneratingContent8, setIsGeneratingContent8] = useState(false);
   const [isGeneratingContent9, setIsGeneratingContent9] = useState(false);
   const [isGeneratingContent10, setIsGeneratingContent10] = useState(false);
-  const [isGeneratingContent11, setIsGeneratingContent11] = useState(false);
 
   const [selectedStyle, setSelectedStyle] = useState<string>('Photographic (Default)');
   const [imageTexts, setImageTexts] = useState<ImageText[]>([]);
@@ -70,10 +75,12 @@ const GenerateStep = () => {
     }
   };
 
+  // 修改通用内容重生成方法，调整索引映射逻辑
   const handleGenericContentRegeneration = async (index: number, style?: string) => {
-    if (index < 2) return;
+    if (index < 1 || index > 10) return; // 现在索引1-10对应contentImage1-10
 
     const stateSetters = {
+      1: setContentImage1,
       2: setContentImage2,
       3: setContentImage3,
       4: setContentImage4,
@@ -82,11 +89,11 @@ const GenerateStep = () => {
       7: setContentImage7,
       8: setContentImage8,
       9: setContentImage9,
-      10: setContentImage10,
-      11: setContentImage11
+      10: setContentImage10
     };
 
     const loadingSetters = {
+      1: setIsGeneratingContent1,
       2: setIsGeneratingContent2,
       3: setIsGeneratingContent3,
       4: setIsGeneratingContent4,
@@ -95,14 +102,14 @@ const GenerateStep = () => {
       7: setIsGeneratingContent7,
       8: setIsGeneratingContent8,
       9: setIsGeneratingContent9,
-      10: setIsGeneratingContent10,
-      11: setIsGeneratingContent11
+      10: setIsGeneratingContent10
     };
 
     const setContentFn = stateSetters[index as keyof typeof stateSetters];
     const setIsGenerating = loadingSetters[index as keyof typeof loadingSetters];
     if (!setContentFn || !setIsGenerating) return;
 
+    // 更新localStorage键名，使用contentImage1-10
     const lsKey = `loveStoryContentImage${index}`;
     localStorage.removeItem(lsKey);
 
@@ -120,8 +127,10 @@ const GenerateStep = () => {
     setIsGenerating(true);
     try {
       const prompts = JSON.parse(savedPrompts);
-      if (!prompts[index]) {
-        throw new Error(`No prompt found for content index ${index}`);
+      // 调整索引映射，prompts索引需要加2，因为0是封面、1是献词页
+      const promptIndex = index + 2;
+      if (!prompts[promptIndex]) {
+        throw new Error(`No prompt found for content index ${index} (prompt index ${promptIndex})`);
       }
       
       // Use the provided style or fall back to the stored/default style
@@ -136,25 +145,28 @@ const GenerateStep = () => {
       // Include style in the request
       const { data, error } = await supabase.functions.invoke('generate-love-cover', {
         body: { 
-          prompt: prompts[index].prompt, 
+          prompt: prompts[promptIndex].prompt, 
           photo: partnerPhoto,
           style: imageStyle
         }
       });
       if (error) throw error;
 
-      // 后端可能返回 { output: [...]} 或 { contentImageX: [...] }
-      // 具体看你的generate-love-cover实现
-      const imageUrl = data?.[`contentImage${index}`]?.[0] || data?.output?.[0];
+      // 适配后端返回数据的键名
+      // 注意：后端可能仍使用旧的命名约定(contentImage2-11)，需相应调整
+      const oldIndex = index + 2; // 将新索引(1-10)转换为旧索引(3-12)用于API请求
+      const imageUrl = data?.[`contentImage${oldIndex}`]?.[0] || data?.output?.[0];
+      
       if (!imageUrl) {
         throw new Error("No image generated from generate-love-cover");
       }
 
+      // 内容图片1-10需要执行扩展(对应旧的content2-11)
       try {
-        // 2) 调用expand-image进行扩展
+        // 调用expand-image进行扩展
         const expandedBase64 = await expandImage(imageUrl);
 
-        // 3) 存到state & localStorage
+        // 存到state & localStorage
         setContentFn(expandedBase64);
         localStorage.setItem(lsKey, expandedBase64);
         
@@ -168,7 +180,7 @@ const GenerateStep = () => {
       }
 
       toast({
-        title: "Image regenerated & expanded",
+        title: "Image regenerated",
         description: `Content ${index} successfully updated with ${imageStyle} style`,
       });
     } catch (err: any) {
@@ -183,6 +195,8 @@ const GenerateStep = () => {
     }
   };
 
+  // 更新重生成方法的名称和调用
+  const handleRegenerateContent1 = (style?: string) => handleGenericContentRegeneration(1, style);
   const handleRegenerateContent2 = (style?: string) => handleGenericContentRegeneration(2, style);
   const handleRegenerateContent3 = (style?: string) => handleGenericContentRegeneration(3, style);
   const handleRegenerateContent4 = (style?: string) => handleGenericContentRegeneration(4, style);
@@ -192,11 +206,10 @@ const GenerateStep = () => {
   const handleRegenerateContent8 = (style?: string) => handleGenericContentRegeneration(8, style);
   const handleRegenerateContent9 = (style?: string) => handleGenericContentRegeneration(9, style);
   const handleRegenerateContent10 = (style?: string) => handleGenericContentRegeneration(10, style);
-  const handleRegenerateContent11 = (style?: string) => handleGenericContentRegeneration(11, style);
 
   const generateInitialImages = async (prompts: string, partnerPhoto: string) => {
     setIsGeneratingCover(true);
-    setIsGeneratingContent1(true);
+    setIsGeneratingDedication(true);
     toast({
       title: "Generating images",
       description: "This may take a minute...",
@@ -216,45 +229,37 @@ const GenerateStep = () => {
       if (error) throw error;
 
       if (data?.output?.[0]) {
-        // 获取封面图片URL
+        // 获取封面图片URL - 封面图片不需要扩展，直接保存
         const coverImageUrl = data.output[0];
-        
-        // 封面图片不需要扩展，直接保存
         setCoverImage(coverImageUrl);
         localStorage.setItem('loveStoryCoverImage', coverImageUrl);
+        console.log('Saved cover image to localStorage (no expansion needed)');
       }
 
       if (data?.contentImage?.[0]) {
-        // 获取content1图片URL
-        const contentImageUrl = data.contentImage[0];
-        
-        // 扩展content1图片
-        try {
-          const expandedBase64 = await expandImage(contentImageUrl);
-          setContentImage(expandedBase64);
-          localStorage.setItem('loveStoryContentImage', expandedBase64);
-        } catch (expandError) {
-          console.error('Error expanding content image 1:', expandError);
-          // 如果扩展失败，仍然使用原始图片
-          setContentImage(contentImageUrl);
-          localStorage.setItem('loveStoryContentImage', contentImageUrl);
-        }
+        // 获取献词页图片URL - 献词页不需要扩展，直接保存
+        const dedicationImageUrl = data.contentImage[0];
+        setDedicationImage(dedicationImageUrl);
+        localStorage.setItem('loveStoryDedicationImage', dedicationImageUrl);
+        console.log('Saved dedication page image to localStorage (no expansion needed)');
       }
 
       if (data?.contentImage2?.[0]) {
-        // 获取content2图片URL
-        const contentImage2Url = data.contentImage2[0];
+        // 获取内容图片1 URL - 需要扩展(对应旧的content2)
+        const contentImage1Url = data.contentImage2[0];
         
-        // 扩展content2图片
+        // 扩展内容图片1
         try {
-          const expandedBase64 = await expandImage(contentImage2Url);
-          setContentImage2(expandedBase64);
-          localStorage.setItem('loveStoryContentImage2', expandedBase64);
+          const expandedBase64 = await expandImage(contentImage1Url);
+          setContentImage1(expandedBase64);
+          localStorage.setItem('loveStoryContentImage1', expandedBase64);
+          console.log('Saved expanded content image 1 to localStorage');
         } catch (expandError) {
-          console.error('Error expanding content image 2:', expandError);
+          console.error('Error expanding content image 1:', expandError);
           // 如果扩展失败，仍然使用原始图片
-          setContentImage2(contentImage2Url);
-          localStorage.setItem('loveStoryContentImage2', contentImage2Url);
+          setContentImage1(contentImage1Url);
+          localStorage.setItem('loveStoryContentImage1', contentImage1Url);
+          console.log('Saved original content image 1 to localStorage due to expansion error');
         }
       }
 
@@ -271,7 +276,7 @@ const GenerateStep = () => {
       });
     } finally {
       setIsGeneratingCover(false);
-      setIsGeneratingContent1(false);
+      setIsGeneratingDedication(false);
     }
   };
 
@@ -284,24 +289,40 @@ const GenerateStep = () => {
     const savedStyle = localStorage.getItem('loveStoryStyle');
     const savedTexts = localStorage.getItem('loveStoryImageTexts');
     
-    // Load images
+    // 加载图片 - 使用新的键名命名方式
     const savedCoverImage = localStorage.getItem('loveStoryCoverImage');
-    const savedContentImage = localStorage.getItem('loveStoryContentImage');
-    const savedContentImage2 = localStorage.getItem('loveStoryContentImage2');
-    const savedContentImage3 = localStorage.getItem('loveStoryContentImage3');
-    const savedContentImage4 = localStorage.getItem('loveStoryContentImage4');
-    const savedContentImage5 = localStorage.getItem('loveStoryContentImage5');
-    const savedContentImage6 = localStorage.getItem('loveStoryContentImage6');
-    const savedContentImage7 = localStorage.getItem('loveStoryContentImage7');
-    const savedContentImage8 = localStorage.getItem('loveStoryContentImage8');
-    const savedContentImage9 = localStorage.getItem('loveStoryContentImage9');
-    const savedContentImage10 = localStorage.getItem('loveStoryContentImage10');
-    const savedContentImage11 = localStorage.getItem('loveStoryContentImage11');
+    
+    // 检查新旧localStorage键，确保兼容性
+    const savedDedicationImage = localStorage.getItem('loveStoryDedicationImage') || 
+                               localStorage.getItem('loveStoryContentImage'); // 兼容旧键名
+
+    // 使用新键名，但保持与旧键名的兼容性
+    const savedContentImage1 = localStorage.getItem('loveStoryContentImage1') || 
+                              localStorage.getItem('loveStoryContentImage2');
+    const savedContentImage2 = localStorage.getItem('loveStoryContentImage2') || 
+                              localStorage.getItem('loveStoryContentImage3');
+    const savedContentImage3 = localStorage.getItem('loveStoryContentImage3') || 
+                              localStorage.getItem('loveStoryContentImage4');
+    const savedContentImage4 = localStorage.getItem('loveStoryContentImage4') || 
+                              localStorage.getItem('loveStoryContentImage5');
+    const savedContentImage5 = localStorage.getItem('loveStoryContentImage5') || 
+                              localStorage.getItem('loveStoryContentImage6');
+    const savedContentImage6 = localStorage.getItem('loveStoryContentImage6') || 
+                              localStorage.getItem('loveStoryContentImage7');
+    const savedContentImage7 = localStorage.getItem('loveStoryContentImage7') || 
+                              localStorage.getItem('loveStoryContentImage8');
+    const savedContentImage8 = localStorage.getItem('loveStoryContentImage8') || 
+                              localStorage.getItem('loveStoryContentImage9');
+    const savedContentImage9 = localStorage.getItem('loveStoryContentImage9') || 
+                              localStorage.getItem('loveStoryContentImage10');
+    const savedContentImage10 = localStorage.getItem('loveStoryContentImage10') || 
+                               localStorage.getItem('loveStoryContentImage11');
     const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
     
     console.log('Loading images from localStorage...');
     console.log('Cover image exists:', !!savedCoverImage);
-    console.log('Content image 1 exists:', !!savedContentImage);
+    console.log('Dedication image exists:', !!savedDedicationImage);
+    console.log('Content image 1 exists:', !!savedContentImage1);
     console.log('Content image 2 exists:', !!savedContentImage2);
     console.log('Content image 3 exists:', !!savedContentImage3);
     console.log('Content image 4 exists:', !!savedContentImage4);
@@ -311,9 +332,8 @@ const GenerateStep = () => {
     console.log('Content image 8 exists:', !!savedContentImage8);
     console.log('Content image 9 exists:', !!savedContentImage9);
     console.log('Content image 10 exists:', !!savedContentImage10);
-    console.log('Content image 11 exists:', !!savedContentImage11);
     
-    // Ensure we have a recipient name stored
+    // 确保我们存储了收件人姓名
     const savedQuestions = localStorage.getItem('loveStoryQuestions');
     if (savedQuestions) {
       try {
@@ -384,53 +404,108 @@ const GenerateStep = () => {
       setCoverImage(savedCoverImage);
       console.log('Loaded cover image from localStorage, length:', savedCoverImage.length);
     }
-    if (savedContentImage) {
-      setContentImage(savedContentImage);
-      console.log('Loaded content image 1 from localStorage, length:', savedContentImage.length);
+    if (savedDedicationImage) {
+      setDedicationImage(savedDedicationImage);
+      console.log('Loaded dedication image from localStorage, length:', savedDedicationImage.length);
+      
+      // 如果使用的是旧键名，迁移到新键名
+      if(!localStorage.getItem('loveStoryDedicationImage') && localStorage.getItem('loveStoryContentImage')) {
+        localStorage.setItem('loveStoryDedicationImage', savedDedicationImage);
+      }
+    }
+    if (savedContentImage1) {
+      setContentImage1(savedContentImage1);
+      console.log('Loaded content image 1 from localStorage, length:', savedContentImage1.length);
+      
+      // 迁移数据
+      if(!localStorage.getItem('loveStoryContentImage1') && localStorage.getItem('loveStoryContentImage2')) {
+        localStorage.setItem('loveStoryContentImage1', savedContentImage1);
+      }
     }
     if (savedContentImage2) {
       setContentImage2(savedContentImage2);
       console.log('Loaded content image 2 from localStorage, length:', savedContentImage2.length);
+      
+      // 迁移数据
+      if(!localStorage.getItem('loveStoryContentImage2') && localStorage.getItem('loveStoryContentImage3')) {
+        localStorage.setItem('loveStoryContentImage2', savedContentImage2);
+      }
     }
     if (savedContentImage3) {
       setContentImage3(savedContentImage3);
       console.log('Loaded content image 3 from localStorage, length:', savedContentImage3.length);
+      
+      // 迁移数据
+      if(!localStorage.getItem('loveStoryContentImage3') && localStorage.getItem('loveStoryContentImage4')) {
+        localStorage.setItem('loveStoryContentImage3', savedContentImage3);
+      }
     }
     if (savedContentImage4) {
       setContentImage4(savedContentImage4);
       console.log('Loaded content image 4 from localStorage, length:', savedContentImage4.length);
+      
+      // 迁移数据
+      if(!localStorage.getItem('loveStoryContentImage4') && localStorage.getItem('loveStoryContentImage5')) {
+        localStorage.setItem('loveStoryContentImage4', savedContentImage4);
+      }
     }
     if (savedContentImage5) {
       setContentImage5(savedContentImage5);
       console.log('Loaded content image 5 from localStorage, length:', savedContentImage5.length);
+      
+      // 迁移数据
+      if(!localStorage.getItem('loveStoryContentImage5') && localStorage.getItem('loveStoryContentImage6')) {
+        localStorage.setItem('loveStoryContentImage5', savedContentImage5);
+      }
     }
     if (savedContentImage6) {
       setContentImage6(savedContentImage6);
       console.log('Loaded content image 6 from localStorage, length:', savedContentImage6.length);
+      
+      // 迁移数据
+      if(!localStorage.getItem('loveStoryContentImage6') && localStorage.getItem('loveStoryContentImage7')) {
+        localStorage.setItem('loveStoryContentImage6', savedContentImage6);
+      }
     }
     if (savedContentImage7) {
       setContentImage7(savedContentImage7);
       console.log('Loaded content image 7 from localStorage, length:', savedContentImage7.length);
+      
+      // 迁移数据
+      if(!localStorage.getItem('loveStoryContentImage7') && localStorage.getItem('loveStoryContentImage8')) {
+        localStorage.setItem('loveStoryContentImage7', savedContentImage7);
+      }
     }
     if (savedContentImage8) {
       setContentImage8(savedContentImage8);
       console.log('Loaded content image 8 from localStorage, length:', savedContentImage8.length);
+      
+      // 迁移数据
+      if(!localStorage.getItem('loveStoryContentImage8') && localStorage.getItem('loveStoryContentImage9')) {
+        localStorage.setItem('loveStoryContentImage8', savedContentImage8);
+      }
     }
     if (savedContentImage9) {
       setContentImage9(savedContentImage9);
       console.log('Loaded content image 9 from localStorage, length:', savedContentImage9.length);
+      
+      // 迁移数据
+      if(!localStorage.getItem('loveStoryContentImage9') && localStorage.getItem('loveStoryContentImage10')) {
+        localStorage.setItem('loveStoryContentImage9', savedContentImage9);
+      }
     }
     if (savedContentImage10) {
       setContentImage10(savedContentImage10);
       console.log('Loaded content image 10 from localStorage, length:', savedContentImage10.length);
-    }
-    if (savedContentImage11) {
-      setContentImage11(savedContentImage11);
-      console.log('Loaded content image 11 from localStorage, length:', savedContentImage11.length);
+      
+      // 迁移数据
+      if(!localStorage.getItem('loveStoryContentImage10') && localStorage.getItem('loveStoryContentImage11')) {
+        localStorage.setItem('loveStoryContentImage10', savedContentImage10);
+      }
     }
 
     // Temporarily commented out for testing purposes
-    // if ((!savedCoverImage || !savedContentImage || !savedContentImage2) && savedPrompts && partnerPhoto) {
+    // if ((!savedCoverImage || !savedDedicationImage || !savedContentImage1) && savedPrompts && partnerPhoto) {
     //   generateInitialImages(savedPrompts, partnerPhoto);
     // }
   }, []);
@@ -499,14 +574,15 @@ const GenerateStep = () => {
     }
   };
 
-  const handleRegenerateContent1 = async (style?: string) => {
-    localStorage.removeItem('loveStoryContentImage');
+  // 更新为新的函数名 handleRegenerateDedication
+  const handleRegenerateDedication = async (style?: string) => {
+    localStorage.removeItem('loveStoryDedicationImage');
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
     const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
     if (savedPrompts && partnerPhoto) {
       const prompts = JSON.parse(savedPrompts);
       if (prompts && prompts.length > 1) {
-        setIsGeneratingContent1(true);
+        setIsGeneratingDedication(true);
         
         // Use the provided style or fall back to the stored/default style
         const imageStyle = style || selectedStyle;
@@ -527,101 +603,111 @@ const GenerateStep = () => {
           });
           if (error) throw error;
           if (data?.contentImage?.[0]) {
-            // 获取原始图片URL
+            // 获取图片URL - 献词页不需要扩展，直接保存
             const imageUrl = data.contentImage[0];
-            
-            // 扩展图片
-            try {
-              const expandedBase64 = await expandImage(imageUrl);
-              setContentImage(expandedBase64);
-              localStorage.setItem('loveStoryContentImage', expandedBase64);
-            } catch (expandError) {
-              console.error('Error expanding content image 1:', expandError);
-              // 如果扩展失败，仍然使用原始图片
-              setContentImage(imageUrl);
-              localStorage.setItem('loveStoryContentImage', imageUrl);
-            }
+            setDedicationImage(imageUrl);
+            localStorage.setItem('loveStoryDedicationImage', imageUrl);
+            console.log('Saved dedication image to localStorage (no expansion needed)');
             
             toast({
               title: "Image regenerated",
-              description: `Image 1 updated with ${imageStyle} style`,
+              description: `Dedication page updated with ${imageStyle} style`,
             });
           }
         } catch (error) {
-          console.error('Error regenerating content image 1:', error);
+          console.error('Error regenerating dedication image:', error);
           toast({
             title: "Error regenerating image",
             description: "Please try again",
             variant: "destructive",
           });
         } finally {
-          setIsGeneratingContent1(false);
+          setIsGeneratingDedication(false);
         }
       }
     }
   };
 
-  // Render content images with text inside the canvas
-  const renderContentImage = (imageIndex: number) => {
-    const imageStateMap: Record<number, string | undefined> = {
-      1: contentImage,
-      2: contentImage2,
-      3: contentImage3,
-      4: contentImage4,
-      5: contentImage5,
-      6: contentImage6,
-      7: contentImage7,
-      8: contentImage8,
-      9: contentImage9,
-      10: contentImage10,
-      11: contentImage11,
-    };
-    
-    const loadingStateMap: Record<number, boolean> = {
-      1: isGeneratingContent1,
-      2: isGeneratingContent2,
-      3: isGeneratingContent3,
-      4: isGeneratingContent4, 
-      5: isGeneratingContent5,
-      6: isGeneratingContent6,
-      7: isGeneratingContent7,
-      8: isGeneratingContent8,
-      9: isGeneratingContent9,
-      10: isGeneratingContent10,
-      11: isGeneratingContent11,
-    };
-    
-    const handleRegenerateMap: Record<number, () => void> = {
-      1: handleRegenerateContent1,
-      2: handleRegenerateContent2,
-      3: handleRegenerateContent3,
-      4: handleRegenerateContent4,
-      5: handleRegenerateContent5,
-      6: handleRegenerateContent6,
-      7: handleRegenerateContent7,
-      8: handleRegenerateContent8,
-      9: handleRegenerateContent9,
-      10: handleRegenerateContent10,
-      11: handleRegenerateContent11,
-    };
-    
-    const image = imageStateMap[imageIndex];
-    const isLoading = loadingStateMap[imageIndex];
-    const handleRegenerate = handleRegenerateMap[imageIndex];
-    // Get the text for this image, adjusting for zero-based array index
-    const imageText = imageTexts && imageTexts.length > imageIndex - 1 ? imageTexts[imageIndex - 1] : null;
-    
+  // 更新渲染图片的方法
+  const renderImages = () => {
     return (
-      <div className="mb-10">
-        <ContentImageCard 
-          image={image} 
-          isGenerating={isLoading}
-          onRegenerate={handleRegenerate}
-          index={imageIndex}
-          onEditText={() => {}}
-          text={imageText?.text}
-        />
-      </div>
+      <>
+        {/* 献词页 */}
+        <div className="mb-10">
+          <h3 className="text-xl font-semibold mb-2">Dedication Page</h3>
+          <ContentImageCard 
+            image={dedicationImage} 
+            isGenerating={isGeneratingDedication}
+            onRegenerate={handleRegenerateDedication}
+            index={0} // 使用特殊索引0表示献词页
+            onEditText={() => {}}
+            text={imageTexts && imageTexts.length > 0 ? imageTexts[0]?.text : null}
+          />
+        </div>
+
+        {/* 内容图片1-10 */}
+        {Array.from({ length: 10 }).map((_, idx) => {
+          const imageIndex = idx + 1; // 从1开始
+          const imageStateMap: Record<number, string | undefined> = {
+            1: contentImage1,
+            2: contentImage2,
+            3: contentImage3,
+            4: contentImage4,
+            5: contentImage5,
+            6: contentImage6,
+            7: contentImage7,
+            8: contentImage8,
+            9: contentImage9,
+            10: contentImage10,
+          };
+          
+          const loadingStateMap: Record<number, boolean> = {
+            1: isGeneratingContent1,
+            2: isGeneratingContent2,
+            3: isGeneratingContent3,
+            4: isGeneratingContent4, 
+            5: isGeneratingContent5,
+            6: isGeneratingContent6,
+            7: isGeneratingContent7,
+            8: isGeneratingContent8,
+            9: isGeneratingContent9,
+            10: isGeneratingContent10,
+          };
+          
+          const handleRegenerateMap: Record<number, (style?: string) => void> = {
+            1: handleRegenerateContent1,
+            2: handleRegenerateContent2,
+            3: handleRegenerateContent3,
+            4: handleRegenerateContent4,
+            5: handleRegenerateContent5,
+            6: handleRegenerateContent6,
+            7: handleRegenerateContent7,
+            8: handleRegenerateContent8,
+            9: handleRegenerateContent9,
+            10: handleRegenerateContent10,
+          };
+          
+          const image = imageStateMap[imageIndex];
+          const isLoading = loadingStateMap[imageIndex];
+          const handleRegenerate = handleRegenerateMap[imageIndex];
+          // 获取此图片的文本，调整索引以匹配
+          const imageText = imageTexts && imageTexts.length > imageIndex ? imageTexts[imageIndex] : null;
+          
+          return (
+            <div key={imageIndex} className="mb-10">
+              <h3 className="text-xl font-semibold mb-2">Story Page {imageIndex}</h3>
+              <ContentImageCard 
+                image={image} 
+                isGenerating={isLoading}
+                onRegenerate={handleRegenerate}
+                index={imageIndex}
+                onEditText={() => {}}
+                text={imageText?.text}
+              />
+            </div>
+          );
+        })}
+      </>
     );
   };
 
@@ -646,11 +732,11 @@ const GenerateStep = () => {
               const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
               const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
               if (savedPrompts && partnerPhoto) {
-                // 生成封面和content1
+                // 生成封面和献词页
                 generateInitialImages(savedPrompts, partnerPhoto);
                 
-                // 生成content2-11
-                for(let i = 2; i <= 11; i++) {
+                // 生成内容图片1-10
+                for(let i = 1; i <= 10; i++) {
                   handleGenericContentRegeneration(i);
                 }
                 
@@ -688,18 +774,8 @@ const GenerateStep = () => {
         
         <h2 className="text-2xl font-bold mb-6">Story Images with Text</h2>
         <div className="space-y-8">
-          {/* Render content images with text inside canvas */}
-          {renderContentImage(1)}
-          {renderContentImage(2)}
-          {renderContentImage(3)}
-          {renderContentImage(4)}
-          {renderContentImage(5)}
-          {renderContentImage(6)}
-          {renderContentImage(7)}
-          {renderContentImage(8)}
-          {renderContentImage(9)}
-          {renderContentImage(10)}
-          {renderContentImage(11)}
+          {/* 渲染所有图片 */}
+          {renderImages()}
         </div>
       </div>
     </WizardStep>
