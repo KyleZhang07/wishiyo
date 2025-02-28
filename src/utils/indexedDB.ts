@@ -44,6 +44,7 @@ export const getDataFromStore = async (key: string): Promise<any> => {
         if (request.result) {
           resolve(request.result.data);
         } else {
+          console.log(`No data found for key ${key} in IndexedDB`);
           resolve(null);
         }
         db.close();
@@ -61,24 +62,50 @@ export const getDataFromStore = async (key: string): Promise<any> => {
   }
 };
 
-// Store data in the store
+// Store data in the store with transaction completion guarantee
 export const storeData = async (key: string, data: any): Promise<boolean> => {
   try {
     const db = await openDatabase();
     return new Promise((resolve, reject) => {
       const transaction = db.transaction([LOVE_STORY_STORE], 'readwrite');
       const store = transaction.objectStore(LOVE_STORY_STORE);
-      const request = store.put({ id: key, data: data });
+      
+      // Add the data with a timestamp to avoid cache issues
+      const timestamp = new Date().getTime();
+      const request = store.put({ 
+        id: key, 
+        data: data,
+        timestamp: timestamp
+      });
 
+      // Handle individual request success
       request.onsuccess = () => {
-        console.log(`Data with key ${key} stored successfully`);
+        console.log(`Data with key ${key} queued for storage successfully`);
+      };
+
+      // Handle individual request error
+      request.onerror = (event) => {
+        console.error(`Error storing data with key ${key} in IndexedDB`, event);
+        transaction.abort();
+      };
+
+      // Handle transaction completion - ensures data is actually written
+      transaction.oncomplete = () => {
+        console.log(`Transaction completed, data with key ${key} stored successfully`);
         resolve(true);
         db.close();
       };
 
-      request.onerror = (event) => {
-        console.error('Error storing data in IndexedDB', event);
-        reject('Error storing data in IndexedDB');
+      // Handle transaction abort or error
+      transaction.onabort = (event) => {
+        console.error('Transaction aborted', event);
+        reject('Transaction aborted');
+        db.close();
+      };
+
+      transaction.onerror = (event) => {
+        console.error('Error in transaction', event);
+        reject('Error in transaction');
         db.close();
       };
     });
@@ -88,7 +115,7 @@ export const storeData = async (key: string, data: any): Promise<boolean> => {
   }
 };
 
-// Remove data from store
+// Remove data from store with transaction completion guarantee
 export const removeData = async (key: string): Promise<boolean> => {
   try {
     const db = await openDatabase();
@@ -97,15 +124,34 @@ export const removeData = async (key: string): Promise<boolean> => {
       const store = transaction.objectStore(LOVE_STORY_STORE);
       const request = store.delete(key);
 
+      // Handle individual request success
       request.onsuccess = () => {
-        console.log(`Data with key ${key} removed successfully`);
+        console.log(`Data with key ${key} queued for removal`);
+      };
+
+      // Handle individual request error
+      request.onerror = (event) => {
+        console.error(`Error removing data with key ${key} from IndexedDB`, event);
+        transaction.abort();
+      };
+
+      // Handle transaction completion - ensures data is actually removed
+      transaction.oncomplete = () => {
+        console.log(`Transaction completed, data with key ${key} removed successfully`);
         resolve(true);
         db.close();
       };
 
-      request.onerror = (event) => {
-        console.error('Error removing data from IndexedDB', event);
-        reject('Error removing data from IndexedDB');
+      // Handle transaction abort or error
+      transaction.onabort = (event) => {
+        console.error('Transaction aborted', event);
+        reject('Transaction aborted');
+        db.close();
+      };
+
+      transaction.onerror = (event) => {
+        console.error('Error in transaction', event);
+        reject('Error in transaction');
         db.close();
       };
     });
@@ -150,15 +196,23 @@ export const clearStore = async (): Promise<boolean> => {
       const store = transaction.objectStore(LOVE_STORY_STORE);
       const request = store.clear();
 
-      request.onsuccess = () => {
+      // Handle transaction completion
+      transaction.oncomplete = () => {
         console.log('Store cleared successfully');
         resolve(true);
         db.close();
       };
 
-      request.onerror = (event) => {
+      // Handle transaction errors
+      transaction.onerror = (event) => {
         console.error('Error clearing store in IndexedDB', event);
         reject('Error clearing store in IndexedDB');
+        db.close();
+      };
+
+      transaction.onabort = (event) => {
+        console.error('Transaction aborted while clearing store', event);
+        reject('Transaction aborted while clearing store');
         db.close();
       };
     });
@@ -171,14 +225,20 @@ export const clearStore = async (): Promise<boolean> => {
 // Helper to migrate data from localStorage to IndexedDB
 export const migrateFromLocalStorage = async (keys: string[]): Promise<void> => {
   try {
+    console.log(`Starting migration of ${keys.length} keys from localStorage to IndexedDB`);
     for (const key of keys) {
       const value = localStorage.getItem(key);
       if (value) {
-        await storeData(key, value);
+        // Store with timestamp to keep track of when it was migrated
+        await storeData(key, {
+          data: value,
+          migratedAt: new Date().toISOString()
+        });
         console.log(`Migrated ${key} from localStorage to IndexedDB`);
       }
     }
+    console.log(`Migration completed for ${keys.length} keys`);
   } catch (error) {
     console.error('Error migrating data from localStorage to IndexedDB', error);
   }
-}; 
+};
