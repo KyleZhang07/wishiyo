@@ -30,7 +30,10 @@ const IMAGE_STORAGE_KEYS = [
   'loveStoryContentImage7',
   'loveStoryContentImage8',
   'loveStoryContentImage9',
-  'loveStoryContentImage10'
+  'loveStoryContentImage10',
+  'loveStoryInputImage2',
+  'loveStoryInputImage3',
+  'loveStoryInputImage4'
 ];
 
 const GenerateStep = () => {
@@ -50,6 +53,11 @@ const GenerateStep = () => {
   const [contentImage8, setContentImage8] = useState<string>();
   const [contentImage9, setContentImage9] = useState<string>();
   const [contentImage10, setContentImage10] = useState<string>();
+
+  // Additional input images (from MomentsStep)
+  const [inputImage2, setInputImage2] = useState<string>();
+  const [inputImage3, setInputImage3] = useState<string>();
+  const [inputImage4, setInputImage4] = useState<string>();
 
   const [isGeneratingCover, setIsGeneratingCover] = useState(false);
   const [isGeneratingIntro, setIsGeneratingIntro] = useState(false);
@@ -168,13 +176,21 @@ const GenerateStep = () => {
         localStorage.setItem('loveStoryStyle', style);
       }
 
+      // Prepare the request body with additional images if available
+      const requestBody: any = { 
+        prompt: prompts[promptIndex].prompt,
+        photo: characterPhoto,
+        style: imageStyle
+      };
+      
+      // Add additional input images if available
+      if (inputImage2) requestBody.input_image2 = inputImage2;
+      if (inputImage3) requestBody.input_image3 = inputImage3;
+      if (inputImage4) requestBody.input_image4 = inputImage4;
+
       // Include style in the request
       const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-        body: { 
-          prompt: prompts[promptIndex].prompt,
-          photo: characterPhoto,
-          style: imageStyle
-        }
+        body: requestBody
       });
       if (error) throw error;
 
@@ -227,14 +243,22 @@ const GenerateStep = () => {
     });
 
     try {
+      // Prepare the request body with additional images if available
+      const requestBody: any = { 
+        prompt: prompts, 
+        contentPrompt: prompts,
+        content2Prompt: prompts,
+        photo: characterPhoto,
+        style: selectedStyle
+      };
+      
+      // Add additional input images if available
+      if (inputImage2) requestBody.input_image2 = inputImage2;
+      if (inputImage3) requestBody.input_image3 = inputImage3;
+      if (inputImage4) requestBody.input_image4 = inputImage4;
+
       const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-        body: { 
-          prompt: prompts, 
-          contentPrompt: prompts,
-          content2Prompt: prompts,
-          photo: characterPhoto,
-          style: selectedStyle
-        }
+        body: requestBody
       });
 
       if (error) throw error;
@@ -299,6 +323,12 @@ const GenerateStep = () => {
       const savedContentImage8 = await getDataFromStore('loveStoryContentImage8');
       const savedContentImage9 = await getDataFromStore('loveStoryContentImage9');
       const savedContentImage10 = await getDataFromStore('loveStoryContentImage10');
+      
+      // Load the additional input images
+      const savedInputImage2 = await getDataFromStore('loveStoryInputImage2');
+      const savedInputImage3 = await getDataFromStore('loveStoryInputImage3');
+      const savedInputImage4 = await getDataFromStore('loveStoryInputImage4');
+      
       const characterPhoto = localStorage.getItem('loveStoryCharacterPhoto');
       
       // Ensure we have a recipient name stored
@@ -368,6 +398,7 @@ const GenerateStep = () => {
         setBackCoverText(formattedMoments);
       }
 
+      // Set main content images
       if (savedCoverImage) {
         setCoverImage(savedCoverImage);
       }
@@ -403,6 +434,17 @@ const GenerateStep = () => {
       }
       if (savedContentImage10) {
         setContentImage10(savedContentImage10);
+      }
+
+      // Set additional input images
+      if (savedInputImage2) {
+        setInputImage2(savedInputImage2);
+      }
+      if (savedInputImage3) {
+        setInputImage3(savedInputImage3);
+      }
+      if (savedInputImage4) {
+        setInputImage4(savedInputImage4);
       }
 
       // Temporarily commented out for testing purposes
@@ -449,13 +491,21 @@ const GenerateStep = () => {
         }
         
         try {
+          // Prepare the request body with additional images if available
+          const requestBody: any = { 
+            // coverImage对应prompts中的索引0
+            prompt: prompts[0].prompt,
+            photo: characterPhoto,
+            style: imageStyle
+          };
+          
+          // Add additional input images if available
+          if (inputImage2) requestBody.input_image2 = inputImage2;
+          if (inputImage3) requestBody.input_image3 = inputImage3;
+          if (inputImage4) requestBody.input_image4 = inputImage4;
+
           const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-            body: { 
-              // coverImage对应prompts中的索引0
-              prompt: prompts[0].prompt,
-              photo: characterPhoto,
-              style: imageStyle
-            }
+            body: requestBody
           });
           if (error) throw error;
           
@@ -510,13 +560,21 @@ const GenerateStep = () => {
         }
         
         try {
+          // Prepare the request body with additional images if available
+          const requestBody: any = { 
+            // introImage对应prompts中的索引1
+            prompt: prompts[1].prompt, 
+            photo: characterPhoto,
+            style: imageStyle
+          };
+          
+          // Add additional input images if available
+          if (inputImage2) requestBody.input_image2 = inputImage2;
+          if (inputImage3) requestBody.input_image3 = inputImage3;
+          if (inputImage4) requestBody.input_image4 = inputImage4;
+
           const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-            body: { 
-              // introImage对应prompts中的索引1
-              prompt: prompts[1].prompt, 
-              photo: characterPhoto,
-              style: imageStyle
-            }
+            body: requestBody
           });
           if (error) throw error;
           if (data?.contentImage?.[0] || data?.output?.[0]) {
