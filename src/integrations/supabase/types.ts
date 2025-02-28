@@ -9,24 +9,27 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      image_key_mappings: {
+      profiles: {
         Row: {
-          created_at: string | null
-          file_path: string
+          avatar_url: string | null
+          created_at: string
           id: string
-          key: string
+          updated_at: string
+          username: string | null
         }
         Insert: {
-          created_at?: string | null
-          file_path: string
-          id?: string
-          key: string
+          avatar_url?: string | null
+          created_at?: string
+          id: string
+          updated_at?: string
+          username?: string | null
         }
         Update: {
-          created_at?: string | null
-          file_path?: string
+          avatar_url?: string | null
+          created_at?: string
           id?: string
-          key?: string
+          updated_at?: string
+          username?: string | null
         }
         Relationships: []
       }

@@ -7,7 +7,6 @@ const FunnyBiographyIdeasStep = () => {
       category="friends"
       previousStep="/create/friends/funny-biography/stories"
       nextStep="/create/friends/funny-biography/photos"
-      bookType="funny-biography"
     />
   );
 };

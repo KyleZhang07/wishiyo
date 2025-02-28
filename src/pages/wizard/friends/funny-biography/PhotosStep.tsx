@@ -4,8 +4,6 @@ import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
 import { ImagePlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { uploadImage, getImageUrl } from '@/utils/supabaseStorage';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const MAX_IMAGE_DIMENSION = 1200;
@@ -16,18 +14,14 @@ const FunnyBiographyPhotosStep = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const loadPhoto = async () => {
-      try {
-        const loadedPhoto = await getImageUrl('funnyBiographyPhoto');
-        if (loadedPhoto) {
-          setPhoto(loadedPhoto);
-        }
-      } catch (error) {
-        console.error('Error loading photo from Supabase:', error);
+    try {
+      const savedPhoto = localStorage.getItem('funnyBiographyPhoto');
+      if (savedPhoto) {
+        setPhoto(savedPhoto);
       }
-    };
-    
-    loadPhoto();
+    } catch (error) {
+      console.error('Error loading photo from localStorage:', error);
+    }
   }, []);
 
   const compressImage = (file: File): Promise<string> => {
@@ -97,25 +91,28 @@ const FunnyBiographyPhotosStep = () => {
 
     try {
       const compressedDataUrl = await compressImage(file);
+      setPhoto(compressedDataUrl);
       
-      // Upload to Supabase storage
-      const imageUrl = await uploadImage('funnyBiographyPhoto', compressedDataUrl);
-      
-      if (imageUrl) {
-        setPhoto(imageUrl);
+      try {
+        localStorage.setItem('funnyBiographyPhoto', compressedDataUrl);
         toast({
           title: "Photo uploaded successfully",
           description: "Your photo has been saved"
         });
-      } else {
-        throw new Error("Failed to upload photo to storage");
+      } catch (error) {
+        console.error('Error saving to localStorage:', error);
+        toast({
+          variant: "destructive",
+          title: "Storage error",
+          description: "Could not save the photo. Please try a smaller image."
+        });
       }
     } catch (error) {
       console.error('Error processing image:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Could not process or save the image. Please try another one."
+        description: "Could not process the image. Please try another one."
       });
     }
   };
