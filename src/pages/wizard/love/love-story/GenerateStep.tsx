@@ -102,7 +102,7 @@ const GenerateStep = () => {
     const setIsGenerating = loadingSetters[index as keyof typeof loadingSetters];
     if (!setContentFn || !setIsGenerating) return;
 
-    const lsKey = `loveStoryContentImage${index+1}`;
+    const lsKey = `loveStoryContentImage${index}`;
     localStorage.removeItem(lsKey);
 
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
@@ -217,6 +217,9 @@ const GenerateStep = () => {
         setContentImage1(data.contentImage2[0]);
         localStorage.setItem('loveStoryContentImage1', data.contentImage2[0]);
       }
+
+      // 注意：初始生成只包含封面、介绍页和第一个内容页
+      // 其余内容页(2-10)需要通过"Edit image"按钮单独生成
 
       toast({
         title: "Images generated",
