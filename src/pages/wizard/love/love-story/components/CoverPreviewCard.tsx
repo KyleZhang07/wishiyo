@@ -1,8 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Edit, RefreshCw } from 'lucide-react';
 import LoveStoryCoverPreview from '@/components/cover-generator/LoveStoryCoverPreview';
-import { useState, useEffect } from 'react';
-import { getDataFromStore } from '@/utils/indexedDB';
 
 interface CoverPreviewCardProps {
   coverTitle: string;
@@ -12,7 +10,7 @@ interface CoverPreviewCardProps {
   backCoverText: string;
   isGeneratingCover: boolean;
   onEditCover: () => void;
-  onRegenerateCover: (style?: string) => void;
+  onRegenerateCover: () => void;
 }
 
 export const CoverPreviewCard = ({
@@ -25,29 +23,8 @@ export const CoverPreviewCard = ({
   onEditCover,
   onRegenerateCover
 }: CoverPreviewCardProps) => {
-  const [recipientName, setRecipientName] = useState<string>('My Love');
-  
-  useEffect(() => {
-    // First try to get from localStorage, as text data is still in localStorage
-    const savedRecipient = localStorage.getItem('loveStoryRecipientName');
-    if (savedRecipient) {
-      setRecipientName(savedRecipient);
-    } else {
-      // As a fallback, try to get from IndexedDB
-      const loadRecipientName = async () => {
-        try {
-          const storedRecipient = await getDataFromStore('loveStoryRecipientName');
-          if (storedRecipient) {
-            setRecipientName(storedRecipient);
-          }
-        } catch (error) {
-          console.error('Error loading recipient name from IndexedDB:', error);
-        }
-      };
-      
-      loadRecipientName();
-    }
-  }, []);
+  // Get recipient name from localStorage
+  const recipientName = localStorage.getItem('loveStoryRecipientName') || 'My Love';
 
   return (
     <div className="glass-card rounded-2xl p-8 py-[40px] relative">
@@ -71,7 +48,7 @@ export const CoverPreviewCard = ({
           </Button>
           <Button
             variant="secondary"
-            onClick={() => onRegenerateCover()}
+            onClick={onRegenerateCover}
             disabled={isGeneratingCover}
           >
             <RefreshCw className={`w-4 h-4 mr-2 ${isGeneratingCover ? 'animate-spin' : ''}`} />

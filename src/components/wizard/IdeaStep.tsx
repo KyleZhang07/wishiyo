@@ -6,16 +6,6 @@ import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { Check } from 'lucide-react';
-import { storeData, getDataFromStore } from '@/utils/indexedDB';
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 interface Chapter {
   title: string;
@@ -62,26 +52,19 @@ interface IdeaStepProps {
   category: 'friends' | 'love';
   previousStep: string;
   nextStep: string;
-  bookType: string;
 }
-
-// 这是一个引用，保存爱情故事类别中的图像数据的IndexedDB键
-const LOVE_STORY_IMAGE_KEYS = [
-  'loveStoryCharacterPhoto'
-];
 
 const IdeaStep = ({
   category,
   previousStep,
-  nextStep,
-  bookType
+  nextStep
 }: IdeaStepProps) => {
   const [ideas, setIdeas] = useState<BookIdea[]>([]);
   const [selectedIdeaIndex, setSelectedIdeaIndex] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [imagePrompts, setImagePrompts] = useState<ImagePrompt[]>([]);
   const [selectedTone, setSelectedTone] = useState<string>('Heartfelt');
-  const [selectedStyle, setSelectedStyle] = useState<string>("Photographic");
+  const [selectedStyle, setSelectedStyle] = useState<string>('Photographic');
   const [isGeneratingTexts, setIsGeneratingTexts] = useState(false);
   const [imageTexts, setImageTexts] = useState<ImageText[]>([]);
   const { toast } = useToast();
@@ -264,62 +247,51 @@ const IdeaStep = ({
     }
   };
 
-  const generateImageTexts = async (imagePrompts: ImagePrompt[], tone: string) => {
+  const generateImageTexts = async (prompts: ImagePrompt[], tone: string) => {
     setIsGeneratingTexts(true);
-    
     try {
       const path = window.location.pathname;
       const bookType = path.split('/')[3];
-      const personNameKey = 'loveStoryRecipientName';
-      const personName = localStorage.getItem(personNameKey);
-      
+      const { textsKey } = getStorageKeys(bookType);
+
+      const personName = localStorage.getItem('loveStoryPersonName');
       if (!personName) {
-        toast({
-          title: "Missing recipient name",
-          description: "Please complete the author step first.",
-          variant: "destructive",
-        });
-        return;
+        throw new Error('Missing person name');
       }
-      
+
       const { data, error } = await supabase.functions.invoke('generate-image-texts', {
         body: { 
-          prompts: imagePrompts.map(p => p.prompt),
+          prompts,
           tone,
           personName
         }
       });
-      
+
       if (error) throw error;
-      
-      if (data?.texts && Array.isArray(data.texts)) {
-        const newImageTexts = data.texts.map((text: string, index: number) => ({
-          text,
-          tone
-        }));
-        
-        setImageTexts(newImageTexts);
-        
-        // Save to localStorage
-        const { textsKey } = getStorageKeys(bookType);
-        localStorage.setItem(textsKey, JSON.stringify(newImageTexts));
-        
-        // Also save tone selection
-        const { toneKey } = getStorageKeys(bookType);
-        localStorage.setItem(toneKey, tone);
-        
-        toast({
-          title: "Texts generated",
-          description: `Generated ${newImageTexts.length} texts with ${tone} tone.`,
-        });
+
+      if (!data || !data.texts) {
+        throw new Error('No texts received from the server');
       }
+
+      setImageTexts(data.texts);
+      localStorage.setItem(textsKey, JSON.stringify(data.texts));
+
     } catch (error) {
       console.error('Error generating image texts:', error);
       toast({
-        title: "Error generating texts",
-        description: "Please try again later.",
+        title: "Error generating text accompaniments",
+        description: "Using default text instead.",
         variant: "destructive",
       });
+      
+      // Create default texts as fallback
+      const defaultTexts = prompts.map(prompt => ({
+        text: "A special moment captured in time.",
+        tone: tone
+      }));
+      
+      setImageTexts(defaultTexts);
+      localStorage.setItem(getStorageKeys('love-story').textsKey, JSON.stringify(defaultTexts));
     } finally {
       setIsGeneratingTexts(false);
     }
@@ -351,10 +323,10 @@ const IdeaStep = ({
 
   const handleStyleSelect = (style: string) => {
     setSelectedStyle(style);
-    // 每次选择样式时都保存到localStorage
     const path = window.location.pathname;
-    const currentBookType = path.split('/')[3] || bookType;
-    const { styleKey } = getStorageKeys(currentBookType);
+    const bookType = path.split('/')[3];
+    const { styleKey } = getStorageKeys(bookType);
+    
     localStorage.setItem(styleKey, style);
   };
 
@@ -384,39 +356,6 @@ const IdeaStep = ({
     navigate(nextStep);
   };
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      const file = event.target.files[0];
-      
-      // Check file size (5MB max)
-      if (file.size > 5 * 1024 * 1024) {
-        toast({
-          title: "File too large",
-          description: "Please upload an image smaller than 5MB.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      // Convert to base64
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const base64String = e.target?.result as string;
-        
-        // 存储到IndexedDB
-        await storeData('loveStoryCharacterPhoto', base64String);
-        // 同时保存到localStorage以向后兼容
-        localStorage.setItem('loveStoryCharacterPhoto', base64String);
-        
-        toast({
-          title: "Photo uploaded",
-          description: "Your photo has been uploaded successfully.",
-        });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   useEffect(() => {
     const path = window.location.pathname;
     const bookType = path.split('/')[3];
@@ -438,8 +377,6 @@ const IdeaStep = ({
       
       if (savedStyle) {
         setSelectedStyle(savedStyle);
-      } else {
-        localStorage.setItem(styleKey, 'Photographic');
       }
       
       // Load saved image texts
@@ -491,22 +428,6 @@ const IdeaStep = ({
       generateIdeas();
     }
   }, [category]);
-
-  // 确保样式选择保存到localStorage
-  useEffect(() => {
-    const path = window.location.pathname;
-    const currentBookType = path.split('/')[3] || bookType;
-    const { styleKey } = getStorageKeys(currentBookType);
-    const savedStyle = localStorage.getItem(styleKey);
-    
-    if (savedStyle) {
-      setSelectedStyle(savedStyle);
-    } else if (category === 'love') {
-      // 如果是love类别且没有保存的样式，默认设置为Photographic
-      localStorage.setItem(styleKey, "Photographic");
-      setSelectedStyle("Photographic");
-    }
-  }, [bookType, category]);
 
   return (
     <WizardStep

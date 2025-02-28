@@ -10,7 +10,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Check } from 'lucide-react';
-import { storeData } from '@/utils/indexedDB';
 
 interface ContentImageCardProps {
   image?: string;
@@ -210,14 +209,9 @@ export const ContentImageCard = ({
     setSelectedStyle(style);
   };
 
-  const handleRegenerateWithStyle = async () => {
-    // Save the selected style to localStorage and IndexedDB
+  const handleRegenerateWithStyle = () => {
+    // Save the selected style to localStorage
     localStorage.setItem('loveStoryStyle', selectedStyle);
-    try {
-      await storeData('loveStoryStyle', selectedStyle);
-    } catch (error) {
-      console.error('Error storing style in IndexedDB:', error);
-    }
     
     // Close the dialog
     setIsDialogOpen(false);

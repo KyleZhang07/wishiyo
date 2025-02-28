@@ -5,36 +5,11 @@ import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { CoverPreviewCard } from './components/CoverPreviewCard';
 import { ContentImageCard } from './components/ContentImageCard';
-import { 
-  getDataFromStore, 
-  storeData, 
-  removeData, 
-  migrateFromLocalStorage 
-} from '@/utils/indexedDB';
 
 interface ImageText {
   text: string;
   tone: string;
 }
-
-// Define image-related localStorage keys for migration
-const IMAGE_STORAGE_KEYS = [
-  'loveStoryCoverImage',
-  'loveStoryIntroImage',
-  'loveStoryContentImage1',
-  'loveStoryContentImage2',
-  'loveStoryContentImage3',
-  'loveStoryContentImage4',
-  'loveStoryContentImage5',
-  'loveStoryContentImage6',
-  'loveStoryContentImage7',
-  'loveStoryContentImage8',
-  'loveStoryContentImage9',
-  'loveStoryContentImage10',
-  'loveStoryInputImage2',
-  'loveStoryInputImage3',
-  'loveStoryInputImage4'
-];
 
 const GenerateStep = () => {
   const [coverTitle, setCoverTitle] = useState('');
@@ -54,11 +29,6 @@ const GenerateStep = () => {
   const [contentImage9, setContentImage9] = useState<string>();
   const [contentImage10, setContentImage10] = useState<string>();
 
-  // Additional input images (from MomentsStep)
-  const [inputImage2, setInputImage2] = useState<string>();
-  const [inputImage3, setInputImage3] = useState<string>();
-  const [inputImage4, setInputImage4] = useState<string>();
-
   const [isGeneratingCover, setIsGeneratingCover] = useState(false);
   const [isGeneratingIntro, setIsGeneratingIntro] = useState(false);
   const [isGeneratingContent1, setIsGeneratingContent1] = useState(false);
@@ -74,20 +44,8 @@ const GenerateStep = () => {
 
   const [selectedStyle, setSelectedStyle] = useState<string>('Photographic (Default)');
   const [imageTexts, setImageTexts] = useState<ImageText[]>([]);
-  const [migratedToIndexedDB, setMigratedToIndexedDB] = useState(false);
 
   const { toast } = useToast();
-
-  // Function to migrate existing image data from localStorage to IndexedDB
-  const migrateImagesToIndexedDB = async () => {
-    try {
-      await migrateFromLocalStorage(IMAGE_STORAGE_KEYS);
-      setMigratedToIndexedDB(true);
-      console.log('Successfully migrated image data to IndexedDB');
-    } catch (error) {
-      console.error('Failed to migrate images to IndexedDB:', error);
-    }
-  };
 
   const expandImage = async (imageUrl: string): Promise<string> => {
     try {
@@ -144,16 +102,15 @@ const GenerateStep = () => {
     const setIsGenerating = loadingSetters[index as keyof typeof loadingSetters];
     if (!setContentFn || !setIsGenerating) return;
 
-    const lsKey = `loveStoryContentImage${index}`;
-    // Remove from IndexedDB instead of localStorage
-    await removeData(lsKey);
+    const lsKey = `loveStoryContentImage${index+1}`;
+    localStorage.removeItem(lsKey);
 
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
-    const characterPhoto = localStorage.getItem('loveStoryCharacterPhoto');
-    if (!savedPrompts || !characterPhoto) {
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    if (!savedPrompts || !partnerPhoto) {
       toast({
         title: "Missing info",
-        description: "No prompts or character photo found",
+        description: "No prompts or partner photo found",
         variant: "destructive",
       });
       return;
@@ -162,9 +119,8 @@ const GenerateStep = () => {
     setIsGenerating(true);
     try {
       const prompts = JSON.parse(savedPrompts);
-      const promptIndex = index + 1;
-      if (!prompts[promptIndex]) {
-        throw new Error(`No prompt found for content index ${promptIndex}`);
+      if (!prompts[index+1]) {
+        throw new Error(`No prompt found for content index ${index+1}`);
       }
       
       // Use the provided style or fall back to the stored/default style
@@ -176,26 +132,18 @@ const GenerateStep = () => {
         localStorage.setItem('loveStoryStyle', style);
       }
 
-      // Prepare the request body with additional images if available
-      const requestBody: any = { 
-        prompt: prompts[promptIndex].prompt,
-        photo: characterPhoto,
-        style: imageStyle
-      };
-      
-      // Add additional input images if available
-      if (inputImage2) requestBody.input_image2 = inputImage2;
-      if (inputImage3) requestBody.input_image3 = inputImage3;
-      if (inputImage4) requestBody.input_image4 = inputImage4;
-
       // Include style in the request
       const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-        body: requestBody
+        body: { 
+          prompt: prompts[index+1].prompt,
+          photo: partnerPhoto,
+          style: imageStyle
+        }
       });
       if (error) throw error;
 
       // 后端可能返回 { output: [...]} 或 { contentImageX: [...] }
-      const imageUrl = data?.[`contentImage${promptIndex}`]?.[0] || data?.output?.[0];
+      const imageUrl = data?.[`contentImage${index+1}`]?.[0] || data?.output?.[0];
       if (!imageUrl) {
         throw new Error("No image generated from generate-love-cover");
       }
@@ -203,9 +151,9 @@ const GenerateStep = () => {
       // 2) 调用expand-image进行扩展
       const expandedBase64 = await expandImage(imageUrl);
 
-      // 3) 存到state & IndexedDB (而不是localStorage)
+      // 3) 存到state & localStorage
       setContentFn(expandedBase64);
-      await storeData(lsKey, expandedBase64);
+      localStorage.setItem(lsKey, expandedBase64);
 
       toast({
         title: "Image regenerated & expanded",
@@ -234,7 +182,7 @@ const GenerateStep = () => {
   const handleRegenerateContent9 = (style?: string) => handleGenericContentRegeneration(9, style);
   const handleRegenerateContent10 = (style?: string) => handleGenericContentRegeneration(10, style);
 
-  const generateInitialImages = async (prompts: string, characterPhoto: string) => {
+  const generateInitialImages = async (prompts: string, partnerPhoto: string) => {
     setIsGeneratingCover(true);
     setIsGeneratingIntro(true);
     toast({
@@ -243,39 +191,31 @@ const GenerateStep = () => {
     });
 
     try {
-      // Prepare the request body with additional images if available
-      const requestBody: any = { 
-        prompt: prompts, 
-        contentPrompt: prompts,
-        content2Prompt: prompts,
-        photo: characterPhoto,
-        style: selectedStyle
-      };
-      
-      // Add additional input images if available
-      if (inputImage2) requestBody.input_image2 = inputImage2;
-      if (inputImage3) requestBody.input_image3 = inputImage3;
-      if (inputImage4) requestBody.input_image4 = inputImage4;
-
       const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-        body: requestBody
+        body: { 
+          prompt: prompts, 
+          contentPrompt: prompts,
+          content2Prompt: prompts,
+          photo: partnerPhoto,
+          style: selectedStyle
+        }
       });
 
       if (error) throw error;
 
       if (data?.output?.[0]) {
         setCoverImage(data.output[0]);
-        await storeData('loveStoryCoverImage', data.output[0]);
+        localStorage.setItem('loveStoryCoverImage', data.output[0]);
       }
 
       if (data?.contentImage?.[0]) {
         setIntroImage(data.contentImage[0]);
-        await storeData('loveStoryIntroImage', data.contentImage[0]);
+        localStorage.setItem('loveStoryIntroImage', data.contentImage[0]);
       }
 
       if (data?.contentImage2?.[0]) {
         setContentImage1(data.contentImage2[0]);
-        await storeData('loveStoryContentImage1', data.contentImage2[0]);
+        localStorage.setItem('loveStoryContentImage1', data.contentImage2[0]);
       }
 
       toast({
@@ -296,165 +236,138 @@ const GenerateStep = () => {
   };
 
   useEffect(() => {
-    // First, attempt to migrate existing image data from localStorage to IndexedDB
-    if (!migratedToIndexedDB) {
-      migrateImagesToIndexedDB();
+    const savedAuthor = localStorage.getItem('loveStoryAuthorName');
+    const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
+    const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
+    const savedMoments = localStorage.getItem('loveStoryMoments');
+    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const savedStyle = localStorage.getItem('loveStoryStyle');
+    const savedTexts = localStorage.getItem('loveStoryImageTexts');
+    
+    // Load images
+    const savedCoverImage = localStorage.getItem('loveStoryCoverImage');
+    const savedIntroImage = localStorage.getItem('loveStoryIntroImage');
+    const savedContentImage1 = localStorage.getItem('loveStoryContentImage1');
+    const savedContentImage2 = localStorage.getItem('loveStoryContentImage2');
+    const savedContentImage3 = localStorage.getItem('loveStoryContentImage3');
+    const savedContentImage4 = localStorage.getItem('loveStoryContentImage4');
+    const savedContentImage5 = localStorage.getItem('loveStoryContentImage5');
+    const savedContentImage6 = localStorage.getItem('loveStoryContentImage6');
+    const savedContentImage7 = localStorage.getItem('loveStoryContentImage7');
+    const savedContentImage8 = localStorage.getItem('loveStoryContentImage8');
+    const savedContentImage9 = localStorage.getItem('loveStoryContentImage9');
+    const savedContentImage10 = localStorage.getItem('loveStoryContentImage10');
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    
+    // Ensure we have a recipient name stored
+    const savedQuestions = localStorage.getItem('loveStoryQuestions');
+    if (savedQuestions) {
+      try {
+        const questions = JSON.parse(savedQuestions);
+        const nameQuestion = questions.find((q: any) => 
+          q.question.toLowerCase().includes('name') && 
+          !q.question.toLowerCase().includes('your name')
+        );
+        
+        if (nameQuestion && nameQuestion.answer) {
+          localStorage.setItem('loveStoryRecipientName', nameQuestion.answer);
+        }
+      } catch (error) {
+        console.error('Error parsing questions:', error);
+      }
     }
 
-    const loadData = async () => {
-      const savedAuthor = localStorage.getItem('loveStoryAuthorName');
-      const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
-      const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
-      const savedMoments = localStorage.getItem('loveStoryMoments');
-      const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
-      const savedStyle = localStorage.getItem('loveStoryStyle');
-      const savedTexts = localStorage.getItem('loveStoryImageTexts');
+    if (savedAuthor) {
+      setAuthorName(savedAuthor);
+    }
+
+    if (savedStyle) {
+      // Map old style names to new API-compatible style names
+      const styleMapping: Record<string, string> = {
+        'Comic Book': 'Comic book',
+        'Line Art': 'Line art',
+        'Fantasy Art': 'Fantasy art',
+        'Photographic': 'Photographic (Default)',
+        'Cinematic': 'Cinematic'
+      };
       
-      // Load images from IndexedDB
-      const savedCoverImage = await getDataFromStore('loveStoryCoverImage');
-      const savedIntroImage = await getDataFromStore('loveStoryIntroImage');
-      const savedContentImage1 = await getDataFromStore('loveStoryContentImage1');
-      const savedContentImage2 = await getDataFromStore('loveStoryContentImage2');
-      const savedContentImage3 = await getDataFromStore('loveStoryContentImage3');
-      const savedContentImage4 = await getDataFromStore('loveStoryContentImage4');
-      const savedContentImage5 = await getDataFromStore('loveStoryContentImage5');
-      const savedContentImage6 = await getDataFromStore('loveStoryContentImage6');
-      const savedContentImage7 = await getDataFromStore('loveStoryContentImage7');
-      const savedContentImage8 = await getDataFromStore('loveStoryContentImage8');
-      const savedContentImage9 = await getDataFromStore('loveStoryContentImage9');
-      const savedContentImage10 = await getDataFromStore('loveStoryContentImage10');
+      // Use the mapping or the original value
+      const normalizedStyle = styleMapping[savedStyle] || savedStyle;
+      setSelectedStyle(normalizedStyle);
       
-      // Load the additional input images
-      const savedInputImage2 = await getDataFromStore('loveStoryInputImage2');
-      const savedInputImage3 = await getDataFromStore('loveStoryInputImage3');
-      const savedInputImage4 = await getDataFromStore('loveStoryInputImage4');
-      
-      const characterPhoto = localStorage.getItem('loveStoryCharacterPhoto');
-      
-      // Ensure we have a recipient name stored
-      const savedQuestions = localStorage.getItem('loveStoryQuestions');
-      if (savedQuestions) {
-        try {
-          const questions = JSON.parse(savedQuestions);
-          const nameQuestion = questions.find((q: any) => 
-            q.question.toLowerCase().includes('name') && 
-            !q.question.toLowerCase().includes('your name')
-          );
-          
-          if (nameQuestion && nameQuestion.answer) {
-            localStorage.setItem('loveStoryRecipientName', nameQuestion.answer);
-          }
-        } catch (error) {
-          console.error('Error parsing questions:', error);
-        }
+      // Update localStorage with the normalized style if it changed
+      if (normalizedStyle !== savedStyle) {
+        localStorage.setItem('loveStoryStyle', normalizedStyle);
       }
+    }
 
-      if (savedAuthor) {
-        setAuthorName(savedAuthor);
+    if (savedTexts) {
+      try {
+        setImageTexts(JSON.parse(savedTexts));
+      } catch (error) {
+        console.error('Error parsing saved texts:', error);
       }
+    }
 
-      if (savedStyle) {
-        // Map old style names to new API-compatible style names
-        const styleMapping: Record<string, string> = {
-          'Comic Book': 'Comic book',
-          'Line Art': 'Line art',
-          'Fantasy Art': 'Fantasy art',
-          'Photographic': 'Photographic (Default)',
-          'Cinematic': 'Cinematic'
-        };
-        
-        // Use the mapping or the original value
-        const normalizedStyle = styleMapping[savedStyle] || savedStyle;
-        setSelectedStyle(normalizedStyle);
-        
-        // Update localStorage with the normalized style if it changed
-        if (normalizedStyle !== savedStyle) {
-          localStorage.setItem('loveStoryStyle', normalizedStyle);
-        }
+    if (savedIdeas && savedIdeaIndex) {
+      const ideas = JSON.parse(savedIdeas);
+      const selectedIdea = ideas[parseInt(savedIdeaIndex)];
+      if (selectedIdea) {
+        setCoverTitle(selectedIdea.title || '');
+        setSubtitle(selectedIdea.description || '');
       }
+    }
 
-      if (savedTexts) {
-        try {
-          setImageTexts(JSON.parse(savedTexts));
-        } catch (error) {
-          console.error('Error parsing saved texts:', error);
-        }
-      }
+    if (savedMoments) {
+      const moments = JSON.parse(savedMoments);
+      const formattedMoments = moments
+        .map((moment: string) => `"${moment}"`)
+        .join('\n\n');
+      setBackCoverText(formattedMoments);
+    }
 
-      if (savedIdeas && savedIdeaIndex) {
-        const ideas = JSON.parse(savedIdeas);
-        const selectedIdea = ideas[parseInt(savedIdeaIndex)];
-        if (selectedIdea) {
-          setCoverTitle(selectedIdea.title || '');
-          setSubtitle(selectedIdea.description || '');
-        }
-      }
+    if (savedCoverImage) {
+      setCoverImage(savedCoverImage);
+    }
+    if (savedIntroImage) {
+      setIntroImage(savedIntroImage);
+    }
+    if (savedContentImage1) {
+      setContentImage1(savedContentImage1);
+    }
+    if (savedContentImage2) {
+      setContentImage2(savedContentImage2);
+    }
+    if (savedContentImage3) {
+      setContentImage3(savedContentImage3);
+    }
+    if (savedContentImage4) {
+      setContentImage4(savedContentImage4);
+    }
+    if (savedContentImage5) {
+      setContentImage5(savedContentImage5);
+    }
+    if (savedContentImage6) {
+      setContentImage6(savedContentImage6);
+    }
+    if (savedContentImage7) {
+      setContentImage7(savedContentImage7);
+    }
+    if (savedContentImage8) {
+      setContentImage8(savedContentImage8);
+    }
+    if (savedContentImage9) {
+      setContentImage9(savedContentImage9);
+    }
+    if (savedContentImage10) {
+      setContentImage10(savedContentImage10);
+    }
 
-      if (savedMoments) {
-        const moments = JSON.parse(savedMoments);
-        const formattedMoments = moments
-          .map((moment: string) => `"${moment}"`)
-          .join('\n\n');
-        setBackCoverText(formattedMoments);
-      }
-
-      // Set main content images
-      if (savedCoverImage) {
-        setCoverImage(savedCoverImage);
-      }
-      if (savedIntroImage) {
-        setIntroImage(savedIntroImage);
-      }
-      if (savedContentImage1) {
-        setContentImage1(savedContentImage1);
-      }
-      if (savedContentImage2) {
-        setContentImage2(savedContentImage2);
-      }
-      if (savedContentImage3) {
-        setContentImage3(savedContentImage3);
-      }
-      if (savedContentImage4) {
-        setContentImage4(savedContentImage4);
-      }
-      if (savedContentImage5) {
-        setContentImage5(savedContentImage5);
-      }
-      if (savedContentImage6) {
-        setContentImage6(savedContentImage6);
-      }
-      if (savedContentImage7) {
-        setContentImage7(savedContentImage7);
-      }
-      if (savedContentImage8) {
-        setContentImage8(savedContentImage8);
-      }
-      if (savedContentImage9) {
-        setContentImage9(savedContentImage9);
-      }
-      if (savedContentImage10) {
-        setContentImage10(savedContentImage10);
-      }
-
-      // Set additional input images
-      if (savedInputImage2) {
-        setInputImage2(savedInputImage2);
-      }
-      if (savedInputImage3) {
-        setInputImage3(savedInputImage3);
-      }
-      if (savedInputImage4) {
-        setInputImage4(savedInputImage4);
-      }
-
-      // Temporarily commented out for testing purposes
-      // if ((!savedCoverImage || !savedIntroImage || !savedContentImage1) && savedPrompts && characterPhoto) {
-      //   generateInitialImages(savedPrompts, characterPhoto);
-      // }
-    };
-    
-    loadData();
-  }, [migratedToIndexedDB]);
+    // Temporarily commented out for testing purposes
+    // if ((!savedCoverImage || !savedIntroImage || !savedContentImage1) && savedPrompts && partnerPhoto) {
+    //   generateInitialImages(savedPrompts, partnerPhoto);
+    // }
+  }, []);
 
   const handleEditCover = () => {
     toast({
@@ -471,12 +384,10 @@ const GenerateStep = () => {
   };
 
   const handleRegenerateCover = async (style?: string) => {
-    // Remove from IndexedDB instead of localStorage
-    await removeData('loveStoryCoverImage');
-    
+    localStorage.removeItem('loveStoryCoverImage');
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
-    const characterPhoto = localStorage.getItem('loveStoryCharacterPhoto');
-    if (savedPrompts && characterPhoto) {
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    if (savedPrompts && partnerPhoto) {
       const prompts = JSON.parse(savedPrompts);
       if (prompts && prompts.length > 0) {
         setIsGeneratingCover(true);
@@ -491,40 +402,23 @@ const GenerateStep = () => {
         }
         
         try {
-          // Prepare the request body with additional images if available
-          const requestBody: any = { 
-            // coverImage对应prompts中的索引0
-            prompt: prompts[0].prompt,
-            photo: characterPhoto,
-            style: imageStyle
-          };
-          
-          // Add additional input images if available
-          if (inputImage2) requestBody.input_image2 = inputImage2;
-          if (inputImage3) requestBody.input_image3 = inputImage3;
-          if (inputImage4) requestBody.input_image4 = inputImage4;
-
           const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-            body: requestBody
+            body: { 
+              prompt: prompts[0].prompt, 
+              photo: partnerPhoto,
+              style: imageStyle
+            }
           });
           if (error) throw error;
-          
-          // Backend might return result in output or coverImage field
-          const imageUrl = data?.output?.[0] || data?.coverImage?.[0];
-          if (!imageUrl) {
-            throw new Error("No image generated from generate-love-cover");
+          if (data?.output?.[0]) {
+            setCoverImage(data.output[0]);
+            localStorage.setItem('loveStoryCoverImage', data.output[0]);
+            
+            toast({
+              title: "Cover image regenerated",
+              description: `Cover updated with ${imageStyle} style`,
+            });
           }
-          
-          // 调用expand-image进行扩展
-          const expandedBase64 = await expandImage(imageUrl);
-          
-          setCoverImage(expandedBase64);
-          await storeData('loveStoryCoverImage', expandedBase64);
-          
-          toast({
-            title: "Cover regenerated",
-            description: `Cover updated with ${imageStyle} style`,
-          });
         } catch (error) {
           console.error('Error regenerating cover:', error);
           toast({
@@ -540,12 +434,10 @@ const GenerateStep = () => {
   };
 
   const handleRegenerateIntro = async (style?: string) => {
-    // Remove from IndexedDB instead of localStorage
-    await removeData('loveStoryIntroImage');
-    
+    localStorage.removeItem('loveStoryIntroImage');
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
-    const characterPhoto = localStorage.getItem('loveStoryCharacterPhoto');
-    if (savedPrompts && characterPhoto) {
+    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    if (savedPrompts && partnerPhoto) {
       const prompts = JSON.parse(savedPrompts);
       if (prompts && prompts.length > 1) {
         setIsGeneratingIntro(true);
@@ -560,39 +452,25 @@ const GenerateStep = () => {
         }
         
         try {
-          // Prepare the request body with additional images if available
-          const requestBody: any = { 
-            // introImage对应prompts中的索引1
-            prompt: prompts[1].prompt, 
-            photo: characterPhoto,
-            style: imageStyle
-          };
-          
-          // Add additional input images if available
-          if (inputImage2) requestBody.input_image2 = inputImage2;
-          if (inputImage3) requestBody.input_image3 = inputImage3;
-          if (inputImage4) requestBody.input_image4 = inputImage4;
-
           const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-            body: requestBody
+            body: { 
+              contentPrompt: prompts[1].prompt, 
+              photo: partnerPhoto,
+              style: imageStyle
+            }
           });
           if (error) throw error;
-          if (data?.contentImage?.[0] || data?.output?.[0]) {
-            const imageUrl = data?.contentImage?.[0] || data?.output?.[0];
-            // 调用expand-image进行扩展
-            const expandedBase64 = await expandImage(imageUrl);
-            
-            setIntroImage(expandedBase64);
-            // Store in IndexedDB instead of localStorage
-            await storeData('loveStoryIntroImage', expandedBase64);
+          if (data?.contentImage?.[0]) {
+            setIntroImage(data.contentImage[0]);
+            localStorage.setItem('loveStoryIntroImage', data.contentImage[0]);
             
             toast({
               title: "Image regenerated",
-              description: `Introduction image updated with ${imageStyle} style`,
+              description: `Image 1 updated with ${imageStyle} style`,
             });
           }
         } catch (error) {
-          console.error('Error regenerating intro image:', error);
+          console.error('Error regenerating content image 1:', error);
           toast({
             title: "Error regenerating image",
             description: "Please try again",
