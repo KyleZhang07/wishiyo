@@ -5,25 +5,7 @@ import type { Database } from './types';
 const SUPABASE_URL = "https://hbkgbggctzvqffqfrmhl.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhia2diZ2djdHp2cWZmcWZybWhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzkxNDIxOTcsImV4cCI6MjA1NDcxODE5N30.17M3xzD8Yx_5EAu8EzY4ARnva21TCuEHQU85TixrAdE";
 
-// 获取客户端ID
-const getStoredClientId = () => {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('wishiyo_client_id') || '';
-  }
-  return '';
-};
-
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(
-  SUPABASE_URL, 
-  SUPABASE_PUBLISHABLE_KEY,
-  {
-    global: {
-      headers: {
-        'x-client-id': getStoredClientId()
-      }
-    }
-  }
-);
+export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
