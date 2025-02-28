@@ -50,13 +50,6 @@ const DebugPromptsStep = () => {
     }
   }, []);
 
-  // 根据索引获取图片类型名称
-  const getImageTypeName = (index: number): string => {
-    if (index === 0) return 'Cover Image';
-    if (index === 1) return 'Dedication Page';
-    return `Story Image ${index - 1}`; // 索引2对应Story Image 1
-  };
-
   return (
     <WizardStep
       title="[DEV] Love Story Debug View"
@@ -90,11 +83,19 @@ const DebugPromptsStep = () => {
         <div className="space-y-4">
           <h3 className="font-bold text-gray-800 text-xl">Story Elements:</h3>
           
-          {/* 显示所有图片提示和文本，包括封面、献词页和内容图片 */}
+          {/* Display the cover image data */}
+          <div className="bg-white p-4 rounded-lg shadow">
+            <h3 className="font-bold text-gray-800 mb-2">Cover Image:</h3>
+            <p className="text-gray-600 mb-4">{prompts[0]?.question}</p>
+            <p className="text-gray-600 font-mono text-sm bg-gray-50 p-2 rounded">{prompts[0]?.prompt}</p>
+          </div>
+
+          {/* Display the story image prompts with their text accompaniments */}
           <div className="space-y-4">
-            {prompts.map((prompt, index) => (
+            <h3 className="font-bold text-gray-800">Story Images:</h3>
+            {prompts.slice(1).map((prompt, index) => (
               <div key={index} className="bg-white p-4 rounded-lg shadow">
-                <h4 className="font-bold text-gray-800 mb-2">{getImageTypeName(index)}:</h4>
+                <h4 className="font-bold text-gray-800 mb-2">Image {index + 1}:</h4>
                 
                 <div className="mb-4">
                   <p className="text-gray-600 font-semibold mb-1">Question:</p>
@@ -106,27 +107,13 @@ const DebugPromptsStep = () => {
                   <p className="text-gray-600 font-mono text-sm bg-gray-50 p-2 rounded">{prompt.prompt}</p>
                 </div>
                 
-                {/* 对于封面不显示文本陪伴 */}
-                {index > 0 && (
-                  <div className="mt-4 pt-4 border-t border-gray-200">
-                    <p className="text-gray-600 font-semibold mb-1">
-                      Text Accompaniment ({texts[index-1]?.tone || selectedTone}):
-                    </p>
-                    {texts[index-1] ? (
-                      <p className="text-gray-800 italic bg-blue-50 p-3 rounded">{texts[index-1].text}</p>
-                    ) : (
-                      <p className="text-red-500">No text accompaniment found</p>
-                    )}
-                  </div>
-                )}
-
-                {/* 显示对应的localStorage键名 */}
-                <div className="mt-4 pt-4 border-t border-gray-200 text-xs text-gray-500">
-                  <p>localStorage key: {
-                    index === 0 ? 'loveStoryCoverImage' :
-                    index === 1 ? 'loveStoryDedicationImage' :
-                    `loveStoryContentImage${index - 1}`
-                  }</p>
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <p className="text-gray-600 font-semibold mb-1">Text Accompaniment ({texts[index]?.tone || selectedTone}):</p>
+                  {texts[index] ? (
+                    <p className="text-gray-800 italic bg-blue-50 p-3 rounded">{texts[index].text}</p>
+                  ) : (
+                    <p className="text-red-500">No text accompaniment found</p>
+                  )}
                 </div>
               </div>
             ))}
