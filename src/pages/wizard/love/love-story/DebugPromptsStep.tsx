@@ -1,5 +1,8 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
+import { getAllImagesFromStorage, ensureBucketExists } from '@/integrations/supabase/storage';
+import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 
 interface ImagePrompt {
   question: string;
@@ -11,11 +14,22 @@ interface ImageText {
   tone: string;
 }
 
+interface SupabaseImage {
+  name: string;
+  url: string;
+  metadata?: any;
+  created_at: string;
+  updated_at: string;
+  id: string;
+}
+
 const DebugPromptsStep = () => {
   const [prompts, setPrompts] = useState<ImagePrompt[]>([]);
   const [texts, setTexts] = useState<ImageText[]>([]);
   const [selectedTone, setSelectedTone] = useState<string>('');
   const [selectedStyle, setSelectedStyle] = useState<string>('');
+  const [supabaseImages, setSupabaseImages] = useState<SupabaseImage[]>([]);
+  const [isLoadingImages, setIsLoadingImages] = useState(false);
 
   useEffect(() => {
     // Load prompts
@@ -48,7 +62,151 @@ const DebugPromptsStep = () => {
     if (savedStyle) {
       setSelectedStyle(savedStyle);
     }
+
+    // Load images from Supabase Storage
+    loadSupabaseImages();
   }, []);
+
+  const loadSupabaseImages = async () => {
+    setIsLoadingImages(true);
+    try {
+      // Ensure images bucket exists
+      await ensureBucketExists('images');
+      const images = await getAllImagesFromStorage('images');
+      setSupabaseImages(images);
+    } catch (error) {
+      console.error('Error loading images from Supabase:', error);
+    } finally {
+      setIsLoadingImages(false);
+    }
+  };
+
+  const refreshSupabaseImages = () => {
+    loadSupabaseImages();
+  };
+
+  const debugContent = (
+    <div className="space-y-8 bg-yellow-50 p-4 rounded-lg border-2 border-yellow-400">
+      <div className="bg-yellow-100 p-4 rounded">
+        <h2 className="text-yellow-800 font-bold">⚠️ Development Only</h2>
+        <p className="text-yellow-700">This page is for development purposes and will be removed in production.</p>
+      </div>
+      
+      {/* Selected tone and style */}
+      <div className="bg-white p-4 rounded-lg shadow">
+        <h3 className="font-bold text-gray-800 mb-2">Selected Settings:</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <p className="text-gray-600 font-semibold">Text Tone:</p>
+            <p className="text-gray-800">{selectedTone || 'Not selected'}</p>
+          </div>
+          <div>
+            <p className="text-gray-600 font-semibold">Image Style:</p>
+            <p className="text-gray-800">{selectedStyle || 'Not selected'}</p>
+          </div>
+        </div>
+      </div>
+      
+      {/* Supabase Images Section */}
+      <div className="bg-white p-4 rounded-lg shadow">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="font-bold text-gray-800 text-xl">Supabase Storage Images</h3>
+          <Button 
+            onClick={refreshSupabaseImages} 
+            variant="outline" 
+            size="sm"
+            disabled={isLoadingImages}
+          >
+            {isLoadingImages ? (
+              <React.Fragment>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Loading...
+              </React.Fragment>
+            ) : (
+              'Refresh Images'
+            )}
+          </Button>
+        </div>
+
+        {isLoadingImages ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+          </div>
+        ) : supabaseImages.length > 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {supabaseImages.map((image) => (
+              <div key={image.id} className="bg-gray-50 p-2 rounded">
+                <img 
+                  src={image.url} 
+                  alt={image.name}
+                  className="w-full h-48 object-cover rounded mb-2"
+                />
+                <p className="text-xs text-gray-500 truncate" title={image.name}>
+                  {image.name}
+                </p>
+                <p className="text-xs text-gray-400">
+                  {new Date(image.created_at).toLocaleString()}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500 py-8 text-center">No images found in Supabase Storage.</p>
+        )}
+      </div>
+      
+      <div className="space-y-4">
+        <h3 className="font-bold text-gray-800 text-xl">Story Elements:</h3>
+        
+        {/* Display the cover image data */}
+        <div className="bg-white p-4 rounded-lg shadow">
+          <h3 className="font-bold text-gray-800 mb-2">Cover Image:</h3>
+          <p className="text-gray-600 mb-4">{prompts[0]?.question}</p>
+          <p className="text-gray-600 font-mono text-sm bg-gray-50 p-2 rounded">{prompts[0]?.prompt}</p>
+        </div>
+
+        {/* Display the story image prompts with their text accompaniments */}
+        <div className="space-y-4">
+          <h3 className="font-bold text-gray-800">Story Images:</h3>
+          {prompts.slice(1).map((prompt, index) => (
+            <div key={index} className="bg-white p-4 rounded-lg shadow">
+              <h4 className="font-bold text-gray-800 mb-2">Image {index + 1}:</h4>
+              
+              <div className="mb-4">
+                <p className="text-gray-600 font-semibold mb-1">Question:</p>
+                <p className="text-gray-800">{prompt.question}</p>
+              </div>
+              
+              <div className="mb-4">
+                <p className="text-gray-600 font-semibold mb-1">Image Prompt:</p>
+                <p className="text-gray-600 font-mono text-sm bg-gray-50 p-2 rounded">{prompt.prompt}</p>
+              </div>
+              
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <p className="text-gray-600 font-semibold mb-1">Text Accompaniment ({texts[index]?.tone || selectedTone}):</p>
+                {texts[index] ? (
+                  <p className="text-gray-800 italic bg-blue-50 p-3 rounded">{texts[index].text}</p>
+                ) : (
+                  <p className="text-red-500">No text accompaniment found</p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      {/* Raw data dump for debugging */}
+      <div className="bg-black text-green-400 p-4 rounded-lg font-mono text-xs mt-8 overflow-x-auto">
+        <h3 className="text-white mb-2">Raw Data:</h3>
+        <p className="mb-2">ImagePrompts:</p>
+        <pre>{JSON.stringify(prompts, null, 2)}</pre>
+        <p className="mt-4 mb-2">ImageTexts:</p>
+        <pre>{JSON.stringify(texts, null, 2)}</pre>
+        <p className="mt-4 mb-2">Supabase Storage URLs:</p>
+        <pre>{JSON.stringify(supabaseImages.map(img => img.url), null, 2)}</pre>
+      </div>
+    </div>
+  );
 
   return (
     <WizardStep
@@ -59,76 +217,7 @@ const DebugPromptsStep = () => {
       currentStep={3}
       totalSteps={4}
     >
-      <div className="space-y-8 bg-yellow-50 p-4 rounded-lg border-2 border-yellow-400">
-        <div className="bg-yellow-100 p-4 rounded">
-          <h2 className="text-yellow-800 font-bold">⚠️ Development Only</h2>
-          <p className="text-yellow-700">This page is for development purposes and will be removed in production.</p>
-        </div>
-        
-        {/* Selected tone and style */}
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="font-bold text-gray-800 mb-2">Selected Settings:</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-gray-600 font-semibold">Text Tone:</p>
-              <p className="text-gray-800">{selectedTone || 'Not selected'}</p>
-            </div>
-            <div>
-              <p className="text-gray-600 font-semibold">Image Style:</p>
-              <p className="text-gray-800">{selectedStyle || 'Not selected'}</p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="space-y-4">
-          <h3 className="font-bold text-gray-800 text-xl">Story Elements:</h3>
-          
-          {/* Display the cover image data */}
-          <div className="bg-white p-4 rounded-lg shadow">
-            <h3 className="font-bold text-gray-800 mb-2">Cover Image:</h3>
-            <p className="text-gray-600 mb-4">{prompts[0]?.question}</p>
-            <p className="text-gray-600 font-mono text-sm bg-gray-50 p-2 rounded">{prompts[0]?.prompt}</p>
-          </div>
-
-          {/* Display the story image prompts with their text accompaniments */}
-          <div className="space-y-4">
-            <h3 className="font-bold text-gray-800">Story Images:</h3>
-            {prompts.slice(1).map((prompt, index) => (
-              <div key={index} className="bg-white p-4 rounded-lg shadow">
-                <h4 className="font-bold text-gray-800 mb-2">Image {index + 1}:</h4>
-                
-                <div className="mb-4">
-                  <p className="text-gray-600 font-semibold mb-1">Question:</p>
-                  <p className="text-gray-800">{prompt.question}</p>
-                </div>
-                
-                <div className="mb-4">
-                  <p className="text-gray-600 font-semibold mb-1">Image Prompt:</p>
-                  <p className="text-gray-600 font-mono text-sm bg-gray-50 p-2 rounded">{prompt.prompt}</p>
-                </div>
-                
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <p className="text-gray-600 font-semibold mb-1">Text Accompaniment ({texts[index]?.tone || selectedTone}):</p>
-                  {texts[index] ? (
-                    <p className="text-gray-800 italic bg-blue-50 p-3 rounded">{texts[index].text}</p>
-                  ) : (
-                    <p className="text-red-500">No text accompaniment found</p>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-        
-        {/* Raw data dump for debugging */}
-        <div className="bg-black text-green-400 p-4 rounded-lg font-mono text-xs mt-8 overflow-x-auto">
-          <h3 className="text-white mb-2">Raw Data:</h3>
-          <p className="mb-2">ImagePrompts:</p>
-          <pre>{JSON.stringify(prompts, null, 2)}</pre>
-          <p className="mt-4 mb-2">ImageTexts:</p>
-          <pre>{JSON.stringify(texts, null, 2)}</pre>
-        </div>
-      </div>
+      {debugContent}
     </WizardStep>
   );
 };
