@@ -33,6 +33,22 @@ const IMAGE_STORAGE_KEYS = [
   'loveStoryContentImage10'
 ];
 
+// 定义照片存储键名 - 与MomentsStep中的定义保持一致
+const PHOTO_KEYS = {
+  MAIN: 'loveStoryCharacterPhoto',
+  SECOND: 'loveStoryCharacterPhoto2',
+  THIRD: 'loveStoryCharacterPhoto3',
+  FOURTH: 'loveStoryCharacterPhoto4'
+};
+
+// 映射到API schema
+const API_PHOTO_KEYS = {
+  [PHOTO_KEYS.MAIN]: 'input_image',
+  [PHOTO_KEYS.SECOND]: 'input_image2', 
+  [PHOTO_KEYS.THIRD]: 'input_image3',
+  [PHOTO_KEYS.FOURTH]: 'input_image4'
+};
+
 const GenerateStep = () => {
   const [coverTitle, setCoverTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
@@ -79,6 +95,55 @@ const GenerateStep = () => {
     } catch (error) {
       console.error('Failed to migrate images to IndexedDB:', error);
     }
+  };
+
+  // 辅助函数：获取所有角色照片
+  const getAllCharacterPhotos = async () => {
+    const photos: Record<string, string | null> = {};
+    
+    // 尝试从IndexedDB加载所有照片
+    for (const key of Object.values(PHOTO_KEYS)) {
+      try {
+        // 先从IndexedDB加载
+        const photoFromIDB = await getDataFromStore(key);
+        if (photoFromIDB) {
+          photos[key] = photoFromIDB;
+          continue;
+        }
+        
+        // 回退到localStorage
+        const savedPhoto = localStorage.getItem(key);
+        if (savedPhoto) {
+          photos[key] = savedPhoto;
+        }
+      } catch (error) {
+        console.error(`Error loading photo ${key}:`, error);
+      }
+    }
+    
+    // 向后兼容：检查旧的键名
+    if (!photos[PHOTO_KEYS.MAIN]) {
+      const oldPartnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+      if (oldPartnerPhoto) {
+        photos[PHOTO_KEYS.MAIN] = oldPartnerPhoto;
+      }
+    }
+    
+    return photos;
+  };
+
+  // 辅助函数：准备API调用的照片参数
+  const preparePhotoParams = (photos: Record<string, string | null>) => {
+    const params: Record<string, string> = {};
+    
+    // 将照片数据映射到API参数
+    Object.entries(photos).forEach(([key, value]) => {
+      if (value && API_PHOTO_KEYS[key]) {
+        params[API_PHOTO_KEYS[key]] = value;
+      }
+    });
+    
+    return params;
   };
 
   const expandImage = async (imageUrl: string): Promise<string> => {
@@ -141,8 +206,12 @@ const GenerateStep = () => {
     await removeData(lsKey);
 
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
-    const characterPhoto = localStorage.getItem('loveStoryCharacterPhoto');
-    if (!savedPrompts || !characterPhoto) {
+    
+    // 获取所有角色照片，而不是仅获取主照片
+    const characterPhotos = await getAllCharacterPhotos();
+    const mainPhoto = characterPhotos[PHOTO_KEYS.MAIN];
+    
+    if (!savedPrompts || !mainPhoto) {
       toast({
         title: "Missing info",
         description: "No prompts or character photo found",
@@ -168,11 +237,14 @@ const GenerateStep = () => {
         localStorage.setItem('loveStoryStyle', style);
       }
 
-      // Include style in the request
+      // 准备API调用的照片参数
+      const photoParams = preparePhotoParams(characterPhotos);
+
+      // Include style and all available photos in the request
       const { data, error } = await supabase.functions.invoke('generate-love-cover', {
         body: { 
           prompt: prompts[promptIndex].prompt,
-          photo: characterPhoto,
+          ...photoParams,  // 使用展开运算符添加所有照片参数
           style: imageStyle
         }
       });
@@ -433,8 +505,12 @@ const GenerateStep = () => {
     await removeData('loveStoryCoverImage');
     
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
-    const characterPhoto = localStorage.getItem('loveStoryCharacterPhoto');
-    if (savedPrompts && characterPhoto) {
+    
+    // 获取所有角色照片
+    const characterPhotos = await getAllCharacterPhotos();
+    const mainPhoto = characterPhotos[PHOTO_KEYS.MAIN];
+    
+    if (savedPrompts && mainPhoto) {
       const prompts = JSON.parse(savedPrompts);
       if (prompts && prompts.length > 0) {
         setIsGeneratingCover(true);
@@ -449,11 +525,14 @@ const GenerateStep = () => {
         }
         
         try {
+          // 准备API调用的照片参数
+          const photoParams = preparePhotoParams(characterPhotos);
+          
           const { data, error } = await supabase.functions.invoke('generate-love-cover', {
             body: { 
               // coverImage对应prompts中的索引0
               prompt: prompts[0].prompt,
-              photo: characterPhoto,
+              ...photoParams,  // 使用展开运算符添加所有照片参数
               style: imageStyle
             }
           });
@@ -494,8 +573,12 @@ const GenerateStep = () => {
     await removeData('loveStoryIntroImage');
     
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
-    const characterPhoto = localStorage.getItem('loveStoryCharacterPhoto');
-    if (savedPrompts && characterPhoto) {
+    
+    // 获取所有角色照片
+    const characterPhotos = await getAllCharacterPhotos();
+    const mainPhoto = characterPhotos[PHOTO_KEYS.MAIN];
+    
+    if (savedPrompts && mainPhoto) {
       const prompts = JSON.parse(savedPrompts);
       if (prompts && prompts.length > 1) {
         setIsGeneratingIntro(true);
@@ -510,11 +593,14 @@ const GenerateStep = () => {
         }
         
         try {
+          // 准备API调用的照片参数
+          const photoParams = preparePhotoParams(characterPhotos);
+          
           const { data, error } = await supabase.functions.invoke('generate-love-cover', {
             body: { 
               // introImage对应prompts中的索引1
               prompt: prompts[1].prompt, 
-              photo: characterPhoto,
+              ...photoParams,  // 使用展开运算符添加所有照片参数
               style: imageStyle
             }
           });
