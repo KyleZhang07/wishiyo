@@ -1,5 +1,4 @@
-
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
@@ -76,7 +75,6 @@ const GenerateStep = () => {
   const [selectedStyle, setSelectedStyle] = useState<string>('Photographic (Default)');
   const [imageTexts, setImageTexts] = useState<ImageText[]>([]);
   const [migratedToIndexedDB, setMigratedToIndexedDB] = useState(false);
-  const [dataInitialized, setDataInitialized] = useState(false);
 
   const { toast } = useToast();
 
@@ -113,72 +111,6 @@ const GenerateStep = () => {
     }
   };
 
-  // Improved storage function that ensures images are stored in IndexedDB
-  const saveImageToStorage = useCallback(async (key: string, imageData: string): Promise<void> => {
-    try {
-      console.log(`Saving image with key ${key} to IndexedDB...`);
-      // Store image to IndexedDB with timestamp to prevent caching issues
-      const imageWithTimestamp = {
-        data: imageData,
-        timestamp: new Date().getTime()
-      };
-      
-      // Store as an object with timestamp to help with versioning
-      await storeData(key, imageWithTimestamp);
-      console.log(`Successfully saved image with key ${key} to IndexedDB`);
-    } catch (error) {
-      console.error(`Error saving image with key ${key} to IndexedDB:`, error);
-      // Fallback to localStorage if IndexedDB fails
-      try {
-        localStorage.setItem(key, imageData);
-        console.log(`Fallback: Saved image with key ${key} to localStorage`);
-      } catch (lsError) {
-        console.error(`Error saving image to localStorage as fallback:`, lsError);
-        toast({
-          title: "Storage Error",
-          description: "Unable to save generated image. Your changes may not persist after page refresh.",
-          variant: "destructive",
-        });
-      }
-    }
-  }, [toast]);
-
-  // Helper function to load image from storage
-  const loadImageFromStorage = useCallback(async (key: string): Promise<string | undefined> => {
-    try {
-      console.log(`Loading image with key ${key} from IndexedDB...`);
-      // Try to get from IndexedDB first
-      const storedData = await getDataFromStore(key);
-      
-      if (storedData) {
-        // Handle either direct string or object with timestamp
-        if (typeof storedData === 'object' && storedData.data) {
-          console.log(`Found image with key ${key} (timestamped) in IndexedDB`);
-          return storedData.data;
-        } else {
-          console.log(`Found image with key ${key} (direct) in IndexedDB`);
-          return storedData as string;
-        }
-      }
-
-      // Fallback to localStorage
-      const lsData = localStorage.getItem(key);
-      if (lsData) {
-        console.log(`Found image with key ${key} in localStorage`);
-        // Migrate from localStorage to IndexedDB for future use
-        await saveImageToStorage(key, lsData);
-        return lsData;
-      }
-      
-      console.log(`No image found with key ${key} in storage`);
-      return undefined;
-    } catch (error) {
-      console.error(`Error loading image with key ${key} from storage:`, error);
-      // Final fallback to localStorage
-      return localStorage.getItem(key) || undefined;
-    }
-  }, [saveImageToStorage]);
-
   const handleGenericContentRegeneration = async (index: number, style?: string) => {
     if (index < 1) return;
 
@@ -213,15 +145,8 @@ const GenerateStep = () => {
     if (!setContentFn || !setIsGenerating) return;
 
     const lsKey = `loveStoryContentImage${index}`;
-    
-    // First remove the old image from storage (both IndexedDB and localStorage as fallback)
-    try {
-      await removeData(lsKey);
-      localStorage.removeItem(lsKey); // Fallback cleanup
-    } catch (error) {
-      console.error(`Error removing old image with key ${lsKey}:`, error);
-      // Continue anyway since we're replacing it
-    }
+    // Remove from IndexedDB instead of localStorage
+    await removeData(lsKey);
 
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
     const characterPhoto = localStorage.getItem('loveStoryCharacterPhoto');
@@ -249,8 +174,6 @@ const GenerateStep = () => {
       if (style) {
         setSelectedStyle(style);
         localStorage.setItem('loveStoryStyle', style);
-        // Also store style in IndexedDB for consistency
-        await storeData('loveStoryStyle', style);
       }
 
       // Prepare the request body with additional images if available
@@ -271,20 +194,18 @@ const GenerateStep = () => {
       });
       if (error) throw error;
 
-      // Backend might return different output formats
+      // 后端可能返回 { output: [...]} 或 { contentImageX: [...] }
       const imageUrl = data?.[`contentImage${promptIndex}`]?.[0] || data?.output?.[0];
       if (!imageUrl) {
         throw new Error("No image generated from generate-love-cover");
       }
 
-      // Expand the image
+      // 2) 调用expand-image进行扩展
       const expandedBase64 = await expandImage(imageUrl);
 
-      // Set in state for immediate display
+      // 3) 存到state & IndexedDB (而不是localStorage)
       setContentFn(expandedBase64);
-      
-      // Store in IndexedDB and localStorage as fallback
-      await saveImageToStorage(lsKey, expandedBase64);
+      await storeData(lsKey, expandedBase64);
 
       toast({
         title: "Image regenerated & expanded",
@@ -344,17 +265,17 @@ const GenerateStep = () => {
 
       if (data?.output?.[0]) {
         setCoverImage(data.output[0]);
-        await saveImageToStorage('loveStoryCoverImage', data.output[0]);
+        await storeData('loveStoryCoverImage', data.output[0]);
       }
 
       if (data?.contentImage?.[0]) {
         setIntroImage(data.contentImage[0]);
-        await saveImageToStorage('loveStoryIntroImage', data.contentImage[0]);
+        await storeData('loveStoryIntroImage', data.contentImage[0]);
       }
 
       if (data?.contentImage2?.[0]) {
         setContentImage1(data.contentImage2[0]);
-        await saveImageToStorage('loveStoryContentImage1', data.contentImage2[0]);
+        await storeData('loveStoryContentImage1', data.contentImage2[0]);
       }
 
       toast({
@@ -374,7 +295,6 @@ const GenerateStep = () => {
     }
   };
 
-  // Load all data when component mounts
   useEffect(() => {
     // First, attempt to migrate existing image data from localStorage to IndexedDB
     if (!migratedToIndexedDB) {
@@ -382,34 +302,32 @@ const GenerateStep = () => {
     }
 
     const loadData = async () => {
-      console.log("Loading love story data from storage...");
-      
       const savedAuthor = localStorage.getItem('loveStoryAuthorName');
       const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
       const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
       const savedMoments = localStorage.getItem('loveStoryMoments');
       const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
-      const savedStyle = localStorage.getItem('loveStoryStyle') || await getDataFromStore('loveStoryStyle');
+      const savedStyle = localStorage.getItem('loveStoryStyle');
       const savedTexts = localStorage.getItem('loveStoryImageTexts');
       
-      // Load images from IndexedDB using the improved helper function
-      const savedCoverImage = await loadImageFromStorage('loveStoryCoverImage');
-      const savedIntroImage = await loadImageFromStorage('loveStoryIntroImage');
-      const savedContentImage1 = await loadImageFromStorage('loveStoryContentImage1');
-      const savedContentImage2 = await loadImageFromStorage('loveStoryContentImage2');
-      const savedContentImage3 = await loadImageFromStorage('loveStoryContentImage3');
-      const savedContentImage4 = await loadImageFromStorage('loveStoryContentImage4');
-      const savedContentImage5 = await loadImageFromStorage('loveStoryContentImage5');
-      const savedContentImage6 = await loadImageFromStorage('loveStoryContentImage6');
-      const savedContentImage7 = await loadImageFromStorage('loveStoryContentImage7');
-      const savedContentImage8 = await loadImageFromStorage('loveStoryContentImage8');
-      const savedContentImage9 = await loadImageFromStorage('loveStoryContentImage9');
-      const savedContentImage10 = await loadImageFromStorage('loveStoryContentImage10');
+      // Load images from IndexedDB
+      const savedCoverImage = await getDataFromStore('loveStoryCoverImage');
+      const savedIntroImage = await getDataFromStore('loveStoryIntroImage');
+      const savedContentImage1 = await getDataFromStore('loveStoryContentImage1');
+      const savedContentImage2 = await getDataFromStore('loveStoryContentImage2');
+      const savedContentImage3 = await getDataFromStore('loveStoryContentImage3');
+      const savedContentImage4 = await getDataFromStore('loveStoryContentImage4');
+      const savedContentImage5 = await getDataFromStore('loveStoryContentImage5');
+      const savedContentImage6 = await getDataFromStore('loveStoryContentImage6');
+      const savedContentImage7 = await getDataFromStore('loveStoryContentImage7');
+      const savedContentImage8 = await getDataFromStore('loveStoryContentImage8');
+      const savedContentImage9 = await getDataFromStore('loveStoryContentImage9');
+      const savedContentImage10 = await getDataFromStore('loveStoryContentImage10');
       
       // Load the additional input images
-      const savedInputImage2 = await loadImageFromStorage('loveStoryInputImage2');
-      const savedInputImage3 = await loadImageFromStorage('loveStoryInputImage3');
-      const savedInputImage4 = await loadImageFromStorage('loveStoryInputImage4');
+      const savedInputImage2 = await getDataFromStore('loveStoryInputImage2');
+      const savedInputImage3 = await getDataFromStore('loveStoryInputImage3');
+      const savedInputImage4 = await getDataFromStore('loveStoryInputImage4');
       
       const characterPhoto = localStorage.getItem('loveStoryCharacterPhoto');
       
@@ -425,8 +343,6 @@ const GenerateStep = () => {
           
           if (nameQuestion && nameQuestion.answer) {
             localStorage.setItem('loveStoryRecipientName', nameQuestion.answer);
-            // Also store in IndexedDB for consistency
-            await storeData('loveStoryRecipientName', nameQuestion.answer);
           }
         } catch (error) {
           console.error('Error parsing questions:', error);
@@ -448,13 +364,12 @@ const GenerateStep = () => {
         };
         
         // Use the mapping or the original value
-        const normalizedStyle = styleMapping[savedStyle as string] || savedStyle;
+        const normalizedStyle = styleMapping[savedStyle] || savedStyle;
         setSelectedStyle(normalizedStyle);
         
-        // Update localStorage and IndexedDB with the normalized style if it changed
+        // Update localStorage with the normalized style if it changed
         if (normalizedStyle !== savedStyle) {
           localStorage.setItem('loveStoryStyle', normalizedStyle);
-          await storeData('loveStoryStyle', normalizedStyle);
         }
       }
 
@@ -467,28 +382,20 @@ const GenerateStep = () => {
       }
 
       if (savedIdeas && savedIdeaIndex) {
-        try {
-          const ideas = JSON.parse(savedIdeas);
-          const selectedIdea = ideas[parseInt(savedIdeaIndex)];
-          if (selectedIdea) {
-            setCoverTitle(selectedIdea.title || '');
-            setSubtitle(selectedIdea.description || '');
-          }
-        } catch (error) {
-          console.error('Error parsing saved ideas:', error);
+        const ideas = JSON.parse(savedIdeas);
+        const selectedIdea = ideas[parseInt(savedIdeaIndex)];
+        if (selectedIdea) {
+          setCoverTitle(selectedIdea.title || '');
+          setSubtitle(selectedIdea.description || '');
         }
       }
 
       if (savedMoments) {
-        try {
-          const moments = JSON.parse(savedMoments);
-          const formattedMoments = moments
-            .map((moment: string) => `"${moment}"`)
-            .join('\n\n');
-          setBackCoverText(formattedMoments);
-        } catch (error) {
-          console.error('Error parsing saved moments:', error);
-        }
+        const moments = JSON.parse(savedMoments);
+        const formattedMoments = moments
+          .map((moment: string) => `"${moment}"`)
+          .join('\n\n');
+        setBackCoverText(formattedMoments);
       }
 
       // Set main content images
@@ -540,16 +447,14 @@ const GenerateStep = () => {
         setInputImage4(savedInputImage4);
       }
 
-      // Generate initial images if needed
-      if ((!savedCoverImage || !savedIntroImage || !savedContentImage1) && savedPrompts && characterPhoto) {
-        generateInitialImages(savedPrompts, characterPhoto);
-      }
-
-      setDataInitialized(true);
+      // Temporarily commented out for testing purposes
+      // if ((!savedCoverImage || !savedIntroImage || !savedContentImage1) && savedPrompts && characterPhoto) {
+      //   generateInitialImages(savedPrompts, characterPhoto);
+      // }
     };
     
     loadData();
-  }, [migratedToIndexedDB, loadImageFromStorage, saveImageToStorage]);
+  }, [migratedToIndexedDB]);
 
   const handleEditCover = () => {
     toast({
@@ -566,14 +471,8 @@ const GenerateStep = () => {
   };
 
   const handleRegenerateCover = async (style?: string) => {
-    // Remove from both IndexedDB and localStorage
-    try {
-      await removeData('loveStoryCoverImage');
-      localStorage.removeItem('loveStoryCoverImage'); // Fallback cleanup
-    } catch (error) {
-      console.error("Error removing cover image from storage:", error);
-      // Continue anyway since we're replacing it
-    }
+    // Remove from IndexedDB instead of localStorage
+    await removeData('loveStoryCoverImage');
     
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
     const characterPhoto = localStorage.getItem('loveStoryCharacterPhoto');
@@ -589,8 +488,6 @@ const GenerateStep = () => {
         if (style) {
           setSelectedStyle(style);
           localStorage.setItem('loveStoryStyle', style);
-          // Also store in IndexedDB for consistency
-          await storeData('loveStoryStyle', style);
         }
         
         try {
@@ -618,14 +515,11 @@ const GenerateStep = () => {
             throw new Error("No image generated from generate-love-cover");
           }
           
-          // Expand the image
+          // 调用expand-image进行扩展
           const expandedBase64 = await expandImage(imageUrl);
           
-          // Set in state for immediate display
           setCoverImage(expandedBase64);
-          
-          // Store persistently with timestamp
-          await saveImageToStorage('loveStoryCoverImage', expandedBase64);
+          await storeData('loveStoryCoverImage', expandedBase64);
           
           toast({
             title: "Cover regenerated",
@@ -646,14 +540,8 @@ const GenerateStep = () => {
   };
 
   const handleRegenerateIntro = async (style?: string) => {
-    // Remove from both IndexedDB and localStorage
-    try {
-      await removeData('loveStoryIntroImage');
-      localStorage.removeItem('loveStoryIntroImage'); // Fallback cleanup
-    } catch (error) {
-      console.error("Error removing intro image from storage:", error);
-      // Continue anyway since we're replacing it
-    }
+    // Remove from IndexedDB instead of localStorage
+    await removeData('loveStoryIntroImage');
     
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
     const characterPhoto = localStorage.getItem('loveStoryCharacterPhoto');
@@ -669,8 +557,6 @@ const GenerateStep = () => {
         if (style) {
           setSelectedStyle(style);
           localStorage.setItem('loveStoryStyle', style);
-          // Also store in IndexedDB for consistency
-          await storeData('loveStoryStyle', style);
         }
         
         try {
@@ -691,26 +577,20 @@ const GenerateStep = () => {
             body: requestBody
           });
           if (error) throw error;
-          
-          // Backend might return data in different fields
-          const imageUrl = data?.contentImage?.[0] || data?.output?.[0];
-          if (!imageUrl) {
-            throw new Error("No image generated from generate-love-cover");
+          if (data?.contentImage?.[0] || data?.output?.[0]) {
+            const imageUrl = data?.contentImage?.[0] || data?.output?.[0];
+            // 调用expand-image进行扩展
+            const expandedBase64 = await expandImage(imageUrl);
+            
+            setIntroImage(expandedBase64);
+            // Store in IndexedDB instead of localStorage
+            await storeData('loveStoryIntroImage', expandedBase64);
+            
+            toast({
+              title: "Image regenerated",
+              description: `Introduction image updated with ${imageStyle} style`,
+            });
           }
-          
-          // Expand the image
-          const expandedBase64 = await expandImage(imageUrl);
-          
-          // Set in state for immediate display
-          setIntroImage(expandedBase64);
-          
-          // Store persistently with timestamp
-          await saveImageToStorage('loveStoryIntroImage', expandedBase64);
-          
-          toast({
-            title: "Image regenerated",
-            description: `Introduction image updated with ${imageStyle} style`,
-          });
         } catch (error) {
           console.error('Error regenerating intro image:', error);
           toast({
@@ -775,7 +655,7 @@ const GenerateStep = () => {
     // Get the text for this image, adjusting for zero-based array index
     const imageText = imageTexts && imageTexts.length > imageIndex ? imageTexts[imageIndex] : null;
     
-    // Display title adaptation for different naming conventions
+    // 显示标题适配新的命名方式
     let title = imageIndex === 0 ? "Introduction" : `Moment ${imageIndex}`;
     
     return (
@@ -785,44 +665,13 @@ const GenerateStep = () => {
           isGenerating={isLoading}
           onRegenerate={handleRegenerate}
           index={imageIndex}
-          onEditText={handleEditText}
+          onEditText={() => {}}
           text={imageText?.text}
           title={title}
         />
       </div>
     );
   };
-
-  // Add a debugging section to help track state
-  const debugStorage = async () => {
-    try {
-      console.log("==== STORAGE DEBUG INFO ====");
-      console.log("IndexedDB Initialized:", migratedToIndexedDB);
-      console.log("Data Initialized:", dataInitialized);
-      
-      // Log what's in IndexedDB
-      console.log("Current Cover Image in state:", coverImage?.substring(0, 50) + "...");
-      
-      const storedCover = await getDataFromStore('loveStoryCoverImage');
-      console.log("Cover Image in IndexedDB:", 
-        typeof storedCover === 'object' ? 
-          (storedCover?.data?.substring(0, 50) + "...") : 
-          (storedCover?.substring(0, 50) + "..."));
-      
-      // Log what's in localStorage
-      const lsCover = localStorage.getItem('loveStoryCoverImage');
-      console.log("Cover Image in localStorage:", lsCover?.substring(0, 50) + "...");
-    } catch (error) {
-      console.error("Error in debugStorage:", error);
-    }
-  };
-
-  // Call debug on initial load when in development
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development' && dataInitialized) {
-      debugStorage();
-    }
-  }, [dataInitialized]);
 
   return (
     <WizardStep
@@ -845,7 +694,7 @@ const GenerateStep = () => {
             backCoverText={backCoverText}
             isGeneratingCover={isGeneratingCover}
             onRegenerateCover={handleRegenerateCover}
-            onEditCover={handleEditCover}
+            onEditCover={() => {}}
           />
         </div>
         
