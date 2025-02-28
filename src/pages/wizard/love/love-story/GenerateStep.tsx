@@ -3,7 +3,7 @@ import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { uploadImageToStorage, getAllImagesFromStorage, getClientId } from '@/integrations/supabase/storage';
+import { uploadImageToStorage, getAllImagesFromStorage } from '@/integrations/supabase/storage';
 import { CoverPreviewCard } from './components/CoverPreviewCard';
 import { ContentImageCard } from './components/ContentImageCard';
 
@@ -71,8 +71,6 @@ const GenerateStep = () => {
 
   // Add state for tracking Supabase image URLs
   const [imageStorageMap, setImageStorageMap] = useState<ImageStorageMap>({});
-
-  const [clientId, setClientId] = useState<string | undefined>();
 
   const expandImage = async (imageUrl: string): Promise<string> => {
     try {
@@ -200,8 +198,7 @@ const GenerateStep = () => {
       const storageUrl = await uploadImageToStorage(
         expandedBase64, 
         'images', 
-        `love-story-content-${index}-${timestamp}`,
-        clientId
+        `love-story-content-${index}-${timestamp}`
       );
 
       // 4) Update state and storage map
@@ -270,9 +267,6 @@ const GenerateStep = () => {
 
       if (error) throw error;
 
-      // 确保我们有客户端ID
-      const currentClientId = clientId || getOrCreateClientId();
-
       if (data?.output?.[0]) {
         const coverImageData = data.output[0];
         setCoverImage(coverImageData);
@@ -281,8 +275,7 @@ const GenerateStep = () => {
         const storageUrl = await uploadImageToStorage(
           coverImageData, 
           'images', 
-          'love-story-cover',
-          currentClientId
+          'love-story-cover'
         );
         
         // Update storage map
@@ -306,8 +299,7 @@ const GenerateStep = () => {
         const storageUrl = await uploadImageToStorage(
           introImageData, 
           'images', 
-          'love-story-intro',
-          currentClientId
+          'love-story-intro'
         );
         
         // Update storage map
@@ -331,8 +323,7 @@ const GenerateStep = () => {
         const storageUrl = await uploadImageToStorage(
           contentImage1Data, 
           'images', 
-          'love-story-content-1',
-          currentClientId
+          'love-story-content-1'
         );
         
         // Update storage map
@@ -365,22 +356,12 @@ const GenerateStep = () => {
     }
   };
 
-  // 获取客户端ID
-  const getOrCreateClientId = () => {
-    const id = getClientId();
-    setClientId(id);
-    return id;
-  };
-
-  // 修改 loadImagesFromSupabase 函数
+  // 新增加：从Supabase加载所有图片
   const loadImagesFromSupabase = async () => {
     setIsLoadingImages(true);
     try {
-      // 确保我们有客户端ID
-      const currentClientId = clientId || getOrCreateClientId();
-      
-      // 获取当前客户端的图片
-      const images = await getAllImagesFromStorage('images', currentClientId);
+      // 获取所有Supabase中的图片
+      const images = await getAllImagesFromStorage('images');
       setSupabaseImages(images);
       
       // 创建一个新的Map用于存储图片引用
@@ -388,7 +369,9 @@ const GenerateStep = () => {
       
       // 遍历所有图片，更新映射 - 修复命名识别问题
       images.forEach(img => {
-        const fileName = img.name.split('/').pop() || '';
+        // 从完整路径中提取文件名
+        const pathParts = img.name.split('/');
+        const fileName = pathParts[pathParts.length - 1];
         
         // 使用正则表达式精确匹配文件名，防止10匹配到1的内容
         if (/^love-story-cover/.test(fileName)) {
@@ -482,9 +465,6 @@ const GenerateStep = () => {
   };
 
   useEffect(() => {
-    // 首先获取客户端ID
-    getOrCreateClientId();
-    
     // 加载文本内容和设置
     const savedAuthor = localStorage.getItem('loveStoryAuthorName');
     const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
@@ -629,8 +609,7 @@ const GenerateStep = () => {
             const storageUrl = await uploadImageToStorage(
               coverImageData, 
               'images', 
-              `love-story-cover-${timestamp}`,
-              clientId
+              `love-story-cover-${timestamp}`
             );
             
             // Update storage map
@@ -741,8 +720,7 @@ const GenerateStep = () => {
             const storageUrl = await uploadImageToStorage(
               introImageData, 
               'images', 
-              `love-story-intro-${timestamp}`,
-              clientId
+              `love-story-intro-${timestamp}`
             );
             
             // Update storage map

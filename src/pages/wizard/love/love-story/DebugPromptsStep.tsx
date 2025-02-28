@@ -90,6 +90,7 @@ const DebugPromptsStep = () => {
     try {
       // Ensure images bucket exists
       await ensureBucketExists('images');
+      // 使用更新后的getAllImagesFromStorage函数，它将自动获取当前客户端的图片
       const images = await getAllImagesFromStorage('images');
       setSupabaseImages(images);
     } catch (error) {
