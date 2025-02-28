@@ -2,7 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 // 图片存储桶名称
-const IMAGES_BUCKET = 'story-images';
+const IMAGES_BUCKET = 'story_images';
 
 /**
  * 上传图片到 Supabase 存储
