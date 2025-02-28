@@ -98,7 +98,7 @@ const FunnyBiographyPhotosStep = () => {
     try {
       const compressedDataUrl = await compressImage(file);
       
-      // 上传到 Supabase 存储
+      // Upload to Supabase storage
       const imageUrl = await uploadImage('funnyBiographyPhoto', compressedDataUrl);
       
       if (imageUrl) {
