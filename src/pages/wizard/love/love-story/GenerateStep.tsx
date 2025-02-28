@@ -49,7 +49,9 @@ const GenerateStep = () => {
 
   const expandImage = async (imageUrl: string): Promise<string> => {
     try {
-      console.log('Starting image expansion for:', imageUrl);
+      console.log('🔄 开始扩展图片，原图URL长度:', imageUrl.length);
+      console.log('🔍 原图URL前缀:', imageUrl.substring(0, 50) + '...');
+      
       const { data, error } = await supabase.functions.invoke('expand-image', {
         body: { 
           imageUrl,
@@ -57,14 +59,36 @@ const GenerateStep = () => {
         }
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('❌ 扩展图片API错误:', error);
+        throw error;
+      }
+      
       if (!data?.imageData) {
+        console.error('❌ 扩展API没有返回imageData');
         throw new Error("No imageData returned from expand-image");
+      }
+      
+      const expandedImageSize = data.imageData.length;
+      console.log(`✅ 扩展图片成功，新图片大小: ${Math.round(expandedImageSize / 1024)} KB`);
+      console.log('🔍 扩展图片前缀:', data.imageData.substring(0, 50) + '...');
+      
+      // 验证是否是有效的Base64图片
+      const isValidBase64 = data.imageData.startsWith('data:image');
+      console.log(`🔍 扩展后图片是否有效Base64: ${isValidBase64}`);
+      
+      if (!isValidBase64) {
+        console.warn('⚠️ 扩展后的图片不是有效的Base64格式，可能导致显示问题');
+        // 如果缺少前缀，尝试添加
+        if (!data.imageData.startsWith('data:')) {
+          console.log('🔧 尝试修复Base64前缀...');
+          return 'data:image/jpeg;base64,' + data.imageData;
+        }
       }
       
       return data.imageData;
     } catch (err) {
-      console.error("Error expanding image:", err);
+      console.error("❌ 扩展图片过程中出错:", err);
       throw err;
     }
   };
@@ -84,26 +108,106 @@ const GenerateStep = () => {
   // 简化的保存图片到localStorage的函数
   const saveImageToStorage = (key: string, imageData: string) => {
     try {
+      // 检查图片数据大小
+      const sizeInKB = Math.round(imageData.length / 1024);
+      console.log(`💾 尝试保存图片到localStorage: ${key}, 大小: ${sizeInKB} KB`);
+      
+      // 检查是否是有效的Base64图片
+      const isValidBase64 = imageData.startsWith('data:image');
+      console.log(`🔍 是否有效的Base64图片: ${isValidBase64}`);
+      
+      if (!isValidBase64) {
+        console.warn('❌ 无效的Base64图片数据，缺少data:image前缀');
+      }
+      
+      // 保存前计算当前localStorage使用情况
+      const totalStorageUsed = calculateStorageUsage();
+      console.log(`📊 当前localStorage使用: ${totalStorageUsed.totalKB} KB, 项目数: ${totalStorageUsed.itemCount}`);
+      
       localStorage.setItem(key, imageData);
-      console.log(`✅ Saved image to localStorage: ${key}`);
+      console.log(`✅ 已保存图片到localStorage: ${key}`);
+      
+      // 验证保存是否成功
+      const savedItem = localStorage.getItem(key);
+      if (savedItem) {
+        console.log(`✅ 验证成功: 已找到保存的图片，大小: ${Math.round(savedItem.length / 1024)} KB`);
+      } else {
+        console.error(`❌ 验证失败: 图片似乎未成功保存`);
+      }
     } catch (error) {
-      console.error(`❌ Failed to save image to localStorage: ${key}`, error);
+      console.error(`❌ 保存图片到localStorage失败: ${key}`, error);
+      // 如果是配额错误，输出更多信息
+      if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+        console.error('💥 localStorage配额已满! 尝试清理一些数据');
+        
+        // 输出所有localStorage项及其大小
+        const storageInfo = Object.keys(localStorage).map(k => ({
+          key: k,
+          size: Math.round((localStorage.getItem(k)?.length || 0) / 1024),
+          preview: (localStorage.getItem(k)?.substring(0, 50) || '') + '...'
+        }));
+        console.table(storageInfo);
+      }
     }
   };
 
   // 从localStorage加载图片的函数
   const loadImageFromStorage = (key: string): string | null => {
     try {
+      console.log(`🔍 尝试加载图片: ${key}`);
       const image = localStorage.getItem(key);
+      
       if (image) {
-        console.log(`✅ Loaded image from localStorage: ${key}`);
+        const sizeInKB = Math.round(image.length / 1024);
+        console.log(`✅ 已加载图片: ${key}, 大小: ${sizeInKB} KB`);
+        
+        // 检查是否是有效的Base64图片
+        const isValidBase64 = image.startsWith('data:image');
+        console.log(`🔍 ${key} 是否有效的Base64图片: ${isValidBase64}`);
+        
+        if (!isValidBase64) {
+          console.warn(`❌ ${key} 数据无效，缺少data:image前缀，前50个字符: ${image.substring(0, 50)}...`);
+        }
+        
         return image;
       }
-      console.log(`ℹ️ No image in localStorage: ${key}`);
+      
+      console.log(`ℹ️ localStorage中没有图片: ${key}`);
       return null;
     } catch (error) {
-      console.error(`❌ Failed to load image from localStorage: ${key}`, error);
+      console.error(`❌ 加载图片失败: ${key}`, error);
       return null;
+    }
+  };
+  
+  // 计算localStorage使用情况
+  const calculateStorageUsage = () => {
+    try {
+      let totalSize = 0;
+      let itemCount = 0;
+      let loveStorySize = 0;
+      
+      Object.keys(localStorage).forEach(key => {
+        const value = localStorage.getItem(key);
+        const size = value ? value.length : 0;
+        totalSize += size;
+        itemCount++;
+        
+        if (key.startsWith('loveStory')) {
+          loveStorySize += size;
+        }
+      });
+      
+      return {
+        totalBytes: totalSize,
+        totalKB: Math.round(totalSize / 1024),
+        totalMB: Math.round(totalSize / 1024 / 1024 * 100) / 100,
+        loveStoryKB: Math.round(loveStorySize / 1024),
+        itemCount
+      };
+    } catch (error) {
+      console.error('计算localStorage使用情况失败', error);
+      return { totalBytes: 0, totalKB: 0, totalMB: 0, loveStoryKB: 0, itemCount: 0 };
     }
   };
 
@@ -440,7 +544,16 @@ const GenerateStep = () => {
   };
 
   useEffect(() => {
-    console.log('Loading saved data from localStorage...');
+    // 启动时检查localStorage总体使用情况
+    const storageUsage = calculateStorageUsage();
+    console.log('📊 localStorage状态:', storageUsage);
+    console.log(`📊 总存储: ${storageUsage.totalMB}MB, loveStory数据: ${storageUsage.loveStoryKB}KB`);
+    
+    // 列出所有loveStory相关的键
+    const loveStoryKeys = Object.keys(localStorage).filter(key => key.startsWith('loveStory'));
+    console.log('📋 所有loveStory键:', loveStoryKeys);
+    
+    console.log('🔄 开始从localStorage加载数据...');
     
     // 加载保存的文本内容和设置
     const savedAuthor = localStorage.getItem(LS_KEYS.AUTHOR_NAME);
@@ -451,16 +564,21 @@ const GenerateStep = () => {
     const savedTexts = localStorage.getItem(LS_KEYS.IMAGE_TEXTS);
     
     // 加载保存的图片
+    console.log('🖼️ 开始加载图片...');
     const savedCoverImage = loadImageFromStorage(LS_KEYS.COVER_IMAGE);
     const savedIntroImage = loadImageFromStorage(LS_KEYS.INTRO_IMAGE);
     
     // 加载content images 1-10
+    console.log('🖼️ 开始加载内容图片 1-10...');
     const contentImages = [];
     for (let i = 1; i <= 10; i++) {
       const key = `${LS_KEYS.CONTENT_IMAGE_PREFIX}${i}`;
       const image = loadImageFromStorage(key);
       contentImages.push(image);
     }
+    
+    // 特别关注Moment 9
+    console.log(`🔍 Moment 9状态: ${contentImages[8] ? '✅ 已加载' : '❌ 未找到'}`);
     
     // 设置作者名
     if (savedAuthor) {
@@ -630,48 +748,141 @@ const GenerateStep = () => {
     );
   };
 
-  return (
-    <WizardStep
-      title="Your Love Story Images"
-      description="Here are your personalized love story images with accompanying text."
-      previousStep="/create/love/love-story/moments"
-      nextStep="/create/love/love-story/preview"
-      currentStep={4}
-      totalSteps={4}
-    >
-      <div className="max-w-5xl mx-auto">
-        {/* Cover section */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold mb-4">Cover</h2>
-          <CoverPreviewCard 
-            coverImage={coverImage}
-            coverTitle={coverTitle}
-            subtitle={subtitle}
-            authorName={authorName}
-            backCoverText={backCoverText}
-            isGeneratingCover={isGeneratingCover}
-            onRegenerateCover={handleRegenerateCover}
-            onEditCover={() => {}}
-          />
-        </div>
+  // 添加一个检查特定图片的调试函数
+  const debugLocalStorage = (index?: number) => {
+    console.group('🔍 localStorage调试信息');
+    
+    // 计算localStorage使用情况
+    const usage = calculateStorageUsage();
+    console.log('📊 localStorage使用情况:', usage);
+    
+    // 列出所有loveStory相关的键
+    const loveStoryKeys = Object.keys(localStorage).filter(key => key.startsWith('loveStory'));
+    console.log('📋 所有loveStory键:', loveStoryKeys);
+    
+    // 如果指定了索引，检查该索引的图片
+    if (index !== undefined) {
+      const imageKey = `${LS_KEYS.CONTENT_IMAGE_PREFIX}${index}`;
+      const imageData = localStorage.getItem(imageKey);
+      
+      console.log(`🖼️ 图片 ${index} 状态:`);
+      if (imageData) {
+        const sizeInKB = Math.round(imageData.length / 1024);
+        console.log(`✅ 找到图片 ${index}, 大小: ${sizeInKB} KB`);
+        console.log('🔍 前缀:', imageData.substring(0, 50) + '...');
         
-        <h2 className="text-2xl font-bold mb-6">Story Images with Text</h2>
-        <div className="space-y-8">
-          {/* 渲染介绍图片和内容图片 */}
-          {renderContentImage(0)} {/* 介绍图片 */}
-          {renderContentImage(1)}
-          {renderContentImage(2)}
-          {renderContentImage(3)}
-          {renderContentImage(4)}
-          {renderContentImage(5)}
-          {renderContentImage(6)}
-          {renderContentImage(7)}
-          {renderContentImage(8)}
-          {renderContentImage(9)}
-          {renderContentImage(10)}
+        const isValidBase64 = imageData.startsWith('data:image');
+        console.log(`🔍 是否有效Base64: ${isValidBase64}`);
+        
+        if (!isValidBase64) {
+          console.warn(`⚠️ 图片 ${index} 不是有效的Base64格式，可能导致显示问题`);
+          
+          // 尝试修复
+          if (confirm(`图片 ${index} 格式可能有问题。要尝试修复吗？`)) {
+            try {
+              const fixedData = 'data:image/jpeg;base64,' + imageData.replace(/^data:image\/[^;]+;base64,/, '');
+              localStorage.setItem(imageKey, fixedData);
+              console.log('🔧 已尝试修复图片格式');
+              alert('已尝试修复。请刷新页面查看结果。');
+            } catch (error) {
+              console.error('❌ 修复失败:', error);
+              alert('修复失败: ' + error);
+            }
+          }
+        }
+      } else {
+        console.warn(`❌ 未找到图片 ${index}`);
+      }
+    }
+    
+    console.groupEnd();
+  };
+
+  return (
+    <div className="px-4 md:px-6">
+      <div className="flex flex-col space-y-8">
+        <div className="flex flex-col space-y-2">
+          <h1 className="text-2xl font-bold">Your Love Story</h1>
+          <p className="text-muted-foreground">
+            Personalized images for your love story
+          </p>
+          
+          {/* 添加调试按钮 - 仅开发环境显示 */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mt-4 p-2 bg-yellow-50 rounded border border-yellow-200">
+              <p className="text-sm text-yellow-800 mb-2">调试工具</p>
+              <div className="flex flex-wrap gap-2">
+                <button 
+                  onClick={() => debugLocalStorage()}
+                  className="px-2 py-1 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 text-xs rounded"
+                >
+                  检查localStorage
+                </button>
+                <button 
+                  onClick={() => debugLocalStorage(9)}
+                  className="px-2 py-1 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 text-xs rounded"
+                >
+                  检查Moment 9
+                </button>
+                <button 
+                  onClick={() => {
+                    const result = confirm("确定要继续吗？这将清除Moment 9的数据");
+                    if (result) {
+                      localStorage.removeItem(`${LS_KEYS.CONTENT_IMAGE_PREFIX}9`);
+                      alert("已清除Moment 9数据，请重新生成");
+                    }
+                  }}
+                  className="px-2 py-1 bg-red-100 hover:bg-red-200 text-red-800 text-xs rounded"
+                >
+                  清除Moment 9
+                </button>
+              </div>
+            </div>
+          )}
         </div>
+        <WizardStep
+          title="Your Love Story Images"
+          description="Here are your personalized love story images with accompanying text."
+          previousStep="/create/love/love-story/moments"
+          nextStep="/create/love/love-story/preview"
+          currentStep={4}
+          totalSteps={4}
+        >
+          <div className="max-w-5xl mx-auto">
+            {/* Cover section */}
+            <div className="mb-12">
+              <h2 className="text-2xl font-bold mb-4">Cover</h2>
+              <CoverPreviewCard 
+                coverImage={coverImage}
+                coverTitle={coverTitle}
+                subtitle={subtitle}
+                authorName={authorName}
+                backCoverText={backCoverText}
+                isGeneratingCover={isGeneratingCover}
+                onRegenerateCover={handleRegenerateCover}
+                onEditCover={() => {}}
+              />
+            </div>
+            
+            <h2 className="text-2xl font-bold mb-6">Story Images with Text</h2>
+            <div className="space-y-8">
+              {/* 渲染介绍图片和内容图片 */}
+              {renderContentImage(0)} {/* 介绍图片 */}
+              {renderContentImage(1)}
+              {renderContentImage(2)}
+              {renderContentImage(3)}
+              {renderContentImage(4)}
+              {renderContentImage(5)}
+              {renderContentImage(6)}
+              {renderContentImage(7)}
+              {renderContentImage(8)}
+              {renderContentImage(9)}
+              {renderContentImage(10)}
+            </div>
+          </div>
+        </WizardStep>
       </div>
-    </WizardStep>
+    </div>
   );
 };
 
