@@ -455,41 +455,77 @@ const GenerateStep = () => {
     // Update the storage map
     setImageStorageMap(updatedStorageMap);
 
-    // Now load images, preferring URLs from storage map if available
-    if (savedCoverImage) {
+    // Now load images, prioritizing Supabase URLs over localStorage data
+    if (savedCoverImageUrl) {
+      // If we have a Supabase URL, use it directly instead of base64 data
+      setCoverImage(savedCoverImageUrl);
+    } else if (savedCoverImage) {
       setCoverImage(savedCoverImage);
     }
-    if (savedIntroImage) {
+    
+    if (savedIntroImageUrl) {
+      setIntroImage(savedIntroImageUrl);
+    } else if (savedIntroImage) {
       setIntroImage(savedIntroImage);
     }
-    if (savedContentImage1) {
+    
+    if (savedContentImage1Url) {
+      setContentImage1(savedContentImage1Url);
+    } else if (savedContentImage1) {
       setContentImage1(savedContentImage1);
     }
-    if (savedContentImage2) {
+    
+    if (savedContentImage2Url) {
+      setContentImage2(savedContentImage2Url);
+    } else if (savedContentImage2) {
       setContentImage2(savedContentImage2);
     }
-    if (savedContentImage3) {
+    
+    if (savedContentImage3Url) {
+      setContentImage3(savedContentImage3Url);
+    } else if (savedContentImage3) {
       setContentImage3(savedContentImage3);
     }
-    if (savedContentImage4) {
+    
+    if (savedContentImage4Url) {
+      setContentImage4(savedContentImage4Url);
+    } else if (savedContentImage4) {
       setContentImage4(savedContentImage4);
     }
-    if (savedContentImage5) {
+    
+    if (savedContentImage5Url) {
+      setContentImage5(savedContentImage5Url);
+    } else if (savedContentImage5) {
       setContentImage5(savedContentImage5);
     }
-    if (savedContentImage6) {
+    
+    if (savedContentImage6Url) {
+      setContentImage6(savedContentImage6Url);
+    } else if (savedContentImage6) {
       setContentImage6(savedContentImage6);
     }
-    if (savedContentImage7) {
+    
+    if (savedContentImage7Url) {
+      setContentImage7(savedContentImage7Url);
+    } else if (savedContentImage7) {
       setContentImage7(savedContentImage7);
     }
-    if (savedContentImage8) {
+    
+    if (savedContentImage8Url) {
+      setContentImage8(savedContentImage8Url);
+    } else if (savedContentImage8) {
       setContentImage8(savedContentImage8);
     }
-    if (savedContentImage9) {
+    
+    if (savedContentImage9Url) {
+      setContentImage9(savedContentImage9Url);
+    } else if (savedContentImage9) {
       setContentImage9(savedContentImage9);
     }
-    if (savedContentImage10) {
+    
+    if (savedContentImage10Url) {
+      setContentImage10(savedContentImage10Url);
+    } else if (savedContentImage10) {
       setContentImage10(savedContentImage10);
     }
 
