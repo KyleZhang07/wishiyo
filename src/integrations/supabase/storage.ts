@@ -44,23 +44,16 @@ export const ensureBucketExists = async (bucket = 'images'): Promise<boolean> =>
  * @param base64Image Base64 encoded image string
  * @param bucket Bucket name
  * @param path Path within the bucket
- * @param clientId Optional client ID to associate with the image
  * @returns Public URL of the uploaded image
  */
 export const uploadImageToStorage = async (
   base64Image: string,
   bucket = 'images',
-  path: string,
-  clientId?: string
+  path: string
 ): Promise<string> => {
   try {
     // Ensure the bucket exists
     await ensureBucketExists(bucket);
-    
-    // Get client ID if not provided
-    if (!clientId) {
-      clientId = getClientId();
-    }
     
     // Convert base64 to Blob
     const base64Data = base64Image.split(',')[1];
@@ -85,10 +78,7 @@ export const uploadImageToStorage = async (
       .from(bucket)
       .upload(fileName, blob, {
         contentType: 'image/jpeg',
-        upsert: true,
-        metadata: {
-          clientId: clientId
-        }
+        upsert: true
       });
     
     if (error) {
@@ -110,10 +100,9 @@ export const uploadImageToStorage = async (
 /**
  * Fetches all images from a specific bucket in Supabase Storage
  * @param bucket Bucket name
- * @param clientId Optional client ID to filter images by owner
  * @returns Array of image objects with URLs and metadata
  */
-export const getAllImagesFromStorage = async (bucket = 'images', clientId?: string) => {
+export const getAllImagesFromStorage = async (bucket = 'images') => {
   try {
     // List all files in the bucket
     const { data, error } = await supabase.storage
@@ -124,22 +113,8 @@ export const getAllImagesFromStorage = async (bucket = 'images', clientId?: stri
       throw error;
     }
     
-    // 获取客户端ID，如果未提供
-    if (!clientId) {
-      clientId = getClientId();
-    }
-    
-    // 过滤图片，只返回属于当前客户端的图片
-    const userFiles = clientId 
-      ? data?.filter(file => {
-          // 检查文件元数据中的clientId是否匹配
-          const fileClientId = file.metadata?.clientId;
-          return fileClientId === clientId || fileClientId === undefined;
-        })
-      : data;
-    
     // Get public URLs for all images
-    return userFiles?.map(file => {
+    return data?.map(file => {
       const { data: publicUrlData } = supabase.storage
         .from(bucket)
         .getPublicUrl(file.name);
@@ -180,27 +155,4 @@ export const deleteImageFromStorage = async (path: string, bucket = 'images'): P
     console.error('Error deleting image from Supabase Storage:', error);
     return false;
   }
-};
-
-/**
- * 获取或创建客户端唯一ID
- * 用于区分不同的用户，无需登录
- * @returns 客户端唯一ID
- */
-export const getClientId = (): string => {
-  // 尝试从localStorage获取客户端ID
-  let clientId = localStorage.getItem('wishiyo_client_id');
-  
-  // 如果不存在，则创建一个新的UUID
-  if (!clientId) {
-    // 生成一个随机的UUID
-    clientId = 'client-' + Math.random().toString(36).substring(2, 15) + 
-               Math.random().toString(36).substring(2, 15) + '-' + 
-               Date.now().toString(36);
-    
-    // 保存到localStorage
-    localStorage.setItem('wishiyo_client_id', clientId);
-  }
-  
-  return clientId;
 }; 

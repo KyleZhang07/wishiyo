@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { getAllImagesFromStorage, ensureBucketExists } from '@/integrations/supabase/storage';
 import { Button } from '@/components/ui/button';
-import { Loader2, Trash2 } from 'lucide-react';
+import { Loader2, Trash2, RefreshCw } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
 interface ImagePrompt {
@@ -26,8 +26,9 @@ interface SupabaseImage {
 
 interface LocalStorageImage {
   key: string;
-  dataUrl: string;
-  size: number; // in bytes
+  data: string;
+  isBase64: boolean;
+  size: string;
 }
 
 const DebugPromptsStep = () => {
@@ -36,11 +37,9 @@ const DebugPromptsStep = () => {
   const [selectedTone, setSelectedTone] = useState<string>('');
   const [selectedStyle, setSelectedStyle] = useState<string>('');
   const [supabaseImages, setSupabaseImages] = useState<SupabaseImage[]>([]);
-  const [isLoadingImages, setIsLoadingImages] = useState(false);
   const [localStorageImages, setLocalStorageImages] = useState<LocalStorageImage[]>([]);
+  const [isLoadingImages, setIsLoadingImages] = useState(false);
   const [isLoadingLocalStorage, setIsLoadingLocalStorage] = useState(false);
-  const [localStorageUsage, setLocalStorageUsage] = useState<{used: number, total: number}>({used: 0, total: 0});
-  
   const { toast } = useToast();
 
   useEffect(() => {
@@ -80,9 +79,6 @@ const DebugPromptsStep = () => {
     
     // Load images from localStorage
     loadLocalStorageImages();
-    
-    // Calculate localStorage usage
-    calculateLocalStorageUsage();
   }, []);
 
   const loadSupabaseImages = async () => {
@@ -101,6 +97,7 @@ const DebugPromptsStep = () => {
 
   const loadLocalStorageImages = () => {
     setIsLoadingLocalStorage(true);
+    
     try {
       const imageKeys = [
         'loveStoryCoverImage',
@@ -114,20 +111,22 @@ const DebugPromptsStep = () => {
         'loveStoryContentImage7',
         'loveStoryContentImage8',
         'loveStoryContentImage9',
-        'loveStoryContentImage10',
+        'loveStoryContentImage10'
       ];
       
       const images: LocalStorageImage[] = [];
       
       imageKeys.forEach(key => {
-        const dataUrl = localStorage.getItem(key);
-        if (dataUrl) {
-          // Calculate size in bytes (approximation for base64)
-          const size = Math.ceil((dataUrl.length * 3) / 4);
+        const imageData = localStorage.getItem(key);
+        if (imageData) {
+          // Calculate size in KB
+          const sizeInKB = (imageData.length * 2 / 1024).toFixed(2);
+          
           images.push({
             key,
-            dataUrl,
-            size
+            data: imageData,
+            isBase64: imageData.startsWith('data:image'),
+            size: `${sizeInKB} KB`
           });
         }
       });
@@ -139,34 +138,6 @@ const DebugPromptsStep = () => {
       setIsLoadingLocalStorage(false);
     }
   };
-  
-  const calculateLocalStorageUsage = () => {
-    try {
-      // Get current usage
-      let used = 0;
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key) {
-          const value = localStorage.getItem(key) || '';
-          used += key.length + value.length;
-        }
-      }
-      
-      // Convert to MB
-      const usedMB = used / (1024 * 1024);
-      
-      // Estimate total available (varies by browser)
-      // Most browsers have 5-10MB limit
-      const totalMB = 5; // Conservative estimate
-      
-      setLocalStorageUsage({
-        used: usedMB,
-        total: totalMB
-      });
-    } catch (error) {
-      console.error('Error calculating localStorage usage:', error);
-    }
-  };
 
   const refreshSupabaseImages = () => {
     loadSupabaseImages();
@@ -174,14 +145,27 @@ const DebugPromptsStep = () => {
   
   const refreshLocalStorageImages = () => {
     loadLocalStorageImages();
-    calculateLocalStorageUsage();
-    toast({
-      title: "Local Storage Refreshed",
-      description: "Local storage image data has been refreshed",
-    });
   };
   
-  const clearLocalStorageImages = () => {
+  const clearLocalStorageImage = (key: string) => {
+    try {
+      localStorage.removeItem(key);
+      loadLocalStorageImages();
+      toast({
+        title: "Image removed",
+        description: `Successfully removed ${key} from localStorage`,
+      });
+    } catch (error) {
+      console.error('Error removing image from localStorage:', error);
+      toast({
+        title: "Error",
+        description: "Failed to remove image from localStorage",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const clearAllLocalStorageImages = () => {
     try {
       const imageKeys = [
         'loveStoryCoverImage',
@@ -195,39 +179,26 @@ const DebugPromptsStep = () => {
         'loveStoryContentImage7',
         'loveStoryContentImage8',
         'loveStoryContentImage9',
-        'loveStoryContentImage10',
+        'loveStoryContentImage10'
       ];
       
       imageKeys.forEach(key => {
         localStorage.removeItem(key);
       });
       
-      setLocalStorageImages([]);
-      calculateLocalStorageUsage();
-      
+      loadLocalStorageImages();
       toast({
-        title: "Local Storage Cleared",
-        description: "All image data has been removed from local storage",
+        title: "Images cleared",
+        description: "Successfully removed all images from localStorage",
       });
     } catch (error) {
-      console.error('Error clearing localStorage:', error);
+      console.error('Error clearing localStorage images:', error);
       toast({
         title: "Error",
-        description: "Failed to clear local storage",
+        description: "Failed to clear localStorage images",
         variant: "destructive",
       });
     }
-  };
-
-  // Format file size to human readable format
-  const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
-    
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   const debugContent = (
@@ -252,80 +223,6 @@ const DebugPromptsStep = () => {
         </div>
       </div>
       
-      {/* LocalStorage Usage Section */}
-      <div className="bg-white p-4 rounded-lg shadow">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="font-bold text-gray-800 text-xl">LocalStorage Usage</h3>
-          <div className="flex space-x-2">
-            <Button 
-              onClick={refreshLocalStorageImages} 
-              variant="outline" 
-              size="sm"
-              disabled={isLoadingLocalStorage}
-            >
-              {isLoadingLocalStorage ? (
-                <React.Fragment>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Loading...
-                </React.Fragment>
-              ) : (
-                'Refresh Local'
-              )}
-            </Button>
-            <Button 
-              onClick={clearLocalStorageImages} 
-              variant="destructive" 
-              size="sm"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Clear Images
-            </Button>
-          </div>
-        </div>
-
-        <div className="mb-4">
-          <div className="bg-gray-100 rounded-full h-4 mb-2">
-            <div 
-              className={`h-4 rounded-full ${localStorageUsage.used / localStorageUsage.total > 0.8 ? 'bg-red-500' : 'bg-green-500'}`}
-              style={{ width: `${Math.min(100, (localStorageUsage.used / localStorageUsage.total) * 100)}%` }}
-            ></div>
-          </div>
-          <div className="text-sm text-gray-600 flex justify-between">
-            <span>Used: {localStorageUsage.used.toFixed(2)} MB</span>
-            <span>Total: ~{localStorageUsage.total.toFixed(2)} MB</span>
-          </div>
-        </div>
-
-        {isLoadingLocalStorage ? (
-          <div className="flex justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-          </div>
-        ) : localStorageImages.length > 0 ? (
-          <div>
-            <p className="text-sm mb-2 text-gray-600">Total images in localStorage: {localStorageImages.length}</p>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {localStorageImages.map((image, index) => (
-                <div key={index} className="bg-gray-50 p-2 rounded">
-                  <img 
-                    src={image.dataUrl} 
-                    alt={image.key}
-                    className="w-full h-48 object-cover rounded mb-2"
-                  />
-                  <p className="text-xs text-gray-500 truncate" title={image.key}>
-                    {image.key}
-                  </p>
-                  <p className="text-xs text-orange-500 font-semibold">
-                    Size: {formatFileSize(image.size)}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <p className="text-gray-500 py-8 text-center">No images found in localStorage.</p>
-        )}
-      </div>
-      
       {/* Supabase Images Section */}
       <div className="bg-white p-4 rounded-lg shadow">
         <div className="flex justify-between items-center mb-4">
@@ -342,7 +239,10 @@ const DebugPromptsStep = () => {
                 Loading...
               </React.Fragment>
             ) : (
-              'Refresh Supabase'
+              <React.Fragment>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Refresh Images
+              </React.Fragment>
             )}
           </Button>
         </div>
@@ -352,28 +252,109 @@ const DebugPromptsStep = () => {
             <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
           </div>
         ) : supabaseImages.length > 0 ? (
-          <div>
-            <p className="text-sm mb-2 text-gray-600">Total images in Supabase: {supabaseImages.length}</p>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {supabaseImages.map((image) => (
-                <div key={image.id} className="bg-gray-50 p-2 rounded">
-                  <img 
-                    src={image.url} 
-                    alt={image.name}
-                    className="w-full h-48 object-cover rounded mb-2"
-                  />
-                  <p className="text-xs text-gray-500 truncate" title={image.name}>
-                    {image.name}
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    {new Date(image.created_at).toLocaleString()}
-                  </p>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {supabaseImages.map((image) => (
+              <div key={image.id} className="bg-gray-50 p-2 rounded">
+                <img 
+                  src={image.url} 
+                  alt={image.name}
+                  className="w-full h-48 object-cover rounded mb-2"
+                />
+                <p className="text-xs text-gray-500 truncate" title={image.name}>
+                  {image.name}
+                </p>
+                <p className="text-xs text-gray-400">
+                  {new Date(image.created_at).toLocaleString()}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500 py-8 text-center">No images found in Supabase Storage.</p>
+        )}
+      </div>
+      
+      {/* LocalStorage Images Section */}
+      <div className="bg-white p-4 rounded-lg shadow">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="font-bold text-gray-800 text-xl">LocalStorage Images</h3>
+          <div className="flex gap-2">
+            <Button 
+              onClick={refreshLocalStorageImages} 
+              variant="outline" 
+              size="sm"
+              disabled={isLoadingLocalStorage}
+            >
+              {isLoadingLocalStorage ? (
+                <React.Fragment>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Loading...
+                </React.Fragment>
+              ) : (
+                <React.Fragment>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Refresh
+                </React.Fragment>
+              )}
+            </Button>
+            <Button 
+              onClick={clearAllLocalStorageImages} 
+              variant="destructive" 
+              size="sm"
+              disabled={isLoadingLocalStorage || localStorageImages.length === 0}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Clear All
+            </Button>
+          </div>
+        </div>
+
+        {isLoadingLocalStorage ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+          </div>
+        ) : localStorageImages.length > 0 ? (
+          <div className="space-y-4">
+            <div className="bg-yellow-50 p-3 rounded border border-yellow-200 mb-4 text-sm">
+              <p className="text-yellow-800">Total Size: {
+                localStorageImages.reduce((total, img) => total + parseFloat(img.size), 0).toFixed(2)
+              } KB</p>
+              <p className="text-yellow-700 text-xs mt-1">LocalStorage limit is typically around 5MB (5,120 KB) per domain</p>
+            </div>
+            
+            <div className="grid grid-cols-1 gap-4">
+              {localStorageImages.map((image) => (
+                <div key={image.key} className="bg-gray-50 p-3 rounded">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <p className="font-medium text-gray-700">{image.key}</p>
+                      <p className="text-xs text-gray-500">Size: {image.size}</p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => clearLocalStorageImage(image.key)}
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  
+                  {image.isBase64 && (
+                    <div className="mt-2">
+                      <img 
+                        src={image.data} 
+                        alt={image.key}
+                        className="max-h-20 rounded border border-gray-200"
+                      />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
           </div>
         ) : (
-          <p className="text-gray-500 py-8 text-center">No images found in Supabase Storage.</p>
+          <p className="text-gray-500 py-8 text-center">No images found in localStorage.</p>
         )}
       </div>
       
@@ -426,8 +407,6 @@ const DebugPromptsStep = () => {
         <pre>{JSON.stringify(texts, null, 2)}</pre>
         <p className="mt-4 mb-2">Supabase Storage URLs:</p>
         <pre>{JSON.stringify(supabaseImages.map(img => img.url), null, 2)}</pre>
-        <p className="mt-4 mb-2">LocalStorage Usage:</p>
-        <pre>{JSON.stringify(localStorageUsage, null, 2)}</pre>
       </div>
     </div>
   );
