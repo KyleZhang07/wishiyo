@@ -1,0 +1,1 @@
+请在Supabase SQL编辑器中执行以下SQL语句:

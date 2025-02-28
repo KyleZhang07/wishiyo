@@ -3,12 +3,12 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-export interface WizardStepProps {
+interface WizardStepProps {
   title: string;
   description: string;
   children: ReactNode;
-  previousStep: string;
-  nextStep: string;
+  previousStep?: string;
+  nextStep?: string;
   currentStep: number;
   totalSteps: number;
   onNextClick?: () => void | Promise<void>;
