@@ -17,8 +17,8 @@ const GenerateStep = () => {
   const [authorName, setAuthorName] = useState('');
   const [backCoverText, setBackCoverText] = useState('');
   const [coverImage, setCoverImage] = useState<string>();
-  const [contentImage, setContentImage] = useState<string>();
-  // contentImage2~11
+  const [introImage, setIntroImage] = useState<string>();
+  const [contentImage1, setContentImage1] = useState<string>();
   const [contentImage2, setContentImage2] = useState<string>();
   const [contentImage3, setContentImage3] = useState<string>();
   const [contentImage4, setContentImage4] = useState<string>();
@@ -28,9 +28,9 @@ const GenerateStep = () => {
   const [contentImage8, setContentImage8] = useState<string>();
   const [contentImage9, setContentImage9] = useState<string>();
   const [contentImage10, setContentImage10] = useState<string>();
-  const [contentImage11, setContentImage11] = useState<string>();
 
   const [isGeneratingCover, setIsGeneratingCover] = useState(false);
+  const [isGeneratingIntro, setIsGeneratingIntro] = useState(false);
   const [isGeneratingContent1, setIsGeneratingContent1] = useState(false);
   const [isGeneratingContent2, setIsGeneratingContent2] = useState(false);
   const [isGeneratingContent3, setIsGeneratingContent3] = useState(false);
@@ -41,7 +41,6 @@ const GenerateStep = () => {
   const [isGeneratingContent8, setIsGeneratingContent8] = useState(false);
   const [isGeneratingContent9, setIsGeneratingContent9] = useState(false);
   const [isGeneratingContent10, setIsGeneratingContent10] = useState(false);
-  const [isGeneratingContent11, setIsGeneratingContent11] = useState(false);
 
   const [selectedStyle, setSelectedStyle] = useState<string>('Photographic (Default)');
   const [imageTexts, setImageTexts] = useState<ImageText[]>([]);
@@ -71,9 +70,10 @@ const GenerateStep = () => {
   };
 
   const handleGenericContentRegeneration = async (index: number, style?: string) => {
-    if (index < 2) return;
+    if (index < 1) return;
 
     const stateSetters = {
+      1: setContentImage1,
       2: setContentImage2,
       3: setContentImage3,
       4: setContentImage4,
@@ -82,28 +82,27 @@ const GenerateStep = () => {
       7: setContentImage7,
       8: setContentImage8,
       9: setContentImage9,
-      10: setContentImage10,
-      11: setContentImage11
+      10: setContentImage10
     };
 
     const loadingSetters = {
+      1: setIsGeneratingContent1,
       2: setIsGeneratingContent2,
       3: setIsGeneratingContent3,
-      4: setIsGeneratingContent4,
+      4: setIsGeneratingContent4, 
       5: setIsGeneratingContent5,
       6: setIsGeneratingContent6,
       7: setIsGeneratingContent7,
       8: setIsGeneratingContent8,
       9: setIsGeneratingContent9,
-      10: setIsGeneratingContent10,
-      11: setIsGeneratingContent11
+      10: setIsGeneratingContent10
     };
 
     const setContentFn = stateSetters[index as keyof typeof stateSetters];
     const setIsGenerating = loadingSetters[index as keyof typeof loadingSetters];
     if (!setContentFn || !setIsGenerating) return;
 
-    const lsKey = `loveStoryContentImage${index}`;
+    const lsKey = `loveStoryContentImage${index+1}`;
     localStorage.removeItem(lsKey);
 
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
@@ -120,8 +119,8 @@ const GenerateStep = () => {
     setIsGenerating(true);
     try {
       const prompts = JSON.parse(savedPrompts);
-      if (!prompts[index]) {
-        throw new Error(`No prompt found for content index ${index}`);
+      if (!prompts[index+1]) {
+        throw new Error(`No prompt found for content index ${index+1}`);
       }
       
       // Use the provided style or fall back to the stored/default style
@@ -136,7 +135,7 @@ const GenerateStep = () => {
       // Include style in the request
       const { data, error } = await supabase.functions.invoke('generate-love-cover', {
         body: { 
-          prompt: prompts[index].prompt, 
+          prompt: prompts[index+1].prompt,
           photo: partnerPhoto,
           style: imageStyle
         }
@@ -144,8 +143,7 @@ const GenerateStep = () => {
       if (error) throw error;
 
       // 后端可能返回 { output: [...]} 或 { contentImageX: [...] }
-      // 具体看你的generate-love-cover实现
-      const imageUrl = data?.[`contentImage${index}`]?.[0] || data?.output?.[0];
+      const imageUrl = data?.[`contentImage${index+1}`]?.[0] || data?.output?.[0];
       if (!imageUrl) {
         throw new Error("No image generated from generate-love-cover");
       }
@@ -173,6 +171,7 @@ const GenerateStep = () => {
     }
   };
 
+  const handleRegenerateContent1 = (style?: string) => handleGenericContentRegeneration(1, style);
   const handleRegenerateContent2 = (style?: string) => handleGenericContentRegeneration(2, style);
   const handleRegenerateContent3 = (style?: string) => handleGenericContentRegeneration(3, style);
   const handleRegenerateContent4 = (style?: string) => handleGenericContentRegeneration(4, style);
@@ -182,11 +181,10 @@ const GenerateStep = () => {
   const handleRegenerateContent8 = (style?: string) => handleGenericContentRegeneration(8, style);
   const handleRegenerateContent9 = (style?: string) => handleGenericContentRegeneration(9, style);
   const handleRegenerateContent10 = (style?: string) => handleGenericContentRegeneration(10, style);
-  const handleRegenerateContent11 = (style?: string) => handleGenericContentRegeneration(11, style);
 
   const generateInitialImages = async (prompts: string, partnerPhoto: string) => {
     setIsGeneratingCover(true);
-    setIsGeneratingContent1(true);
+    setIsGeneratingIntro(true);
     toast({
       title: "Generating images",
       description: "This may take a minute...",
@@ -211,13 +209,13 @@ const GenerateStep = () => {
       }
 
       if (data?.contentImage?.[0]) {
-        setContentImage(data.contentImage[0]);
-        localStorage.setItem('loveStoryContentImage', data.contentImage[0]);
+        setIntroImage(data.contentImage[0]);
+        localStorage.setItem('loveStoryIntroImage', data.contentImage[0]);
       }
 
       if (data?.contentImage2?.[0]) {
-        setContentImage2(data.contentImage2[0]);
-        localStorage.setItem('loveStoryContentImage2', data.contentImage2[0]);
+        setContentImage1(data.contentImage2[0]);
+        localStorage.setItem('loveStoryContentImage1', data.contentImage2[0]);
       }
 
       toast({
@@ -233,7 +231,7 @@ const GenerateStep = () => {
       });
     } finally {
       setIsGeneratingCover(false);
-      setIsGeneratingContent1(false);
+      setIsGeneratingIntro(false);
     }
   };
 
@@ -248,7 +246,8 @@ const GenerateStep = () => {
     
     // Load images
     const savedCoverImage = localStorage.getItem('loveStoryCoverImage');
-    const savedContentImage = localStorage.getItem('loveStoryContentImage');
+    const savedIntroImage = localStorage.getItem('loveStoryIntroImage');
+    const savedContentImage1 = localStorage.getItem('loveStoryContentImage1');
     const savedContentImage2 = localStorage.getItem('loveStoryContentImage2');
     const savedContentImage3 = localStorage.getItem('loveStoryContentImage3');
     const savedContentImage4 = localStorage.getItem('loveStoryContentImage4');
@@ -258,7 +257,6 @@ const GenerateStep = () => {
     const savedContentImage8 = localStorage.getItem('loveStoryContentImage8');
     const savedContentImage9 = localStorage.getItem('loveStoryContentImage9');
     const savedContentImage10 = localStorage.getItem('loveStoryContentImage10');
-    const savedContentImage11 = localStorage.getItem('loveStoryContentImage11');
     const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
     
     // Ensure we have a recipient name stored
@@ -331,8 +329,11 @@ const GenerateStep = () => {
     if (savedCoverImage) {
       setCoverImage(savedCoverImage);
     }
-    if (savedContentImage) {
-      setContentImage(savedContentImage);
+    if (savedIntroImage) {
+      setIntroImage(savedIntroImage);
+    }
+    if (savedContentImage1) {
+      setContentImage1(savedContentImage1);
     }
     if (savedContentImage2) {
       setContentImage2(savedContentImage2);
@@ -361,12 +362,9 @@ const GenerateStep = () => {
     if (savedContentImage10) {
       setContentImage10(savedContentImage10);
     }
-    if (savedContentImage11) {
-      setContentImage11(savedContentImage11);
-    }
 
     // Temporarily commented out for testing purposes
-    // if ((!savedCoverImage || !savedContentImage || !savedContentImage2) && savedPrompts && partnerPhoto) {
+    // if ((!savedCoverImage || !savedIntroImage || !savedContentImage1) && savedPrompts && partnerPhoto) {
     //   generateInitialImages(savedPrompts, partnerPhoto);
     // }
   }, []);
@@ -435,14 +433,14 @@ const GenerateStep = () => {
     }
   };
 
-  const handleRegenerateContent1 = async (style?: string) => {
-    localStorage.removeItem('loveStoryContentImage');
+  const handleRegenerateIntro = async (style?: string) => {
+    localStorage.removeItem('loveStoryIntroImage');
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
     const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
     if (savedPrompts && partnerPhoto) {
       const prompts = JSON.parse(savedPrompts);
       if (prompts && prompts.length > 1) {
-        setIsGeneratingContent1(true);
+        setIsGeneratingIntro(true);
         
         // Use the provided style or fall back to the stored/default style
         const imageStyle = style || selectedStyle;
@@ -463,8 +461,8 @@ const GenerateStep = () => {
           });
           if (error) throw error;
           if (data?.contentImage?.[0]) {
-            setContentImage(data.contentImage[0]);
-            localStorage.setItem('loveStoryContentImage', data.contentImage[0]);
+            setIntroImage(data.contentImage[0]);
+            localStorage.setItem('loveStoryIntroImage', data.contentImage[0]);
             
             toast({
               title: "Image regenerated",
@@ -479,7 +477,7 @@ const GenerateStep = () => {
             variant: "destructive",
           });
         } finally {
-          setIsGeneratingContent1(false);
+          setIsGeneratingIntro(false);
         }
       }
     }
@@ -488,7 +486,8 @@ const GenerateStep = () => {
   // Render content images with text inside the canvas
   const renderContentImage = (imageIndex: number) => {
     const imageStateMap: Record<number, string | undefined> = {
-      1: contentImage,
+      0: introImage,
+      1: contentImage1,
       2: contentImage2,
       3: contentImage3,
       4: contentImage4,
@@ -498,10 +497,10 @@ const GenerateStep = () => {
       8: contentImage8,
       9: contentImage9,
       10: contentImage10,
-      11: contentImage11,
     };
     
     const loadingStateMap: Record<number, boolean> = {
+      0: isGeneratingIntro,
       1: isGeneratingContent1,
       2: isGeneratingContent2,
       3: isGeneratingContent3,
@@ -512,10 +511,10 @@ const GenerateStep = () => {
       8: isGeneratingContent8,
       9: isGeneratingContent9,
       10: isGeneratingContent10,
-      11: isGeneratingContent11,
     };
     
-    const handleRegenerateMap: Record<number, () => void> = {
+    const handleRegenerateMap: Record<number, (style?: string) => void> = {
+      0: handleRegenerateIntro,
       1: handleRegenerateContent1,
       2: handleRegenerateContent2,
       3: handleRegenerateContent3,
@@ -526,14 +525,16 @@ const GenerateStep = () => {
       8: handleRegenerateContent8,
       9: handleRegenerateContent9,
       10: handleRegenerateContent10,
-      11: handleRegenerateContent11,
     };
     
     const image = imageStateMap[imageIndex];
     const isLoading = loadingStateMap[imageIndex];
     const handleRegenerate = handleRegenerateMap[imageIndex];
     // Get the text for this image, adjusting for zero-based array index
-    const imageText = imageTexts && imageTexts.length > imageIndex - 1 ? imageTexts[imageIndex - 1] : null;
+    const imageText = imageTexts && imageTexts.length > imageIndex ? imageTexts[imageIndex] : null;
+    
+    // 显示标题适配新的命名方式
+    let title = imageIndex === 0 ? "Introduction" : `Moment ${imageIndex}`;
     
     return (
       <div className="mb-10">
@@ -544,6 +545,7 @@ const GenerateStep = () => {
           index={imageIndex}
           onEditText={() => {}}
           text={imageText?.text}
+          title={title}
         />
       </div>
     );
@@ -576,7 +578,8 @@ const GenerateStep = () => {
         
         <h2 className="text-2xl font-bold mb-6">Story Images with Text</h2>
         <div className="space-y-8">
-          {/* Render content images with text inside canvas */}
+          {/* 渲染介绍图片和内容图片 */}
+          {renderContentImage(0)} {/* 介绍图片 */}
           {renderContentImage(1)}
           {renderContentImage(2)}
           {renderContentImage(3)}
@@ -587,7 +590,6 @@ const GenerateStep = () => {
           {renderContentImage(8)}
           {renderContentImage(9)}
           {renderContentImage(10)}
-          {renderContentImage(11)}
         </div>
       </div>
     </WizardStep>

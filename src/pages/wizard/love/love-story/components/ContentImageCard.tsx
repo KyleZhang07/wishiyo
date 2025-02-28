@@ -21,6 +21,7 @@ interface ContentImageCardProps {
   coverTitle?: string;
   showDedicationText?: boolean;
   text?: string;
+  title?: string;
 }
 
 // Image style options for love story
@@ -41,7 +42,8 @@ export const ContentImageCard = ({
   authorName,
   coverTitle,
   showDedicationText = false,
-  text
+  text,
+  title
 }: ContentImageCardProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -157,7 +159,7 @@ export const ContentImageCard = ({
           ctx.font = 'bold 22px Georgia, serif';
           ctx.fillStyle = 'white';
           ctx.textAlign = 'left';
-          ctx.fillText(`Moment ${index}`, 25, height - overlayHeight + 40);
+          ctx.fillText(title || `Moment ${index}`, 25, height - overlayHeight + 40);
           
           // Add the text content
           ctx.font = '18px Georgia, serif';
