@@ -51,9 +51,9 @@ const LoveStoryMomentsStep = () => {
     <WizardStep
       title="Upload your partner's photo"
       description="We'll use it on the cover"
-      previousStep="/create/love/love-story/ideas"
-      nextStep="/create/love/love-story/generate"
-      currentStep={4}
+      previousStep="/create/love/love-story/questions"
+      nextStep="/create/love/love-story/ideas"
+      currentStep={3}
       totalSteps={5}
     >
       <div className="space-y-6">

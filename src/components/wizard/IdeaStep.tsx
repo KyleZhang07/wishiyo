@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import WizardStep from './WizardStep';
 import { Button } from '@/components/ui/button';
@@ -436,8 +437,8 @@ const IdeaStep = ({
         ? "Choose a writing tone and visual style for your personalized love story."
         : "Choose from these AI-generated fantasy autobiography ideas or regenerate for more options."}
       previousStep={previousStep}
-      currentStep={3}
-      totalSteps={4}
+      currentStep={4}
+      totalSteps={5}
       onNextClick={handleContinue}
     >
       <div className="space-y-6">
