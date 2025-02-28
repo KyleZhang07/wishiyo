@@ -137,13 +137,23 @@ const GenerateStep = () => {
         body: { 
           prompt: prompts[index+1].prompt,
           photo: partnerPhoto,
-          style: imageStyle
+          style: imageStyle,
+          contentIndex: index
         }
       });
       if (error) throw error;
 
       // 后端可能返回 { output: [...]} 或 { contentImageX: [...] }
-      const imageUrl = data?.[`contentImage${index+1}`]?.[0] || data?.output?.[0];
+      let imageUrl = data?.output?.[0];
+      if (!imageUrl) {
+        imageUrl = data?.[`contentImage${index}`]?.[0];
+      }
+      if (!imageUrl) {
+        imageUrl = data?.[`contentImage${index+1}`]?.[0];
+      }
+      
+      console.log(`API response for index ${index}:`, data);
+      
       if (!imageUrl) {
         throw new Error("No image generated from generate-love-cover");
       }
@@ -154,6 +164,13 @@ const GenerateStep = () => {
       // 3) 存到state & localStorage
       setContentFn(expandedBase64);
       localStorage.setItem(lsKey, expandedBase64);
+      
+      // 记录localStorage存储操作
+      console.log(`Saving expanded image to localStorage with key: ${lsKey}`, {
+        imageUrlLength: imageUrl.length,
+        expandedBase64Length: expandedBase64.length,
+        stateSetterKey: index
+      });
 
       toast({
         title: "Image regenerated & expanded",
@@ -239,6 +256,9 @@ const GenerateStep = () => {
   };
 
   useEffect(() => {
+    // 调试：列出所有localStorage键
+    console.log('All localStorage keys:', Object.keys(localStorage).filter(key => key.startsWith('loveStory')));
+    
     const savedAuthor = localStorage.getItem('loveStoryAuthorName');
     const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
     const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
@@ -360,7 +380,10 @@ const GenerateStep = () => {
       setContentImage8(savedContentImage8);
     }
     if (savedContentImage9) {
+      console.log('✅ Found Moment 9 in localStorage, setting state');
       setContentImage9(savedContentImage9);
+    } else {
+      console.log('❌ Moment 9 not found in localStorage');
     }
     if (savedContentImage10) {
       setContentImage10(savedContentImage10);
