@@ -1,24 +1,20 @@
-import { useState, useEffect } from 'react';
+
+import { useState, useEffect, useCallback } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { CoverPreviewCard } from './components/CoverPreviewCard';
 import { ContentImageCard } from './components/ContentImageCard';
-import { 
-  getDataFromStore, 
-  storeData, 
-  removeData, 
-  migrateFromLocalStorage 
-} from '@/utils/indexedDB';
+import { uploadImage, getImageUrl, deleteImage } from '@/utils/supabaseStorage';
 
 interface ImageText {
   text: string;
   tone: string;
 }
 
-// Define image-related localStorage keys for migration
-const IMAGE_STORAGE_KEYS = [
+// 定义图片键
+const IMAGE_KEYS = [
   'loveStoryCoverImage',
   'loveStoryIntroImage',
   'loveStoryContentImage1',
@@ -54,7 +50,7 @@ const GenerateStep = () => {
   const [contentImage9, setContentImage9] = useState<string>();
   const [contentImage10, setContentImage10] = useState<string>();
 
-  // Additional input images (from MomentsStep)
+  // 额外的输入图片（从 MomentsStep）
   const [inputImage2, setInputImage2] = useState<string>();
   const [inputImage3, setInputImage3] = useState<string>();
   const [inputImage4, setInputImage4] = useState<string>();
@@ -74,20 +70,9 @@ const GenerateStep = () => {
 
   const [selectedStyle, setSelectedStyle] = useState<string>('Photographic (Default)');
   const [imageTexts, setImageTexts] = useState<ImageText[]>([]);
-  const [migratedToIndexedDB, setMigratedToIndexedDB] = useState(false);
+  const [dataInitialized, setDataInitialized] = useState(false);
 
   const { toast } = useToast();
-
-  // Function to migrate existing image data from localStorage to IndexedDB
-  const migrateImagesToIndexedDB = async () => {
-    try {
-      await migrateFromLocalStorage(IMAGE_STORAGE_KEYS);
-      setMigratedToIndexedDB(true);
-      console.log('Successfully migrated image data to IndexedDB');
-    } catch (error) {
-      console.error('Failed to migrate images to IndexedDB:', error);
-    }
-  };
 
   const expandImage = async (imageUrl: string): Promise<string> => {
     try {
@@ -110,6 +95,43 @@ const GenerateStep = () => {
       throw err;
     }
   };
+
+  // 保存图片到 Supabase 存储
+  const saveImageToStorage = useCallback(async (key: string, imageData: string): Promise<string | null> => {
+    try {
+      console.log(`Saving image with key ${key} to Supabase...`);
+      const imageUrl = await uploadImage(key, imageData);
+      console.log(`Successfully saved image with key ${key} to Supabase: ${imageUrl}`);
+      return imageUrl;
+    } catch (error) {
+      console.error(`Error saving image with key ${key} to Supabase:`, error);
+      toast({
+        title: "Storage Error",
+        description: "Unable to save generated image to storage.",
+        variant: "destructive",
+      });
+      return null;
+    }
+  }, [toast]);
+
+  // 从 Supabase 存储加载图片
+  const loadImageFromStorage = useCallback(async (key: string): Promise<string | undefined> => {
+    try {
+      console.log(`Loading image with key ${key} from Supabase...`);
+      const imageUrl = await getImageUrl(key);
+      
+      if (imageUrl) {
+        console.log(`Found image with key ${key} in Supabase: ${imageUrl}`);
+        return imageUrl;
+      }
+      
+      console.log(`No image found with key ${key} in Supabase`);
+      return undefined;
+    } catch (error) {
+      console.error(`Error loading image with key ${key} from Supabase:`, error);
+      return undefined;
+    }
+  }, []);
 
   const handleGenericContentRegeneration = async (index: number, style?: string) => {
     if (index < 1) return;
@@ -144,9 +166,15 @@ const GenerateStep = () => {
     const setIsGenerating = loadingSetters[index as keyof typeof loadingSetters];
     if (!setContentFn || !setIsGenerating) return;
 
-    const lsKey = `loveStoryContentImage${index}`;
-    // Remove from IndexedDB instead of localStorage
-    await removeData(lsKey);
+    const imageKey = `loveStoryContentImage${index}`;
+    
+    // 删除旧图片
+    try {
+      await deleteImage(imageKey);
+    } catch (error) {
+      console.error(`Error removing old image with key ${imageKey}:`, error);
+      // 继续执行，因为我们会替换它
+    }
 
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
     const characterPhoto = localStorage.getItem('loveStoryCharacterPhoto');
@@ -167,45 +195,47 @@ const GenerateStep = () => {
         throw new Error(`No prompt found for content index ${promptIndex}`);
       }
       
-      // Use the provided style or fall back to the stored/default style
+      // 使用提供的样式或回退到存储的默认样式
       const imageStyle = style || selectedStyle;
       
-      // Update the stored style if a new one is provided
+      // 如果提供了新样式，则更新存储的样式
       if (style) {
         setSelectedStyle(style);
         localStorage.setItem('loveStoryStyle', style);
       }
 
-      // Prepare the request body with additional images if available
+      // 准备请求体，包含额外的图片（如果有）
       const requestBody: any = { 
         prompt: prompts[promptIndex].prompt,
         photo: characterPhoto,
         style: imageStyle
       };
       
-      // Add additional input images if available
+      // 添加额外的输入图片（如果有）
       if (inputImage2) requestBody.input_image2 = inputImage2;
       if (inputImage3) requestBody.input_image3 = inputImage3;
       if (inputImage4) requestBody.input_image4 = inputImage4;
 
-      // Include style in the request
+      // 包含样式在请求中
       const { data, error } = await supabase.functions.invoke('generate-love-cover', {
         body: requestBody
       });
       if (error) throw error;
 
-      // 后端可能返回 { output: [...]} 或 { contentImageX: [...] }
+      // 后端可能返回不同的输出格式
       const imageUrl = data?.[`contentImage${promptIndex}`]?.[0] || data?.output?.[0];
       if (!imageUrl) {
         throw new Error("No image generated from generate-love-cover");
       }
 
-      // 2) 调用expand-image进行扩展
+      // 扩展图片
       const expandedBase64 = await expandImage(imageUrl);
 
-      // 3) 存到state & IndexedDB (而不是localStorage)
+      // 设置状态以立即显示
       setContentFn(expandedBase64);
-      await storeData(lsKey, expandedBase64);
+      
+      // 存储到 Supabase
+      await saveImageToStorage(imageKey, expandedBase64);
 
       toast({
         title: "Image regenerated & expanded",
@@ -243,7 +273,7 @@ const GenerateStep = () => {
     });
 
     try {
-      // Prepare the request body with additional images if available
+      // 准备请求体，包含额外的图片（如果有）
       const requestBody: any = { 
         prompt: prompts, 
         contentPrompt: prompts,
@@ -252,7 +282,7 @@ const GenerateStep = () => {
         style: selectedStyle
       };
       
-      // Add additional input images if available
+      // 添加额外的输入图片（如果有）
       if (inputImage2) requestBody.input_image2 = inputImage2;
       if (inputImage3) requestBody.input_image3 = inputImage3;
       if (inputImage4) requestBody.input_image4 = inputImage4;
@@ -265,17 +295,17 @@ const GenerateStep = () => {
 
       if (data?.output?.[0]) {
         setCoverImage(data.output[0]);
-        await storeData('loveStoryCoverImage', data.output[0]);
+        await saveImageToStorage('loveStoryCoverImage', data.output[0]);
       }
 
       if (data?.contentImage?.[0]) {
         setIntroImage(data.contentImage[0]);
-        await storeData('loveStoryIntroImage', data.contentImage[0]);
+        await saveImageToStorage('loveStoryIntroImage', data.contentImage[0]);
       }
 
       if (data?.contentImage2?.[0]) {
         setContentImage1(data.contentImage2[0]);
-        await storeData('loveStoryContentImage1', data.contentImage2[0]);
+        await saveImageToStorage('loveStoryContentImage1', data.contentImage2[0]);
       }
 
       toast({
@@ -295,13 +325,11 @@ const GenerateStep = () => {
     }
   };
 
+  // 组件挂载时加载所有数据
   useEffect(() => {
-    // First, attempt to migrate existing image data from localStorage to IndexedDB
-    if (!migratedToIndexedDB) {
-      migrateImagesToIndexedDB();
-    }
-
     const loadData = async () => {
+      console.log("Loading love story data...");
+      
       const savedAuthor = localStorage.getItem('loveStoryAuthorName');
       const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
       const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
@@ -310,28 +338,28 @@ const GenerateStep = () => {
       const savedStyle = localStorage.getItem('loveStoryStyle');
       const savedTexts = localStorage.getItem('loveStoryImageTexts');
       
-      // Load images from IndexedDB
-      const savedCoverImage = await getDataFromStore('loveStoryCoverImage');
-      const savedIntroImage = await getDataFromStore('loveStoryIntroImage');
-      const savedContentImage1 = await getDataFromStore('loveStoryContentImage1');
-      const savedContentImage2 = await getDataFromStore('loveStoryContentImage2');
-      const savedContentImage3 = await getDataFromStore('loveStoryContentImage3');
-      const savedContentImage4 = await getDataFromStore('loveStoryContentImage4');
-      const savedContentImage5 = await getDataFromStore('loveStoryContentImage5');
-      const savedContentImage6 = await getDataFromStore('loveStoryContentImage6');
-      const savedContentImage7 = await getDataFromStore('loveStoryContentImage7');
-      const savedContentImage8 = await getDataFromStore('loveStoryContentImage8');
-      const savedContentImage9 = await getDataFromStore('loveStoryContentImage9');
-      const savedContentImage10 = await getDataFromStore('loveStoryContentImage10');
+      // 从 Supabase 存储加载图片
+      const savedCoverImage = await loadImageFromStorage('loveStoryCoverImage');
+      const savedIntroImage = await loadImageFromStorage('loveStoryIntroImage');
+      const savedContentImage1 = await loadImageFromStorage('loveStoryContentImage1');
+      const savedContentImage2 = await loadImageFromStorage('loveStoryContentImage2');
+      const savedContentImage3 = await loadImageFromStorage('loveStoryContentImage3');
+      const savedContentImage4 = await loadImageFromStorage('loveStoryContentImage4');
+      const savedContentImage5 = await loadImageFromStorage('loveStoryContentImage5');
+      const savedContentImage6 = await loadImageFromStorage('loveStoryContentImage6');
+      const savedContentImage7 = await loadImageFromStorage('loveStoryContentImage7');
+      const savedContentImage8 = await loadImageFromStorage('loveStoryContentImage8');
+      const savedContentImage9 = await loadImageFromStorage('loveStoryContentImage9');
+      const savedContentImage10 = await loadImageFromStorage('loveStoryContentImage10');
       
-      // Load the additional input images
-      const savedInputImage2 = await getDataFromStore('loveStoryInputImage2');
-      const savedInputImage3 = await getDataFromStore('loveStoryInputImage3');
-      const savedInputImage4 = await getDataFromStore('loveStoryInputImage4');
+      // 加载额外的输入图片
+      const savedInputImage2 = await loadImageFromStorage('loveStoryInputImage2');
+      const savedInputImage3 = await loadImageFromStorage('loveStoryInputImage3');
+      const savedInputImage4 = await loadImageFromStorage('loveStoryInputImage4');
       
       const characterPhoto = localStorage.getItem('loveStoryCharacterPhoto');
       
-      // Ensure we have a recipient name stored
+      // 确保我们有存储的收件人姓名
       const savedQuestions = localStorage.getItem('loveStoryQuestions');
       if (savedQuestions) {
         try {
@@ -354,7 +382,7 @@ const GenerateStep = () => {
       }
 
       if (savedStyle) {
-        // Map old style names to new API-compatible style names
+        // 将旧样式名称映射到新的 API 兼容样式名称
         const styleMapping: Record<string, string> = {
           'Comic Book': 'Comic book',
           'Line Art': 'Line art',
@@ -363,11 +391,11 @@ const GenerateStep = () => {
           'Cinematic': 'Cinematic'
         };
         
-        // Use the mapping or the original value
-        const normalizedStyle = styleMapping[savedStyle] || savedStyle;
+        // 使用映射或原始值
+        const normalizedStyle = styleMapping[savedStyle as string] || savedStyle;
         setSelectedStyle(normalizedStyle);
         
-        // Update localStorage with the normalized style if it changed
+        // 如果样式有变化，则更新 localStorage
         if (normalizedStyle !== savedStyle) {
           localStorage.setItem('loveStoryStyle', normalizedStyle);
         }
@@ -382,23 +410,31 @@ const GenerateStep = () => {
       }
 
       if (savedIdeas && savedIdeaIndex) {
-        const ideas = JSON.parse(savedIdeas);
-        const selectedIdea = ideas[parseInt(savedIdeaIndex)];
-        if (selectedIdea) {
-          setCoverTitle(selectedIdea.title || '');
-          setSubtitle(selectedIdea.description || '');
+        try {
+          const ideas = JSON.parse(savedIdeas);
+          const selectedIdea = ideas[parseInt(savedIdeaIndex)];
+          if (selectedIdea) {
+            setCoverTitle(selectedIdea.title || '');
+            setSubtitle(selectedIdea.description || '');
+          }
+        } catch (error) {
+          console.error('Error parsing saved ideas:', error);
         }
       }
 
       if (savedMoments) {
-        const moments = JSON.parse(savedMoments);
-        const formattedMoments = moments
-          .map((moment: string) => `"${moment}"`)
-          .join('\n\n');
-        setBackCoverText(formattedMoments);
+        try {
+          const moments = JSON.parse(savedMoments);
+          const formattedMoments = moments
+            .map((moment: string) => `"${moment}"`)
+            .join('\n\n');
+          setBackCoverText(formattedMoments);
+        } catch (error) {
+          console.error('Error parsing saved moments:', error);
+        }
       }
 
-      // Set main content images
+      // 设置主要内容图片
       if (savedCoverImage) {
         setCoverImage(savedCoverImage);
       }
@@ -436,7 +472,7 @@ const GenerateStep = () => {
         setContentImage10(savedContentImage10);
       }
 
-      // Set additional input images
+      // 设置额外的输入图片
       if (savedInputImage2) {
         setInputImage2(savedInputImage2);
       }
@@ -447,14 +483,16 @@ const GenerateStep = () => {
         setInputImage4(savedInputImage4);
       }
 
-      // Temporarily commented out for testing purposes
-      // if ((!savedCoverImage || !savedIntroImage || !savedContentImage1) && savedPrompts && characterPhoto) {
-      //   generateInitialImages(savedPrompts, characterPhoto);
-      // }
+      // 如果需要，生成初始图片
+      if ((!savedCoverImage || !savedIntroImage || !savedContentImage1) && savedPrompts && characterPhoto) {
+        generateInitialImages(savedPrompts, characterPhoto);
+      }
+
+      setDataInitialized(true);
     };
     
     loadData();
-  }, [migratedToIndexedDB]);
+  }, [loadImageFromStorage, saveImageToStorage]);
 
   const handleEditCover = () => {
     toast({
@@ -471,8 +509,13 @@ const GenerateStep = () => {
   };
 
   const handleRegenerateCover = async (style?: string) => {
-    // Remove from IndexedDB instead of localStorage
-    await removeData('loveStoryCoverImage');
+    // 删除旧图片
+    try {
+      await deleteImage('loveStoryCoverImage');
+    } catch (error) {
+      console.error("Error removing cover image:", error);
+      // 继续执行，因为我们会替换它
+    }
     
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
     const characterPhoto = localStorage.getItem('loveStoryCharacterPhoto');
@@ -481,25 +524,25 @@ const GenerateStep = () => {
       if (prompts && prompts.length > 0) {
         setIsGeneratingCover(true);
         
-        // Use the provided style or fall back to the stored/default style
+        // 使用提供的样式或回退到存储的默认样式
         const imageStyle = style || selectedStyle;
         
-        // Update the stored style if a new one is provided
+        // 如果提供了新样式，则更新存储的样式
         if (style) {
           setSelectedStyle(style);
           localStorage.setItem('loveStoryStyle', style);
         }
         
         try {
-          // Prepare the request body with additional images if available
+          // 准备请求体，包含额外的图片（如果有）
           const requestBody: any = { 
-            // coverImage对应prompts中的索引0
+            // coverImage 对应 prompts 中的索引 0
             prompt: prompts[0].prompt,
             photo: characterPhoto,
             style: imageStyle
           };
           
-          // Add additional input images if available
+          // 添加额外的输入图片（如果有）
           if (inputImage2) requestBody.input_image2 = inputImage2;
           if (inputImage3) requestBody.input_image3 = inputImage3;
           if (inputImage4) requestBody.input_image4 = inputImage4;
@@ -509,17 +552,20 @@ const GenerateStep = () => {
           });
           if (error) throw error;
           
-          // Backend might return result in output or coverImage field
+          // 后端可能在 output 或 coverImage 字段中返回结果
           const imageUrl = data?.output?.[0] || data?.coverImage?.[0];
           if (!imageUrl) {
             throw new Error("No image generated from generate-love-cover");
           }
           
-          // 调用expand-image进行扩展
+          // 扩展图片
           const expandedBase64 = await expandImage(imageUrl);
           
+          // 设置状态以立即显示
           setCoverImage(expandedBase64);
-          await storeData('loveStoryCoverImage', expandedBase64);
+          
+          // 持久存储
+          await saveImageToStorage('loveStoryCoverImage', expandedBase64);
           
           toast({
             title: "Cover regenerated",
@@ -540,8 +586,13 @@ const GenerateStep = () => {
   };
 
   const handleRegenerateIntro = async (style?: string) => {
-    // Remove from IndexedDB instead of localStorage
-    await removeData('loveStoryIntroImage');
+    // 删除旧图片
+    try {
+      await deleteImage('loveStoryIntroImage');
+    } catch (error) {
+      console.error("Error removing intro image:", error);
+      // 继续执行，因为我们会替换它
+    }
     
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
     const characterPhoto = localStorage.getItem('loveStoryCharacterPhoto');
@@ -550,25 +601,25 @@ const GenerateStep = () => {
       if (prompts && prompts.length > 1) {
         setIsGeneratingIntro(true);
         
-        // Use the provided style or fall back to the stored/default style
+        // 使用提供的样式或回退到存储的默认样式
         const imageStyle = style || selectedStyle;
         
-        // Update the stored style if a new one is provided
+        // 如果提供了新样式，则更新存储的样式
         if (style) {
           setSelectedStyle(style);
           localStorage.setItem('loveStoryStyle', style);
         }
         
         try {
-          // Prepare the request body with additional images if available
+          // 准备请求体，包含额外的图片（如果有）
           const requestBody: any = { 
-            // introImage对应prompts中的索引1
+            // introImage 对应 prompts 中的索引 1
             prompt: prompts[1].prompt, 
             photo: characterPhoto,
             style: imageStyle
           };
           
-          // Add additional input images if available
+          // 添加额外的输入图片（如果有）
           if (inputImage2) requestBody.input_image2 = inputImage2;
           if (inputImage3) requestBody.input_image3 = inputImage3;
           if (inputImage4) requestBody.input_image4 = inputImage4;
@@ -577,20 +628,26 @@ const GenerateStep = () => {
             body: requestBody
           });
           if (error) throw error;
-          if (data?.contentImage?.[0] || data?.output?.[0]) {
-            const imageUrl = data?.contentImage?.[0] || data?.output?.[0];
-            // 调用expand-image进行扩展
-            const expandedBase64 = await expandImage(imageUrl);
-            
-            setIntroImage(expandedBase64);
-            // Store in IndexedDB instead of localStorage
-            await storeData('loveStoryIntroImage', expandedBase64);
-            
-            toast({
-              title: "Image regenerated",
-              description: `Introduction image updated with ${imageStyle} style`,
-            });
+          
+          // 后端可能在不同字段中返回数据
+          const imageUrl = data?.contentImage?.[0] || data?.output?.[0];
+          if (!imageUrl) {
+            throw new Error("No image generated from generate-love-cover");
           }
+          
+          // 扩展图片
+          const expandedBase64 = await expandImage(imageUrl);
+          
+          // 设置状态以立即显示
+          setIntroImage(expandedBase64);
+          
+          // 持久存储
+          await saveImageToStorage('loveStoryIntroImage', expandedBase64);
+          
+          toast({
+            title: "Image regenerated",
+            description: `Introduction image updated with ${imageStyle} style`,
+          });
         } catch (error) {
           console.error('Error regenerating intro image:', error);
           toast({
@@ -605,7 +662,7 @@ const GenerateStep = () => {
     }
   };
 
-  // Render content images with text inside the canvas
+  // 渲染带有文本的内容图片到画布
   const renderContentImage = (imageIndex: number) => {
     const imageStateMap: Record<number, string | undefined> = {
       0: introImage,
@@ -652,10 +709,10 @@ const GenerateStep = () => {
     const image = imageStateMap[imageIndex];
     const isLoading = loadingStateMap[imageIndex];
     const handleRegenerate = handleRegenerateMap[imageIndex];
-    // Get the text for this image, adjusting for zero-based array index
+    // 获取此图片的文本，调整为基于零的数组索引
     const imageText = imageTexts && imageTexts.length > imageIndex ? imageTexts[imageIndex] : null;
     
-    // 显示标题适配新的命名方式
+    // 显示标题适配不同的命名约定
     let title = imageIndex === 0 ? "Introduction" : `Moment ${imageIndex}`;
     
     return (
@@ -665,7 +722,7 @@ const GenerateStep = () => {
           isGenerating={isLoading}
           onRegenerate={handleRegenerate}
           index={imageIndex}
-          onEditText={() => {}}
+          onEditText={handleEditText}
           text={imageText?.text}
           title={title}
         />
@@ -694,7 +751,7 @@ const GenerateStep = () => {
             backCoverText={backCoverText}
             isGeneratingCover={isGeneratingCover}
             onRegenerateCover={handleRegenerateCover}
-            onEditCover={() => {}}
+            onEditCover={handleEditCover}
           />
         </div>
         
