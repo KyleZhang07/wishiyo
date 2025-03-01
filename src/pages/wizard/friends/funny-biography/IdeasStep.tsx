@@ -1,4 +1,3 @@
-
 import IdeaStep from '@/components/wizard/IdeaStep';
 
 const FunnyBiographyIdeasStep = () => {
@@ -6,7 +5,7 @@ const FunnyBiographyIdeasStep = () => {
     <IdeaStep
       category="friends"
       previousStep="/create/friends/funny-biography/stories"
-      nextStep="/create/friends/funny-biography/photos"
+      nextStep="/create/friends/funny-biography/debug"
     />
   );
 };

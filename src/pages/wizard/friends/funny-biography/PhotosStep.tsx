@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
@@ -125,10 +124,10 @@ const FunnyBiographyPhotosStep = () => {
     <WizardStep
       title="Upload a photo"
       description="We'll use it on the cover"
-      previousStep="/create/friends/funny-biography/ideas"
+      previousStep="/create/friends/funny-biography/debug"
       nextStep="/create/friends/funny-biography/generate"
-      currentStep={3}
-      totalSteps={4}
+      currentStep={4}
+      totalSteps={6}
     >
       <div className="space-y-6">
         <input 

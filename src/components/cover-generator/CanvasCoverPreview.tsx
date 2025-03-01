@@ -17,6 +17,7 @@ interface CanvasCoverPreviewProps {
   onImageAdjust?: (position: { x: number; y: number }, scale: number) => void;
   previewMode?: boolean;
   scaleFactor?: number;
+  praiseQuotes?: Array<{ quote: string; source: string }>;
 }
 
 const CanvasCoverPreview = ({
@@ -32,7 +33,8 @@ const CanvasCoverPreview = ({
   imageScale = 100,
   onImageAdjust,
   previewMode = false,
-  scaleFactor = 0.5
+  scaleFactor = 0.5,
+  praiseQuotes = []
 }: CanvasCoverPreviewProps) => {
   const frontCoverRef = useRef<HTMLCanvasElement>(null);
   const spineRef = useRef<HTMLCanvasElement>(null);
@@ -101,7 +103,7 @@ const CanvasCoverPreview = ({
         drawBackCover(backCtx, baseWidth, baseHeight, template);
       }
     }
-  }, [coverTitle, subtitle, authorName, image, selectedFont, selectedTemplate, selectedLayout, category, imagePosition, imageScale, previewMode, scaleFactor]);
+  }, [coverTitle, subtitle, authorName, image, selectedFont, selectedTemplate, selectedLayout, category, imagePosition, imageScale, previewMode, scaleFactor, praiseQuotes]);
 
   const drawFrontCover = (
     ctx: CanvasRenderingContext2D, 
@@ -341,6 +343,28 @@ const CanvasCoverPreview = ({
     // Draw background
     ctx.fillStyle = template.backCoverStyle.backgroundColor;
     ctx.fillRect(0, 0, width, height);
+
+    // Draw praise quotes if available
+    if (praiseQuotes && praiseQuotes.length > 0) {
+      ctx.textAlign = 'left';
+      ctx.font = `italic 14px ${selectedFont}`;
+      ctx.fillStyle = '#FFFFFF'; // White text
+      
+      let currentY = 80; // Start position
+      
+      // Draw each praise quote
+      praiseQuotes.forEach((praise) => {
+        // Draw the quote with quotation marks
+        ctx.font = `italic 14px ${selectedFont}`;
+        ctx.fillText(`"${praise.quote}"`, 40, currentY);
+        
+        // Draw the source with a different style
+        ctx.font = `bold 12px ${selectedFont}`;
+        ctx.fillText(`— ${praise.source}`, 40, currentY + 20);
+        
+        currentY += 60; // Add space between quotes
+      });
+    }
 
     // Draw book info at the bottom
     ctx.textAlign = 'left';

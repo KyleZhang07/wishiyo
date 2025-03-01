@@ -136,17 +136,57 @@ export const drawBackCover = (
     coverWidth,
     height,
     summary,
-    selectedFont
+    selectedFont,
+    praiseQuotes = []
   }: {
     backX: number;
     coverWidth: number;
     height: number;
     summary: string;
     selectedFont: string;
+    praiseQuotes?: Array<{ quote: string; source: string }>;
   }
 ) => {
-  ctx.textAlign = 'left';
-  ctx.font = `normal 1.5rem ${selectedFont}`; // Increased font size for summary
-  ctx.fillStyle = template.backCoverStyle.textColor;
-  wrapText(ctx, summary, backX + 80, height * 0.2, coverWidth - 160, 60, 'left'); // Increased padding and line height
+  // Draw praise quotes if available
+  if (praiseQuotes && praiseQuotes.length > 0) {
+    ctx.textAlign = 'left';
+    ctx.font = `italic 1.25rem ${selectedFont}`;
+    ctx.fillStyle = template.backCoverStyle.textColor;
+    
+    let currentY = height * 0.1; // Start at 10% from the top
+    
+    // Draw each praise quote
+    praiseQuotes.forEach((praise, index) => {
+      // Draw the quote with quotation marks
+      ctx.font = `italic 1.25rem ${selectedFont}`;
+      currentY = wrapText(ctx, `"${praise.quote}"`, backX + 80, currentY, coverWidth - 160, 40, 'left');
+      
+      // Draw the source with a different style
+      ctx.font = `bold 1rem ${selectedFont}`;
+      ctx.fillText(`— ${praise.source}`, backX + 80, currentY + 40);
+      
+      currentY += 70; // Add space between quotes
+    });
+    
+    // Draw separator line
+    ctx.strokeStyle = template.backCoverStyle.textColor;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(backX + 80, currentY);
+    ctx.lineTo(backX + coverWidth - 80, currentY);
+    ctx.stroke();
+    
+    currentY += 40; // Space after separator
+    
+    // Draw summary after praise quotes
+    ctx.font = `normal 1.5rem ${selectedFont}`;
+    ctx.fillStyle = template.backCoverStyle.textColor;
+    wrapText(ctx, summary, backX + 80, currentY, coverWidth - 160, 60, 'left');
+  } else {
+    // If no praise quotes, just draw the summary
+    ctx.textAlign = 'left';
+    ctx.font = `normal 1.5rem ${selectedFont}`;
+    ctx.fillStyle = template.backCoverStyle.textColor;
+    wrapText(ctx, summary, backX + 80, height * 0.2, coverWidth - 160, 60, 'left');
+  }
 };

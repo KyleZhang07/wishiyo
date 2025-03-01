@@ -17,7 +17,8 @@ interface UseCanvasDrawingProps {
   imageScale: number;
   imagePosition: { x: number; y: number };
   isProcessingImage: boolean;
-  backCoverText: string; // Add this property
+  backCoverText: string;
+  praiseQuotes?: Array<{ quote: string; source: string }>;
 }
 
 export const useCanvasDrawing = ({
@@ -32,7 +33,8 @@ export const useCanvasDrawing = ({
   imageScale,
   imagePosition,
   isProcessingImage,
-  backCoverText = '' // Add default value
+  backCoverText = '',
+  praiseQuotes = []
 }: UseCanvasDrawingProps) => {
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -101,10 +103,11 @@ export const useCanvasDrawing = ({
       backX,
       coverWidth,
       height: canvas.height,
-      summary: backCoverText, // Pass the backCoverText here
-      selectedFont
+      summary: backCoverText,
+      selectedFont,
+      praiseQuotes
     });
-  }, [canvasRef, coverTitle, subtitle, authorName, image, selectedFont, selectedTemplate, selectedLayout, imageScale, imagePosition, isProcessingImage, backCoverText]);
+  }, [canvasRef, coverTitle, subtitle, authorName, image, selectedFont, selectedTemplate, selectedLayout, imageScale, imagePosition, isProcessingImage, backCoverText, praiseQuotes]);
 };
 
 const drawLoadingState = (

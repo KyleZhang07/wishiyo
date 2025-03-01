@@ -38,9 +38,10 @@ export const coverLayouts: { [key: string]: CoverLayout } = {
       textAlign: 'center'
     },
     imageContainerStyle: {
-      width: '80%',
+      width: '70%',
       height: '45%',
-      position: 'center'
+      position: 'center',
+      borderRadius: '50%'
     }
   },
   'modern-split': {

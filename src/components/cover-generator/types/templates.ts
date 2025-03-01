@@ -147,36 +147,36 @@ export const coverTemplates: { [key: string]: TemplateType } = {
   classic: {
     id: 'classic',
     name: 'Classic',
-    backgroundColor: '#FFECD1',
+    backgroundColor: '#F8D5B2',
     titleStyle: {
-      color: '#C41E3A',
-      fontSize: '2.5rem',
+      color: '#1E365C',
+      fontSize: '2.7rem',
       fontWeight: 'bold',
       textAlign: 'center',
-      offsetY: 0.3
+      offsetY: 0.2
     },
     subtitleStyle: {
-      color: '#333333',
-      fontSize: '1.25rem',
+      color: '#1E365C',
+      fontSize: '1.1rem',
       fontWeight: 'normal'
     },
     authorStyle: {
-      color: '#333333',
+      color: '#1E365C',
       fontSize: '1rem'
     },
     imageStyle: {
-      filter: 'sepia(0.2)',
-      opacity: '0.9',
-      borderRadius: '0'
+      filter: 'none',
+      opacity: '1.0',
+      borderRadius: '50%'
     },
     spineStyle: {
-      backgroundColor: '#C41E3A',
-      titleColor: '#FFFFFF',
-      authorColor: '#FFECD1'
+      backgroundColor: '#F8D5B2',
+      titleColor: '#1E365C',
+      authorColor: '#1E365C'
     },
     backCoverStyle: {
-      backgroundColor: '#FFECD1',
-      textColor: '#333333',
+      backgroundColor: '#F8D5B2',
+      textColor: '#1E365C',
       summaryFontSize: '1rem'
     }
   },

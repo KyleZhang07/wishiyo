@@ -10,43 +10,51 @@ import { useToast } from '@/hooks/use-toast';
 const stylePresets = [
   {
     id: 'classic-red',
-    name: '经典红色',
+    name: 'Classic Beige',
     font: 'merriweather',
     template: 'classic',
     layout: 'classic-centered',
-    description: '红色背景与金色边框，典雅风格'
+    description: 'Warm beige background with navy blue text and circular image'
   },
   {
     id: 'modern-green',
-    name: '现代绿色',
+    name: 'Modern Green',
     font: 'montserrat',
     template: 'vibrant-green',
     layout: 'bold-header',
-    description: '黑色背景配以鲜亮的绿色文字'
+    description: 'Black background with vibrant green text'
   },
   {
     id: 'minimal-gray',
-    name: '简约灰色',
+    name: 'Minimal Gray',
     font: 'roboto',
     template: 'minimal',
     layout: 'minimal-frame',
-    description: '灰色背景与黑白配色，简约时尚'
+    description: 'Gray background with monochrome styling'
   },
   {
     id: 'vibrant-blue',
-    name: '活力蓝色',
+    name: 'Vibrant Blue',
     font: 'montserrat',
     template: 'vibrant',
     layout: 'bold-header',
-    description: '蓝色背景与黄色文字，充满活力'
+    description: 'Blue background with yellow highlight text'
   },
   {
     id: 'pastel-beige',
-    name: '柔和米色',
+    name: 'Pastel Beige',
     font: 'playfair',
     template: 'classic',
     layout: 'left-align',
-    description: '米色背景与深蓝色文字，温暖柔和'
+    description: 'Soft beige background with navy blue text'
+  },
+  {
+    id: 'striped-pink',
+    name: 'Striped Pink',
+    font: 'playfair',
+    template: 'classic',
+    layout: 'classic-centered',
+    description: 'Pink striped background with black text'
   }
 ];
 
@@ -59,6 +67,8 @@ const FunnyBiographyGenerateStep = () => {
   const [selectedStyle, setSelectedStyle] = useState('classic-red');
   const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
   const [imageScale, setImageScale] = useState(100);
+  const [praiseQuotes, setPraiseQuotes] = useState<Array<{ quote: string; source: string }>>([]);
+  const [isGeneratingPraise, setIsGeneratingPraise] = useState(false);
   const { toast } = useToast();
 
   // Get the current style preset
@@ -72,6 +82,7 @@ const FunnyBiographyGenerateStep = () => {
     const savedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
     const savedPhotos = localStorage.getItem('funnyBiographyPhoto');
     const savedStyle = localStorage.getItem('funnyBiographySelectedStyle');
+    const savedPraiseQuotes = localStorage.getItem('funnyBiographyPraiseQuotes');
 
     if (savedAuthor) {
       setAuthorName(savedAuthor);
@@ -96,6 +107,19 @@ const FunnyBiographyGenerateStep = () => {
 
     if (savedPhotos) {
       handleImageProcessing(savedPhotos);
+    }
+
+    if (savedPraiseQuotes) {
+      setPraiseQuotes(JSON.parse(savedPraiseQuotes));
+    } else {
+      // Generate praise quotes when entering this step if we don't have any
+      if (savedIdeas && savedIdeaIndex) {
+        const ideas = JSON.parse(savedIdeas);
+        const selectedIdea = ideas[parseInt(savedIdeaIndex)];
+        if (selectedIdea && selectedIdea.title && savedAuthor) {
+          generatePraiseQuotes(selectedIdea.title, savedAuthor);
+        }
+      }
     }
   }, []);
 
@@ -133,6 +157,54 @@ const FunnyBiographyGenerateStep = () => {
     localStorage.setItem('funnyBiographySelectedStyle', styleId);
   };
 
+  const generatePraiseQuotes = async (title: string, author: string) => {
+    try {
+      setIsGeneratingPraise(true);
+      const { data, error } = await supabase.functions.invoke('generate-praise-words', {
+        body: { 
+          title,
+          authorName: author,
+          bookType: 'funny-biography'
+        }
+      });
+
+      if (error) throw error;
+
+      if (data && data.praiseQuotes) {
+        setPraiseQuotes(data.praiseQuotes);
+        localStorage.setItem('funnyBiographyPraiseQuotes', JSON.stringify(data.praiseQuotes));
+      }
+    } catch (error) {
+      console.error('Error generating praise quotes:', error);
+      toast({
+        variant: "destructive",
+        title: "Error generating praise quotes",
+        description: "Failed to generate praise quotes for your book. Using default quotes instead."
+      });
+      
+      // Fallback to some default praise quotes
+      const defaultQuotes = [
+        { 
+          quote: "A delightful romp through the absurdities of everyday life. I couldn't put it down!", 
+          source: "The Literary Gazette" 
+        },
+        { 
+          quote: "Utterly hilarious and surprisingly insightful. A must-read for anyone with a sense of humor.", 
+          source: "Dr. Laugh, Humor Studies Institute" 
+        },
+        { 
+          quote: "The funniest book I've read this year. Genuine laughs on every page.", 
+          source: "Comedy Critics Association" 
+        }
+      ];
+      
+      setPraiseQuotes(defaultQuotes);
+      localStorage.setItem('funnyBiographyPraiseQuotes', JSON.stringify(defaultQuotes));
+    } finally {
+      setIsGeneratingPraise(false);
+    }
+  };
+
   const handleGenerateBook = () => {
     // Save current style selection to localStorage
     localStorage.setItem('funnyBiographySelectedStyle', selectedStyle);
@@ -148,8 +220,8 @@ const FunnyBiographyGenerateStep = () => {
       title="Create Your Book Cover"
       description="Design the perfect cover for your funny biography"
       previousStep="/create/friends/funny-biography/photos"
-      currentStep={4}
-      totalSteps={5}
+      currentStep={5}
+      totalSteps={6}
     >
       <div className="glass-card rounded-2xl p-8 py-[40px]">
         <div className="max-w-xl mx-auto space-y-8">
@@ -166,26 +238,78 @@ const FunnyBiographyGenerateStep = () => {
             imageScale={imageScale}
             onImageAdjust={handleImageAdjust}
             scaleFactor={0.4}
+            praiseQuotes={praiseQuotes}
           />
+          {isGeneratingPraise && (
+            <div className="text-center text-sm text-gray-500 mt-2">
+              Generating praise quotes for your book...
+            </div>
+          )}
           
           <div className="space-y-4">
             <div>
               <h3 className="text-lg font-medium text-center mb-4">Choose Your Style</h3>
-              <div className="grid grid-cols-2 gap-4">
-                {stylePresets.map((style) => (
-                  <div 
-                    key={style.id}
-                    onClick={() => handleStyleChange(style.id)}
-                    className={`p-4 rounded-lg cursor-pointer transition-all ${
-                      selectedStyle === style.id 
-                        ? 'bg-primary text-primary-foreground ring-2 ring-primary' 
-                        : 'bg-card hover:bg-accent'
-                    }`}
-                  >
-                    <h4 className="font-medium">{style.name}</h4>
-                    <p className="text-sm opacity-80">{style.description}</p>
-                  </div>
-                ))}
+              <div className="flex flex-wrap justify-center gap-6 mt-4">
+                {[...stylePresets].map((style, index) => {
+                  // Get template and layout data based on style configuration
+                  const template = style.template;
+                  
+                  // Define style colors to match the image
+                  let styleConfig;
+                  if (style.id === 'classic-red') {
+                    styleConfig = { bg: '#C41E3A', text: '#FFFFFF', border: 'none' }; // Red with white text (first circle)
+                  } else if (style.id === 'modern-green') {
+                    styleConfig = { bg: '#121212', text: '#7CFC00', border: 'none' }; // Black with green text (second circle)
+                  } else if (style.id === 'minimal-gray') {
+                    styleConfig = { bg: '#808080', text: '#FFFFFF', border: 'none' }; // Gray with white text (third circle)
+                  } else if (style.id === 'vibrant-blue') {
+                    styleConfig = { bg: '#4361EE', text: '#FFC300', border: 'none' }; // Blue with yellow text (fourth circle)
+                  } else if (style.id === 'pastel-beige') {
+                    styleConfig = { bg: '#FFD1DC', text: '#000000', border: 'none', isStriped: false }; // Pink with black (fifth circle)
+                  } else if (style.id === 'striped-pink') {
+                    styleConfig = { bg: '#FFD1DC', text: '#000000', border: '2px solid #1E365C', isStriped: true }; // Striped pink (sixth circle)
+                  } else {
+                    styleConfig = { bg: '#F8D5B2', text: '#1E365C', border: 'none', isStriped: false }; // Default
+                  }
+                  
+                  return (
+                    <div 
+                      key={style.id}
+                      onClick={() => handleStyleChange(style.id)}
+                      className="flex flex-col items-center"
+                    >
+                      <div 
+                        className={`w-[80px] h-[80px] rounded-full flex items-center justify-center cursor-pointer transition-all ${
+                          selectedStyle === style.id 
+                            ? 'ring-4 ring-primary ring-offset-2' 
+                            : 'hover:ring-2 hover:ring-primary/50'
+                        }`}
+                        style={{ 
+                          backgroundColor: styleConfig.bg,
+                          border: styleConfig.border,
+                          backgroundImage: styleConfig.isStriped 
+                            ? 'repeating-linear-gradient(45deg, #FFD1DC, #FFD1DC 10px, #FFB6C1 10px, #FFB6C1 20px)' 
+                            : 'none'
+                        }}
+                      >
+                        <span 
+                          className="text-3xl font-bold"
+                          style={{ 
+                            color: styleConfig.text,
+                            fontFamily: style.font === 'playfair' ? 'serif' 
+                                     : style.font === 'merriweather' ? 'serif' 
+                                     : style.font === 'montserrat' ? 'sans-serif' 
+                                     : style.font === 'roboto' ? 'sans-serif'
+                                     : 'sans-serif',
+                            fontWeight: style.font === 'montserrat' || style.font === 'roboto' ? '700' : '800',
+                          }}
+                        >
+                          Aa
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
