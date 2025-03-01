@@ -12,7 +12,7 @@ interface ToneOption {
 }
 
 const LoveStoryTextToneStep = () => {
-  const [selectedTone, setSelectedTone] = useState<string>('Romantic');
+  const [selectedTone, setSelectedTone] = useState<string>('Heartfelt');
   
   useEffect(() => {
     const savedTone = localStorage.getItem('loveStoryTone');
@@ -28,10 +28,10 @@ const LoveStoryTextToneStep = () => {
 
   const toneOptions: ToneOption[] = [
     {
-      value: 'Romantic',
-      label: 'Romantic',
-      description: 'Passionate expressions of love and devotion',
-      emoji: '❤️'
+      value: 'Humorous',
+      label: 'Humorous',
+      description: 'Witty and fun expressions with a touch of humor',
+      emoji: '😄'
     },
     {
       value: 'Poetic',
@@ -40,28 +40,22 @@ const LoveStoryTextToneStep = () => {
       emoji: '🌹'
     },
     {
-      value: 'Playful',
-      label: 'Playful',
-      description: 'Fun, light-hearted and cheerful expressions',
-      emoji: '😊'
+      value: 'Dramatic',
+      label: 'Dramatic',
+      description: 'Intense and emotionally impactful expressions',
+      emoji: '🎭'
     },
     {
-      value: 'Nostalgic',
-      label: 'Nostalgic',
-      description: 'Warm reflections on memories and shared moments',
+      value: 'Heartfelt',
+      label: 'Heartfelt',
+      description: 'Sincere and emotionally authentic expressions of love',
+      emoji: '❤️'
+    },
+    {
+      value: 'Encouraging',
+      label: 'Encouraging',
+      description: 'Uplifting and supportive expressions of affection',
       emoji: '✨'
-    },
-    {
-      value: 'Inspirational',
-      label: 'Inspirational',
-      description: 'Uplifting and encouraging expressions of love',
-      emoji: '🌟'
-    },
-    {
-      value: 'Humorous',
-      label: 'Humorous',
-      description: 'Witty and fun expressions with a touch of humor',
-      emoji: '😄'
     }
   ];
 

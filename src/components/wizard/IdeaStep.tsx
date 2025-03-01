@@ -80,8 +80,17 @@ const IdeaStep = ({
     };
   };
 
-  // Modified function to not call generate-ideas endpoint
+  // Modified function to ensure style is saved before navigating
   const handleFormSubmit = async () => {
+    if (!selectedStyle && category === 'love') {
+      toast({
+        title: "Style required",
+        description: "Please select an image style before continuing",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsLoading(true);
     try {
       // Save selected style to localStorage
@@ -152,6 +161,9 @@ const IdeaStep = ({
     
     if (savedStyle) {
       setSelectedStyle(savedStyle);
+    } else if (category === 'love') {
+      // Set default to Photographic if not already saved
+      setSelectedStyle('Photographic');
     }
 
     if (savedIdeas) {
@@ -184,6 +196,7 @@ const IdeaStep = ({
         nextStep={nextStep}
         currentStep={5}
         totalSteps={6}
+        onNextClick={handleFormSubmit}
       >
         <div className="max-w-3xl mx-auto">
           <div className="grid grid-cols-2 gap-6 mb-8">
@@ -215,23 +228,6 @@ const IdeaStep = ({
                 </p>
               </div>
             ))}
-          </div>
-
-          <div className="flex justify-end space-x-4 mt-8">
-            <Button
-              variant="default"
-              onClick={handleFormSubmit}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                'Continue'
-              )}
-            </Button>
           </div>
         </div>
       </WizardStep>
