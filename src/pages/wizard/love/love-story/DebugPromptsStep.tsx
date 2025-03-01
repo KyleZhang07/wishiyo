@@ -514,7 +514,6 @@ const DebugPromptsStep = () => {
       title="Debug Information"
       description="Technical details for debugging purposes."
       previousStep="/create/love/love-story/generate"
-      nextStep="/create/love/love-story/preview"
       currentStep={5}
       totalSteps={5}
     >

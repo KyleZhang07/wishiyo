@@ -967,9 +967,9 @@ const GenerateStep = () => {
       title="Your Love Story Images"
       description="Here are your personalized love story images with accompanying text."
       previousStep="/create/love/love-story/moments"
-      nextStep="/create/love/love-story/preview"
+      nextStep="/create/love/love-story/debug-prompts"
       currentStep={4}
-      totalSteps={4}
+      totalSteps={5}
     >
       <div className="max-w-5xl mx-auto">
         {/* 添加刷新按钮 */}
