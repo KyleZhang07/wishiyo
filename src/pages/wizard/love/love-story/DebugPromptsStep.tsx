@@ -58,7 +58,9 @@ const DebugPromptsStep = () => {
     const savedTexts = localStorage.getItem('loveStoryImageTexts');
     if (savedTexts) {
       try {
-        setTexts(JSON.parse(savedTexts));
+        const parsedTexts = JSON.parse(savedTexts);
+        console.log('Loaded text accompaniments:', parsedTexts);
+        setTexts(parsedTexts);
       } catch (error) {
         console.error('Error parsing texts:', error);
       }
@@ -220,7 +222,6 @@ const DebugPromptsStep = () => {
     }
   };
 
-  // Format file size to human readable format
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
     
@@ -384,8 +385,8 @@ const DebugPromptsStep = () => {
         {/* Display the cover image data */}
         <div className="bg-white p-4 rounded-lg shadow">
           <h3 className="font-bold text-gray-800 mb-2">Cover Image:</h3>
-          <p className="text-gray-600 mb-4">{prompts[0]?.question}</p>
-          <p className="text-gray-600 font-mono text-sm bg-gray-50 p-2 rounded">{prompts[0]?.prompt}</p>
+          <p className="text-gray-600 mb-4">{prompts[0]?.question || 'No cover image prompt found'}</p>
+          <p className="text-gray-600 font-mono text-sm bg-gray-50 p-2 rounded">{prompts[0]?.prompt || 'No prompt available'}</p>
         </div>
 
         {/* Display the story image prompts with their text accompaniments */}
@@ -406,8 +407,10 @@ const DebugPromptsStep = () => {
               </div>
               
               <div className="mt-4 pt-4 border-t border-gray-200">
-                <p className="text-gray-600 font-semibold mb-1">Text Accompaniment ({texts[index]?.tone || selectedTone}):</p>
-                {texts[index] ? (
+                <p className="text-gray-600 font-semibold mb-1">
+                  Text Accompaniment ({texts[index]?.tone || selectedTone || 'Unknown'}):
+                </p>
+                {texts && texts[index] ? (
                   <p className="text-gray-800 italic bg-blue-50 p-3 rounded">{texts[index].text}</p>
                 ) : (
                   <p className="text-red-500">No text accompaniment found</p>
@@ -425,6 +428,7 @@ const DebugPromptsStep = () => {
         <pre>{JSON.stringify(prompts, null, 2)}</pre>
         <p className="mt-4 mb-2">ImageTexts:</p>
         <pre>{JSON.stringify(texts, null, 2)}</pre>
+        <p className="mt-4 mb-2">Text Length: {texts?.length || 0}</p>
         <p className="mt-4 mb-2">Supabase Storage URLs:</p>
         <pre>{JSON.stringify(supabaseImages.map(img => img.url), null, 2)}</pre>
         <p className="mt-4 mb-2">LocalStorage Usage:</p>
