@@ -161,17 +161,17 @@ export const ContentImageCard = ({
         };
         
         // 添加文本内容 - 在画布的左半边
-        ctx.font = '18px Georgia, serif';
+        ctx.font = '22px Georgia, serif'; // 增加字体大小
         // 文字颜色在drawStrokedText中设置
-        const maxWidth = textAreaWidth - 50; // 左边文字区域宽度，留有边距
+        const maxWidth = textAreaWidth - 60; // 左边文字区域宽度，留有边距
         
         // 使用提供的文本或默认文本
         const displayText = text || "A beautiful story captured in an image.";
         
         // 垂直居中显示文本
         const textStartY = height * 0.25; // 从上方1/4处开始
-        const textLineHeight = 28; // 行高
-        wrapText(displayText, 25, textStartY, maxWidth, textLineHeight);
+        const textLineHeight = 34; // 增加行高
+        wrapText(displayText, 40, textStartY, maxWidth, textLineHeight);
         
         // Draw dedication text if needed
         if (showDedicationText && coverTitle) {
@@ -225,8 +225,8 @@ export const ContentImageCard = ({
   };
 
   return (
-    <div className="relative mb-4">
-      <div className="max-w-xl mx-auto">
+    <div className="relative mb-8">
+      <div className="max-w-4xl mx-auto">
         <div className="aspect-[2/1] overflow-hidden relative">
           {isGenerating ? (
             <div className="h-full flex flex-col justify-center items-center text-center bg-gray-100/50 rounded-sm">
@@ -237,8 +237,8 @@ export const ContentImageCard = ({
             <canvas 
               ref={canvasRef} 
               className="w-full h-full rounded-sm"
-              width={800} // Base resolution
-              height={400}
+              width={1200} // 增加分辨率
+              height={600}
             />
           )}
         </div>
