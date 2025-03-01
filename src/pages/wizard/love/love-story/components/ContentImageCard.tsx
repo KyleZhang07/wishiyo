@@ -116,17 +116,9 @@ export const ContentImageCard = ({
         // Draw the image to fill the canvas
         ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
         
-        // 创建半透明文本区域（在图像左侧）
-        const textAreaWidth = width * 0.5; // 占据左半部分
+        // 不再使用半透明渐变背景，而是使用文字阴影效果
+        const textAreaWidth = width * 0.5; // 文字区域仍占据左半部分
         const textPadding = 20; // 内边距
-        
-        // 创建半透明渐变背景，从左到右
-        const gradient = ctx.createLinearGradient(0, 0, textAreaWidth, 0);
-        gradient.addColorStop(0, 'rgba(0, 0, 0, 0.7)');
-        gradient.addColorStop(1, 'rgba(0, 0, 0, 0.3)');
-        
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, textAreaWidth, height);
         
         // 文本换行函数
         const wrapText = (text: string, x: number, y: number, maxWidth: number, lineHeight: number) => {
@@ -161,10 +153,66 @@ export const ContentImageCard = ({
         // 使用文本或占位符
         const displayText = text || "A special moment captured in time.";
         
-        // 绘制文本
-        ctx.font = '18px Georgia, serif';
+        // 绘制文本 - 添加文字阴影和边缘效果，确保在任何背景上都清晰可见
+        ctx.font = 'bold 20px Georgia, serif'; // 增加字体粗细和尺寸
+        ctx.textAlign = 'left';
+        
+        // 设置文字阴影
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 2;
+        ctx.shadowBlur = 4;
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+        
+        // 先绘制文字外描边
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.lineJoin = 'round'; // 圆角连接，使描边更平滑
+        
+        // 存储当前文本状态用于描边
+        ctx.save();
+        
+        // 描绘文字外轮廓
+        const outlineText = (text: string, x: number, y: number, maxWidth: number, lineHeight: number) => {
+          const words = text.split(' ');
+          let line = '';
+          let testLine = '';
+          let lineCount = 0;
+          
+          for (let n = 0; n < words.length; n++) {
+            testLine = line + words[n] + ' ';
+            const metrics = ctx.measureText(testLine);
+            const testWidth = metrics.width;
+            
+            if (testWidth > maxWidth && n > 0) {
+              ctx.strokeText(line, x, y + (lineCount * lineHeight));
+              line = words[n] + ' ';
+              lineCount++;
+            } else {
+              line = testLine;
+            }
+          }
+          
+          ctx.strokeText(line, x, y + (lineCount * lineHeight));
+          return lineCount;
+        };
+        
+        outlineText(displayText, textStartX, textStartY, maxWidth, 30);
+        
+        // 恢复文本状态，准备填充文字
+        ctx.restore();
+        
+        // 设置文字颜色
         ctx.fillStyle = 'white';
-        wrapText(displayText, textStartX, textStartY, maxWidth, 26);
+        ctx.shadowBlur = 1; // 轻微的模糊效果
+        
+        // 填充实际文字
+        wrapText(displayText, textStartX, textStartY, maxWidth, 30);
+        
+        // 重置阴影效果
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        ctx.shadowBlur = 0;
+        ctx.shadowColor = 'transparent';
         
         // 如果需要显示献词文本
         if (showDedicationText && coverTitle) {
