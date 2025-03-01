@@ -54,25 +54,22 @@ serve(async (req) => {
           messages: [
             { 
               role: 'system', 
-              content: `You are a talented writer creating evocative descriptions for a visual love story.
-                        Create poetic, vivid, and emotionally engaging text that will be displayed directly over images.
-                        Your text should be concise yet impactful - words that can stand alone as artistic overlay on photographs.
-                        Focus on creating beautiful imagery with words that complement but don't describe the visual elements.
-                        Write 3-5 sentences (around 80-100 words) with strong emotional resonance.
-                        Use metaphors, sensory details, and emotional language that enhances the visual storytelling.
+              content: `You are a talented caption writer for an illustrated book. 
+                        Create short, engaging captions in a ${tone} tone. 
+                        The captions should be for a love story and complement the illustrations.
+                        Write ONLY the caption text, no more than 1-2 sentences.
                         Do not include any explanations or metadata.` 
             },
             { 
               role: 'user', 
-              content: `Write an evocative text overlay for this image: ${prompt.prompt}.
+              content: `Write a caption for this image: ${prompt.prompt}.
                         This is for a love story featuring a person named ${personName || 'my love'}, who is ${personAge || 'adult'} years old.
-                        Make it ${tone}, personal, and poetic - text that will float directly on the image.
-                        Write 3-5 sentences (around 80-100 words) that create a vivid emotional moment.
-                        Focus on feelings, metaphors, and sensory impressions rather than literal description.` 
+                        Make it ${tone}, personal, and evocative.
+                        Keep it short (1-2 sentences maximum).` 
             }
           ],
-          temperature: 0.8,
-          max_tokens: 250,
+          temperature: 0.7,
+          max_tokens: 100,
         }),
       });
 

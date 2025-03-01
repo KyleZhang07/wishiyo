@@ -19,8 +19,8 @@ const LoveStoryAuthorStep = () => {
     if (!authorName.trim()) {
       toast({
         variant: "destructive",
-        title: "作者姓名必填",
-        description: "请输入您的名字以继续"
+        title: "Author name required",
+        description: "Please enter your name to continue"
       });
       return;
     }
@@ -31,8 +31,8 @@ const LoveStoryAuthorStep = () => {
 
   return (
     <WizardStep 
-      title="作者信息" 
-      description="请告诉我们关于您的信息" 
+      title="Author Information" 
+      description="Tell us about yourself" 
       previousStep="/create/love/love-story/character" 
       currentStep={2} 
       totalSteps={5} 
@@ -40,8 +40,8 @@ const LoveStoryAuthorStep = () => {
     >
       <div className="space-y-6">
         <div>
-          <label className="block text-sm font-medium mb-2">作者姓名</label>
-          <Input placeholder="输入您的名字" value={authorName} onChange={e => setAuthorName(e.target.value)} />
+          <label className="block text-sm font-medium mb-2">Author name</label>
+          <Input placeholder="Enter your name" value={authorName} onChange={e => setAuthorName(e.target.value)} />
         </div>
       </div>
     </WizardStep>

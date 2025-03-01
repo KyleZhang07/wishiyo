@@ -116,11 +116,26 @@ export const ContentImageCard = ({
         // Draw the image to fill the canvas
         ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
         
-        // 不再使用半透明渐变背景，而是使用文字阴影效果
-        const textAreaWidth = width * 0.5; // 文字区域仍占据左半部分
-        const textPadding = 20; // 内边距
+        // Add semi-transparent overlay at the bottom of the canvas for text readability
+        const overlayHeight = height * 0.3; // 30% of canvas height for text overlay
+        const gradientStart = height - overlayHeight;
         
-        // 文本换行函数
+        // Create gradient for text background
+        const gradient = ctx.createLinearGradient(0, gradientStart, 0, height);
+        gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0.7)');
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, gradientStart, width, overlayHeight);
+        
+        // Always draw title, even if there's no text
+        // Add a title based on the index
+        ctx.font = 'bold 22px Georgia, serif';
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'left';
+        ctx.fillText(title || `Moment ${index}`, 25, height - overlayHeight + 40);
+        
+        // Text wrapping function for use with either provided text or placeholder
         const wrapText = (text: string, x: number, y: number, maxWidth: number, lineHeight: number) => {
           const words = text.split(' ');
           let line = '';
@@ -142,83 +157,24 @@ export const ContentImageCard = ({
           }
           
           ctx.fillText(line, x, y + (lineCount * lineHeight));
-          return lineCount + 1; // 返回行数
+          return lineCount + 1; // Return the number of lines
         };
         
-        // 添加文本内容
-        const textStartX = textPadding;
-        const textStartY = height * 0.2; // 从画布的上部20%开始
-        const maxWidth = textAreaWidth - (textPadding * 2);
-        
-        // 使用文本或占位符
-        const displayText = text || "A special moment captured in time.";
-        
-        // 绘制文本 - 添加文字阴影和边缘效果，确保在任何背景上都清晰可见
-        ctx.font = 'bold 20px Georgia, serif'; // 增加字体粗细和尺寸
-        ctx.textAlign = 'left';
-        
-        // 设置文字阴影
-        ctx.shadowOffsetX = 2;
-        ctx.shadowOffsetY = 2;
-        ctx.shadowBlur = 4;
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-        
-        // 先绘制文字外描边
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.lineJoin = 'round'; // 圆角连接，使描边更平滑
-        
-        // 存储当前文本状态用于描边
-        ctx.save();
-        
-        // 描绘文字外轮廓
-        const outlineText = (text: string, x: number, y: number, maxWidth: number, lineHeight: number) => {
-          const words = text.split(' ');
-          let line = '';
-          let testLine = '';
-          let lineCount = 0;
-          
-          for (let n = 0; n < words.length; n++) {
-            testLine = line + words[n] + ' ';
-            const metrics = ctx.measureText(testLine);
-            const testWidth = metrics.width;
-            
-            if (testWidth > maxWidth && n > 0) {
-              ctx.strokeText(line, x, y + (lineCount * lineHeight));
-              line = words[n] + ' ';
-              lineCount++;
-            } else {
-              line = testLine;
-            }
-          }
-          
-          ctx.strokeText(line, x, y + (lineCount * lineHeight));
-          return lineCount;
-        };
-        
-        outlineText(displayText, textStartX, textStartY, maxWidth, 30);
-        
-        // 恢复文本状态，准备填充文字
-        ctx.restore();
-        
-        // 设置文字颜色
+        // Add text content - either provided text or a generic placeholder
+        ctx.font = '18px Georgia, serif';
         ctx.fillStyle = 'white';
-        ctx.shadowBlur = 1; // 轻微的模糊效果
+        const textStartY = height - overlayHeight + 70;
+        const maxWidth = width - 50; // Padding on both sides
         
-        // 填充实际文字
-        wrapText(displayText, textStartX, textStartY, maxWidth, 30);
+        // Use provided text or a simple placeholder
+        const displayText = text || "A special moment captured in time.";
+        wrapText(displayText, 25, textStartY, maxWidth, 24);
         
-        // 重置阴影效果
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 0;
-        ctx.shadowBlur = 0;
-        ctx.shadowColor = 'transparent';
-        
-        // 如果需要显示献词文本
+        // Draw dedication text if needed
         if (showDedicationText && coverTitle) {
           const firstName = coverTitle.split(',')[0];
           
-          // 创建半透明覆盖层
+          // Create a semi-transparent overlay for the dedication text
           ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
           ctx.fillRect(0, 0, width, height);
           

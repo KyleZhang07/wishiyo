@@ -823,7 +823,9 @@ const GenerateStep = () => {
     const textIndex = imageIndex + 1; // +1是因为text[0]是cover，text[1]是intro
     const imageText = imageTexts && imageTexts.length > textIndex ? imageTexts[textIndex] : null;
     
-    // 不再需要标题
+    // 显示标题适配新的命名方式 - 显示为Moment 1-10
+    let title = imageIndex === 0 ? "Introduction" : `Moment ${imageIndex}`;
+    
     return (
       <div className="mb-10">
         <ContentImageCard 
@@ -833,6 +835,7 @@ const GenerateStep = () => {
           index={imageIndex}
           onEditText={() => {}}
           text={imageText?.text}
+          title={title}
         />
       </div>
     );
@@ -895,6 +898,7 @@ const GenerateStep = () => {
               index={0}
               onEditText={() => {}}
               text={imageTexts && imageTexts.length > 1 ? imageTexts[1]?.text : undefined}
+              title="Introduction"
             />
           </div>
         </div>
