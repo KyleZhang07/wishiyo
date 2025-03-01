@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import WizardStep from './WizardStep';
 import { Button } from '@/components/ui/button';
@@ -220,7 +221,6 @@ const IdeaStep = ({
         if (data.imagePrompts && promptsKey) {
           setImagePrompts(data.imagePrompts);
           localStorage.setItem(promptsKey, JSON.stringify(data.imagePrompts));
-          
           // After image prompts are set, generate texts for them
           generateImageTexts(data.imagePrompts, selectedTone);
         }
@@ -249,9 +249,6 @@ const IdeaStep = ({
   };
 
   const generateImageTexts = async (prompts: ImagePrompt[], tone: string) => {
-    console.log('Generating image texts for prompts:', prompts);
-    console.log('Using tone:', tone);
-    
     setIsGeneratingTexts(true);
     try {
       const path = window.location.pathname;
@@ -271,17 +268,12 @@ const IdeaStep = ({
         }
       });
 
-      if (error) {
-        console.error('Supabase function error:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       if (!data || !data.texts) {
-        console.error('No texts received from the server. Response data:', data);
         throw new Error('No texts received from the server');
       }
 
-      console.log('Received text accompaniments:', data.texts);
       setImageTexts(data.texts);
       localStorage.setItem(textsKey, JSON.stringify(data.texts));
 
@@ -299,7 +291,6 @@ const IdeaStep = ({
         tone: tone
       }));
       
-      console.log('Using default texts:', defaultTexts);
       setImageTexts(defaultTexts);
       localStorage.setItem(getStorageKeys('love-story').textsKey, JSON.stringify(defaultTexts));
     } finally {
@@ -393,9 +384,7 @@ const IdeaStep = ({
       const savedTexts = localStorage.getItem(textsKey);
       if (savedTexts) {
         try {
-          const parsedTexts = JSON.parse(savedTexts);
-          console.log('Loaded saved text accompaniments:', parsedTexts);
-          setImageTexts(parsedTexts);
+          setImageTexts(JSON.parse(savedTexts));
         } catch (error) {
           console.error('Error parsing saved texts:', error);
         }
@@ -410,13 +399,6 @@ const IdeaStep = ({
           const parsedPrompts = JSON.parse(savedPromptsString);
           if (Array.isArray(parsedPrompts)) {
             setImagePrompts(parsedPrompts);
-            
-            // Check if we need to generate text accompaniments
-            const savedTexts = localStorage.getItem(textsKey);
-            if (!savedTexts && parsedPrompts.length > 0) {
-              console.log('No saved texts found, generating new ones for existing prompts');
-              generateImageTexts(parsedPrompts, selectedTone);
-            }
           }
         } catch (error) {
           console.error('Error parsing saved prompts:', error);
