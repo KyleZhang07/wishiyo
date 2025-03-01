@@ -231,7 +231,7 @@ export const ContentImageCard = ({
   return (
     <div className="glass-card rounded-2xl p-8 py-[40px] relative">
       <div className="max-w-xl mx-auto">
-        <div className="aspect-[2/1] bg-[#FFECD1] rounded-lg overflow-hidden relative">
+        <div className="aspect-[2/1] bg-[#FFECD1] rounded-sm overflow-hidden relative">
           {isGenerating ? (
             <div className="h-full flex flex-col justify-center items-center text-center">
               <RefreshCw className="animate-spin h-8 w-8 mb-4" />
@@ -240,7 +240,7 @@ export const ContentImageCard = ({
           ) : (
             <canvas 
               ref={canvasRef} 
-              className="w-full h-full rounded-lg"
+              className="w-full h-full rounded-sm"
               width={800} // Base resolution
               height={400}
             />
