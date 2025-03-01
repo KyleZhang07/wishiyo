@@ -24,7 +24,6 @@ const PreviewStep = () => {
   const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
   const [imageScale, setImageScale] = useState(100);
   const [chapters, setChapters] = useState<Chapter[]>([]);
-  const [praiseQuotes, setPraiseQuotes] = useState<Array<{ quote: string; source: string }>>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const generateChapters = async () => {
@@ -78,7 +77,6 @@ const PreviewStep = () => {
       const savedPhotos = localStorage.getItem('funnyBiographyPhoto');
       const savedStyle = localStorage.getItem('funnyBiographySelectedStyle');
       const savedChapters = localStorage.getItem('funnyBiographyChapters');
-      const savedPraiseQuotes = localStorage.getItem('funnyBiographyPraiseQuotes');
       
       if (savedAuthor) {
         setAuthorName(savedAuthor);
@@ -99,10 +97,6 @@ const PreviewStep = () => {
 
       if (savedStyle) {
         setSelectedStyle(savedStyle);
-      }
-
-      if (savedPraiseQuotes) {
-        setPraiseQuotes(JSON.parse(savedPraiseQuotes));
       }
 
       if (savedChapters) {
@@ -184,7 +178,6 @@ const PreviewStep = () => {
                 imageScale={imageScale}
                 previewMode={true}
                 scaleFactor={0.4}
-                praiseQuotes={praiseQuotes}
               />
             </div>
           </div>

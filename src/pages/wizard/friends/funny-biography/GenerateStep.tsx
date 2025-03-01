@@ -67,8 +67,6 @@ const FunnyBiographyGenerateStep = () => {
   const [selectedStyle, setSelectedStyle] = useState('classic-red');
   const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
   const [imageScale, setImageScale] = useState(100);
-  const [praiseQuotes, setPraiseQuotes] = useState<Array<{ quote: string; source: string }>>([]);
-  const [isGeneratingPraise, setIsGeneratingPraise] = useState(false);
   const { toast } = useToast();
 
   // Get the current style preset
@@ -82,7 +80,6 @@ const FunnyBiographyGenerateStep = () => {
     const savedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
     const savedPhotos = localStorage.getItem('funnyBiographyPhoto');
     const savedStyle = localStorage.getItem('funnyBiographySelectedStyle');
-    const savedPraiseQuotes = localStorage.getItem('funnyBiographyPraiseQuotes');
 
     if (savedAuthor) {
       setAuthorName(savedAuthor);
@@ -107,19 +104,6 @@ const FunnyBiographyGenerateStep = () => {
 
     if (savedPhotos) {
       handleImageProcessing(savedPhotos);
-    }
-
-    if (savedPraiseQuotes) {
-      setPraiseQuotes(JSON.parse(savedPraiseQuotes));
-    } else {
-      // Generate praise quotes when entering this step if we don't have any
-      if (savedIdeas && savedIdeaIndex) {
-        const ideas = JSON.parse(savedIdeas);
-        const selectedIdea = ideas[parseInt(savedIdeaIndex)];
-        if (selectedIdea && selectedIdea.title && savedAuthor) {
-          generatePraiseQuotes(selectedIdea.title, savedAuthor);
-        }
-      }
     }
   }, []);
 
@@ -157,54 +141,6 @@ const FunnyBiographyGenerateStep = () => {
     localStorage.setItem('funnyBiographySelectedStyle', styleId);
   };
 
-  const generatePraiseQuotes = async (title: string, author: string) => {
-    try {
-      setIsGeneratingPraise(true);
-      const { data, error } = await supabase.functions.invoke('generate-praise-words', {
-        body: { 
-          title,
-          authorName: author,
-          bookType: 'funny-biography'
-        }
-      });
-
-      if (error) throw error;
-
-      if (data && data.praiseQuotes) {
-        setPraiseQuotes(data.praiseQuotes);
-        localStorage.setItem('funnyBiographyPraiseQuotes', JSON.stringify(data.praiseQuotes));
-      }
-    } catch (error) {
-      console.error('Error generating praise quotes:', error);
-      toast({
-        variant: "destructive",
-        title: "Error generating praise quotes",
-        description: "Failed to generate praise quotes for your book. Using default quotes instead."
-      });
-      
-      // Fallback to some default praise quotes
-      const defaultQuotes = [
-        { 
-          quote: "A delightful romp through the absurdities of everyday life. I couldn't put it down!", 
-          source: "The Literary Gazette" 
-        },
-        { 
-          quote: "Utterly hilarious and surprisingly insightful. A must-read for anyone with a sense of humor.", 
-          source: "Dr. Laugh, Humor Studies Institute" 
-        },
-        { 
-          quote: "The funniest book I've read this year. Genuine laughs on every page.", 
-          source: "Comedy Critics Association" 
-        }
-      ];
-      
-      setPraiseQuotes(defaultQuotes);
-      localStorage.setItem('funnyBiographyPraiseQuotes', JSON.stringify(defaultQuotes));
-    } finally {
-      setIsGeneratingPraise(false);
-    }
-  };
-
   const handleGenerateBook = () => {
     // Save current style selection to localStorage
     localStorage.setItem('funnyBiographySelectedStyle', selectedStyle);
@@ -238,13 +174,7 @@ const FunnyBiographyGenerateStep = () => {
             imageScale={imageScale}
             onImageAdjust={handleImageAdjust}
             scaleFactor={0.4}
-            praiseQuotes={praiseQuotes}
           />
-          {isGeneratingPraise && (
-            <div className="text-center text-sm text-gray-500 mt-2">
-              Generating praise quotes for your book...
-            </div>
-          )}
           
           <div className="space-y-4">
             <div>

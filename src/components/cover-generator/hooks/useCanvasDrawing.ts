@@ -1,4 +1,3 @@
-
 import { useEffect, RefObject } from 'react';
 import { DEFAULT_CANVAS_SIZE } from '../types/canvas';
 import { coverTemplates, coverLayouts } from '../types';
@@ -17,8 +16,7 @@ interface UseCanvasDrawingProps {
   imageScale: number;
   imagePosition: { x: number; y: number };
   isProcessingImage: boolean;
-  backCoverText: string;
-  praiseQuotes?: Array<{ quote: string; source: string }>;
+  backCoverText: string; // Add this property
 }
 
 export const useCanvasDrawing = ({
@@ -33,8 +31,7 @@ export const useCanvasDrawing = ({
   imageScale,
   imagePosition,
   isProcessingImage,
-  backCoverText = '',
-  praiseQuotes = []
+  backCoverText = '' // Add default value
 }: UseCanvasDrawingProps) => {
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -103,11 +100,10 @@ export const useCanvasDrawing = ({
       backX,
       coverWidth,
       height: canvas.height,
-      summary: backCoverText,
-      selectedFont,
-      praiseQuotes
+      summary: backCoverText, // Pass the backCoverText here
+      selectedFont
     });
-  }, [canvasRef, coverTitle, subtitle, authorName, image, selectedFont, selectedTemplate, selectedLayout, imageScale, imagePosition, isProcessingImage, backCoverText, praiseQuotes]);
+  }, [canvasRef, coverTitle, subtitle, authorName, image, selectedFont, selectedTemplate, selectedLayout, imageScale, imagePosition, isProcessingImage, backCoverText]);
 };
 
 const drawLoadingState = (
