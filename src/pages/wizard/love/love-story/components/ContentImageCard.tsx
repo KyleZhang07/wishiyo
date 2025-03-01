@@ -1,3 +1,4 @@
+
 import { Button } from '@/components/ui/button';
 import { Edit, RefreshCw, ImageIcon, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -16,6 +17,7 @@ interface ContentImageCardProps {
   isGenerating: boolean;
   onEditText: () => void;
   onRegenerate: (style?: string) => void;
+  onTextUpdate?: (text: string) => void;
   index: number;
   authorName?: string;
   coverTitle?: string;
@@ -38,6 +40,7 @@ export const ContentImageCard = ({
   isGenerating,
   onEditText,
   onRegenerate,
+  onTextUpdate,
   index,
   authorName,
   coverTitle,
@@ -48,6 +51,7 @@ export const ContentImageCard = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedStyle, setSelectedStyle] = useState<string>('Photographic (Default)');
+  const [displayText, setDisplayText] = useState<string>(text || "A special moment captured in time.");
 
   useEffect(() => {
     // Load the current style from localStorage
@@ -72,6 +76,13 @@ export const ContentImageCard = ({
       }
     }
   }, []);
+
+  // Update displayText when text prop changes
+  useEffect(() => {
+    if (text) {
+      setDisplayText(text);
+    }
+  }, [text]);
 
   useEffect(() => {
     if (canvasRef.current && image && !isGenerating) {
@@ -167,7 +178,6 @@ export const ContentImageCard = ({
         const maxWidth = width - 50; // Padding on both sides
         
         // Use provided text or a simple placeholder
-        const displayText = text || "A beautiful moment captured in time.";
         wrapText(displayText, 25, textStartY, maxWidth, 24);
         
         // Draw dedication text if needed
@@ -204,7 +214,7 @@ export const ContentImageCard = ({
         ctx.fillText('Image failed to load', width / 2, height / 2);
       };
     }
-  }, [image, isGenerating, text, index, showDedicationText, coverTitle, authorName, title]);
+  }, [image, isGenerating, displayText, index, showDedicationText, coverTitle, authorName, title]);
 
   const handleStyleSelect = (style: string) => {
     setSelectedStyle(style);
