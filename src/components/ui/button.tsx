@@ -21,10 +21,10 @@ const buttonVariants = cva(
         dark: "bg-[#1a1a1a] text-white hover:bg-[#333333] transition-colors",
       },
       size: {
-        default: "h-12 px-6 rounded-md",
-        sm: "h-9 px-3 rounded-md",
-        lg: "h-14 px-8 text-base",
-        icon: "h-10 w-10 rounded-md",
+        default: "h-10 px-4 rounded-sm",
+        sm: "h-8 px-3 text-xs rounded-sm",
+        lg: "h-11 px-6 text-base rounded-sm",
+        icon: "h-8 w-8 rounded-sm",
       },
     },
     defaultVariants: {

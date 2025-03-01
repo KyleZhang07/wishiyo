@@ -57,16 +57,15 @@ serve(async (req) => {
               content: `You are a talented caption writer for an illustrated book. 
                         Create short, engaging captions in a ${tone} tone. 
                         The captions should be for a love story and complement the illustrations.
-                        Write ONLY the caption text, no more than 1-2 sentences.
+                        Write ONLY the caption text, normally 3-5 sentences.
                         Do not include any explanations or metadata.` 
             },
             { 
               role: 'user', 
-              content: `Write a detailed descriptive text for this image: ${prompt.prompt}.
+              content: `Write a caption for this image: ${prompt.prompt}.
                         This is for a love story featuring a person named ${personName || 'my love'}, who is ${personAge || 'adult'} years old.
-                        Make it ${tone}, personal, and evocative with specific details.
-                        The text should be 3-5 sentences long, rich in imagery and emotion.
-                        This text will be displayed prominently next to the image.` 
+                        Make it ${tone}, personal, and evocative.
+                        Make it 3-5 sentences long.` 
             }
           ],
           temperature: 0.7,
@@ -77,7 +76,7 @@ serve(async (req) => {
       if (!response.ok) {
         console.error('OpenAI API error:', await response.text());
         return {
-          text: "A beautiful moment frozen in time. The emotions of this scene tell a story deeper than words could express. Each detail captures the essence of a profound experience.",
+          text: "A special moment captured in time.",
           tone: tone
         };
       }

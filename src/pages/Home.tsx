@@ -9,7 +9,7 @@ const Home = () => {
         <div className="container mx-auto px-4 py-12 md:py-20 relative z-10">
           <div className="text-center max-w-3xl mx-auto">
             <div className="mb-6 inline-block">
-              <span className="px-4 py-1 rounded-full bg-primary/20 text-primary text-sm font-medium">AI-Powered Personalized Books</span>
+              <span className="px-3 py-1 rounded-sm bg-primary/20 text-primary text-sm font-medium">AI-Powered Personalized Books</span>
             </div>
             <h1 className="text-4xl font-display font-bold mb-6 slide-in md:text-6xl bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/70">
               Turn memories into magical stories
@@ -18,11 +18,11 @@ const Home = () => {
               Personalized Books for Every Special Bond — Create a unique gift that will be cherished forever
             </p>
             <div className="flex flex-col justify-center items-center gap-5 mt-10">
-              <Link to="/friends" className="w-80 inline-flex items-center justify-center px-6 py-4 text-lg font-medium text-white bg-primary rounded-xl hover:bg-primary/90 transition-all hover:shadow-lg shadow-primary/20 group">
-                Create Books for Fun <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              <Link to="/friends" className="w-72 inline-flex items-center justify-center px-5 py-3 text-base font-medium text-white bg-primary rounded-sm hover:bg-primary/90 transition-all hover:shadow-lg shadow-primary/20 group">
+                Create Books for Fun <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
-              <Link to="/love" className="w-80 inline-flex items-center justify-center px-6 py-4 text-lg font-medium text-white bg-primary/80 backdrop-blur-sm rounded-xl hover:bg-primary/70 transition-all hover:shadow-lg shadow-primary/20 group whitespace-nowrap">
-                Create Books for Fantasy <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              <Link to="/love" className="w-72 inline-flex items-center justify-center px-5 py-3 text-base font-medium text-white bg-primary/80 backdrop-blur-sm rounded-sm hover:bg-primary/70 transition-all hover:shadow-lg shadow-primary/20 group whitespace-nowrap">
+                Create Books for Fantasy <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
           </div>
@@ -42,15 +42,15 @@ const Home = () => {
           </div>
           <div className="flex flex-col md:flex-row justify-center items-stretch gap-10 max-w-4xl mx-auto">
             <Link to="/friends" className="group flex-1 max-w-[340px] block hover:scale-105 transition-all duration-300">
-              <div className="glass-card h-full rounded-2xl shadow-lg hover:shadow-xl overflow-hidden border border-gray-100">
+              <div className="glass-card h-full rounded-sm shadow-lg hover:shadow-xl overflow-hidden border border-gray-100">
                 <div className="aspect-[4/3] relative overflow-hidden">
                   <img src="https://images.unsplash.com/photo-1517022812141-23620dba5c23" alt="Books for Fun" 
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
                 </div>
                 <div className="p-8">
-                  <div className="w-12 h-12 mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Book className="w-6 h-6 text-primary" />
+                  <div className="w-10 h-10 mb-4 rounded-sm bg-primary/10 flex items-center justify-center">
+                    <Book className="w-5 h-5 text-primary" />
                   </div>
                   <h3 className="text-2xl font-display font-semibold mb-4 group-hover:text-primary transition-colors">Books for Fun</h3>
                   <p className="text-gray-600 mb-4">Create entertaining stories filled with humor and friendship</p>
@@ -63,15 +63,15 @@ const Home = () => {
             </Link>
             
             <Link to="/love" className="group flex-1 max-w-[340px] block hover:scale-105 transition-all duration-300">
-              <div className="glass-card h-full rounded-2xl shadow-lg hover:shadow-xl overflow-hidden border border-gray-100">
+              <div className="glass-card h-full rounded-sm shadow-lg hover:shadow-xl overflow-hidden border border-gray-100">
                 <div className="aspect-[4/3] relative overflow-hidden">
                   <img src="https://images.unsplash.com/photo-1582562124811-c09040d0a901" alt="Books for Love" 
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
                 </div>
                 <div className="p-8">
-                  <div className="w-12 h-12 mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Heart className="w-6 h-6 text-primary" />
+                  <div className="w-10 h-10 mb-4 rounded-sm bg-primary/10 flex items-center justify-center">
+                    <Heart className="w-5 h-5 text-primary" />
                   </div>
                   <h3 className="text-2xl font-display font-semibold mb-4 group-hover:text-primary transition-colors">Books for Fantasy</h3>
                   <p className="text-gray-600 mb-4">Share your love story in a beautifully crafted book</p>
@@ -99,7 +99,7 @@ const Home = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {[1, 2, 3].map(book => (
-              <div key={book} className="glass-card rounded-2xl shadow-lg hover:shadow-xl overflow-hidden transition-all hover:scale-105 border border-gray-100 duration-300">
+              <div key={book} className="glass-card rounded-sm shadow-lg hover:shadow-xl overflow-hidden transition-all hover:scale-105 border border-gray-100 duration-300">
                 <div className="aspect-[3/4] bg-gradient-to-br from-primary/10 to-primary/5 relative">
                   <div className="absolute inset-0 flex items-center justify-center">
                     <Sparkles className="w-12 h-12 text-primary/40" />
@@ -132,8 +132,8 @@ const Home = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 max-w-5xl mx-auto">
             <div className="text-center group">
-              <div className="w-24 h-24 bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-primary/10 group-hover:scale-110 transition-transform duration-300">
-                <BookOpen className="w-12 h-12 text-white" />
+              <div className="w-20 h-20 bg-gradient-to-br from-primary to-primary/80 rounded-sm flex items-center justify-center mx-auto mb-6 shadow-lg shadow-primary/10 group-hover:scale-110 transition-transform duration-300">
+                <BookOpen className="w-10 h-10 text-white" />
               </div>
               <h3 className="text-xl font-display font-semibold mb-3">Find a book they'll love</h3>
               <p className="text-gray-600">
@@ -142,8 +142,8 @@ const Home = () => {
             </div>
 
             <div className="text-center group">
-              <div className="w-24 h-24 bg-gradient-to-br from-primary to-primary/80 clip-hexagon flex items-center justify-center mx-auto mb-6 shadow-lg shadow-primary/10 group-hover:scale-110 transition-transform duration-300">
-                <Pencil className="w-12 h-12 text-white" />
+              <div className="w-20 h-20 bg-gradient-to-br from-primary to-primary/80 clip-hexagon flex items-center justify-center mx-auto mb-6 shadow-lg shadow-primary/10 group-hover:scale-110 transition-transform duration-300">
+                <Pencil className="w-10 h-10 text-white" />
               </div>
               <h3 className="text-xl font-display font-semibold mb-3">Personalize it with care</h3>
               <p className="text-gray-600">
@@ -152,8 +152,8 @@ const Home = () => {
             </div>
 
             <div className="text-center group">
-              <div className="w-24 h-24 bg-gradient-to-br from-primary to-primary/80 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-primary/10 group-hover:scale-110 transition-transform duration-300">
-                <Heart className="w-12 h-12 text-white" />
+              <div className="w-20 h-20 bg-gradient-to-br from-primary to-primary/80 rounded-sm flex items-center justify-center mx-auto mb-6 shadow-lg shadow-primary/10 group-hover:scale-110 transition-transform duration-300">
+                <Heart className="w-10 h-10 text-white" />
               </div>
               <h3 className="text-xl font-display font-semibold mb-3">Add a message</h3>
               <p className="text-gray-600">
@@ -162,8 +162,8 @@ const Home = () => {
             </div>
 
             <div className="text-center group">
-              <div className="w-24 h-24 bg-gradient-to-br from-primary to-primary/80 clip-gift flex items-center justify-center mx-auto mb-6 shadow-lg shadow-primary/10 group-hover:scale-110 transition-transform duration-300">
-                <Gift className="w-12 h-12 text-white" />
+              <div className="w-20 h-20 bg-gradient-to-br from-primary to-primary/80 clip-gift flex items-center justify-center mx-auto mb-6 shadow-lg shadow-primary/10 group-hover:scale-110 transition-transform duration-300">
+                <Gift className="w-10 h-10 text-white" />
               </div>
               <h3 className="text-xl font-display font-semibold mb-3">Give a gift to remember</h3>
               <p className="text-gray-600">
@@ -182,8 +182,8 @@ const Home = () => {
             <p className="text-xl text-gray-600 mb-8 max-w-xl mx-auto">
               Start your journey today and create a personalized book that will be cherished for years to come.
             </p>
-            <Link to="/create/step2" className="inline-flex items-center px-8 py-4 text-lg font-medium text-white bg-primary rounded-xl hover:bg-primary/90 transition-all hover:shadow-lg shadow-primary/20 group">
-              Get Started <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
+            <Link to="/create/step2" className="inline-flex items-center px-6 py-3 text-base font-medium text-white bg-primary rounded-sm hover:bg-primary/90 transition-all hover:shadow-lg shadow-primary/20 group">
+              Get Started <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
         </div>
