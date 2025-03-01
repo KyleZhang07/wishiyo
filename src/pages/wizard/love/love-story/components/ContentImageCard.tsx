@@ -11,6 +11,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Check } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 
 interface ContentImageCardProps {
   image?: string;
@@ -50,8 +51,10 @@ export const ContentImageCard = ({
 }: ContentImageCardProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isTextDialogOpen, setIsTextDialogOpen] = useState(false);
   const [selectedStyle, setSelectedStyle] = useState<string>('Photographic (Default)');
   const [displayText, setDisplayText] = useState<string>(text || "A special moment captured in time.");
+  const [editedText, setEditedText] = useState<string>("");
 
   useEffect(() => {
     // Load the current style from localStorage
@@ -81,6 +84,7 @@ export const ContentImageCard = ({
   useEffect(() => {
     if (text) {
       setDisplayText(text);
+      setEditedText(text);
     }
   }, [text]);
 
@@ -231,6 +235,19 @@ export const ContentImageCard = ({
     onRegenerate(selectedStyle);
   };
 
+  const handleSaveText = () => {
+    setDisplayText(editedText);
+    if (onTextUpdate) {
+      onTextUpdate(editedText);
+    }
+    setIsTextDialogOpen(false);
+  };
+
+  const openTextDialog = () => {
+    setEditedText(displayText);
+    setIsTextDialogOpen(true);
+  };
+
   return (
     <div className="glass-card rounded-2xl p-8 py-[40px] relative">
       <div className="max-w-xl mx-auto">
@@ -238,7 +255,7 @@ export const ContentImageCard = ({
           {isGenerating ? (
             <div className="h-full flex flex-col justify-center items-center text-center">
               <RefreshCw className="animate-spin h-8 w-8 mb-4" />
-              <p className="text-gray-600">Generating image...</p>
+              <p className="text-gray-600">Generating image and text...</p>
             </div>
           ) : (
             <canvas 
@@ -252,7 +269,7 @@ export const ContentImageCard = ({
         <div className="absolute bottom-4 right-4 flex gap-2">
           <Button
             variant="secondary"
-            onClick={onEditText}
+            onClick={openTextDialog}
           >
             <Edit className="w-4 h-4 mr-2" />
             Edit text
@@ -325,6 +342,41 @@ export const ContentImageCard = ({
                 >
                   <RefreshCw className={`w-4 h-4 mr-2 ${isGenerating ? 'animate-spin' : ''}`} />
                   Regenerate with {selectedStyle}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Text editing dialog */}
+          <Dialog open={isTextDialogOpen} onOpenChange={setIsTextDialogOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Edit Text</DialogTitle>
+                <DialogDescription>
+                  Update the text for this image.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-4 py-4">
+                <Textarea 
+                  value={editedText} 
+                  onChange={(e) => setEditedText(e.target.value)}
+                  className="min-h-[150px]"
+                  placeholder="Enter text for this image..."
+                />
+              </div>
+              
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={() => setIsTextDialogOpen(false)}>
+                  <X className="w-4 h-4 mr-2" />
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleSaveText}
+                  className="bg-black text-white hover:bg-black/90"
+                >
+                  <Check className="w-4 h-4 mr-2" />
+                  Save Text
                 </Button>
               </div>
             </DialogContent>
