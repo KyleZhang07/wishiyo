@@ -147,7 +147,8 @@ const GenerateStep = () => {
     try {
       const prompts = JSON.parse(savedPrompts);
       // 修复索引问题 - 确保正确访问提示数组
-      const promptIndex = index <= prompts.length ? index : prompts.length - 1;
+      // 使用index+1因为prompts[0]是封面，prompts[1]是intro，content从prompts[2]开始
+      const promptIndex = index + 1 <= prompts.length ? index + 1 : prompts.length - 1;
       if (!prompts[promptIndex]) {
         throw new Error(`No prompt found for content index ${promptIndex}`);
       }
@@ -170,7 +171,7 @@ const GenerateStep = () => {
         type: 'content'       // 明确内容类型
       };
 
-      console.log(`Content ${index} generation request:`, JSON.stringify(requestBody));
+      console.log(`Content ${index} generation request (using prompt ${promptIndex}):`, JSON.stringify(requestBody));
 
       // Include style in the request
       const { data, error } = await supabase.functions.invoke('generate-love-cover', {
@@ -255,11 +256,19 @@ const GenerateStep = () => {
     });
 
     try {
+      // 我们现在解析完整的prompts对象，而不是使用传入的字符串
+      // 这样我们可以正确访问每个图像对应的提示
+      const promptsObj = JSON.parse(localStorage.getItem('loveStoryImagePrompts') || '[]');
+      if (!promptsObj || promptsObj.length < 3) {
+        throw new Error("Not enough prompts for image generation");
+      }
+
+      // 为每个图像类型使用专门的提示
       const { data, error } = await supabase.functions.invoke('generate-love-cover', {
         body: { 
-          prompt: prompts, 
-          contentPrompt: prompts,
-          content2Prompt: prompts,
+          prompt: promptsObj[0].prompt,          // 封面使用prompts[0]
+          contentPrompt: promptsObj[1].prompt,   // intro使用prompts[1]
+          content2Prompt: promptsObj[2].prompt,  // Moment 1使用prompts[2]
           photo: partnerPhoto,
           style: selectedStyle
         }
@@ -671,7 +680,7 @@ const GenerateStep = () => {
         }
         
         try {
-          // 修复请求结构，明确指定这是intro图片
+          // 修复请求结构，使用prompts[1]而非prompts[0]（prompts[0]是封面）
           const requestBody = {
             contentPrompt: prompts[1].prompt, 
             photo: characterPhoto,
@@ -679,7 +688,7 @@ const GenerateStep = () => {
             type: 'intro'
           };
 
-          console.log('Intro generation request:', JSON.stringify(requestBody));
+          console.log('Intro generation request (using prompt 1):', JSON.stringify(requestBody));
           
           const { data, error } = await supabase.functions.invoke('generate-love-cover', {
             body: requestBody
@@ -808,10 +817,13 @@ const GenerateStep = () => {
     const image = imageStateMap[imageIndex];
     const isLoading = loadingStateMap[imageIndex];
     const handleRegenerate = handleRegenerateMap[imageIndex];
-    // Get the text for this image, adjusting for zero-based array index
-    const imageText = imageTexts && imageTexts.length > imageIndex ? imageTexts[imageIndex] : null;
     
-    // 显示标题适配新的命名方式
+    // 修正：图像索引与文本索引对应关系
+    // 根据新逻辑，图像索引1-10对应文本索引2-11(moment3-12重命名为moment1-10)
+    const textIndex = imageIndex + 1; // +1是因为text[0]是cover，text[1]是intro
+    const imageText = imageTexts && imageTexts.length > textIndex ? imageTexts[textIndex] : null;
+    
+    // 显示标题适配新的命名方式 - 显示为Moment 1-10
     let title = imageIndex === 0 ? "Introduction" : `Moment ${imageIndex}`;
     
     return (
@@ -885,7 +897,7 @@ const GenerateStep = () => {
               onRegenerate={handleRegenerateIntro}
               index={0}
               onEditText={() => {}}
-              text={imageTexts && imageTexts.length > 0 ? imageTexts[0]?.text : undefined}
+              text={imageTexts && imageTexts.length > 1 ? imageTexts[1]?.text : undefined}
               title="Introduction"
             />
           </div>

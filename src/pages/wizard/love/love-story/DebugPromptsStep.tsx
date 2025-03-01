@@ -10,6 +10,11 @@ interface ImagePrompt {
   prompt: string;
 }
 
+interface ImageText {
+  text: string;
+  tone: string;
+}
+
 interface SupabaseImage {
   name: string;
   url: string;
@@ -27,6 +32,7 @@ interface LocalStorageImage {
 
 const DebugPromptsStep = () => {
   const [prompts, setPrompts] = useState<ImagePrompt[]>([]);
+  const [imageTexts, setImageTexts] = useState<ImageText[]>([]);
   const [selectedTone, setSelectedTone] = useState<string>('');
   const [selectedStyle, setSelectedStyle] = useState<string>('');
   const [supabaseImages, setSupabaseImages] = useState<SupabaseImage[]>([]);
@@ -45,6 +51,16 @@ const DebugPromptsStep = () => {
         setPrompts(JSON.parse(savedPrompts));
       } catch (error) {
         console.error('Error parsing prompts:', error);
+      }
+    }
+    
+    // Load image texts
+    const savedTexts = localStorage.getItem('loveStoryImageTexts');
+    if (savedTexts) {
+      try {
+        setImageTexts(JSON.parse(savedTexts));
+      } catch (error) {
+        console.error('Error parsing image texts:', error);
       }
     }
     
@@ -377,7 +393,7 @@ const DebugPromptsStep = () => {
           <h3 className="font-bold text-gray-800">Story Images:</h3>
           {prompts.slice(1).map((prompt, index) => (
             <div key={index} className="bg-white p-4 rounded-lg shadow">
-              <h4 className="font-bold text-gray-800 mb-2">Image {index + 1}:</h4>
+              <h4 className="font-bold text-gray-800 mb-2">{index === 0 ? "Intro Image" : `Image ${index}`}:</h4>
               
               <div className="mb-4">
                 <p className="text-gray-600 font-semibold mb-1">Question:</p>
@@ -393,11 +409,38 @@ const DebugPromptsStep = () => {
         </div>
       </div>
       
+      {/* Display Image Texts */}
+      <div className="space-y-4 mt-8">
+        <h3 className="font-bold text-gray-800 text-xl">Image Texts:</h3>
+        
+        {imageTexts.length > 0 ? (
+          <div className="space-y-4">
+            {imageTexts.map((textItem, index) => (
+              <div key={index} className="bg-white p-4 rounded-lg shadow">
+                <h4 className="font-bold text-gray-800 mb-2">Moment {index + 1} Text:</h4>
+                <div className="mb-4">
+                  <p className="text-gray-600 font-semibold mb-1">Text:</p>
+                  <p className="text-gray-800">{textItem.text}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600 font-semibold mb-1">Tone:</p>
+                  <p className="text-gray-800">{textItem.tone}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500 py-4 text-center">No image texts found in localStorage.</p>
+        )}
+      </div>
+      
       {/* Raw data dump for debugging */}
       <div className="bg-black text-green-400 p-4 rounded-lg font-mono text-xs mt-8 overflow-x-auto">
         <h3 className="text-white mb-2">Raw Data:</h3>
         <p className="mb-2">ImagePrompts:</p>
         <pre>{JSON.stringify(prompts, null, 2)}</pre>
+        <p className="mt-4 mb-2">ImageTexts:</p>
+        <pre>{JSON.stringify(imageTexts, null, 2)}</pre>
         <p className="mt-4 mb-2">Supabase Storage URLs:</p>
         <pre>{JSON.stringify(supabaseImages.map(img => img.url), null, 2)}</pre>
         <p className="mt-4 mb-2">LocalStorage Usage:</p>
