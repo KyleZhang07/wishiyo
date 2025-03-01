@@ -116,26 +116,19 @@ export const ContentImageCard = ({
         // Draw the image to fill the canvas
         ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
         
-        // Add semi-transparent overlay at the bottom of the canvas for text readability
-        const overlayHeight = height * 0.3; // 30% of canvas height for text overlay
-        const gradientStart = height - overlayHeight;
+        // 创建半透明文本区域（在图像左侧）
+        const textAreaWidth = width * 0.5; // 占据左半部分
+        const textPadding = 20; // 内边距
         
-        // Create gradient for text background
-        const gradient = ctx.createLinearGradient(0, gradientStart, 0, height);
-        gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
-        gradient.addColorStop(1, 'rgba(0, 0, 0, 0.7)');
+        // 创建半透明渐变背景，从左到右
+        const gradient = ctx.createLinearGradient(0, 0, textAreaWidth, 0);
+        gradient.addColorStop(0, 'rgba(0, 0, 0, 0.7)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0.3)');
         
         ctx.fillStyle = gradient;
-        ctx.fillRect(0, gradientStart, width, overlayHeight);
+        ctx.fillRect(0, 0, textAreaWidth, height);
         
-        // Always draw title, even if there's no text
-        // Add a title based on the index
-        ctx.font = 'bold 22px Georgia, serif';
-        ctx.fillStyle = 'white';
-        ctx.textAlign = 'left';
-        ctx.fillText(title || `Moment ${index}`, 25, height - overlayHeight + 40);
-        
-        // Text wrapping function for use with either provided text or placeholder
+        // 文本换行函数
         const wrapText = (text: string, x: number, y: number, maxWidth: number, lineHeight: number) => {
           const words = text.split(' ');
           let line = '';
@@ -157,24 +150,27 @@ export const ContentImageCard = ({
           }
           
           ctx.fillText(line, x, y + (lineCount * lineHeight));
-          return lineCount + 1; // Return the number of lines
+          return lineCount + 1; // 返回行数
         };
         
-        // Add text content - either provided text or a generic placeholder
+        // 添加文本内容
+        const textStartX = textPadding;
+        const textStartY = height * 0.2; // 从画布的上部20%开始
+        const maxWidth = textAreaWidth - (textPadding * 2);
+        
+        // 使用文本或占位符
+        const displayText = text || "A special moment captured in time.";
+        
+        // 绘制文本
         ctx.font = '18px Georgia, serif';
         ctx.fillStyle = 'white';
-        const textStartY = height - overlayHeight + 70;
-        const maxWidth = width - 50; // Padding on both sides
+        wrapText(displayText, textStartX, textStartY, maxWidth, 26);
         
-        // Use provided text or a simple placeholder
-        const displayText = text || "A special moment captured in time.";
-        wrapText(displayText, 25, textStartY, maxWidth, 24);
-        
-        // Draw dedication text if needed
+        // 如果需要显示献词文本
         if (showDedicationText && coverTitle) {
           const firstName = coverTitle.split(',')[0];
           
-          // Create a semi-transparent overlay for the dedication text
+          // 创建半透明覆盖层
           ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
           ctx.fillRect(0, 0, width, height);
           

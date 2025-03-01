@@ -78,7 +78,7 @@ const GenerateStep = () => {
       const { data, error } = await supabase.functions.invoke('expand-image', {
         body: { 
           imageUrl,
-          textPrompt: "The expanded area should be: very clean with no objects and shapes; suitable for text placement(clean background); soft gradient background matching the original image tone; seamless transition"
+          textPrompt: "The expanded area MUST be: completely empty with absolutely NO people, NO objects, NO shapes, and NO animals; only a clean, simple, and minimal background; suitable for text placement; smooth gradient background matching the original image tone; seamless transition from original image; plain and uncluttered extended region"
         }
       });
       
@@ -823,9 +823,7 @@ const GenerateStep = () => {
     const textIndex = imageIndex + 1; // +1是因为text[0]是cover，text[1]是intro
     const imageText = imageTexts && imageTexts.length > textIndex ? imageTexts[textIndex] : null;
     
-    // 显示标题适配新的命名方式 - 显示为Moment 1-10
-    let title = imageIndex === 0 ? "Introduction" : `Moment ${imageIndex}`;
-    
+    // 不再需要标题
     return (
       <div className="mb-10">
         <ContentImageCard 
@@ -835,7 +833,6 @@ const GenerateStep = () => {
           index={imageIndex}
           onEditText={() => {}}
           text={imageText?.text}
-          title={title}
         />
       </div>
     );
@@ -898,7 +895,6 @@ const GenerateStep = () => {
               index={0}
               onEditText={() => {}}
               text={imageTexts && imageTexts.length > 1 ? imageTexts[1]?.text : undefined}
-              title="Introduction"
             />
           </div>
         </div>

@@ -54,22 +54,24 @@ serve(async (req) => {
           messages: [
             { 
               role: 'system', 
-              content: `You are a talented caption writer for an illustrated book. 
-                        Create short, engaging captions in a ${tone} tone. 
-                        The captions should be for a love story and complement the illustrations.
-                        Write ONLY the caption text, no more than 1-2 sentences.
+              content: `You are a talented writer creating evocative descriptions for an illustrated love story.
+                        Create detailed, vivid, and emotionally engaging text in a ${tone} tone.
+                        Your descriptions should complement the illustrations by adding depth, context, and emotion.
+                        Focus on painting a rich picture with words that enhances the visual element.
+                        Write 3-5 sentences (around 80-100 words) that tell a mini-story or convey deep emotions.
                         Do not include any explanations or metadata.` 
             },
             { 
               role: 'user', 
-              content: `Write a caption for this image: ${prompt.prompt}.
+              content: `Write a detailed description for this image: ${prompt.prompt}.
                         This is for a love story featuring a person named ${personName || 'my love'}, who is ${personAge || 'adult'} years old.
-                        Make it ${tone}, personal, and evocative.
-                        Keep it short (1-2 sentences maximum).` 
+                        Make it ${tone}, personal, and evocative, with specific details that bring the scene to life.
+                        Include emotions, sensory details, and the character's thoughts or feelings.
+                        Write 3-5 sentences (around 80-100 words) that create a vivid narrative moment.` 
             }
           ],
           temperature: 0.7,
-          max_tokens: 100,
+          max_tokens: 250,
         }),
       });
 
