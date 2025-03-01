@@ -91,57 +91,48 @@ const LoveStoryCharacterStep = () => {
       onNextClick={handleContinue}
     >
       <div className="space-y-8">
-        <div className="border-b pb-6">
-          <h3 className="text-lg font-medium mb-4">Main Character</h3>
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium mb-2">Who is the main character?</label>
-              <Input placeholder="Enter their name" value={firstName} onChange={e => setFirstName(e.target.value)} />
-            </div>
+        <div>
+          <label className="block text-sm font-medium mb-2">Their name</label>
+          <Input placeholder="" value={firstName} onChange={e => setFirstName(e.target.value)} />
+        </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Their gender</label>
-              <div className="grid grid-cols-2 gap-4">
-                <Button 
-                  type="button" 
-                  variant={gender === 'male' ? 'default' : 'outline'} 
-                  className="w-full py-6 text-lg" 
-                  onClick={() => setGender('male')}
-                >
-                  Male
-                </Button>
-                <Button 
-                  type="button" 
-                  variant={gender === 'female' ? 'default' : 'outline'} 
-                  className="w-full py-6 text-lg" 
-                  onClick={() => setGender('female')}
-                >
-                  Female
-                </Button>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Their age</label>
-              <Input 
-                type="number" 
-                placeholder="Enter their age" 
-                value={age} 
-                onChange={e => setAge(e.target.value)}
-                min="1"
-                max="120"
-              />
-            </div>
+        <div>
+          <label className="block text-sm font-medium mb-2">Their gender</label>
+          <div className="grid grid-cols-2 gap-4">
+            <Button 
+              type="button" 
+              variant={gender === 'male' ? 'default' : 'outline'} 
+              className="w-full py-6 text-lg" 
+              onClick={() => setGender('male')}
+            >
+              Male
+            </Button>
+            <Button 
+              type="button" 
+              variant={gender === 'female' ? 'default' : 'outline'} 
+              className="w-full py-6 text-lg" 
+              onClick={() => setGender('female')}
+            >
+              Female
+            </Button>
           </div>
         </div>
 
         <div>
-          <h3 className="text-lg font-medium mb-4">Author Information</h3>
-          <div>
-            <label className="block text-sm font-medium mb-2">Author name</label>
-            <Input placeholder="Enter your name" value={authorName} onChange={e => setAuthorName(e.target.value)} />
-            <p className="text-sm text-gray-500 mt-2">This will appear as the book's author</p>
-          </div>
+          <label className="block text-sm font-medium mb-2">Their age</label>
+          <Input 
+            type="number" 
+            placeholder="" 
+            value={age} 
+            onChange={e => setAge(e.target.value)}
+            min="1"
+            max="120"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2">Author name</label>
+          <Input placeholder="" value={authorName} onChange={e => setAuthorName(e.target.value)} />
         </div>
       </div>
     </WizardStep>
