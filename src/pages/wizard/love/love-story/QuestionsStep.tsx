@@ -100,9 +100,9 @@ const LoveStoryQuestionsStep = () => {
     <WizardStep
       title="Share Your Story"
       description="Tell us about your journey together"
-      previousStep="/create/love/love-story/author"
-      currentStep={3}
-      totalSteps={5}
+      previousStep="/create/love/love-story/character"
+      currentStep={2}
+      totalSteps={6}
       onNextClick={handleNext}
     >
       <div className="space-y-6">

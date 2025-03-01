@@ -51,9 +51,9 @@ const LoveStoryMomentsStep = () => {
       title="Upload your character's photo"
       description="We'll use it on the cover"
       previousStep="/create/love/love-story/questions"
-      nextStep="/create/love/love-story/ideas"
-      currentStep={4}
-      totalSteps={5}
+      nextStep="/create/love/love-story/style"
+      currentStep={3}
+      totalSteps={6}
     >
       <div className="space-y-6">
         <div className="max-w-md mx-auto">

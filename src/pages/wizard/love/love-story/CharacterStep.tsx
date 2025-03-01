@@ -9,6 +9,7 @@ const LoveStoryCharacterStep = () => {
   const [firstName, setFirstName] = useState('');
   const [gender, setGender] = useState<'male' | 'female' | ''>('');
   const [age, setAge] = useState<string>('');
+  const [authorName, setAuthorName] = useState('');
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -16,10 +17,12 @@ const LoveStoryCharacterStep = () => {
     const savedFirstName = localStorage.getItem('loveStoryPersonName');
     const savedGender = localStorage.getItem('loveStoryPersonGender');
     const savedAge = localStorage.getItem('loveStoryPersonAge');
+    const savedAuthorName = localStorage.getItem('loveStoryAuthorName');
     
     if (savedFirstName) setFirstName(savedFirstName);
     if (savedGender) setGender(savedGender as 'male' | 'female');
     if (savedAge) setAge(savedAge);
+    if (savedAuthorName) setAuthorName(savedAuthorName);
   }, []);
 
   const handleContinue = () => {
@@ -50,6 +53,15 @@ const LoveStoryCharacterStep = () => {
       return;
     }
 
+    if (!authorName.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Author name required",
+        description: "Please enter your name to continue"
+      });
+      return;
+    }
+
     // Validate age is a number and within reasonable range
     const ageNumber = parseInt(age);
     if (isNaN(ageNumber) || ageNumber < 1 || ageNumber > 120) {
@@ -64,57 +76,72 @@ const LoveStoryCharacterStep = () => {
     localStorage.setItem('loveStoryPersonName', firstName.trim());
     localStorage.setItem('loveStoryPersonGender', gender);
     localStorage.setItem('loveStoryPersonAge', age);
+    localStorage.setItem('loveStoryAuthorName', authorName.trim());
     
-    navigate('/create/love/love-story/author');
+    navigate('/create/love/love-story/questions');
   };
 
   return (
     <WizardStep 
       title="Character Information" 
-      description="Tell us about the main character of the story" 
+      description="Tell us about you and the main character of the story" 
       previousStep="/love" 
       currentStep={1} 
-      totalSteps={5} 
+      totalSteps={6} 
       onNextClick={handleContinue}
     >
-      <div className="space-y-6">
-        <div>
-          <label className="block text-sm font-medium mb-2">Who is the main character?</label>
-          <Input placeholder="Enter their name" value={firstName} onChange={e => setFirstName(e.target.value)} />
-        </div>
+      <div className="space-y-8">
+        <div className="border-b pb-6">
+          <h3 className="text-lg font-medium mb-4">Main Character</h3>
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium mb-2">Who is the main character?</label>
+              <Input placeholder="Enter their name" value={firstName} onChange={e => setFirstName(e.target.value)} />
+            </div>
 
-        <div>
-          <label className="block text-sm font-medium mb-2">Their gender</label>
-          <div className="grid grid-cols-2 gap-4">
-            <Button 
-              type="button" 
-              variant={gender === 'male' ? 'default' : 'outline'} 
-              className="w-full py-6 text-lg" 
-              onClick={() => setGender('male')}
-            >
-              Male
-            </Button>
-            <Button 
-              type="button" 
-              variant={gender === 'female' ? 'default' : 'outline'} 
-              className="w-full py-6 text-lg" 
-              onClick={() => setGender('female')}
-            >
-              Female
-            </Button>
+            <div>
+              <label className="block text-sm font-medium mb-2">Their gender</label>
+              <div className="grid grid-cols-2 gap-4">
+                <Button 
+                  type="button" 
+                  variant={gender === 'male' ? 'default' : 'outline'} 
+                  className="w-full py-6 text-lg" 
+                  onClick={() => setGender('male')}
+                >
+                  Male
+                </Button>
+                <Button 
+                  type="button" 
+                  variant={gender === 'female' ? 'default' : 'outline'} 
+                  className="w-full py-6 text-lg" 
+                  onClick={() => setGender('female')}
+                >
+                  Female
+                </Button>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Their age</label>
+              <Input 
+                type="number" 
+                placeholder="Enter their age" 
+                value={age} 
+                onChange={e => setAge(e.target.value)}
+                min="1"
+                max="120"
+              />
+            </div>
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2">Their age</label>
-          <Input 
-            type="number" 
-            placeholder="Enter their age" 
-            value={age} 
-            onChange={e => setAge(e.target.value)}
-            min="1"
-            max="120"
-          />
+          <h3 className="text-lg font-medium mb-4">Author Information</h3>
+          <div>
+            <label className="block text-sm font-medium mb-2">Author name</label>
+            <Input placeholder="Enter your name" value={authorName} onChange={e => setAuthorName(e.target.value)} />
+            <p className="text-sm text-gray-500 mt-2">This will appear as the book's author</p>
+          </div>
         </div>
       </div>
     </WizardStep>
