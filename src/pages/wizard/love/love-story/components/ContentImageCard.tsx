@@ -116,22 +116,35 @@ export const ContentImageCard = ({
         // Draw the image to fill the canvas
         ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
         
-        // 为了让文字更自然悬浮，使用更细微的处理方式
-        // 不再添加大面积半透明遮罩，而是使用文字阴影和局部背景增强可读性
-
-        // 文本区域宽度
-        const textAreaWidth = width * 0.5; // 文字区域宽度为画布的50%
+        // 文字区域，定位在左侧 - 不再使用渐变黑色蒙版
+        // 只在左侧占据60%的区域显示文字
+        const textAreaWidth = width * 0.6;
         
-        // 文本包装函数，增加了返回包装后文本宽高的功能
+        // 添加文本显示函数 - 带有描边和阴影以确保可读性
+        // 此函数将创建带有文字轮廓的文本
+        const drawStrokedText = (text: string, x: number, y: number) => {
+          // 添加阴影
+          ctx.shadowOffsetX = 2;
+          ctx.shadowOffsetY = 2;
+          ctx.shadowBlur = 4;
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+          
+          // 先绘制文字外描边
+          ctx.lineWidth = 3;
+          ctx.strokeStyle = 'rgba(0, 0, 0, 0.7)';
+          ctx.strokeText(text, x, y);
+          
+          // 再绘制文字内容
+          ctx.fillStyle = 'white';
+          ctx.fillText(text, x, y);
+        };
+        
+        // 文本换行函数 - 现在使用drawStrokedText以提高可读性
         const wrapText = (text: string, x: number, y: number, maxWidth: number, lineHeight: number) => {
           const words = text.split(' ');
           let line = '';
           let testLine = '';
           let lineCount = 0;
-          let maxLineWidth = 0;
-          
-          // 预处理所有行，记录最大宽度
-          const lines: string[] = [];
           
           for (let n = 0; n < words.length; n++) {
             testLine = line + words[n] + ' ';
@@ -139,8 +152,7 @@ export const ContentImageCard = ({
             const testWidth = metrics.width;
             
             if (testWidth > maxWidth && n > 0) {
-              lines.push(line);
-              maxLineWidth = Math.max(maxLineWidth, ctx.measureText(line).width);
+              drawStrokedText(line, x, y + (lineCount * lineHeight));
               line = words[n] + ' ';
               lineCount++;
             } else {
@@ -148,63 +160,22 @@ export const ContentImageCard = ({
             }
           }
           
-          // 添加最后一行
-          lines.push(line);
-          maxLineWidth = Math.max(maxLineWidth, ctx.measureText(line).width);
-          lineCount++;
-          
-          // 绘制文本的半透明背景
-          const padding = 20;
-          const textBgHeight = (lineCount * lineHeight) + (padding * 2);
-          const textBgWidth = maxLineWidth + (padding * 2);
-          
-          // 文字背景为半透明黑色渐变，增强可读性
-          const bgGradient = ctx.createLinearGradient(x - padding, 0, x + textBgWidth, 0);
-          bgGradient.addColorStop(0, 'rgba(0, 0, 0, 0.6)');
-          bgGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-          
-          ctx.fillStyle = bgGradient;
-          ctx.fillRect(x - padding, y - padding, textBgWidth, textBgHeight);
-          
-          // 绘制每一行文本，添加文字阴影
-          ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
-          ctx.shadowBlur = 3;
-          ctx.shadowOffsetX = 1;
-          ctx.shadowOffsetY = 1;
-          ctx.fillStyle = 'white';
-          
-          for (let i = 0; i < lines.length; i++) {
-            ctx.fillText(lines[i], x, y + (i * lineHeight));
-          }
-          
-          // 重置阴影设置
-          ctx.shadowColor = 'transparent';
-          ctx.shadowBlur = 0;
-          ctx.shadowOffsetX = 0;
-          ctx.shadowOffsetY = 0;
-          
-          return {
-            width: textBgWidth,
-            height: textBgHeight,
-            lineCount
-          };
+          drawStrokedText(line, x, y + (lineCount * lineHeight));
+          return lineCount + 1; // Return the number of lines
         };
+        
+        // 添加文本内容 - 在画布的左半边
+        ctx.font = '18px Georgia, serif';
+        // 文字颜色在drawStrokedText中设置
+        const maxWidth = textAreaWidth - 50; // 左边文字区域宽度，留有边距
         
         // 使用提供的文本或默认文本
         const displayText = text || "A beautiful story captured in an image.";
         
-        // 设置文本样式
-        ctx.font = '18px Georgia, serif';
-        ctx.fillStyle = 'white';
-        
-        // 计算文本起始位置
-        const textStartX = 30; // 左边距
+        // 垂直居中显示文本
         const textStartY = height * 0.25; // 从上方1/4处开始
-        const textLineHeight = 30; // 增加行高
-        const maxTextWidth = textAreaWidth - 60; // 文本区域最大宽度
-        
-        // 绘制文本
-        wrapText(displayText, textStartX, textStartY, maxTextWidth, textLineHeight);
+        const textLineHeight = 28; // 行高
+        wrapText(displayText, 25, textStartY, maxWidth, textLineHeight);
         
         // Draw dedication text if needed
         if (showDedicationText && coverTitle) {
