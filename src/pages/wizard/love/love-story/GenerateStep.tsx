@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { uploadImageToStorage, getAllImagesFromStorage } from '@/integrations/supabase/storage';
 import { CoverPreviewCard } from './components/CoverPreviewCard';
@@ -78,6 +78,7 @@ const GenerateStep = () => {
   // Add state for tracking Supabase image URLs
   const [imageStorageMap, setImageStorageMap] = useState<ImageStorageMap>({});
 
+  // Function to expand images for better text placement
   const expandImage = async (imageUrl: string): Promise<string> => {
     try {
       console.log('Starting image expansion for:', imageUrl);
@@ -100,7 +101,7 @@ const GenerateStep = () => {
     }
   };
 
-  // New function to generate text for an image
+  // Function to generate text for each image
   const generateImageText = async (promptIndex: number) => {
     setIsGeneratingTexts(true);
     
@@ -162,6 +163,7 @@ const GenerateStep = () => {
     }
   };
 
+  // Updated to run image and text generation concurrently
   const handleGenericContentRegeneration = async (index: number, style?: string) => {
     if (index < 1) return;
 
@@ -192,7 +194,7 @@ const GenerateStep = () => {
     };
 
     const setContentFn = stateSetters[index as keyof typeof stateSetters];
-    const setIsGenerating = loadingSetters[index as keyof loadingSetters];
+    const setIsGenerating = loadingSetters[index as keyof typeof loadingSetters];
     if (!setContentFn || !setIsGenerating) return;
 
     const lsKey = `loveStoryContentImage${index}`;
@@ -338,6 +340,7 @@ const GenerateStep = () => {
   const handleRegenerateContent9 = (style?: string) => handleGenericContentRegeneration(9, style);
   const handleRegenerateContent10 = (style?: string) => handleGenericContentRegeneration(10, style);
 
+  // This function doesn't need to be updated as it already handles multiple images
   const generateInitialImages = async (prompts: string, partnerPhoto: string) => {
     setIsGeneratingCover(true);
     setIsGeneratingIntro(true);
@@ -448,7 +451,7 @@ const GenerateStep = () => {
     }
   };
 
-  // 新增加：从Supabase加载所有图片
+  // Function to load images from Supabase storage
   const loadImagesFromSupabase = async () => {
     setIsLoadingImages(true);
     try {
@@ -503,7 +506,7 @@ const GenerateStep = () => {
             localStorageKey: 'loveStoryContentImage4',
             url: img.url
           };
-        } else if (/^love-story-content-5$|^love-story-content-5-/.test(fileName)) {
+        } else if (/^love-story-content-5$|^loveStory-content-5-/.test(fileName)) {
           setContentImage5(img.url);
           newImageMap['loveStoryContentImage5'] = {
             localStorageKey: 'loveStoryContentImage5',
@@ -556,6 +559,7 @@ const GenerateStep = () => {
     }
   };
 
+  // Initial data loading
   useEffect(() => {
     // 加载文本内容和设置
     const savedAuthor = localStorage.getItem('loveStoryAuthorName');
@@ -633,7 +637,7 @@ const GenerateStep = () => {
     });
   };
 
-  // Update the cover regeneration function to not use Promise.all since we don't need text for cover
+  // Cover regeneration - doesn't need updating as it's just a single image
   const handleRegenerateCover = async (style?: string) => {
     localStorage.removeItem('loveStoryCoverImage');
     localStorage.removeItem('loveStoryCoverImage_url');
@@ -768,7 +772,7 @@ const GenerateStep = () => {
             // Intro image generation
             (async () => {
               const requestBody = {
-                contentPrompt: prompts[1].prompt, 
+                contentPrompt: prompts[0].prompt, 
                 photo: characterPhoto,
                 style: imageStyle,
                 type: 'intro'
@@ -865,6 +869,7 @@ const GenerateStep = () => {
     }
   };
 
+  // Function to update text for a specific content image
   const handleUpdateContentText = (index: number, newText: string) => {
     const savedTextsJson = localStorage.getItem('loveStoryImageTexts');
     let currentTexts: ImageText[] = [];
@@ -940,3 +945,115 @@ const GenerateStep = () => {
       4: handleRegenerateContent4,
       5: handleRegenerateContent5,
       6: handleRegenerateContent6,
+      7: handleRegenerateContent7,
+      8: handleRegenerateContent8,
+      9: handleRegenerateContent9,
+      10: handleRegenerateContent10,
+    };
+    
+    const image = imageStateMap[imageIndex];
+    const isLoading = loadingStateMap[imageIndex];
+    const handleRegenerate = handleRegenerateMap[imageIndex];
+    
+    let imageText = null;
+    if (imageTexts && imageTexts.length > imageIndex) {
+      imageText = imageTexts[imageIndex]?.text;
+    }
+    
+    console.log(`Rendering image ${imageIndex} with text:`, imageText);
+    
+    let title = imageIndex === 0 ? "Introduction" : `Moment ${imageIndex}`;
+    
+    return (
+      <div className="mb-10">
+        <ContentImageCard 
+          image={image} 
+          isGenerating={isLoading}
+          onRegenerate={handleRegenerate}
+          index={imageIndex}
+          onEditText={() => {}}
+          onTextUpdate={(text) => handleUpdateContentText(imageIndex, text)}
+          text={imageText}
+          title={title}
+        />
+      </div>
+    );
+  };
+
+  // Function to refresh images from Supabase
+  const refreshImages = () => {
+    loadImagesFromSupabase();
+    toast({
+      title: "Refreshing images",
+      description: "Loading latest images from Supabase Storage",
+    });
+  };
+
+  return (
+    <WizardStep
+      title="Your Love Story Images"
+      description="Here are your personalized love story images with accompanying text."
+      previousStep="/create/love/love-story/moments"
+      nextStep="/create/love/love-story/preview"
+      currentStep={4}
+      totalSteps={4}
+    >
+      <div className="max-w-5xl mx-auto">
+        {/* Refresh button */}
+        <div className="mb-4 flex justify-end">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={refreshImages}
+            disabled={isLoadingImages}
+          >
+            {isLoadingImages ? 'Loading...' : 'Refresh Images'}
+          </Button>
+        </div>
+      
+        {/* Cover section */}
+        <div className="mb-12">
+          <h2 className="text-2xl font-bold mb-4">Cover</h2>
+          <CoverPreviewCard 
+            coverImage={coverImage}
+            coverTitle={coverTitle}
+            subtitle={subtitle}
+            authorName={authorName}
+            backCoverText={backCoverText}
+            isGeneratingCover={isGeneratingCover}
+            onRegenerateCover={handleRegenerateCover}
+            onEditCover={handleEditCover}
+          />
+        </div>
+        
+        {/* Introduction section */}
+        <div className="mb-12 border-t-2 border-gray-200 pt-8">
+          <h2 className="text-2xl font-bold mb-6">Introduction</h2>
+          <div className="mb-10">
+            {renderContentImage(0)}
+          </div>
+        </div>
+        
+        {/* Content section */}
+        <div className="border-t-2 border-gray-200 pt-8">
+          <h2 className="text-2xl font-bold mb-6">Story Moments</h2>
+          <div className="space-y-8">
+            {/* Render content images */}
+            {renderContentImage(1)}
+            {renderContentImage(2)}
+            {renderContentImage(3)}
+            {renderContentImage(4)}
+            {renderContentImage(5)}
+            {renderContentImage(6)}
+            {renderContentImage(7)}
+            {renderContentImage(8)}
+            {renderContentImage(9)}
+            {renderContentImage(10)}
+          </div>
+        </div>
+      </div>
+    </WizardStep>
+  );
+};
+
+export default GenerateStep;

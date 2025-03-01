@@ -1,6 +1,6 @@
 
 import { Button } from '@/components/ui/button';
-import { Edit, RefreshCw, ImageIcon, X, Type } from 'lucide-react';
+import { Edit, RefreshCw, ImageIcon, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import {
   Dialog,
@@ -9,7 +9,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Check } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
@@ -51,17 +50,11 @@ export const ContentImageCard = ({
   title
 }: ContentImageCardProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isStyleDialogOpen, setIsStyleDialogOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isTextDialogOpen, setIsTextDialogOpen] = useState(false);
   const [selectedStyle, setSelectedStyle] = useState<string>('Photographic (Default)');
-  const [editedText, setEditedText] = useState<string>('');
-
-  useEffect(() => {
-    // Initialize editedText when text prop changes
-    if (text) {
-      setEditedText(text);
-    }
-  }, [text]);
+  const [displayText, setDisplayText] = useState<string>(text || "A special moment captured in time.");
+  const [editedText, setEditedText] = useState<string>("");
 
   useEffect(() => {
     // Load the current style from localStorage
@@ -86,6 +79,14 @@ export const ContentImageCard = ({
       }
     }
   }, []);
+
+  // Update displayText when text prop changes
+  useEffect(() => {
+    if (text) {
+      setDisplayText(text);
+      setEditedText(text);
+    }
+  }, [text]);
 
   useEffect(() => {
     if (canvasRef.current && image && !isGenerating) {
@@ -181,7 +182,6 @@ export const ContentImageCard = ({
         const maxWidth = width - 50; // Padding on both sides
         
         // Use provided text or a simple placeholder
-        const displayText = text || "A beautiful moment captured in time.";
         wrapText(displayText, 25, textStartY, maxWidth, 24);
         
         // Draw dedication text if needed
@@ -218,7 +218,7 @@ export const ContentImageCard = ({
         ctx.fillText('Image failed to load', width / 2, height / 2);
       };
     }
-  }, [image, isGenerating, text, index, showDedicationText, coverTitle, authorName, title]);
+  }, [image, isGenerating, displayText, index, showDedicationText, coverTitle, authorName, title]);
 
   const handleStyleSelect = (style: string) => {
     setSelectedStyle(style);
@@ -229,17 +229,23 @@ export const ContentImageCard = ({
     localStorage.setItem('loveStoryStyle', selectedStyle);
     
     // Close the dialog
-    setIsStyleDialogOpen(false);
+    setIsDialogOpen(false);
     
     // Call the onRegenerate function with the selected style
     onRegenerate(selectedStyle);
   };
 
-  const handleTextSave = () => {
+  const handleSaveText = () => {
+    setDisplayText(editedText);
     if (onTextUpdate) {
       onTextUpdate(editedText);
     }
     setIsTextDialogOpen(false);
+  };
+
+  const openTextDialog = () => {
+    setEditedText(displayText);
+    setIsTextDialogOpen(true);
   };
 
   return (
@@ -249,7 +255,7 @@ export const ContentImageCard = ({
           {isGenerating ? (
             <div className="h-full flex flex-col justify-center items-center text-center">
               <RefreshCw className="animate-spin h-8 w-8 mb-4" />
-              <p className="text-gray-600">Generating image...</p>
+              <p className="text-gray-600">Generating image and text...</p>
             </div>
           ) : (
             <canvas 
@@ -261,52 +267,15 @@ export const ContentImageCard = ({
           )}
         </div>
         <div className="absolute bottom-4 right-4 flex gap-2">
-          {/* Text edit dialog */}
-          <Dialog open={isTextDialogOpen} onOpenChange={setIsTextDialogOpen}>
-            <DialogTrigger asChild>
-              <Button
-                variant="secondary"
-                disabled={isGenerating}
-              >
-                <Type className="w-4 h-4 mr-2" />
-                Edit text
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Edit Image Text</DialogTitle>
-                <DialogDescription>
-                  Update the text that accompanies this image
-                </DialogDescription>
-              </DialogHeader>
-              
-              <div className="space-y-4 py-4">
-                <Textarea 
-                  value={editedText} 
-                  onChange={(e) => setEditedText(e.target.value)}
-                  placeholder="Enter text for this image..."
-                  className="min-h-[100px]"
-                />
-              </div>
-              
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsTextDialogOpen(false)}>
-                  <X className="w-4 h-4 mr-2" />
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={handleTextSave}
-                  className="bg-black text-white hover:bg-black/90"
-                >
-                  <Check className="w-4 h-4 mr-2" />
-                  Save Text
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <Button
+            variant="secondary"
+            onClick={openTextDialog}
+          >
+            <Edit className="w-4 h-4 mr-2" />
+            Edit text
+          </Button>
           
-          {/* Image style dialog */}
-          <Dialog open={isStyleDialogOpen} onOpenChange={setIsStyleDialogOpen}>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button
                 variant="secondary"
@@ -361,8 +330,8 @@ export const ContentImageCard = ({
                 </div>
               </div>
               
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsStyleDialogOpen(false)}>
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                   <X className="w-4 h-4 mr-2" />
                   Cancel
                 </Button>
@@ -374,7 +343,42 @@ export const ContentImageCard = ({
                   <RefreshCw className={`w-4 h-4 mr-2 ${isGenerating ? 'animate-spin' : ''}`} />
                   Regenerate with {selectedStyle}
                 </Button>
-              </DialogFooter>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Text editing dialog */}
+          <Dialog open={isTextDialogOpen} onOpenChange={setIsTextDialogOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Edit Text</DialogTitle>
+                <DialogDescription>
+                  Update the text for this image.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-4 py-4">
+                <Textarea 
+                  value={editedText} 
+                  onChange={(e) => setEditedText(e.target.value)}
+                  className="min-h-[150px]"
+                  placeholder="Enter text for this image..."
+                />
+              </div>
+              
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={() => setIsTextDialogOpen(false)}>
+                  <X className="w-4 h-4 mr-2" />
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleSaveText}
+                  className="bg-black text-white hover:bg-black/90"
+                >
+                  <Check className="w-4 h-4 mr-2" />
+                  Save Text
+                </Button>
+              </div>
             </DialogContent>
           </Dialog>
         </div>
