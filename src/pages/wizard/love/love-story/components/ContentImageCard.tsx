@@ -86,10 +86,6 @@ export const ContentImageCard = ({
       // Clear canvas
       ctx.clearRect(0, 0, width, height);
 
-      // Draw background
-      ctx.fillStyle = '#FFECD1';
-      ctx.fillRect(0, 0, width, height);
-
       // Load and draw the image to fill the entire canvas
       const img = new Image();
       img.onload = () => {
@@ -229,11 +225,11 @@ export const ContentImageCard = ({
   };
 
   return (
-    <div className="glass-card rounded-2xl p-8 py-[40px] relative">
+    <div className="relative mb-4">
       <div className="max-w-xl mx-auto">
-        <div className="aspect-[2/1] bg-[#FFECD1] rounded-sm overflow-hidden relative">
+        <div className="aspect-[2/1] overflow-hidden relative">
           {isGenerating ? (
-            <div className="h-full flex flex-col justify-center items-center text-center">
+            <div className="h-full flex flex-col justify-center items-center text-center bg-gray-100/50 rounded-sm">
               <RefreshCw className="animate-spin h-8 w-8 mb-4" />
               <p className="text-gray-600">Generating image...</p>
             </div>

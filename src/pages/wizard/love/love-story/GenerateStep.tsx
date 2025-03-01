@@ -827,7 +827,7 @@ const GenerateStep = () => {
     let title = "";  // 不再显示标题
     
     return (
-      <div className="mb-10">
+      <div>
         <ContentImageCard 
           image={image} 
           isGenerating={isLoading}
@@ -859,9 +859,9 @@ const GenerateStep = () => {
       currentStep={4}
       totalSteps={4}
     >
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-6xl mx-auto px-4">
         {/* 添加刷新按钮 */}
-        <div className="mb-4 flex justify-end">
+        <div className="mb-6 flex justify-end">
           <Button 
             variant="outline" 
             size="sm" 
@@ -873,8 +873,8 @@ const GenerateStep = () => {
         </div>
       
         {/* Cover section */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold mb-4">Cover</h2>
+        <div className="mb-10">
+          <h2 className="text-2xl font-bold mb-6">Cover</h2>
           <CoverPreviewCard 
             coverImage={coverImage}
             coverTitle={coverTitle}
@@ -888,9 +888,9 @@ const GenerateStep = () => {
         </div>
         
         {/* 介绍部分 - 将Intro与其他Content分开 */}
-        <div className="mb-12 border-t-2 border-gray-200 pt-8">
+        <div className="mb-10 border-t-2 border-gray-200 pt-8">
           <h2 className="text-2xl font-bold mb-6">Introduction</h2>
-          <div className="mb-10">
+          <div className="mb-6">
             <ContentImageCard 
               image={introImage} 
               isGenerating={isGeneratingIntro}
@@ -906,7 +906,7 @@ const GenerateStep = () => {
         {/* 内容部分 */}
         <div className="border-t-2 border-gray-200 pt-8">
           <h2 className="text-2xl font-bold mb-6">Story Content</h2>
-          <div className="space-y-8">
+          <div className="space-y-6">
             {/* 只渲染内容图片，跳过介绍图片 */}
             {renderContentImage(1)}
             {renderContentImage(2)}

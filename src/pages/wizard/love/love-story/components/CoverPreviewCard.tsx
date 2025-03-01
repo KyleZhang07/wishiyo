@@ -1,4 +1,3 @@
-
 import { Button } from '@/components/ui/button';
 import { Edit, RefreshCw } from 'lucide-react';
 import LoveStoryCoverPreview from '@/components/cover-generator/LoveStoryCoverPreview';
@@ -28,7 +27,7 @@ export const CoverPreviewCard = ({
   const recipientName = localStorage.getItem('loveStoryRecipientName') || 'My Love';
 
   return (
-    <div className="glass-card rounded-2xl p-8 py-[40px] relative">
+    <div className="relative">
       <div className="max-w-xl mx-auto">
         <LoveStoryCoverPreview
           coverTitle={coverTitle}
@@ -53,7 +52,7 @@ export const CoverPreviewCard = ({
             disabled={isGeneratingCover}
           >
             <RefreshCw className={`w-4 h-4 mr-2 ${isGeneratingCover ? 'animate-spin' : ''}`} />
-            Regenerate cover
+            Regenerate
           </Button>
         </div>
       </div>
