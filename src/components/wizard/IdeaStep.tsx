@@ -144,7 +144,6 @@ const IdeaStep = ({
       const authorName = localStorage.getItem(authorNameKey);
       const savedAnswers = localStorage.getItem(storageKey);
       
-      // Get person name and gender for love-story category
       let personName = null;
       let personGender = null;
       if (category === 'love') {
@@ -204,9 +203,7 @@ const IdeaStep = ({
         throw new Error('Invalid response format: ideas should be an array');
       }
 
-      // Process ideas differently based on category
       if (category === 'love') {
-        // For love story, we only need one idea and we won't display it
         const processedIdea = {
           ...data.ideas[0],
           author: authorName,
@@ -216,15 +213,12 @@ const IdeaStep = ({
         localStorage.setItem(ideasKey, JSON.stringify([processedIdea]));
         localStorage.setItem(getStorageKeys(bookType).selectedIdeaKey, "0");
         
-        // Store image prompts separately for love category books
         if (data.imagePrompts && promptsKey) {
           setImagePrompts(data.imagePrompts);
           localStorage.setItem(promptsKey, JSON.stringify(data.imagePrompts));
-          // After image prompts are set, generate texts for them
           generateImageTexts(data.imagePrompts, selectedTone);
         }
       } else {
-        // For other categories, handle normally
         const processedIdeas = data.ideas.map(idea => ({
           ...idea,
           author: authorName,
@@ -253,19 +247,6 @@ const IdeaStep = ({
       const path = window.location.pathname;
       const bookType = path.split('/')[3];
       const { textsKey } = getStorageKeys(bookType);
-
-      // Skip image text generation for love-story genre
-      if (bookType === 'love-story') {
-        // Create default texts as fallback for love-story
-        const defaultTexts = prompts.map(prompt => ({
-          text: "A special moment captured in time.",
-          tone: tone
-        }));
-        
-        setImageTexts(defaultTexts);
-        localStorage.setItem(getStorageKeys('love-story').textsKey, JSON.stringify(defaultTexts));
-        return;
-      }
 
       const personName = localStorage.getItem('loveStoryPersonName');
       if (!personName) {
@@ -297,7 +278,6 @@ const IdeaStep = ({
         variant: "destructive",
       });
       
-      // Create default texts as fallback
       const defaultTexts = prompts.map(prompt => ({
         text: "A special moment captured in time.",
         tone: tone
@@ -328,7 +308,6 @@ const IdeaStep = ({
     
     localStorage.setItem(toneKey, tone);
     
-    // Generate new texts when tone changes
     if (imagePrompts.length > 0) {
       generateImageTexts(imagePrompts, tone);
     }
@@ -345,7 +324,6 @@ const IdeaStep = ({
 
   const handleContinue = () => {
     if (category === 'love') {
-      // For love story, we need to check if tone and style are selected
       if (!selectedTone || !selectedStyle) {
         toast({
           title: "Selection required",
@@ -355,7 +333,6 @@ const IdeaStep = ({
         return;
       }
     } else {
-      // For other categories, check if an idea is selected
       if (selectedIdeaIndex === null) {
         toast({
           title: "No idea selected",
@@ -379,7 +356,6 @@ const IdeaStep = ({
       return;
     }
 
-    // Load saved tone and style for love story
     if (category === 'love') {
       const savedTone = localStorage.getItem(toneKey);
       const savedStyle = localStorage.getItem(styleKey);
@@ -392,7 +368,6 @@ const IdeaStep = ({
         setSelectedStyle(savedStyle);
       }
       
-      // Load saved image texts
       const savedTexts = localStorage.getItem(textsKey);
       if (savedTexts) {
         try {
@@ -403,7 +378,6 @@ const IdeaStep = ({
       }
     }
 
-    // Load image prompts for love story
     if (category === 'love' && promptsKey) {
       const savedPromptsString = localStorage.getItem(promptsKey);
       if (savedPromptsString) {
@@ -456,9 +430,7 @@ const IdeaStep = ({
       <div className="space-y-6">
         {category === 'love' ? (
           <>
-            {/* Love story tone and style selector */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Text Tone Selection */}
               <div className="bg-white rounded-lg p-6 shadow-md">
                 <h3 className="text-xl font-bold text-gray-900 mb-4">Select a Writing Tone</h3>
                 <p className="text-gray-500 mb-6">
@@ -501,7 +473,6 @@ const IdeaStep = ({
                 </div>
               </div>
               
-              {/* Image Style Selection */}
               <div className="bg-white rounded-lg p-6 shadow-md">
                 <h3 className="text-xl font-bold text-gray-900 mb-4">Select an Image Style</h3>
                 <p className="text-gray-500 mb-6">
@@ -545,7 +516,6 @@ const IdeaStep = ({
               </div>
             </div>
 
-            {/* Loading states */}
             {(isLoading || isGeneratingTexts) && (
               <div className="text-center py-4">
                 <RefreshCw className="animate-spin h-6 w-6 mx-auto mb-2" />
@@ -555,7 +525,6 @@ const IdeaStep = ({
               </div>
             )}
 
-            {/* Regenerate button */}
             <div className="flex justify-end">
               <Button 
                 variant="outline" 
@@ -569,7 +538,6 @@ const IdeaStep = ({
             </div>
           </>
         ) : (
-          // Original layout for other categories
           <>
             <div className="flex justify-end mb-4">
               <Button 

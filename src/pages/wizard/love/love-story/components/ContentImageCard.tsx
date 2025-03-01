@@ -167,7 +167,7 @@ export const ContentImageCard = ({
         const maxWidth = width - 50; // Padding on both sides
         
         // Use provided text or a simple placeholder
-        const displayText = text || "A beautiful moment captured in time.";
+        const displayText = text || "A special moment captured in time.";
         wrapText(displayText, 25, textStartY, maxWidth, 24);
         
         // Draw dedication text if needed
