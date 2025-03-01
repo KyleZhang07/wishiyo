@@ -17,6 +17,7 @@ interface CanvasCoverPreviewProps {
   onImageAdjust?: (position: { x: number; y: number }, scale: number) => void;
   previewMode?: boolean;
   scaleFactor?: number;
+  praises?: Array<{source: string, text: string}>;
 }
 
 const CanvasCoverPreview = ({
@@ -32,7 +33,8 @@ const CanvasCoverPreview = ({
   imageScale = 100,
   onImageAdjust,
   previewMode = false,
-  scaleFactor = 0.5
+  scaleFactor = 0.5,
+  praises = []
 }: CanvasCoverPreviewProps) => {
   const frontCoverRef = useRef<HTMLCanvasElement>(null);
   const spineRef = useRef<HTMLCanvasElement>(null);
@@ -101,7 +103,7 @@ const CanvasCoverPreview = ({
         drawBackCover(backCtx, baseWidth, baseHeight, template);
       }
     }
-  }, [coverTitle, subtitle, authorName, image, selectedFont, selectedTemplate, selectedLayout, category, imagePosition, imageScale, previewMode, scaleFactor]);
+  }, [coverTitle, subtitle, authorName, image, selectedFont, selectedTemplate, selectedLayout, category, imagePosition, imageScale, previewMode, scaleFactor, praises]);
 
   const drawFrontCover = (
     ctx: CanvasRenderingContext2D, 
@@ -342,6 +344,35 @@ const CanvasCoverPreview = ({
     ctx.fillStyle = template.backCoverStyle.backgroundColor;
     ctx.fillRect(0, 0, width, height);
 
+    // 绘制赞美语，如果有的话
+    if (praises && praises.length > 0) {
+      const availablePraises = praises.slice(0, 4); // 限制最多显示4条赞美语
+      
+      // 设置标题
+      ctx.textAlign = 'left';
+      ctx.fillStyle = template.backCoverStyle.textColor || '#FFFFFF';
+      ctx.font = `bold 20px ${selectedFont}`;
+      ctx.fillText(`Praises for ${coverTitle}`, 40, 60);
+      
+      let yPosition = 100;
+      
+      // 绘制每条赞美语
+      availablePraises.forEach(praise => {
+        // 赞美文本内容
+        ctx.font = `italic 14px ${selectedFont}`;
+        
+        // 使用文本换行函数
+        const wrappedText = wrapTextWithHeight(ctx, `"${praise.text}"`, 40, yPosition, width - 80, 18);
+        yPosition += wrappedText.height + 10;
+        
+        // 赞美来源
+        ctx.font = `bold 14px ${selectedFont}`;
+        ctx.fillText(praise.source, 40, yPosition);
+        
+        yPosition += 40; // 为下一条赞美语留出空间
+      });
+    }
+
     // Draw book info at the bottom
     ctx.textAlign = 'left';
     ctx.fillStyle = '#FFFFFF'; // White text
@@ -355,6 +386,41 @@ const CanvasCoverPreview = ({
     // Draw barcode at the bottom right
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(width - 180, height - 100, 140, 60);
+  };
+
+  // 添加文本换行并计算高度的辅助函数
+  const wrapTextWithHeight = (
+    ctx: CanvasRenderingContext2D,
+    text: string,
+    x: number,
+    y: number,
+    maxWidth: number,
+    lineHeight: number
+  ) => {
+    const words = text.split(' ');
+    let line = '';
+    let testLine = '';
+    let lineCount = 0;
+    
+    for (let n = 0; n < words.length; n++) {
+      testLine = line + words[n] + ' ';
+      const metrics = ctx.measureText(testLine);
+      const testWidth = metrics.width;
+      
+      if (testWidth > maxWidth && n > 0) {
+        ctx.fillText(line, x, y + (lineCount * lineHeight));
+        line = words[n] + ' ';
+        lineCount++;
+      } else {
+        line = testLine;
+      }
+    }
+    
+    ctx.fillText(line, x, y + (lineCount * lineHeight));
+    
+    return {
+      height: lineCount * lineHeight + lineHeight // 总高度
+    };
   };
 
   return (

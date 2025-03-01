@@ -6,6 +6,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
+
+// 定义赞美语接口
+interface Praise {
+  source: string;
+  text: string;
+}
 
 interface Chapter {
   title: string;
@@ -19,11 +26,12 @@ const PreviewStep = () => {
   const [coverTitle, setCoverTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
   const [authorName, setAuthorName] = useState('');
-  const [coverImage, setCoverImage] = useState<string>();
+  const [coverImage, setCoverImage] = useState<string | undefined>();
   const [selectedStyle, setSelectedStyle] = useState('modern-green');
   const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
   const [imageScale, setImageScale] = useState(100);
   const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [praises, setPraises] = useState<Praise[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const generateChapters = async () => {
@@ -77,6 +85,8 @@ const PreviewStep = () => {
       const savedPhotos = localStorage.getItem('funnyBiographyPhoto');
       const savedStyle = localStorage.getItem('funnyBiographySelectedStyle');
       const savedChapters = localStorage.getItem('funnyBiographyChapters');
+      const savedImagePosition = localStorage.getItem('funnyBiographyCoverImagePosition');
+      const savedImageScale = localStorage.getItem('funnyBiographyCoverImageScale');
       
       if (savedAuthor) {
         setAuthorName(savedAuthor);
@@ -88,6 +98,11 @@ const PreviewStep = () => {
         if (selectedIdea) {
           setCoverTitle(selectedIdea.title || '');
           setSubtitle(selectedIdea.description || '');
+          
+          // 获取赞美语
+          if (selectedIdea.praises && Array.isArray(selectedIdea.praises)) {
+            setPraises(selectedIdea.praises);
+          }
         }
       }
 
@@ -178,6 +193,7 @@ const PreviewStep = () => {
                 imageScale={imageScale}
                 previewMode={true}
                 scaleFactor={0.4}
+                praises={praises}
               />
             </div>
           </div>

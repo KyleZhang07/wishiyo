@@ -6,6 +6,12 @@ import CanvasCoverPreview from '@/components/cover-generator/CanvasCoverPreview'
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+// 定义赞美语接口
+interface Praise {
+  source: string;
+  text: string;
+}
+
 // Define combined style presets
 const stylePresets = [
   {
@@ -67,6 +73,7 @@ const FunnyBiographyGenerateStep = () => {
   const [selectedStyle, setSelectedStyle] = useState('classic-red');
   const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
   const [imageScale, setImageScale] = useState(100);
+  const [praises, setPraises] = useState<Praise[]>([]);
   const { toast } = useToast();
 
   // Get the current style preset
@@ -98,6 +105,11 @@ const FunnyBiographyGenerateStep = () => {
         // Always use the authorName from localStorage, ignore any author field from the idea
         if (savedAuthor) {
           setAuthorName(savedAuthor);
+        }
+        
+        // 获取赞美语
+        if (selectedIdea.praises && Array.isArray(selectedIdea.praises)) {
+          setPraises(selectedIdea.praises);
         }
       }
     }
@@ -174,6 +186,7 @@ const FunnyBiographyGenerateStep = () => {
             imageScale={imageScale}
             onImageAdjust={handleImageAdjust}
             scaleFactor={0.4}
+            praises={praises}
           />
           
           <div className="space-y-4">

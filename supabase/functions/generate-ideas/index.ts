@@ -6,6 +6,12 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// 定义赞美语接口
+interface Praise {
+  source: string; // 虚构的机构或名人名称
+  text: string;   // 赞美文本
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -115,28 +121,52 @@ serve(async (req) => {
                 Create compelling, specific, and highly personal book concepts that showcase the recipient in their ideal life scenarios.
                 Each idea should read like an engaging fantasy autobiography premise that draws readers in.
                 IGNORE any information about other people mentioned in the answers - focus solely on ${recipientName}.
-                You must respond with ONLY a JSON array containing exactly 3 book ideas.`
+                You must respond with ONLY a JSON array containing exactly 3 book ideas.
+                
+                Additionally, for each book idea, create 3 fictional praise quotes from imaginary publications, magazines, or critics.
+                These should sound like authentic book reviews or endorsements that would appear on a book's back cover.`
             },
             {
               role: 'user',
               content: `Generate 3 different fantasy autobiography book ideas for ${recipientName} based on these answers:\n\n${JSON.stringify(answers, null, 2)}\n\n
                 The book is a dream life visualization created by ${authorName} for ${recipientName} (${recipientGender}, ${recipientAge} years old).\n\n
-                Return ONLY a JSON array of 3 objects, each with 'title', 'author', and 'description' fields.
+                Return a JSON array of 3 objects, each with:
+                - 'title': The book title
+                - 'author': "${authorName}"
+                - 'description': An engaging book description
+                - 'praises': An array of 3 fictional praise objects, each with 'source' (imaginary publication or critic name) and 'text' (the praise quote)
+                
                 CREATE HIGHLY ENGAGING IDEAS - make each description sound like an enticing fantasy autobiography that people would want to read.
                 Focus EXCLUSIVELY on ${recipientName}'s dream life, aspirational achievements, and fantasy experiences.
                 Even if other people are mentioned in the answers, your ideas should be only about ${recipientName}.
+                
                 Each book should represent different aspects of ${recipientName}'s ideal life:
                 - Career and achievement dreams
                 - Adventure and exploration fantasies
                 - Lifestyle and personal fulfillment aspirations
-                Create titles and descriptions that would genuinely intrigue and captivate a reader.
-                Make each description specific, personal, and aspirational.
+                
+                The praises should sound authentic and specific to the book idea, mentioning themes from the book.
+                
                 Example:
                 [
                   {
                     "title": "The Extraordinary Life of ${recipientName}",
                     "author": "${authorName}",
-                    "description": "An intimate journey through ${recipientName}'s dream life, revealing the extraordinary adventures and remarkable achievements of a life lived to its fullest potential."
+                    "description": "An intimate journey through ${recipientName}'s dream life, revealing the extraordinary adventures and remarkable achievements of a life lived to its fullest potential.",
+                    "praises": [
+                      {
+                        "source": "Dream Life Magazine",
+                        "text": "A breathtaking portrait of ambition and fulfillment. ${authorName} has captured the essence of human potential in this stunning work."
+                      },
+                      {
+                        "source": "The Visionary Review",
+                        "text": "Readers will find themselves inspired to pursue their own dreams after witnessing ${recipientName}'s extraordinary journey."
+                      },
+                      {
+                        "source": "Success Chronicles",
+                        "text": "A masterful blend of aspiration and accomplishment that showcases the power of imagination and determination."
+                      }
+                    ]
                   }
                 ]`
             }
@@ -178,9 +208,10 @@ serve(async (req) => {
         title: string;
         author: string;
         description: string;
+        praises?: Praise[]; // 添加赞美语数组
       }
 
-      // First, generate book ideas
+      // First, generate book ideas with praises
       const ideasResponse = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -208,6 +239,9 @@ serve(async (req) => {
                 - "Perfectly Imperfect"
                 - "Kyle's Chaos and Glory"
                 
+                Additionally, for each book idea, create 3 fictional praise quotes from imaginary publications, magazines, or critics.
+                These should sound like authentic book reviews or endorsements that would appear on a book's back cover.
+                
                 You must respond with ONLY a JSON array containing exactly 3 book ideas.`
             },
             {
@@ -215,19 +249,22 @@ serve(async (req) => {
               content: `Generate 3 different funny book ideas based on these answers:\n\n${JSON.stringify(answers, null, 2)}\n\n
                 The biography is about ${authorName}, who is also the author.
                 
-                Respond with ONLY a JSON array of 3 objects, each with 'title', 'author', and 'description' fields where:
-                - The 'title' field must be SHORT, MEMORABLE, and NEVER use parentheses or subtitle formats
-                - The 'author' field MUST be exactly "${authorName}" for all ideas
-                - The 'description' field should be ENGAGING, FUNNY, and FOCUSED ONLY on ${authorName}:
-                  * Use action verbs and vivid language that draw the reader in
-                  * Create descriptions that would make people curious and want to read more
-                  * Focus EXCLUSIVELY on ${authorName}'s personal journey and experiences
-                  * Description should be 1 sentence long, 10-15 words
+                Respond with ONLY a JSON array of 3 objects, each with:
+                - 'title': The book title (SHORT, MEMORABLE, NEVER using parentheses or subtitle formats)
+                - 'author': "${authorName}" for all ideas
+                - 'description': ENGAGING, FUNNY, FOCUSED ONLY on ${authorName}, 1 sentence long, 10-15 words
+                - 'praises': An array of 3 fictional praise objects, each with 'source' (imaginary publication or critic name) and 'text' (the praise quote)
                 
                 Make the ideas FUNNY but also MEANINGFUL - they should sound like real biography books people would enjoy reading.
                 Each idea should be ABOUT ${authorName} ONLY, even if other people are mentioned in the answers.
-                DO NOT include any explanatory text or formatting.
-                NEVER use parentheses, brackets, or subtitle formats in titles.`
+                
+                The praises should be humorous, witty, and specific to the book idea, mentioning themes from the book.
+                
+                Example praise:
+                {
+                  "source": "Daily Humor Review",
+                  "text": "A comedic masterpiece that transforms everyday mishaps into laugh-out-loud revelations. Readers will recognize their own foibles while delighting in the author's self-deprecating wit."
+                }`
             }
           ],
         }),
