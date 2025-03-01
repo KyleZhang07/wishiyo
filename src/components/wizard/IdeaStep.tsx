@@ -335,10 +335,10 @@ const IdeaStep = ({
 
   const handleContinue = () => {
     if (category === 'love') {
-      if (!selectedTone || !selectedStyle) {
+      if (!selectedTone) {
         toast({
           title: "Selection required",
-          description: "Please select both a text tone and image style.",
+          description: "Please select a text tone.",
           variant: "destructive",
         });
         return;
@@ -346,8 +346,8 @@ const IdeaStep = ({
     } else {
       if (selectedIdeaIndex === null) {
         toast({
-          title: "No idea selected",
-          description: "Please select an idea before continuing.",
+          title: "Selection required",
+          description: "Please select an idea to continue",
           variant: "destructive",
         });
         return;
@@ -376,6 +376,7 @@ const IdeaStep = ({
       }
       
       if (savedStyle) {
+        console.log('Loading saved style:', savedStyle);
         setSelectedStyle(savedStyle);
       }
       
@@ -439,103 +440,52 @@ const IdeaStep = ({
       onNextClick={handleContinue}
     >
       <div className="space-y-6">
+        {category === 'love' && (
+          <div className="bg-white rounded-lg p-6 shadow-md mb-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Select a Text Tone</h3>
+            <p className="text-gray-500 mb-6">
+              This determines the writing style of your love story.
+            </p>
+            
+            <div className="space-y-3">
+              {TONE_OPTIONS.map((tone) => (
+                <div 
+                  key={tone}
+                  onClick={() => handleToneSelect(tone)}
+                  className={`
+                    flex items-center p-3 rounded-md cursor-pointer transition-all
+                    ${selectedTone === tone 
+                      ? 'bg-primary/10 border border-primary' 
+                      : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'}
+                  `}
+                >
+                  <div className="flex-shrink-0 mr-3">
+                    {selectedTone === tone ? (
+                      <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                        <Check className="w-3 h-3 text-white" />
+                      </div>
+                    ) : (
+                      <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
+                    )}
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-gray-900">{tone}</h4>
+                    <p className="text-sm text-gray-500">
+                      {tone === 'Humorous' && 'Light-hearted and funny tone'}
+                      {tone === 'Poetic' && 'Lyrical and expressive language'}
+                      {tone === 'Dramatic' && 'Intense and emotional storytelling'}
+                      {tone === 'Heartfelt' && 'Sincere and deeply emotional'}
+                      {tone === 'Encouraging' && 'Uplifting and inspirational'}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {category === 'love' ? (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="bg-white rounded-lg p-6 shadow-md">
-                <h3 className="text-xl font-bold text-gray-900 mb-4">Select a Writing Tone</h3>
-                <p className="text-gray-500 mb-6">
-                  This determines how the text accompanying each image will be written.
-                </p>
-                
-                <div className="space-y-3">
-                  {TONE_OPTIONS.map((tone) => (
-                    <div 
-                      key={tone}
-                      onClick={() => handleToneSelect(tone)}
-                      className={`
-                        flex items-center p-3 rounded-md cursor-pointer transition-all
-                        ${selectedTone === tone 
-                          ? 'bg-primary/10 border border-primary' 
-                          : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'}
-                      `}
-                    >
-                      <div className="flex-shrink-0 mr-3">
-                        {selectedTone === tone ? (
-                          <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                            <Check className="w-3 h-3 text-white" />
-                          </div>
-                        ) : (
-                          <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
-                        )}
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-gray-900">{tone}</h4>
-                        <p className="text-sm text-gray-500">
-                          {tone === 'Humorous' && 'Light-hearted and witty captions'}
-                          {tone === 'Poetic' && 'Lyrical and expressive language'}
-                          {tone === 'Dramatic' && 'Intense and emotionally charged'}
-                          {tone === 'Heartfelt' && 'Warm, sincere, and emotionally genuine'}
-                          {tone === 'Encouraging' && 'Positive, uplifting, and supportive'}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              <div className="bg-white rounded-lg p-6 shadow-md">
-                <h3 className="text-xl font-bold text-gray-900 mb-4">Select an Image Style</h3>
-                <p className="text-gray-500 mb-6">
-                  This determines the visual aesthetic of the generated images.
-                </p>
-                
-                <div className="space-y-3">
-                  {STYLE_OPTIONS.map((style) => (
-                    <div 
-                      key={style}
-                      onClick={() => handleStyleSelect(style)}
-                      className={`
-                        flex items-center p-3 rounded-md cursor-pointer transition-all
-                        ${selectedStyle === style 
-                          ? 'bg-primary/10 border border-primary' 
-                          : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'}
-                      `}
-                    >
-                      <div className="flex-shrink-0 mr-3">
-                        {selectedStyle === style ? (
-                          <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                            <Check className="w-3 h-3 text-white" />
-                          </div>
-                        ) : (
-                          <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
-                        )}
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-gray-900">{style}</h4>
-                        <p className="text-sm text-gray-500">
-                          {style === 'Comic Book' && 'Bold outlines and vibrant colors'}
-                          {style === 'Line Art' && 'Elegant, minimalist black and white illustration'}
-                          {style === 'Fantasy Art' && 'Dreamlike and magical aesthetic'}
-                          {style === 'Photographic' && 'Realistic, photography-like images'}
-                          {style === 'Cinematic' && 'Film-like with dramatic lighting and composition'}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {(isLoading || isGeneratingTexts) && (
-              <div className="text-center py-4">
-                <RefreshCw className="animate-spin h-6 w-6 mx-auto mb-2" />
-                <p className="text-gray-500 text-sm">
-                  {isLoading ? 'Generating story elements...' : 'Creating text accompaniments...'}
-                </p>
-              </div>
-            )}
-
             <div className="flex justify-end">
               <Button 
                 variant="outline" 
