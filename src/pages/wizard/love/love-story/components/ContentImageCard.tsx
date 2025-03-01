@@ -20,6 +20,7 @@ interface ContentImageCardProps {
   authorName?: string;
   coverTitle?: string;
   showDedicationText?: boolean;
+  text?: string;
   title?: string;
 }
 
@@ -41,6 +42,7 @@ export const ContentImageCard = ({
   authorName,
   coverTitle,
   showDedicationText = false,
+  text,
   title
 }: ContentImageCardProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -114,24 +116,57 @@ export const ContentImageCard = ({
         // Draw the image to fill the canvas
         ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
         
-        // Add title based on the index
-        if (title) {
-          // Add semi-transparent overlay at the top of the canvas for title readability
-          const overlayHeight = height * 0.15; // 15% of canvas height for title overlay
+        // Add semi-transparent overlay at the bottom of the canvas for text readability
+        const overlayHeight = height * 0.3; // 30% of canvas height for text overlay
+        const gradientStart = height - overlayHeight;
+        
+        // Create gradient for text background
+        const gradient = ctx.createLinearGradient(0, gradientStart, 0, height);
+        gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0.7)');
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, gradientStart, width, overlayHeight);
+        
+        // Draw text
+        if (text) {
+          // Text wrapping function
+          const wrapText = (text: string, x: number, y: number, maxWidth: number, lineHeight: number) => {
+            const words = text.split(' ');
+            let line = '';
+            let testLine = '';
+            let lineCount = 0;
+            
+            for (let n = 0; n < words.length; n++) {
+              testLine = line + words[n] + ' ';
+              const metrics = ctx.measureText(testLine);
+              const testWidth = metrics.width;
+              
+              if (testWidth > maxWidth && n > 0) {
+                ctx.fillText(line, x, y + (lineCount * lineHeight));
+                line = words[n] + ' ';
+                lineCount++;
+              } else {
+                line = testLine;
+              }
+            }
+            
+            ctx.fillText(line, x, y + (lineCount * lineHeight));
+            return lineCount + 1; // Return the number of lines
+          };
           
-          // Create gradient for title background
-          const gradient = ctx.createLinearGradient(0, 0, 0, overlayHeight);
-          gradient.addColorStop(0, 'rgba(0, 0, 0, 0.7)');
-          gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-          
-          ctx.fillStyle = gradient;
-          ctx.fillRect(0, 0, width, overlayHeight);
-          
-          // Add title
+          // Add a title based on the index
           ctx.font = 'bold 22px Georgia, serif';
           ctx.fillStyle = 'white';
           ctx.textAlign = 'left';
-          ctx.fillText(title, 25, 40);
+          ctx.fillText(title || `Moment ${index}`, 25, height - overlayHeight + 40);
+          
+          // Add the text content
+          ctx.font = '18px Georgia, serif';
+          ctx.fillStyle = 'white';
+          const textStartY = height - overlayHeight + 70;
+          const maxWidth = width - 50; // Padding on both sides
+          wrapText(text, 25, textStartY, maxWidth, 24);
         }
         
         // Draw dedication text if needed
@@ -168,7 +203,7 @@ export const ContentImageCard = ({
         ctx.fillText('Image failed to load', width / 2, height / 2);
       };
     }
-  }, [image, isGenerating, index, showDedicationText, coverTitle, authorName, title]);
+  }, [image, isGenerating, text, index, showDedicationText, coverTitle, authorName]);
 
   const handleStyleSelect = (style: string) => {
     setSelectedStyle(style);
@@ -204,6 +239,14 @@ export const ContentImageCard = ({
           )}
         </div>
         <div className="absolute bottom-4 right-4 flex gap-2">
+          <Button
+            variant="secondary"
+            onClick={onEditText}
+          >
+            <Edit className="w-4 h-4 mr-2" />
+            Edit text
+          </Button>
+          
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button

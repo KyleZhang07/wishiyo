@@ -7,6 +7,11 @@ import { uploadImageToStorage, getAllImagesFromStorage } from '@/integrations/su
 import { CoverPreviewCard } from './components/CoverPreviewCard';
 import { ContentImageCard } from './components/ContentImageCard';
 
+export interface ImageText {
+  text: string;
+  tone: string;
+}
+
 // Interface to track image storage locations
 interface ImageStorageMap {
   [key: string]: {
@@ -57,6 +62,7 @@ const GenerateStep = () => {
   const [isGeneratingContent10, setIsGeneratingContent10] = useState(false);
 
   const [selectedStyle, setSelectedStyle] = useState<string>('Photographic (Default)');
+  const [imageTexts, setImageTexts] = useState<ImageText[]>([]);
 
   const [isLoadingImages, setIsLoadingImages] = useState(false);
   const [supabaseImages, setSupabaseImages] = useState<SupabaseImage[]>([]);
@@ -466,6 +472,7 @@ const GenerateStep = () => {
     const savedMoments = localStorage.getItem('loveStoryMoments');
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
     const savedStyle = localStorage.getItem('loveStoryStyle');
+    const savedTexts = localStorage.getItem('loveStoryImageTexts');
     
     // 直接从Supabase加载所有图片，不再使用localStorage
     loadImagesFromSupabase();
@@ -494,6 +501,19 @@ const GenerateStep = () => {
       }
     }
 
+    if (savedTexts) {
+      try {
+        setImageTexts(JSON.parse(savedTexts));
+      } catch (error) {
+        console.error('Error parsing saved texts:', error);
+        // If there's an error parsing saved texts, create default texts
+        createDefaultTexts();
+      }
+    } else {
+      // If no saved texts exist, create default texts
+      createDefaultTexts();
+    }
+
     if (savedIdeas && savedIdeaIndex) {
       const ideas = JSON.parse(savedIdeas);
       const selectedIdea = ideas[parseInt(savedIdeaIndex)];
@@ -511,6 +531,26 @@ const GenerateStep = () => {
       setBackCoverText(formattedMoments);
     }
   }, []);
+
+  // Helper function to create default texts
+  const createDefaultTexts = () => {
+    // Create 12 default text entries (for intro + 10 content images + cover)
+    const defaultTexts = Array(12).fill(null).map((_, index) => {
+      let text = "A special moment captured in time.";
+      
+      if (index === 0) {
+        text = "A beautiful introduction to our love story.";
+      }
+      
+      return {
+        text,
+        tone: "Heartfelt"
+      };
+    });
+    
+    setImageTexts(defaultTexts);
+    localStorage.setItem('loveStoryImageTexts', JSON.stringify(defaultTexts));
+  };
 
   const handleEditCover = () => {
     toast({
@@ -746,7 +786,7 @@ const GenerateStep = () => {
     }
   };
 
-  // Render content images without text
+  // Render content images with text inside the canvas
   const renderContentImage = (imageIndex: number) => {
     const imageStateMap: Record<number, string | undefined> = {
       0: introImage,
@@ -793,6 +833,8 @@ const GenerateStep = () => {
     const image = imageStateMap[imageIndex];
     const isLoading = loadingStateMap[imageIndex];
     const handleRegenerate = handleRegenerateMap[imageIndex];
+    // Get the text for this image, adjusting for zero-based array index
+    const imageText = imageTexts && imageTexts.length > imageIndex ? imageTexts[imageIndex] : null;
     
     // 显示标题适配新的命名方式
     let title = imageIndex === 0 ? "Introduction" : `Moment ${imageIndex}`;
@@ -805,6 +847,7 @@ const GenerateStep = () => {
           onRegenerate={handleRegenerate}
           index={imageIndex}
           onEditText={() => {}}
+          text={imageText?.text}
           title={title}
         />
       </div>
@@ -824,10 +867,10 @@ const GenerateStep = () => {
     <WizardStep
       title="Your Love Story Images"
       description="Here are your personalized love story images with accompanying text."
-      previousStep="/create/love/love-story/debug-prompts"
+      previousStep="/create/love/love-story/moments"
       nextStep="/create/love/love-story/preview"
-      currentStep={7}
-      totalSteps={7}
+      currentStep={4}
+      totalSteps={4}
     >
       <div className="max-w-5xl mx-auto">
         {/* 添加刷新按钮 */}
@@ -867,6 +910,7 @@ const GenerateStep = () => {
               onRegenerate={handleRegenerateIntro}
               index={0}
               onEditText={() => {}}
+              text={imageTexts && imageTexts.length > 0 ? imageTexts[0]?.text : undefined}
               title="Introduction"
             />
           </div>
