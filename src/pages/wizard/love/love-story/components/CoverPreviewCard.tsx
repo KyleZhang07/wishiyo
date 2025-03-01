@@ -1,4 +1,3 @@
-
 import { Button } from '@/components/ui/button';
 import { Edit, RefreshCw } from 'lucide-react';
 import LoveStoryCoverPreview from '@/components/cover-generator/LoveStoryCoverPreview';
