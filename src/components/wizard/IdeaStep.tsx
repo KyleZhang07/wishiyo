@@ -182,8 +182,8 @@ const IdeaStep = ({
         description="Choose a visual style for your love story images."
         previousStep={previousStep}
         nextStep={nextStep}
-        currentStep={2}
-        totalSteps={4}
+        currentStep={5}
+        totalSteps={6}
       >
         <div className="max-w-3xl mx-auto">
           <div className="grid grid-cols-2 gap-6 mb-8">

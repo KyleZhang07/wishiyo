@@ -64,7 +64,7 @@ const LoveStoryQuestionsStep = () => {
       });
       return;
     }
-    navigate('/create/love/love-story/moments');
+    navigate('/create/love/love-story/text-tone');
   };
 
   const handleSubmitAnswer = (question: string, answer: string) => {

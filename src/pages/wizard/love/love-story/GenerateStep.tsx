@@ -824,10 +824,10 @@ const GenerateStep = () => {
     <WizardStep
       title="Your Love Story Images"
       description="Here are your personalized love story images with accompanying text."
-      previousStep="/create/love/love-story/moments"
+      previousStep="/create/love/love-story/debug-prompts"
       nextStep="/create/love/love-story/preview"
-      currentStep={4}
-      totalSteps={4}
+      currentStep={7}
+      totalSteps={7}
     >
       <div className="max-w-5xl mx-auto">
         {/* 添加刷新按钮 */}
