@@ -134,6 +134,7 @@ const GenerateStep = () => {
 
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
     const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    const savedTone = localStorage.getItem('loveStoryTone');
     if (!savedPrompts || !partnerPhoto) {
       toast({
         title: "Missing info",
@@ -172,47 +173,110 @@ const GenerateStep = () => {
 
       console.log(`Content ${index} generation request:`, JSON.stringify(requestBody));
 
-      // Include style in the request
-      const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-        body: requestBody
-      });
-      
-      if (error) throw error;
+      // 启动并行任务: 同时生成图片和文本
+      const [imageResult, textResult] = await Promise.all([
+        // 1. 图片生成任务
+        (async () => {
+          // Include style in the request
+          const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+            body: requestBody
+          });
+          
+          if (error) throw error;
 
-      console.log(`Content ${index} generation response:`, data);
+          console.log(`Content ${index} generation response:`, data);
 
-      // 后端可能返回 { output: [...]} 或 { contentImageX: [...] }
-      const imageUrl = data?.[`contentImage${index}`]?.[0] || data?.output?.[0];
-      if (!imageUrl) {
-        throw new Error("No image generated from generate-love-cover");
-      }
+          // 后端可能返回 { output: [...]} 或 { contentImageX: [...] }
+          const imageUrl = data?.[`contentImage${index}`]?.[0] || data?.output?.[0];
+          if (!imageUrl) {
+            throw new Error("No image generated from generate-love-cover");
+          }
 
-      // 2) 调用expand-image进行扩展
-      const expandedBase64 = await expandImage(imageUrl);
+          // 2) 调用expand-image进行扩展
+          const expandedBase64 = await expandImage(imageUrl);
 
-      // 使用时间戳确保文件名唯一
-      const timestamp = Date.now();
+          // 使用时间戳确保文件名唯一
+          const timestamp = Date.now();
 
-      // 3) Upload to Supabase Storage instead of localStorage - 修复文件名问题
-      // 使用明确的数字标识符和时间戳
-      const storageUrl = await uploadImageToStorage(
-        expandedBase64, 
-        'images', 
-        `love-story-content-${index}-${timestamp}`
-      );
+          // 3) Upload to Supabase Storage instead of localStorage - 修复文件名问题
+          // 使用明确的数字标识符和时间戳
+          const storageUrl = await uploadImageToStorage(
+            expandedBase64, 
+            'images', 
+            `love-story-content-${index}-${timestamp}`
+          );
 
-      // 4) Update state and storage map
-      setContentFn(expandedBase64);
-      setImageStorageMap(prev => ({
-        ...prev,
-        [lsKey]: {
-          localStorageKey: lsKey,
-          url: storageUrl
+          // 4) Update state and storage map
+          setContentFn(expandedBase64);
+          setImageStorageMap(prev => ({
+            ...prev,
+            [lsKey]: {
+              localStorageKey: lsKey,
+              url: storageUrl
+            }
+          }));
+
+          // 5) Store only the URL reference in localStorage
+          localStorage.setItem(`${lsKey}_url`, storageUrl);
+
+          return expandedBase64;
+        })(),
+
+        // 2. 文本生成任务 - 仅为当前索引生成新文本
+        (async () => {
+          if (!savedTone) return null;
+
+          // 只为当前的index生成文本
+          const singlePrompt = [prompts[promptIndex]];
+          const personName = localStorage.getItem('loveStoryPersonName') || '';
+          
+          console.log(`Generating text for content ${index} with tone: ${savedTone}`);
+          
+          const { data, error } = await supabase.functions.invoke('generate-image-texts', {
+            body: { 
+              prompts: singlePrompt,
+              tone: savedTone,
+              personName
+            }
+          });
+          
+          if (error) throw error;
+          
+          if (!data || !data.texts || !data.texts[0]) {
+            console.warn("No text generated, using default");
+            return {
+              text: "A special moment captured in time.",
+              tone: savedTone
+            };
+          }
+
+          // 返回生成的文本
+          return data.texts[0];
+        })()
+      ]);
+
+      // 更新图片文本
+      if (textResult) {
+        // 创建现有文本的副本
+        const updatedTexts = [...(imageTexts || [])];
+        
+        // 确保数组有足够的位置
+        while (updatedTexts.length <= index) {
+          updatedTexts.push({
+            text: "A special moment captured in time.",
+            tone: savedTone || "Heartfelt"
+          });
         }
-      }));
-
-      // 5) Store only the URL reference in localStorage
-      localStorage.setItem(`${lsKey}_url`, storageUrl);
+        
+        // 将新生成的文本放在对应的位置
+        updatedTexts[index] = textResult;
+        
+        // 更新状态和存储
+        setImageTexts(updatedTexts);
+        localStorage.setItem('loveStoryImageTexts', JSON.stringify(updatedTexts));
+        
+        console.log(`Updated text for content ${index}: ${textResult.text}`);
+      }
 
       // 6) 延迟刷新图片列表，确保上传完成
       setTimeout(() => {
@@ -220,13 +284,13 @@ const GenerateStep = () => {
       }, 1000);
 
       toast({
-        title: "Image regenerated & expanded",
+        title: "Image and text regenerated",
         description: `Content ${index} successfully updated with ${imageStyle} style`,
       });
     } catch (err: any) {
       console.error("Error in handleGenericContentRegeneration:", err);
       toast({
-        title: "Error regenerating image",
+        title: "Error regenerating content",
         description: err.message || "Please try again",
         variant: "destructive",
       });
@@ -547,100 +611,98 @@ const GenerateStep = () => {
     
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
     const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    const savedTone = localStorage.getItem('loveStoryTone');
+    
     if (savedPrompts && partnerPhoto) {
       const prompts = JSON.parse(savedPrompts);
       if (prompts && prompts.length > 0) {
         setIsGeneratingCover(true);
         
-        // Use the provided style or fall back to the stored/default style
-        const imageStyle = style || selectedStyle;
-        
-        // Update the stored style if a new one is provided
-        if (style) {
-          setSelectedStyle(style);
-          localStorage.setItem('loveStoryStyle', style);
-        }
-        
         try {
-          // 修复JSON循环引用错误 - 简化请求对象
-          const requestBody = { 
-            prompt: prompts[0].prompt, 
-            photo: partnerPhoto,
-            style: imageStyle,
-            type: 'cover'  // 使用明确的type标识
-          };
-
-          console.log('Cover generation request:', JSON.stringify(requestBody));
+          // Use the provided style or fall back to the stored/default style
+          const imageStyle = style || selectedStyle;
           
-          const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-            body: requestBody
-          });
-          
-          if (error) throw error;
-
-          console.log('Cover generation response:', data);
-
-          // 更详细地检查和处理响应数据
-          let coverImageData = '';
-          if (data?.output && data.output.length > 0) {
-            coverImageData = data.output[0];
-          } else if (data?.coverImage && data.coverImage.length > 0) {
-            coverImageData = data.coverImage[0];
-          } else {
-            throw new Error("No cover image data in response");
+          // Update the stored style if a new one is provided
+          if (style) {
+            setSelectedStyle(style);
+            localStorage.setItem('loveStoryStyle', style);
           }
-          
-          if (coverImageData) {
-            // 尝试扩展图片
-            try {
-              const expandedBase64 = await expandImage(coverImageData);
-              coverImageData = expandedBase64;
-            } catch (expandError) {
-              console.error("Error expanding cover image:", expandError);
-              // 即使扩展失败，继续使用原始图片
-            }
-            
-            setCoverImage(coverImageData);
-            
-            // 使用时间戳确保文件名唯一
-            const timestamp = Date.now();
-            
-            // Upload to Supabase Storage
-            const storageUrl = await uploadImageToStorage(
-              coverImageData, 
-              'images', 
-              `love-story-cover-${timestamp}`
-            );
-            
-            // Update storage map
-            setImageStorageMap(prev => ({
-              ...prev,
-              ['loveStoryCoverImage']: {
-                localStorageKey: 'loveStoryCoverImage',
-                url: storageUrl
+
+          // 启动并行任务: 同时生成封面图片和文本
+          const [coverImageResult, coverTextResult] = await Promise.all([
+            // 1. 图片生成任务
+            (async () => {
+              // 使用更明确的请求格式
+              const requestBody = {
+                prompt: prompts[0].prompt,
+                photo: partnerPhoto,
+                style: imageStyle,
+                type: 'cover'  // 明确指定是封面
+              };
+
+              console.log('Cover generation request:', JSON.stringify(requestBody));
+
+              const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+                body: requestBody
+              });
+              
+              if (error) throw error;
+
+              console.log('Cover generation response:', data);
+              
+              const coverImageData = data?.output?.[0] || data?.coverImage?.[0];
+              if (!coverImageData) {
+                throw new Error("No cover image generated");
               }
-            }));
-            
-            // Store only the URL reference in localStorage
-            localStorage.setItem('loveStoryCoverImage_url', storageUrl);
 
-            // 延迟刷新图片列表，确保上传完成
-            setTimeout(() => {
-              loadImagesFromSupabase();
-            }, 1000);
-            
-            toast({
-              title: "Cover regenerated",
-              description: `Cover updated with ${imageStyle} style`,
-            });
-          } else {
-            throw new Error("Failed to generate cover image");
-          }
-        } catch (error: any) {
-          console.error('Error regenerating cover:', error);
+              // Apply image expansion to the cover
+              const expandedCover = await expandImage(coverImageData);
+              
+              // Upload expanded cover to Supabase
+              const timestamp = Date.now();
+              const storageUrl = await uploadImageToStorage(
+                expandedCover, 
+                'images', 
+                `love-story-cover-${timestamp}`
+              );
+              
+              // Update state and storage map
+              setCoverImage(expandedCover);
+              setImageStorageMap(prev => ({
+                ...prev,
+                ['loveStoryCoverImage']: {
+                  localStorageKey: 'loveStoryCoverImage',
+                  url: storageUrl
+                }
+              }));
+              
+              // Store only the URL reference in localStorage
+              localStorage.setItem('loveStoryCoverImage_url', storageUrl);
+
+              return expandedCover;
+            })(),
+
+            // 2. 封面文本生成任务 (如果需要的话)
+            (async () => {
+              // 封面可能不需要额外的文本生成，但如果需要可以在这里实现
+              return null;
+            })()
+          ]);
+
+          // 6) 延迟刷新图片列表，确保上传完成
+          setTimeout(() => {
+            loadImagesFromSupabase();
+          }, 1000);
+
           toast({
-            title: "Error regenerating cover image",
-            description: error.message || "Please try again",
+            title: "Cover regenerated",
+            description: `Cover successfully updated with ${imageStyle} style`,
+          });
+        } catch (err: any) {
+          console.error("Error regenerating cover:", err);
+          toast({
+            title: "Error regenerating cover",
+            description: err.message || "Please try again",
             variant: "destructive",
           });
         } finally {
@@ -656,102 +718,148 @@ const GenerateStep = () => {
     
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
     const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    const savedTone = localStorage.getItem('loveStoryTone');
+    
     if (savedPrompts && partnerPhoto) {
       const prompts = JSON.parse(savedPrompts);
       if (prompts && prompts.length > 1) {
         setIsGeneratingIntro(true);
         
-        // Use the provided style or fall back to the stored/default style
-        const imageStyle = style || selectedStyle;
-        
-        // Update the stored style if a new one is provided
-        if (style) {
-          setSelectedStyle(style);
-          localStorage.setItem('loveStoryStyle', style);
-        }
-        
         try {
-          // 修复请求结构，明确指定这是intro图片
-          const requestBody = {
-            contentPrompt: prompts[1].prompt, 
-            photo: partnerPhoto,
-            style: imageStyle,
-            type: 'intro'
-          };
-
-          console.log('Intro generation request:', JSON.stringify(requestBody));
+          // Use the provided style or fall back to the stored/default style
+          const imageStyle = style || selectedStyle;
           
-          const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-            body: requestBody
-          });
-          
-          if (error) throw error;
-          
-          console.log('Intro generation response:', data);
-          
-          // 检查各种可能的响应格式
-          let introImageData = '';
-          if (data?.contentImage && data.contentImage.length > 0) {
-            introImageData = data.contentImage[0];
-          } else if (data?.output && data.output.length > 0) {
-            introImageData = data.output[0];
-          } else if (data?.introImage && data.introImage.length > 0) {
-            introImageData = data.introImage[0];
-          } else {
-            throw new Error("No intro image data in response");
+          // Update the stored style if a new one is provided
+          if (style) {
+            setSelectedStyle(style);
+            localStorage.setItem('loveStoryStyle', style);
           }
-          
-          if (introImageData) {
-            // 尝试扩展图片
-            try {
-              const expandedBase64 = await expandImage(introImageData);
-              introImageData = expandedBase64;
-            } catch (expandError) {
-              console.error("Error expanding intro image:", expandError);
-              // 即使扩展失败，继续使用原始图片
+
+          // 启动并行任务: 同时生成介绍图片和文本
+          const [introImageResult, introTextResult] = await Promise.all([
+            // 1. 图片生成任务
+            (async () => {
+              // 使用更明确的请求格式
+              const requestBody = {
+                prompt: prompts[0].prompt,
+                contentPrompt: prompts[0].prompt,
+                photo: partnerPhoto,
+                style: imageStyle,
+                type: 'intro'  // 明确指定是介绍
+              };
+
+              console.log('Intro generation request:', JSON.stringify(requestBody));
+
+              const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+                body: requestBody
+              });
+              
+              if (error) throw error;
+
+              console.log('Intro generation response:', data);
+              
+              const introImageData = data?.contentImage?.[0] || data?.output?.[0];
+              if (!introImageData) {
+                throw new Error("No intro image generated");
+              }
+
+              // Apply image expansion to the intro
+              const expandedIntro = await expandImage(introImageData);
+              
+              // Upload expanded intro to Supabase
+              const timestamp = Date.now();
+              const storageUrl = await uploadImageToStorage(
+                expandedIntro, 
+                'images', 
+                `love-story-intro-${timestamp}`
+              );
+              
+              // Update state and storage map
+              setIntroImage(expandedIntro);
+              setImageStorageMap(prev => ({
+                ...prev,
+                ['loveStoryIntroImage']: {
+                  localStorageKey: 'loveStoryIntroImage',
+                  url: storageUrl
+                }
+              }));
+              
+              // Store only the URL reference in localStorage
+              localStorage.setItem('loveStoryIntroImage_url', storageUrl);
+
+              return expandedIntro;
+            })(),
+
+            // 2. 介绍文本生成任务
+            (async () => {
+              if (!savedTone) return null;
+
+              // 为介绍图片生成文本
+              const introPrompt = [prompts[0]];
+              const personName = localStorage.getItem('loveStoryPersonName') || '';
+              
+              console.log(`Generating text for intro with tone: ${savedTone}`);
+              
+              const { data, error } = await supabase.functions.invoke('generate-image-texts', {
+                body: { 
+                  prompts: introPrompt,
+                  tone: savedTone,
+                  personName
+                }
+              });
+              
+              if (error) throw error;
+              
+              if (!data || !data.texts || !data.texts[0]) {
+                console.warn("No intro text generated, using default");
+                return {
+                  text: "The beginning of a beautiful love story.",
+                  tone: savedTone
+                };
+              }
+
+              // 返回生成的文本
+              return data.texts[0];
+            })()
+          ]);
+
+          // 更新介绍文本
+          if (introTextResult) {
+            // 创建现有文本的副本
+            const updatedTexts = [...(imageTexts || [])];
+            
+            // 确保数组有足够的位置
+            while (updatedTexts.length < 1) {
+              updatedTexts.push({
+                text: "The beginning of a beautiful love story.",
+                tone: savedTone || "Heartfelt"
+              });
             }
             
-            setIntroImage(introImageData);
+            // 将新生成的介绍文本放在数组的第一个位置
+            updatedTexts[0] = introTextResult;
             
-            // 使用时间戳确保文件名唯一
-            const timestamp = Date.now();
+            // 更新状态和存储
+            setImageTexts(updatedTexts);
+            localStorage.setItem('loveStoryImageTexts', JSON.stringify(updatedTexts));
             
-            // Upload to Supabase Storage
-            const storageUrl = await uploadImageToStorage(
-              introImageData, 
-              'images', 
-              `love-story-intro-${timestamp}`
-            );
-            
-            // Update storage map
-            setImageStorageMap(prev => ({
-              ...prev,
-              ['loveStoryIntroImage']: {
-                localStorageKey: 'loveStoryIntroImage',
-                url: storageUrl
-              }
-            }));
-            
-            // Store only the URL reference in localStorage
-            localStorage.setItem('loveStoryIntroImage_url', storageUrl);
-            
-            // 延迟刷新图片列表，确保上传完成
-            setTimeout(() => {
-              loadImagesFromSupabase();
-            }, 1000);
-            
-            toast({
-              title: "Introduction image regenerated",
-              description: `Intro image updated with ${imageStyle} style`,
-            });
-          } else {
-            throw new Error("Failed to generate intro image");
+            console.log(`Updated intro text: ${introTextResult.text}`);
           }
-        } catch (error: any) {
-          console.error('Error regenerating intro image:', error);
+
+          // 延迟刷新图片列表，确保上传完成
+          setTimeout(() => {
+            loadImagesFromSupabase();
+          }, 1000);
+
           toast({
-            title: "Error regenerating intro image",
-            description: error.message || "Please try again",
+            title: "Introduction regenerated",
+            description: `Introduction successfully updated with ${imageStyle} style`,
+          });
+        } catch (err: any) {
+          console.error("Error regenerating intro:", err);
+          toast({
+            title: "Error regenerating introduction",
+            description: err.message || "Please try again",
             variant: "destructive",
           });
         } finally {
