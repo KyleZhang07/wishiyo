@@ -131,10 +131,15 @@ const IdeaStep = ({
         'love-story': 'loveStoryPersonGender',
       };
 
+      const personAgeKeyMap: { [key: string]: string } = {
+        'love-story': 'loveStoryPersonAge',
+      };
+
       const storageKey = storageKeyMap[bookType];
       const authorNameKey = authorNameKeyMap[bookType];
       const personNameKey = personNameKeyMap[bookType];
       const personGenderKey = personGenderKeyMap[bookType];
+      const personAgeKey = personAgeKeyMap[bookType];
       const { ideasKey, promptsKey } = getStorageKeys(bookType);
 
       if (!storageKey || !authorNameKey) {
@@ -146,11 +151,13 @@ const IdeaStep = ({
       
       let personName = null;
       let personGender = null;
+      let personAge = null;
       if (category === 'love') {
         personName = localStorage.getItem(personNameKey);
         personGender = localStorage.getItem(personGenderKey);
+        personAge = localStorage.getItem(personAgeKey);
         
-        if (!personName || !personGender) {
+        if (!personName || !personGender || !personAge) {
           toast({
             title: "Missing recipient information",
             description: "Please complete the author step with recipient information first.",
@@ -189,7 +196,8 @@ const IdeaStep = ({
           bookType,
           category,
           personName,
-          personGender
+          personGender,
+          personAge
         }
       });
 
@@ -249,6 +257,8 @@ const IdeaStep = ({
       const { textsKey } = getStorageKeys(bookType);
 
       const personName = localStorage.getItem('loveStoryPersonName');
+      const personAge = localStorage.getItem('loveStoryPersonAge');
+      
       if (!personName) {
         throw new Error('Missing person name');
       }
@@ -257,7 +267,8 @@ const IdeaStep = ({
         body: { 
           prompts,
           tone,
-          personName
+          personName,
+          personAge
         }
       });
 

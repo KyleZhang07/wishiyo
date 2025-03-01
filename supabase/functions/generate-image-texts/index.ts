@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -23,7 +22,7 @@ serve(async (req) => {
   }
 
   try {
-    const { prompts, tone, personName } = await req.json();
+    const { prompts, tone, personName, personAge } = await req.json();
     
     console.log(`Generating image texts for ${prompts.length} prompts with tone: ${tone}`);
     
@@ -64,7 +63,7 @@ serve(async (req) => {
             { 
               role: 'user', 
               content: `Write a caption for this image: ${prompt.prompt}.
-                        This is for a love story featuring a person named ${personName || 'my love'}.
+                        This is for a love story featuring a person named ${personName || 'my love'}, who is ${personAge || 'adult'} years old.
                         Make it ${tone}, personal, and evocative.
                         Keep it short (1-2 sentences maximum).` 
             }

@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { authorName, answers, bookType, category, personName, personGender } = await req.json();
+    const { authorName, answers, bookType, category, personName, personGender, personAge } = await req.json();
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
     if (!openAIApiKey) {
@@ -24,8 +24,9 @@ serve(async (req) => {
       // Fallback to extraction from answers if not provided (for backward compatibility)
       const recipientName = personName || answers.find((a: any) => a.question.toLowerCase().includes('name'))?.answer || 'them';
       const recipientGender = personGender || answers.find((a: any) => a.question.toLowerCase().includes('gender'))?.answer || 'them';
+      const recipientAge = personAge || '30'; // Default age if not provided
       
-      console.log('Generating prompts for person:', recipientName, 'gender:', recipientGender);
+      console.log('Generating prompts for person:', recipientName, 'gender:', recipientGender, 'age:', recipientAge);
       
       // Generate image prompts first
       const promptResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -42,7 +43,7 @@ serve(async (req) => {
               content: `You are a creative assistant that generates imaginative image prompts for a fantasy autobiography book. 
                 Create 13 unique and creative scenes focusing solely on one person - the recipient.
                 Each prompt should imagine the person in different fantasy scenarios that represent their ideal dream life.
-                Consider the person's gender (${recipientGender}) when creating prompts.
+                Consider the person's gender (${recipientGender}) and age (${recipientAge}) when creating prompts.
                 Make the prompts suitable for high-quality photo-realistic AI image generation.
                 Focus on solo portraits and scenes that showcase the person living their fantasy dream life.
                 Include a variety of settings: adventure scenarios, career achievements, lifestyle dreams, and aspirational moments.`
@@ -51,7 +52,7 @@ serve(async (req) => {
               role: 'user',
               content: `Generate 13 creative image prompts based on these answers:\n\n${JSON.stringify(answers, null, 2)}\n\n
                 Create: 
-                1. One cover image prompt that captures ${recipientName}'s essence (${recipientGender}) in an aspirational setting
+                1. One cover image prompt that captures ${recipientName}'s essence (${recipientGender}, ${recipientAge} years old) in an aspirational setting
                 2. Twelve fantasy autobiography image prompts showing ${recipientName} in various dream life scenarios
                 Each prompt should be detailed and photo-realistic.
                 Format the response as a JSON array of 13 objects, each with 'question' (short description) and 'prompt' (detailed AI image generation prompt) fields.
@@ -60,12 +61,12 @@ serve(async (req) => {
                 - ${recipientName} in adventure settings (exploring exotic locations, etc.)
                 - ${recipientName} living luxury lifestyle moments
                 - ${recipientName} accomplishing personal goals
-                Ensure the prompts are appropriate for the person's gender (${recipientGender}).
+                Ensure the prompts are appropriate for the person's gender (${recipientGender}) and age (${recipientAge}).
                 Do not include other people in the scenes - focus solely on ${recipientName}.
                 Example prompt structure:
                 {
                   "question": "${recipientName} living their dream",
-                  "prompt": "Ultra-realistic portrait of ${recipientName}, ${recipientGender === 'male' ? 'handsome' : 'beautiful'} person standing on a private yacht in crystal blue waters, luxurious setting, golden hour lighting, successful lifestyle, solo portrait, high detail"
+                  "prompt": "Ultra-realistic portrait of ${recipientName}, ${recipientGender === 'male' ? 'handsome' : 'beautiful'} ${recipientAge}-year-old person standing on a private yacht in crystal blue waters, luxurious setting, golden hour lighting, successful lifestyle, solo portrait, high detail"
                 }`
             }
           ],
@@ -110,7 +111,7 @@ serve(async (req) => {
               content: `You are a creative assistant that generates imaginative and aspirational fantasy autobiography book ideas. 
                 The book will be a showcase of ONE PERSON ONLY - the recipient - living their dream life.
                 Your ideas must focus EXCLUSIVELY on the recipient's fantasy journey, dream achievements, and ideal experiences.
-                Consider the recipient's gender (${recipientGender}) when generating ideas.
+                Consider the recipient's gender (${recipientGender}) and age (${recipientAge}) when generating ideas.
                 Create compelling, specific, and highly personal book concepts that showcase the recipient in their ideal life scenarios.
                 Each idea should read like an engaging fantasy autobiography premise that draws readers in.
                 IGNORE any information about other people mentioned in the answers - focus solely on ${recipientName}.
@@ -119,7 +120,7 @@ serve(async (req) => {
             {
               role: 'user',
               content: `Generate 3 different fantasy autobiography book ideas for ${recipientName} based on these answers:\n\n${JSON.stringify(answers, null, 2)}\n\n
-                The book is a dream life visualization created by ${authorName} for ${recipientName} (${recipientGender}).\n\n
+                The book is a dream life visualization created by ${authorName} for ${recipientName} (${recipientGender}, ${recipientAge} years old).\n\n
                 Return ONLY a JSON array of 3 objects, each with 'title', 'author', and 'description' fields.
                 CREATE HIGHLY ENGAGING IDEAS - make each description sound like an enticing fantasy autobiography that people would want to read.
                 Focus EXCLUSIVELY on ${recipientName}'s dream life, aspirational achievements, and fantasy experiences.

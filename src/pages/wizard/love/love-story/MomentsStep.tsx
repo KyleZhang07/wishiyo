@@ -52,7 +52,7 @@ const LoveStoryMomentsStep = () => {
       description="We'll use it on the cover"
       previousStep="/create/love/love-story/questions"
       nextStep="/create/love/love-story/ideas"
-      currentStep={3}
+      currentStep={4}
       totalSteps={5}
     >
       <div className="space-y-6">
