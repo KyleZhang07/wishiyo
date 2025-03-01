@@ -12,15 +12,13 @@ interface ImageText {
   tone: string;
 }
 
-// Interface to track image storage locations
 interface ImageStorageMap {
   [key: string]: {
     localStorageKey: string;
-    url?: string;  // Supabase Storage URL
+    url?: string;
   };
 }
 
-// Interface for Supabase image objects
 interface SupabaseImage {
   name: string;
   url: string;
@@ -112,9 +110,12 @@ const GenerateStep = () => {
       }
       
       const prompts = JSON.parse(savedPrompts);
-      const singlePrompt = promptIndex >= 0 && promptIndex < prompts.length 
-        ? prompts[promptIndex] 
-        : prompts[0];
+      if (promptIndex < 0 || promptIndex >= prompts.length) {
+        console.error(`Invalid prompt index: ${promptIndex}, prompts length: ${prompts.length}`);
+        throw new Error(`Invalid prompt index: ${promptIndex}`);
+      }
+      
+      const singlePrompt = prompts[promptIndex];
       
       console.log(`Generating text for prompt index ${promptIndex}:`, singlePrompt);
       
@@ -136,39 +137,33 @@ const GenerateStep = () => {
       
       console.log('Generated text response:', data);
       
-      if (promptIndex >= 0) {
-        const savedTextsJson = localStorage.getItem('loveStoryImageTexts');
-        let currentTexts: ImageText[] = [];
-        
-        if (savedTextsJson) {
-          try {
-            currentTexts = JSON.parse(savedTextsJson);
-          } catch (e) {
-            console.error('Error parsing saved texts:', e);
-            currentTexts = [];
-          }
+      const savedTextsJson = localStorage.getItem('loveStoryImageTexts');
+      let currentTexts: ImageText[] = [];
+      
+      if (savedTextsJson) {
+        try {
+          currentTexts = JSON.parse(savedTextsJson);
+        } catch (e) {
+          console.error('Error parsing saved texts:', e);
+          currentTexts = [];
         }
-        
-        while (currentTexts.length <= promptIndex) {
-          currentTexts.push({
-            text: "A special moment captured in time.",
-            tone: savedTone
-          });
-        }
-        
-        currentTexts[promptIndex] = data.texts[0];
-        
-        localStorage.setItem('loveStoryImageTexts', JSON.stringify(currentTexts));
-        
-        setImageTexts(currentTexts);
-        
-        console.log(`Updated text at index ${promptIndex}:`, data.texts[0]);
-        return data.texts[0];
-      } else {
-        localStorage.setItem('loveStoryImageTexts', JSON.stringify(data.texts));
-        setImageTexts(data.texts);
-        return data.texts;
       }
+      
+      while (currentTexts.length <= promptIndex) {
+        currentTexts.push({
+          text: "A special moment captured in time.",
+          tone: savedTone
+        });
+      }
+      
+      currentTexts[promptIndex] = data.texts[0];
+      
+      localStorage.setItem('loveStoryImageTexts', JSON.stringify(currentTexts));
+      
+      setImageTexts(currentTexts);
+      
+      console.log(`Updated text at index ${promptIndex}:`, data.texts[0]);
+      return data.texts[0];
     } catch (error) {
       console.error('Error generating image texts:', error);
       
@@ -177,31 +172,6 @@ const GenerateStep = () => {
         text: "A special moment captured in time.",
         tone: savedTone
       };
-      
-      if (promptIndex >= 0) {
-        const savedTextsJson = localStorage.getItem('loveStoryImageTexts');
-        let currentTexts: ImageText[] = [];
-        
-        if (savedTextsJson) {
-          try {
-            currentTexts = JSON.parse(savedTextsJson);
-          } catch (e) {
-            console.error('Error parsing saved texts:', e);
-            currentTexts = [];
-          }
-        }
-        
-        while (currentTexts.length <= promptIndex) {
-          currentTexts.push(defaultText);
-        }
-        
-        currentTexts[promptIndex] = defaultText;
-        
-        localStorage.setItem('loveStoryImageTexts', JSON.stringify(currentTexts));
-        setImageTexts(currentTexts);
-        
-        return defaultText;
-      }
       
       return defaultText;
     } finally {
@@ -260,7 +230,7 @@ const GenerateStep = () => {
     setIsGenerating(true);
     try {
       const prompts = JSON.parse(savedPrompts);
-      const promptIndex = index <= prompts.length ? index : prompts.length - 1;
+      const promptIndex = index <= prompts.length ? index - 1 : prompts.length - 1;
       if (!prompts[promptIndex]) {
         throw new Error(`No prompt found for content index ${promptIndex}`);
       }
@@ -316,8 +286,19 @@ const GenerateStep = () => {
 
       localStorage.setItem(`${lsKey}_url`, storageUrl);
 
+      console.log(`Generating text for prompt index ${promptIndex}, image index ${index}`);
       const newText = await generateImageText(promptIndex);
       console.log(`Generated new text for image ${index}:`, newText);
+
+      const updatedTexts = [...imageTexts];
+      while (updatedTexts.length <= promptIndex) {
+        updatedTexts.push({
+          text: "A special moment captured in time.",
+          tone: localStorage.getItem('loveStoryTone') || 'Heartfelt'
+        });
+      }
+      updatedTexts[promptIndex] = newText;
+      setImageTexts(updatedTexts);
 
       setTimeout(() => {
         loadImagesFromSupabase();
