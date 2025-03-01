@@ -2,3 +2,5 @@
 project_id = "hbkgbggctzvqffqfrmhl"
 [functions.remove-background]
 verify_jwt = false
+[functions.generate-image-text]
+verify_jwt = false
