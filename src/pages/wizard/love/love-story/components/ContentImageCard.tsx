@@ -116,24 +116,16 @@ export const ContentImageCard = ({
         // Draw the image to fill the canvas
         ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
         
-        // Add semi-transparent overlay at the bottom of the canvas for text readability
-        const overlayHeight = height * 0.3; // 30% of canvas height for text overlay
-        const gradientStart = height - overlayHeight;
+        // Add semi-transparent overlay for text readability - 左侧半边覆盖
+        const overlayWidth = width * 0.6; // 占画布宽度的60%
         
-        // Create gradient for text background
-        const gradient = ctx.createLinearGradient(0, gradientStart, 0, height);
-        gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
-        gradient.addColorStop(1, 'rgba(0, 0, 0, 0.7)');
+        // Create gradient for text background (从左到右渐变)
+        const gradient = ctx.createLinearGradient(0, 0, overlayWidth, 0);
+        gradient.addColorStop(0, 'rgba(0, 0, 0, 0.7)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
         
         ctx.fillStyle = gradient;
-        ctx.fillRect(0, gradientStart, width, overlayHeight);
-        
-        // Always draw title, even if there's no text
-        // Add a title based on the index
-        ctx.font = 'bold 22px Georgia, serif';
-        ctx.fillStyle = 'white';
-        ctx.textAlign = 'left';
-        ctx.fillText(title || `Moment ${index}`, 25, height - overlayHeight + 40);
+        ctx.fillRect(0, 0, overlayWidth, height);
         
         // Text wrapping function for use with either provided text or placeholder
         const wrapText = (text: string, x: number, y: number, maxWidth: number, lineHeight: number) => {
@@ -160,15 +152,18 @@ export const ContentImageCard = ({
           return lineCount + 1; // Return the number of lines
         };
         
-        // Add text content - either provided text or a generic placeholder
+        // 添加文本内容 - 在画布的左半边，垂直居中
         ctx.font = '18px Georgia, serif';
         ctx.fillStyle = 'white';
-        const textStartY = height - overlayHeight + 70;
-        const maxWidth = width - 50; // Padding on both sides
+        const maxWidth = overlayWidth - 50; // 左边文字区域宽度，留有边距
         
-        // Use provided text or a simple placeholder
-        const displayText = text || "A special moment captured in time.";
-        wrapText(displayText, 25, textStartY, maxWidth, 24);
+        // 使用提供的文本或默认文本
+        const displayText = text || "A beautiful story captured in an image.";
+        
+        // 垂直居中显示文本
+        const textStartY = height * 0.25; // 从上方1/4处开始
+        const textLineHeight = 28; // 行高
+        wrapText(displayText, 25, textStartY, maxWidth, textLineHeight);
         
         // Draw dedication text if needed
         if (showDedicationText && coverTitle) {

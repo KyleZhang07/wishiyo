@@ -824,7 +824,7 @@ const GenerateStep = () => {
     const imageText = imageTexts && imageTexts.length > textIndex ? imageTexts[textIndex] : null;
     
     // 显示标题适配新的命名方式 - 显示为Moment 1-10
-    let title = imageIndex === 0 ? "Introduction" : `Moment ${imageIndex}`;
+    let title = "";  // 不再显示标题
     
     return (
       <div className="mb-10">
@@ -889,7 +889,7 @@ const GenerateStep = () => {
         
         {/* 介绍部分 - 将Intro与其他Content分开 */}
         <div className="mb-12 border-t-2 border-gray-200 pt-8">
-          <h2 className="text-2xl font-bold mb-6">Introduction</h2>
+          <h2 className="text-2xl font-bold mb-6">开篇</h2>
           <div className="mb-10">
             <ContentImageCard 
               image={introImage} 
@@ -898,14 +898,14 @@ const GenerateStep = () => {
               index={0}
               onEditText={() => {}}
               text={imageTexts && imageTexts.length > 1 ? imageTexts[1]?.text : undefined}
-              title="Introduction"
+              title=""
             />
           </div>
         </div>
         
         {/* 内容部分 */}
         <div className="border-t-2 border-gray-200 pt-8">
-          <h2 className="text-2xl font-bold mb-6">Story Moments</h2>
+          <h2 className="text-2xl font-bold mb-6">故事内容</h2>
           <div className="space-y-8">
             {/* 只渲染内容图片，跳过介绍图片 */}
             {renderContentImage(1)}
