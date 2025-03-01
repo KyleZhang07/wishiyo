@@ -1,4 +1,4 @@
-<lov-code>
+
 import React, { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
@@ -952,4 +952,42 @@ const GenerateStep = () => {
       description="Here are your personalized love story images with accompanying text."
       previousStep="/create/love/love-story/moments"
       nextStep="/create/love/love-story/preview"
-      currentStep={4
+      currentStep={4}
+      totalSteps={5}
+    >
+      <div className="space-y-8">
+        <CoverPreviewCard 
+          coverImage={coverImage}
+          title={coverTitle}
+          subtitle={subtitle}
+          author={authorName}
+          backCoverText={backCoverText}
+          isGenerating={isGeneratingCover}
+          onRegenerate={handleRegenerateCover}
+          onEditText={handleEditText}
+          onEditCover={handleEditCover}
+        />
+        
+        {renderContentImage(0)}
+        {renderContentImage(1)}
+        {renderContentImage(2)}
+        {renderContentImage(3)}
+        {renderContentImage(4)}
+        {renderContentImage(5)}
+        {renderContentImage(6)}
+        {renderContentImage(7)}
+        {renderContentImage(8)}
+        {renderContentImage(9)}
+        {renderContentImage(10)}
+        
+        <div className="flex justify-center">
+          <Button onClick={refreshImages} variant="outline" className="mx-auto">
+            Refresh Images
+          </Button>
+        </div>
+      </div>
+    </WizardStep>
+  );
+};
+
+export default GenerateStep;
