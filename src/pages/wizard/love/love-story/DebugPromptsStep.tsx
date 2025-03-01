@@ -10,11 +10,6 @@ interface ImagePrompt {
   prompt: string;
 }
 
-interface ImageText {
-  text: string;
-  tone: string;
-}
-
 interface SupabaseImage {
   name: string;
   url: string;
@@ -32,7 +27,6 @@ interface LocalStorageImage {
 
 const DebugPromptsStep = () => {
   const [prompts, setPrompts] = useState<ImagePrompt[]>([]);
-  const [texts, setTexts] = useState<ImageText[]>([]);
   const [selectedTone, setSelectedTone] = useState<string>('');
   const [selectedStyle, setSelectedStyle] = useState<string>('');
   const [supabaseImages, setSupabaseImages] = useState<SupabaseImage[]>([]);
@@ -51,16 +45,6 @@ const DebugPromptsStep = () => {
         setPrompts(JSON.parse(savedPrompts));
       } catch (error) {
         console.error('Error parsing prompts:', error);
-      }
-    }
-    
-    // Load text accompaniments
-    const savedTexts = localStorage.getItem('loveStoryImageTexts');
-    if (savedTexts) {
-      try {
-        setTexts(JSON.parse(savedTexts));
-      } catch (error) {
-        console.error('Error parsing texts:', error);
       }
     }
     
@@ -388,7 +372,7 @@ const DebugPromptsStep = () => {
           <p className="text-gray-600 font-mono text-sm bg-gray-50 p-2 rounded">{prompts[0]?.prompt}</p>
         </div>
 
-        {/* Display the story image prompts with their text accompaniments */}
+        {/* Display the story image prompts without text accompaniments */}
         <div className="space-y-4">
           <h3 className="font-bold text-gray-800">Story Images:</h3>
           {prompts.slice(1).map((prompt, index) => (
@@ -404,15 +388,6 @@ const DebugPromptsStep = () => {
                 <p className="text-gray-600 font-semibold mb-1">Image Prompt:</p>
                 <p className="text-gray-600 font-mono text-sm bg-gray-50 p-2 rounded">{prompt.prompt}</p>
               </div>
-              
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <p className="text-gray-600 font-semibold mb-1">Text Accompaniment ({texts[index]?.tone || selectedTone}):</p>
-                {texts[index] ? (
-                  <p className="text-gray-800 italic bg-blue-50 p-3 rounded">{texts[index].text}</p>
-                ) : (
-                  <p className="text-red-500">No text accompaniment found</p>
-                )}
-              </div>
             </div>
           ))}
         </div>
@@ -423,8 +398,6 @@ const DebugPromptsStep = () => {
         <h3 className="text-white mb-2">Raw Data:</h3>
         <p className="mb-2">ImagePrompts:</p>
         <pre>{JSON.stringify(prompts, null, 2)}</pre>
-        <p className="mt-4 mb-2">ImageTexts:</p>
-        <pre>{JSON.stringify(texts, null, 2)}</pre>
         <p className="mt-4 mb-2">Supabase Storage URLs:</p>
         <pre>{JSON.stringify(supabaseImages.map(img => img.url), null, 2)}</pre>
         <p className="mt-4 mb-2">LocalStorage Usage:</p>
