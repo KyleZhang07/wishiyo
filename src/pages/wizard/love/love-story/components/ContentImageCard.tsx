@@ -11,6 +11,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Check } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 
 interface ContentImageCardProps {
   image?: string;
@@ -50,8 +51,10 @@ export const ContentImageCard = ({
 }: ContentImageCardProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isTextDialogOpen, setIsTextDialogOpen] = useState(false);
   const [selectedStyle, setSelectedStyle] = useState<string>('Photographic (Default)');
   const [displayText, setDisplayText] = useState<string>(text || "A special moment captured in time.");
+  const [editableText, setEditableText] = useState<string>(text || "A special moment captured in time.");
 
   useEffect(() => {
     // Load the current style from localStorage
@@ -81,6 +84,7 @@ export const ContentImageCard = ({
   useEffect(() => {
     if (text) {
       setDisplayText(text);
+      setEditableText(text);
     }
   }, [text]);
 
@@ -231,6 +235,19 @@ export const ContentImageCard = ({
     onRegenerate(selectedStyle);
   };
 
+  const handleSaveText = () => {
+    setDisplayText(editableText);
+    if (onTextUpdate) {
+      onTextUpdate(editableText);
+    }
+    setIsTextDialogOpen(false);
+  };
+
+  const handleOpenTextDialog = () => {
+    setEditableText(displayText);
+    setIsTextDialogOpen(true);
+  };
+
   return (
     <div className="glass-card rounded-2xl p-8 py-[40px] relative">
       <div className="max-w-xl mx-auto">
@@ -250,13 +267,48 @@ export const ContentImageCard = ({
           )}
         </div>
         <div className="absolute bottom-4 right-4 flex gap-2">
-          <Button
-            variant="secondary"
-            onClick={onEditText}
-          >
-            <Edit className="w-4 h-4 mr-2" />
-            Edit text
-          </Button>
+          <Dialog open={isTextDialogOpen} onOpenChange={setIsTextDialogOpen}>
+            <DialogTrigger asChild>
+              <Button
+                variant="secondary"
+                onClick={handleOpenTextDialog}
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Edit text
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Edit Image Text</DialogTitle>
+                <DialogDescription>
+                  Update the text that appears with this image.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-4 py-4">
+                <Textarea 
+                  value={editableText} 
+                  onChange={(e) => setEditableText(e.target.value)}
+                  className="min-h-[100px]"
+                  placeholder="Enter text to display with this image..."
+                />
+              </div>
+              
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={() => setIsTextDialogOpen(false)}>
+                  <X className="w-4 h-4 mr-2" />
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleSaveText}
+                  className="bg-black text-white hover:bg-black/90"
+                >
+                  <Check className="w-4 h-4 mr-2" />
+                  Save Text
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
           
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
