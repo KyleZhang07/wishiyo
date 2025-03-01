@@ -171,8 +171,8 @@ const FunnyBiographyGenerateStep = () => {
       currentStep={5}
       totalSteps={6}
     >
-      <div className="glass-card rounded-2xl p-8 py-[40px]">
-        <div className="max-w-xl mx-auto space-y-8">
+      <div className="space-y-8">
+        <div className="mx-auto flex justify-center">
           <CanvasCoverPreview
             coverTitle={coverTitle}
             subtitle={subtitle}
@@ -188,7 +188,9 @@ const FunnyBiographyGenerateStep = () => {
             scaleFactor={0.4}
             praises={praises}
           />
-          
+        </div>
+        
+        <div className="glass-card rounded-2xl p-8 py-[40px]">
           <div className="space-y-4">
             <div>
               <h3 className="text-lg font-medium text-center mb-4">Choose Your Style</h3>
