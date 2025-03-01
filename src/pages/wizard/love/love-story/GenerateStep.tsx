@@ -25,6 +25,7 @@ const GenerateStep = () => {
     introImage,
     contentImages,
     imageStorageMap,
+    setImageStorageMap,
     isLoadingImages,
     loadImagesFromSupabase,
     setImageFunction

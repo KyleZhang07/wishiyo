@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { getAllImagesFromStorage } from '@/integrations/supabase/storage';
@@ -18,6 +17,7 @@ interface UseSupabaseImagesReturn {
   introImage?: string;
   contentImages: {[key: number]: string | undefined};
   imageStorageMap: ImageStorageMap;
+  setImageStorageMap: React.Dispatch<React.SetStateAction<ImageStorageMap>>;
   isLoadingImages: boolean;
   loadImagesFromSupabase: () => Promise<void>;
   setImageFunction: (type: 'cover' | 'intro' | number, value: string | undefined) => void;
@@ -102,6 +102,7 @@ export const useSupabaseImages = (): UseSupabaseImagesReturn => {
     introImage,
     contentImages,
     imageStorageMap,
+    setImageStorageMap,
     isLoadingImages,
     loadImagesFromSupabase,
     setImageFunction
