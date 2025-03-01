@@ -11,7 +11,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Check } from 'lucide-react';
-import { Textarea } from '@/components/ui/textarea';
 
 interface ContentImageCardProps {
   image?: string;
@@ -51,10 +50,8 @@ export const ContentImageCard = ({
 }: ContentImageCardProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isTextDialogOpen, setIsTextDialogOpen] = useState(false);
   const [selectedStyle, setSelectedStyle] = useState<string>('Photographic (Default)');
   const [displayText, setDisplayText] = useState<string>(text || "A special moment captured in time.");
-  const [editableText, setEditableText] = useState<string>(text || "A special moment captured in time.");
 
   useEffect(() => {
     // Load the current style from localStorage
@@ -80,14 +77,12 @@ export const ContentImageCard = ({
     }
   }, []);
 
-  // 关键修复: 当text属性改变时更新显示的文本
+  // Update displayText when text prop changes
   useEffect(() => {
-    console.log(`ContentImageCard[${index}] text prop changed:`, text);
     if (text) {
       setDisplayText(text);
-      setEditableText(text);
     }
-  }, [text, index]);
+  }, [text]);
 
   useEffect(() => {
     if (canvasRef.current && image && !isGenerating) {
@@ -182,8 +177,7 @@ export const ContentImageCard = ({
         const textStartY = height - overlayHeight + 70;
         const maxWidth = width - 50; // Padding on both sides
         
-        // 关键修复: 确保使用最新的displayText
-        console.log(`Drawing text on canvas[${index}]:`, displayText);
+        // Use provided text or a simple placeholder
         wrapText(displayText, 25, textStartY, maxWidth, 24);
         
         // Draw dedication text if needed
@@ -234,22 +228,7 @@ export const ContentImageCard = ({
     setIsDialogOpen(false);
     
     // Call the onRegenerate function with the selected style
-    console.log(`Regenerating image ${index} with style ${selectedStyle}`);
     onRegenerate(selectedStyle);
-  };
-
-  const handleSaveText = () => {
-    console.log(`Saving edited text for image ${index}:`, editableText);
-    setDisplayText(editableText);
-    if (onTextUpdate) {
-      onTextUpdate(editableText);
-    }
-    setIsTextDialogOpen(false);
-  };
-
-  const handleOpenTextDialog = () => {
-    setEditableText(displayText);
-    setIsTextDialogOpen(true);
   };
 
   return (
@@ -271,48 +250,13 @@ export const ContentImageCard = ({
           )}
         </div>
         <div className="absolute bottom-4 right-4 flex gap-2">
-          <Dialog open={isTextDialogOpen} onOpenChange={setIsTextDialogOpen}>
-            <DialogTrigger asChild>
-              <Button
-                variant="secondary"
-                onClick={handleOpenTextDialog}
-              >
-                <Edit className="w-4 h-4 mr-2" />
-                Edit text
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Edit Image Text</DialogTitle>
-                <DialogDescription>
-                  Update the text that appears with this image.
-                </DialogDescription>
-              </DialogHeader>
-              
-              <div className="space-y-4 py-4">
-                <Textarea 
-                  value={editableText} 
-                  onChange={(e) => setEditableText(e.target.value)}
-                  className="min-h-[100px]"
-                  placeholder="Enter text to display with this image..."
-                />
-              </div>
-              
-              <div className="flex justify-between">
-                <Button variant="outline" onClick={() => setIsTextDialogOpen(false)}>
-                  <X className="w-4 h-4 mr-2" />
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={handleSaveText}
-                  className="bg-black text-white hover:bg-black/90"
-                >
-                  <Check className="w-4 h-4 mr-2" />
-                  Save Text
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <Button
+            variant="secondary"
+            onClick={onEditText}
+          >
+            <Edit className="w-4 h-4 mr-2" />
+            Edit text
+          </Button>
           
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
