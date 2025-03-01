@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -25,8 +26,8 @@ import FunnyBiographyCompletePage from "./pages/wizard/friends/funny-biography/C
 // Love Story Routes
 import LoveStoryAuthorStep from "./pages/wizard/love/love-story/AuthorStep";
 import LoveStoryQuestionsStep from "./pages/wizard/love/love-story/QuestionsStep";
-import LoveStoryIdeasStep from "./pages/wizard/love/love-story/IdeasStep";
 import LoveStoryMomentsStep from "./pages/wizard/love/love-story/MomentsStep";
+import LoveStoryIdeasStep from "./pages/wizard/love/love-story/IdeasStep";
 import LoveStoryGenerateStep from "./pages/wizard/love/love-story/GenerateStep";
 import DebugPromptsStep from "./pages/wizard/love/love-story/DebugPromptsStep";
 
@@ -58,12 +59,12 @@ const AppLayout = () => {
           <Route path="/create/friends/funny-biography/preview" element={<FunnyBiographyPreviewStep />} />
           <Route path="/create/friends/funny-biography/complete" element={<FunnyBiographyCompletePage />} />
 
-          {/* Love Story Routes */}
+          {/* Love Story Routes - Updated order */}
           <Route path="/create/love/love-story/author" element={<LoveStoryAuthorStep />} />
           <Route path="/create/love/love-story/questions" element={<LoveStoryQuestionsStep />} />
+          <Route path="/create/love/love-story/moments" element={<LoveStoryMomentsStep />} />
           <Route path="/create/love/love-story/ideas" element={<LoveStoryIdeasStep />} />
           <Route path="/create/love/love-story/debug-prompts" element={<DebugPromptsStep />} />
-          <Route path="/create/love/love-story/moments" element={<LoveStoryMomentsStep />} />
           <Route path="/create/love/love-story/generate" element={<LoveStoryGenerateStep />} />
           
           <Route path="*" element={<NotFound />} />

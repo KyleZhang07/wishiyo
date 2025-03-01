@@ -64,21 +64,18 @@ const LoveStoryQuestionsStep = () => {
       });
       return;
     }
-    navigate('/create/love/love-story/ideas');
+    navigate('/create/love/love-story/moments');
   };
 
   const handleSubmitAnswer = (question: string, answer: string) => {
-    // Check if this question has already been answered
     const existingIndex = questionsAndAnswers.findIndex(qa => qa.question === question);
     
     let newAnswers: QuestionAnswer[];
     
     if (existingIndex >= 0) {
-      // Update existing answer
       newAnswers = [...questionsAndAnswers];
       newAnswers[existingIndex] = { question, answer };
     } else {
-      // Add new answer
       newAnswers = [...questionsAndAnswers, { question, answer }];
     }
     
@@ -105,7 +102,7 @@ const LoveStoryQuestionsStep = () => {
       description="Tell us about your journey together"
       previousStep="/create/love/love-story/author"
       currentStep={2}
-      totalSteps={4}
+      totalSteps={6}
       onNextClick={handleNext}
     >
       <div className="space-y-6">

@@ -438,9 +438,9 @@ const DebugPromptsStep = () => {
       title="[DEV] Love Story Debug View"
       description="This is a development-only view to check the stored data for the love story."
       previousStep="/create/love/love-story/ideas"
-      nextStep="/create/love/love-story/moments"
-      currentStep={3}
-      totalSteps={4}
+      nextStep="/create/love/love-story/generate"
+      currentStep={5}
+      totalSteps={6}
     >
       {debugContent}
     </WizardStep>
