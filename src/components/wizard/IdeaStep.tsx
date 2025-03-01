@@ -112,85 +112,127 @@ const IdeaStep = ({
     try {
       const path = window.location.pathname;
       const bookType = path.split('/')[3];
-      const { promptsKey } = getStorageKeys(bookType);
+      
+      const storageKeyMap: { [key: string]: string } = {
+        'funny-biography': 'funnyBiographyAnswers',
+        'love-story': 'loveStoryAnswers',
+      };
 
-      // Get data from localStorage
-      let answers: Record<string, string> = {};
-      if (bookType === 'funny-biography') {
-        const interests = localStorage.getItem('funnyBiographyPersonInterests');
-        const achievements = localStorage.getItem('funnyBiographyPersonAchievements');
-        const dreams = localStorage.getItem('funnyBiographyPersonDreams');
-        const funnyQuirks = localStorage.getItem('funnyBiographyPersonQuirks');
-        const personalityTraits = localStorage.getItem('funnyBiographyPersonTraits');
-        const gender = localStorage.getItem('funnyBiographyPersonGender');
-        const name = localStorage.getItem('funnyBiographyPersonName');
-        const authorName = localStorage.getItem('funnyBiographyAuthorName');
+      const authorNameKeyMap: { [key: string]: string } = {
+        'funny-biography': 'funnyBiographyAuthorName',
+        'love-story': 'loveStoryAuthorName',
+      };
 
-        if (!name || !gender) {
-          throw new Error('Missing required information');
-        }
+      const personNameKeyMap: { [key: string]: string } = {
+        'love-story': 'loveStoryPersonName',
+      };
 
-        answers = {
-          interests: interests || '',
-          achievements: achievements || '',
-          dreams: dreams || '',
-          funnyQuirks: funnyQuirks || '',
-          personalityTraits: personalityTraits || '',
-          gender,
-          name,
-          authorName: authorName || '',
-        };
-      } else if (bookType === 'love-story') {
-        const howMet = localStorage.getItem('loveStoryHowMet');
-        const memorableMoments = localStorage.getItem('loveStoryMemorableMoments');
-        const insideJokes = localStorage.getItem('loveStoryInsideJokes');
-        const traditions = localStorage.getItem('loveStoryTraditions');
-        const whyLove = localStorage.getItem('loveStoryWhyLove');
-        const personGender = localStorage.getItem('loveStoryPersonGender');
-        const personName = localStorage.getItem('loveStoryPersonName');
-        const authorName = localStorage.getItem('loveStoryAuthorName');
+      const personGenderKeyMap: { [key: string]: string } = {
+        'love-story': 'loveStoryPersonGender',
+      };
 
+      const storageKey = storageKeyMap[bookType];
+      const authorNameKey = authorNameKeyMap[bookType];
+      const personNameKey = personNameKeyMap[bookType];
+      const personGenderKey = personGenderKeyMap[bookType];
+      const { ideasKey, promptsKey } = getStorageKeys(bookType);
+
+      if (!storageKey || !authorNameKey) {
+        throw new Error('Invalid book type');
+      }
+
+      const authorName = localStorage.getItem(authorNameKey);
+      const savedAnswers = localStorage.getItem(storageKey);
+      
+      // Get person name and gender for love-story category
+      let personName = null;
+      let personGender = null;
+      if (category === 'love') {
+        personName = localStorage.getItem(personNameKey);
+        personGender = localStorage.getItem(personGenderKey);
+        
         if (!personName || !personGender) {
-          throw new Error('Missing required information');
+          toast({
+            title: "Missing recipient information",
+            description: "Please complete the author step with recipient information first.",
+            variant: "destructive",
+          });
+          return;
         }
+      }
+      
+      if (!authorName || !savedAnswers) {
+        toast({
+          title: "Missing information",
+          description: "Please complete the previous steps first.",
+          variant: "destructive",
+        });
+        return;
+      }
 
-        answers = {
-          howMet: howMet || '',
-          memorableMoments: memorableMoments || '',
-          insideJokes: insideJokes || '',
-          traditions: traditions || '',
-          whyLove: whyLove || '',
-          personGender,
-          personName,
-          authorName: authorName || '',
-        };
+      let answers;
+      try {
+        answers = JSON.parse(savedAnswers);
+      } catch (error) {
+        console.error('Error parsing saved answers:', error);
+        toast({
+          title: "Error",
+          description: "Invalid saved answers format. Please try again.",
+          variant: "destructive",
+        });
+        return;
       }
 
       const { data, error } = await supabase.functions.invoke('generate-ideas', {
-        body: { answers, bookType }
+        body: { 
+          authorName,
+          answers,
+          bookType,
+          category,
+          personName,
+          personGender
+        }
       });
 
       if (error) throw error;
 
-      console.log('Generated ideas:', data);
-      setIdeas(data.ideas);
-      localStorage.setItem(`${bookType}GeneratedIdeas`, JSON.stringify(data.ideas));
-      handleIdeaSelect(0); // Select the first idea by default
-      setImagePrompts(data.imagePrompts);
-      localStorage.setItem(promptsKey, JSON.stringify(data.imagePrompts));
-      
-      // Only generate image texts for non-love-story genres
-      if (bookType !== 'love-story') {
-        generateImageTexts(data.imagePrompts, selectedTone);
-      } else {
-        // Create default texts for love-story genre
-        const defaultTexts = data.imagePrompts.map(prompt => ({
-          text: "A special moment captured in time.",
-          tone: selectedTone
-        }));
+      if (!data) {
+        throw new Error('No data received from the server');
+      }
+
+      if (!Array.isArray(data.ideas)) {
+        throw new Error('Invalid response format: ideas should be an array');
+      }
+
+      // Process ideas differently based on category
+      if (category === 'love') {
+        // For love story, we only need one idea and we won't display it
+        const processedIdea = {
+          ...data.ideas[0],
+          author: authorName,
+        };
+        setIdeas([processedIdea]);
+        setSelectedIdeaIndex(0);
+        localStorage.setItem(ideasKey, JSON.stringify([processedIdea]));
+        localStorage.setItem(getStorageKeys(bookType).selectedIdeaKey, "0");
         
-        setImageTexts(defaultTexts);
-        localStorage.setItem(getStorageKeys('love-story').textsKey, JSON.stringify(defaultTexts));
+        // Store image prompts separately for love category books
+        if (data.imagePrompts && promptsKey) {
+          setImagePrompts(data.imagePrompts);
+          localStorage.setItem(promptsKey, JSON.stringify(data.imagePrompts));
+          // After image prompts are set, generate texts for them
+          generateImageTexts(data.imagePrompts, selectedTone);
+        }
+      } else {
+        // For other categories, handle normally
+        const processedIdeas = data.ideas.map(idea => ({
+          ...idea,
+          author: authorName,
+          description: idea.description || ''
+        }));
+        setIdeas(processedIdeas);
+        setSelectedIdeaIndex(null);
+        localStorage.setItem(ideasKey, JSON.stringify(processedIdeas));
       }
 
     } catch (error) {
@@ -212,14 +254,40 @@ const IdeaStep = ({
       const bookType = path.split('/')[3];
       const { textsKey } = getStorageKeys(bookType);
 
-      // Create default texts for all genres
-      const defaultTexts = prompts.map(prompt => ({
-        text: "A special moment captured in time.",
-        tone: tone
-      }));
-      
-      setImageTexts(defaultTexts);
-      localStorage.setItem(textsKey, JSON.stringify(defaultTexts));
+      // Skip image text generation for love-story genre
+      if (bookType === 'love-story') {
+        // Create default texts as fallback for love-story
+        const defaultTexts = prompts.map(prompt => ({
+          text: "A special moment captured in time.",
+          tone: tone
+        }));
+        
+        setImageTexts(defaultTexts);
+        localStorage.setItem(getStorageKeys('love-story').textsKey, JSON.stringify(defaultTexts));
+        return;
+      }
+
+      const personName = localStorage.getItem('loveStoryPersonName');
+      if (!personName) {
+        throw new Error('Missing person name');
+      }
+
+      const { data, error } = await supabase.functions.invoke('generate-image-texts', {
+        body: { 
+          prompts,
+          tone,
+          personName
+        }
+      });
+
+      if (error) throw error;
+
+      if (!data || !data.texts) {
+        throw new Error('No texts received from the server');
+      }
+
+      setImageTexts(data.texts);
+      localStorage.setItem(textsKey, JSON.stringify(data.texts));
 
     } catch (error) {
       console.error('Error generating image texts:', error);
@@ -236,10 +304,7 @@ const IdeaStep = ({
       }));
       
       setImageTexts(defaultTexts);
-      const path = window.location.pathname;
-      const bookType = path.split('/')[3];
-      const { textsKey } = getStorageKeys(bookType);
-      localStorage.setItem(textsKey, JSON.stringify(defaultTexts));
+      localStorage.setItem(getStorageKeys('love-story').textsKey, JSON.stringify(defaultTexts));
     } finally {
       setIsGeneratingTexts(false);
     }
@@ -257,22 +322,15 @@ const IdeaStep = ({
 
   const handleToneSelect = (tone: string) => {
     setSelectedTone(tone);
-    
-    // Only regenerate text for non-love-story genres when tone changes
     const path = window.location.pathname;
     const bookType = path.split('/')[3];
+    const { toneKey } = getStorageKeys(bookType);
     
-    if (bookType !== 'love-story' && imagePrompts.length > 0) {
+    localStorage.setItem(toneKey, tone);
+    
+    // Generate new texts when tone changes
+    if (imagePrompts.length > 0) {
       generateImageTexts(imagePrompts, tone);
-    } else if (bookType === 'love-story' && imagePrompts.length > 0) {
-      // Create default texts for love-story genre
-      const defaultTexts = imagePrompts.map(prompt => ({
-        text: "A special moment captured in time.",
-        tone: tone
-      }));
-      
-      setImageTexts(defaultTexts);
-      localStorage.setItem(getStorageKeys('love-story').textsKey, JSON.stringify(defaultTexts));
     }
   };
 

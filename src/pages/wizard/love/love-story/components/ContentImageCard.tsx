@@ -128,46 +128,47 @@ export const ContentImageCard = ({
         ctx.fillStyle = gradient;
         ctx.fillRect(0, gradientStart, width, overlayHeight);
         
-        // Draw text
-        if (text) {
-          // Text wrapping function
-          const wrapText = (text: string, x: number, y: number, maxWidth: number, lineHeight: number) => {
-            const words = text.split(' ');
-            let line = '';
-            let testLine = '';
-            let lineCount = 0;
+        // Always draw title, even if there's no text
+        // Add a title based on the index
+        ctx.font = 'bold 22px Georgia, serif';
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'left';
+        ctx.fillText(title || `Moment ${index}`, 25, height - overlayHeight + 40);
+        
+        // Text wrapping function for use with either provided text or placeholder
+        const wrapText = (text: string, x: number, y: number, maxWidth: number, lineHeight: number) => {
+          const words = text.split(' ');
+          let line = '';
+          let testLine = '';
+          let lineCount = 0;
+          
+          for (let n = 0; n < words.length; n++) {
+            testLine = line + words[n] + ' ';
+            const metrics = ctx.measureText(testLine);
+            const testWidth = metrics.width;
             
-            for (let n = 0; n < words.length; n++) {
-              testLine = line + words[n] + ' ';
-              const metrics = ctx.measureText(testLine);
-              const testWidth = metrics.width;
-              
-              if (testWidth > maxWidth && n > 0) {
-                ctx.fillText(line, x, y + (lineCount * lineHeight));
-                line = words[n] + ' ';
-                lineCount++;
-              } else {
-                line = testLine;
-              }
+            if (testWidth > maxWidth && n > 0) {
+              ctx.fillText(line, x, y + (lineCount * lineHeight));
+              line = words[n] + ' ';
+              lineCount++;
+            } else {
+              line = testLine;
             }
-            
-            ctx.fillText(line, x, y + (lineCount * lineHeight));
-            return lineCount + 1; // Return the number of lines
-          };
+          }
           
-          // Add a title based on the index
-          ctx.font = 'bold 22px Georgia, serif';
-          ctx.fillStyle = 'white';
-          ctx.textAlign = 'left';
-          ctx.fillText(title || `Moment ${index}`, 25, height - overlayHeight + 40);
-          
-          // Add the text content
-          ctx.font = '18px Georgia, serif';
-          ctx.fillStyle = 'white';
-          const textStartY = height - overlayHeight + 70;
-          const maxWidth = width - 50; // Padding on both sides
-          wrapText(text, 25, textStartY, maxWidth, 24);
-        }
+          ctx.fillText(line, x, y + (lineCount * lineHeight));
+          return lineCount + 1; // Return the number of lines
+        };
+        
+        // Add text content - either provided text or a generic placeholder
+        ctx.font = '18px Georgia, serif';
+        ctx.fillStyle = 'white';
+        const textStartY = height - overlayHeight + 70;
+        const maxWidth = width - 50; // Padding on both sides
+        
+        // Use provided text or a simple placeholder
+        const displayText = text || "A beautiful moment captured in time.";
+        wrapText(displayText, 25, textStartY, maxWidth, 24);
         
         // Draw dedication text if needed
         if (showDedicationText && coverTitle) {
@@ -203,7 +204,7 @@ export const ContentImageCard = ({
         ctx.fillText('Image failed to load', width / 2, height / 2);
       };
     }
-  }, [image, isGenerating, text, index, showDedicationText, coverTitle, authorName]);
+  }, [image, isGenerating, text, index, showDedicationText, coverTitle, authorName, title]);
 
   const handleStyleSelect = (style: string) => {
     setSelectedStyle(style);

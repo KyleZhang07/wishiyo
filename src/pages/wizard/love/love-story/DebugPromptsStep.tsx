@@ -43,26 +43,6 @@ const DebugPromptsStep = () => {
   
   const { toast } = useToast();
 
-  // Helper function to create default texts
-  const createDefaultTexts = () => {
-    // Create 12 default text entries (for intro + 10 content images + cover)
-    const defaultTexts = Array(12).fill(null).map((_, index) => {
-      let text = "A special moment captured in time.";
-      
-      if (index === 0) {
-        text = "A beautiful introduction to our love story.";
-      }
-      
-      return {
-        text,
-        tone: "Heartfelt"
-      };
-    });
-    
-    setTexts(defaultTexts);
-    localStorage.setItem('loveStoryImageTexts', JSON.stringify(defaultTexts));
-  };
-
   useEffect(() => {
     // Load prompts
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
@@ -81,12 +61,7 @@ const DebugPromptsStep = () => {
         setTexts(JSON.parse(savedTexts));
       } catch (error) {
         console.error('Error parsing texts:', error);
-        // Create default texts if parsing fails
-        createDefaultTexts();
       }
-    } else {
-      // Create default texts if none exist
-      createDefaultTexts();
     }
     
     // Load selected tone and style
