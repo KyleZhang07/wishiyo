@@ -183,7 +183,7 @@ const IdeaStep = ({
       if (bookType !== 'love-story') {
         generateImageTexts(data.imagePrompts, selectedTone);
       } else {
-        // For love-story, create default texts without calling generate-image-texts
+        // Create default texts for love-story genre
         const defaultTexts = data.imagePrompts.map(prompt => ({
           text: "A special moment captured in time.",
           tone: selectedTone
@@ -212,39 +212,14 @@ const IdeaStep = ({
       const bookType = path.split('/')[3];
       const { textsKey } = getStorageKeys(bookType);
 
-      // Skip if it's love-story genre
-      if (bookType === 'love-story') {
-        const defaultTexts = prompts.map(prompt => ({
-          text: "A special moment captured in time.",
-          tone: tone
-        }));
-        
-        setImageTexts(defaultTexts);
-        localStorage.setItem(textsKey, JSON.stringify(defaultTexts));
-        return;
-      }
-
-      const personName = localStorage.getItem(`${bookType}PersonName`);
-      if (!personName) {
-        throw new Error('Missing person name');
-      }
-
-      const { data, error } = await supabase.functions.invoke('generate-image-texts', {
-        body: { 
-          prompts,
-          tone,
-          personName
-        }
-      });
-
-      if (error) throw error;
-
-      if (!data || !data.texts) {
-        throw new Error('No texts received from the server');
-      }
-
-      setImageTexts(data.texts);
-      localStorage.setItem(textsKey, JSON.stringify(data.texts));
+      // Create default texts for all genres
+      const defaultTexts = prompts.map(prompt => ({
+        text: "A special moment captured in time.",
+        tone: tone
+      }));
+      
+      setImageTexts(defaultTexts);
+      localStorage.setItem(textsKey, JSON.stringify(defaultTexts));
 
     } catch (error) {
       console.error('Error generating image texts:', error);
@@ -290,7 +265,7 @@ const IdeaStep = ({
     if (bookType !== 'love-story' && imagePrompts.length > 0) {
       generateImageTexts(imagePrompts, tone);
     } else if (bookType === 'love-story' && imagePrompts.length > 0) {
-      // For love-story, create default texts without calling generate-image-texts
+      // Create default texts for love-story genre
       const defaultTexts = imagePrompts.map(prompt => ({
         text: "A special moment captured in time.",
         tone: tone
