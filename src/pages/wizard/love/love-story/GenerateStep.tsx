@@ -3,7 +3,7 @@ import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { uploadImageToStorage, getAllImagesFromStorage, ensureBucketExists, getClientId } from '@/integrations/supabase/storage';
+import { uploadImageToStorage, getAllImagesFromStorage } from '@/integrations/supabase/storage';
 import { CoverPreviewCard } from './components/CoverPreviewCard';
 import { ContentImageCard } from './components/ContentImageCard';
 
@@ -134,14 +134,10 @@ const GenerateStep = () => {
 
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
     const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
-    const personName = localStorage.getItem('loveStoryPersonName');
-    // 获取当前选择的文本风格
-    const savedTone = localStorage.getItem('loveStoryTone') || 'Heartfelt';
-    
-    if (!savedPrompts || !partnerPhoto || !personName) {
+    if (!savedPrompts || !partnerPhoto) {
       toast({
         title: "Missing info",
-        description: "No prompts, partner photo, or person name found",
+        description: "No prompts or partner photo found",
         variant: "destructive",
       });
       return;
@@ -165,108 +161,47 @@ const GenerateStep = () => {
         localStorage.setItem('loveStoryStyle', style);
       }
 
-      // 定义并启动同时进行的图片和文本生成任务
-      console.log(`Starting parallel image and text generation for content ${index}`);
+      // 使用更明确的请求格式
+      const requestBody = {
+        prompt: prompts[promptIndex].prompt,
+        photo: partnerPhoto,
+        style: imageStyle,
+        contentIndex: index,  // 明确指定内容索引
+        type: 'content'       // 明确内容类型
+      };
+
+      console.log(`Content ${index} generation request:`, JSON.stringify(requestBody));
+
+      // Include style in the request
+      const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+        body: requestBody
+      });
       
-      // 1. 启动图片生成任务
-      const imageGenerationPromise = (async () => {
-        // 使用更明确的请求格式
-        const requestBody = {
-          prompt: prompts[promptIndex].prompt,
-          photo: partnerPhoto,
-          style: imageStyle,
-          contentIndex: index,  // 明确指定内容索引
-          type: 'content'       // 明确内容类型
-        };
+      if (error) throw error;
 
-        console.log(`Content ${index} image generation request:`, JSON.stringify(requestBody));
+      console.log(`Content ${index} generation response:`, data);
 
-        // Include style in the request
-        const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-          body: requestBody
-        });
-        
-        if (error) throw error;
+      // 后端可能返回 { output: [...]} 或 { contentImageX: [...] }
+      const imageUrl = data?.[`contentImage${index}`]?.[0] || data?.output?.[0];
+      if (!imageUrl) {
+        throw new Error("No image generated from generate-love-cover");
+      }
 
-        console.log(`Content ${index} image generation response:`, data);
+      // 2) 调用expand-image进行扩展
+      const expandedBase64 = await expandImage(imageUrl);
 
-        // 后端可能返回 { output: [...]} 或 { contentImageX: [...] }
-        const imageUrl = data?.[`contentImage${index}`]?.[0] || data?.output?.[0];
-        if (!imageUrl) {
-          throw new Error("No image generated from generate-love-cover");
-        }
-
-        // 调用expand-image进行扩展
-        const expandedBase64 = await expandImage(imageUrl);
-        
-        return expandedBase64;
-      })();
-      
-      // 2. 同时启动文本生成任务
-      const textGenerationPromise = (async () => {
-        console.log(`Generating text for content ${index} with tone: ${savedTone}`);
-        
-        // 只为当前索引生成文本
-        const singlePrompt = [prompts[promptIndex]];
-        
-        const { data, error } = await supabase.functions.invoke('generate-image-texts', {
-          body: { 
-            prompts: singlePrompt,
-            tone: savedTone,
-            personName
-          }
-        });
-        
-        if (error) throw error;
-        
-        if (!data || !data.texts || !data.texts[0]) {
-          throw new Error('No text received from the server');
-        }
-        
-        console.log(`Generated text for content ${index}:`, data.texts[0]);
-        return data.texts[0];
-      })();
-      
-      // 3. 等待两个任务完成
-      const [expandedBase64, generatedText] = await Promise.all([
-        imageGenerationPromise,
-        textGenerationPromise
-      ]);
-      
       // 使用时间戳确保文件名唯一
       const timestamp = Date.now();
 
-      // 4. 将图片上传到Supabase Storage
+      // 3) Upload to Supabase Storage instead of localStorage - 修复文件名问题
+      // 使用明确的数字标识符和时间戳
       const storageUrl = await uploadImageToStorage(
         expandedBase64, 
         'images', 
         `love-story-content-${index}-${timestamp}`
       );
 
-      // 5. 将文本也保存到Supabase
-      // 创建文本内容的JSON对象
-      const textContent = {
-        text: generatedText.text,
-        tone: generatedText.tone,
-        contentIndex: index,
-        timestamp: timestamp
-      };
-      
-      // 将JSON对象转为字符串
-      const textBlob = new Blob([JSON.stringify(textContent)], {
-        type: 'application/json'
-      });
-      
-      // 上传文本内容到Supabase
-      const textFileName = `love-story-text-${index}-${timestamp}.json`;
-      await supabase.storage
-        .from('images')
-        .upload(getClientId() + '/' + textFileName, textBlob, {
-          contentType: 'application/json',
-          upsert: true
-        });
-      
-      // 6. 更新状态和本地存储
+      // 4) Update state and storage map
       setContentFn(expandedBase64);
       setImageStorageMap(prev => ({
         ...prev,
@@ -275,31 +210,23 @@ const GenerateStep = () => {
           url: storageUrl
         }
       }));
-      
-      // 更新文本状态和本地存储
-      const updatedTexts = [...imageTexts];
-      updatedTexts[index - 1] = generatedText; // 索引调整
-      setImageTexts(updatedTexts);
-      
-      // 保存文本到localStorage
-      localStorage.setItem('loveStoryImageTexts', JSON.stringify(updatedTexts));
-      
-      // 保存图片URL到localStorage
+
+      // 5) Store only the URL reference in localStorage
       localStorage.setItem(`${lsKey}_url`, storageUrl);
 
-      // 7. 延迟刷新图片列表，确保上传完成
+      // 6) 延迟刷新图片列表，确保上传完成
       setTimeout(() => {
         loadImagesFromSupabase();
       }, 1000);
 
       toast({
-        title: "Content regenerated",
-        description: `Moment ${index} image and text successfully updated with ${imageStyle} style`,
+        title: "Image regenerated & expanded",
+        description: `Content ${index} successfully updated with ${imageStyle} style`,
       });
     } catch (err: any) {
       console.error("Error in handleGenericContentRegeneration:", err);
       toast({
-        title: "Error regenerating content",
+        title: "Error regenerating image",
         description: err.message || "Please try again",
         variant: "destructive",
       });
@@ -836,8 +763,8 @@ const GenerateStep = () => {
 
   // Render content images with text inside the canvas
   const renderContentImage = (imageIndex: number) => {
-    // 使用映射对象保持代码简洁
-    const imageStateMap = {
+    const imageStateMap: Record<number, string | undefined> = {
+      0: introImage,
       1: contentImage1,
       2: contentImage2,
       3: contentImage3,
@@ -850,11 +777,12 @@ const GenerateStep = () => {
       10: contentImage10,
     };
     
-    const loadingStateMap = {
+    const loadingStateMap: Record<number, boolean> = {
+      0: isGeneratingIntro,
       1: isGeneratingContent1,
       2: isGeneratingContent2,
       3: isGeneratingContent3,
-      4: isGeneratingContent4,
+      4: isGeneratingContent4, 
       5: isGeneratingContent5,
       6: isGeneratingContent6,
       7: isGeneratingContent7,
@@ -863,7 +791,8 @@ const GenerateStep = () => {
       10: isGeneratingContent10,
     };
     
-    const handleRegenerateMap = {
+    const handleRegenerateMap: Record<number, (style?: string) => void> = {
+      0: handleRegenerateIntro,
       1: handleRegenerateContent1,
       2: handleRegenerateContent2,
       3: handleRegenerateContent3,
@@ -885,59 +814,6 @@ const GenerateStep = () => {
     // 显示标题适配新的命名方式
     let title = imageIndex === 0 ? "Introduction" : `Moment ${imageIndex}`;
     
-    // 处理文本编辑
-    const handleEditText = async (newText: string) => {
-      if (!imageText) return;
-      
-      // 更新本地状态
-      const updatedTexts = [...imageTexts];
-      updatedTexts[imageIndex] = {
-        ...updatedTexts[imageIndex],
-        text: newText
-      };
-      setImageTexts(updatedTexts);
-      
-      // 保存到localStorage
-      localStorage.setItem('loveStoryImageTexts', JSON.stringify(updatedTexts));
-      
-      // 上传到Supabase
-      try {
-        // 创建文本内容的JSON对象
-        const textContent = {
-          text: newText,
-          tone: imageText.tone,
-          contentIndex: imageIndex,
-          timestamp: Date.now()
-        };
-        
-        // 将JSON对象转为字符串
-        const textBlob = new Blob([JSON.stringify(textContent)], {
-          type: 'application/json'
-        });
-        
-        // 上传文本内容到Supabase
-        const textFileName = `love-story-text-${imageIndex}-${Date.now()}.json`;
-        await supabase.storage
-          .from('images')
-          .upload(getClientId() + '/' + textFileName, textBlob, {
-            contentType: 'application/json',
-            upsert: true
-          });
-          
-        toast({
-          title: "Text updated",
-          description: `Text for ${title} has been updated`,
-        });
-      } catch (error) {
-        console.error('Error saving text to Supabase:', error);
-        toast({
-          title: "Error updating text",
-          description: "Text was saved locally but not to Supabase",
-          variant: "destructive",
-        });
-      }
-    };
-    
     return (
       <div className="mb-10">
         <ContentImageCard 
@@ -945,7 +821,7 @@ const GenerateStep = () => {
           isGenerating={isLoading}
           onRegenerate={handleRegenerate}
           index={imageIndex}
-          onEditText={handleEditText}
+          onEditText={() => {}}
           text={imageText?.text}
           title={title}
         />
@@ -967,9 +843,9 @@ const GenerateStep = () => {
       title="Your Love Story Images"
       description="Here are your personalized love story images with accompanying text."
       previousStep="/create/love/love-story/moments"
-      nextStep="/create/love/love-story/debug-prompts"
+      nextStep="/create/love/love-story/preview"
       currentStep={4}
-      totalSteps={5}
+      totalSteps={4}
     >
       <div className="max-w-5xl mx-auto">
         {/* 添加刷新按钮 */}

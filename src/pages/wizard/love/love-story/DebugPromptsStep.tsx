@@ -2,13 +2,8 @@ import React, { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { getAllImagesFromStorage, ensureBucketExists } from '@/integrations/supabase/storage';
 import { Button } from '@/components/ui/button';
-import { Loader2, Trash2, RefreshCw } from 'lucide-react';
+import { Loader2, Trash2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { Progress } from '@/components/ui/progress';
-import { formatBytes } from '@/lib/utils';
-import { supabase } from '@/integrations/supabase/client';
 
 interface ImagePrompt {
   question: string;
@@ -18,8 +13,6 @@ interface ImagePrompt {
 interface ImageText {
   text: string;
   tone: string;
-  contentIndex?: number;
-  timestamp?: number;
 }
 
 interface SupabaseImage {
@@ -37,19 +30,9 @@ interface LocalStorageImage {
   size: number; // in bytes
 }
 
-interface SupabaseText {
-  name: string;
-  url: string;
-  metadata?: any;
-  created_at: string;
-  updated_at: string;
-  id: string;
-  content?: ImageText; // 解析后的文本内容
-}
-
 const DebugPromptsStep = () => {
-  const [imagePrompts, setImagePrompts] = useState<ImagePrompt[]>([]);
-  const [imageTexts, setImageTexts] = useState<ImageText[]>([]);
+  const [prompts, setPrompts] = useState<ImagePrompt[]>([]);
+  const [texts, setTexts] = useState<ImageText[]>([]);
   const [selectedTone, setSelectedTone] = useState<string>('');
   const [selectedStyle, setSelectedStyle] = useState<string>('');
   const [supabaseImages, setSupabaseImages] = useState<SupabaseImage[]>([]);
@@ -57,8 +40,6 @@ const DebugPromptsStep = () => {
   const [localStorageImages, setLocalStorageImages] = useState<LocalStorageImage[]>([]);
   const [isLoadingLocalStorage, setIsLoadingLocalStorage] = useState(false);
   const [localStorageUsage, setLocalStorageUsage] = useState<{used: number, total: number}>({used: 0, total: 0});
-  const [supabaseTexts, setSupabaseTexts] = useState<SupabaseText[]>([]);
-  const [isLoadingTexts, setIsLoadingTexts] = useState(false);
   
   const { toast } = useToast();
 
@@ -67,9 +48,9 @@ const DebugPromptsStep = () => {
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
     if (savedPrompts) {
       try {
-        setImagePrompts(JSON.parse(savedPrompts));
+        setPrompts(JSON.parse(savedPrompts));
       } catch (error) {
-        console.error('Error parsing image prompts:', error);
+        console.error('Error parsing prompts:', error);
       }
     }
     
@@ -77,9 +58,9 @@ const DebugPromptsStep = () => {
     const savedTexts = localStorage.getItem('loveStoryImageTexts');
     if (savedTexts) {
       try {
-        setImageTexts(JSON.parse(savedTexts));
+        setTexts(JSON.parse(savedTexts));
       } catch (error) {
-        console.error('Error parsing image texts:', error);
+        console.error('Error parsing texts:', error);
       }
     }
     
@@ -99,9 +80,6 @@ const DebugPromptsStep = () => {
     
     // Load images from localStorage
     loadLocalStorageImages();
-    
-    // Load texts from Supabase Storage
-    loadSupabaseTexts();
     
     // Calculate localStorage usage
     calculateLocalStorageUsage();
@@ -165,81 +143,29 @@ const DebugPromptsStep = () => {
   
   const calculateLocalStorageUsage = () => {
     try {
-      let totalUsed = 0;
+      // Get current usage
+      let used = 0;
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (key) {
-          const value = localStorage.getItem(key);
-          if (value) {
-            totalUsed += value.length * 2; // Approximate size in bytes (2 bytes per character)
-          }
+          const value = localStorage.getItem(key) || '';
+          used += key.length + value.length;
         }
       }
-
+      
       // Convert to MB
-      const usedInMB = totalUsed / (1024 * 1024);
-      // Approximate total localStorage size (5MB is common)
-      const totalInMB = 5;
-
+      const usedMB = used / (1024 * 1024);
+      
+      // Estimate total available (varies by browser)
+      // Most browsers have 5-10MB limit
+      const totalMB = 5; // Conservative estimate
+      
       setLocalStorageUsage({
-        used: usedInMB,
-        total: totalInMB
+        used: usedMB,
+        total: totalMB
       });
     } catch (error) {
       console.error('Error calculating localStorage usage:', error);
-    }
-  };
-
-  const loadSupabaseTexts = async () => {
-    setIsLoadingTexts(true);
-    try {
-      // Ensure images bucket exists
-      await ensureBucketExists('images');
-      
-      // Get all JSON files (text content)
-      const { data, error } = await supabase.storage
-        .from('images')
-        .list();
-      
-      if (error) {
-        throw error;
-      }
-      
-      // Filter out all text files (ending with .json)
-      const textFiles = data?.filter(file => file.name.endsWith('.json')) || [];
-      
-      // Get public URL for each text file and fetch content
-      const textsWithContent = await Promise.all(textFiles.map(async (file) => {
-        const { data: publicUrlData } = supabase.storage
-          .from('images')
-          .getPublicUrl(file.name);
-          
-        // Get text content
-        let content: ImageText | undefined;
-        try {
-          const response = await fetch(publicUrlData.publicUrl);
-          const jsonData = await response.json();
-          content = jsonData as ImageText;
-        } catch (error) {
-          console.error(`Error fetching text content for ${file.name}:`, error);
-        }
-        
-        return {
-          name: file.name,
-          url: publicUrlData?.publicUrl || '',
-          metadata: file.metadata,
-          created_at: file.created_at,
-          updated_at: file.updated_at,
-          id: file.id,
-          content
-        };
-      }));
-      
-      setSupabaseTexts(textsWithContent);
-    } catch (error) {
-      console.error('Error loading texts from Supabase:', error);
-    } finally {
-      setIsLoadingTexts(false);
     }
   };
 
@@ -294,228 +220,227 @@ const DebugPromptsStep = () => {
     }
   };
 
-  const refreshTexts = () => {
-    loadSupabaseTexts();
-    toast({
-      title: "Refreshing texts",
-      description: "Loading latest texts from Supabase Storage",
-    });
+  // Format file size to human readable format
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   const debugContent = (
-    <div className="space-y-8 pb-10">
-      <Card>
-        <CardHeader>
-          <CardTitle>Selected Settings</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div>
-              <strong>Selected Tone:</strong> {selectedTone}
-            </div>
-            <div>
-              <strong>Selected Style:</strong> {selectedStyle}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="space-y-8 bg-yellow-50 p-4 rounded-lg border-2 border-yellow-400">
+      <div className="bg-yellow-100 p-4 rounded">
+        <h2 className="text-yellow-800 font-bold">⚠️ Development Only</h2>
+        <p className="text-yellow-700">This page is for development purposes and will be removed in production.</p>
+      </div>
       
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Local Storage Usage</CardTitle>
+      {/* Selected tone and style */}
+      <div className="bg-white p-4 rounded-lg shadow">
+        <h3 className="font-bold text-gray-800 mb-2">Selected Settings:</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <p className="text-gray-600 font-semibold">Text Tone:</p>
+            <p className="text-gray-800">{selectedTone || 'Not selected'}</p>
+          </div>
+          <div>
+            <p className="text-gray-600 font-semibold">Image Style:</p>
+            <p className="text-gray-800">{selectedStyle || 'Not selected'}</p>
+          </div>
+        </div>
+      </div>
+      
+      {/* LocalStorage Usage Section */}
+      <div className="bg-white p-4 rounded-lg shadow">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="font-bold text-gray-800 text-xl">LocalStorage Usage</h3>
           <div className="flex space-x-2">
             <Button 
+              onClick={refreshLocalStorageImages} 
               variant="outline" 
-              size="sm" 
-              onClick={refreshLocalStorageImages}
+              size="sm"
               disabled={isLoadingLocalStorage}
             >
-              <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingLocalStorage ? 'animate-spin' : ''}`} />
-              Refresh
+              {isLoadingLocalStorage ? (
+                <React.Fragment>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Loading...
+                </React.Fragment>
+              ) : (
+                'Refresh Local'
+              )}
             </Button>
             <Button 
+              onClick={clearLocalStorageImages} 
               variant="destructive" 
-              size="sm" 
-              onClick={clearLocalStorageImages}
-              disabled={isLoadingLocalStorage}
+              size="sm"
             >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Clear
+              <Trash2 className="mr-2 h-4 w-4" />
+              Clear Images
             </Button>
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div>
-              <div className="flex justify-between mb-1">
-                <span>Used: {formatBytes(localStorageUsage.used)} of {formatBytes(localStorageUsage.total)}</span>
-                <span>{Math.round((localStorageUsage.used / localStorageUsage.total) * 100)}%</span>
-              </div>
-              <Progress value={(localStorageUsage.used / localStorageUsage.total) * 100} />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        </div>
+
+        <div className="mb-4">
+          <div className="bg-gray-100 rounded-full h-4 mb-2">
+            <div 
+              className={`h-4 rounded-full ${localStorageUsage.used / localStorageUsage.total > 0.8 ? 'bg-red-500' : 'bg-green-500'}`}
+              style={{ width: `${Math.min(100, (localStorageUsage.used / localStorageUsage.total) * 100)}%` }}
+            ></div>
+          </div>
+          <div className="text-sm text-gray-600 flex justify-between">
+            <span>Used: {localStorageUsage.used.toFixed(2)} MB</span>
+            <span>Total: ~{localStorageUsage.total.toFixed(2)} MB</span>
+          </div>
+        </div>
+
+        {isLoadingLocalStorage ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+          </div>
+        ) : localStorageImages.length > 0 ? (
+          <div>
+            <p className="text-sm mb-2 text-gray-600">Total images in localStorage: {localStorageImages.length}</p>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {localStorageImages.map((image, index) => (
-                <div key={index} className="border rounded-md p-3">
-                  <div className="font-medium">{image.key}</div>
-                  <div className="text-sm text-gray-500">Size: {formatBytes(image.size)}</div>
-                  <div className="h-32 overflow-hidden mt-2">
-                    <img 
-                      src={image.dataUrl} 
-                      alt={`Preview of ${image.key}`}
-                      className="object-contain w-full h-full"
-                    />
-                  </div>
+                <div key={index} className="bg-gray-50 p-2 rounded">
+                  <img 
+                    src={image.dataUrl} 
+                    alt={image.key}
+                    className="w-full h-48 object-cover rounded mb-2"
+                  />
+                  <p className="text-xs text-gray-500 truncate" title={image.key}>
+                    {image.key}
+                  </p>
+                  <p className="text-xs text-orange-500 font-semibold">
+                    Size: {formatFileSize(image.size)}
+                  </p>
                 </div>
               ))}
             </div>
           </div>
-        </CardContent>
-      </Card>
+        ) : (
+          <p className="text-gray-500 py-8 text-center">No images found in localStorage.</p>
+        )}
+      </div>
       
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Supabase Storage Images</CardTitle>
+      {/* Supabase Images Section */}
+      <div className="bg-white p-4 rounded-lg shadow">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="font-bold text-gray-800 text-xl">Supabase Storage Images</h3>
           <Button 
+            onClick={refreshSupabaseImages} 
             variant="outline" 
-            size="sm" 
-            onClick={refreshSupabaseImages}
+            size="sm"
             disabled={isLoadingImages}
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingImages ? 'animate-spin' : ''}`} />
-            Refresh
+            {isLoadingImages ? (
+              <React.Fragment>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Loading...
+              </React.Fragment>
+            ) : (
+              'Refresh Supabase'
+            )}
           </Button>
-        </CardHeader>
-        <CardContent>
-          {isLoadingImages ? (
-            <div className="flex justify-center py-8">
-              <RefreshCw className="animate-spin h-8 w-8" />
-            </div>
-          ) : supabaseImages.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              No images found in Supabase storage
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {supabaseImages.map((image, index) => (
-                <div key={index} className="border rounded-md p-3">
-                  <div className="font-medium truncate" title={image.name}>
+        </div>
+
+        {isLoadingImages ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+          </div>
+        ) : supabaseImages.length > 0 ? (
+          <div>
+            <p className="text-sm mb-2 text-gray-600">Total images in Supabase: {supabaseImages.length}</p>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {supabaseImages.map((image) => (
+                <div key={image.id} className="bg-gray-50 p-2 rounded">
+                  <img 
+                    src={image.url} 
+                    alt={image.name}
+                    className="w-full h-48 object-cover rounded mb-2"
+                  />
+                  <p className="text-xs text-gray-500 truncate" title={image.name}>
                     {image.name}
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    Created: {new Date(image.created_at).toLocaleString()}
-                  </div>
-                  <div className="h-32 overflow-hidden mt-2">
-                    <img 
-                      src={image.url} 
-                      alt={`Preview of ${image.name}`}
-                      className="object-contain w-full h-full"
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Supabase Storage Texts</CardTitle>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={refreshTexts}
-            disabled={isLoadingTexts}
-          >
-            <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingTexts ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {isLoadingTexts ? (
-            <div className="flex justify-center py-8">
-              <RefreshCw className="animate-spin h-8 w-8" />
-            </div>
-          ) : supabaseTexts.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              No text files found in Supabase storage
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {supabaseTexts.map((textFile, index) => (
-                <div key={index} className="border rounded-md p-4">
-                  <h3 className="font-medium truncate" title={textFile.name}>
-                    {textFile.name}
-                  </h3>
-                  <p className="text-sm text-gray-500 mb-2">
-                    Created: {new Date(textFile.created_at).toLocaleString()}
                   </p>
-                  {textFile.content ? (
-                    <div className="bg-gray-50 p-3 rounded-md">
-                      <p><strong>Text:</strong> {textFile.content.text}</p>
-                      <p><strong>Tone:</strong> {textFile.content.tone}</p>
-                      {textFile.content.contentIndex !== undefined && (
-                        <p><strong>Index:</strong> {textFile.content.contentIndex}</p>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-amber-600">
-                      Content not available or could not be parsed
-                    </p>
-                  )}
+                  <p className="text-xs text-gray-400">
+                    {new Date(image.created_at).toLocaleString()}
+                  </p>
                 </div>
               ))}
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+        ) : (
+          <p className="text-gray-500 py-8 text-center">No images found in Supabase Storage.</p>
+        )}
+      </div>
       
-      <Card>
-        <CardHeader>
-          <CardTitle>Image Texts (LocalStorage)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {imageTexts.length === 0 ? (
-            <div className="text-center py-4 text-gray-500">
-              No image texts found in LocalStorage
+      <div className="space-y-4">
+        <h3 className="font-bold text-gray-800 text-xl">Story Elements:</h3>
+        
+        {/* Display the cover image data */}
+        <div className="bg-white p-4 rounded-lg shadow">
+          <h3 className="font-bold text-gray-800 mb-2">Cover Image:</h3>
+          <p className="text-gray-600 mb-4">{prompts[0]?.question}</p>
+          <p className="text-gray-600 font-mono text-sm bg-gray-50 p-2 rounded">{prompts[0]?.prompt}</p>
+        </div>
+
+        {/* Display the story image prompts with their text accompaniments */}
+        <div className="space-y-4">
+          <h3 className="font-bold text-gray-800">Story Images:</h3>
+          {prompts.slice(1).map((prompt, index) => (
+            <div key={index} className="bg-white p-4 rounded-lg shadow">
+              <h4 className="font-bold text-gray-800 mb-2">Image {index + 1}:</h4>
+              
+              <div className="mb-4">
+                <p className="text-gray-600 font-semibold mb-1">Question:</p>
+                <p className="text-gray-800">{prompt.question}</p>
+              </div>
+              
+              <div className="mb-4">
+                <p className="text-gray-600 font-semibold mb-1">Image Prompt:</p>
+                <p className="text-gray-600 font-mono text-sm bg-gray-50 p-2 rounded">{prompt.prompt}</p>
+              </div>
+              
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <p className="text-gray-600 font-semibold mb-1">Text Accompaniment ({texts[index]?.tone || selectedTone}):</p>
+                {texts[index] ? (
+                  <p className="text-gray-800 italic bg-blue-50 p-3 rounded">{texts[index].text}</p>
+                ) : (
+                  <p className="text-red-500">No text accompaniment found</p>
+                )}
+              </div>
             </div>
-          ) : (
-            <div className="space-y-4">
-              {imageTexts.map((text, index) => (
-                <div key={index} className="border rounded-md p-3">
-                  <div className="font-medium">Text {index + 1}</div>
-                  <div className="bg-gray-50 p-3 rounded-md mt-2">
-                    <p><strong>Text:</strong> {text.text}</p>
-                    <p><strong>Tone:</strong> {text.tone}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          ))}
+        </div>
+      </div>
       
-      <Card>
-        <CardHeader>
-          <CardTitle>Image Prompts</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <pre className="bg-gray-50 p-4 rounded-md overflow-auto max-h-[500px] text-xs">
-            {JSON.stringify(imagePrompts, null, 2)}
-          </pre>
-        </CardContent>
-      </Card>
+      {/* Raw data dump for debugging */}
+      <div className="bg-black text-green-400 p-4 rounded-lg font-mono text-xs mt-8 overflow-x-auto">
+        <h3 className="text-white mb-2">Raw Data:</h3>
+        <p className="mb-2">ImagePrompts:</p>
+        <pre>{JSON.stringify(prompts, null, 2)}</pre>
+        <p className="mt-4 mb-2">ImageTexts:</p>
+        <pre>{JSON.stringify(texts, null, 2)}</pre>
+        <p className="mt-4 mb-2">Supabase Storage URLs:</p>
+        <pre>{JSON.stringify(supabaseImages.map(img => img.url), null, 2)}</pre>
+        <p className="mt-4 mb-2">LocalStorage Usage:</p>
+        <pre>{JSON.stringify(localStorageUsage, null, 2)}</pre>
+      </div>
     </div>
   );
 
   return (
     <WizardStep
-      title="Debug Information"
-      description="Technical details for debugging purposes."
-      previousStep="/create/love/love-story/generate"
+      title="[DEV] Love Story Debug View"
+      description="This is a development-only view to check the stored data for the love story."
+      previousStep="/create/love/love-story/ideas"
+      nextStep="/create/love/love-story/generate"
       currentStep={5}
-      totalSteps={5}
+      totalSteps={6}
     >
       {debugContent}
     </WizardStep>

@@ -14,7 +14,7 @@ import { Check } from 'lucide-react';
 interface ContentImageCardProps {
   image?: string;
   isGenerating: boolean;
-  onEditText: (newText: string) => void;
+  onEditText: () => void;
   onRegenerate: (style?: string) => void;
   index: number;
   authorName?: string;
@@ -220,14 +220,6 @@ export const ContentImageCard = ({
     onRegenerate(selectedStyle);
   };
 
-  const onTextEdit = () => {
-    const newText = prompt("Edit the text:", text || "");
-    if (newText !== null && onEditText && typeof onEditText === 'function') {
-      // 调用父组件提供的文本编辑回调
-      onEditText(newText);
-    }
-  };
-
   return (
     <div className="glass-card rounded-2xl p-8 py-[40px] relative">
       <div className="max-w-xl mx-auto">
@@ -249,7 +241,7 @@ export const ContentImageCard = ({
         <div className="absolute bottom-4 right-4 flex gap-2">
           <Button
             variant="secondary"
-            onClick={onTextEdit}
+            onClick={onEditText}
           >
             <Edit className="w-4 h-4 mr-2" />
             Edit text
