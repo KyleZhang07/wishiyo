@@ -62,6 +62,7 @@ const GenerateStep = () => {
   const [isGeneratingContent10, setIsGeneratingContent10] = useState(false);
 
   const [selectedStyle, setSelectedStyle] = useState<string>('Photographic (Default)');
+  const [imageTexts, setImageTexts] = useState<ImageText[]>([]);
 
   const [isLoadingImages, setIsLoadingImages] = useState(false);
   const [supabaseImages, setSupabaseImages] = useState<SupabaseImage[]>([]);
@@ -132,11 +133,11 @@ const GenerateStep = () => {
     localStorage.removeItem(lsKey);
 
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
-    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
-    if (!savedPrompts || !partnerPhoto) {
+    const characterPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    if (!savedPrompts || !characterPhoto) {
       toast({
         title: "Missing info",
-        description: "No prompts or partner photo found",
+        description: "No prompts or character photo found",
         variant: "destructive",
       });
       return;
@@ -163,7 +164,7 @@ const GenerateStep = () => {
       // 使用更明确的请求格式
       const requestBody = {
         prompt: prompts[promptIndex].prompt,
-        photo: partnerPhoto,
+        photo: characterPhoto,
         style: imageStyle,
         contentIndex: index,  // 明确指定内容索引
         type: 'content'       // 明确内容类型
@@ -464,28 +465,20 @@ const GenerateStep = () => {
   };
 
   useEffect(() => {
-    // Load images from Supabase
+    // 加载文本内容和设置
+    const savedAuthor = localStorage.getItem('loveStoryAuthorName');
+    const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
+    const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
+    const savedMoments = localStorage.getItem('loveStoryMoments');
+    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const savedStyle = localStorage.getItem('loveStoryStyle');
+    const savedTexts = localStorage.getItem('loveStoryImageTexts');
+    
+    // 直接从Supabase加载所有图片，不再使用localStorage
     loadImagesFromSupabase();
 
-    // Load saved data from localStorage
-    const savedCoverTitle = localStorage.getItem('loveStoryTitle');
-    const savedSubtitle = localStorage.getItem('loveStorySubtitle');
-    const savedAuthorName = localStorage.getItem('loveStoryAuthorName');
-    const savedStyle = localStorage.getItem('loveStoryStyle');
-    const savedIdeas = localStorage.getItem('loveStoryIdeas');
-    const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdeaIndex');
-    const savedMoments = localStorage.getItem('loveStoryMoments');
-
-    if (savedCoverTitle) {
-      setCoverTitle(savedCoverTitle);
-    }
-
-    if (savedSubtitle) {
-      setSubtitle(savedSubtitle);
-    }
-
-    if (savedAuthorName) {
-      setAuthorName(savedAuthorName);
+    if (savedAuthor) {
+      setAuthorName(savedAuthor);
     }
 
     if (savedStyle) {
@@ -505,6 +498,14 @@ const GenerateStep = () => {
       // Update localStorage with the normalized style if it changed
       if (normalizedStyle !== savedStyle) {
         localStorage.setItem('loveStoryStyle', normalizedStyle);
+      }
+    }
+
+    if (savedTexts) {
+      try {
+        setImageTexts(JSON.parse(savedTexts));
+      } catch (error) {
+        console.error('Error parsing saved texts:', error);
       }
     }
 
@@ -545,8 +546,8 @@ const GenerateStep = () => {
     localStorage.removeItem('loveStoryCoverImage_url');
     
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
-    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
-    if (savedPrompts && partnerPhoto) {
+    const characterPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    if (savedPrompts && characterPhoto) {
       const prompts = JSON.parse(savedPrompts);
       if (prompts && prompts.length > 0) {
         setIsGeneratingCover(true);
@@ -564,7 +565,7 @@ const GenerateStep = () => {
           // 修复JSON循环引用错误 - 简化请求对象
           const requestBody = { 
             prompt: prompts[0].prompt, 
-            photo: partnerPhoto,
+            photo: characterPhoto,
             style: imageStyle,
             type: 'cover'  // 使用明确的type标识
           };
@@ -654,8 +655,8 @@ const GenerateStep = () => {
     localStorage.removeItem('loveStoryIntroImage_url');
     
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
-    const partnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
-    if (savedPrompts && partnerPhoto) {
+    const characterPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    if (savedPrompts && characterPhoto) {
       const prompts = JSON.parse(savedPrompts);
       if (prompts && prompts.length > 1) {
         setIsGeneratingIntro(true);
@@ -673,7 +674,7 @@ const GenerateStep = () => {
           // 修复请求结构，明确指定这是intro图片
           const requestBody = {
             contentPrompt: prompts[1].prompt, 
-            photo: partnerPhoto,
+            photo: characterPhoto,
             style: imageStyle,
             type: 'intro'
           };
@@ -760,105 +761,72 @@ const GenerateStep = () => {
     }
   };
 
-  const getImageCard = (imageIndex: string | number) => {
-    // Array of state-setting functions
-    const imageMap: Record<string, string | undefined> = {
-      "cover": coverImage,
-      "intro": introImage,
-      "1": contentImage1,
-      "2": contentImage2,
-      "3": contentImage3,
-      "4": contentImage4,
-      "5": contentImage5,
-      "6": contentImage6,
-      "7": contentImage7,
-      "8": contentImage8,
-      "9": contentImage9,
-      "10": contentImage10,
+  // Render content images with text inside the canvas
+  const renderContentImage = (imageIndex: number) => {
+    const imageStateMap: Record<number, string | undefined> = {
+      0: introImage,
+      1: contentImage1,
+      2: contentImage2,
+      3: contentImage3,
+      4: contentImage4,
+      5: contentImage5,
+      6: contentImage6,
+      7: contentImage7,
+      8: contentImage8,
+      9: contentImage9,
+      10: contentImage10,
     };
     
-    const image = imageMap[imageIndex.toString()];
-    const loadingStateMap: Record<string, boolean> = {
-      "cover": isGeneratingCover,
-      "intro": isGeneratingIntro,
-      "1": isGeneratingContent1,
-      "2": isGeneratingContent2,
-      "3": isGeneratingContent3,
-      "4": isGeneratingContent4,
-      "5": isGeneratingContent5,
-      "6": isGeneratingContent6,
-      "7": isGeneratingContent7,
-      "8": isGeneratingContent8,
-      "9": isGeneratingContent9,
-      "10": isGeneratingContent10,
+    const loadingStateMap: Record<number, boolean> = {
+      0: isGeneratingIntro,
+      1: isGeneratingContent1,
+      2: isGeneratingContent2,
+      3: isGeneratingContent3,
+      4: isGeneratingContent4, 
+      5: isGeneratingContent5,
+      6: isGeneratingContent6,
+      7: isGeneratingContent7,
+      8: isGeneratingContent8,
+      9: isGeneratingContent9,
+      10: isGeneratingContent10,
     };
     
-    const handleRegenerateMap: Record<string, (style?: string) => void> = {
-      "cover": handleRegenerateCover,
-      "intro": handleRegenerateIntro,
-      "1": handleRegenerateContent1,
-      "2": handleRegenerateContent2,
-      "3": handleRegenerateContent3,
-      "4": handleRegenerateContent4,
-      "5": handleRegenerateContent5,
-      "6": handleRegenerateContent6,
-      "7": handleRegenerateContent7,
-      "8": handleRegenerateContent8,
-      "9": handleRegenerateContent9,
-      "10": handleRegenerateContent10,
+    const handleRegenerateMap: Record<number, (style?: string) => void> = {
+      0: handleRegenerateIntro,
+      1: handleRegenerateContent1,
+      2: handleRegenerateContent2,
+      3: handleRegenerateContent3,
+      4: handleRegenerateContent4,
+      5: handleRegenerateContent5,
+      6: handleRegenerateContent6,
+      7: handleRegenerateContent7,
+      8: handleRegenerateContent8,
+      9: handleRegenerateContent9,
+      10: handleRegenerateContent10,
     };
     
-    const isLoading = loadingStateMap[imageIndex.toString()];
-    const handleRegenerate = handleRegenerateMap[imageIndex.toString()];
+    const image = imageStateMap[imageIndex];
+    const isLoading = loadingStateMap[imageIndex];
+    const handleRegenerate = handleRegenerateMap[imageIndex];
+    // Get the text for this image, adjusting for zero-based array index
+    const imageText = imageTexts && imageTexts.length > imageIndex ? imageTexts[imageIndex] : null;
     
-    // Display title based on section
-    let title = ""; 
-    if (imageIndex === "cover") {
-      title = "Cover";
-    } else if (imageIndex === "intro") {
-      title = "Introduction";
-    } else {
-      title = `Moment ${imageIndex}`;
-    }
+    // 显示标题适配新的命名方式
+    let title = imageIndex === 0 ? "Introduction" : `Moment ${imageIndex}`;
     
-    // Check if intro page to show dedication text
-    const showDedicationText = imageIndex === "intro";
-    
-    // Render different components based on image type
-    if (imageIndex === "cover") {
-      return (
-        <div key={`image-card-${imageIndex}`} className="aspect-[3/4] h-[500px] w-[375px] mx-auto">
-          <CoverPreviewCard
-            coverImage={image}
-            coverTitle={coverTitle}
-            subtitle={subtitle}
-            authorName={authorName}
-            backCoverText={backCoverText}
-            isGeneratingCover={!!isLoading}
-            onEditCover={handleEditCover}
-            onRegenerateCover={handleRegenerate as () => void}
-          />
-        </div>
-      );
-    } else {
-      const numericIndex = typeof imageIndex === 'number' ? imageIndex : imageIndex === 'intro' ? 0 : parseInt(imageIndex);
-      return (
-        <div key={`image-card-${imageIndex}`} className="aspect-[3/4] h-[500px] w-[375px] mx-auto">
-          <ContentImageCard
-            image={image}
-            isGenerating={!!isLoading}
-            onEditText={handleEditText}
-            onRegenerate={handleRegenerate as (style?: string) => void}
-            index={numericIndex}
-            text=""
-            title={title}
-            authorName={authorName}
-            coverTitle={coverTitle}
-            showDedicationText={showDedicationText}
-          />
-        </div>
-      );
-    }
+    return (
+      <div className="mb-10">
+        <ContentImageCard 
+          image={image} 
+          isGenerating={isLoading}
+          onRegenerate={handleRegenerate}
+          index={imageIndex}
+          onEditText={() => {}}
+          text={imageText?.text}
+          title={title}
+        />
+      </div>
+    );
   };
 
   // 添加刷新图片的函数
@@ -895,13 +863,32 @@ const GenerateStep = () => {
         {/* Cover section */}
         <div className="mb-12">
           <h2 className="text-2xl font-bold mb-4">Cover</h2>
-          {getImageCard("cover")}
+          <CoverPreviewCard 
+            coverImage={coverImage}
+            coverTitle={coverTitle}
+            subtitle={subtitle}
+            authorName={authorName}
+            backCoverText={backCoverText}
+            isGeneratingCover={isGeneratingCover}
+            onRegenerateCover={handleRegenerateCover}
+            onEditCover={() => {}}
+          />
         </div>
         
         {/* 介绍部分 - 将Intro与其他Content分开 */}
         <div className="mb-12 border-t-2 border-gray-200 pt-8">
           <h2 className="text-2xl font-bold mb-6">Introduction</h2>
-          {getImageCard("intro")}
+          <div className="mb-10">
+            <ContentImageCard 
+              image={introImage} 
+              isGenerating={isGeneratingIntro}
+              onRegenerate={handleRegenerateIntro}
+              index={0}
+              onEditText={() => {}}
+              text={imageTexts && imageTexts.length > 0 ? imageTexts[0]?.text : undefined}
+              title="Introduction"
+            />
+          </div>
         </div>
         
         {/* 内容部分 */}
@@ -909,16 +896,16 @@ const GenerateStep = () => {
           <h2 className="text-2xl font-bold mb-6">Story Moments</h2>
           <div className="space-y-8">
             {/* 只渲染内容图片，跳过介绍图片 */}
-            {getImageCard(1)}
-            {getImageCard(2)}
-            {getImageCard(3)}
-            {getImageCard(4)}
-            {getImageCard(5)}
-            {getImageCard(6)}
-            {getImageCard(7)}
-            {getImageCard(8)}
-            {getImageCard(9)}
-            {getImageCard(10)}
+            {renderContentImage(1)}
+            {renderContentImage(2)}
+            {renderContentImage(3)}
+            {renderContentImage(4)}
+            {renderContentImage(5)}
+            {renderContentImage(6)}
+            {renderContentImage(7)}
+            {renderContentImage(8)}
+            {renderContentImage(9)}
+            {renderContentImage(10)}
           </div>
         </div>
       </div>

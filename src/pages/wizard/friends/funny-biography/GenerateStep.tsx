@@ -9,36 +9,44 @@ import { useToast } from '@/hooks/use-toast';
 // Define combined style presets
 const stylePresets = [
   {
-    id: 'modern-green',
-    name: 'Modern Green',
-    font: 'playfair',
-    template: 'vibrant-green',
-    layout: 'classic-centered',
-    description: 'Black background with green text'
-  },
-  {
-    id: 'classic-elegant',
-    name: 'Classic Elegant',
+    id: 'classic-red',
+    name: '经典红色',
     font: 'merriweather',
     template: 'classic',
-    layout: 'left-align',
-    description: 'Cream background with red accents'
+    layout: 'classic-centered',
+    description: '红色背景与金色边框，典雅风格'
   },
   {
-    id: 'bold-vibrant',
-    name: 'Bold Vibrant',
+    id: 'modern-green',
+    name: '现代绿色',
     font: 'montserrat',
-    template: 'vibrant',
+    template: 'vibrant-green',
     layout: 'bold-header',
-    description: 'Blue background with yellow highlights'
+    description: '黑色背景配以鲜亮的绿色文字'
   },
   {
-    id: 'minimal-clean',
-    name: 'Minimal Clean',
+    id: 'minimal-gray',
+    name: '简约灰色',
     font: 'roboto',
     template: 'minimal',
     layout: 'minimal-frame',
-    description: 'Light background with dark text'
+    description: '灰色背景与黑白配色，简约时尚'
+  },
+  {
+    id: 'vibrant-blue',
+    name: '活力蓝色',
+    font: 'montserrat',
+    template: 'vibrant',
+    layout: 'bold-header',
+    description: '蓝色背景与黄色文字，充满活力'
+  },
+  {
+    id: 'pastel-beige',
+    name: '柔和米色',
+    font: 'playfair',
+    template: 'classic',
+    layout: 'left-align',
+    description: '米色背景与深蓝色文字，温暖柔和'
   }
 ];
 
@@ -48,7 +56,7 @@ const FunnyBiographyGenerateStep = () => {
   const [subtitle, setSubtitle] = useState('');
   const [authorName, setAuthorName] = useState('');
   const [coverImage, setCoverImage] = useState<string>();
-  const [selectedStyle, setSelectedStyle] = useState('modern-green');
+  const [selectedStyle, setSelectedStyle] = useState('classic-red');
   const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
   const [imageScale, setImageScale] = useState(100);
   const { toast } = useToast();
@@ -63,9 +71,14 @@ const FunnyBiographyGenerateStep = () => {
     const savedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
     const savedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
     const savedPhotos = localStorage.getItem('funnyBiographyPhoto');
+    const savedStyle = localStorage.getItem('funnyBiographySelectedStyle');
 
     if (savedAuthor) {
       setAuthorName(savedAuthor);
+    }
+
+    if (savedStyle) {
+      setSelectedStyle(savedStyle);
     }
 
     if (savedIdeas && savedIdeaIndex) {
