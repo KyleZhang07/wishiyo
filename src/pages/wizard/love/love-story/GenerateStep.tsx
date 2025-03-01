@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
@@ -106,6 +107,7 @@ const GenerateStep = () => {
       const personName = localStorage.getItem('loveStoryPersonName');
       
       if (!savedPrompts) {
+        console.error('No prompts found in localStorage');
         throw new Error('No prompts found');
       }
       
@@ -127,11 +129,15 @@ const GenerateStep = () => {
         }
       });
       
+      console.log('Response from generate-image-text:', data, error);
+      
       if (error) {
+        console.error('Error from generate-image-text:', error);
         throw error;
       }
       
       if (!data || !data.texts || !data.texts.length) {
+        console.error('No text data received:', data);
         throw new Error('No text received from server');
       }
       
@@ -149,6 +155,7 @@ const GenerateStep = () => {
         }
       }
       
+      // Ensure the array is large enough
       while (currentTexts.length <= promptIndex) {
         currentTexts.push({
           text: "A special moment captured in time.",
@@ -156,13 +163,18 @@ const GenerateStep = () => {
         });
       }
       
+      // Update the specific text at the index
       currentTexts[promptIndex] = data.texts[0];
       
+      // Save the updated texts back to localStorage
       localStorage.setItem('loveStoryImageTexts', JSON.stringify(currentTexts));
       
+      // Update the state
       setImageTexts(currentTexts);
       
       console.log(`Updated text at index ${promptIndex}:`, data.texts[0]);
+      console.log('Complete imageTexts array:', currentTexts);
+      
       return data.texts[0];
     } catch (error) {
       console.error('Error generating image texts:', error);
@@ -229,9 +241,15 @@ const GenerateStep = () => {
 
     setIsGenerating(true);
     try {
+      console.log(`Starting regeneration for content image ${index}`);
       const prompts = JSON.parse(savedPrompts);
-      const promptIndex = index <= prompts.length ? index - 1 : prompts.length - 1;
+      // 关键修复: 确保 promptIndex 计算正确，内容图片索引是从1开始，但提示数组索引是从0开始
+      const promptIndex = index - 1;
+      
+      console.log(`Using prompt index ${promptIndex} for content image ${index}`);
+      
       if (!prompts[promptIndex]) {
+        console.error(`No prompt found at index ${promptIndex}`);
         throw new Error(`No prompt found for content index ${promptIndex}`);
       }
       
@@ -256,12 +274,16 @@ const GenerateStep = () => {
         body: requestBody
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error generating image:', error);
+        throw error;
+      }
 
       console.log(`Content ${index} generation response:`, data);
 
       const imageUrl = data?.[`contentImage${index}`]?.[0] || data?.output?.[0];
       if (!imageUrl) {
+        console.error('No image URL in response:', data);
         throw new Error("No image generated from generate-love-cover");
       }
 
@@ -275,6 +297,7 @@ const GenerateStep = () => {
         `love-story-content-${index}-${timestamp}`
       );
 
+      // 设置图片
       setContentFn(expandedBase64);
       setImageStorageMap(prev => ({
         ...prev,
@@ -287,9 +310,12 @@ const GenerateStep = () => {
       localStorage.setItem(`${lsKey}_url`, storageUrl);
 
       console.log(`Generating text for prompt index ${promptIndex}, image index ${index}`);
+      
+      // 关键修复: 先生成文本
       const newText = await generateImageText(promptIndex);
       console.log(`Generated new text for image ${index}:`, newText);
 
+      // 关键修复: 立即更新文本状态，确保UI显示新文本
       const updatedTexts = [...imageTexts];
       while (updatedTexts.length <= promptIndex) {
         updatedTexts.push({
@@ -299,6 +325,9 @@ const GenerateStep = () => {
       }
       updatedTexts[promptIndex] = newText;
       setImageTexts(updatedTexts);
+      
+      // 保存到本地存储
+      localStorage.setItem('loveStoryImageTexts', JSON.stringify(updatedTexts));
 
       setTimeout(() => {
         loadImagesFromSupabase();

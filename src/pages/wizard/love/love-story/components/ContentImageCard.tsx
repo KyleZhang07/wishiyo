@@ -80,13 +80,14 @@ export const ContentImageCard = ({
     }
   }, []);
 
-  // Update displayText when text prop changes
+  // 关键修复: 当text属性改变时更新显示的文本
   useEffect(() => {
+    console.log(`ContentImageCard[${index}] text prop changed:`, text);
     if (text) {
       setDisplayText(text);
       setEditableText(text);
     }
-  }, [text]);
+  }, [text, index]);
 
   useEffect(() => {
     if (canvasRef.current && image && !isGenerating) {
@@ -181,7 +182,8 @@ export const ContentImageCard = ({
         const textStartY = height - overlayHeight + 70;
         const maxWidth = width - 50; // Padding on both sides
         
-        // Use provided text or a simple placeholder
+        // 关键修复: 确保使用最新的displayText
+        console.log(`Drawing text on canvas[${index}]:`, displayText);
         wrapText(displayText, 25, textStartY, maxWidth, 24);
         
         // Draw dedication text if needed
@@ -232,10 +234,12 @@ export const ContentImageCard = ({
     setIsDialogOpen(false);
     
     // Call the onRegenerate function with the selected style
+    console.log(`Regenerating image ${index} with style ${selectedStyle}`);
     onRegenerate(selectedStyle);
   };
 
   const handleSaveText = () => {
+    console.log(`Saving edited text for image ${index}:`, editableText);
     setDisplayText(editableText);
     if (onTextUpdate) {
       onTextUpdate(editableText);

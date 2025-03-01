@@ -6,3 +6,5 @@ verify_jwt = false
 verify_jwt = false
 [functions.generate-love-cover]
 verify_jwt = false
+[functions.expand-image]
+verify_jwt = false
