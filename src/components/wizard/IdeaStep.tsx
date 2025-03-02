@@ -335,10 +335,10 @@ const IdeaStep = ({
 
   const handleContinue = () => {
     if (category === 'love') {
-      if (!selectedTone) {
+      if (!selectedStyle) {
         toast({
           title: "Selection required",
-          description: "Please select a text tone.",
+          description: "Please select an image style.",
           variant: "destructive",
         });
         return;
@@ -432,29 +432,29 @@ const IdeaStep = ({
     <WizardStep
       title={category === 'love' ? "Customize Your Love Story" : "Let's pick a fantasy life story"}
       description={category === 'love' 
-        ? "Choose a writing tone and visual style for your personalized love story."
+        ? "Choose a visual style for your personalized love story."
         : "Choose from these AI-generated fantasy autobiography ideas or regenerate for more options."}
       previousStep={previousStep}
       currentStep={4}
-      totalSteps={5}
+      totalSteps={category === 'love' ? 7 : 5}
       onNextClick={handleContinue}
     >
       <div className="space-y-6">
         {category === 'love' && (
           <div className="bg-white rounded-lg p-6 shadow-md mb-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Select a Text Tone</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Select an Image Style</h3>
             <p className="text-gray-500 mb-6">
-              This determines the writing style of your love story.
+              This determines the visual aesthetic of all the generated images in your love story.
             </p>
             
             <div className="space-y-3">
-              {TONE_OPTIONS.map((tone) => (
+              {STYLE_OPTIONS.map((style) => (
                 <div 
-                  key={tone}
-                  onClick={() => handleToneSelect(tone)}
+                  key={style}
+                  onClick={() => handleStyleSelect(style)}
                   className={`
                     flex items-center p-3 rounded-md cursor-pointer transition-all
-                    ${selectedTone === tone 
+                    ${selectedStyle === style 
                       ? category === 'love'
                         ? 'bg-[#FF7F50]/10 border border-[#FF7F50]'
                         : 'bg-[#F6C744]/10 border border-[#F6C744]' 
@@ -462,7 +462,7 @@ const IdeaStep = ({
                   `}
                 >
                   <div className="flex-shrink-0 mr-3">
-                    {selectedTone === tone ? (
+                    {selectedStyle === style ? (
                       <div className={`w-5 h-5 rounded-full ${category === 'love' ? 'bg-[#FF7F50]' : 'bg-[#F6C744]'} flex items-center justify-center`}>
                         <Check className="w-3 h-3 text-white" />
                       </div>
@@ -471,13 +471,13 @@ const IdeaStep = ({
                     )}
                   </div>
                   <div>
-                    <h4 className="font-medium text-gray-900">{tone}</h4>
+                    <h4 className="font-medium text-gray-900">{style}</h4>
                     <p className="text-sm text-gray-500">
-                      {tone === 'Humorous' && 'Light-hearted and funny tone'}
-                      {tone === 'Poetic' && 'Lyrical and expressive language'}
-                      {tone === 'Dramatic' && 'Intense and emotional storytelling'}
-                      {tone === 'Heartfelt' && 'Sincere and deeply emotional'}
-                      {tone === 'Encouraging' && 'Uplifting and inspirational'}
+                      {style === 'Comic Book' && 'Bold outlines and vibrant colors'}
+                      {style === 'Line Art' && 'Elegant, minimalist black and white illustration'}
+                      {style === 'Fantasy Art' && 'Dreamlike and magical aesthetic'}
+                      {style === 'Photographic' && 'Realistic, photography-like images'}
+                      {style === 'Cinematic' && 'Film-like with dramatic lighting and composition'}
                     </p>
                   </div>
                 </div>

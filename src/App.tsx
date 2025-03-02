@@ -29,6 +29,7 @@ import LoveStoryQuestionsStep from "./pages/wizard/love/love-story/QuestionsStep
 import LoveStoryMomentsStep from "./pages/wizard/love/love-story/MomentsStep";
 import LoveStoryStyleStep from "./pages/wizard/love/love-story/StyleStep";
 import LoveStoryIdeasStep from "./pages/wizard/love/love-story/IdeasStep";
+import LoveStoryCoverStep from "./pages/wizard/love/love-story/CoverStep";
 import LoveStoryGenerateStep from "./pages/wizard/love/love-story/GenerateStep";
 import DebugPromptsStep from "./pages/wizard/love/love-story/DebugPromptsStep";
 
@@ -67,6 +68,7 @@ const AppLayout = () => {
           <Route path="/create/love/love-story/moments" element={<LoveStoryMomentsStep />} />
           <Route path="/create/love/love-story/style" element={<LoveStoryStyleStep />} />
           <Route path="/create/love/love-story/ideas" element={<LoveStoryIdeasStep />} />
+          <Route path="/create/love/love-story/cover" element={<LoveStoryCoverStep />} />
           <Route path="/create/love/love-story/debug-prompts" element={<DebugPromptsStep />} />
           <Route path="/create/love/love-story/generate" element={<LoveStoryGenerateStep />} />
           

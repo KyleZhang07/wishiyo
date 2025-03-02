@@ -29,11 +29,11 @@ const CanvasCoverPreview = ({
   selectedTemplate,
   selectedLayout,
   category = 'friends',
-  imagePosition = { x: 0, y: 0 },
-  imageScale = 100,
+  imagePosition = { x: 0.5, y: 0.5 },
+  imageScale = 1,
   onImageAdjust,
   previewMode = false,
-  scaleFactor = 0.5,
+  scaleFactor = 0.5, // 调整默认缩放因子，使封面整体变小
   praises = []
 }: CanvasCoverPreviewProps) => {
   const frontCoverRef = useRef<HTMLCanvasElement>(null);
@@ -56,16 +56,23 @@ const CanvasCoverPreview = ({
     const baseWidth = 800;
     const baseHeight = 1200;
     
+    // 获取设备像素比，用于高清屏幕渲染
+    const pixelRatio = window.devicePixelRatio || 1;
+    
     // Apply scale factor to dimensions
     const scaledWidth = Math.floor(baseWidth * scaleFactor);
     const scaledHeight = Math.floor(baseHeight * scaleFactor);
 
-    // Set canvas dimensions for front cover with scaling
-    frontCanvas.width = scaledWidth;
-    frontCanvas.height = scaledHeight;
+    // 设置Canvas的物理像素大小
+    frontCanvas.width = scaledWidth * pixelRatio;
+    frontCanvas.height = scaledHeight * pixelRatio;
     
-    // Scale the context to maintain correct drawing proportions
-    frontCtx.scale(scaleFactor, scaleFactor);
+    // 设置Canvas的CSS显示大小
+    frontCanvas.style.width = `${scaledWidth}px`;
+    frontCanvas.style.height = `${scaledHeight}px`;
+    
+    // 根据设备像素比缩放绘图上下文
+    frontCtx.scale(scaleFactor * pixelRatio, scaleFactor * pixelRatio);
     
     // Clear and draw front canvas (at base size, context scaling will handle the rest)
     frontCtx.clearRect(0, 0, baseWidth, baseHeight);
@@ -82,18 +89,22 @@ const CanvasCoverPreview = ({
       
       if (spineCtx && backCtx) {
         // Base spine width
-        const baseSpineWidth = 60;
+        const baseSpineWidth = 80;
         
-        // Set canvas dimensions for spine and back with scaling
-        spineCanvas.width = Math.floor(baseSpineWidth * scaleFactor);
-        spineCanvas.height = scaledHeight;
+        // 同样应用高清屏幕渲染
+        spineCanvas.width = Math.floor(baseSpineWidth * scaleFactor) * pixelRatio;
+        spineCanvas.height = scaledHeight * pixelRatio;
+        spineCanvas.style.width = `${Math.floor(baseSpineWidth * scaleFactor)}px`;
+        spineCanvas.style.height = `${scaledHeight}px`;
         
-        backCanvas.width = scaledWidth;
-        backCanvas.height = scaledHeight;
+        backCanvas.width = scaledWidth * pixelRatio;
+        backCanvas.height = scaledHeight * pixelRatio;
+        backCanvas.style.width = `${scaledWidth}px`;
+        backCanvas.style.height = `${scaledHeight}px`;
         
-        // Scale the contexts
-        spineCtx.scale(scaleFactor, scaleFactor);
-        backCtx.scale(scaleFactor, scaleFactor);
+        // 缩放上下文
+        spineCtx.scale(scaleFactor * pixelRatio, scaleFactor * pixelRatio);
+        backCtx.scale(scaleFactor * pixelRatio, scaleFactor * pixelRatio);
         
         // Clear and draw spine and back canvases
         spineCtx.clearRect(0, 0, baseSpineWidth, baseHeight);
@@ -139,7 +150,7 @@ const CanvasCoverPreview = ({
       }
 
       // Apply user's position and scale adjustments
-      const scale = imageScale / 100;
+      const scale = imageScale;
       drawWidth *= scale;
       drawHeight *= scale;
       x -= (drawWidth - width) * imagePosition.x;
@@ -226,7 +237,11 @@ const CanvasCoverPreview = ({
     ctx.font = `bold 48px ${selectedFont}`;
     ctx.fillStyle = '#FFFFFF'; // White text
     ctx.textAlign = 'left';
-    ctx.fillText(initials, 40, 80);
+    
+    // 确保绘制在整数像素位置，避免模糊
+    const x1 = Math.round(40);
+    const y1 = Math.round(80);
+    ctx.fillText(initials, x1, y1);
 
     // Draw title at the bottom in green
     ctx.font = `bold 48px ${selectedFont}`;
@@ -240,33 +255,39 @@ const CanvasCoverPreview = ({
     const firstLine = titleLines.slice(0, midPoint).join(' ');
     const secondLine = titleLines.slice(midPoint).join(' ');
     
-    ctx.fillText(firstLine, 40, height - 140);
+    // 使用整数坐标绘制文本
+    const x2 = Math.round(40);
+    const y2 = Math.round(height - 140);
+    ctx.fillText(firstLine, x2, y2);
+    
     if (secondLine) {
-      ctx.fillText(secondLine, 40, height - 80);
+      const y3 = Math.round(height - 80);
+      ctx.fillText(secondLine, x2, y3);
     }
 
     // Draw subtitle below title
     ctx.font = `18px ${selectedFont}`;
     ctx.fillStyle = '#FFFFFF'; // White text
     ctx.textAlign = 'left';
-    ctx.fillText(subtitle, 40, height - 40);
+    const y4 = Math.round(height - 40);
+    ctx.fillText(subtitle, x2, y4);
 
     // Draw bestseller badge (like in the reference image)
     if (category === 'friends') {
       // Draw hexagonal badge instead of circle
-      const badgeX = width - 120;
-      const badgeY = 250;
+      const badgeX = Math.round(width - 120);
+      const badgeY = Math.round(250);
       const badgeSize = 100;
       
       // Draw hexagon
       ctx.fillStyle = '#7CFC00'; // Bright green
       ctx.beginPath();
       
-      // Draw hexagon path
+      // Draw hexagon path with整数坐标
       for (let i = 0; i < 6; i++) {
         const angle = (Math.PI / 3) * i - Math.PI / 6;
-        const x = badgeX + badgeSize * Math.cos(angle);
-        const y = badgeY + badgeSize * Math.sin(angle);
+        const x = Math.round(badgeX + badgeSize * Math.cos(angle));
+        const y = Math.round(badgeY + badgeSize * Math.sin(angle));
         if (i === 0) {
           ctx.moveTo(x, y);
         } else {
@@ -277,14 +298,15 @@ const CanvasCoverPreview = ({
       ctx.closePath();
       ctx.fill();
       
-      // Draw text in badge
+      // Draw text in badge with整数坐标
       ctx.fillStyle = '#121212'; // Dark text
       ctx.textAlign = 'center';
+      
       ctx.font = `bold 36px ${selectedFont}`;
-      ctx.fillText('#1', badgeX, badgeY - 15);
-      ctx.font = `bold 14px ${selectedFont}`;
-      ctx.fillText('WORLDWIDE', badgeX, badgeY + 15);
-      ctx.fillText('BESTSELLER', badgeX, badgeY + 35);
+      ctx.fillText('#1', Math.round(badgeX), Math.round(badgeY - 15));
+      ctx.font = `bold 16px ${selectedFont}`;
+      ctx.fillText('WORLDWIDE', Math.round(badgeX), Math.round(badgeY + 15));
+      ctx.fillText('BESTSELLER', Math.round(badgeX), Math.round(badgeY + 35));
     }
   };
 
@@ -305,9 +327,9 @@ const CanvasCoverPreview = ({
       .join('')
       .toUpperCase();
     
-    // Draw spine text vertically
+    // Draw spine text vertically with整数坐标
     ctx.save();
-    ctx.translate(width/2, height/2);
+    ctx.translate(Math.round(width/2), Math.round(height/2));
     ctx.rotate(-Math.PI/2);
     
     // Draw title text vertically - use shorter text if too long
@@ -329,7 +351,7 @@ const CanvasCoverPreview = ({
     ctx.font = `bold 20px ${selectedFont}`;
     ctx.fillStyle = '#FFFFFF'; // White text
     ctx.textAlign = 'center';
-    ctx.fillText(initials, 0, -height/2 + 50);
+    ctx.fillText(initials, 0, Math.round(-height/2 + 50));
     
     ctx.restore();
   };
@@ -348,44 +370,47 @@ const CanvasCoverPreview = ({
     if (praises && praises.length > 0) {
       const availablePraises = praises.slice(0, 4); // 限制最多显示4条赞美语
       
-      // 设置标题
+      // 设置标题 - 确保使用整数坐标
       ctx.textAlign = 'left';
       ctx.fillStyle = template.backCoverStyle.textColor || '#FFFFFF';
-      ctx.font = `bold 20px ${selectedFont}`;
-      ctx.fillText(`Praises for ${coverTitle}`, 40, 60);
+      ctx.font = `bold 24px ${selectedFont}`; // 使用稍大的字体
+      
+      const x = Math.round(40);
+      const y = Math.round(60);
+      ctx.fillText(`Praises for ${coverTitle}`, x, y);
       
       let yPosition = 100;
       
       // 绘制每条赞美语
       availablePraises.forEach(praise => {
         // 赞美文本内容
-        ctx.font = `italic 14px ${selectedFont}`;
+        ctx.font = `italic 18px ${selectedFont}`; // 稍大的字体
         
-        // 使用文本换行函数
-        const wrappedText = wrapTextWithHeight(ctx, `"${praise.text}"`, 40, yPosition, width - 80, 18);
-        yPosition += wrappedText.height + 10;
+        // 使用文本换行函数 - 确保使用整数坐标
+        const wrappedText = wrapTextWithHeight(ctx, `"${praise.text}"`, x, Math.round(yPosition), width - 80, 24);
+        yPosition += wrappedText.height + 15;
         
         // 赞美来源
-        ctx.font = `bold 14px ${selectedFont}`;
-        ctx.fillText(praise.source, 40, yPosition);
+        ctx.font = `bold 20px ${selectedFont}`;
+        ctx.fillText(praise.source, x, Math.round(yPosition));
         
-        yPosition += 40; // 为下一条赞美语留出空间
+        yPosition += 50; // 为下一条赞美语留出更多空间
       });
     }
 
-    // Draw book info at the bottom
+    // Draw book info at the bottom - 确保使用整数坐标
     ctx.textAlign = 'left';
     ctx.fillStyle = '#FFFFFF'; // White text
     ctx.font = `14px ${selectedFont}`;
-    ctx.fillText("Visit bookbyanyone.com", 40, height - 80);
+    ctx.fillText("Visit bookbyanyone.com", Math.round(40), Math.round(height - 80));
     
     ctx.font = `bold 18px ${selectedFont}`;
     ctx.fillStyle = '#FF6B35'; // Orange for BOOK BY ANYONE
-    ctx.fillText("BOOK BY ANYONE", 40, height - 50);
+    ctx.fillText("BOOK BY ANYONE", Math.round(40), Math.round(height - 50));
 
     // Draw barcode at the bottom right
     ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(width - 180, height - 100, 140, 60);
+    ctx.fillRect(Math.round(width - 180), Math.round(height - 100), 140, 60);
   };
 
   // 添加文本换行并计算高度的辅助函数
@@ -402,13 +427,21 @@ const CanvasCoverPreview = ({
     let testLine = '';
     let lineCount = 0;
     
+    // 设置文本渲染属性 - 保证清晰度
+    ctx.textBaseline = 'middle'; // 使文本垂直居中，增加清晰度
+    
+    // 应用适当的字符间距，增加可读性
+    ctx.letterSpacing = '0.5px';
+    
     for (let n = 0; n < words.length; n++) {
       testLine = line + words[n] + ' ';
       const metrics = ctx.measureText(testLine);
       const testWidth = metrics.width;
       
       if (testWidth > maxWidth && n > 0) {
-        ctx.fillText(line, x, y + (lineCount * lineHeight));
+        // 绘制当前行，使用描边增加清晰度
+        ctx.fillText(line, x, y + (lineCount * lineHeight) + lineHeight/2);
+        
         line = words[n] + ' ';
         lineCount++;
       } else {
@@ -416,52 +449,48 @@ const CanvasCoverPreview = ({
       }
     }
     
-    ctx.fillText(line, x, y + (lineCount * lineHeight));
+    // 绘制最后一行，使用描边增加清晰度
+    ctx.fillText(line, x, y + (lineCount * lineHeight) + lineHeight/2);
     
+    // 返回文本块的总高度
     return {
       height: lineCount * lineHeight + lineHeight // 总高度
     };
   };
 
   return (
-    <div className="w-full">
-      <div className="relative flex justify-center">
-        <div className="flex">
-          {/* Front Cover is always visible */}
-          <canvas 
-            ref={frontCoverRef}
-            className="border border-gray-300 shadow-lg"
-            style={{ maxWidth: '100%', height: 'auto', objectFit: 'contain' }}
-          ></canvas>
-          
-          {/* Spine and Back Cover only visible when not in preview mode */}
-          {!previewMode && (
-            <>
-              <canvas 
-                ref={spineRef}
-                className="border-t border-b border-r border-gray-300 shadow-lg"
-                style={{ maxWidth: '100%', height: 'auto', objectFit: 'contain' }}
-              ></canvas>
-              <canvas 
-                ref={backCoverRef}
-                className="border-t border-b border-r border-gray-300 shadow-lg"
-                style={{ maxWidth: '100%', height: 'auto', objectFit: 'contain' }}
-              ></canvas>
-            </>
-          )}
+    <div className="relative">
+      {/* 预览模式下只显示封面 */}
+      {previewMode ? (
+        <div className="relative">
+          <canvas ref={frontCoverRef} className="block" />
         </div>
-        
-        {onImageAdjust && coverImage && (
-          <div className="absolute bottom-0 left-0 right-0 flex justify-center pb-4">
-            <CoverImageControls 
-              coverImage={coverImage}
-              imagePosition={imagePosition}
-              imageScale={imageScale}
-              onImageAdjust={onImageAdjust}
-            />
+      ) : (
+        <div className="flex items-start">
+          {/* 调整封面之间的间距 */}
+          <div className="mr-6">
+            <canvas ref={frontCoverRef} className="block" />
           </div>
-        )}
-      </div>
+          <div className="mr-6">
+            <canvas ref={spineRef} className="block" />
+          </div>
+          <div>
+            <canvas ref={backCoverRef} className="block" />
+          </div>
+        </div>
+      )}
+      
+      {/* 调整图片按钮 */}
+      {image && !previewMode && (
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+          <CoverImageControls 
+            coverImage={coverImage}
+            imagePosition={imagePosition}
+            imageScale={imageScale}
+            onImageAdjust={onImageAdjust}
+          />
+        </div>
+      )}
     </div>
   );
 };

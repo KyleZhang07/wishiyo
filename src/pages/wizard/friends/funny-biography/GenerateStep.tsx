@@ -185,7 +185,7 @@ const FunnyBiographyGenerateStep = () => {
             imagePosition={imagePosition}
             imageScale={imageScale}
             onImageAdjust={handleImageAdjust}
-            scaleFactor={0.4}
+            scaleFactor={0.5}
             praises={praises}
           />
         </div>

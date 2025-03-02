@@ -5,7 +5,7 @@ const LoveStoryIdeasStep = () => {
     <IdeaStep
       category="love"
       previousStep="/create/love/love-story/style"
-      nextStep="/create/love/love-story/debug-prompts"
+      nextStep="/create/love/love-story/cover"
     />
   );
 };
