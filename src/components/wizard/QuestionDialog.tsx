@@ -94,17 +94,17 @@ const QuestionDialog = ({
               <>
                 <Button 
                   variant="ghost" 
-                  className="absolute left-0 p-2 text-gray-600 hover:text-primary hover:bg-primary/10 rounded-full" 
+                  className="absolute left-0 p-2 text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-full" 
                   onClick={() => setSelectedQuestion(null)}
                 >
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
-                <MessageSquare className="mr-2 h-6 w-6 text-primary" />
+                <MessageSquare className="mr-2 h-6 w-6 text-amber-600" />
                 Share a Story
               </>
             ) : (
               <>
-                <MessageSquare className="mr-2 h-6 w-6 text-primary" />
+                <MessageSquare className="mr-2 h-6 w-6 text-amber-600" />
                 Pick a Question
               </>
             )}
@@ -121,9 +121,9 @@ const QuestionDialog = ({
                     <div
                       key={index}
                       className={`
-                        group rounded-xl border p-4 hover:border-primary/30 transition-all cursor-pointer
+                        group rounded-xl border p-4 hover:border-amber-300 transition-all cursor-pointer
                         ${isAnswered 
-                          ? 'bg-primary/5 border-primary/20' 
+                          ? 'bg-amber-50 border-amber-200' 
                           : 'bg-white border-gray-200 hover:bg-gray-50'
                         }
                       `}
@@ -134,7 +134,7 @@ const QuestionDialog = ({
                           <p className="text-lg text-gray-800 font-medium">{question}</p>
                         </div>
                         {isAnswered && (
-                          <span className="ml-3 flex-shrink-0 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary/20 text-primary">
+                          <span className="ml-3 flex-shrink-0 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-amber-100 text-amber-700">
                             <Check className="mr-1 h-3.5 w-3.5" />
                             Answered
                           </span>
@@ -155,7 +155,7 @@ const QuestionDialog = ({
                 placeholder="Write your answer here..." 
                 value={answer} 
                 onChange={e => setAnswer(e.target.value)} 
-                className="min-h-[220px] text-lg border-gray-200 focus:border-primary focus:ring-primary" 
+                className="min-h-[220px] text-lg border-gray-200 focus:border-amber-400 focus:ring-amber-400" 
               />
               
               <div className="flex justify-end space-x-4 pt-2">
@@ -169,7 +169,7 @@ const QuestionDialog = ({
                 <Button 
                   onClick={handleSubmit}
                   disabled={!answer.trim()}
-                  className="bg-primary hover:bg-primary/90 px-6 py-5 text-base"
+                  className="bg-amber-500 hover:bg-amber-600 px-6 py-5 text-base"
                 >
                   Save Story
                 </Button>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
@@ -98,7 +97,7 @@ const CompletePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-amber-50 flex flex-col items-center p-4">
+    <div className="min-h-screen bg-[#FFFAF5] flex flex-col items-center p-4">
       <div className="glass-card max-w-4xl w-full p-8 rounded-2xl shadow-lg">
         {isLoading ? (
           <div className="text-center py-16">

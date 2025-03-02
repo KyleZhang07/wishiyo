@@ -224,8 +224,8 @@ const FunnyBiographyGenerateStep = () => {
                   <div 
                     className={`w-[80px] h-[80px] rounded-full flex items-center justify-center cursor-pointer transition-all ${
                       selectedStyle === style.id 
-                        ? 'ring-4 ring-amber-500 ring-offset-2' 
-                        : 'hover:ring-2 hover:ring-amber-500/50'
+                        ? 'ring-4 ring-[#F6C744] ring-offset-2' 
+                        : 'hover:ring-2 hover:ring-[#F6C744]/50'
                     }`}
                     style={{ 
                       backgroundColor: styleConfig.bg,
@@ -258,7 +258,7 @@ const FunnyBiographyGenerateStep = () => {
         
         <div className="mt-8">
           <Button 
-            className="w-full py-6 text-lg bg-amber-500 hover:bg-amber-600 text-white"
+            className="w-full py-6 text-lg bg-[#F6C744] hover:bg-[#E5B73E] text-white"
             onClick={handleGenerateBook}
           >
             Generate Your Book

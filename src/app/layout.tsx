@@ -1,4 +1,3 @@
-
 import { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -18,19 +17,8 @@ export default function RootLayout({ children }: LayoutProps) {
 
 // Background provider component to handle different background colors
 export function BackgroundProvider({ children }: { children: ReactNode }) {
-  const pathname = window.location.pathname;
-  
-  // Determine background color based on route
-  let bgColorClass = "bg-white";
-  
-  if (pathname.includes('/friends/funny-biography')) {
-    bgColorClass = "bg-amber-50";
-  } else if (pathname.includes('/love/love-story')) {
-    bgColorClass = "bg-red-50";
-  }
-  
   return (
-    <div className={`${bgColorClass} min-h-screen`}>
+    <div className="bg-[#FFFAF5] min-h-screen">
       {children}
     </div>
   );
