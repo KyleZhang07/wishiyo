@@ -113,8 +113,8 @@ export const ContentImageCard = ({
         ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
         
         // 文字区域，定位在左侧 - 不再使用渐变黑色蒙版
-        // 只在左侧占据60%的区域显示文字
-        const textAreaWidth = width * 0.6;
+        // 只在左侧占据50%的区域显示文字
+        const textAreaWidth = width * 0.5;
         
         // 添加文本显示函数 - 带有描边和阴影以确保可读性
         // 此函数将创建带有文字轮廓的文本
@@ -135,29 +135,52 @@ export const ContentImageCard = ({
           ctx.fillText(text, x, y);
         };
         
-        // 文本换行函数 - 现在使用drawStrokedText以提高可读性
-        const wrapText = (text: string, x: number, y: number, maxWidth: number, lineHeight: number) => {
-          const words = text.split(' ');
-          let line = '';
-          let testLine = '';
+        // 文本换行函数 - 现在使用按句子换行
+        const wrapTextBySentence = (text: string, x: number, y: number, maxWidth: number, lineHeight: number) => {
+          // 按句子分割文本 (句号、问号、感叹号后跟空格，或者在句末)
+          const sentences = text.match(/[^.!?]+[.!?]+\s*|\s*[^.!?]+[.!?]+$|\s*[^.!?]+$/g) || [text];
           let lineCount = 0;
           
-          for (let n = 0; n < words.length; n++) {
-            testLine = line + words[n] + ' ';
-            const metrics = ctx.measureText(testLine);
-            const testWidth = metrics.width;
+          for (let i = 0; i < sentences.length; i++) {
+            let sentence = sentences[i].trim();
             
-            if (testWidth > maxWidth && n > 0) {
-              drawStrokedText(line, x, y + (lineCount * lineHeight));
-              line = words[n] + ' ';
-              lineCount++;
+            // 如果句子为空，跳过
+            if (!sentence) continue;
+            
+            // 检查句子是否超过最大宽度
+            const metrics = ctx.measureText(sentence);
+            if (metrics.width > maxWidth) {
+              // 如果句子太长，使用单词换行
+              const words = sentence.split(' ');
+              let line = '';
+              let testLine = '';
+              
+              for (let n = 0; n < words.length; n++) {
+                testLine = line + words[n] + ' ';
+                const testMetrics = ctx.measureText(testLine);
+                const testWidth = testMetrics.width;
+                
+                if (testWidth > maxWidth && n > 0) {
+                  drawStrokedText(line, x, y + (lineCount * lineHeight));
+                  line = words[n] + ' ';
+                  lineCount++;
+                } else {
+                  line = testLine;
+                }
+              }
+              
+              if (line) {
+                drawStrokedText(line, x, y + (lineCount * lineHeight));
+                lineCount++;
+              }
             } else {
-              line = testLine;
+              // 如果句子不超过最大宽度，直接绘制
+              drawStrokedText(sentence, x, y + (lineCount * lineHeight));
+              lineCount++;
             }
           }
           
-          drawStrokedText(line, x, y + (lineCount * lineHeight));
-          return lineCount + 1; // Return the number of lines
+          return lineCount; // 返回行数
         };
         
         // 添加文本内容 - 在画布的左半边
@@ -171,7 +194,7 @@ export const ContentImageCard = ({
         // 垂直居中显示文本
         const textStartY = height * 0.25; // 从上方1/4处开始
         const textLineHeight = 34; // 增加行高
-        wrapText(displayText, 40, textStartY, maxWidth, textLineHeight);
+        wrapTextBySentence(displayText, 40, textStartY, maxWidth, textLineHeight);
         
         // Draw dedication text if needed
         if (showDedicationText && coverTitle) {

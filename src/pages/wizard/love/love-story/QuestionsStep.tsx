@@ -111,27 +111,27 @@ const LoveStoryQuestionsStep = () => {
             <Button
               variant="ghost"
               size="icon"
-              className="absolute -right-2 -top-2 rounded-full bg-white border shadow-sm hover:bg-[#D88373]/10 h-8 w-8 p-0"
+              className="absolute -right-2 -top-2 rounded-full bg-white border shadow-sm hover:bg-gray-50 h-8 w-8 p-0"
               onClick={(e) => {
                 e.stopPropagation();
                 handleRemoveQA(index);
               }}
             >
-              <X className="h-4 w-4 text-[#D88373]" />
+              <X className="h-4 w-4" />
             </Button>
-            <h3 className="font-medium mb-2 text-gray-700">{qa.question}</h3>
+            <h3 className="font-medium mb-2 text-gray-500">{qa.question}</h3>
             <p className="text-lg">{qa.answer}</p>
           </div>
         ))}
         <Button
           variant="outline"
-          className="w-full h-16 border-dashed text-lg bg-gradient-to-r from-[#D88373]/10 to-[#D88373]/20 hover:from-[#D88373]/20 hover:to-[#D88373]/30 text-gray-700"
+          className="w-full h-16 border-dashed text-lg"
           onClick={() => {
             setSelectedQuestion(null);
             setIsDialogOpen(true);
           }}
         >
-          <PlusCircle className="mr-2 h-5 w-5 text-[#D88373]" />
+          <PlusCircle className="mr-2 h-5 w-5" />
           {questionsAndAnswers.length === 0 
             ? "Share Your First Memory" 
             : "Add Another Memory"}

@@ -4,19 +4,19 @@ const LoveLanding = () => {
   return <div className="page-transition">
       <div className="bg-white shadow-lg">
         <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-[#D88373] to-[#C57164]" />
-          <div className="relative z-10 px-[60px] my-[64px] bg-[#D88373]/10 py-[100px]">
+          <div className="absolute inset-0 bg-gradient-to-r from-[#FF7F50] to-[#FF7F50]/80" />
+          <div className="relative z-10 px-[60px] my-[64px] bg-[#FF7F50]/10 py-[100px]">
             <div className="max-w-6xl mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                 <div className="text-white space-y-6">
                   <h1 className="text-4xl font-display font-bold px-0 mx-0 md:text-4xl text-slate-800">Dream Life. Magically crafted.</h1>
                   <p className="text-xl text-slate-800">Create a personalized fantasy autobiography that brings your dream life to vivid reality</p>
-                  <Link to="/create/love/love-story/character" className="inline-flex items-center px-6 py-3 text-base font-medium text-white bg-[#D88373] rounded-sm hover:bg-[#C57164] transition-colors">
+                  <Link to="/create/love/love-story/character" className="inline-flex items-center px-6 py-3 text-base font-medium text-white bg-[#FF7F50] rounded-sm hover:bg-[#FF7F50]/80 transition-colors">
                     Create My Book
                   </Link>
                 </div>
                 <div className="hidden md:block">
-                  <div className="w-56 h-56 mx-auto rounded-sm overflow-hidden border-4 border-[#D88373]/20">
+                  <div className="w-56 h-56 mx-auto rounded-sm overflow-hidden border-4 border-[#FF7F50]/20">
                     <img src="/placeholder.svg" alt="" className="w-full h-full object-cover" />
                   </div>
                 </div>

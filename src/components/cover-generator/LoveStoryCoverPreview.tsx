@@ -55,8 +55,8 @@ const LoveStoryCoverPreview = ({
 
     // Draw background gradient
     const gradient = ctx.createLinearGradient(0, 0, 0, height);
-    gradient.addColorStop(0, '#D88373');
-    gradient.addColorStop(1, '#C57164');
+    gradient.addColorStop(0, '#FF6B6B');
+    gradient.addColorStop(1, '#7971EA');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
 
@@ -143,7 +143,7 @@ const LoveStoryCoverPreview = ({
     height: number
   ) => {
     // Draw heart in the top right corner
-    ctx.fillStyle = '#D88373';
+    ctx.fillStyle = '#FF6B6B';
     ctx.save();
     ctx.translate(width - 80, 80);
     ctx.rotate(Math.PI / 10);

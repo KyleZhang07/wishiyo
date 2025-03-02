@@ -456,14 +456,14 @@ const IdeaStep = ({
                     flex items-center p-3 rounded-md cursor-pointer transition-all
                     ${selectedTone === tone 
                       ? category === 'love'
-                        ? 'bg-[#D88373]/10 border border-[#D88373]'
+                        ? 'bg-[#FF7F50]/10 border border-[#FF7F50]'
                         : 'bg-[#F6C744]/10 border border-[#F6C744]' 
                       : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'}
                   `}
                 >
                   <div className="flex-shrink-0 mr-3">
                     {selectedTone === tone ? (
-                      <div className={`w-5 h-5 rounded-full ${category === 'love' ? 'bg-[#D88373]' : 'bg-[#F6C744]'} flex items-center justify-center`}>
+                      <div className={`w-5 h-5 rounded-full ${category === 'love' ? 'bg-[#FF7F50]' : 'bg-[#F6C744]'} flex items-center justify-center`}>
                         <Check className="w-3 h-3 text-white" />
                       </div>
                     ) : (
@@ -491,7 +491,7 @@ const IdeaStep = ({
             <div className="flex justify-end">
               <Button 
                 variant="outline" 
-                className={`${category === 'love' ? 'bg-[#D88373] hover:bg-[#C57164]' : 'bg-[#F6C744] hover:bg-[#E5B73E]'} text-white`}
+                className={`${(category as string) === 'love' ? 'bg-[#FF7F50] text-white hover:bg-[#FF7F50]/80' : 'bg-[#F6C744] text-white hover:bg-[#E5B73E]'}`}
                 onClick={generateIdeas}
                 disabled={isLoading || isGeneratingTexts}
               >
@@ -505,7 +505,7 @@ const IdeaStep = ({
             <div className="flex justify-end mb-4">
               <Button 
                 variant="outline" 
-                className={`${category === 'love' ? 'bg-[#D88373] hover:bg-[#C57164]' : 'bg-[#F6C744] hover:bg-[#E5B73E]'} text-white`}
+                className={`${(category as string) === 'love' ? 'bg-[#FF7F50] text-white hover:bg-[#FF7F50]/80' : 'bg-[#F6C744] text-white hover:bg-[#E5B73E]'}`}
                 onClick={generateIdeas}
                 disabled={isLoading}
               >
@@ -529,7 +529,7 @@ const IdeaStep = ({
                     selectedIdeaIndex === index 
                       ? category === 'friends' 
                         ? 'ring-2 ring-[#F6C744] shadow-lg scale-[1.02]' 
-                        : 'ring-2 ring-[#D88373] shadow-lg scale-[1.02]' 
+                        : 'ring-2 ring-[#FF7F50] shadow-lg scale-[1.02]' 
                       : ''
                   }`}
                   onClick={() => handleIdeaSelect(index)}

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, MessageSquare, Check } from 'lucide-react';
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useLocation } from 'react-router-dom';
 
 interface QuestionDialogProps {
   isOpen: boolean;
@@ -26,6 +27,13 @@ const QuestionDialog = ({
 }: QuestionDialogProps) => {
   const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
   const [answer, setAnswer] = useState('');
+  const location = useLocation();
+  
+  // 判断当前是否在love category
+  const isLoveCategory = location.pathname.includes('/love/');
+  // 根据category选择颜色
+  const accentColor = isLoveCategory ? '#FF7F50' : '#F6C744';
+  const hoverColor = isLoveCategory ? '#FF7F50/80' : '#E5B73E';
   
   useEffect(() => {
     if (initialQuestion) {
@@ -94,17 +102,17 @@ const QuestionDialog = ({
               <>
                 <Button 
                   variant="ghost" 
-                  className="absolute left-0 p-2 text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-full" 
+                  className={`absolute left-0 p-2 text-gray-600 hover:text-${isLoveCategory ? '[#FF7F50]' : 'amber-600'} hover:bg-${isLoveCategory ? '[#FF7F50]/10' : 'amber-50'} rounded-full`}
                   onClick={() => setSelectedQuestion(null)}
                 >
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
-                <MessageSquare className="mr-2 h-6 w-6 text-amber-600" />
+                <MessageSquare className={`mr-2 h-6 w-6 text-${isLoveCategory ? '[#FF7F50]' : 'amber-600'}`} />
                 Share a Story
               </>
             ) : (
               <>
-                <MessageSquare className="mr-2 h-6 w-6 text-amber-600" />
+                <MessageSquare className={`mr-2 h-6 w-6 text-${isLoveCategory ? '[#FF7F50]' : 'amber-600'}`} />
                 Pick a Question
               </>
             )}
@@ -121,9 +129,9 @@ const QuestionDialog = ({
                     <div
                       key={index}
                       className={`
-                        group rounded-xl border p-4 hover:border-amber-300 transition-all cursor-pointer
+                        group rounded-xl border p-4 hover:border-${isLoveCategory ? '[#FF7F50]/60' : 'amber-300'} transition-all cursor-pointer
                         ${isAnswered 
-                          ? 'bg-amber-50 border-amber-200' 
+                          ? isLoveCategory ? 'bg-[#FF7F50]/10 border-[#FF7F50]/20' : 'bg-amber-50 border-amber-200'
                           : 'bg-white border-gray-200 hover:bg-gray-50'
                         }
                       `}
@@ -134,7 +142,7 @@ const QuestionDialog = ({
                           <p className="text-lg text-gray-800 font-medium">{question}</p>
                         </div>
                         {isAnswered && (
-                          <span className="ml-3 flex-shrink-0 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-amber-100 text-amber-700">
+                          <span className={`ml-3 flex-shrink-0 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${isLoveCategory ? 'bg-[#FF7F50]/20 text-[#FF7F50]/90' : 'bg-amber-100 text-amber-700'}`}>
                             <Check className="mr-1 h-3.5 w-3.5" />
                             Answered
                           </span>
@@ -155,7 +163,7 @@ const QuestionDialog = ({
                 placeholder="Write your answer here..." 
                 value={answer} 
                 onChange={e => setAnswer(e.target.value)} 
-                className="min-h-[220px] text-lg border-gray-200 focus:border-amber-400 focus:ring-amber-400" 
+                className={`min-h-[220px] text-lg border-gray-200 ${isLoveCategory ? 'focus:border-[#FF7F50] focus:ring-[#FF7F50]' : 'focus:border-amber-400 focus:ring-amber-400'}`}
               />
               
               <div className="flex justify-end space-x-4 pt-2">
@@ -169,7 +177,7 @@ const QuestionDialog = ({
                 <Button 
                   onClick={handleSubmit}
                   disabled={!answer.trim()}
-                  className="bg-amber-500 hover:bg-amber-600 px-6 py-5 text-base"
+                  className={`${isLoveCategory ? 'bg-[#FF7F50] hover:bg-[#FF7F50]/80' : 'bg-amber-500 hover:bg-amber-600'} px-6 py-5 text-base`}
                 >
                   Save Story
                 </Button>

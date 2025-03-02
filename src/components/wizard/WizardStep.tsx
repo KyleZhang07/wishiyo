@@ -27,11 +27,8 @@ const WizardStep = ({
   const navigate = useNavigate();
   const location = useLocation();
   
-  // 根据路径判断是love还是friends类别
+  // 判断当前是否在love category
   const isLoveCategory = location.pathname.includes('/love/');
-  const buttonColor = isLoveCategory 
-    ? "bg-[#D88373] hover:bg-[#C57164]" 
-    : "bg-[#F6C744] hover:bg-[#E5B73E]";
   
   return (
     <div className="min-h-screen bg-[#FFFAF5]">
@@ -66,7 +63,7 @@ const WizardStep = ({
               <Button 
                 variant="default"
                 size="lg"
-                className={`w-full ${buttonColor} text-white`}
+                className={`w-full ${isLoveCategory ? 'bg-[#FF7F50] hover:bg-[#FF7F50]/80' : 'bg-[#F6C744] hover:bg-[#E5B73E]'} text-white`}
                 onClick={onNextClick ? onNextClick : () => nextStep && navigate(nextStep)}
               >
                 Continue

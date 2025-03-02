@@ -867,6 +867,7 @@ const GenerateStep = () => {
             size="sm" 
             onClick={refreshImages}
             disabled={isLoadingImages}
+            className="bg-[#FF7F50]/10 text-[#FF7F50] hover:bg-[#FF7F50]/20 border-[#FF7F50]/30"
           >
             {isLoadingImages ? 'Loading...' : 'Refresh Images'}
           </Button>
