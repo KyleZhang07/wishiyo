@@ -190,77 +190,75 @@ const FunnyBiographyGenerateStep = () => {
           />
         </div>
         
-        <div className="glass-card rounded-2xl p-8 py-[40px]">
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-lg font-medium text-center mb-4">Choose Your Style</h3>
-              <div className="flex flex-wrap justify-center gap-6 mt-4">
-                {[...stylePresets].map((style, index) => {
-                  // Get template and layout data based on style configuration
-                  const template = style.template;
-                  
-                  // Define style colors to match the image
-                  let styleConfig;
-                  if (style.id === 'classic-red') {
-                    styleConfig = { bg: '#C41E3A', text: '#FFFFFF', border: 'none' }; // Red with white text (first circle)
-                  } else if (style.id === 'modern-green') {
-                    styleConfig = { bg: '#121212', text: '#7CFC00', border: 'none' }; // Black with green text (second circle)
-                  } else if (style.id === 'minimal-gray') {
-                    styleConfig = { bg: '#808080', text: '#FFFFFF', border: 'none' }; // Gray with white text (third circle)
-                  } else if (style.id === 'vibrant-blue') {
-                    styleConfig = { bg: '#4361EE', text: '#FFC300', border: 'none' }; // Blue with yellow text (fourth circle)
-                  } else if (style.id === 'pastel-beige') {
-                    styleConfig = { bg: '#FFD1DC', text: '#000000', border: 'none', isStriped: false }; // Pink with black (fifth circle)
-                  } else if (style.id === 'striped-pink') {
-                    styleConfig = { bg: '#FFD1DC', text: '#000000', border: '2px solid #1E365C', isStriped: true }; // Striped pink (sixth circle)
-                  } else {
-                    styleConfig = { bg: '#F8D5B2', text: '#1E365C', border: 'none', isStriped: false }; // Default
-                  }
-                  
-                  return (
-                    <div 
-                      key={style.id}
-                      onClick={() => handleStyleChange(style.id)}
-                      className="flex flex-col items-center"
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium text-center mb-4">Choose Your Style</h3>
+          <div className="flex flex-wrap justify-center gap-6 mt-4">
+            {[...stylePresets].map((style, index) => {
+              // Get template and layout data based on style configuration
+              const template = style.template;
+              
+              // Define style colors to match the image
+              let styleConfig;
+              if (style.id === 'classic-red') {
+                styleConfig = { bg: '#C41E3A', text: '#FFFFFF', border: 'none' }; // Red with white text (first circle)
+              } else if (style.id === 'modern-green') {
+                styleConfig = { bg: '#121212', text: '#7CFC00', border: 'none' }; // Black with green text (second circle)
+              } else if (style.id === 'minimal-gray') {
+                styleConfig = { bg: '#808080', text: '#FFFFFF', border: 'none' }; // Gray with white text (third circle)
+              } else if (style.id === 'vibrant-blue') {
+                styleConfig = { bg: '#4361EE', text: '#FFC300', border: 'none' }; // Blue with yellow text (fourth circle)
+              } else if (style.id === 'pastel-beige') {
+                styleConfig = { bg: '#FFD1DC', text: '#000000', border: 'none', isStriped: false }; // Pink with black (fifth circle)
+              } else if (style.id === 'striped-pink') {
+                styleConfig = { bg: '#FFD1DC', text: '#000000', border: '2px solid #1E365C', isStriped: true }; // Striped pink (sixth circle)
+              } else {
+                styleConfig = { bg: '#F8D5B2', text: '#1E365C', border: 'none', isStriped: false }; // Default
+              }
+              
+              return (
+                <div 
+                  key={style.id}
+                  onClick={() => handleStyleChange(style.id)}
+                  className="flex flex-col items-center"
+                >
+                  <div 
+                    className={`w-[80px] h-[80px] rounded-full flex items-center justify-center cursor-pointer transition-all ${
+                      selectedStyle === style.id 
+                        ? 'ring-4 ring-amber-500 ring-offset-2' 
+                        : 'hover:ring-2 hover:ring-amber-500/50'
+                    }`}
+                    style={{ 
+                      backgroundColor: styleConfig.bg,
+                      border: styleConfig.border,
+                      backgroundImage: styleConfig.isStriped 
+                        ? 'repeating-linear-gradient(45deg, #FFD1DC, #FFD1DC 10px, #FFB6C1 10px, #FFB6C1 20px)' 
+                        : 'none'
+                    }}
+                  >
+                    <span 
+                      className="text-3xl font-bold"
+                      style={{ 
+                        color: styleConfig.text,
+                        fontFamily: style.font === 'playfair' ? 'serif' 
+                                 : style.font === 'merriweather' ? 'serif' 
+                                 : style.font === 'montserrat' ? 'sans-serif' 
+                                 : style.font === 'roboto' ? 'sans-serif'
+                                 : 'sans-serif',
+                        fontWeight: style.font === 'montserrat' || style.font === 'roboto' ? '700' : '800',
+                      }}
                     >
-                      <div 
-                        className={`w-[80px] h-[80px] rounded-full flex items-center justify-center cursor-pointer transition-all ${
-                          selectedStyle === style.id 
-                            ? 'ring-4 ring-primary ring-offset-2' 
-                            : 'hover:ring-2 hover:ring-primary/50'
-                        }`}
-                        style={{ 
-                          backgroundColor: styleConfig.bg,
-                          border: styleConfig.border,
-                          backgroundImage: styleConfig.isStriped 
-                            ? 'repeating-linear-gradient(45deg, #FFD1DC, #FFD1DC 10px, #FFB6C1 10px, #FFB6C1 20px)' 
-                            : 'none'
-                        }}
-                      >
-                        <span 
-                          className="text-3xl font-bold"
-                          style={{ 
-                            color: styleConfig.text,
-                            fontFamily: style.font === 'playfair' ? 'serif' 
-                                     : style.font === 'merriweather' ? 'serif' 
-                                     : style.font === 'montserrat' ? 'sans-serif' 
-                                     : style.font === 'roboto' ? 'sans-serif'
-                                     : 'sans-serif',
-                            fontWeight: style.font === 'montserrat' || style.font === 'roboto' ? '700' : '800',
-                          }}
-                        >
-                          Aa
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+                      Aa
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-
+        </div>
+        
+        <div className="mt-8">
           <Button 
-            className="w-full py-6 text-lg"
+            className="w-full py-6 text-lg bg-amber-500 hover:bg-amber-600 text-white"
             onClick={handleGenerateBook}
           >
             Generate Your Book

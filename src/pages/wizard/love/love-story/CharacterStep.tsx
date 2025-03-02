@@ -102,7 +102,7 @@ const LoveStoryCharacterStep = () => {
             <Button 
               type="button" 
               variant={gender === 'male' ? 'default' : 'outline'} 
-              className="w-full py-6 text-lg" 
+              className={`w-full py-6 text-lg ${gender === 'male' ? 'bg-[#D88373] hover:bg-[#C57164]' : ''}`}
               onClick={() => setGender('male')}
             >
               Male
@@ -110,7 +110,7 @@ const LoveStoryCharacterStep = () => {
             <Button 
               type="button" 
               variant={gender === 'female' ? 'default' : 'outline'} 
-              className="w-full py-6 text-lg" 
+              className={`w-full py-6 text-lg ${gender === 'female' ? 'bg-[#D88373] hover:bg-[#C57164]' : ''}`}
               onClick={() => setGender('female')}
             >
               Female

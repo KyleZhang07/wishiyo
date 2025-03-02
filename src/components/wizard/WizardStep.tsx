@@ -27,18 +27,14 @@ const WizardStep = ({
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Determine background color based on route
-  const pathname = location.pathname;
-  let bgClass = '';
-  
-  if (pathname.includes('/friends/funny-biography')) {
-    bgClass = 'bg-amber-50';
-  } else if (pathname.includes('/love/love-story')) {
-    bgClass = 'bg-red-50';
-  }
+  // 根据路径判断是love还是friends类别
+  const isLoveCategory = location.pathname.includes('/love/');
+  const buttonColor = isLoveCategory 
+    ? "bg-[#D88373] hover:bg-[#C57164]" 
+    : "bg-[#F6C744] hover:bg-[#E5B73E]";
   
   return (
-    <div className={`min-h-screen ${bgClass}`}>
+    <div className="min-h-screen bg-[#FFFAF5]">
       <div className="container mx-auto px-4 pt-8 pb-16 max-w-4xl">
         <div className="text-center mb-8">
           <p className="text-sm text-gray-600">Step {currentStep} of {totalSteps}</p>
@@ -68,9 +64,9 @@ const WizardStep = ({
           <div className="flex justify-center pt-8 w-full">
             {(nextStep || onNextClick) && (
               <Button 
-                variant="dark"
+                variant="default"
                 size="lg"
-                className="w-full"
+                className={`w-full ${buttonColor} text-white`}
                 onClick={onNextClick ? onNextClick : () => nextStep && navigate(nextStep)}
               >
                 Continue

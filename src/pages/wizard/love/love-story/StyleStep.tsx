@@ -72,13 +72,13 @@ const LoveStoryStyleStep = () => {
                 className={`
                   flex items-center p-4 rounded-md cursor-pointer transition-all
                   ${selectedStyle === style 
-                    ? 'bg-primary/10 border border-primary' 
+                    ? 'bg-[#D88373]/10 border border-[#D88373]' 
                     : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'}
                 `}
               >
                 <div className="flex-shrink-0 mr-3">
                   {selectedStyle === style ? (
-                    <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                    <div className="w-5 h-5 rounded-full bg-[#D88373] flex items-center justify-center">
                       <Check className="w-3 h-3 text-white" />
                     </div>
                   ) : (

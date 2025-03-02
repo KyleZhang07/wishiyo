@@ -455,13 +455,15 @@ const IdeaStep = ({
                   className={`
                     flex items-center p-3 rounded-md cursor-pointer transition-all
                     ${selectedTone === tone 
-                      ? 'bg-primary/10 border border-primary' 
+                      ? category === 'love'
+                        ? 'bg-[#D88373]/10 border border-[#D88373]'
+                        : 'bg-[#F6C744]/10 border border-[#F6C744]' 
                       : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'}
                   `}
                 >
                   <div className="flex-shrink-0 mr-3">
                     {selectedTone === tone ? (
-                      <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                      <div className={`w-5 h-5 rounded-full ${category === 'love' ? 'bg-[#D88373]' : 'bg-[#F6C744]'} flex items-center justify-center`}>
                         <Check className="w-3 h-3 text-white" />
                       </div>
                     ) : (
@@ -489,7 +491,7 @@ const IdeaStep = ({
             <div className="flex justify-end">
               <Button 
                 variant="outline" 
-                className="bg-black text-white hover:bg-black/90" 
+                className={`${category === 'love' ? 'bg-[#D88373] hover:bg-[#C57164]' : 'bg-[#F6C744] hover:bg-[#E5B73E]'} text-white`}
                 onClick={generateIdeas}
                 disabled={isLoading || isGeneratingTexts}
               >
@@ -503,7 +505,7 @@ const IdeaStep = ({
             <div className="flex justify-end mb-4">
               <Button 
                 variant="outline" 
-                className="bg-black text-white hover:bg-black/90" 
+                className={`${category === 'love' ? 'bg-[#D88373] hover:bg-[#C57164]' : 'bg-[#F6C744] hover:bg-[#E5B73E]'} text-white`}
                 onClick={generateIdeas}
                 disabled={isLoading}
               >
@@ -525,7 +527,9 @@ const IdeaStep = ({
                   key={index} 
                   className={`bg-white rounded-lg p-6 cursor-pointer transition-all hover:shadow-md ${
                     selectedIdeaIndex === index 
-                      ? 'ring-2 ring-primary shadow-lg scale-[1.02]' 
+                      ? category === 'friends' 
+                        ? 'ring-2 ring-[#F6C744] shadow-lg scale-[1.02]' 
+                        : 'ring-2 ring-[#D88373] shadow-lg scale-[1.02]' 
                       : ''
                   }`}
                   onClick={() => handleIdeaSelect(index)}
