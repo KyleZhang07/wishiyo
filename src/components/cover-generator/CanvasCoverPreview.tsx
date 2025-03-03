@@ -33,7 +33,7 @@ const CanvasCoverPreview = ({
   imageScale = 1,
   onImageAdjust,
   previewMode = false,
-  scaleFactor = 0.5, // 调整默认缩放因子，使封面整体变小
+  scaleFactor = 0.45, // 调整默认缩放因子，使封面整体变小一些
   praises = []
 }: CanvasCoverPreviewProps) => {
   const frontCoverRef = useRef<HTMLCanvasElement>(null);
@@ -373,7 +373,7 @@ const CanvasCoverPreview = ({
       // 设置标题 - 确保使用整数坐标
       ctx.textAlign = 'left';
       ctx.fillStyle = template.backCoverStyle.textColor || '#FFFFFF';
-      ctx.font = `bold 24px ${selectedFont}`; // 使用稍大的字体
+      ctx.font = `bold 28px ${selectedFont}`; // 增大标题字体
       
       const x = Math.round(40);
       const y = Math.round(60);
@@ -384,17 +384,17 @@ const CanvasCoverPreview = ({
       // 绘制每条赞美语
       availablePraises.forEach(praise => {
         // 赞美文本内容
-        ctx.font = `italic 18px ${selectedFont}`; // 稍大的字体
+        ctx.font = `italic 22px ${selectedFont}`; // 增大赞美语字体
         
         // 使用文本换行函数 - 确保使用整数坐标
-        const wrappedText = wrapTextWithHeight(ctx, `"${praise.text}"`, x, Math.round(yPosition), width - 80, 24);
-        yPosition += wrappedText.height + 15;
+        const wrappedText = wrapTextWithHeight(ctx, `"${praise.text}"`, x, Math.round(yPosition), width - 80, 26);
+        yPosition += wrappedText.height + 20; // 增加行间距
         
         // 赞美来源
-        ctx.font = `bold 20px ${selectedFont}`;
+        ctx.font = `bold 24px ${selectedFont}`; // 增大来源字体
         ctx.fillText(praise.source, x, Math.round(yPosition));
         
-        yPosition += 50; // 为下一条赞美语留出更多空间
+        yPosition += 60; // 为下一条赞美语留出更多空间
       });
     }
 

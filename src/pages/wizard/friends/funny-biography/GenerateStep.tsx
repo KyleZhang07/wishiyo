@@ -53,14 +53,6 @@ const stylePresets = [
     template: 'classic',
     layout: 'left-align',
     description: 'Soft beige background with navy blue text'
-  },
-  {
-    id: 'striped-pink',
-    name: 'Striped Pink',
-    font: 'playfair',
-    template: 'classic',
-    layout: 'classic-centered',
-    description: 'Pink striped background with black text'
   }
 ];
 
@@ -185,7 +177,7 @@ const FunnyBiographyGenerateStep = () => {
             imagePosition={imagePosition}
             imageScale={imageScale}
             onImageAdjust={handleImageAdjust}
-            scaleFactor={0.5}
+            scaleFactor={0.45}
             praises={praises}
           />
         </div>
@@ -208,11 +200,9 @@ const FunnyBiographyGenerateStep = () => {
               } else if (style.id === 'vibrant-blue') {
                 styleConfig = { bg: '#4361EE', text: '#FFC300', border: 'none' }; // Blue with yellow text (fourth circle)
               } else if (style.id === 'pastel-beige') {
-                styleConfig = { bg: '#FFD1DC', text: '#000000', border: 'none', isStriped: false }; // Pink with black (fifth circle)
-              } else if (style.id === 'striped-pink') {
-                styleConfig = { bg: '#FFD1DC', text: '#000000', border: '2px solid #1E365C', isStriped: true }; // Striped pink (sixth circle)
+                styleConfig = { bg: '#FFD1DC', text: '#000000', border: 'none' }; // Pink with black (fifth circle)
               } else {
-                styleConfig = { bg: '#F8D5B2', text: '#1E365C', border: 'none', isStriped: false }; // Default
+                styleConfig = { bg: '#F8D5B2', text: '#1E365C', border: 'none' }; // Default
               }
               
               return (
@@ -229,10 +219,7 @@ const FunnyBiographyGenerateStep = () => {
                     }`}
                     style={{ 
                       backgroundColor: styleConfig.bg,
-                      border: styleConfig.border,
-                      backgroundImage: styleConfig.isStriped 
-                        ? 'repeating-linear-gradient(45deg, #FFD1DC, #FFD1DC 10px, #FFB6C1 10px, #FFB6C1 20px)' 
-                        : 'none'
+                      border: styleConfig.border
                     }}
                   >
                     <span 

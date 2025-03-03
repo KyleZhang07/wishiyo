@@ -1,6 +1,18 @@
 import { useRef, useEffect } from 'react';
 import { useImageLoader } from './hooks/useImageLoader';
 
+// 样式接口定义
+interface CoverStyle {
+  id: string;
+  name: string;
+  background: string;
+  titleColor: string;
+  subtitleColor: string;
+  authorColor: string;
+  font: string;
+  borderColor?: string;
+}
+
 interface LoveStoryCoverPreviewProps {
   coverTitle: string;
   subtitle: string;
@@ -8,6 +20,7 @@ interface LoveStoryCoverPreviewProps {
   recipientName: string;
   coverImage?: string;
   selectedFont?: string;
+  style?: CoverStyle;
 }
 
 const LoveStoryCoverPreview = ({
@@ -16,7 +29,8 @@ const LoveStoryCoverPreview = ({
   authorName,
   recipientName,
   coverImage,
-  selectedFont = 'playfair'
+  selectedFont = 'playfair',
+  style
 }: LoveStoryCoverPreviewProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const image = useImageLoader(coverImage);
@@ -36,9 +50,9 @@ const LoveStoryCoverPreview = ({
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Draw the cover
-    drawLoveStoryCover(ctx, canvas, coverTitle, subtitle, authorName, recipientName, image, selectedFont);
+    drawLoveStoryCover(ctx, canvas, coverTitle, subtitle, authorName, recipientName, image, selectedFont, style);
     
-  }, [coverTitle, subtitle, authorName, recipientName, image, selectedFont]);
+  }, [coverTitle, subtitle, authorName, recipientName, image, selectedFont, style]);
 
   const drawLoveStoryCover = (
     ctx: CanvasRenderingContext2D, 
@@ -48,19 +62,96 @@ const LoveStoryCoverPreview = ({
     author: string,
     recipient: string,
     image: { element: HTMLImageElement } | null,
-    font: string
+    font: string,
+    style?: CoverStyle
   ) => {
     const width = canvas.width;
     const height = canvas.height;
 
-    // Draw background gradient
-    const gradient = ctx.createLinearGradient(0, 0, 0, height);
-    gradient.addColorStop(0, '#FF6B6B');
-    gradient.addColorStop(1, '#7971EA');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, width, height);
+    // 使用样式或默认值
+    const backgroundColor = style?.background || '#f5f5f0';
+    const titleColor = style?.titleColor || '#5a5a5a';
+    const subtitleColor = style?.subtitleColor || '#633d63';
+    const authorColor = style?.authorColor || '#333333';
+    
+    // 根据样式调整文字位置
+    const titleY = style?.id === 'modern' ? height * 0.15 : height * 0.1;
+    const subtitleY = style?.id === 'modern' ? height * 0.3 : height * 0.25;
+    const authorY = style?.id === 'playful' ? height * 0.85 : height * 0.92;
+    const authorX = style?.id === 'elegant' ? width * 0.5 : width * 0.9;
+    
+    // 根据样式设置字体家族
+    let fontFamily = 'serif'; // 默认为衬线字体
+    if (font === 'montserrat' || (style?.font === 'montserrat')) {
+      fontFamily = 'sans-serif';
+    } else if (font === 'comic-sans' || (style?.font === 'comic-sans')) {
+      fontFamily = 'cursive';
+    } else if (font === 'didot' || (style?.font === 'didot')) {
+      fontFamily = 'serif';
+    } else if (font === 'georgia' || (style?.font === 'georgia')) {
+      fontFamily = 'serif';
+    }
 
-    // Draw image if available
+    // Draw background
+    ctx.fillStyle = backgroundColor;
+    ctx.fillRect(0, 0, width, height);
+    
+    // 为某些风格添加特殊装饰
+    if (style?.id === 'elegant') {
+      // 添加金色边框
+      ctx.strokeStyle = style.borderColor || '#D4AF37';
+      ctx.lineWidth = 20;
+      ctx.strokeRect(40, 40, width - 80, height - 80);
+    } else if (style?.id === 'playful') {
+      // 添加彩色角落
+      ctx.fillStyle = '#FF5252';
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(120, 0);
+      ctx.lineTo(0, 120);
+      ctx.closePath();
+      ctx.fill();
+      
+      ctx.fillStyle = '#FFEB3B';
+      ctx.beginPath();
+      ctx.moveTo(width, 0);
+      ctx.lineTo(width - 120, 0);
+      ctx.lineTo(width, 120);
+      ctx.closePath();
+      ctx.fill();
+    } else if (style?.id === 'pastel') {
+      // 添加柔和条纹
+      ctx.fillStyle = style.borderColor || '#DBDBF5';
+      for (let i = 0; i < width; i += 80) {
+        ctx.fillRect(i, 0, 40, height);
+      }
+      ctx.fillStyle = backgroundColor;
+      ctx.fillRect(50, 50, width - 100, height - 100);
+    }
+
+    // Draw main title at the top
+    ctx.font = `bold 50px ${fontFamily}`;
+    ctx.fillStyle = titleColor;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(title, width / 2, titleY);
+    
+    // Draw subtitle (character name) - larger and more prominent
+    ctx.font = `bold 90px ${fontFamily}`;
+    ctx.fillStyle = subtitleColor;
+    const recipientUpper = recipient.toUpperCase();
+    
+    // Modern风格使用斜体
+    if (style?.id === 'modern') {
+      ctx.font = `bold italic 90px ${fontFamily}`;
+    } else if (style?.id === 'playful') {
+      // Playful风格使用更大字体
+      ctx.font = `bold 110px ${fontFamily}`;
+    }
+    
+    ctx.fillText(recipientUpper + "!", width / 2, subtitleY);
+
+    // Draw image in the center if available
     if (image?.element) {
       const { width: imgWidth, height: imgHeight } = image.element;
       
@@ -68,135 +159,103 @@ const LoveStoryCoverPreview = ({
       const canvasAspect = width / height;
       const imageAspect = imgWidth / imgHeight;
       
-      let drawWidth = width;
-      let drawHeight = height;
-      let x = 0;
-      let y = 0;
-
-      // Adjust dimensions to maintain aspect ratio while covering the canvas
-      if (imageAspect > canvasAspect) {
-        drawHeight = width / imageAspect;
-        y = (height - drawHeight) / 2;
+      // 根据样式调整图片大小和位置
+      let drawWidth = width * 0.7; // 默认宽度70%
+      let drawHeight = height * 0.5; // 默认高度50%
+      let x = (width - drawWidth) / 2;
+      let y = height * 0.35; // 默认位置在中间
+      
+      if (style?.id === 'modern') {
+        // Modern样式图片更大，居中
+        drawWidth = width * 0.8;
+        drawHeight = height * 0.5;
+        y = height * 0.4;
+      } else if (style?.id === 'playful') {
+        // Playful样式图片更小，向上移动
+        drawWidth = width * 0.6;
+        drawHeight = height * 0.4;
+        y = height * 0.45;
+      } else if (style?.id === 'elegant') {
+        // Elegant样式图片稍小，位置更居中
+        drawWidth = width * 0.65;
+        drawHeight = height * 0.5;
+        y = height * 0.37;
+      }
+      
+      // Maintain aspect ratio while fitting in the designated space
+      if (imageAspect > 1) {
+        // Landscape image
+        drawHeight = drawWidth / imageAspect;
       } else {
-        drawWidth = height * imageAspect;
+        // Portrait image
+        drawWidth = drawHeight * imageAspect;
         x = (width - drawWidth) / 2;
       }
 
-      // Draw image with a soft filter
-      ctx.filter = 'brightness(0.8) contrast(1.1)';
-      ctx.globalAlpha = 0.8;
+      // 为特定样式添加图片效果
+      if (style?.id === 'modern') {
+        // 为Modern风格添加黑白滤镜
+        ctx.filter = 'grayscale(100%)';
+      } else if (style?.id === 'elegant') {
+        // 为Elegant风格添加复古滤镜
+        ctx.filter = 'sepia(30%)';
+      } else if (style?.id === 'pastel') {
+        // 为Pastel风格添加柔和滤镜
+        ctx.filter = 'brightness(1.1) contrast(0.9)';
+      }
+
+      // Draw image 
       ctx.drawImage(image.element, x, y, drawWidth, drawHeight);
-      ctx.globalAlpha = 1.0;
-      ctx.filter = 'none';
+      ctx.filter = 'none'; // 重置滤镜
     }
 
-    // Add a semi-transparent overlay for better text readability
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-    ctx.fillRect(0, 0, width, height);
-
-    // Draw title
-    ctx.font = `bold 60px ${font}`;
-    ctx.fillStyle = '#FFFFFF';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    // Draw author name 
+    ctx.font = `normal 30px ${fontFamily}`;
+    ctx.fillStyle = authorColor;
     
-    // Handle multi-line title
-    const titleLines = wrapText(ctx, title, width - 100);
-    let titleY = height * 0.35;
-    const lineHeight = 70;
+    // 根据样式调整作者名称样式和位置
+    if (style?.id === 'elegant') {
+      // Elegant样式作者名居中
+      ctx.textAlign = 'center';
+      ctx.font = `italic 30px ${fontFamily}`;
+    } else if (style?.id === 'modern') {
+      // Modern样式使用更小字体
+      ctx.textAlign = 'right';
+      ctx.font = `bold 24px ${fontFamily}`;
+    } else {
+      ctx.textAlign = 'right';
+    }
     
-    titleLines.forEach(line => {
-      ctx.fillText(line, width / 2, titleY);
-      titleY += lineHeight;
-    });
-
-    // Draw subtitle
-    ctx.font = `italic 30px ${font}`;
-    ctx.fillStyle = '#FFFFFF';
+    ctx.fillText(`Written by ${author}`, authorX, authorY);
     
-    const subtitleLines = wrapText(ctx, subtitle, width - 150);
-    let subtitleY = titleY + 40;
-    
-    subtitleLines.forEach(line => {
-      ctx.fillText(line, width / 2, subtitleY);
-      subtitleY += 40;
-    });
-
-    // Draw "For [recipient]" text
-    ctx.font = `bold 36px ${font}`;
-    ctx.fillStyle = '#FFD700'; // Gold color
-    ctx.fillText(`For ${recipient}`, width / 2, height * 0.8);
-
-    // Draw author name
-    ctx.font = `24px ${font}`;
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillText(`By ${author}`, width / 2, height * 0.85);
-
-    // Draw decorative elements
-    drawDecorativeElements(ctx, width, height);
-  };
-
-  // Draw decorative elements for the love story cover
-  const drawDecorativeElements = (
-    ctx: CanvasRenderingContext2D,
-    width: number,
-    height: number
-  ) => {
-    // Draw heart in the top right corner
-    ctx.fillStyle = '#FF6B6B';
-    ctx.save();
-    ctx.translate(width - 80, 80);
-    ctx.rotate(Math.PI / 10);
-    
-    const heartSize = 30;
-    drawHeart(ctx, 0, 0, heartSize);
-    
-    ctx.restore();
-    
-    // Draw small hearts at the bottom
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-    for (let i = 0; i < 5; i++) {
-      const x = width * (0.2 + i * 0.15);
-      const y = height * 0.92;
-      const size = 10 + Math.random() * 5;
-      
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(Math.random() * 0.5 - 0.25);
-      drawHeart(ctx, 0, 0, size);
-      ctx.restore();
+    // 只有Classic和Pastel样式显示出版商标志
+    if (style?.id === 'classic' || style?.id === 'pastel') {
+      let logoColor = '#1e7e7e'; // 默认颜色
+      if (style.id === 'pastel') {
+        logoColor = '#6A7B8B'; // Pastel样式使用不同颜色
+      }
+      drawPublisherLogo(ctx, width / 2, height * 0.92, 40, logoColor);
     }
   };
 
-  // Helper function to draw a heart shape
-  const drawHeart = (
+  // Draw a simple publisher logo similar to the example
+  const drawPublisherLogo = (
     ctx: CanvasRenderingContext2D,
     x: number,
     y: number,
-    size: number
+    size: number,
+    color: string = '#1e7e7e'
   ) => {
+    ctx.fillStyle = color;
+    
+    // Draw a simple crown-like shape
     ctx.beginPath();
-    ctx.moveTo(x, y + size / 4);
-    ctx.bezierCurveTo(
-      x, y, 
-      x - size / 2, y, 
-      x - size / 2, y + size / 4
-    );
-    ctx.bezierCurveTo(
-      x - size / 2, y + size / 2, 
-      x, y + size * 0.75, 
-      x, y + size
-    );
-    ctx.bezierCurveTo(
-      x, y + size * 0.75, 
-      x + size / 2, y + size / 2, 
-      x + size / 2, y + size / 4
-    );
-    ctx.bezierCurveTo(
-      x + size / 2, y, 
-      x, y, 
-      x, y + size / 4
-    );
+    ctx.moveTo(x - size/2, y);
+    ctx.lineTo(x - size/4, y - size/2);
+    ctx.lineTo(x, y - size/4);
+    ctx.lineTo(x + size/4, y - size/2);
+    ctx.lineTo(x + size/2, y);
+    ctx.closePath();
     ctx.fill();
   };
 
