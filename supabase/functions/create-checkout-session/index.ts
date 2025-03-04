@@ -1,5 +1,4 @@
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
 import { stripe } from '../_shared/stripe.ts'
 
 const corsHeaders = {
@@ -14,7 +13,7 @@ Deno.serve(async (req) => {
   }
   
   try {
-    const { bookInfo, shippingAddress } = await req.json()
+    const { bookInfo } = await req.json()
     
     if (!bookInfo || !bookInfo.title || !bookInfo.price) {
       return new Response(
