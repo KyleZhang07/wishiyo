@@ -125,7 +125,7 @@ const PreviewStep = () => {
   }, []);
 
   const handleContinue = () => {
-    navigate('/create/friends/funny-biography/complete');
+    navigate('/create/friends/funny-biography/format');
   };
 
   // Get the current style preset
