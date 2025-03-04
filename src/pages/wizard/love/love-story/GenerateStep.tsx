@@ -522,7 +522,8 @@ const GenerateStep = () => {
       const ideas = JSON.parse(savedIdeas);
       const selectedIdea = ideas[parseInt(savedIdeaIndex)];
       if (selectedIdea) {
-        setCoverTitle(selectedIdea.title || '');
+        // 保持主标题为"THE MAGIC IN"
+        setCoverTitle('THE MAGIC IN');
         setSubtitle(selectedIdea.description || '');
       }
     }

@@ -5,6 +5,8 @@ import { Edit, RefreshCw } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import WizardStep from '@/components/wizard/WizardStep';
 import LoveStoryCoverPreview from '@/components/cover-generator/LoveStoryCoverPreview';
+import { supabase } from '@/integrations/supabase/client';
+import { uploadImageToStorage, getClientId, getAllImagesFromStorage } from '@/integrations/supabase/storage';
 
 // 定义封面样式类型
 interface CoverStyle {
@@ -76,25 +78,27 @@ const LoveStoryCoverStep = () => {
   const [coverImage, setCoverImage] = useState<string | undefined>();
   const [isGeneratingCover, setIsGeneratingCover] = useState<boolean>(false);
   const [selectedStyle, setSelectedStyle] = useState<string>('classic');
+  const [textTone, setTextTone] = useState<string>('romantic');
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
-    // 从localStorage获取标题、作者信息和样式
+    // 从localStorage获取标题、作者信息、样式和文本风格
     const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
     const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
     const savedAuthorName = localStorage.getItem('loveStoryAuthorName');
     const savedStyle = localStorage.getItem('loveStoryCoverStyle');
+    const savedTone = localStorage.getItem('loveStoryTone');
     
-    // 获取已保存的封面图片
-    const savedCoverImage = localStorage.getItem('loveStoryCoverImage');
+    // 从Supabase获取已保存的封面图片
+    loadCoverImageFromSupabase();
     
     if (savedAuthorName) {
       setAuthorName(savedAuthorName);
     }
     
-    if (savedCoverImage) {
-      setCoverImage(savedCoverImage);
+    if (savedTone) {
+      setTextTone(savedTone);
     }
     
     if (savedStyle) {
@@ -116,6 +120,25 @@ const LoveStoryCoverStep = () => {
       }
     }
   }, []);
+
+  // 从Supabase加载封面图片
+  const loadCoverImageFromSupabase = async () => {
+    try {
+      const images = await getAllImagesFromStorage('images');
+      const coverImages = images.filter(img => img.name.includes('love-story-cover'));
+      
+      if (coverImages.length > 0) {
+        // 使用最新的图片
+        const latestImage = coverImages.sort((a, b) => {
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        })[0];
+        
+        setCoverImage(latestImage.url);
+      }
+    } catch (error) {
+      console.error('Error loading cover image from Supabase:', error);
+    }
+  };
 
   // 处理样式选择
   const handleStyleSelect = (styleId: string) => {
@@ -141,40 +164,97 @@ const LoveStoryCoverStep = () => {
     });
     
     try {
-      // 模拟生成过程
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // 获取用户上传的图片
+      const uploadedImage = localStorage.getItem('loveStoryPartnerPhoto');
+      const savedTone = localStorage.getItem('loveStoryTone') || textTone;
       
-      // 这里我们只改变背景颜色的逻辑不变，但不再需要绘制复杂的渐变
-      const canvas = document.createElement('canvas');
-      canvas.width = 800;
-      canvas.height = 1000;
-      const ctx = canvas.getContext('2d');
-      
-      if (ctx) {
-        // 使用当前选定样式的背景色
-        const currentStyle = coverStyles.find(style => style.id === selectedStyle) || coverStyles[0];
-        ctx.fillStyle = currentStyle.background;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      if (uploadedImage) {
+        // 使用上传的图片处理
+        // 第一步：调用generate-love-cover API增强图片
+        const { data: enhancedData, error: enhancedError } = await supabase.functions.invoke('generate-love-cover', {
+          body: { 
+            photo: uploadedImage,
+            style: selectedStyle,
+            type: 'cover',
+            textPrompt: `the person's single person img, but wearing more brilliant clothes, but in a ${savedTone} way.`
+          }
+        });
         
-        // 保存新的封面图片
-        try {
-          const dataUrl = canvas.toDataURL('image/png');
-          localStorage.setItem('loveStoryCoverImage', dataUrl);
-          setCoverImage(dataUrl);
+        if (enhancedError) throw enhancedError;
+        
+        // 检查并处理响应数据
+        let enhancedImage = '';
+        if (enhancedData?.output && enhancedData.output.length > 0) {
+          enhancedImage = enhancedData.output[0];
+        } else if (enhancedData?.coverImage && enhancedData.coverImage.length > 0) {
+          enhancedImage = enhancedData.coverImage[0];
+        } else {
+          throw new Error("No enhanced image data in response");
+        }
+        
+        // 第二步：调用remove-background API去除背景
+        const { data: bgRemoveData, error: bgRemoveError } = await supabase.functions.invoke('remove-background', {
+          body: { imageUrl: enhancedImage }
+        });
+        
+        if (bgRemoveError) throw bgRemoveError;
+        
+        if (!bgRemoveData?.success || !bgRemoveData?.image) {
+          throw new Error("Failed to remove background");
+        }
+        
+        const processedImage = bgRemoveData.image;
+        
+        // 第三步：上传到Supabase存储
+        const timestamp = Date.now();
+        const storageUrl = await uploadImageToStorage(
+          processedImage,
+          'images',
+          `love-story-cover-${timestamp}`
+        );
+        
+        // 仅保存到状态中用于显示，不存储到localStorage
+        setCoverImage(processedImage);
+      } else {
+        // 没有上传图片，使用简单的背景颜色
+        const canvas = document.createElement('canvas');
+        canvas.width = 800;
+        canvas.height = 1000;
+        const ctx = canvas.getContext('2d');
+        
+        if (ctx) {
+          // 使用当前选定样式的背景色
+          const currentStyle = coverStyles.find(style => style.id === selectedStyle) || coverStyles[0];
+          ctx.fillStyle = currentStyle.background;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
           
-          toast({
-            title: "Cover regenerated",
-            description: "Your new cover is ready!"
-          });
-        } catch (error) {
-          console.error('Error saving cover image:', error);
-          toast({
-            title: "Error",
-            description: "Failed to save the new cover.",
-            variant: "destructive"
-          });
+          try {
+            const dataUrl = canvas.toDataURL('image/png');
+            setCoverImage(dataUrl);
+            
+            // 上传到Supabase，但不存储到localStorage
+            const timestamp = Date.now();
+            await uploadImageToStorage(
+              dataUrl,
+              'images',
+              `love-story-cover-${timestamp}`
+            );
+          } catch (error) {
+            console.error('Error creating cover image:', error);
+            throw error;
+          }
         }
       }
+      
+      // 重新加载Supabase上的图片以获取最新上传的图片
+      setTimeout(() => {
+        loadCoverImageFromSupabase();
+      }, 1000);
+      
+      toast({
+        title: "Cover regenerated",
+        description: "Your new cover is ready!"
+      });
     } catch (error) {
       console.error('Error generating cover:', error);
       toast({

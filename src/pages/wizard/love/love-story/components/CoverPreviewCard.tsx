@@ -24,7 +24,7 @@ export const CoverPreviewCard = ({
   onRegenerateCover
 }: CoverPreviewCardProps) => {
   // Get recipient name from localStorage
-  const recipientName = localStorage.getItem('loveStoryRecipientName') || 'My Love';
+  const recipientName = localStorage.getItem('loveStoryPersonName') || 'My Love';
 
   return (
     <div className="relative">
