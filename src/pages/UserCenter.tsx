@@ -14,6 +14,7 @@ const UserCenter = () => {
     editPath: string;
   }>>([]);
   const [hasItems, setHasItems] = useState(false);
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
 
   useEffect(() => {
     const items = [];
@@ -79,9 +80,64 @@ const UserCenter = () => {
     navigate(path);
   };
 
-  const handleCheckout = () => {
-    // 导航到结账页面
-    navigate('/checkout');
+  const handleCheckout = async () => {
+    if (cartItems.length === 0) {
+      toast({
+        title: "Empty Cart",
+        description: "Your cart is empty. Please add items before checkout.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsCheckingOut(true);
+    
+    try {
+      // 目前仅处理单个商品，如果有多个商品，使用第一个
+      const item = cartItems[0];
+      
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          productId: item.id,
+          title: item.title,
+          format: item.format,
+          price: item.price, 
+          quantity: 1
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      
+      const { url, orderId } = await response.json();
+      
+      // 保存订单ID
+      if (item.id === 'love-story') {
+        localStorage.setItem('loveStoryOrderId', orderId);
+      } else if (item.id === 'funny-biography') {
+        localStorage.setItem('funnyBiographyOrderId', orderId);
+      }
+      
+      // 重定向到Stripe结账页面
+      if (url) {
+        window.location.href = url;
+      } else {
+        throw new Error('No checkout URL returned');
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      toast({
+        title: "Checkout Error",
+        description: "An error occurred during checkout. Please try again.",
+        variant: "destructive"
+      });
+      setIsCheckingOut(false);
+    }
   };
 
   return (
@@ -136,8 +192,9 @@ const UserCenter = () => {
               <Button 
                 onClick={handleCheckout}
                 className="bg-[#FF7F50] hover:bg-[#FF7F50]/80 text-white px-8 py-3 text-lg"
+                disabled={isCheckingOut}
               >
-                Checkout
+                {isCheckingOut ? 'Processing...' : 'Checkout'}
               </Button>
             </div>
           </div>
