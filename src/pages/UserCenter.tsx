@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { X } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const UserCenter = () => {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ const UserCenter = () => {
     editPath: string;
   }>>([]);
   const [hasItems, setHasItems] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const items = [];
@@ -79,9 +81,57 @@ const UserCenter = () => {
     navigate(path);
   };
 
-  const handleCheckout = () => {
-    // 导航到结账页面
-    navigate('/checkout');
+  const handleCheckout = async () => {
+    if (!hasItems || cartItems.length === 0) {
+      toast({
+        title: "Empty cart",
+        description: "Please add items to your cart before checkout.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // 使用第一个物品的信息（一般情况下只有一个书籍）
+      const item = cartItems[0];
+      const productInfo = {
+        title: item.title,
+        format: item.format,
+        price: item.price
+      };
+
+      // 调用Supabase函数创建结账会话
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { 
+          productInfo,
+          shippingRequired: true // 需要收集配送地址
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      // 保存订单ID供后续使用
+      if (item.id === 'love-story') {
+        localStorage.setItem('loveStoryOrderId', data.orderId);
+      } else if (item.id === 'funny-biography') {
+        localStorage.setItem('funnyBiographyOrderId', data.orderId);
+      }
+
+      // 重定向到Stripe结账页面
+      window.location.href = data.url;
+    } catch (error) {
+      console.error('Checkout error:', error);
+      toast({
+        title: "Checkout failed",
+        description: error.message || "Something went wrong. Please try again.",
+        variant: "destructive"
+      });
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -135,9 +185,10 @@ const UserCenter = () => {
             <div className="flex justify-end">
               <Button 
                 onClick={handleCheckout}
+                disabled={isLoading}
                 className="bg-[#FF7F50] hover:bg-[#FF7F50]/80 text-white px-8 py-3 text-lg"
               >
-                Checkout
+                {isLoading ? 'Processing...' : 'Checkout'}
               </Button>
             </div>
           </div>

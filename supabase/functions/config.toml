@@ -1,3 +1,9 @@
+# 这是本地开发的环境变量
+# 请将实际的密钥安全地存储在Supabase Dashboard中
+
+[global.env_variables]
+# Stripe密钥 - 这里只是占位符，请使用您的实际密钥
+STRIPE_SECRET_KEY = "your_stripe_secret_key_here"
 
 project_id = "hbkgbggctzvqffqfrmhl"
 [functions.remove-background]
