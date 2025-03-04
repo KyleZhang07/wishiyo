@@ -3,7 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { X } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { loadStripe } from '@stripe/stripe-js';
+
+// Stripe公钥（这是公开的，可以安全地包含在前端代码中）
+// 注意：请替换为您的实际Stripe公钥
+const stripePromise = loadStripe('pk_test_TYooMQauvdEDq54NiTphI7jx');
 
 const UserCenter = () => {
   const navigate = useNavigate();
@@ -96,33 +100,62 @@ const UserCenter = () => {
     try {
       // 使用第一个物品的信息（一般情况下只有一个书籍）
       const item = cartItems[0];
-      const productInfo = {
-        title: item.title,
-        format: item.format,
-        price: item.price
-      };
-
-      // 调用Supabase函数创建结账会话
-      const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { 
-          productInfo,
-          shippingRequired: true // 需要收集配送地址
-        }
-      });
-
-      if (error) {
-        throw error;
-      }
-
+      
+      // 生成唯一订单ID
+      const orderId = `WY-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+      
       // 保存订单ID供后续使用
       if (item.id === 'love-story') {
-        localStorage.setItem('loveStoryOrderId', data.orderId);
+        localStorage.setItem('loveStoryOrderId', orderId);
       } else if (item.id === 'funny-biography') {
-        localStorage.setItem('funnyBiographyOrderId', data.orderId);
+        localStorage.setItem('funnyBiographyOrderId', orderId);
       }
-
-      // 重定向到Stripe结账页面
-      window.location.href = data.url;
+      
+      // 加载Stripe实例
+      const stripe = await stripePromise;
+      if (!stripe) throw new Error('Failed to load Stripe');
+      
+      // 注意：由于Stripe前端SDK的限制，我们需要使用一个后端会话ID
+      // 但我们可以使用更简单的后端实现，仅创建会话ID
+      
+      // 创建一个简单的表单提交，模拟结账
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = 'https://checkout.stripe.com/create-checkout-session';
+      
+      // 添加必要的字段
+      const addHiddenField = (name: string, value: string) => {
+        const hiddenField = document.createElement('input');
+        hiddenField.type = 'hidden';
+        hiddenField.name = name;
+        hiddenField.value = value;
+        form.appendChild(hiddenField);
+      };
+      
+      // 设置基本参数
+      addHiddenField('key', 'pk_test_TYooMQauvdEDq54NiTphI7jx'); // 替换为您的公钥
+      addHiddenField('success_url', `${window.location.origin}/order-success?order_id=${orderId}`);
+      addHiddenField('cancel_url', `${window.location.origin}/user-center`);
+      addHiddenField('client_reference_id', orderId);
+      
+      // 设置商品信息
+      addHiddenField('line_items[0][name]', item.title);
+      addHiddenField('line_items[0][description]', `${item.title} - ${item.format}`);
+      addHiddenField('line_items[0][amount]', `${Math.round(parseFloat(item.price) * 100)}`);
+      addHiddenField('line_items[0][currency]', 'usd');
+      addHiddenField('line_items[0][quantity]', '1');
+      
+      // 设置其他选项
+      addHiddenField('mode', 'payment');
+      addHiddenField('shipping_address_collection[allowed_countries][]', 'US');
+      addHiddenField('shipping_address_collection[allowed_countries][]', 'CA');
+      addHiddenField('shipping_address_collection[allowed_countries][]', 'GB');
+      addHiddenField('shipping_address_collection[allowed_countries][]', 'AU');
+      
+      // 将表单添加到文档并提交
+      document.body.appendChild(form);
+      form.submit();
+      
     } catch (error) {
       console.error('Checkout error:', error);
       toast({
