@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -43,15 +42,14 @@ const Checkout = () => {
     setLoading(true);
     
     try {
-      // Call Supabase Function to create Stripe checkout session
+      // 使用更新的Stripe checkout session API
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: {
-          bookInfo: {
-            title: bookTitle,
-            format: bookFormat,
-            price: price,
-            orderId: orderId
-          }
+          productId: 'love-story-book',
+          priceId: 'price_' + Math.random().toString(36).substring(2, 10), // 在实际应用中，这将是Stripe的真实价格ID
+          quantity: 1,
+          format: bookFormat,
+          title: bookTitle
         }
       });
       
