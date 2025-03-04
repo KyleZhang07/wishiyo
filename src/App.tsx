@@ -13,8 +13,6 @@ import NotFound from "./pages/NotFound";
 import FriendsLanding from "./pages/FriendsLanding";
 import LoveLanding from "./pages/LoveLanding";
 import Checkout from "./pages/Checkout";
-import CheckoutPage from "./pages/CheckoutPage";
-import OrderSuccessPage from "./pages/OrderSuccessPage";
 
 // Friends Book Creation Routes - Funny Biography
 import FunnyBiographyAuthorStep from "./pages/wizard/friends/funny-biography/AuthorStep";
@@ -79,13 +77,11 @@ const AppLayout = () => {
   
   // Check if the current path is a book creation path
   const isCreationPath = location.pathname.includes('/create/');
-  const isCheckoutPage = location.pathname === '/checkout-page';
-  const isOrderSuccessPage = location.pathname === '/order-success';
   
   return (
     <div className="min-h-screen flex flex-col">
-      {!isCreationPath && !isCheckoutPage && !isOrderSuccessPage && <Header />}
-      <main className={`flex-grow ${isCreationPath || isCheckoutPage || isOrderSuccessPage ? 'pt-0' : 'pt-0'}`}>
+      {!isCreationPath && <Header />}
+      <main className={`flex-grow ${isCreationPath ? 'pt-0' : 'pt-0'}`}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/user-center" element={<UserCenter />} />
@@ -118,13 +114,12 @@ const AppLayout = () => {
           
           {/* Checkout Routes */}
           <Route path="/checkout" element={<Checkout />} />
-          <Route path="/checkout-page" element={<CheckoutPage />} />
-          <Route path="/order-success" element={<OrderSuccessPage />} />
+          <Route path="/order-success" element={<OrderSuccess />} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
-      {!isCreationPath && !isCheckoutPage && !isOrderSuccessPage && <Footer />}
+      {!isCreationPath && <Footer />}
     </div>
   );
 };
