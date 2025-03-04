@@ -9,6 +9,19 @@ import { loadStripe } from '@stripe/stripe-js';
 // 注意：请替换为您的实际Stripe公钥
 const stripePromise = loadStripe('pk_test_TYooMQauvdEDq54NiTphI7jx');
 
+// 这些价格ID应该在Stripe Dashboard中预先创建
+// 这是最安全的方式，因为价格在服务器端定义
+const PRODUCT_PRICE_IDS = {
+  'love-story': {
+    'hardcover': 'price_1OdBfKJXUvYKLyJnKbRd5aKy', // 爱情故事-精装版价格ID
+    'paperback': 'price_1OdBg3JXUvYKLyJn9jqJ3Yl1'  // 爱情故事-平装版价格ID
+  },
+  'funny-biography': {
+    'hardcover': 'price_1OdBgaJXUvYKLyJnYFfcXgNq', // 趣味传记-精装版价格ID
+    'paperback': 'price_1OdBh3JXUvYKLyJnUqK8nBgh'  // 趣味传记-平装版价格ID
+  }
+};
+
 const UserCenter = () => {
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState<Array<{
@@ -33,7 +46,7 @@ const UserCenter = () => {
       items.push({
         id: 'love-story',
         title: loveTitle,
-        format: loveFormat,
+        format: loveFormat.toLowerCase(),
         price: lovePrice,
         editPath: '/create/love/love-story/generate'
       });
@@ -48,7 +61,7 @@ const UserCenter = () => {
       items.push({
         id: 'funny-biography',
         title: funnyTitle,
-        format: funnyFormat,
+        format: funnyFormat.toLowerCase(),
         price: funnyPrice,
         editPath: '/create/friends/funny-biography/generate'
       });
@@ -111,51 +124,31 @@ const UserCenter = () => {
         localStorage.setItem('funnyBiographyOrderId', orderId);
       }
       
+      // 获取这个产品和格式对应的Stripe价格ID
+      const priceId = PRODUCT_PRICE_IDS[item.id]?.[item.format];
+      
+      if (!priceId) {
+        throw new Error(`No price ID found for ${item.id} with format ${item.format}`);
+      }
+      
       // 加载Stripe实例
       const stripe = await stripePromise;
       if (!stripe) throw new Error('Failed to load Stripe');
       
-      // 注意：由于Stripe前端SDK的限制，我们需要使用一个后端会话ID
-      // 但我们可以使用更简单的后端实现，仅创建会话ID
+      // 使用预定义的价格ID创建会话
+      const { error } = await stripe.redirectToCheckout({
+        lineItems: [{ price: priceId, quantity: 1 }],
+        mode: 'payment',
+        successUrl: `${window.location.origin}/order-success?order_id=${orderId}`,
+        cancelUrl: `${window.location.origin}/user-center`,
+        shippingAddressCollection: {
+          allowedCountries: ['US', 'CA', 'GB', 'AU'],
+        },
+      });
       
-      // 创建一个简单的表单提交，模拟结账
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = 'https://checkout.stripe.com/create-checkout-session';
-      
-      // 添加必要的字段
-      const addHiddenField = (name: string, value: string) => {
-        const hiddenField = document.createElement('input');
-        hiddenField.type = 'hidden';
-        hiddenField.name = name;
-        hiddenField.value = value;
-        form.appendChild(hiddenField);
-      };
-      
-      // 设置基本参数
-      addHiddenField('key', 'pk_test_TYooMQauvdEDq54NiTphI7jx'); // 替换为您的公钥
-      addHiddenField('success_url', `${window.location.origin}/order-success?order_id=${orderId}`);
-      addHiddenField('cancel_url', `${window.location.origin}/user-center`);
-      addHiddenField('client_reference_id', orderId);
-      
-      // 设置商品信息
-      addHiddenField('line_items[0][name]', item.title);
-      addHiddenField('line_items[0][description]', `${item.title} - ${item.format}`);
-      addHiddenField('line_items[0][amount]', `${Math.round(parseFloat(item.price) * 100)}`);
-      addHiddenField('line_items[0][currency]', 'usd');
-      addHiddenField('line_items[0][quantity]', '1');
-      
-      // 设置其他选项
-      addHiddenField('mode', 'payment');
-      addHiddenField('shipping_address_collection[allowed_countries][]', 'US');
-      addHiddenField('shipping_address_collection[allowed_countries][]', 'CA');
-      addHiddenField('shipping_address_collection[allowed_countries][]', 'GB');
-      addHiddenField('shipping_address_collection[allowed_countries][]', 'AU');
-      
-      // 将表单添加到文档并提交
-      document.body.appendChild(form);
-      form.submit();
-      
+      if (error) {
+        throw error;
+      }
     } catch (error) {
       console.error('Checkout error:', error);
       toast({
