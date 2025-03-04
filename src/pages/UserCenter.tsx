@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -80,8 +81,8 @@ const UserCenter = () => {
   };
 
   const handleCheckout = () => {
-    // 导航到结账页面
-    navigate('/checkout');
+    // Navigate to our new Stripe checkout page instead of the old checkout
+    navigate('/checkout-page');
   };
 
   return (
