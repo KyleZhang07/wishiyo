@@ -3,24 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { X } from 'lucide-react';
-import { loadStripe } from '@stripe/stripe-js';
-
-// Stripe公钥（这是公开的，可以安全地包含在前端代码中）
-// 注意：请替换为您的实际Stripe公钥
-const stripePromise = loadStripe('pk_test_TYooMQauvdEDq54NiTphI7jx');
-
-// 这些价格ID应该在Stripe Dashboard中预先创建
-// 这是最安全的方式，因为价格在服务器端定义
-const PRODUCT_PRICE_IDS = {
-  'love-story': {
-    'hardcover': 'price_1OdBfKJXUvYKLyJnKbRd5aKy', // 爱情故事-精装版价格ID
-    'paperback': 'price_1OdBg3JXUvYKLyJn9jqJ3Yl1'  // 爱情故事-平装版价格ID
-  },
-  'funny-biography': {
-    'hardcover': 'price_1OdBgaJXUvYKLyJnYFfcXgNq', // 趣味传记-精装版价格ID
-    'paperback': 'price_1OdBh3JXUvYKLyJnUqK8nBgh'  // 趣味传记-平装版价格ID
-  }
-};
 
 const UserCenter = () => {
   const navigate = useNavigate();
@@ -32,7 +14,6 @@ const UserCenter = () => {
     editPath: string;
   }>>([]);
   const [hasItems, setHasItems] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const items = [];
@@ -46,7 +27,7 @@ const UserCenter = () => {
       items.push({
         id: 'love-story',
         title: loveTitle,
-        format: loveFormat.toLowerCase(),
+        format: loveFormat,
         price: lovePrice,
         editPath: '/create/love/love-story/generate'
       });
@@ -61,7 +42,7 @@ const UserCenter = () => {
       items.push({
         id: 'funny-biography',
         title: funnyTitle,
-        format: funnyFormat.toLowerCase(),
+        format: funnyFormat,
         price: funnyPrice,
         editPath: '/create/friends/funny-biography/generate'
       });
@@ -98,66 +79,9 @@ const UserCenter = () => {
     navigate(path);
   };
 
-  const handleCheckout = async () => {
-    if (!hasItems || cartItems.length === 0) {
-      toast({
-        title: "Empty cart",
-        description: "Please add items to your cart before checkout.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      // 使用第一个物品的信息（一般情况下只有一个书籍）
-      const item = cartItems[0];
-      
-      // 生成唯一订单ID
-      const orderId = `WY-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-      
-      // 保存订单ID供后续使用
-      if (item.id === 'love-story') {
-        localStorage.setItem('loveStoryOrderId', orderId);
-      } else if (item.id === 'funny-biography') {
-        localStorage.setItem('funnyBiographyOrderId', orderId);
-      }
-      
-      // 获取这个产品和格式对应的Stripe价格ID
-      const priceId = PRODUCT_PRICE_IDS[item.id]?.[item.format];
-      
-      if (!priceId) {
-        throw new Error(`No price ID found for ${item.id} with format ${item.format}`);
-      }
-      
-      // 加载Stripe实例
-      const stripe = await stripePromise;
-      if (!stripe) throw new Error('Failed to load Stripe');
-      
-      // 使用预定义的价格ID创建会话
-      const { error } = await stripe.redirectToCheckout({
-        lineItems: [{ price: priceId, quantity: 1 }],
-        mode: 'payment',
-        successUrl: `${window.location.origin}/order-success?order_id=${orderId}`,
-        cancelUrl: `${window.location.origin}/user-center`,
-        shippingAddressCollection: {
-          allowedCountries: ['US', 'CA', 'GB', 'AU'],
-        },
-      });
-      
-      if (error) {
-        throw error;
-      }
-    } catch (error) {
-      console.error('Checkout error:', error);
-      toast({
-        title: "Checkout failed",
-        description: error.message || "Something went wrong. Please try again.",
-        variant: "destructive"
-      });
-      setIsLoading(false);
-    }
+  const handleCheckout = () => {
+    // 导航到结账页面
+    navigate('/checkout');
   };
 
   return (
@@ -211,10 +135,9 @@ const UserCenter = () => {
             <div className="flex justify-end">
               <Button 
                 onClick={handleCheckout}
-                disabled={isLoading}
                 className="bg-[#FF7F50] hover:bg-[#FF7F50]/80 text-white px-8 py-3 text-lg"
               >
-                {isLoading ? 'Processing...' : 'Checkout'}
+                Checkout
               </Button>
             </div>
           </div>
