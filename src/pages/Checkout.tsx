@@ -1,7 +1,11 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Check } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
+import { toast } from '@/components/ui/use-toast';
+import { supabase } from "@/integrations/supabase/client";
+import { Input } from '@/components/ui/input';
 
 // 生成随机订单ID，格式: WY-XXXXXXXX
 const generateOrderId = () => {
@@ -35,15 +39,53 @@ const Checkout = () => {
     navigate('/');
   };
   
-  const handleCompleteOrder = () => {
+  const handleCheckout = async () => {
     setLoading(true);
     
-    // 模拟订单处理过程
-    setTimeout(() => {
+    try {
+      // Call Supabase Function to create Stripe checkout session
+      const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+        body: {
+          bookInfo: {
+            title: bookTitle,
+            format: bookFormat,
+            price: price,
+            orderId: orderId
+          }
+        }
+      });
+      
+      if (error) {
+        console.error('Error creating checkout session:', error);
+        toast({
+          title: "Error",
+          description: "Failed to create checkout session. Please try again.",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+      
+      // Redirect to Stripe Checkout
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        toast({
+          title: "Error",
+          description: "No checkout URL returned. Please try again.",
+          variant: "destructive"
+        });
+        setLoading(false);
+      }
+    } catch (err) {
+      console.error('Checkout error:', err);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
+      });
       setLoading(false);
-      // 显示订单成功并导航到成功页面
-      navigate('/order-success');
-    }, 2000);
+    }
   };
   
   return (
@@ -99,10 +141,15 @@ const Checkout = () => {
           <Button 
             variant="default" 
             className="bg-[#FF7F50] hover:bg-[#FF7F50]/80 text-white"
-            onClick={handleCompleteOrder}
+            onClick={handleCheckout}
             disabled={loading}
           >
-            {loading ? 'Processing...' : 'Complete Order'}
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Processing...
+              </>
+            ) : 'Proceed to Checkout'}
           </Button>
         </div>
       </div>
@@ -110,4 +157,4 @@ const Checkout = () => {
   );
 };
 
-export default Checkout; 
+export default Checkout;
