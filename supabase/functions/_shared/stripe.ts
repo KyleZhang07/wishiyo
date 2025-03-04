@@ -1,4 +1,4 @@
-import Stripe from 'https://esm.sh/stripe@12.5.0?target=deno';
+import Stripe from 'https://esm.sh/stripe@12.5.0?target=deno&no-check';
 
 // 注意：确保使用您的实际Stripe密钥
 const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY') || '';
