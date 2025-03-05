@@ -1,61 +1,72 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// Vercel serverless function for generating image texts
+import axios from 'axios';
 
+// CORS headers for API responses
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
 };
 
-interface ImagePrompt {
-  question: string;
-  prompt: string;
-}
+/**
+ * Interface definitions (commented as docs in JS)
+ * 
+ * ImagePrompt {
+ *   question: string;
+ *   prompt: string;
+ * }
+ * 
+ * ImageText {
+ *   text: string;
+ *   tone: string;
+ * }
+ * 
+ * QuestionAnswer {
+ *   question: string;
+ *   answer: string;
+ * }
+ */
 
-interface ImageText {
-  text: string;
-  tone: string;
-}
-
-interface QuestionAnswer {
-  question: string;
-  answer: string;
-}
-
-serve(async (req) => {
+export default async function handler(req, res) {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    res.status(200).set(corsHeaders).end();
+    return;
+  }
+
+  // Only allow POST for this endpoint
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { prompts, tone, personName, personAge, questionsAndAnswers = [] } = await req.json();
+    const { prompts, tone, personName, personAge, questionsAndAnswers = [] } = req.body;
     
     console.log(`Generating image texts for ${prompts.length} prompts with tone: ${tone}`);
     
     if (!Array.isArray(prompts) || prompts.length === 0) {
-      throw new Error('Prompts must be a non-empty array');
+      return res.status(400).json({ error: 'Prompts must be a non-empty array' });
     }
     
     if (!tone) {
-      throw new Error('Tone is required');
+      return res.status(400).json({ error: 'Tone is required' });
     }
 
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+    const openAIApiKey = process.env.OPENAI_API_KEY;
     if (!openAIApiKey) {
-      throw new Error('OpenAI API key is not configured');
+      return res.status(500).json({ error: 'OpenAI API key is not configured' });
     }
 
-    const texts: ImageText[] = [];
-    
     // Process questions and answers for personalization
     let personalInfo = '';
     if (questionsAndAnswers && questionsAndAnswers.length > 0) {
-      personalInfo = questionsAndAnswers.map((qa: QuestionAnswer) => 
+      personalInfo = questionsAndAnswers.map((qa) => 
         `${qa.question}: ${qa.answer}`
       ).join('\n');
     }
 
     // Create tone-specific system prompts
-    const getToneSpecificPrompt = (tone: string) => {
+    const getToneSpecificPrompt = (tone) => {
       switch (tone) {
         case 'Heartfelt':
           return `You are a talented caption writer who specializes in warm, emotional, and deeply sincere content.
@@ -105,14 +116,9 @@ serve(async (req) => {
     };
 
     // Generate texts in parallel for all prompts
-    const textPromises = prompts.map(async (prompt: ImagePrompt) => {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${openAIApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+    const textPromises = prompts.map(async (prompt) => {
+      try {
+        const response = await axios.post('https://api.openai.com/v1/chat/completions', {
           model: 'gpt-4o-mini',
           messages: [
             { 
@@ -137,43 +143,43 @@ serve(async (req) => {
           ],
           temperature: 0.7,
           max_tokens: 250,
-        }),
-      });
+        }, {
+          headers: {
+            'Authorization': `Bearer ${openAIApiKey}`,
+            'Content-Type': 'application/json',
+          }
+        });
 
-      if (!response.ok) {
-        console.error('OpenAI API error:', await response.text());
+        const generatedText = response.data.choices[0].message.content.trim();
+        
+        return {
+          text: generatedText,
+          tone: tone
+        };
+      } catch (error) {
+        console.error('OpenAI API error:', error.response?.data || error.message);
         return {
           text: "A special moment captured in time.",
           tone: tone
         };
       }
-
-      const data = await response.json();
-      const generatedText = data.choices[0].message.content.trim();
-      
-      return {
-        text: generatedText,
-        tone: tone
-      };
     });
 
     const generatedTexts = await Promise.all(textPromises);
     
     console.log(`Successfully generated ${generatedTexts.length} texts`);
 
-    return new Response(
-      JSON.stringify({ texts: generatedTexts }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    // Return the generated texts with CORS headers
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Content-Type', 'application/json');
+    return res.status(200).json({ texts: generatedTexts });
+    
   } catch (error) {
     console.error('Error generating image texts:', error);
     
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
-    );
+    // Return error with CORS headers
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Content-Type', 'application/json');
+    return res.status(500).json({ error: error.message });
   }
-});
+} 

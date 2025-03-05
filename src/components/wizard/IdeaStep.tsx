@@ -32,11 +32,9 @@ interface ImageText {
 
 // Text tone options for love story
 const TONE_OPTIONS = [
-  'Humorous',
-  'Poetic',
-  'Dramatic',
   'Heartfelt',
-  'Encouraging'
+  'Playful',
+  'Inspirational'
 ];
 
 // Image style options for love story
@@ -259,20 +257,36 @@ const IdeaStep = ({
       const personName = localStorage.getItem('loveStoryPersonName');
       const personAge = localStorage.getItem('loveStoryPersonAge');
       
+      // Get the answers to questions about the person
+      const savedAnswers = localStorage.getItem('loveStoryAnswers');
+      const questionsAndAnswers = savedAnswers ? JSON.parse(savedAnswers) : [];
+      
       if (!personName) {
         throw new Error('Missing person name');
       }
 
-      const { data, error } = await supabase.functions.invoke('generate-image-texts', {
-        body: { 
+      // 使用 Vercel API 而不是 Supabase 函数
+      const apiUrl = '/api/generate-image-texts';
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           prompts,
           tone,
           personName,
-          personAge
-        }
+          personAge,
+          questionsAndAnswers
+        }),
       });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'API request failed');
+      }
+
+      const data = await response.json();
 
       if (!data || !data.texts) {
         throw new Error('No texts received from the server');

@@ -7,11 +7,9 @@ import WizardStep from '@/components/wizard/WizardStep';
 
 // Text tone options for love story
 const TONE_OPTIONS = [
-  'Humorous',
-  'Poetic',
-  'Dramatic',
   'Heartfelt',
-  'Encouraging'
+  'Playful',
+  'Inspirational'
 ];
 
 const LoveStoryStyleStep = () => {
@@ -88,11 +86,9 @@ const LoveStoryStyleStep = () => {
                 <div>
                   <h4 className="font-medium text-gray-900">{tone}</h4>
                   <p className="text-sm text-gray-500">
-                    {tone === 'Humorous' && 'Light-hearted and funny tone'}
-                    {tone === 'Poetic' && 'Lyrical and expressive language'}
-                    {tone === 'Dramatic' && 'Intense and emotional storytelling'}
+                    {tone === 'Playful' && 'Light-hearted and fun expression'}
                     {tone === 'Heartfelt' && 'Sincere and deeply emotional'}
-                    {tone === 'Encouraging' && 'Uplifting and inspirational'}
+                    {tone === 'Inspirational' && 'Uplifting and motivational'}
                   </p>
                 </div>
               </div>
@@ -108,19 +104,13 @@ const LoveStoryStyleStep = () => {
             </p>
             <div className="grid grid-cols-2 gap-4">
               <div className="aspect-video bg-gray-100 rounded-sm flex items-center justify-center">
-                <p className="text-gray-400 text-sm">Humorous example</p>
-              </div>
-              <div className="aspect-video bg-gray-100 rounded-sm flex items-center justify-center">
-                <p className="text-gray-400 text-sm">Poetic example</p>
-              </div>
-              <div className="aspect-video bg-gray-100 rounded-sm flex items-center justify-center">
-                <p className="text-gray-400 text-sm">Dramatic example</p>
-              </div>
-              <div className="aspect-video bg-gray-100 rounded-sm flex items-center justify-center">
                 <p className="text-gray-400 text-sm">Heartfelt example</p>
               </div>
               <div className="aspect-video bg-gray-100 rounded-sm flex items-center justify-center">
-                <p className="text-gray-400 text-sm">Encouraging example</p>
+                <p className="text-gray-400 text-sm">Playful example</p>
+              </div>
+              <div className="aspect-video bg-gray-100 rounded-sm flex items-center justify-center">
+                <p className="text-gray-400 text-sm">Inspirational example</p>
               </div>
             </div>
           </div>
