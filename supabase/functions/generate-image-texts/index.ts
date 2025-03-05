@@ -64,12 +64,12 @@ serve(async (req) => {
                  Write in a warm, intimate tone that reflects genuine emotional connection.
                  Include specific personal details to make the text feel authentic and tailored.
                  The text should feel like a heartfelt letter to someone deeply loved and cherished.
-                 Start with the person's name and create text that's 3-5 sentences long. 
+                 Start with the person's name and create text that's 2-3 sentences long. 
                  End with a sentiment that captures warm appreciation and nostalgic affection.
                  Example tone: Warm, sincere, emotionally resonant, appreciative.
                  
                  Example of Heartfelt text:
-                 "Cassie, whenever the gentle warmth of spring returns, I'm reminded of you—of the way you eagerly lace up your boots and head into the wilderness, excited for every adventure. Your joy in hiking those trails, your quiet wonder beneath the open sky; these are moments that have woven themselves deeply into my heart. I created this page especially for you, hoping it always reminds you of how truly special and cherished you are. Just like spring itself, your presence fills my world with beauty and warmth that I treasure beyond words."`;
+                 "Cassie, whenever the gentle warmth of spring returns, I'm reminded of you—of the way you eagerly lace up your boots and head into the wilderness. Your joy in hiking those trails fills my heart with warmth that I treasure beyond words."`;
           
         case 'Playful':
           return `You are a talented caption writer who specializes in light-hearted, fun, and slightly mischievous content.
@@ -77,12 +77,12 @@ serve(async (req) => {
                  Write in a casual, conversational tone with playful metaphors or gentle jokes.
                  Include fun hypothetical scenarios or light teasing related to the person's interests or habits.
                  The text should feel like a note from a close friend who knows how to make them laugh.
-                 Start with "Hey [Name]!" and create text that's 3-5 sentences long.
+                 Start with "Hey [Name]!" and create text that's 2-3 sentences long.
                  End with an encouraging or adventurous sentiment that's upbeat and positive.
                  Example tone: Lighthearted, humorous, whimsical, friendly.
                  
                  Example of Playful text:
-                 "Hey Cassie! Did you notice these trees whispering behind your back? I'm pretty sure they're gossiping about that time you dreamed you'd ski right down the Eiffel Tower when you finally make it to Paris! Remember, adventures await around every corner—whether it's snowy slopes or secret forest trails. Keep being brave, curious, and just a tiny bit mischievous—just like you've always been, my favorite little explorer!"`;
+                 "Hey Cassie! Did you notice these trees whispering behind your back? I'm pretty sure they're gossiping about that time you dreamed you'd ski right down the Eiffel Tower when you finally make it to Paris!"`;
           
         case 'Inspirational':
           return `You are a talented caption writer who specializes in uplifting, motivational, and forward-looking content.
@@ -90,18 +90,18 @@ serve(async (req) => {
                  Write in an encouraging tone that emphasizes growth, dreams, and future potential.
                  Include metaphors about journeys, paths, or natural cycles (like seasons changing).
                  The text should feel like motivational encouragement from someone who deeply believes in them.
-                 Start with the person's name and create text that's 3-5 sentences long.
+                 Start with the person's name and create text that's 2-3 sentences long.
                  End with a motivational sentiment that inspires them to pursue their dreams.
                  Example tone: Empowering, forward-looking, encouraging, hopeful.
                  
                  Example of Inspirational text:
-                 "Cassie, every trail you hike and every slope you ski brings you closer to your dreams—especially that special dream of strolling down the streets of Paris one day. This page is here to remind you that every step forward counts, and every adventure shapes who you are becoming. Just like spring always follows winter, your dreams are waiting patiently for you to arrive. Keep walking boldly towards them—I believe in you, always."`;
+                 "Cassie, every trail you hike and every slope you ski brings you closer to your dreams—especially that special dream of Paris. Keep walking boldly towards them—I believe in you, always."`;
           
         default:
           return `You are a talented caption writer for an illustrated book. 
                  Create short, engaging captions in a ${tone} tone. 
                  The captions should complement the illustrations.
-                 Write ONLY the caption text, normally 3-5 sentences.`;
+                 Write ONLY the caption text, normally 2-3 sentences.`;
       }
     };
 
@@ -131,13 +131,14 @@ serve(async (req) => {
                         
                         The caption should relate to this prompt's theme: ${prompt.question}
                         
-                        Create a ${tone.toLowerCase()} caption that feels personal and evocative.
+                        Create a brief ${tone.toLowerCase()} caption that feels personal and evocative (2-3 sentences max).
+                        Keep it short and meaningful. Less is more.
                         DO NOT include explanations or metadata.
                         DO NOT add any symbols or emoji markers at the beginning.`
             }
           ],
           temperature: 0.7,
-          max_tokens: 250,
+          max_tokens: 150,
         }),
       });
 
