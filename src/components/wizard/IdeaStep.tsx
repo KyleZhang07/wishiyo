@@ -265,28 +265,17 @@ const IdeaStep = ({
         throw new Error('Missing person name');
       }
 
-      // 使用 Vercel API 而不是 Supabase 函数
-      const apiUrl = '/api/generate-image-texts';
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('generate-image-texts', {
+        body: { 
           prompts,
           tone,
           personName,
           personAge,
           questionsAndAnswers
-        }),
+        }
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'API request failed');
-      }
-
-      const data = await response.json();
+      if (error) throw error;
 
       if (!data || !data.texts) {
         throw new Error('No texts received from the server');
