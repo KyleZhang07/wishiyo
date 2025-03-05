@@ -1,14 +1,14 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import Replicate from "https://esm.sh/replicate@0.25.2";
+import { Replicate } from 'replicate';
 
+// CORS headers to allow cross-origin requests
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, HEAD, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
 // Map of style names from UI to API style names
-const styleMap: { [key: string]: string } = {
+const styleMap = {
   "Comic Book": "Comic book",
   "Line Art": "Line art",
   "Fantasy Art": "Fantasy art",
@@ -19,13 +19,38 @@ const styleMap: { [key: string]: string } = {
 // Default style if none is specified
 const DEFAULT_STYLE = "Photographic (Default)";
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+// Valid API style names for reference
+const validApiStyles = [
+  "(No style)", 
+  "Cinematic", 
+  "Disney Charactor", 
+  "Digital Art", 
+  "Photographic (Default)", 
+  "Fantasy art", 
+  "Neonpunk", 
+  "Enhance", 
+  "Comic book", 
+  "Lowpoly", 
+  "Line art"
+];
+
+export default async function handler(req, res) {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    res.status(200).set(corsHeaders).end();
+    return;
+  }
+  
+  // Set CORS headers for all responses
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed, please use POST' });
   }
 
   try {
-    const REPLICATE_API_KEY = Deno.env.get("REPLICATE_API_KEY");
+    const REPLICATE_API_KEY = process.env.REPLICATE_API_KEY;
     if (!REPLICATE_API_KEY) {
       throw new Error("REPLICATE_API_KEY is not set");
     }
@@ -34,25 +59,10 @@ serve(async (req) => {
       auth: REPLICATE_API_KEY,
     });
 
-    const { prompt, contentPrompt, content2Prompt, photo, photos, style } = await req.json();
+    const { prompt, contentPrompt, content2Prompt, photo, photos, style } = req.body;
     
     // Get the style name to use with the API
     console.log(`Requested style from client: "${style}"`);
-    
-    // Define valid API style names for reference
-    const validApiStyles = [
-      "(No style)", 
-      "Cinematic", 
-      "Disney Charactor", 
-      "Digital Art", 
-      "Photographic (Default)", 
-      "Fantasy art", 
-      "Neonpunk", 
-      "Enhance", 
-      "Comic book", 
-      "Lowpoly", 
-      "Line art"
-    ];
     
     // Find appropriate style or use default
     let styleName = DEFAULT_STYLE;
@@ -79,8 +89,8 @@ serve(async (req) => {
     console.log(`Mapped to API style_name: "${styleName}"`);
 
     // 获取要使用的照片
-    let inputPhoto: string;
-    let inputPhotos: string[];
+    let inputPhoto;
+    let inputPhotos;
     
     if (photos && Array.isArray(photos) && photos.length > 0) {
       // 使用多张照片
@@ -116,10 +126,7 @@ serve(async (req) => {
         }
       );
 
-      return new Response(
-        JSON.stringify({ output }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return res.status(200).json({ output });
     }
 
     // 仅生成内容图1
@@ -142,10 +149,7 @@ serve(async (req) => {
         }
       );
 
-      return new Response(
-        JSON.stringify({ contentImage }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return res.status(200).json({ contentImage });
     }
 
     // 仅生成内容图2
@@ -168,10 +172,7 @@ serve(async (req) => {
         }
       );
 
-      return new Response(
-        JSON.stringify({ contentImage2 }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return res.status(200).json({ contentImage2 });
     }
 
     // 同时生成封面、内容1、内容2
@@ -233,25 +234,13 @@ serve(async (req) => {
       ),
     ]);
 
-    return new Response(
-      JSON.stringify({
-        output,
-        contentImage,
-        contentImage2,
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      }
-    );
+    return res.status(200).json({
+      output,
+      contentImage,
+      contentImage2,
+    });
   } catch (error) {
     console.error("Error in replicate function:", error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
-      }
-    );
+    return res.status(500).json({ error: error.message });
   }
-});
+} 
