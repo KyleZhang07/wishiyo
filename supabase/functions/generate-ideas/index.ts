@@ -123,7 +123,7 @@ serve(async (req) => {
                 IGNORE any information about other people mentioned in the answers - focus solely on ${recipientName}.
                 You must respond with ONLY a JSON array containing exactly 3 book ideas.
                 
-                Additionally, for each book idea, create 3 fictional praise quotes from imaginary publications, magazines, or critics.
+                Additionally, for each book idea, create 4 fictional praise quotes from imaginary publications, magazines, or critics.
                 These should sound like authentic book reviews or endorsements that would appear on a book's back cover.`
             },
             {
@@ -134,7 +134,7 @@ serve(async (req) => {
                 - 'title': The book title
                 - 'author': "${authorName}"
                 - 'description': An engaging book description
-                - 'praises': An array of 3 fictional praise objects, each with 'source' (imaginary publication or critic name) and 'text' (the praise quote)
+                - 'praises': An array of 4 fictional praise objects, each with 'source' (imaginary publication or critic name) and 'text' (the praise quote)
                 
                 CREATE HIGHLY ENGAGING IDEAS - make each description sound like an enticing fantasy autobiography that people would want to read.
                 Focus EXCLUSIVELY on ${recipientName}'s dream life, aspirational achievements, and fantasy experiences.
@@ -156,15 +156,19 @@ serve(async (req) => {
                     "praises": [
                       {
                         "source": "Dream Life Magazine",
-                        "text": "A breathtaking portrait of ambition and fulfillment. ${authorName} has captured the essence of human potential in this stunning work."
+                        "text": "A spellbinding journey into the world of possibilities and dreams. ${authorName} masterfully captures the universal desire for achievement and fulfillment, crafting a narrative that resonates with anyone who has ever dared to imagine a different life. This visionary work transports readers through ${recipientName}'s extraordinary potential with vivid detail and emotional depth."
                       },
                       {
                         "source": "The Visionary Review",
-                        "text": "Readers will find themselves inspired to pursue their own dreams after witnessing ${recipientName}'s extraordinary journey."
+                        "text": "An immersive experience that transforms aspirations into vivid reality. Readers will find themselves inspired to pursue their own dreams after witnessing ${recipientName}'s extraordinary journey through challenges and triumphs. Each page reveals new depths of human potential that leave a lasting impression long after the final chapter."
                       },
                       {
                         "source": "Success Chronicles",
-                        "text": "A masterful blend of aspiration and accomplishment that showcases the power of imagination and determination."
+                        "text": "${recipientName}'s journey unfolds like a masterclass in determination and self-discovery. This book resonates with anyone who has ever stood at the crossroads of comfort and possibility, offering a compelling glimpse into what happens when we choose the path of growth. It's a beautifully crafted testament to the power of imagination that will have readers reflecting on their own untapped potential."
+                      },
+                      {
+                        "source": "Beneath the Screen Publishing",
+                        "text": "An exhilarating narrative that transforms ordinary aspirations into epic quests and meaningful journeys. ${authorName}'s unique storytelling voice illuminates ${recipientName}'s potential with such vividness that readers will find themselves inspired to reimagine their own possibilities. A remarkable blend of fantasy and emotional truth that captivates from the first page to the last."
                       }
                     ]
                   }
@@ -239,7 +243,7 @@ serve(async (req) => {
                 - "Perfectly Imperfect"
                 - "Kyle's Chaos and Glory"
                 
-                Additionally, for each book idea, create 3 fictional praise quotes from imaginary publications, magazines, or critics.
+                Additionally, for each book idea, create 4 fictional praise quotes from imaginary publications, magazines, or critics.
                 These should sound like authentic book reviews or endorsements that would appear on a book's back cover.
                 
                 You must respond with ONLY a JSON array containing exactly 3 book ideas.`
@@ -252,19 +256,40 @@ serve(async (req) => {
                 Respond with ONLY a JSON array of 3 objects, each with:
                 - 'title': The book title (SHORT, MEMORABLE, NEVER using parentheses or subtitle formats)
                 - 'author': "${authorName}" for all ideas
-                - 'description': ENGAGING, FUNNY, FOCUSED ONLY on ${authorName}, 1 sentence long, 10-15 words
-                - 'praises': An array of 3 fictional praise objects, each with 'source' (imaginary publication or critic name) and 'text' (the praise quote)
+                - 'description': A compelling book description (10-20 words) that sounds like a real book blurb. Make it engaging, specific, and capture the essence of the book.
+                - 'praises': An array of 4 fictional praise objects, each with 'source' (imaginary publication or critic name) and 'text' (the praise quote)
                 
                 Make the ideas FUNNY but also MEANINGFUL - they should sound like real biography books people would enjoy reading.
                 Each idea should be ABOUT ${authorName} ONLY, even if other people are mentioned in the answers.
                 
+                The descriptions should be specific, narrative, and intriguing - like real book descriptions found on book covers.
+                
+                Example descriptions:
+                - "An anthology of ${authorName}'s bizarre browser history that makes conspiracy theories look tame."
+                - "How ${authorName} found a virtual Nickname-Buddy and formed a one-sided bromance with algorithms."
+                - "A thrilling adventure of misspellings, autocorrect horrors, and the quest for elusive Google results."
+                
                 The praises should be humorous, witty, and specific to the book idea, mentioning themes from the book.
                 
                 Example praise:
-                {
-                  "source": "Daily Humor Review",
-                  "text": "A comedic masterpiece that transforms everyday mishaps into laugh-out-loud revelations. Readers will recognize their own foibles while delighting in the author's self-deprecating wit."
-                }`
+                [
+                  {
+                    "source": "Tech Tales Weekly",
+                    "text": "A spellbinding journey into the chaos of typos and the haunting clutches of autocorrect. ${authorName} masterfully captures the universal struggle of navigating a digital world armed only with a keyboard and determination. This hilarious chronicle transforms everyday frustrations into an epic saga that will have readers nodding in recognition and laughing out loud."
+                  },
+                  {
+                    "source": "Digital Explorer Magazine",
+                    "text": "A humorous yet heart-pounding adventure that takes us through the trials of modern-day digital mishaps. ${authorName}'s wit and perceptive insights kept me entertained and educated on every page. The perfect blend of self-deprecating humor and keen observation that makes even the most mundane technological failures seem like grand adventures."
+                  },
+                  {
+                    "source": "Adventures in Cyberspace Review",
+                    "text": "${authorName} brings to life the often overlooked perils of everyday misadventures. This book resonates with anyone who's ever faced the frustration of an awkward social interaction or the irony of best-laid plans gone hilariously wrong. It's a must-read that transforms ordinary mishaps into extraordinary entertainment for readers of all ages."
+                  },
+                  {
+                    "source": "Humor & Life Quarterly",
+                    "text": "With remarkable wit and refreshing honesty, ${authorName} turns life's embarrassing moments into literary gold. This collection of mishaps and misadventures offers both laughter and unexpected wisdom, reminding us that our most cringe-worthy moments often become our best stories. A delightful celebration of imperfection that will leave readers eagerly turning pages."
+                  }
+                ]`
             }
           ],
         }),

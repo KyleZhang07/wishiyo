@@ -64,7 +64,7 @@ serve(async (req) => {
                  Write in a warm, intimate tone that reflects genuine emotional connection.
                  Include specific personal details to make the text feel authentic and tailored.
                  The text should feel like a heartfelt letter to someone deeply loved and cherished.
-                 Start with the person's name and create text that's 2-3 sentences long. 
+                 Create text that's 2-3 sentences long, you must mention the person's name in the text. 
                  End with a sentiment that captures warm appreciation and nostalgic affection.
                  Example tone: Warm, sincere, emotionally resonant, appreciative.
                  
@@ -77,7 +77,7 @@ serve(async (req) => {
                  Write in a casual, conversational tone with playful metaphors or gentle jokes.
                  Include fun hypothetical scenarios or light teasing related to the person's interests or habits.
                  The text should feel like a note from a close friend who knows how to make them laugh.
-                 Start with "Hey [Name]!" and create text that's 2-3 sentences long.
+                 Create text that's 2-3 sentences long, you must mention the person's name in the text.
                  End with an encouraging or adventurous sentiment that's upbeat and positive.
                  Example tone: Lighthearted, humorous, whimsical, friendly.
                  
@@ -90,7 +90,7 @@ serve(async (req) => {
                  Write in an encouraging tone that emphasizes growth, dreams, and future potential.
                  Include metaphors about journeys, paths, or natural cycles (like seasons changing).
                  The text should feel like motivational encouragement from someone who deeply believes in them.
-                 Start with the person's name and create text that's 2-3 sentences long.
+                 Create text that's 2-3 sentences long, you must mention the person's name in the text.
                  End with a motivational sentiment that inspires them to pursue their dreams.
                  Example tone: Empowering, forward-looking, encouraging, hopeful.
                  
@@ -124,7 +124,7 @@ serve(async (req) => {
               role: 'user', 
               content: `Write a personalized caption for this image: ${prompt.prompt}
                         
-                        This is for a love story featuring ${personName || 'my love'}, who is ${personAge || 'adult'} years old.
+                        This is for an illustrated book featuring ${personName || 'my love'}, who is ${personAge || 'adult'} years old.
                         
                         Personal information about ${personName}:
                         ${personalInfo || `${personName} is someone special and loved.`}

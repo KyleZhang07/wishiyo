@@ -226,14 +226,7 @@ const CanvasCoverPreview = ({
     ctx.fillStyle = `${template.backgroundColor}33`; // 20% opacity
     ctx.fillRect(0, 0, width, height);
 
-    // Get author initials
-    const initials = authorName
-      .split(' ')
-      .map(name => name.charAt(0))
-      .join('')
-      .toUpperCase();
-
-    // Draw author initials at the top left
+    // Draw author name at the top left
     ctx.font = `bold 48px ${selectedFont}`;
     ctx.fillStyle = '#FFFFFF'; // White text
     ctx.textAlign = 'left';
@@ -241,7 +234,7 @@ const CanvasCoverPreview = ({
     // 确保绘制在整数像素位置，避免模糊
     const x1 = Math.round(40);
     const y1 = Math.round(80);
-    ctx.fillText(initials, x1, y1);
+    ctx.fillText(authorName.toUpperCase(), x1, y1);
 
     // Draw title at the bottom in green
     ctx.font = `bold 48px ${selectedFont}`;
@@ -319,41 +312,69 @@ const CanvasCoverPreview = ({
     // Draw spine background
     ctx.fillStyle = template.spineStyle.backgroundColor;
     ctx.fillRect(0, 0, width, height);
-
-    // Get author initials
-    const initials = authorName
-      .split(' ')
-      .map(name => name.charAt(0))
-      .join('')
-      .toUpperCase();
     
-    // Draw spine text vertically with整数坐标
-    ctx.save();
-    ctx.translate(Math.round(width/2), Math.round(height/2));
-    ctx.rotate(-Math.PI/2);
+    // Determine font sizes and spacing - increased for better visibility
+    const authorFontSize = 30;
+    const titleFontSize = 28;
     
-    // Draw title text vertically - use shorter text if too long
-    ctx.font = `bold 14px ${selectedFont}`;  // Even smaller font
-    ctx.fillStyle = '#7CFC00'; // Bright green
+    // Set text properties
     ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
     
-    // Limit the title length for the spine
-    const maxSpineLength = 25; // Characters
-    let spineText = coverTitle.toUpperCase();
-    if (spineText.length > maxSpineLength) {
-      spineText = spineText.substring(0, maxSpineLength - 3) + '...';
+    // Position for vertical text (centered horizontally, starting from top)
+    const centerX = width / 2;
+    let currentY = 60; // Start position from top
+    
+    // Draw author name vertically, with each character rotated 90 degrees
+    ctx.font = `bold ${authorFontSize}px ${selectedFont}`;
+    ctx.fillStyle = '#FFFFFF'; // White text
+    
+    const authorChars = authorName.toUpperCase().split('');
+    authorChars.forEach(char => {
+      ctx.save();
+      ctx.translate(centerX, currentY);
+      ctx.rotate(Math.PI / 2); // Rotate 90 degrees clockwise
+      ctx.fillText(char, 0, 0);
+      ctx.restore();
+      
+      // Reduced character spacing
+      currentY += Math.round(authorFontSize * 0.75); 
+    });
+    
+    // Space between author and title (slightly reduced)
+    currentY += 20;
+    
+    // Draw title vertically, with each character rotated 90 degrees
+    ctx.font = `bold ${titleFontSize}px ${selectedFont}`;
+    ctx.fillStyle = '#7CFC00'; // Bright green
+    
+    // Calculate how many characters can fit
+    const titleChars = coverTitle.toUpperCase().split('');
+    
+    // Use tighter spacing for height calculation
+    const charSpacing = Math.round(titleFontSize * 0.75);
+    const availableHeight = height - currentY - 60; // Space left for title
+    const estimatedTitleHeight = titleChars.length * charSpacing;
+    
+    // If title is too long, we need to truncate it
+    let charsToShow = titleChars;
+    if (estimatedTitleHeight > availableHeight) {
+      // Calculate how many characters can fit
+      const maxChars = Math.floor(availableHeight / charSpacing);
+      charsToShow = titleChars.slice(0, maxChars);
     }
     
-    // Draw the text in the spine
-    ctx.fillText(spineText, 0, 0);
-    
-    // Draw author initials at the bottom - positioned higher up
-    ctx.font = `bold 20px ${selectedFont}`;
-    ctx.fillStyle = '#FFFFFF'; // White text
-    ctx.textAlign = 'center';
-    ctx.fillText(initials, 0, Math.round(-height/2 + 50));
-    
-    ctx.restore();
+    // Draw each character of the title vertically with rotation
+    charsToShow.forEach(char => {
+      ctx.save();
+      ctx.translate(centerX, currentY);
+      ctx.rotate(Math.PI / 2); // Rotate 90 degrees clockwise
+      ctx.fillText(char, 0, 0);
+      ctx.restore();
+      
+      // Reduced character spacing
+      currentY += charSpacing;
+    });
   };
 
   const drawBackCover = (
@@ -373,7 +394,7 @@ const CanvasCoverPreview = ({
       // 设置标题 - 确保使用整数坐标
       ctx.textAlign = 'left';
       ctx.fillStyle = template.backCoverStyle.textColor || '#FFFFFF';
-      ctx.font = `bold 28px ${selectedFont}`; // 增大标题字体
+      ctx.font = `bold 34px ${selectedFont}`; // 增大标题字体
       
       const x = Math.round(40);
       const y = Math.round(60);
@@ -384,14 +405,14 @@ const CanvasCoverPreview = ({
       // 绘制每条赞美语
       availablePraises.forEach(praise => {
         // 赞美文本内容
-        ctx.font = `italic 22px ${selectedFont}`; // 增大赞美语字体
+        ctx.font = `italic 28px ${selectedFont}`; // 增大赞美语字体
         
         // 使用文本换行函数 - 确保使用整数坐标
-        const wrappedText = wrapTextWithHeight(ctx, `"${praise.text}"`, x, Math.round(yPosition), width - 80, 26);
+        const wrappedText = wrapTextWithHeight(ctx, `"${praise.text}"`, x, Math.round(yPosition), width - 80, 32);
         yPosition += wrappedText.height + 20; // 增加行间距
         
         // 赞美来源
-        ctx.font = `bold 24px ${selectedFont}`; // 增大来源字体
+        ctx.font = `bold 30px ${selectedFont}`; // 增大来源字体
         ctx.fillText(praise.source, x, Math.round(yPosition));
         
         yPosition += 60; // 为下一条赞美语留出更多空间

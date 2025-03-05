@@ -114,7 +114,7 @@ export const ContentImageCard = ({
         
         // 文字区域，定位在左侧 - 不再使用渐变黑色蒙版
         // 只在左侧占据50%的区域显示文字
-        const textAreaWidth = width * 0.5;
+        const textAreaWidth = width * 0.5; // 保持在50%
         
         // 添加文本显示函数 - 带有描边和阴影以确保可读性
         // 此函数将创建带有文字轮廓的文本
@@ -135,11 +135,45 @@ export const ContentImageCard = ({
           ctx.fillText(text, x, y);
         };
         
-        // 文本换行函数 - 现在使用按句子换行
+        // 绘制两端对齐的文本
+        const drawJustifiedText = (words: string[], x: number, y: number, maxWidth: number) => {
+          if (words.length === 1) {
+            // 如果只有一个单词，就居左对齐
+            drawStrokedText(words[0], x, y);
+            return;
+          }
+          
+          // 计算所有单词的总宽度
+          let totalWordsWidth = 0;
+          for (let word of words) {
+            totalWordsWidth += ctx.measureText(word).width;
+          }
+          
+          // 计算需要分配的额外空间
+          const extraSpace = maxWidth - totalWordsWidth;
+          // 计算单词间距数量（单词数量-1）
+          const spacesCount = words.length - 1;
+          // 计算每个间距的宽度
+          const spaceWidth = extraSpace / spacesCount;
+          
+          let currentX = x;
+          for (let i = 0; i < words.length; i++) {
+            const word = words[i];
+            drawStrokedText(word, currentX, y);
+            
+            // 更新下一个单词的x位置（最后一个单词不需要添加间距）
+            if (i < words.length - 1) {
+              currentX += ctx.measureText(word).width + spaceWidth;
+            }
+          }
+        };
+        
+        // 文本换行函数 - 现在使用按句子换行，且增加段落间距
         const wrapTextBySentence = (text: string, x: number, y: number, maxWidth: number, lineHeight: number) => {
           // 按句子分割文本 (句号、问号、感叹号后跟空格，或者在句末)
           const sentences = text.match(/[^.!?]+[.!?]+\s*|\s*[^.!?]+[.!?]+$|\s*[^.!?]+$/g) || [text];
           let lineCount = 0;
+          let isParagraphStart = true; // 用于标记段落开始
           
           for (let i = 0; i < sentences.length; i++) {
             let sentence = sentences[i].trim();
@@ -147,30 +181,39 @@ export const ContentImageCard = ({
             // 如果句子为空，跳过
             if (!sentence) continue;
             
+            // 为新段落添加额外的行距
+            if (!isParagraphStart && i > 0) {
+              lineCount += 0.6; // 添加0.6行的额外间距
+            }
+            isParagraphStart = false;
+            
             // 检查句子是否超过最大宽度
             const metrics = ctx.measureText(sentence);
             if (metrics.width > maxWidth) {
               // 如果句子太长，使用单词换行
               const words = sentence.split(' ');
-              let line = '';
-              let testLine = '';
+              let line: string[] = [];
+              let testWidth = 0;
               
               for (let n = 0; n < words.length; n++) {
-                testLine = line + words[n] + ' ';
-                const testMetrics = ctx.measureText(testLine);
-                const testWidth = testMetrics.width;
+                const word = words[n];
+                const wordWidth = ctx.measureText(word + ' ').width;
                 
-                if (testWidth > maxWidth && n > 0) {
-                  drawStrokedText(line, x, y + (lineCount * lineHeight));
-                  line = words[n] + ' ';
+                if (testWidth + wordWidth > maxWidth && line.length > 0) {
+                  // 绘制两端对齐的文本行
+                  drawJustifiedText(line, x, y + (lineCount * lineHeight), maxWidth);
+                  line = [word];
+                  testWidth = wordWidth;
                   lineCount++;
                 } else {
-                  line = testLine;
+                  line.push(word);
+                  testWidth += wordWidth;
                 }
               }
               
-              if (line) {
-                drawStrokedText(line, x, y + (lineCount * lineHeight));
+              if (line.length > 0) {
+                // 最后一行不需要两端对齐，使用普通绘制
+                drawStrokedText(line.join(' '), x, y + (lineCount * lineHeight));
                 lineCount++;
               }
             } else {
@@ -186,7 +229,7 @@ export const ContentImageCard = ({
         // 添加文本内容 - 在画布的左半边
         ctx.font = '22px Georgia, serif'; // 增加字体大小
         // 文字颜色在drawStrokedText中设置
-        const maxWidth = textAreaWidth - 60; // 左边文字区域宽度，留有边距
+        const maxWidth = textAreaWidth - 120; // 从60改为100，使文本离左边和中线都更远
         
         // 使用提供的文本或默认文本
         const displayText = text || "A beautiful story captured in an image.";
@@ -194,7 +237,7 @@ export const ContentImageCard = ({
         // 垂直居中显示文本
         const textStartY = height * 0.25; // 从上方1/4处开始
         const textLineHeight = 34; // 增加行高
-        wrapTextBySentence(displayText, 40, textStartY, maxWidth, textLineHeight);
+        wrapTextBySentence(displayText, 90, textStartY, maxWidth, textLineHeight); // 从50改为70，增加左侧边距
         
         // Draw dedication text if needed
         if (showDedicationText && coverTitle) {
