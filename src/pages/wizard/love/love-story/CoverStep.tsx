@@ -164,85 +164,86 @@ const LoveStoryCoverStep = () => {
     });
     
     try {
-      // 获取用户上传的多张图片
-      const uploadedPhotos = localStorage.getItem('loveStoryPartnerPhotos');
+      // 获取用户上传的图片
+      const uploadedImage = localStorage.getItem('loveStoryPartnerPhoto');
       const savedTone = localStorage.getItem('loveStoryTone') || textTone;
       
-      if (uploadedPhotos) {
-        const photos = JSON.parse(uploadedPhotos);
+      if (uploadedImage) {
+        // 使用上传的图片处理
+        // 第一步：调用generate-love-cover API增强图片
+        const { data: enhancedData, error: enhancedError } = await supabase.functions.invoke('generate-love-cover', {
+          body: { 
+            photo: uploadedImage,
+            style: selectedStyle,
+            type: 'cover',
+            textPrompt: `the person's single person img, but wearing more brilliant clothes, but in a ${savedTone} way.`
+          }
+        });
         
-        if (photos.length > 0) {
-          // 使用上传的图片处理
-          // 调用Vercel API函数增强图片
-          const response = await fetch('/api/generate-love-cover', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ 
-              photos: photos, // 传入多张照片
-              style: selectedStyle,
-              type: 'cover',
-              prompt: `the person's single person img, but wearing more brilliant clothes, but in a ${savedTone} way.`
-            })
-          });
-          
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to generate cover');
-          }
-          
-          const enhancedData = await response.json();
-          
-          // 检查并处理响应数据
-          let enhancedImage = '';
-          if (enhancedData?.output && enhancedData.output.length > 0) {
-            enhancedImage = enhancedData.output[0];
-          } else if (enhancedData?.coverImage && enhancedData.coverImage.length > 0) {
-            enhancedImage = enhancedData.coverImage[0];
-          } else {
-            throw new Error("No enhanced image data in response");
-          }
-          
-          // 第二步：调用remove-background API去除背景
-          const bgRemoveResponse = await fetch('/api/remove-background', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ imageUrl: enhancedImage })
-          });
-          
-          if (!bgRemoveResponse.ok) {
-            const errorData = await bgRemoveResponse.json();
-            throw new Error(errorData.error || 'Failed to remove background');
-          }
-          
-          const bgRemoveData = await bgRemoveResponse.json();
-          
-          if (!bgRemoveData?.success || !bgRemoveData?.image) {
-            throw new Error("Failed to remove background");
-          }
-          
-          const processedImage = bgRemoveData.image;
-          
-          // 第三步：上传到Supabase存储
-          const timestamp = Date.now();
-          const storageUrl = await uploadImageToStorage(
-            processedImage,
-            'images',
-            `love-story-cover-${timestamp}`
-          );
-          
-          // 仅保存到状态中用于显示，不存储到localStorage
-          setCoverImage(processedImage);
+        if (enhancedError) throw enhancedError;
+        
+        // 检查并处理响应数据
+        let enhancedImage = '';
+        if (enhancedData?.output && enhancedData.output.length > 0) {
+          enhancedImage = enhancedData.output[0];
+        } else if (enhancedData?.coverImage && enhancedData.coverImage.length > 0) {
+          enhancedImage = enhancedData.coverImage[0];
         } else {
-          // 没有上传图片，使用简单的背景颜色
-          createDefaultCoverImage();
+          throw new Error("No enhanced image data in response");
         }
+        
+        // 第二步：调用remove-background API去除背景
+        const { data: bgRemoveData, error: bgRemoveError } = await supabase.functions.invoke('remove-background', {
+          body: { imageUrl: enhancedImage }
+        });
+        
+        if (bgRemoveError) throw bgRemoveError;
+        
+        if (!bgRemoveData?.success || !bgRemoveData?.image) {
+          throw new Error("Failed to remove background");
+        }
+        
+        const processedImage = bgRemoveData.image;
+        
+        // 第三步：上传到Supabase存储
+        const timestamp = Date.now();
+        const storageUrl = await uploadImageToStorage(
+          processedImage,
+          'images',
+          `love-story-cover-${timestamp}`
+        );
+        
+        // 仅保存到状态中用于显示，不存储到localStorage
+        setCoverImage(processedImage);
       } else {
         // 没有上传图片，使用简单的背景颜色
-        createDefaultCoverImage();
+        const canvas = document.createElement('canvas');
+        canvas.width = 800;
+        canvas.height = 1000;
+        const ctx = canvas.getContext('2d');
+        
+        if (ctx) {
+          // 使用当前选定样式的背景色
+          const currentStyle = coverStyles.find(style => style.id === selectedStyle) || coverStyles[0];
+          ctx.fillStyle = currentStyle.background;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          
+          try {
+            const dataUrl = canvas.toDataURL('image/png');
+            setCoverImage(dataUrl);
+            
+            // 上传到Supabase，但不存储到localStorage
+            const timestamp = Date.now();
+            await uploadImageToStorage(
+              dataUrl,
+              'images',
+              `love-story-cover-${timestamp}`
+            );
+          } catch (error) {
+            console.error('Error creating cover image:', error);
+            throw error;
+          }
+        }
       }
       
       // 重新加载Supabase上的图片以获取最新上传的图片
@@ -263,37 +264,6 @@ const LoveStoryCoverStep = () => {
       });
     } finally {
       setIsGeneratingCover(false);
-    }
-  };
-  
-  // 创建默认背景封面
-  const createDefaultCoverImage = async () => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 800;
-    canvas.height = 1000;
-    const ctx = canvas.getContext('2d');
-    
-    if (ctx) {
-      // 使用当前选定样式的背景色
-      const currentStyle = coverStyles.find(style => style.id === selectedStyle) || coverStyles[0];
-      ctx.fillStyle = currentStyle.background;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
-      try {
-        const dataUrl = canvas.toDataURL('image/png');
-        setCoverImage(dataUrl);
-        
-        // 上传到Supabase，但不存储到localStorage
-        const timestamp = Date.now();
-        await uploadImageToStorage(
-          dataUrl,
-          'images',
-          `love-story-cover-${timestamp}`
-        );
-      } catch (error) {
-        console.error('Error creating cover image:', error);
-        throw error;
-      }
     }
   };
   
