@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -25,14 +24,19 @@ serve(async (req) => {
 Background information about ${authorName}:
 ${answers?.map((qa: any) => `- ${qa.question}: ${qa.answer}`).join('\n') || 'No specific details provided'}
 
-Generate exactly 10 chapters. Each chapter must follow this exact format:
+Generate exactly 20 chapters. Each chapter must follow this exact format:
 {
   "title": "Funny chapter title here",
-  "description": "Brief humorous description of the chapter (1-2 sentences)",
-  "startPage": page number (start from page 1, each chapter is ~20-25 pages)
+  "description": "Brief humorous description of the chapter (15-30 words). Make it similar to a real book's table of contents - engaging, specific, and reflecting the chapter's content.",
+  "startPage": page number (start from page 1, each chapter is ~10-12 pages)
 }
 
-Return ONLY a JSON array containing these 10 chapter objects. No other text or explanation.`;
+Example descriptions:
+- "An introduction to the art of procrastination through gaming, and how it has become a common coping mechanism."
+- "Exploring the psychological reasons behind why we procrastinate, using gaming mechanics as a metaphor."
+- "A look at how experience points in games can make real-life achievements feel less rewarding."
+
+Return ONLY a JSON array containing these 20 chapter objects. No other text or explanation.`;
 
     console.log("Sending prompt to OpenAI:", prompt);
 
@@ -47,7 +51,16 @@ Return ONLY a JSON array containing these 10 chapter objects. No other text or e
         messages: [
           {
             role: "system",
-            content: "You are a specialist in creating humorous chapter outlines. Always return valid JSON arrays containing exactly 10 chapters."
+            content: `You are a creative AI assistant that generates a table of contents for a humorous biography book. 
+                      You must generate exactly 20 chapters, each with a funny title, brief description (15-30 words), and starting page number.
+                      
+                      Example descriptions:
+                      - "An introduction to the art of procrastination through gaming, and how it has become a common coping mechanism."
+                      - "Exploring the psychological reasons behind why we procrastinate, using gaming mechanics as a metaphor."
+                      - "A look at how experience points in games can make real-life achievements feel less rewarding."
+                      
+                      Each chapter should have a starting page number, with the first chapter starting at page 1 and subsequent chapters starting based on approximately 10-12 pages per chapter.
+                      Return only valid JSON.`
           },
           {
             role: "user",
@@ -73,7 +86,7 @@ Return ONLY a JSON array containing these 10 chapter objects. No other text or e
       generatedText = generatedText.replace(/```json\n?|\n?```/g, '').trim();
       const chapters = JSON.parse(generatedText);
 
-      if (!Array.isArray(chapters) || chapters.length !== 10) {
+      if (!Array.isArray(chapters) || chapters.length !== 20) {
         throw new Error("Invalid chapter array structure");
       }
 
@@ -81,7 +94,7 @@ Return ONLY a JSON array containing these 10 chapter objects. No other text or e
       const formattedChapters = chapters.map((chapter, index) => ({
         title: String(chapter.title || `Chapter ${index + 1}`),
         description: String(chapter.description || "An exciting chapter in this story"),
-        startPage: Number(chapter.startPage || index * 20 + 1)
+        startPage: Number(chapter.startPage || index * 12 + 1)
       }));
 
       return new Response(

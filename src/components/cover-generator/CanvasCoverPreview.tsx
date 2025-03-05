@@ -503,7 +503,7 @@ const CanvasCoverPreview = ({
       
       {/* 调整图片按钮 */}
       {image && !previewMode && (
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+        <div className="absolute bottom-[-40px] left-1/2 transform -translate-x-1/2">
           <CoverImageControls 
             coverImage={coverImage}
             imagePosition={imagePosition}

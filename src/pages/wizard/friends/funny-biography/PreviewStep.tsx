@@ -231,13 +231,13 @@ const PreviewStep = () => {
             ) : (
               <div className="space-y-6">
                 {chapters.map((chapter, index) => (
-                  <div key={index} className="border-b border-gray-200 pb-4">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="text-xl font-semibold">Chapter {index + 1}: {chapter.title.replace(/^Chapter \d+:\s*/i, '')}</h3>
-                        <p className="text-gray-600 mt-2">{chapter.description}</p>
+                  <div key={index} className="pb-4">
+                    <div className="flex justify-between items-baseline">
+                      <div className="w-full">
+                        <h3 className="text-xl font-bold mb-2">Chapter {index + 1}: {chapter.title.replace(/^Chapter \d+:?\s*/i, '')}</h3>
+                        <p className="text-gray-600 pr-4">{chapter.description}</p>
                       </div>
-                      <span className="text-gray-400">pg. {chapter.startPage}</span>
+                      <span className="text-gray-500 font-normal ml-4 whitespace-nowrap">{chapter.startPage}</span>
                     </div>
                   </div>
                 ))}
