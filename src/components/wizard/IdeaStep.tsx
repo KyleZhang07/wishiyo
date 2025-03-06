@@ -517,32 +517,41 @@ const IdeaStep = ({
               </Button>
             </div>
 
-            {isLoading && (
-              <div className="text-center py-8">
-                <RefreshCw className="animate-spin h-8 w-8 mx-auto mb-4" />
-                <p className="text-gray-500">Generating creative ideas...</p>
+            {isLoading ? (
+              <div className="text-center py-20">
+                <div className="flex flex-col items-center justify-center">
+                  {/* 使用主题色的加载圆环 */}
+                  <div className="relative w-16 h-16 mb-6">
+                    <div className={`absolute top-0 left-0 w-16 h-16 rounded-full border-4 border-t-transparent ${category === 'love' ? 'border-[#FF7F50]' : 'border-[#F6C744]'} animate-spin`}></div>
+                    <div className={`absolute top-0 left-0 w-16 h-16 rounded-full border-4 border-r-transparent border-b-transparent border-l-transparent ${category === 'love' ? 'border-[#FF7F50]/20' : 'border-[#F6C744]/20'}`}></div>
+                  </div>
+                  {/* 主题色的标题文字 */}
+                  <h3 className={`text-xl font-medium ${category === 'love' ? 'text-[#FF7F50]' : 'text-[#F6C744]'}`}>
+                    Creating book ideas
+                  </h3>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {ideas.map((idea, index) => (
+                  <div 
+                    key={index} 
+                    className={`bg-white rounded-lg p-6 cursor-pointer transition-all hover:shadow-md ${
+                      selectedIdeaIndex === index 
+                        ? category === 'friends' 
+                          ? 'ring-2 ring-[#F6C744] shadow-lg scale-[1.02]' 
+                          : 'ring-2 ring-[#FF7F50] shadow-lg scale-[1.02]' 
+                        : ''
+                    }`}
+                    onClick={() => handleIdeaSelect(index)}
+                  >
+                    <h3 className="text-2xl font-bold mb-1">{idea.title}</h3>
+                    <p className="text-gray-600 text-sm mb-4">{idea.author}</p>
+                    <p className="text-gray-800">{idea.description}</p>
+                  </div>
+                ))}
               </div>
             )}
-
-            <div className="space-y-4">
-              {ideas.map((idea, index) => (
-                <div 
-                  key={index} 
-                  className={`bg-white rounded-lg p-6 cursor-pointer transition-all hover:shadow-md ${
-                    selectedIdeaIndex === index 
-                      ? category === 'friends' 
-                        ? 'ring-2 ring-[#F6C744] shadow-lg scale-[1.02]' 
-                        : 'ring-2 ring-[#FF7F50] shadow-lg scale-[1.02]' 
-                      : ''
-                  }`}
-                  onClick={() => handleIdeaSelect(index)}
-                >
-                  <h3 className="text-2xl font-bold mb-1">{idea.title}</h3>
-                  <p className="text-gray-600 text-sm mb-4">{idea.author}</p>
-                  <p className="text-gray-800">{idea.description}</p>
-                </div>
-              ))}
-            </div>
           </>
         )}
       </div>
