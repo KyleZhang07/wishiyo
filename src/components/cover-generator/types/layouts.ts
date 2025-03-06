@@ -149,5 +149,27 @@ export const coverLayouts: { [key: string]: CoverLayout } = {
       height: '45%',
       position: 'center'
     }
+  },
+  'bestseller-modern': {
+    id: 'bestseller-modern',
+    name: 'Bestseller Modern',
+    titlePosition: {
+      offsetY: 0.15,
+      textAlign: 'center'
+    },
+    subtitlePosition: {
+      offsetY: 0.87,
+      textAlign: 'center'
+    },
+    authorPosition: {
+      offsetY: 0.3,
+      textAlign: 'center'
+    },
+    imageContainerStyle: {
+      width: '80%',
+      height: '50%',
+      position: 'top',
+      borderRadius: '0%'
+    }
   }
 };

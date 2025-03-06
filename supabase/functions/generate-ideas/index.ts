@@ -269,25 +269,30 @@ serve(async (req) => {
                 - "How ${authorName} found a virtual Nickname-Buddy and formed a one-sided bromance with algorithms."
                 - "A thrilling adventure of misspellings, autocorrect horrors, and the quest for elusive Google results."
                 
-                The praises should be humorous, witty, and specific to the book idea, mentioning themes from the book.
+                For the praises, follow these guidelines:
+                1. Each praise should be a substantial paragraph (2-4 sentences) that deeply analyzes some aspect of the book or author's style
+                2. Use formal, literary language with sophisticated vocabulary and structure
+                3. Include specific insights about the book's themes, the author's writing approach, or the reader experience
+                4. Make them sound like genuine literary critiques from respected publications
+                5. Source names should be specific publications that match the subject matter (magazines, journals, newspapers, etc.)
                 
-                Example praise:
+                Example praises based on the provided image:
                 [
                   {
-                    "source": "Tech Tales Weekly",
-                    "text": "A spellbinding journey into the chaos of typos and the haunting clutches of autocorrect. ${authorName} masterfully captures the universal struggle of navigating a digital world armed only with a keyboard and determination. This hilarious chronicle transforms everyday frustrations into an epic saga that will have readers nodding in recognition and laughing out loud."
+                    "source": "Procrastinator's Digest",
+                    "text": "Kyle's witty take on procrastination through the lens of gaming is not only hilarious but also surprisingly enlightening. A must-read for anyone who considers themselves a master procrastinator."
                   },
                   {
-                    "source": "Digital Explorer Magazine",
-                    "text": "A humorous yet heart-pounding adventure that takes us through the trials of modern-day digital mishaps. ${authorName}'s wit and perceptive insights kept me entertained and educated on every page. The perfect blend of self-deprecating humor and keen observation that makes even the most mundane technological failures seem like grand adventures."
+                    "source": "Level Up Times",
+                    "text": "With humor and insight, Kyle's 'The Art of Procrastination: Press Start' captures the essence of how our favorite pastimes shape our approach to responsibilities—often for the worse, but always with amusement."
                   },
                   {
-                    "source": "Adventures in Cyberspace Review",
-                    "text": "${authorName} brings to life the often overlooked perils of everyday misadventures. This book resonates with anyone who's ever faced the frustration of an awkward social interaction or the irony of best-laid plans gone hilariously wrong. It's a must-read that transforms ordinary mishaps into extraordinary entertainment for readers of all ages."
+                    "source": "Virtual World Weekly",
+                    "text": "Kyle taps into the gamer mind with surgical precision, humorously dissecting the ways we avoid the mundane by diving into digital worlds, making even the laziest among us feel understood and entertained."
                   },
                   {
-                    "source": "Humor & Life Quarterly",
-                    "text": "With remarkable wit and refreshing honesty, ${authorName} turns life's embarrassing moments into literary gold. This collection of mishaps and misadventures offers both laughter and unexpected wisdom, reminding us that our most cringe-worthy moments often become our best stories. A delightful celebration of imperfection that will leave readers eagerly turning pages."
+                    "source": "Gamer's Escape",
+                    "text": "'The Art of Procrastination: Press Start' masterfully blends humor with a sharp analysis of our modern-day penchant for delay tactics. Kyle's narrative is the perfect companion for when you should be doing anything else."
                   }
                 ]`
             }

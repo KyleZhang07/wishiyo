@@ -78,7 +78,7 @@ const GenerateStep = () => {
       const { data, error } = await supabase.functions.invoke('expand-image', {
         body: { 
           imageUrl,
-          textPrompt: "The expanded area MUST be: completely empty with absolutely NO people, NO objects, NO shapes, and NO animals; only a clean, simple, and minimal background; suitable for text placement; smooth gradient background matching the original image tone; seamless transition from original image; plain and uncluttered extended region"
+          textPrompt: "The expanded area MUST be: absolutely 100% empty with ZERO people, ZERO objects, ZERO shapes, ZERO text, and ZERO animals; create ONLY a perfectly clean, solid or simple gradient background; ensure the background is suitable for text placement; create a smooth color gradient matching the edge colors of the original image; ensure seamless and invisible transition from original image; the expanded region MUST be completely plain, uniform, and uncluttered with NO DETAILS whatsoever; treat this expansion like creating empty space around the original image"
         }
       });
       

@@ -23,6 +23,14 @@ const stylePresets = [
     description: 'Warm beige background with navy blue text and circular image'
   },
   {
+    id: 'bestseller-style',
+    name: 'Bestseller',
+    font: 'montserrat',
+    template: 'bestseller',
+    layout: 'bestseller-modern',
+    description: 'Black background with yellow title and blue description area'
+  },
+  {
     id: 'modern-green',
     name: 'Modern Green',
     font: 'montserrat',
@@ -33,26 +41,18 @@ const stylePresets = [
   {
     id: 'minimal-gray',
     name: 'Minimal Gray',
-    font: 'roboto',
+    font: 'inter',
     template: 'minimal',
-    layout: 'minimal-frame',
-    description: 'Gray background with monochrome styling'
-  },
-  {
-    id: 'vibrant-blue',
-    name: 'Vibrant Blue',
-    font: 'montserrat',
-    template: 'vibrant',
-    layout: 'bold-header',
-    description: 'Blue background with yellow highlight text'
+    layout: 'centered-title',
+    description: 'Gray background with black and white color scheme'
   },
   {
     id: 'pastel-beige',
-    name: 'Pastel Beige',
-    font: 'playfair',
-    template: 'classic',
-    layout: 'left-align',
-    description: 'Soft beige background with navy blue text'
+    name: 'Sweet Pink',
+    font: 'times',
+    template: 'pastel-beige',
+    layout: 'classic-centered',
+    description: '粉色背景，紫色文字'
   }
 ];
 
@@ -193,16 +193,14 @@ const FunnyBiographyGenerateStep = () => {
               let styleConfig;
               if (style.id === 'classic-red') {
                 styleConfig = { bg: '#C41E3A', text: '#FFFFFF', border: 'none' }; // Red with white text (first circle)
+              } else if (style.id === 'bestseller-style') {
+                styleConfig = { bg: '#4361EE', text: '#F7DC6F', border: 'none' }; // Blue with yellow text
               } else if (style.id === 'modern-green') {
-                styleConfig = { bg: '#121212', text: '#7CFC00', border: 'none' }; // Black with green text (second circle)
+                styleConfig = { bg: '#E6DEC9', text: '#D4AF37', border: 'none' }; // 折中的奶油色底金字
               } else if (style.id === 'minimal-gray') {
-                styleConfig = { bg: '#808080', text: '#FFFFFF', border: 'none' }; // Gray with white text (third circle)
-              } else if (style.id === 'vibrant-blue') {
-                styleConfig = { bg: '#4361EE', text: '#FFC300', border: 'none' }; // Blue with yellow text (fourth circle)
+                styleConfig = { bg: '#D9D9D9', text: '#FFFFFF', border: 'none' }; // 浅灰色背景，白色文字
               } else if (style.id === 'pastel-beige') {
-                styleConfig = { bg: '#FFD1DC', text: '#000000', border: 'none' }; // Pink with black (fifth circle)
-              } else {
-                styleConfig = { bg: '#F8D5B2', text: '#1E365C', border: 'none' }; // Default
+                styleConfig = { bg: '#FFC0CB', text: '#8A2BE2', border: 'none' }; // 粉色背景，紫色文字
               }
               
               return (
