@@ -22,7 +22,6 @@ import FunnyBiographyPhotosStep from "./pages/wizard/friends/funny-biography/Pho
 import FunnyBiographyGenerateStep from "./pages/wizard/friends/funny-biography/GenerateStep";
 import FunnyBiographyPreviewStep from "./pages/wizard/friends/funny-biography/PreviewStep";
 import FunnyBiographyFormatStep from "./pages/wizard/friends/funny-biography/FormatStep";
-import FunnyBiographyCompletePage from "./pages/wizard/friends/funny-biography/CompletePage";
 
 // Love Story Routes
 import LoveStoryCharacterStep from "./pages/wizard/love/love-story/CharacterStep";
@@ -98,7 +97,6 @@ const AppLayout = () => {
           <Route path="/create/friends/funny-biography/generate" element={<FunnyBiographyGenerateStep />} />
           <Route path="/create/friends/funny-biography/preview" element={<FunnyBiographyPreviewStep />} />
           <Route path="/create/friends/funny-biography/format" element={<FunnyBiographyFormatStep />} />
-          <Route path="/create/friends/funny-biography/complete" element={<FunnyBiographyCompletePage />} />
 
           {/* Love Story Routes - Updated order */}
           <Route path="/create/love/love-story/character" element={<LoveStoryCharacterStep />} />
