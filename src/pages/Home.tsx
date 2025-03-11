@@ -19,10 +19,10 @@ const Home = () => {
             </p>
             <div className="flex flex-col justify-center items-center gap-5 mt-10">
               <Link to="/friends" className="w-72 inline-flex items-center justify-center px-5 py-3 text-base font-medium text-white bg-primary rounded-sm hover:bg-primary/90 transition-all hover:shadow-lg shadow-primary/20 group">
-                Create Books for Fun <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                Create Personalized Book <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
               <Link to="/love" className="w-72 inline-flex items-center justify-center px-5 py-3 text-base font-medium text-white bg-primary/80 backdrop-blur-sm rounded-sm hover:bg-primary/70 transition-all hover:shadow-lg shadow-primary/20 group whitespace-nowrap">
-                Create Books for Fantasy <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                Create Illustrated Book <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
           </div>
@@ -44,7 +44,7 @@ const Home = () => {
             <Link to="/friends" className="group flex-1 max-w-[340px] block hover:scale-105 transition-all duration-300">
               <div className="glass-card h-full rounded-sm shadow-lg hover:shadow-xl overflow-hidden border border-gray-100">
                 <div className="aspect-[4/3] relative overflow-hidden">
-                  <img src="https://images.unsplash.com/photo-1517022812141-23620dba5c23" alt="Books for Fun" 
+                  <img src="https://images.unsplash.com/photo-1517022812141-23620dba5c23" alt="Personalized Book" 
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
                 </div>
@@ -52,7 +52,7 @@ const Home = () => {
                   <div className="w-10 h-10 mb-4 rounded-sm bg-primary/10 flex items-center justify-center">
                     <Book className="w-5 h-5 text-primary" />
                   </div>
-                  <h3 className="text-2xl font-display font-semibold mb-4 group-hover:text-primary transition-colors">Books for Fun</h3>
+                  <h3 className="text-2xl font-display font-semibold mb-4 group-hover:text-primary transition-colors">Personalized Book</h3>
                   <p className="text-gray-600 mb-4">Create entertaining stories filled with humor and friendship</p>
                   <div className="flex items-center text-primary font-medium">
                     <span>Explore</span>
@@ -65,7 +65,7 @@ const Home = () => {
             <Link to="/love" className="group flex-1 max-w-[340px] block hover:scale-105 transition-all duration-300">
               <div className="glass-card h-full rounded-sm shadow-lg hover:shadow-xl overflow-hidden border border-gray-100">
                 <div className="aspect-[4/3] relative overflow-hidden">
-                  <img src="https://images.unsplash.com/photo-1582562124811-c09040d0a901" alt="Books for Love" 
+                  <img src="https://images.unsplash.com/photo-1582562124811-c09040d0a901" alt="Illustrated Book" 
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
                 </div>
@@ -73,7 +73,7 @@ const Home = () => {
                   <div className="w-10 h-10 mb-4 rounded-sm bg-primary/10 flex items-center justify-center">
                     <Heart className="w-5 h-5 text-primary" />
                   </div>
-                  <h3 className="text-2xl font-display font-semibold mb-4 group-hover:text-primary transition-colors">Books for Fantasy</h3>
+                  <h3 className="text-2xl font-display font-semibold mb-4 group-hover:text-primary transition-colors">Illustrated Book</h3>
                   <p className="text-gray-600 mb-4">Share your love story in a beautifully crafted book</p>
                   <div className="flex items-center text-primary font-medium">
                     <span>Explore</span>

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { X } from 'lucide-react';
 
-const UserCenter = () => {
+const Checkout = () => {
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState<Array<{
     id: string;
@@ -220,4 +220,4 @@ const UserCenter = () => {
   );
 };
 
-export default UserCenter;
+export default Checkout;

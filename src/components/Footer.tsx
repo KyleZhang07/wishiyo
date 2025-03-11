@@ -1,4 +1,3 @@
-
 import { Link } from 'react-router-dom';
 
 const Footer = () => {
@@ -27,7 +26,7 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/user-center" className="text-gray-600 hover:text-gray-900 transition-colors">
+                <Link to="/checkout" className="text-gray-600 hover:text-gray-900 transition-colors">
                   My Books
                 </Link>
               </li>
@@ -74,7 +73,7 @@ const Footer = () => {
         
         <div className="mt-8 pt-8 border-t border-gray-200">
           <p className="text-center text-gray-600">
-            © {new Date().getFullYear()} AI Book Crafter. All rights reserved.
+            {new Date().getFullYear()} AI Book Crafter. All rights reserved.
           </p>
         </div>
       </div>

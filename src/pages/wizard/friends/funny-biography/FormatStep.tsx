@@ -80,7 +80,7 @@ const FormatStep = () => {
         });
         
         // 导航到购物车页面
-        navigate('/user-center');
+        navigate('/checkout');
         
         setIsAddingToCart(false);
       }, 800);

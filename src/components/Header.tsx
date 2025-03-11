@@ -15,14 +15,14 @@ const Header = () => {
               <Link to="/" className="text-gray-600 hover:text-primary transition-colors">
                 Home
               </Link>
-              <Link to="/friends" className="text-gray-600 hover:text-primary transition-colors">Books for Fun</Link>
-              <Link to="/love" className="text-gray-600 hover:text-primary transition-colors">Books for Fantasy</Link>
+              <Link to="/friends" className="text-gray-600 hover:text-primary transition-colors">Personalized Book</Link>
+              <Link to="/love" className="text-gray-600 hover:text-primary transition-colors">Illustrated Book</Link>
             </nav>
           </div>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6 pr-4">
-            <Link to="/user-center" className="text-gray-600 hover:text-gray-900 transition-colors">
+            <Link to="/checkout" className="text-gray-600 hover:text-gray-900 transition-colors">
               <ShoppingCart className="w-6 h-6" />
             </Link>
           </div>
@@ -39,12 +39,12 @@ const Header = () => {
               Home
             </Link>
             <Link to="/friends" className="block px-4 py-2 text-amber-600 hover:text-amber-700 transition-colors" onClick={() => setIsMenuOpen(false)}>
-              Books for Fun
+              Personalized Book
             </Link>
             <Link to="/love" className="block px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors" onClick={() => setIsMenuOpen(false)}>
-              Books for Fantasy
+              Illustrated Book
             </Link>
-            <Link to="/user-center" className="block px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors" onClick={() => setIsMenuOpen(false)}>
+            <Link to="/checkout" className="block px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors" onClick={() => setIsMenuOpen(false)}>
               Cart
             </Link>
           </nav>}

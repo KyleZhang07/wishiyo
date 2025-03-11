@@ -5,10 +5,25 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
+  // 检查必要的环境变量
+  if (!process.env.STRIPE_SECRET_KEY) {
+    console.error('Missing Stripe secret key in environment variables');
+    return res.status(500).json({ error: 'Server configuration error' });
+  }
+
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
   try {
     const { productId, title, format, price, quantity = 1 } = req.body;
+    
+    // 验证必要的输入数据
+    if (!productId) {
+      return res.status(400).json({ error: 'Missing product ID' });
+    }
+    
+    if (!price || isNaN(parseFloat(price)) || parseFloat(price) <= 0) {
+      return res.status(400).json({ error: 'Invalid price value' });
+    }
     
     // 生成随机订单ID
     const orderId = `WY-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
@@ -22,11 +37,11 @@ export default async function handler(req, res) {
             currency: 'usd',
             product_data: {
               name: title || 'Custom Book',
-              description: `${format} Format`,
+              description: `${format || 'Standard'} Format`,
             },
-            unit_amount: parseFloat(price) * 100, // Stripe需要以美分为单位
+            unit_amount: Math.round(parseFloat(price) * 100), // Stripe需要以美分为单位，确保四舍五入为整数
           },
-          quantity,
+          quantity: parseInt(quantity, 10) || 1, // 确保quantity为整数
         },
       ],
       mode: 'payment',
@@ -76,14 +91,16 @@ export default async function handler(req, res) {
         },
       ],
       success_url: `${req.headers.origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.origin}/user-center`,
+      cancel_url: `${req.headers.origin}/checkout`,
       metadata: {
         orderId,
         productId,
-        format,
-        title,
+        format: format || 'Standard',
+        title: title || 'Custom Book',
       },
     });
+
+    console.log(`Created checkout session for order ${orderId}, product ${productId}`);
 
     res.status(200).json({ 
       sessionId: session.id, 
@@ -92,6 +109,7 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     console.error('Error creating checkout session:', error);
-    res.status(500).json({ error: error.message });
+    // 不向客户端暴露详细错误信息
+    res.status(500).json({ error: 'Failed to create checkout session' });
   }
-} 
+}
