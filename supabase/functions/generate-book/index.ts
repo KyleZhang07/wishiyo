@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
@@ -65,8 +64,6 @@ Format the response as a JSON object with the following structure:
   ]
 }
 `;
-
-  console.log(`Generating chapter ${chapterIndex + 1}: ${chapter.title}`);
 
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",

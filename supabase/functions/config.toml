@@ -4,13 +4,3 @@ project_id = "hbkgbggctzvqffqfrmhl"
 verify_jwt = false
 [functions.generate-image-texts]
 verify_jwt = false
-[functions.generate-chapters]
-verify_jwt = false
-[functions.generate-ideas]
-verify_jwt = false
-[functions.generate-love-cover]
-verify_jwt = false
-[functions.expand-image]
-verify_jwt = false
-[functions.generate-book]
-verify_jwt = false
