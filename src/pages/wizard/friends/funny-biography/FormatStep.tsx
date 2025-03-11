@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
-import { Check } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { createClient } from '@supabase/supabase-js';
 
 // 封面类型
 interface CoverFormat {
@@ -14,6 +15,11 @@ interface CoverFormat {
   popular?: boolean;
   imageSrc?: string; // 添加图片路径属性
 }
+
+// 初始化Supabase客户端
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const FormatStep = () => {
   const navigate = useNavigate();
@@ -46,6 +52,9 @@ const FormatStep = () => {
   // 默认选择软封面
   const [selectedFormat, setSelectedFormat] = useState<string>('softcover');
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState('');
+  const [pdfUrls, setPdfUrls] = useState({ interior: '', cover: '' });
   
   // 处理格式选择
   const handleFormatSelect = (formatId: string) => {
@@ -60,30 +69,92 @@ const FormatStep = () => {
   };
   
   // 处理添加到购物车
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     const selectedFormatObj = coverFormats.find(format => format.id === selectedFormat);
     
     if (selectedFormatObj) {
       setIsAddingToCart(true);
+      setIsGeneratingPdf(true);
+      setGenerationProgress('Starting book generation...');
       
-      // 保存书籍信息到localStorage
-      localStorage.setItem('funnyBiographyBookTitle', 'The ' + (localStorage.getItem('funnyBiographyAuthorName') || 'Friend') + ' Chronicles');
-      localStorage.setItem('funnyBiographyBookFormat', selectedFormatObj.name);
-      localStorage.setItem('funnyBiographyBookPrice', selectedFormatObj.price.toString());
-      
-      // 模拟添加到购物车的延迟
-      setTimeout(() => {
-        // 显示添加成功提示
-        toast({
-          title: "Added to cart",
-          description: `${selectedFormatObj.name} - $${selectedFormatObj.price.toFixed(2)} has been added to your cart.`,
+      try {
+        // 生成唯一的订单ID
+        const orderId = `WY-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+        localStorage.setItem('funnyBiographyOrderId', orderId);
+        
+        // 保存书籍信息到localStorage
+        const bookTitle = localStorage.getItem('funnyBiographyBookTitle') || 
+          'The ' + (localStorage.getItem('funnyBiographyAuthorName') || 'Friend') + ' Chronicles';
+        localStorage.setItem('funnyBiographyBookTitle', bookTitle);
+        localStorage.setItem('funnyBiographyBookFormat', selectedFormatObj.name);
+        localStorage.setItem('funnyBiographyBookPrice', selectedFormatObj.price.toString());
+        
+        // 准备调用 generate-book 函数所需的数据
+        const localStorageData = {
+          authorName: localStorage.getItem('funnyBiographyAuthorName'),
+          bookTitle: bookTitle,
+          selectedIdea: JSON.parse(localStorage.getItem('funnyBiographySelectedIdea') || '{}'),
+          answers: JSON.parse(localStorage.getItem('funnyBiographyAnswers') || '[]'),
+          tableOfContents: JSON.parse(localStorage.getItem('funnyBiographyChapters') || '[]'),
+          frontCoverCanvas: localStorage.getItem('funnyBiographyFrontCoverCanvas'),
+          spineCanvas: localStorage.getItem('funnyBiographySpineCanvas'),
+          backCoverCanvas: localStorage.getItem('funnyBiographyBackCoverCanvas')
+        };
+        
+        setGenerationProgress('Generating book content and PDFs...');
+        
+        // 调用 generate-book 函数
+        const { data, error } = await supabase.functions.invoke('generate-book', {
+          body: {
+            orderId,
+            productId: 'funny-biography',
+            title: bookTitle,
+            format: selectedFormat,
+            customerEmail: 'test@example.com',
+            paymentStatus: 'pending',
+            localStorageData
+          }
         });
         
-        // 导航到购物车页面
-        navigate('/checkout');
+        if (error) {
+          throw new Error(`Error calling generate-book: ${error.message}`);
+        }
         
+        if (data.success) {
+          setGenerationProgress('PDF generation completed!');
+          // 保存PDF URLs
+          setPdfUrls({
+            interior: data.interior_pdf_url,
+            cover: data.cover_pdf_url
+          });
+          
+          // 保存到localStorage，以便在购物车页面使用
+          localStorage.setItem('funnyBiographyInteriorPdfUrl', data.interior_pdf_url);
+          localStorage.setItem('funnyBiographyCoverPdfUrl', data.cover_pdf_url);
+          
+          // 显示添加成功提示
+          toast({
+            title: "Added to cart",
+            description: `${selectedFormatObj.name} - $${selectedFormatObj.price.toFixed(2)} has been added to your cart.`,
+          });
+          
+          // 导航到购物车页面
+          navigate('/checkout');
+        } else {
+          throw new Error(data.error || 'Failed to generate book');
+        }
+      } catch (error) {
+        console.error('Error generating book:', error);
+        
+        toast({
+          title: "Error",
+          description: `Failed to generate the book: ${error.message}`,
+          variant: "destructive"
+        });
+      } finally {
         setIsAddingToCart(false);
-      }, 800);
+        setIsGeneratingPdf(false);
+      }
     }
   };
   
@@ -157,6 +228,7 @@ const FormatStep = () => {
                       : 'text-[#0C5C4C] border-[#0C5C4C]'
                   }`}
                   onClick={() => handleFormatSelect(format.id)}
+                  disabled={isAddingToCart}
                 >
                   {selectedFormat === format.id ? 'Selected' : `Select ${format.name}`}
                 </Button>
@@ -174,7 +246,12 @@ const FormatStep = () => {
             onClick={handleAddToCart}
             disabled={isAddingToCart}
           >
-            {isAddingToCart ? 'Adding to cart...' : 'Add to cart'}
+            {isAddingToCart ? (
+              <div className="flex items-center">
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {isGeneratingPdf ? generationProgress : 'Adding to cart...'}
+              </div>
+            ) : 'Add to cart'}
           </Button>
         </div>
       </div>

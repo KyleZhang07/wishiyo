@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
-import { X } from 'lucide-react';
+import { X, FileText, Book } from 'lucide-react';
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -12,6 +12,8 @@ const Checkout = () => {
     format: string;
     price: string;
     editPath: string;
+    interiorPdfUrl?: string;
+    coverPdfUrl?: string;
   }>>([]);
   const [hasItems, setHasItems] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
@@ -23,6 +25,8 @@ const Checkout = () => {
     const loveTitle = localStorage.getItem('loveStoryBookTitle');
     const loveFormat = localStorage.getItem('loveStoryBookFormat');
     const lovePrice = localStorage.getItem('loveStoryBookPrice');
+    const loveInteriorPdf = localStorage.getItem('loveStoryInteriorPdfUrl');
+    const loveCoverPdf = localStorage.getItem('loveStoryCoverPdfUrl');
     
     if (loveTitle && loveFormat && lovePrice) {
       items.push({
@@ -30,7 +34,9 @@ const Checkout = () => {
         title: loveTitle,
         format: loveFormat,
         price: lovePrice,
-        editPath: '/create/love/love-story/generate'
+        editPath: '/create/love/love-story/generate',
+        interiorPdfUrl: loveInteriorPdf || undefined,
+        coverPdfUrl: loveCoverPdf || undefined
       });
     }
     
@@ -38,6 +44,8 @@ const Checkout = () => {
     const funnyTitle = localStorage.getItem('funnyBiographyBookTitle');
     const funnyFormat = localStorage.getItem('funnyBiographyBookFormat');
     const funnyPrice = localStorage.getItem('funnyBiographyBookPrice');
+    const funnyInteriorPdf = localStorage.getItem('funnyBiographyInteriorPdfUrl');
+    const funnyCoverPdf = localStorage.getItem('funnyBiographyCoverPdfUrl');
     
     if (funnyTitle && funnyFormat && funnyPrice) {
       items.push({
@@ -45,7 +53,9 @@ const Checkout = () => {
         title: funnyTitle,
         format: funnyFormat,
         price: funnyPrice,
-        editPath: '/create/friends/funny-biography/generate'
+        editPath: '/create/friends/funny-biography/generate',
+        interiorPdfUrl: funnyInteriorPdf || undefined,
+        coverPdfUrl: funnyCoverPdf || undefined
       });
     }
     
@@ -53,16 +63,35 @@ const Checkout = () => {
     setHasItems(items.length > 0);
   }, []);
 
+  // 处理PDF预览
+  const handlePreviewPdf = (url: string, pdfType: string) => {
+    if (!url) {
+      toast({
+        title: "PDF Not Available",
+        description: `The ${pdfType} PDF is not available yet.`,
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // 在新窗口打开PDF
+    window.open(url, '_blank');
+  };
+
   const handleRemoveItem = (itemId: string) => {
     // 根据ID移除购物车中的商品
     if (itemId === 'love-story') {
       localStorage.removeItem('loveStoryBookTitle');
       localStorage.removeItem('loveStoryBookFormat');
       localStorage.removeItem('loveStoryBookPrice');
+      localStorage.removeItem('loveStoryInteriorPdfUrl');
+      localStorage.removeItem('loveStoryCoverPdfUrl');
     } else if (itemId === 'funny-biography') {
       localStorage.removeItem('funnyBiographyBookTitle');
       localStorage.removeItem('funnyBiographyBookFormat');
       localStorage.removeItem('funnyBiographyBookPrice');
+      localStorage.removeItem('funnyBiographyInteriorPdfUrl');
+      localStorage.removeItem('funnyBiographyCoverPdfUrl');
     }
     
     // 更新购物车
@@ -106,7 +135,9 @@ const Checkout = () => {
           title: item.title,
           format: item.format,
           price: item.price, 
-          quantity: 1
+          quantity: 1,
+          interiorPdfUrl: item.interiorPdfUrl,
+          coverPdfUrl: item.coverPdfUrl
         }),
       });
       
@@ -172,7 +203,7 @@ const Checkout = () => {
                     
                     <p className="text-gray-600 mt-1">{item.format}</p>
                     
-                    <div className="mt-6">
+                    <div className="mt-6 flex flex-wrap gap-4">
                       <button 
                         onClick={() => handleEditContent(item.editPath)}
                         className="text-gray-600 hover:text-gray-900 flex items-center font-medium"
@@ -182,6 +213,31 @@ const Checkout = () => {
                         </svg>
                         Edit content
                       </button>
+                      
+                      {/* PDF预览按钮 */}
+                      {(item.interiorPdfUrl || item.coverPdfUrl) && (
+                        <div className="flex gap-2">
+                          {item.interiorPdfUrl && (
+                            <button 
+                              onClick={() => handlePreviewPdf(item.interiorPdfUrl!, 'Interior')}
+                              className="text-blue-600 hover:text-blue-800 flex items-center font-medium"
+                            >
+                              <FileText className="w-5 h-5 mr-2" />
+                              Interior PDF
+                            </button>
+                          )}
+                          
+                          {item.coverPdfUrl && (
+                            <button 
+                              onClick={() => handlePreviewPdf(item.coverPdfUrl!, 'Cover')}
+                              className="text-blue-600 hover:text-blue-800 flex items-center font-medium"
+                            >
+                              <Book className="w-5 h-5 mr-2" />
+                              Cover PDF
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
