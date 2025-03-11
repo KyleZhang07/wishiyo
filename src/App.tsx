@@ -12,6 +12,7 @@ import Checkout from "./pages/Checkout";
 import NotFound from "./pages/NotFound";
 import FriendsLanding from "./pages/FriendsLanding";
 import LoveLanding from "./pages/LoveLanding";
+import BookPreview from "./pages/BookPreview";
 
 // Friends Book Creation Routes - Funny Biography
 import FunnyBiographyAuthorStep from "./pages/wizard/friends/funny-biography/AuthorStep";
@@ -108,6 +109,9 @@ const AppLayout = () => {
           <Route path="/create/love/love-story/debug-prompts" element={<DebugPromptsStep />} />
           <Route path="/create/love/love-story/generate" element={<LoveStoryGenerateStep />} />
           <Route path="/create/love/love-story/format" element={<LoveStoryFormatStep />} />
+          
+          {/* Book Preview Route */}
+          <Route path="/book-preview" element={<BookPreview />} />
           
           {/* Order Success Route */}
           <Route path="/order-success" element={<OrderSuccess />} />
