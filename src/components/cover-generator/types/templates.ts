@@ -1,3 +1,4 @@
+
 export type TemplateType = {
   id: string;
   name: string;
@@ -8,20 +9,20 @@ export type TemplateType = {
     fontWeight: string;
     textAlign: 'left' | 'center' | 'right';
     offsetY: number;
-    textTransform?: string;
+    textTransform?: 'uppercase' | 'lowercase' | 'capitalize' | 'none';
   };
   subtitleStyle: {
     color: string;
     fontSize: string;
     fontWeight: string;
     fontStyle?: string;
-    textTransform?: string;
+    textTransform?: 'uppercase' | 'lowercase' | 'capitalize' | 'none';
   };
   authorStyle: {
     color: string;
     fontSize: string;
     fontWeight: string;
-    textTransform?: string;
+    textTransform?: 'uppercase' | 'lowercase' | 'capitalize' | 'none';
     letterSpacing?: string;
   };
   imageStyle: {
@@ -96,7 +97,8 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     },
     authorStyle: {
       color: '#9b87f5',
-      fontSize: '1rem'
+      fontSize: '1rem',
+      fontWeight: 'normal'
     },
     imageStyle: {
       filter: 'brightness(0.7)',
@@ -137,7 +139,7 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     },
     imageStyle: {
       filter: 'grayscale(100%)', 
-      opacity: 1,
+      opacity: '1',
       borderRadius: '0' 
     },
     spineStyle: {
@@ -169,7 +171,8 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     },
     authorStyle: {
       color: '#F2FCE2',
-      fontSize: '1rem'
+      fontSize: '1rem',
+      fontWeight: 'normal'
     },
     imageStyle: {
       filter: 'brightness(0.6) contrast(1.2)',
@@ -195,6 +198,8 @@ export const coverTemplates: { [key: string]: TemplateType } = {
       color: '#FFFFFF',
       fontSize: '3rem',
       fontWeight: 'bold',
+      textAlign: 'center',
+      offsetY: 0,
       textTransform: 'uppercase'
     },
     subtitleStyle: {
@@ -258,7 +263,7 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     },
     imageStyle: {
       filter: 'brightness(1.1)', 
-      opacity: 1,
+      opacity: '1',
       borderRadius: '50%' 
     },
     spineStyle: {
@@ -295,7 +300,7 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     },
     imageStyle: {
       filter: 'none',
-      opacity: 1,
+      opacity: '1',
       borderRadius: '0'
     },
     spineStyle: {
@@ -327,7 +332,8 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     },
     authorStyle: {
       color: '#ffffff',
-      fontSize: '1.8rem'
+      fontSize: '1.8rem',
+      fontWeight: 'normal'
     },
     imageStyle: {
       filter: 'none',
@@ -350,6 +356,18 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     }
   }
 };
+
+// Template interface for the default templates
+export interface Template {
+  id: string;
+  name: string;
+  backgroundColor: string;
+  backgroundImageUrl: string | null;
+  textColor: string;
+  titleStyle: TitleStyle;
+  subtitleStyle: SubtitleStyle;
+  authorStyle: AuthorStyle;
+}
 
 export const defaultTemplates: Template[] = [
   {

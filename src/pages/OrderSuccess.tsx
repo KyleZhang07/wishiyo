@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download } from 'lucide-react';
+import { ArrowLeft, Download, Share } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -35,11 +35,17 @@ const OrderSuccess = () => {
       }
 
       try {
+        console.log('Fetching order data for orderId:', orderId);
         const { data, error } = await supabase.functions.invoke('get-book-data', {
           body: { orderId }
         });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error response from get-book-data:', error);
+          throw error;
+        }
+        
+        console.log('Order data received:', data);
         
         if (data) {
           setOrderData(data);
@@ -69,6 +75,25 @@ const OrderSuccess = () => {
       title: "Download Started",
       description: "Your book is being prepared for download."
     });
+  };
+
+  // Mock function for share button
+  const handleShare = () => {
+    // Check if Web Share API is available
+    if (navigator.share) {
+      navigator.share({
+        title: orderData?.title || 'My Generated Book',
+        text: 'Check out the book I just created!',
+        url: window.location.href,
+      })
+      .then(() => console.log('Successful share'))
+      .catch((error) => console.log('Error sharing:', error));
+    } else {
+      toast({
+        title: "Share",
+        description: "Sharing is not supported on this browser."
+      });
+    }
   };
 
   if (isLoading) {
@@ -114,12 +139,16 @@ const OrderSuccess = () => {
         <div className="bg-white shadow-lg rounded-lg overflow-hidden max-w-2xl mx-auto">
           <div className="p-6">
             <div className="flex flex-col md:flex-row gap-8 items-center">
-              {orderData.cover_image_url && (
+              {orderData.cover_image_url ? (
                 <img 
                   src={orderData.cover_image_url} 
                   alt="Book Cover" 
                   className="w-48 h-auto object-cover rounded shadow"
                 />
+              ) : (
+                <div className="w-48 h-64 bg-gray-200 flex items-center justify-center rounded shadow">
+                  <p className="text-gray-500">Cover image unavailable</p>
+                </div>
               )}
               
               <div className="flex-1">
@@ -129,10 +158,15 @@ const OrderSuccess = () => {
                 <p className="text-gray-600">Order ID: {orderData.order_id}</p>
                 <p className="text-gray-600">Date: {new Date(orderData.created_at).toLocaleDateString()}</p>
                 
-                <div className="mt-6 flex gap-4">
+                <div className="mt-6 flex flex-wrap gap-4">
                   <Button onClick={handleDownload} className="flex items-center gap-2">
                     <Download className="h-4 w-4" />
                     Download Preview
+                  </Button>
+                  
+                  <Button onClick={handleShare} variant="outline" className="flex items-center gap-2">
+                    <Share className="h-4 w-4" />
+                    Share
                   </Button>
                   
                   <Link to="/">

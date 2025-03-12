@@ -1,64 +1,89 @@
 
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
 import { Check } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
+import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { getClientId } from '@/integrations/supabase/storage';
+import CanvasCoverPreview from '@/components/cover-generator/CanvasCoverPreview';
 
-// 封面类型
+// 定义封面格式
 interface CoverFormat {
   id: string;
   name: string;
   price: number;
   description: string;
   popular?: boolean;
-  imageSrc?: string;
 }
 
-const FunnyBiographyFormatStep = () => {
+const FormatStep = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  
-  // 硬封面和软封面的示例图片
-  const hardcoverImage = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wgARCADIASwDAREAAhEBAxEB/8QAHAABAAIDAQEBAAAAAAAAAAAAAAUGAwQHAggB/8QAGwEBAAIDAQEAAAAAAAAAAAAAAAMEAQIFBgf/2gAMAwEAAhADEAAAAfqkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARGfUfNbj48/oHyfoWVkpvTm9bwuixrS2trCy1tLS3NLe0tza3Nrc2tza2NrY3tjowdjGf0cZfZxl9HGXucZPZxk+HGP6cYvxxh/nCH+cIP5xgZcjHk5GDJcGHLdmDNeGDNfGDLfGDJkNjFltTFktzDkuDBluDBmu1gZbtYGW7WBku0cZLtHGS6RhjvUUYrpHGC9Rxfv0R869R/QOW1J/K1YPu+tNp2YPvp1Vj0e4AAAAAAAAAAR2pxfB5/H9Z5HQj52r+98/c+jh651jL1WEPRIxgCM16jiRsFfGDLcGHJcmHJcmLLcGDLdmDLdmDJdLEyXRiyXKyMdytDHcrYx3RiYsk0Y8k0ZMs0Y8s0YclxHGR4YGR4YGHIcRhjuY4w5DmIMOQ6ijDkOogw5DqIL+S7jC/kuo4vZLuOL2S6ji/c+xhsvIw2XkUX/Po4v8Ppw+jDi+kHktjk+1v8pp+5+nzcdFd9L2wAAAAAAAAAAARexxNT5zmtLqaPK3q0k5/2I1o7Sx1MAAAAAAAAAAYazTBGmYPO7Zg87smDzuyYNO7Jgk5pGCTmkYJO56QavwaDV+DQavwSDV+CQavwSDV+CQavwSDV+CQS/wASIN74fAk3vh0CXf8Ah0CXT+HwJNP4fAk0/h8CXS+HwJdL4fAljm0Cfc8lqQt6uJKvlB6HnT61zvv9dPV3vfDztMAAAAAAAAAAAAAEbpcNzvmcj1fMmHEQGkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANea4INn6FHS5eW17jGXrh7PX8yYcTAaQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABrvdLC1/Z07PTl5uj1kJ6YAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIrs4aK88iK++HHOcHHesHF+2HEfIHDfQHB/YGn9waX3Bo/gGh+IZ/5BnfoGd+wZn8Bl/0GV/oe/8Ao9X0/pe/6Xt+l7fpe36Xt+l7fpe36Xt+l7fpe36Xr+l6/pev6Xp+l6fpen6Xp+l6fpen6Xp+l6fpWn/9k=";
-  
-  const softcoverImage = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wgARCADIASwDAREAAhEBAxEB/8QAHAAAAgMBAQEBAAAAAAAAAAAABAUBAgMGBwAI/8QAGgEAAwEBAQEAAAAAAAAAAAAAAAIDBAEFBv/aAAwDAQACEAMQAAAB9UAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVKEBJtlolLrRCtdNDOL2DMXtGUvaMhe2ZAvaAhe4ZAd4xA75hB3zADwDCDvmAHgGEHgGEHhGAHhGAHhGAfBGAPiMI+IxD4jEPkMA+QwD5DAPoMY+gxj6jEPqMY+wxi9GQXY0AvRuEL0bhC9G4Re1cIXtXBF7dgRe3dEXt3RFbt4Be7eDObzGTOZ1mTGdhkw2dgMH1GrEelzZqdFmTf0GFO9Y2OtoeXJsXSqTjBUNxgoFwoEAsShcJhcJhcJxILhKKBYJRQLhKJhcIxMKxKJxWJROKxMJxSJhUJhSJxOJxSJhQJxQJhQJxQJhUJRQJRQJBQJBoIxoJBoJBoIxoIxoIxsIhsIhsIhqIxqIxsIRsIRsIRsIRsIRsIRsIRuIBuOGc2VHOOm1c5ps6nF3OM07vUPQNxsdHnLuPUrDg0G40MxudDMaGwzGh0MxofDMZnwzGh4NBofDUZHg2GA0GYwGgzGIyGYxGYyGYxGYyGYyGIyGIxGIxGIxGQxGQxGQxGIyGIyGIxGIyGIyGIyGIxGIzGI0GIzGIzGIzGIzGIzGAwGA0GAwGQyGQyGQ2GQyGQ2GQ2GQ2GQyGQyGg3GQ5GwyHI4G45HI5HI4HI5HI5HQ5HI5G46HI6HI6HIbnQbnY5HY7G52Ox0dD/9k=";
+  const [authorName, setAuthorName] = useState('');
+  const [coverTitle, setCoverTitle] = useState('');
+  const [subtitle, setSubtitle] = useState('');
+  const [coverImage, setCoverImage] = useState<string | undefined>();
+  const [selectedStyle, setSelectedStyle] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedFormat, setSelectedFormat] = useState<string>('hardcover');
+  const coverCanvasRef = useRef<HTMLDivElement>(null);
+  const spineCanvasRef = useRef<HTMLDivElement>(null);
 
-  // 可选的封面格式
+  // 封面格式列表
   const coverFormats: CoverFormat[] = [
     {
       id: 'hardcover',
       name: 'Hardcover',
       price: 59.99,
       description: 'A premium hardcover with a quality matte finish. Made to be read again and again.',
-      popular: true,
-      imageSrc: hardcoverImage
+      popular: true
     },
     {
       id: 'softcover',
       name: 'Softcover',
       price: 44.99,
-      description: 'A lovely, lightweight softcover printed on thick, durable paper.',
-      imageSrc: softcoverImage
+      description: 'A lovely, lightweight softcover printed on thick, durable paper.'
     }
   ];
-  
-  // 默认选择硬封面
-  const [selectedFormat, setSelectedFormat] = useState<string>('hardcover');
-  const [isProcessing, setIsProcessing] = useState(false);
 
-  // 通过Ref获取canvas元素
-  const coverCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const spineCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  
-  // 处理格式选择
+  useEffect(() => {
+    const savedAuthor = localStorage.getItem('funnyBiographyAuthorName');
+    const savedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
+    const savedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
+    const savedStyle = localStorage.getItem('funnyBiographySelectedStyle');
+    const savedFormat = localStorage.getItem('funnyBiographySelectedFormat');
+
+    if (savedAuthor) {
+      setAuthorName(savedAuthor);
+    }
+
+    if (savedStyle) {
+      setSelectedStyle(savedStyle);
+    }
+
+    if (savedFormat) {
+      setSelectedFormat(savedFormat);
+    }
+
+    if (savedIdeas && savedIdeaIndex) {
+      const ideas = JSON.parse(savedIdeas);
+      const selectedIdea = ideas[parseInt(savedIdeaIndex)];
+      if (selectedIdea) {
+        setCoverTitle(selectedIdea.title || '');
+        setSubtitle(selectedIdea.description || '');
+      }
+    }
+
+    const savedPhotos = localStorage.getItem('funnyBiographyPhoto');
+    if (savedPhotos) {
+      setCoverImage(savedPhotos);
+    }
+  }, []);
+
   const handleFormatSelect = (formatId: string) => {
     setSelectedFormat(formatId);
-    // 保存选择到localStorage
     localStorage.setItem('funnyBiographySelectedFormat', formatId);
     
     const selectedFormatObj = coverFormats.find(format => format.id === formatId);
@@ -67,127 +92,112 @@ const FunnyBiographyFormatStep = () => {
     }
   };
 
-  // 获取canvas元素的图片数据
-  const getCanvasImageData = (canvasRef: React.RefObject<HTMLCanvasElement>): string | null => {
+  const captureCanvasAsImage = async (canvasRef: React.RefObject<HTMLDivElement>): Promise<string | null> => {
     if (!canvasRef.current) {
-      console.error('Canvas element not found');
+      console.error('Canvas reference not found');
       return null;
     }
     
     try {
-      return canvasRef.current.toDataURL('image/jpeg', 0.9);
+      // Find the canvas element inside the div
+      const canvasElement = canvasRef.current.querySelector('canvas');
+      if (!canvasElement) {
+        throw new Error('Canvas element not found inside the ref');
+      }
+      
+      // Get base64 data URL
+      const dataUrl = canvasElement.toDataURL('image/jpeg', 0.9);
+      return dataUrl;
     } catch (error) {
-      console.error('Error converting canvas to image:', error);
+      console.error('Error capturing canvas image:', error);
       return null;
     }
-  };
-  
-  // 从 DOM 获取 Canvas 元素
-  const getCoverSpineElements = () => {
-    if (!coverCanvasRef.current) {
-      // 尝试直接从DOM获取
-      const coverCanvas = document.getElementById('cover-canvas') as HTMLCanvasElement;
-      if (coverCanvas) {
-        coverCanvasRef.current = coverCanvas;
-      }
-    }
-    
-    if (!spineCanvasRef.current) {
-      // 尝试直接从DOM获取
-      const spineCanvas = document.getElementById('spine-canvas') as HTMLCanvasElement;
-      if (spineCanvas) {
-        spineCanvasRef.current = spineCanvas;
-      }
-    }
-    
-    return { coverCanvas: coverCanvasRef.current, spineCanvas: spineCanvasRef.current };
   };
 
-  // 构建书籍数据
-  const buildBookData = () => {
-    const bookTitle = localStorage.getItem('funnyBiographyIdea') || 'Untitled Biography';
-    const authorName = localStorage.getItem('funnyBiographyAuthor') || 'Anonymous';
-    const answers = JSON.parse(localStorage.getItem('funnyBiographyAnswers') || '[]');
-    const tableOfContents = JSON.parse(localStorage.getItem('funnyBiographyTableOfContents') || '[]');
-    const selectedPhoto = localStorage.getItem('funnyBiographyPhoto') || '';
-    
-    const selectedFormatObj = coverFormats.find(format => format.id === selectedFormat);
-    
-    return {
-      title: bookTitle,
-      author: authorName,
-      answers: answers,
-      tableOfContents: tableOfContents,
-      photo: selectedPhoto ? selectedPhoto : null,
-      format: selectedFormatObj?.name || 'Hardcover',
-      price: selectedFormatObj?.price || 59.99
-    };
-  };
-  
-  // 处理结账
   const handleCheckout = async () => {
-    setIsProcessing(true);
-    
-    try {
-      // 显示加载提示
+    // Find the selected format
+    const selectedFormatObj = coverFormats.find(format => format.id === selectedFormat);
+    if (!selectedFormatObj) {
       toast({
-        title: "Processing your order",
-        description: "Please wait while we prepare your book...",
+        title: "Error",
+        description: "Please select a format to continue",
+        variant: "destructive"
       });
-      
-      // 获取Canvas元素
-      const { coverCanvas, spineCanvas } = getCoverSpineElements();
-      
-      if (!coverCanvas) {
-        throw new Error("Cover canvas not found");
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      // Capture cover canvas image
+      const coverImageData = await captureCanvasAsImage(coverCanvasRef);
+      if (!coverImageData) {
+        throw new Error('Failed to capture cover image. Canvas not found.');
       }
+
+      // Capture spine canvas image (if available)
+      const spineImageData = await captureCanvasAsImage(spineCanvasRef);
       
-      // 获取封面和书脊图片
-      const coverImage = getCanvasImageData(coverCanvasRef);
-      const spineImage = spineCanvas ? getCanvasImageData(spineCanvasRef) : null;
-      
-      if (!coverImage) {
-        throw new Error("Failed to get cover image data");
-      }
-      
-      // 构建书籍数据
-      const bookData = buildBookData();
-      
-      // 生成唯一订单ID
-      const orderId = `funny-bio-${uuidv4()}`;
-      
-      // 获取客户端ID
-      const clientId = getClientId();
-      
-      // 将数据保存到Supabase
-      const { data, error } = await supabase.functions.invoke('save-book-data', {
-        body: {
-          orderId,
-          bookData,
-          coverImage,
-          spineImage,
-          clientId,
-          productType: 'funny-biography'
-        }
-      });
-      
-      if (error) {
-        throw error;
-      }
-      
-      // 保存订单ID用于后续查询
+      // Generate a unique order ID
+      const orderId = uuidv4();
       localStorage.setItem('currentOrderId', orderId);
       
-      toast({
-        title: "Order processed successfully",
-        description: "Redirecting to success page...",
+      // Prepare book data
+      const bookData = {
+        title: coverTitle || 'Untitled Book',
+        subtitle: subtitle || '',
+        authorName: authorName || 'Anonymous',
+        format: selectedFormatObj.name,
+        price: selectedFormatObj.price,
+        chapters: JSON.parse(localStorage.getItem('funnyBiographyChapters') || '[]'),
+        style: localStorage.getItem('funnyBiographySelectedStyle') || '',
+        photo: localStorage.getItem('funnyBiographyPhoto') || '',
+        photoPosition: localStorage.getItem('funnyBiographyCoverImagePosition') || '',
+        photoScale: localStorage.getItem('funnyBiographyCoverImageScale') || '100',
+        answers: JSON.parse(localStorage.getItem('funnyBiographyAnswers') || '[]'),
+        ideas: JSON.parse(localStorage.getItem('funnyBiographyGeneratedIdeas') || '[]'),
+        selectedIdeaIndex: localStorage.getItem('funnyBiographySelectedIdea') || '0'
+      };
+
+      console.log('Uploading book data to Supabase:', { 
+        orderId, 
+        formatId: selectedFormat,
+        price: selectedFormatObj.price
       });
       
-      // 跳转到成功页面
-      navigate(`/order-success?orderId=${orderId}`);
+      try {
+        // Upload data and images to Supabase
+        const { data, error } = await supabase.functions.invoke('save-book-data', {
+          body: {
+            orderId,
+            bookData,
+            coverImage: coverImageData,
+            spineImage: spineImageData,
+            clientId: 'anonymous', // We could add user id here if we had authentication
+            productType: 'funny-biography'
+          }
+        });
+
+        if (error) {
+          throw new Error(`Supabase function error: ${error.message}`);
+        }
+
+        console.log('Book data saved successfully:', data);
+        
+        // Save necessary data for the success page
+        localStorage.setItem('funnyBiographyOrderId', orderId);
+        localStorage.setItem('funnyBiographyBookTitle', coverTitle);
+        localStorage.setItem('funnyBiographyBookFormat', selectedFormatObj.name);
+        localStorage.setItem('funnyBiographyBookPrice', selectedFormatObj.price.toString());
+        
+        // Redirect to success page
+        navigate(`/order-success?orderId=${orderId}`);
+      } catch (uploadError: any) {
+        console.error('Error uploading to Supabase:', uploadError);
+        throw new Error(`Failed to save book data: ${uploadError.message}`);
+      }
+      
     } catch (error: any) {
       console.error('Checkout error:', error);
-      
       toast({
         title: "Checkout Error",
         description: error.message || "An error occurred during checkout. Please try again.",
@@ -197,27 +207,80 @@ const FunnyBiographyFormatStep = () => {
       setIsProcessing(false);
     }
   };
-  
-  // 从localStorage加载已保存的选择
-  useEffect(() => {
-    const savedFormat = localStorage.getItem('funnyBiographySelectedFormat');
-    if (savedFormat) {
-      setSelectedFormat(savedFormat);
-    }
-    
-    // 初始化引用
-    getCoverSpineElements();
-  }, []);
-  
+
+  // Get the current style preset
+  const getCurrentStyle = () => {
+    const stylePresets = [
+      {
+        id: 'classic-red',
+        name: 'Classic Beige',
+        font: 'merriweather',
+        template: 'classic',
+        layout: 'classic-centered'
+      },
+      {
+        id: 'bestseller-style',
+        name: 'Bestseller',
+        font: 'montserrat',
+        template: 'bestseller',
+        layout: 'bestseller-modern'
+      },
+      {
+        id: 'modern-green',
+        name: 'Modern Green',
+        font: 'montserrat',
+        template: 'vibrant-green',
+        layout: 'bold-header'
+      },
+      {
+        id: 'minimal-gray',
+        name: 'Minimal Gray',
+        font: 'inter',
+        template: 'minimal',
+        layout: 'centered-title'
+      },
+      {
+        id: 'pastel-beige',
+        name: 'Sweet Pink',
+        font: 'times',
+        template: 'pastel-beige',
+        layout: 'classic-centered'
+      }
+    ];
+    return stylePresets.find(style => style.id === selectedStyle) || stylePresets[0];
+  };
+
+  const currentStyle = getCurrentStyle();
+
   return (
     <WizardStep
       title="Choose a format for your book"
-      description="Make your gift even more special with our selection of cover options"
+      description="Make your gift even more glorious with our selection of cover options"
       previousStep="/create/friends/funny-biography/preview"
       currentStep={7}
       totalSteps={7}
     >
       <div className="max-w-4xl mx-auto">
+        {/* Hidden canvas for capturing the cover image */}
+        <div className="hidden">
+          <div ref={coverCanvasRef}>
+            <CanvasCoverPreview
+              coverTitle={coverTitle}
+              subtitle={subtitle}
+              authorName={authorName}
+              coverImage={coverImage}
+              selectedFont={currentStyle.font}
+              selectedTemplate={currentStyle.template}
+              selectedLayout={currentStyle.layout}
+              category="friends"
+              scaleFactor={0.8}
+            />
+          </div>
+          <div ref={spineCanvasRef}>
+            {/* Spine canvas would go here if we implement it */}
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* 封面格式选项 */}
           {coverFormats.map((format) => (
@@ -225,35 +288,36 @@ const FunnyBiographyFormatStep = () => {
               key={format.id}
               className={`border rounded-lg overflow-hidden transition-all ${
                 selectedFormat === format.id 
-                  ? 'border-primary ring-1 ring-primary' 
+                  ? 'border-[#F6C744] ring-1 ring-[#F6C744]' 
                   : 'border-gray-200'
               }`}
             >
               {/* 人气标签 */}
               {format.popular && (
-                <div className="bg-yellow-300 text-center py-2">
+                <div className="bg-[#F6C744] text-center py-2">
                   <p className="font-medium">Most popular</p>
                 </div>
               )}
               
-              {/* 封面图片 */}
+              {/* 封面预览区 */}
               <div className="h-64 bg-gray-100 border-b relative">
-                {format.imageSrc ? (
-                  <img 
-                    src={format.imageSrc} 
-                    alt={`${format.name} book`}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-500">
-                    {format.name} Preview
+                {format.id === 'hardcover' ? (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-700 font-semibold">
+                    Hardcover Preview
+                    {selectedFormat === format.id && (
+                      <div className="absolute top-2 right-2 bg-[#F6C744] text-white rounded-full p-1">
+                        <Check className="w-5 h-5" />
+                      </div>
+                    )}
                   </div>
-                )}
-                
-                {/* 选中标记 */}
-                {selectedFormat === format.id && (
-                  <div className="absolute top-2 right-2 bg-primary text-white rounded-full p-1">
-                    <Check className="w-5 h-5" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-700 font-semibold">
+                    Softcover Preview
+                    {selectedFormat === format.id && (
+                      <div className="absolute top-2 right-2 bg-[#F6C744] text-white rounded-full p-1">
+                        <Check className="w-5 h-5" />
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -269,8 +333,8 @@ const FunnyBiographyFormatStep = () => {
                   variant={selectedFormat === format.id ? "default" : "outline"}
                   className={`w-full ${
                     selectedFormat === format.id 
-                      ? 'bg-primary hover:bg-primary/90' 
-                      : 'border-primary text-primary hover:bg-primary/10'
+                      ? 'bg-[#F6C744] hover:bg-[#F6C744]/90' 
+                      : 'border-[#F6C744] text-[#F6C744] hover:bg-[#F6C744]/10'
                   }`}
                   onClick={() => handleFormatSelect(format.id)}
                 >
@@ -286,11 +350,11 @@ const FunnyBiographyFormatStep = () => {
           <Button 
             variant="default" 
             size="lg"
-            className="w-full bg-[#FF7F50] hover:bg-[#FF7F50]/80 text-white"
+            className="w-full bg-[#F6C744] hover:bg-[#F6C744]/80 text-white py-6 text-lg"
             onClick={handleCheckout}
             disabled={isProcessing}
           >
-            {isProcessing ? 'Processing...' : 'Checkout'}
+            {isProcessing ? 'Processing...' : 'Complete My Order'}
           </Button>
         </div>
       </div>
@@ -298,4 +362,4 @@ const FunnyBiographyFormatStep = () => {
   );
 };
 
-export default FunnyBiographyFormatStep;
+export default FormatStep;

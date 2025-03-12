@@ -18,6 +18,10 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error("Missing Supabase environment variables");
+    }
+
     // Create Supabase client
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -43,15 +47,39 @@ serve(async (req) => {
 
     // Create book-covers bucket if it doesn't exist
     try {
-      const { data: buckets } = await supabase.storage.listBuckets();
-      if (!buckets?.find(b => b.name === 'book-covers')) {
-        await supabase.storage.createBucket('book-covers', {
+      const { data: buckets, error: bucketListError } = await supabase.storage.listBuckets();
+      
+      if (bucketListError) {
+        console.error("Error listing buckets:", bucketListError);
+        throw bucketListError;
+      }
+      
+      // Check if bucket exists
+      const bucketExists = buckets?.some(b => b.name === 'book-covers');
+      
+      if (!bucketExists) {
+        console.log("Creating book-covers bucket");
+        const { error: createBucketError } = await supabase.storage.createBucket('book-covers', {
           public: true
         });
-        console.log("Created book-covers bucket");
+        
+        if (createBucketError) {
+          console.error("Error creating bucket:", createBucketError);
+          throw createBucketError;
+        }
+        
+        // Set public bucket policy after creation
+        const { error: policyError } = await supabase.storage.from('book-covers').getPublicUrl('test.txt');
+        if (policyError) {
+          console.warn("Warning: Couldn't verify public access to bucket:", policyError);
+        }
+        
+        console.log("Created book-covers bucket successfully");
+      } else {
+        console.log("book-covers bucket already exists");
       }
     } catch (bucketError) {
-      console.error("Error checking/creating bucket:", bucketError);
+      console.error("Error with bucket operations:", bucketError);
       // Continue even if bucket creation fails, as it might already exist
     }
 
@@ -76,6 +104,7 @@ serve(async (req) => {
 
         if (uploadError) {
           console.error("Error uploading cover image:", uploadError);
+          throw uploadError;
         } else {
           // Get public URL
           const { data: publicUrlData } = supabase.storage
@@ -87,7 +116,10 @@ serve(async (req) => {
         }
       } catch (imageError) {
         console.error("Error processing cover image:", imageError);
+        // Continue with the function even if image upload fails
       }
+    } else {
+      console.warn("No cover image provided");
     }
 
     // Upload spine image to storage if provided
@@ -111,6 +143,7 @@ serve(async (req) => {
 
         if (uploadError) {
           console.error("Error uploading spine image:", uploadError);
+          throw uploadError;
         } else {
           // Get public URL
           const { data: publicUrlData } = supabase.storage
@@ -122,6 +155,41 @@ serve(async (req) => {
         }
       } catch (imageError) {
         console.error("Error processing spine image:", imageError);
+        // Continue with the function even if image upload fails
+      }
+    }
+
+    // Check if book_orders table exists, if not create it
+    const { error: tableCheckError } = await supabase
+      .from('book_orders')
+      .select('id', { count: 'exact', head: true });
+    
+    if (tableCheckError && tableCheckError.code === '42P01') {
+      console.log("book_orders table doesn't exist, creating it");
+      
+      const createTableQuery = `
+        CREATE TABLE IF NOT EXISTS public.book_orders (
+          id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+          order_id TEXT UNIQUE NOT NULL,
+          product_id TEXT NOT NULL,
+          client_id TEXT,
+          title TEXT NOT NULL,
+          format TEXT NOT NULL,
+          price TEXT NOT NULL,
+          user_data JSONB,
+          cover_image_url TEXT,
+          spine_image_url TEXT,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+        );
+      `;
+      
+      // Execute create table query
+      const { error: createError } = await supabase.rpc('execute_sql', { query: createTableQuery });
+      if (createError) {
+        console.error("Error creating book_orders table:", createError);
+        // Try to use the table anyway in case it exists despite the error
+      } else {
+        console.log("Created book_orders table successfully");
       }
     }
 
@@ -164,7 +232,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Unexpected error:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error.message || "An unexpected error occurred" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
