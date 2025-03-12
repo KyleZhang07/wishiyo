@@ -112,16 +112,31 @@ export default async function handler(req, res) {
                 });
               }
               
+              // 提取订单ID - 临时修复版本
+              console.log('订单ID:', userData.orderId);
+              console.log('作者:', userData.author);
+              console.log('书名:', userData.bookTitle);
+              
+              // 临时修复 - 我们暂时不发送完整数据到generate-book函数
+              // 这是为了绕过Stripe元数据大小限制
+              // 完整实现应该使用数据库存储用户数据
+              
               // 构建请求数据
               const generateBookData = {
-                userAnswers: userData.userAnswers,
+                // 临时简化数据
+                userAnswers: [], // 在实际实现中从数据库获取
                 author: userData.author,
                 bookTitle: title || userData.bookTitle,
-                tableOfContents: userData.tableOfContents,
-                coverData: userData.coverData,
+                tableOfContents: [], // 在实际实现中从数据库获取
+                coverData: {
+                  frontCover: null, // 在实际实现中从数据库获取
+                  spine: null,     // 在实际实现中从数据库获取
+                  backCover: null  // 在实际实现中从数据库获取
+                },
                 shippingAddress: shippingAddress
               };
 
+              // 此调用仅用于测试，实际实现应该传递完整数据
               // 调用本地generate-book函数生成并打印书籍
               const generateBookUrl = new URL('/api/generate-book', process.env.BASE_URL || 'http://localhost:3000').href;
               const response = await fetch(generateBookUrl, {
