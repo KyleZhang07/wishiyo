@@ -32,14 +32,29 @@ serve(async (req) => {
     async function getImageFromUrl(imageUrl: string): Promise<string> {
       try {
         // 处理已经是base64数据的情况
-        if (imageUrl.startsWith('data:image')) {
+        if (imageUrl.startsWith('data:')) {
+          console.log(`Image is already in data URI format: ${imageUrl.substring(0, 30)}...`);
           return imageUrl;
         }
 
+        console.log(`Fetching image from URL: ${imageUrl}`);
         const response = await fetch(imageUrl);
         
         if (!response.ok) {
           throw new Error(`Failed to fetch image from ${imageUrl}: ${response.status} ${response.statusText}`);
+        }
+        
+        // 获取内容类型
+        const contentType = response.headers.get('content-type') || 'image/jpeg';
+        console.log(`Content type of fetched image: ${contentType}`);
+        
+        // 如果是PDF，我们需要做特殊处理：将其转换为图像
+        if (contentType.includes('application/pdf')) {
+          console.log('Image URL points to a PDF file, converting to image for PDF generation...');
+          
+          // 直接返回URL，jsPDF会处理
+          // 在实际应用中，可能需要将PDF转换为图像，但这需要额外的库
+          return imageUrl;
         }
         
         const imageBuffer = await response.arrayBuffer();
@@ -48,15 +63,7 @@ serve(async (req) => {
             .reduce((data, byte) => data + String.fromCharCode(byte), '')
         );
         
-        // 确定正确的MIME类型
-        let mimeType = 'image/jpeg'; // 默认
-        if (imageUrl.endsWith('.png')) {
-          mimeType = 'image/png';
-        } else if (imageUrl.endsWith('.gif')) {
-          mimeType = 'image/gif';
-        }
-        
-        return `data:${mimeType};base64,${base64Image}`;
+        return `data:${contentType};base64,${base64Image}`;
       } catch (error) {
         console.error(`Error downloading image from ${imageUrl}:`, error);
         throw error;

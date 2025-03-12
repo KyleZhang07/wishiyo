@@ -136,6 +136,43 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     let coverPromise = Promise.resolve({ ok: true, json: () => Promise.resolve({ success: true }) });
     if (images.frontCover && images.spine && images.backCover) {
       console.log(`[${orderId}] Starting cover PDF generation`);
+      console.log(`[${orderId}] Cover images found:`, {
+        frontCover: images.frontCover.substring(0, 50) + '...',
+        spine: images.spine.substring(0, 50) + '...',
+        backCover: images.backCover.substring(0, 50) + '...'
+      });
+      
+      // 检查图片URL有效性
+      const validateImageUrl = (url) => {
+        if (!url) return false;
+        // 检查是否是Supabase Storage URL
+        if (url.includes('supabase.co/storage/v1/object/public/book-covers')) {
+          return true;
+        }
+        // 支持数据URI
+        if (url.startsWith('data:')) {
+          return true;
+        }
+        // 支持其他有效URL
+        try {
+          new URL(url);
+          return true;
+        } catch (e) {
+          return false;
+        }
+      };
+      
+      // 验证所有图片URL
+      if (!validateImageUrl(images.frontCover) || 
+          !validateImageUrl(images.spine) || 
+          !validateImageUrl(images.backCover)) {
+        console.warn(`[${orderId}] One or more image URLs are invalid:`, {
+          frontCoverValid: validateImageUrl(images.frontCover),
+          spineValid: validateImageUrl(images.spine),
+          backCoverValid: validateImageUrl(images.backCover)
+        });
+      }
+      
       coverPromise = fetch(
         `${supabaseUrl}/functions/v1/generate-cover-pdf`,
         {

@@ -121,47 +121,112 @@ const FormatStep = () => {
         
         // 上传封面图片到Supabase Storage
         try {
-          // 转换Base64为Blob
-          const base64ToBlob = (base64Data, contentType) => {
-            const byteString = atob(base64Data.split(',')[1]);
-            const ab = new ArrayBuffer(byteString.length);
-            const ia = new Uint8Array(ab);
-            
-            for (let i = 0; i < byteString.length; i++) {
-              ia[i] = byteString.charCodeAt(i);
+          // 转换Base64数据（PDF或图片）为Blob
+          const dataUriToBlob = (dataUri, defaultType = 'image/jpeg') => {
+            // 检查数据格式是否有效
+            if (!dataUri || typeof dataUri !== 'string') {
+              console.error('Invalid data URI:', dataUri?.substring(0, 50));
+              return null;
             }
             
-            return new Blob([ab], { type: contentType });
+            try {
+              // 确定正确的MIME类型
+              let mimeType = defaultType;
+              let base64Data = dataUri;
+              
+              // 处理标准Data URI格式
+              if (dataUri.startsWith('data:')) {
+                const parts = dataUri.split(',');
+                const matches = parts[0].match(/^data:([^;]+);base64$/);
+                if (matches && matches[1]) {
+                  mimeType = matches[1];
+                }
+                base64Data = parts[1];
+              } 
+              // 处理jsPDF输出的datauristring（带有应用类型前缀）
+              else if (dataUri.startsWith('data:application/pdf;')) {
+                // 从PDF提取图像数据时需要特殊处理
+                mimeType = 'application/pdf';
+                const parts = dataUri.split(',');
+                base64Data = parts[1];
+              }
+              // 如果没有前缀，假设是原始base64
+              else {
+                // 添加必要的头部
+                base64Data = dataUri;
+              }
+              
+              // 解码base64数据
+              const byteString = atob(base64Data);
+              const ab = new ArrayBuffer(byteString.length);
+              const ia = new Uint8Array(ab);
+              
+              for (let i = 0; i < byteString.length; i++) {
+                ia[i] = byteString.charCodeAt(i);
+              }
+              
+              return new Blob([ab], { type: mimeType });
+            } catch (error) {
+              console.error('Error converting data URI to blob:', error);
+              return null;
+            }
           };
           
           // 上传图片到Supabase Storage
-          const uploadImage = async (base64Data, fileName) => {
-            if (!base64Data) return '';
-            
-            const blob = base64ToBlob(base64Data, 'image/jpeg');
-            const file = new File([blob], fileName, { type: 'image/jpeg' });
-            
-            const { data, error } = await supabase.storage
-              .from('book-covers')
-              .upload(`${orderId}/${fileName}`, file, {
-                upsert: true,
-                contentType: 'image/jpeg'
-              });
-              
-            if (error) {
-              console.error(`Error uploading ${fileName}:`, error);
+          const uploadImage = async (dataUri, fileName) => {
+            if (!dataUri) {
+              console.error('No image data provided for:', fileName);
               return '';
             }
             
-            // 获取公共URL
-            const { data: urlData } = supabase.storage
-              .from('book-covers')
-              .getPublicUrl(`${orderId}/${fileName}`);
+            console.log(`Uploading ${fileName}, data URI format:`, dataUri.substring(0, 50) + '...');
+            
+            // 确定是PDF还是图片数据
+            const isPdf = dataUri.includes('application/pdf');
+            const contentType = isPdf ? 'application/pdf' : 'image/jpeg';
+            const fileExtension = isPdf ? '.pdf' : '.jpg';
+            const actualFileName = fileName.endsWith(fileExtension) ? fileName : fileName + fileExtension;
+            
+            // 转换为Blob
+            const blob = dataUriToBlob(dataUri, contentType);
+            if (!blob) {
+              console.error('Failed to convert data to blob for:', fileName);
+              return '';
+            }
+            
+            const file = new File([blob], actualFileName, { type: contentType });
+            console.log(`Created file for ${actualFileName}, size: ${file.size} bytes`);
+            
+            try {
+              const { data, error } = await supabase.storage
+                .from('book-covers')
+                .upload(`${orderId}/${actualFileName}`, file, {
+                  upsert: true,
+                  contentType: contentType
+                });
+                
+              if (error) {
+                console.error(`Error uploading ${actualFileName}:`, error);
+                return '';
+              }
               
-            return urlData.publicUrl;
+              console.log(`Successfully uploaded ${actualFileName} to Supabase`);
+              
+              // 获取公共URL
+              const { data: urlData } = supabase.storage
+                .from('book-covers')
+                .getPublicUrl(`${orderId}/${actualFileName}`);
+                
+              console.log(`Generated public URL for ${actualFileName}:`, urlData.publicUrl);
+              return urlData.publicUrl;
+            } catch (uploadError) {
+              console.error(`Exception during upload of ${actualFileName}:`, uploadError);
+              return '';
+            }
           };
           
           // 上传三个封面图片
+          console.log('Starting image uploads to Supabase Storage');
           const frontCoverUrl = await uploadImage(frontCoverBase64, 'front-cover.jpg');
           const spineUrl = await uploadImage(spineBase64, 'spine.jpg');
           const backCoverUrl = await uploadImage(backCoverBase64, 'back-cover.jpg');
