@@ -4,6 +4,7 @@ import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
 import { Check } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 // 封面类型
 interface CoverFormat {
@@ -112,6 +113,56 @@ const FormatStep = () => {
         
         // 保存订单ID
         localStorage.setItem('funnyBiographyOrderId', orderId);
+        
+        // 创建书籍记录到数据库
+        try {
+          // 收集书籍信息
+          const authorName = localStorage.getItem('funnyBiographyAuthorName') || 'Friend';
+          const savedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
+          const selectedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
+          const tableOfContent = localStorage.getItem('funnyBiographyTableOfContent');
+          let ideas = null;
+          let selectedIdea = null;
+          let toc = null;
+          
+          if (savedIdeas) {
+            ideas = JSON.parse(savedIdeas);
+            if (selectedIdeaIndex) {
+              selectedIdea = ideas[parseInt(selectedIdeaIndex)];
+            }
+          }
+          
+          if (tableOfContent) {
+            toc = JSON.parse(tableOfContent);
+          }
+          
+          // 添加记录到数据库
+          const { data, error } = await supabase
+            .from('funny_biography_books')
+            .insert({
+              order_id: orderId,
+              title: bookTitle,
+              author: authorName,
+              ideas: ideas,
+              selected_idea: selectedIdea,
+              chapters: toc,
+              status: 'created',
+              timestamp: new Date().toISOString()
+            })
+            .select();
+          
+          if (error) {
+            console.error('创建书籍记录错误:', error);
+            throw new Error('无法在数据库中创建书籍记录');
+          }
+          
+          console.log('书籍记录已创建:', data);
+          
+        } catch (dbError) {
+          console.error('数据库错误:', dbError);
+          // 继续处理结账，尽管数据库出错
+          // 我们将依靠startBookGeneration函数在必要时重试
+        }
         
         // 开始并行处理：1. 生成书籍内容 2. 生成封面PDF
         const startBookGeneration = async () => {
