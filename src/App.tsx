@@ -8,7 +8,6 @@ import { useState } from "react";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
-import Checkout from "./pages/Checkout";
 import NotFound from "./pages/NotFound";
 import FriendsLanding from "./pages/FriendsLanding";
 import LoveLanding from "./pages/LoveLanding";
@@ -36,9 +35,15 @@ import LoveStoryFormatStep from "./pages/wizard/love/love-story/FormatStep";
 
 // Simple OrderSuccess component
 const OrderSuccess = () => {
-  // 从localStorage获取订单ID
-  const orderId = localStorage.getItem('loveStoryOrderId') || 'WY-UNKNOWN';
-  const bookTitle = localStorage.getItem('loveStoryBookTitle') || 'Love Story Book';
+  // Get order ID from localStorage (either love story or funny biography)
+  const loveStoryOrderId = localStorage.getItem('loveStoryOrderId');
+  const funnyBiographyOrderId = localStorage.getItem('funnyBiographyOrderId');
+  const orderId = loveStoryOrderId || funnyBiographyOrderId || 'WY-UNKNOWN';
+  
+  // Get book title from localStorage (either love story or funny biography)
+  const loveStoryBookTitle = localStorage.getItem('loveStoryBookTitle');
+  const funnyBiographyBookTitle = localStorage.getItem('funnyBiographyBookTitle');
+  const bookTitle = loveStoryBookTitle || funnyBiographyBookTitle || 'Your Custom Book';
   
   return (
     <div className="min-h-screen bg-[#FFFAF5] flex items-center justify-center">
@@ -82,7 +87,6 @@ const AppLayout = () => {
       <main className={`flex-grow ${isCreationPath ? 'pt-0' : 'pt-0'}`}>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/checkout" element={<Checkout />} />
           
           {/* Category Landing Pages */}
           <Route path="/friends" element={<FriendsLanding />} />

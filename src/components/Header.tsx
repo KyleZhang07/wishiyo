@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, ShoppingCart } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
 
 const Header = () => {
@@ -22,9 +22,7 @@ const Header = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6 pr-4">
-            <Link to="/checkout" className="text-gray-600 hover:text-gray-900 transition-colors">
-              <ShoppingCart className="w-6 h-6" />
-            </Link>
+            {/* Empty div to maintain layout */}
           </div>
 
           {/* Mobile Menu Button */}
@@ -43,9 +41,6 @@ const Header = () => {
             </Link>
             <Link to="/love" className="block px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors" onClick={() => setIsMenuOpen(false)}>
               Illustrated Book
-            </Link>
-            <Link to="/checkout" className="block px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors" onClick={() => setIsMenuOpen(false)}>
-              Cart
             </Link>
           </nav>}
       </div>

@@ -25,11 +25,6 @@ const Footer = () => {
                   Create Book
                 </Link>
               </li>
-              <li>
-                <Link to="/checkout" className="text-gray-600 hover:text-gray-900 transition-colors">
-                  My Books
-                </Link>
-              </li>
             </ul>
           </div>
           
