@@ -8,6 +8,8 @@ export const config = {
   },
 };
 
+console.log("===== WEBHOOK FILE LOADED =====");
+
 // Get raw request body from readable stream
 async function buffer(readable) {
   const chunks = [];
@@ -281,7 +283,9 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
 }
 
 export default async function handler(req, res) {
+  console.log("===== WEBHOOK CALLED =====");
   if (req.method !== 'POST') {
+    console.log("Not a POST request:", req.method);
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
@@ -291,6 +295,7 @@ export default async function handler(req, res) {
   try {
     // Get raw request body
     const rawBody = await buffer(req);
+    console.log("===== REQUEST BODY RECEIVED =====", rawBody.length, "bytes");
     
     // Get Stripe signature header
     const signature = req.headers['stripe-signature'];
@@ -299,22 +304,27 @@ export default async function handler(req, res) {
     let event;
     try {
       event = stripe.webhooks.constructEvent(rawBody, signature, endpointSecret);
+      console.log("===== WEBHOOK SIGNATURE VERIFIED =====");
     } catch (err) {
       console.error(`Webhook signature verification failed: ${err.message}`);
       return res.status(400).json({ error: `Webhook Error: ${err.message}` });
     }
 
     // Check for required environment variables
-    if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
-      console.error('Missing required environment variables for Stripe webhook');
-      return res.status(500).json({ error: 'Server configuration error' });
-    }
+    console.log("Environment variables check:", {
+      hasStripeSecret: !!process.env.STRIPE_SECRET_KEY,
+      hasWebhookSecret: !!process.env.STRIPE_WEBHOOK_SECRET,
+      hasSupabaseUrl: !!process.env.SUPABASE_FUNCTIONS_URL,
+      hasSupabaseKey: !!process.env.SUPABASE_ANON_KEY
+    });
 
     // Handle payment success event
+    console.log("===== EVENT TYPE:", event.type, "=====");
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
       
       // Ensure payment was successful
+      console.log("Payment status:", session.payment_status);
       if (session.payment_status === 'paid') {
         try {
           // Get full session data including customer and shipping info
@@ -375,8 +385,14 @@ export default async function handler(req, res) {
               const supabaseUrl = process.env.SUPABASE_FUNCTIONS_URL;
               const supabaseKey = process.env.SUPABASE_ANON_KEY;
               
+              console.log("===== CALLING SUPABASE FUNCTION =====", {
+                supabaseUrl: supabaseUrl,
+                hasKey: !!supabaseKey,
+                endpoint: `${supabaseUrl}/functions/v1/update-book-data`
+              });
+              
               // Update shipping address and customer email
-              await fetch(
+              const updateResponse = await fetch(
                 `${supabaseUrl}/functions/v1/update-book-data`,
                 {
                   method: 'POST',
@@ -392,7 +408,7 @@ export default async function handler(req, res) {
                     shipping_level: shippingOption?.display_name === 'Express Shipping' ? 'EXPRESS' : 'GROUND',
                     recipient_phone: expandedSession.customer_details?.phone || '',
                     binding_type: binding_type || (format === 'Hardcover' ? 'hardcover' : 'softcover'),
-                    is_color: is_color === 'true' || false,
+                    is_color: is_color === 'true' ? true : false,
                     paper_type: paper_type || 'Standard',
                     book_size: '6x9',
                     print_quantity: 1,
@@ -402,8 +418,13 @@ export default async function handler(req, res) {
                 }
               );
               
+              const updateResponseText = await updateResponse.text();
+              console.log(`Supabase response status: ${updateResponse.status}`);
+              console.log(`Supabase response body: ${updateResponseText}`);
+              
               // Start the book generation process
               // This runs asynchronously without waiting for completion
+              console.log(`===== STARTING BOOK GENERATION FOR ORDER ${orderId} =====`);
               generateBookProcess(supabaseUrl, supabaseKey, orderId)
                 .then(result => {
                   console.log(`Book generation process result for ${orderId}:`, result);
@@ -415,6 +436,7 @@ export default async function handler(req, res) {
               console.log(`Book generation process initiated for order ${orderId}`);
             } catch (error) {
               console.error('Error starting book generation process:', error);
+              console.error(error.stack); // Print stack trace
               // Log error but still return success to Stripe to prevent retry logic
             }
           }
@@ -423,6 +445,7 @@ export default async function handler(req, res) {
           return res.status(200).json({ received: true, success: true });
         } catch (error) {
           console.error('Error processing successful payment:', error);
+          console.error(error.stack); // Print stack trace
           // Don't expose detailed error info to client
           return res.status(500).json({ error: 'Failed to process payment confirmation' });
         }
@@ -433,6 +456,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ received: true });
   } catch (error) {
     console.error('Error processing webhook:', error.message);
+    console.error(error.stack); // Print stack trace
     res.status(500).json({ error: 'Failed to process webhook' });
   }
 }
