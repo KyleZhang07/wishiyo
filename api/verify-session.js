@@ -1,11 +1,13 @@
+
 import Stripe from 'stripe';
+import { supabase } from '../src/integrations/supabase/client';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
-  const { session_id } = req.query;
+  const { session_id, order_id } = req.query;
 
   if (!session_id) {
     return res.status(400).json({ error: 'Missing session ID' });
@@ -23,10 +25,28 @@ export default async function handler(req, res) {
     
     // Check if the payment was successful
     if (session.payment_status === 'paid') {
+      // If order_id is provided, retrieve the order data from Supabase
+      let orderData = null;
+      
+      if (order_id) {
+        const { data, error } = await supabase
+          .from('book_orders')
+          .select('*')
+          .eq('order_id', order_id)
+          .single();
+          
+        if (error) {
+          console.error('Error retrieving order data:', error);
+        } else {
+          orderData = data;
+        }
+      }
+      
       return res.status(200).json({ 
         success: true, 
         paymentStatus: session.payment_status,
-        customerEmail: session.customer_details?.email
+        customerEmail: session.customer_details?.email,
+        orderData
       });
     } else {
       return res.status(200).json({ 
@@ -38,4 +58,4 @@ export default async function handler(req, res) {
     console.error('Error verifying session:', error);
     return res.status(500).json({ error: 'Failed to verify session' });
   }
-} 
+}

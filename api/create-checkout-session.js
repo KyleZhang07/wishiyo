@@ -1,39 +1,53 @@
+
 import Stripe from 'stripe';
+import { v4 as uuidv4 } from 'uuid';
+import { supabase } from '../src/integrations/supabase/client';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
-  // 检查必要的环境变量
-  if (!process.env.STRIPE_SECRET_KEY) {
-    console.error('Missing Stripe secret key in environment variables');
-    return res.status(500).json({ error: 'Server configuration error' });
-  }
-
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
   try {
-    const { productId, title, format, price, quantity = 1, userData } = req.body;
-    
-    // 验证必要的输入数据
-    if (!productId) {
-      return res.status(400).json({ error: 'Missing product ID' });
+    const { productId, title, format, price, quantity, userData } = req.body;
+
+    if (!productId || !title || !format || !price || !quantity) {
+      return res.status(400).json({ error: 'Missing required fields for checkout' });
     }
-    
-    if (!price || isNaN(parseFloat(price)) || parseFloat(price) <= 0) {
-      return res.status(400).json({ error: 'Invalid price value' });
+
+    // Generate order ID
+    const orderId = `order_${uuidv4()}`;
+
+    // Save userData to Supabase instead of passing it through Stripe
+    if (userData) {
+      try {
+        const { error } = await supabase
+          .from('book_orders')
+          .insert({
+            order_id: orderId,
+            product_id: productId,
+            title,
+            format,
+            price,
+            user_data: userData
+          });
+
+        if (error) {
+          console.error('Error saving order data to Supabase:', error);
+          return res.status(500).json({ error: 'Failed to save order data' });
+        }
+      } catch (dbError) {
+        console.error('Database error:', dbError);
+        return res.status(500).json({ error: 'Database error' });
+      }
     }
+
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
     
-    // 如果是funny-biography，验证必要的用户数据
-    if (productId === 'funny-biography' && !userData) {
-      return res.status(400).json({ error: 'Missing user data for book generation' });
-    }
+    // Format price for Stripe (convert to cents)
+    const unitPrice = Math.round(parseFloat(price) * 100);
     
-    // 生成随机订单ID
-    const orderId = `WY-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
-    
-    // 创建Stripe Checkout会话，包含shipping address收集
+    // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
@@ -41,81 +55,29 @@ export default async function handler(req, res) {
           price_data: {
             currency: 'usd',
             product_data: {
-              name: title || 'Custom Book',
-              description: `${format || 'Standard'} Format`,
+              name: title,
+              description: `${format} edition`,
+              metadata: {
+                productId
+              }
             },
-            unit_amount: Math.round(parseFloat(price) * 100), // Stripe需要以美分为单位，确保四舍五入为整数
+            unit_amount: unitPrice
           },
-          quantity: parseInt(quantity, 10) || 1, // 确保quantity为整数
-        },
+          quantity
+        }
       ],
       mode: 'payment',
-      shipping_address_collection: {
-        allowed_countries: ['US', 'CA', 'GB', 'AU'], // 允许的国家列表
-      },
-      shipping_options: [
-        {
-          shipping_rate_data: {
-            type: 'fixed_amount',
-            fixed_amount: {
-              amount: 0, // 免费送货
-              currency: 'usd',
-            },
-            display_name: 'Standard Shipping',
-            delivery_estimate: {
-              minimum: {
-                unit: 'business_day',
-                value: 5,
-              },
-              maximum: {
-                unit: 'business_day',
-                value: 7,
-              },
-            },
-          },
-        },
-        {
-          shipping_rate_data: {
-            type: 'fixed_amount',
-            fixed_amount: {
-              amount: 1500, // $15.00
-              currency: 'usd',
-            },
-            display_name: 'Express Shipping',
-            delivery_estimate: {
-              minimum: {
-                unit: 'business_day',
-                value: 2,
-              },
-              maximum: {
-                unit: 'business_day',
-                value: 3,
-              },
-            },
-          },
-        },
-      ],
-      success_url: `${req.headers.origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.origin}/checkout`,
+      success_url: `${req.headers.origin}/order-success?session_id={CHECKOUT_SESSION_ID}&order_id=${orderId}`,
+      cancel_url: `${req.headers.origin}/create/${productId === 'love-story' ? 'love/love-story' : 'friends/funny-biography'}/format`,
       metadata: {
         orderId,
-        productId,
-        format: format || 'Standard',
-        title: title || 'Custom Book',
-        userData,
-      },
+        productId
+      }
     });
-
-    console.log(`Created checkout session for order ${orderId}, product ${productId}`);
-
-    res.status(200).json({ 
-      sessionId: session.id, 
-      url: session.url,
-      orderId 
-    });
+    
+    return res.status(200).json({ url: session.url, orderId });
   } catch (error) {
-    console.error('Error creating checkout session:', error);
-    // 不向客户端暴露详细错误信息
-    res.status(500).json({ error: 'Failed to create checkout session' });
+    console.error('Checkout session error:', error);
+    return res.status(500).json({ error: 'Failed to create checkout session' });
   }
 }

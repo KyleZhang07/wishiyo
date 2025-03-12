@@ -1,14 +1,20 @@
+
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Check } from 'lucide-react';
+import { useToast } from '../components/ui/use-toast';
+import { supabase } from '../integrations/supabase/client';
 
 export default function OrderSuccess() {
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get('session_id');
+  const orderId = searchParams.get('order_id');
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [orderData, setOrderData] = useState<any>(null);
 
   useEffect(() => {
     if (!sessionId) {
@@ -17,7 +23,7 @@ export default function OrderSuccess() {
       return;
     }
 
-    // Clear localStorage for funny-biography data
+    // Clear localStorage for book creation data
     const clearLocalStorage = () => {
       // 暂时注释掉本地存储清除功能，以便于测试
       // 测试完成后取消注释以重新启用
@@ -33,6 +39,15 @@ export default function OrderSuccess() {
         localStorage.removeItem('funny-biography-cover-spine');
         localStorage.removeItem('funny-biography-cover-back');
         
+        // Clear all love-story related data
+        localStorage.removeItem('loveStoryPersonName');
+        localStorage.removeItem('loveStorySelectedFormat');
+        localStorage.removeItem('loveStoryFormatPrice');
+        localStorage.removeItem('loveStoryBookTitle');
+        localStorage.removeItem('loveStoryBookFormat');
+        localStorage.removeItem('loveStoryBookPrice');
+        localStorage.removeItem('loveStoryOrderId');
+        
         console.log('Local storage cleared successfully');
       } catch (err) {
         console.error('Error clearing local storage:', err);
@@ -40,10 +55,32 @@ export default function OrderSuccess() {
       */
     };
 
+    // Get book generation data from Supabase if available
+    const getOrderData = async () => {
+      if (orderId) {
+        try {
+          const { data, error } = await supabase
+            .from('book_orders')
+            .select('*')
+            .eq('order_id', orderId)
+            .single();
+            
+          if (error) {
+            console.error('Error retrieving order data:', error);
+          } else if (data) {
+            setOrderData(data);
+            console.log('Retrieved order data from Supabase:', data);
+          }
+        } catch (err) {
+          console.error('Error fetching order data:', err);
+        }
+      }
+    };
+
     // Verify the session with Stripe
     const verifySession = async () => {
       try {
-        const response = await fetch(`/api/verify-session?session_id=${sessionId}`);
+        const response = await fetch(`/api/verify-session?session_id=${sessionId}&order_id=${orderId || ''}`);
         
         if (!response.ok) {
           throw new Error('Failed to verify payment session');
@@ -52,21 +89,51 @@ export default function OrderSuccess() {
         const data = await response.json();
         
         if (data.success) {
-          // Payment was successful, call clearLocalStorage but storage won't be cleared due to comment
+          // Payment was successful
+          toast({
+            title: "Payment Successful",
+            description: "Thank you for your purchase! Your book is now being generated.",
+            variant: "default"
+          });
+          
+          // Load order data from Supabase if not already loaded
+          if (!orderData && data.orderData) {
+            setOrderData(data.orderData);
+          }
+          
+          // Call clearLocalStorage but storage won't be cleared due to comment
           clearLocalStorage();
+          
+          // Start book generation process
+          if (orderId) {
+            // Here we would initiate the book generation process
+            console.log('Starting book generation for order:', orderId);
+            // This would typically be an API call to a book generation service
+          }
         } else {
           setError('Payment verification failed');
+          toast({
+            title: "Payment Failed",
+            description: "Your payment could not be verified. Please contact support.",
+            variant: "destructive"
+          });
         }
       } catch (err) {
         console.error('Error verifying session:', err);
         setError('Failed to verify payment. Please contact support.');
+        toast({
+          title: "Error",
+          description: "There was a problem verifying your payment.",
+          variant: "destructive"
+        });
       } finally {
         setIsLoading(false);
       }
     };
 
-    verifySession();
-  }, [sessionId]);
+    // First try to get order data, then verify session
+    getOrderData().then(verifySession);
+  }, [sessionId, orderId, toast, orderData]);
 
   const handleContinue = () => {
     // Navigate back to home page
@@ -101,7 +168,7 @@ export default function OrderSuccess() {
             </div>
             <h2 className="text-2xl font-bold text-gray-900">Order Successful!</h2>
             <p className="text-gray-600">
-              Thank you for your purchase! Your book is now being generated and will be printed and shipped to your address.
+              Thank you for your purchase! Your book "{orderData?.title || 'Your custom book'}" is now being generated and will be printed and shipped to your address.
             </p>
             <p className="text-gray-600 text-xs mt-4 p-2 bg-yellow-50 rounded">
               注意：本地存储清除功能已暂时禁用以供测试。支付成功后您的数据仍会保留。
@@ -117,4 +184,4 @@ export default function OrderSuccess() {
       </div>
     </div>
   );
-} 
+}

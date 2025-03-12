@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import WizardStep from '@/components/wizard/WizardStep';
@@ -73,6 +74,32 @@ const FormatStep = () => {
       localStorage.setItem('loveStoryBookPrice', selectedFormatObj.price.toString());
       
       try {
+        // 收集所有爱情故事相关数据
+        const personName = localStorage.getItem('loveStoryPersonName');
+        const questions = localStorage.getItem('loveStoryQuestions');
+        const moments = localStorage.getItem('loveStoryMoments');
+        const style = localStorage.getItem('loveStoryStyle');
+        const selectedIdea = localStorage.getItem('loveStorySelectedIdea');
+        const coverDesign = localStorage.getItem('loveStoryCoverDesign');
+        const chapters = localStorage.getItem('loveStoryChapters');
+        
+        // 验证所有必要数据是否存在
+        if (!personName || !questions || !style || !selectedIdea) {
+          throw new Error('Missing required data for book generation');
+        }
+        
+        // 准备用户数据对象
+        const userData = {
+          personName,
+          bookTitle,
+          questions: questions ? JSON.parse(questions) : null,
+          moments: moments ? JSON.parse(moments) : null,
+          style: style ? JSON.parse(style) : null,
+          selectedIdea: selectedIdea ? JSON.parse(selectedIdea) : null,
+          coverDesign: coverDesign ? JSON.parse(coverDesign) : null,
+          chapters: chapters ? JSON.parse(chapters) : null
+        };
+        
         // 调用Stripe支付API
         const response = await fetch('/api/create-checkout-session', {
           method: 'POST',
@@ -84,7 +111,8 @@ const FormatStep = () => {
             title: bookTitle,
             format: selectedFormatObj.name,
             price: selectedFormatObj.price.toString(),
-            quantity: 1
+            quantity: 1,
+            userData // 用户数据现在将被存储在Supabase中
           }),
         });
         
@@ -212,4 +240,4 @@ const FormatStep = () => {
   );
 };
 
-export default FormatStep; 
+export default FormatStep;
