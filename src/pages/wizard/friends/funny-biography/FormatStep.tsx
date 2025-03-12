@@ -113,6 +113,88 @@ const FormatStep = () => {
         // 保存订单ID
         localStorage.setItem('funnyBiographyOrderId', orderId);
         
+        // 开始并行处理：1. 生成书籍内容 2. 生成封面PDF
+        const startBookGeneration = async () => {
+          try {
+            // 更新书籍状态为"处理中"
+            await updateBookStatus(orderId, "processing");
+            
+            // 1. 启动内容生成
+            const contentPromise = fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-book-content`, {
+              method: 'POST',
+              body: JSON.stringify({ orderId }),
+              headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+              }
+            });
+            
+            // 2. 获取封面图像数据
+            const frontCover = localStorage.getItem('funnyBiographyFrontCoverImage') || '';
+            const spine = localStorage.getItem('funnyBiographySpineImage') || '';
+            const backCover = localStorage.getItem('funnyBiographyBackCoverImage') || '';
+            
+            // 3. 如果有封面图像，并行启动封面PDF生成
+            let coverPromise = Promise.resolve({ ok: true, json: () => Promise.resolve({ success: true }) });
+            if (frontCover && spine && backCover) {
+              coverPromise = fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-cover-pdf`, {
+                method: 'POST',
+                body: JSON.stringify({ 
+                  frontCover, 
+                  spine, 
+                  backCover 
+                }),
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+                }
+              });
+            }
+            
+            // 4. 等待内容生成完成
+            const contentResponse = await contentPromise;
+            const contentResult = await contentResponse.json();
+            
+            if (!contentResponse.ok || !contentResult.success) {
+              throw new Error('内容生成失败');
+            }
+            
+            // 5. 内容生成完成后，启动内页PDF生成
+            const interiorResponse = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-interior-pdf`, {
+              method: 'POST',
+              body: JSON.stringify({ orderId }),
+              headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+              }
+            });
+            
+            const interiorResult = await interiorResponse.json();
+            if (!interiorResponse.ok || !interiorResult.success) {
+              throw new Error('内页PDF生成失败');
+            }
+            
+            // 6. 等待封面PDF生成完成
+            const coverResponse = await coverPromise;
+            const coverResult = await coverResponse.json();
+            if (!coverResult.success) {
+              throw new Error('封面PDF生成失败');
+            }
+            
+            // 7. 所有处理完成，更新状态为"完成"
+            await updateBookStatus(orderId, "completed");
+            
+            console.log('书籍生成流程已成功完成');
+          } catch (error) {
+            console.error('书籍生成过程中出错:', error);
+            // 更新状态为"失败"
+            await updateBookStatus(orderId, "failed");
+          }
+        };
+        
+        // 开始书籍生成流程，但不等待其完成
+        startBookGeneration();
+        
         // 重定向到Stripe结账页面
         if (url) {
           window.location.href = url;
@@ -129,6 +211,18 @@ const FormatStep = () => {
         setIsProcessing(false);
       }
     }
+  };
+  
+  // 辅助函数：更新书籍状态
+  const updateBookStatus = async (orderId: string, status: string) => {
+    return fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/update-book-data`, {
+      method: 'POST',
+      body: JSON.stringify({ orderId, status }),
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+      }
+    });
   };
   
   // 从localStorage加载已保存的选择
