@@ -355,7 +355,7 @@ export default async function handler(req, res) {
       hasStripeSecret: !!process.env.STRIPE_SECRET_KEY,
       hasWebhookSecret: !!process.env.STRIPE_WEBHOOK_SECRET,
       hasSupabaseUrl: !!process.env.SUPABASE_URL,
-      hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
+      hasSupabaseKey: !!process.env.SUPABASE_ANON_KEY
     });
 
     // Handle payment success event
@@ -412,7 +412,7 @@ export default async function handler(req, res) {
             console.log('Starting funny biography book generation process');
             
             // Check Supabase environment variables
-            if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+            if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
               console.error('Missing required Supabase environment variables');
               return res.status(200).json({ 
                 received: true, 
@@ -423,7 +423,7 @@ export default async function handler(req, res) {
             // Update shipping info in database
             try {
               const supabaseUrl = process.env.SUPABASE_URL;
-              const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+              const supabaseKey = process.env.SUPABASE_ANON_KEY;
               const baseUrl = getBaseUrl();
               
               console.log("===== CALLING API ROUTE =====", {
