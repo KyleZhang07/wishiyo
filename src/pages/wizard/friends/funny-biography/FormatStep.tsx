@@ -70,11 +70,10 @@ const FormatStep = () => {
       const savedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
       const savedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
       let bookTitle = '';
-      let selectedIdea = null;
 
       if (savedIdeas && savedIdeaIndex) {
         const ideas = JSON.parse(savedIdeas);
-        selectedIdea = ideas[parseInt(savedIdeaIndex)];
+        const selectedIdea = ideas[parseInt(savedIdeaIndex)];
         if (selectedIdea && selectedIdea.title) {
           bookTitle = selectedIdea.title;
         }
@@ -90,45 +89,6 @@ const FormatStep = () => {
       localStorage.setItem('funnyBiographyBookPrice', selectedFormatObj.price.toString());
       
       try {
-        // 先创建一个唯一的订单ID
-        const orderId = `funny-bio-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-        
-        // 收集书籍所需的所有数据
-        const authorName = localStorage.getItem('funnyBiographyAuthorName') || 'Unknown';
-        const savedAnswers = localStorage.getItem('funnyBiographyAnswers');
-        const answers = savedAnswers ? JSON.parse(savedAnswers) : [];
-        
-        // 收集章节信息
-        const savedChapters = localStorage.getItem('funnyBiographyChapters');
-        const chapters = savedChapters ? JSON.parse(savedChapters) : [];
-        
-        // 创建书籍记录到数据库
-        const createBookResponse = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/funny_biography_books`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-            'Prefer': 'return=representation'
-          },
-          body: JSON.stringify({
-            order_id: orderId,
-            title: bookTitle,
-            author: authorName,
-            format: selectedFormatObj.name,
-            price: selectedFormatObj.price,
-            selected_idea: selectedIdea,
-            answers: answers,
-            chapters: chapters,
-            status: 'pending'
-          })
-        });
-        
-        if (!createBookResponse.ok) {
-          const errorData = await createBookResponse.json();
-          throw new Error(`Failed to create book record: ${JSON.stringify(errorData)}`);
-        }
-        
         // 调用Stripe支付API
         const response = await fetch('/api/create-checkout-session', {
           method: 'POST',
@@ -140,8 +100,7 @@ const FormatStep = () => {
             title: bookTitle,
             format: selectedFormatObj.name,
             price: selectedFormatObj.price.toString(),
-            quantity: 1,
-            orderId: orderId // 使用我们生成的订单ID
+            quantity: 1
           }),
         });
         
@@ -149,7 +108,7 @@ const FormatStep = () => {
           throw new Error('Network response was not ok');
         }
         
-        const { url } = await response.json();
+        const { url, orderId } = await response.json();
         
         // 保存订单ID
         localStorage.setItem('funnyBiographyOrderId', orderId);
