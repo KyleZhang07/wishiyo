@@ -69,11 +69,13 @@ const FormatStep = () => {
       const selectedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea') || '0';
       const selectedStyle = localStorage.getItem('funnyBiographySelectedStyle') || 'classic-red';
       const photoUrl = localStorage.getItem('funnyBiographyPhoto') || '';
+      const savedChapters = localStorage.getItem('funnyBiographyChapters') || '[]'; // 获取章节目录数据
       
       // 解析数据
       const answers = JSON.parse(savedAnswers);
       const ideas = JSON.parse(savedIdeas);
       const selectedIdea = ideas[parseInt(selectedIdeaIndex)] || {};
+      const chapters = JSON.parse(savedChapters); // 解析章节目录数据
       
       // 导入需要的Supabase工具
       const { uploadImageToStorage, ensureBucketExists, ensureFunnyBiographyTableExists } = await import('@/integrations/supabase/storage');
@@ -229,17 +231,9 @@ const FormatStep = () => {
         `${orderId}/back-cover`
       );
       
-      // 如果有照片，也上传照片
-      let profilePhotoUrl = '';
-      if (photoUrl) {
-        profilePhotoUrl = await uploadImageToStorage(
-          photoUrl,
-          'funny-biography',
-          `${orderId}/profile-photo`
-        );
-      }
+      // 不需要上传用户照片
       
-      // 整合所有数据
+      // 整合所有数据，直接以JSON形式保存目录
       const bookData = {
         orderId,
         title: bookTitle,
@@ -247,12 +241,18 @@ const FormatStep = () => {
         selectedIdea,
         ideas,
         answers,
-        style: stylePreset,
+        chapters, // 添加章节目录数据，直接以JSON形式保存
+        style: {
+          id: stylePreset.id,
+          name: stylePreset.name,
+          font: stylePreset.font,
+          template: stylePreset.template,
+          layout: stylePreset.layout
+        },
         images: {
           frontCover: frontCoverUrl,
           spine: spineUrl,
-          backCover: backCoverUrl,
-          profilePhoto: profilePhotoUrl
+          backCover: backCoverUrl
         },
         timestamp: new Date().toISOString()
       };
