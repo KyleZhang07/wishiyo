@@ -21,35 +21,6 @@ export const getClientId = (): string => {
 };
 
 /**
- * Verifies that the funny_biography_books table exists
- * This is needed to store book data before generating PDFs
- * @returns Boolean indicating if table exists
- */
-export const ensureFunnyBiographyTableExists = async (): Promise<boolean> => {
-  try {
-    const { supabase } = await import('./client');
-    
-    // Check if table exists by querying it
-    const { error: queryError } = await supabase
-      .from('funny_biography_books')
-      .select('id')
-      .limit(1);
-    
-    if (queryError) {
-      console.error('Table funny_biography_books does not exist or cannot be accessed:', queryError);
-      console.error('This table should be created by migrations. Please check your Supabase setup.');
-      return false;
-    }
-    
-    console.log('Table funny_biography_books exists and is accessible');
-    return true;
-  } catch (error) {
-    console.error('Error checking table existence:', error);
-    return false;
-  }
-};
-
-/**
  * Ensure the specified bucket exists, creating it if needed
  * @param bucket Bucket name
  * @returns Boolean indicating if bucket exists or was created successfully
