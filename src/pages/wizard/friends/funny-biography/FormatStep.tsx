@@ -90,6 +90,11 @@ const FormatStep = () => {
       localStorage.setItem('funnyBiographyBookPrice', selectedFormatObj.price.toString());
       
       try {
+        // 获取封面图片数据
+        const frontCoverBase64 = localStorage.getItem('funnyBiographyFrontCoverImage') || '';
+        const spineBase64 = localStorage.getItem('funnyBiographySpineImage') || '';
+        const backCoverBase64 = localStorage.getItem('funnyBiographyBackCoverImage') || '';
+        
         // 调用Stripe支付API
         const response = await fetch('/api/create-checkout-session', {
           method: 'POST',
@@ -114,76 +119,127 @@ const FormatStep = () => {
         // 保存订单ID
         localStorage.setItem('funnyBiographyOrderId', orderId);
         
-        // 创建书籍记录到数据库
+        // 上传封面图片到Supabase Storage
         try {
-          // 收集书籍信息
-          const authorName = localStorage.getItem('funnyBiographyAuthorName') || 'Friend';
-          const savedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
-          const selectedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
-          const tableOfContent = localStorage.getItem('funnyBiographyTableOfContent');
-          const savedAnswers = localStorage.getItem('funnyBiographyAnswers'); // 从Stories Step获取问题和回答
-          const savedChapters = localStorage.getItem('funnyBiographyChapters'); // 从Preview Step获取章节信息
-          
-          let ideas = null;
-          let selectedIdea = null;
-          let toc = null;
-          let answers = null;
-          let chapters = null;
-          
-          if (savedIdeas) {
-            ideas = JSON.parse(savedIdeas);
-            if (selectedIdeaIndex) {
-              selectedIdea = ideas[parseInt(selectedIdeaIndex)];
+          // 转换Base64为Blob
+          const base64ToBlob = (base64Data, contentType) => {
+            const byteString = atob(base64Data.split(',')[1]);
+            const ab = new ArrayBuffer(byteString.length);
+            const ia = new Uint8Array(ab);
+            
+            for (let i = 0; i < byteString.length; i++) {
+              ia[i] = byteString.charCodeAt(i);
             }
-          }
+            
+            return new Blob([ab], { type: contentType });
+          };
           
-          if (tableOfContent) {
-            toc = JSON.parse(tableOfContent);
-          }
+          // 上传图片到Supabase Storage
+          const uploadImage = async (base64Data, fileName) => {
+            if (!base64Data) return '';
+            
+            const blob = base64ToBlob(base64Data, 'image/jpeg');
+            const file = new File([blob], fileName, { type: 'image/jpeg' });
+            
+            const { data, error } = await supabase.storage
+              .from('book-covers')
+              .upload(`${orderId}/${fileName}`, file, {
+                upsert: true,
+                contentType: 'image/jpeg'
+              });
+              
+            if (error) {
+              console.error(`Error uploading ${fileName}:`, error);
+              return '';
+            }
+            
+            // 获取公共URL
+            const { data: urlData } = supabase.storage
+              .from('book-covers')
+              .getPublicUrl(`${orderId}/${fileName}`);
+              
+            return urlData.publicUrl;
+          };
           
-          // 解析回答数据
-          if (savedAnswers) {
-            answers = JSON.parse(savedAnswers);
-          }
+          // 上传三个封面图片
+          const frontCoverUrl = await uploadImage(frontCoverBase64, 'front-cover.jpg');
+          const spineUrl = await uploadImage(spineBase64, 'spine.jpg');
+          const backCoverUrl = await uploadImage(backCoverBase64, 'back-cover.jpg');
           
-          // 解析章节数据
-          if (savedChapters) {
-            chapters = JSON.parse(savedChapters);
-          }
-          
-          // 添加记录到数据库
-          const { data, error } = await supabase
-            .from('funny_biography_books')
-            .insert({
-              order_id: orderId,
-              title: bookTitle,
-              author: authorName,
-              ideas: ideas,
-              selected_idea: selectedIdea,
-              chapters: chapters || toc, // 优先使用chapters，如果不存在则使用toc
-              answers: answers, // 添加answers字段
-              status: 'created',
-              timestamp: new Date().toISOString(),
-              // Upload PDF images to database
-              images: {
-                frontCover: localStorage.getItem('funnyBiographyFrontCoverImage') || '',
-                spine: localStorage.getItem('funnyBiographySpineImage') || '',
-                backCover: localStorage.getItem('funnyBiographyBackCoverImage') || ''
+          // 创建书籍记录到数据库
+          try {
+            // 收集书籍信息
+            const authorName = localStorage.getItem('funnyBiographyAuthorName') || 'Friend';
+            const savedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
+            const selectedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
+            const tableOfContent = localStorage.getItem('funnyBiographyTableOfContent');
+            const savedAnswers = localStorage.getItem('funnyBiographyAnswers'); // 从Stories Step获取问题和回答
+            const savedChapters = localStorage.getItem('funnyBiographyChapters'); // 从Preview Step获取章节信息
+            
+            let ideas = null;
+            let selectedIdea = null;
+            let toc = null;
+            let answers = null;
+            let chapters = null;
+            
+            if (savedIdeas) {
+              ideas = JSON.parse(savedIdeas);
+              if (selectedIdeaIndex) {
+                selectedIdea = ideas[parseInt(selectedIdeaIndex)];
               }
-            })
-            .select();
-          
-          if (error) {
-            console.error('Database error when creating book record:', error);
-            throw new Error('Unable to create book record in database');
+            }
+            
+            if (tableOfContent) {
+              toc = JSON.parse(tableOfContent);
+            }
+            
+            // 解析回答数据
+            if (savedAnswers) {
+              answers = JSON.parse(savedAnswers);
+            }
+            
+            // 解析章节数据
+            if (savedChapters) {
+              chapters = JSON.parse(savedChapters);
+            }
+            
+            // 添加记录到数据库
+            const { data, error } = await supabase
+              .from('funny_biography_books')
+              .insert({
+                order_id: orderId,
+                title: bookTitle,
+                author: authorName,
+                ideas: ideas,
+                selected_idea: selectedIdea,
+                chapters: chapters || toc, // 优先使用chapters，如果不存在则使用toc
+                answers: answers, // 添加answers字段
+                status: 'created',
+                timestamp: new Date().toISOString(),
+                // 保存图片URL到数据库
+                images: {
+                  frontCover: frontCoverUrl,
+                  spine: spineUrl,
+                  backCover: backCoverUrl
+                }
+              })
+              .select();
+            
+            if (error) {
+              console.error('Database error when creating book record:', error);
+              throw new Error('Unable to create book record in database');
+            }
+            
+            console.log('Book record created:', data);
+            
+          } catch (dbError) {
+            console.error('Database error:', dbError);
+            // Continue with checkout despite database error
+            // We'll rely on startBookGeneration function to retry if necessary
           }
-          
-          console.log('Book record created:', data);
-          
-        } catch (dbError) {
-          console.error('Database error:', dbError);
-          // Continue with checkout despite database error
-          // We'll rely on startBookGeneration function to retry if necessary
+        } catch (uploadError) {
+          console.error('Error uploading images to storage:', uploadError);
+          // 继续结账流程，即使图片上传失败
         }
         
         // 书籍生成流程将通过 Stripe Webhook 在支付成功后处理

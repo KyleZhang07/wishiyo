@@ -77,9 +77,29 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     
     const book = bookData[0];
     const images = book.images || {};
+    
+    // Log detailed image data for debugging
+    console.log(`[${orderId}] Images data check:`, {
+      hasImagesObject: !!book.images,
+      hasFrontCover: !!(book.images && book.images.frontCover),
+      frontCoverLength: book.images && book.images.frontCover ? book.images.frontCover.substring(0, 30) + '...' : 'N/A',
+      hasSpine: !!(book.images && book.images.spine),
+      spineLength: book.images && book.images.spine ? book.images.spine.substring(0, 30) + '...' : 'N/A',
+      hasBackCover: !!(book.images && book.images.backCover),
+      backCoverLength: book.images && book.images.backCover ? book.images.backCover.substring(0, 30) + '...' : 'N/A'
+    });
 
-    // 3. Start content generation
-    console.log(`[${orderId}] Starting content generation`);
+    // 3. Start content generation with detailed logging
+    console.log(`[${orderId}] Starting content generation with Supabase function`);
+    console.log(`[${orderId}] Content generation endpoint: ${supabaseUrl}/functions/v1/generate-book-content`);
+    
+    // Log book data (excluding large fields)
+    const bookDataLog = { ...book };
+    // Remove large fields to keep log size manageable
+    if (bookDataLog.images) delete bookDataLog.images;
+    if (bookDataLog.book_content) bookDataLog.book_content = 'Truncated for logging';
+    console.log(`[${orderId}] Book data for content generation:`, bookDataLog);
+    
     const contentPromise = fetch(
       `${supabaseUrl}/functions/v1/generate-book-content`,
       {
@@ -88,9 +108,29 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${supabaseKey}`
         },
-        body: JSON.stringify({ orderId })
+        body: JSON.stringify({ 
+          orderId,
+          // Include essential data directly to ensure it's available to the function
+          title: book.title,
+          author: book.author,
+          format: book.format
+        })
       }
-    );
+    )
+      .then(response => {
+        console.log(`[${orderId}] Content generation response status:`, response.status);
+        // Log response headers for debugging
+        const headers = {};
+        response.headers.forEach((value, key) => {
+          headers[key] = value;
+        });
+        console.log(`[${orderId}] Content generation response headers:`, headers);
+        return response;
+      })
+      .catch(error => {
+        console.error(`[${orderId}] Error calling content generation function:`, error);
+        throw error;
+      });
     
     // 4. Start cover PDF generation in parallel if images are available
     let coverPromise = Promise.resolve({ ok: true, json: () => Promise.resolve({ success: true }) });
@@ -126,10 +166,17 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     console.log(`[${orderId}] Content generation completed`);
     
     // 6. Update book content in database
+    // Extract book content from result
     const bookContent = contentResult.bookContent;
+    console.log(`[${orderId}] Book content generation result:`, {
+      hasBookContent: !!bookContent,
+      contentLength: bookContent ? bookContent.length : 0,
+      contentPreview: bookContent ? bookContent.substring(0, 100) + '...' : 'No content'
+    });
+    
     if (bookContent) {
       console.log(`[${orderId}] Updating book content in database`);
-      await fetch(
+      const contentUpdateResponse = await fetch(
         `${supabaseUrl}/functions/v1/update-book-data`,
         {
           method: 'POST',
@@ -140,44 +187,90 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
           body: JSON.stringify({ orderId, bookContent })
         }
       );
+      
+      // Log content update response
+      console.log(`[${orderId}] Book content database update status:`, contentUpdateResponse.status);
+      const contentUpdateResult = await contentUpdateResponse.text();
+      console.log(`[${orderId}] Book content database update result:`, contentUpdateResult);
+    } else {
+      console.warn(`[${orderId}] No book content received from generator, using existing content if available`);
     }
     
-    // 7. Generate interior PDF
+    // 7. Generate interior PDF with detailed logging
     console.log(`[${orderId}] Starting interior PDF generation`);
-    const interiorResponse = await fetch(
-      `${supabaseUrl}/functions/v1/generate-interior-pdf`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseKey}`
-        },
-        body: JSON.stringify({ orderId })
+    console.log(`[${orderId}] Interior PDF generation endpoint: ${supabaseUrl}/functions/v1/generate-interior-pdf`);
+    
+    try {
+      // Check if book content is available
+      if (!bookContent) {
+        console.warn(`[${orderId}] No book content available for interior PDF generation. Using fallback content.`);
       }
-    );
-    
-    const interiorResult = await interiorResponse.json();
-    if (!interiorResponse.ok || !interiorResult.success) {
-      throw new Error(`Interior PDF generation failed: ${JSON.stringify(interiorResult)}`);
-    }
-    
-    console.log(`[${orderId}] Interior PDF generation completed`);
-    
-    // 8. Update interior PDF in database
-    const interiorPdf = interiorResult.pdfOutput || interiorResult.pdf;
-    if (interiorPdf) {
-      console.log(`[${orderId}] Updating interior PDF in database`);
-      await fetch(
-        `${supabaseUrl}/functions/v1/update-book-data`,
+      
+      const interiorResponse = await fetch(
+        `${supabaseUrl}/functions/v1/generate-interior-pdf`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${supabaseKey}`
           },
-          body: JSON.stringify({ orderId, interiorPdf })
+          body: JSON.stringify({ 
+            orderId,
+            // Include content directly to ensure it's available to the function
+            bookContent: bookContent || "Default book content if none is available.",
+            bookTitle: book.title || "Custom Book",
+            authorName: book.author || "Unknown Author"
+          })
         }
       );
+      
+      // Log response details
+      console.log(`[${orderId}] Interior PDF response status:`, interiorResponse.status);
+      
+      // Log response headers for debugging
+      const interiorHeaders = {};
+      interiorResponse.headers.forEach((value, key) => {
+        interiorHeaders[key] = value;
+      });
+      console.log(`[${orderId}] Interior PDF response headers:`, interiorHeaders);
+      
+      // Parse response
+      const interiorResult = await interiorResponse.json();
+      
+      if (!interiorResponse.ok || !interiorResult.success) {
+        console.error(`[${orderId}] Interior PDF generation failed:`, JSON.stringify(interiorResult));
+        throw new Error(`Interior PDF generation failed: ${JSON.stringify(interiorResult)}`);
+      }
+      
+      console.log(`[${orderId}] Interior PDF generation completed successfully`);
+      
+      // 8. Update interior PDF in database
+      const interiorPdf = interiorResult.pdfOutput || interiorResult.pdf;
+      if (interiorPdf) {
+        console.log(`[${orderId}] Updating interior PDF in database with length ${interiorPdf.length} chars`);
+        const updateResponse = await fetch(
+          `${supabaseUrl}/functions/v1/update-book-data`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${supabaseKey}`
+            },
+            body: JSON.stringify({ orderId, interiorPdf })
+          }
+        );
+        
+        // Log update response
+        console.log(`[${orderId}] Interior PDF database update status:`, updateResponse.status);
+        const updateResult = await updateResponse.text();
+        console.log(`[${orderId}] Interior PDF database update result:`, updateResult);
+      } else {
+        console.warn(`[${orderId}] No interior PDF output received, skipping database update`);
+      }
+    } catch (error) {
+      console.error(`[${orderId}] Error in interior PDF generation process:`, error);
+      // Don't throw the error so we can still try to process the cover
+      console.log(`[${orderId}] Continuing with process despite interior PDF generation error`);
     }
     
     // 9. Wait for cover PDF generation to complete

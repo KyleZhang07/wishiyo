@@ -1,10 +1,16 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { jsPDF } from "https://esm.sh/jspdf@2.5.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+// 添加Deno类型声明，避免TypeScript错误
+declare const Deno: {
+  env: {
+    get(key: string): string | undefined;
+  };
 };
 
 serve(async (req) => {
@@ -17,10 +23,52 @@ serve(async (req) => {
     const { frontCover, spine, backCover } = await req.json();
 
     if (!frontCover || !spine || !backCover) {
-      throw new Error('Missing required cover images');
+      throw new Error('Missing required cover image URLs');
     }
 
-    console.log('Received cover images for PDF generation');
+    console.log('Received cover image URLs for PDF generation');
+
+    // 从URL获取图片数据
+    async function getImageFromUrl(imageUrl: string): Promise<string> {
+      try {
+        // 处理已经是base64数据的情况
+        if (imageUrl.startsWith('data:image')) {
+          return imageUrl;
+        }
+
+        const response = await fetch(imageUrl);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch image from ${imageUrl}: ${response.status} ${response.statusText}`);
+        }
+        
+        const imageBuffer = await response.arrayBuffer();
+        const base64Image = btoa(
+          new Uint8Array(imageBuffer)
+            .reduce((data, byte) => data + String.fromCharCode(byte), '')
+        );
+        
+        // 确定正确的MIME类型
+        let mimeType = 'image/jpeg'; // 默认
+        if (imageUrl.endsWith('.png')) {
+          mimeType = 'image/png';
+        } else if (imageUrl.endsWith('.gif')) {
+          mimeType = 'image/gif';
+        }
+        
+        return `data:${mimeType};base64,${base64Image}`;
+      } catch (error) {
+        console.error(`Error downloading image from ${imageUrl}:`, error);
+        throw error;
+      }
+    }
+
+    // 获取所有图片的base64数据
+    console.log('Downloading images from URLs...');
+    const frontCoverData = await getImageFromUrl(frontCover);
+    const spineData = await getImageFromUrl(spine);
+    const backCoverData = await getImageFromUrl(backCover);
+    console.log('All images downloaded successfully');
 
     // Create a new PDF with appropriate dimensions
     // Standard book cover dimensions with bleed (8.5 x 11 inches plus bleed)
@@ -38,40 +86,34 @@ serve(async (req) => {
     
     // Add images to the PDF (coordinate system starts from top-left)
     // Back cover (positioned first on the left in the spread)
-    if (backCover.startsWith('data:image')) {
-      pdf.addImage(
-        backCover,
-        'JPEG',
-        bleed, // x-position
-        bleed, // y-position
-        backCoverWidth, // width
-        11 // height
-      );
-    }
+    pdf.addImage(
+      backCoverData,
+      'JPEG',
+      bleed, // x-position
+      bleed, // y-position
+      backCoverWidth, // width
+      11 // height
+    );
 
     // Spine (positioned in the middle)
-    if (spine.startsWith('data:image')) {
-      pdf.addImage(
-        spine,
-        'JPEG',
-        backCoverWidth + bleed, // x-position
-        bleed, // y-position
-        spineWidth, // width
-        11 // height
-      );
-    }
+    pdf.addImage(
+      spineData,
+      'JPEG',
+      backCoverWidth + bleed, // x-position
+      bleed, // y-position
+      spineWidth, // width
+      11 // height
+    );
 
     // Front cover (positioned on the right)
-    if (frontCover.startsWith('data:image')) {
-      pdf.addImage(
-        frontCover,
-        'JPEG',
-        backCoverWidth + spineWidth + bleed, // x-position
-        bleed, // y-position
-        frontCoverWidth, // width
-        11 // height
-      );
-    }
+    pdf.addImage(
+      frontCoverData,
+      'JPEG',
+      backCoverWidth + spineWidth + bleed, // x-position
+      bleed, // y-position
+      frontCoverWidth, // width
+      11 // height
+    );
 
     // Convert PDF to base64
     const pdfOutput = pdf.output('datauristring');
