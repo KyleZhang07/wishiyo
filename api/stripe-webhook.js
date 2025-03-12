@@ -94,58 +94,47 @@ export default async function handler(req, res) {
           console.log('Shipping Address:', shippingAddress);
           console.log('Shipping Option:', shippingOption);
 
-          // 如果书籍类型是funny-biography，则调用generate-book函数生成书籍
+          // 如果书籍类型是funny-biography，则调用Supabase函数生成书籍
           if (productId === 'funny-biography') {
             console.log('Starting to generate funny biography book');
             
-            try {
-              // 从本地存储中获取用户数据
-              // 在实际应用中，这些数据应该存储在数据库中或通过客户端传递
-              // 这里我们假设我们接收到了来自客户端的数据
-              const userData = session.metadata.userData ? JSON.parse(session.metadata.userData) : null;
-              
-              if (!userData) {
-                console.error('Missing user data for book generation');
-                return res.status(200).json({ 
-                  received: true, 
-                  warning: 'Book generation skipped due to missing user data' 
-                });
-              }
-              
-              // 提取订单ID - 临时修复版本
-              console.log('订单ID:', userData.orderId);
-              console.log('作者:', userData.author);
-              console.log('书名:', userData.bookTitle);
-              
-              // 临时修复 - 我们暂时不发送完整数据到generate-book函数
-              // 这是为了绕过Stripe元数据大小限制
-              // 完整实现应该使用数据库存储用户数据
-              
-              // 构建请求数据
-              const generateBookData = {
-                // 临时简化数据
-                userAnswers: [], // 在实际实现中从数据库获取
-                author: userData.author,
-                bookTitle: title || userData.bookTitle,
-                tableOfContents: [], // 在实际实现中从数据库获取
-                coverData: {
-                  frontCover: null, // 在实际实现中从数据库获取
-                  spine: null,     // 在实际实现中从数据库获取
-                  backCover: null  // 在实际实现中从数据库获取
-                },
-                shippingAddress: shippingAddress
-              };
-
-              // 此调用仅用于测试，实际实现应该传递完整数据
-              // 调用本地generate-book函数生成并打印书籍
-              const generateBookUrl = new URL('/api/generate-book', process.env.BASE_URL || 'http://localhost:3000').href;
-              const response = await fetch(generateBookUrl, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(generateBookData)
+            // 检查Supabase相关环境变量
+            if (!process.env.SUPABASE_FUNCTIONS_URL || !process.env.SUPABASE_ANON_KEY) {
+              console.error('Missing required Supabase environment variables');
+              return res.status(200).json({ 
+                received: true, 
+                warning: 'Book generation skipped due to missing configuration' 
               });
+            }
+            
+            // 构建请求数据
+            const generateBookData = {
+              orderId,
+              title,
+              format,
+              shippingAddress,
+              shippingOption,
+              customer: {
+                email: expandedSession.customer_details?.email
+              }
+            };
+
+            // 调用Supabase函数生成书籍
+            try {
+              const supabaseUrl = process.env.SUPABASE_FUNCTIONS_URL;
+              const supabaseKey = process.env.SUPABASE_ANON_KEY;
+              
+              const response = await fetch(
+                `${supabaseUrl}/functions/v1/generate-book`,
+                {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${supabaseKey}`
+                  },
+                  body: JSON.stringify(generateBookData)
+                }
+              );
 
               if (!response.ok) {
                 const errorText = await response.text();
@@ -154,11 +143,6 @@ export default async function handler(req, res) {
 
               const result = await response.json();
               console.log('Book generation initiated:', result);
-              
-              // 通知客户端清除本地存储
-              // 这将需要客户端实现一个处理此事件的机制
-              // 例如，通过WebSocket或在客户端轮询订单状态时进行清除
-              
             } catch (error) {
               console.error('Error calling generate-book function:', error);
               // 记录错误但仍返回成功给Stripe，防止重试逻辑

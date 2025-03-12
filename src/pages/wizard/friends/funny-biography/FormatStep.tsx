@@ -89,33 +89,6 @@ const FormatStep = () => {
       localStorage.setItem('funnyBiographyBookPrice', selectedFormatObj.price.toString());
       
       try {
-        // 收集所有必要的用户数据
-        const userAnswers = localStorage.getItem('funnyBiographyAnswers');
-        const author = localStorage.getItem('funnyBiographyAuthorName');
-        const generatedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
-        const selectedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
-        const tableOfContents = localStorage.getItem('funnyBiographyTOC');
-        // 临时注释掉大型Canvas数据
-        // const frontCover = localStorage.getItem('funnyBiographyCoverFront');
-        // const spine = localStorage.getItem('funnyBiographyCoverSpine');
-        // const backCover = localStorage.getItem('funnyBiographyCoverBack');
-        
-        // 验证所有必要数据是否存在
-        if (!userAnswers || !author || !generatedIdeas || !selectedIdeaIndex || !tableOfContents) {
-          throw new Error('Missing required data for book generation');
-        }
-        
-        // 准备简化版用户数据对象（临时修复，移除大型Canvas数据）
-        const userData = {
-          orderId: `WY-${Date.now()}`, // 生成唯一订单ID
-          author,
-          bookTitle,
-          // 限制数据大小
-          userAnswersPreview: JSON.parse(userAnswers).slice(0, 2), // 只发送前两个回答预览
-          tableOfContentsPreview: JSON.parse(tableOfContents).slice(0, 3), // 只发送前三章目录预览
-          // 不包含Canvas数据以避免超出Stripe元数据大小限制
-        };
-        
         // 调用Stripe支付API
         const response = await fetch('/api/create-checkout-session', {
           method: 'POST',
@@ -127,8 +100,7 @@ const FormatStep = () => {
             title: bookTitle,
             format: selectedFormatObj.name,
             price: selectedFormatObj.price.toString(),
-            quantity: 1,
-            userData // 使用简化版userData
+            quantity: 1
           }),
         });
         
