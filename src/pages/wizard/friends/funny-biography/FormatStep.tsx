@@ -89,6 +89,34 @@ const FormatStep = () => {
       localStorage.setItem('funnyBiographyBookPrice', selectedFormatObj.price.toString());
       
       try {
+        // 收集所有必要的用户数据
+        const userAnswers = localStorage.getItem('funnyBiographyAnswers');
+        const author = localStorage.getItem('funnyBiographyAuthorName');
+        const generatedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
+        const selectedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
+        const tableOfContents = localStorage.getItem('funnyBiographyTOC');
+        const frontCover = localStorage.getItem('funnyBiographyCoverFront');
+        const spine = localStorage.getItem('funnyBiographyCoverSpine');
+        const backCover = localStorage.getItem('funnyBiographyCoverBack');
+        
+        // 验证所有必要数据是否存在
+        if (!userAnswers || !author || !generatedIdeas || !selectedIdeaIndex || !tableOfContents) {
+          throw new Error('Missing required data for book generation');
+        }
+        
+        // 准备用户数据对象
+        const userData = {
+          userAnswers: JSON.parse(userAnswers),
+          author,
+          bookTitle,
+          tableOfContents: JSON.parse(tableOfContents),
+          coverData: {
+            frontCover,
+            spine,
+            backCover
+          }
+        };
+        
         // 调用Stripe支付API
         const response = await fetch('/api/create-checkout-session', {
           method: 'POST',
@@ -100,7 +128,8 @@ const FormatStep = () => {
             title: bookTitle,
             format: selectedFormatObj.name,
             price: selectedFormatObj.price.toString(),
-            quantity: 1
+            quantity: 1,
+            userData // 添加用户数据
           }),
         });
         
