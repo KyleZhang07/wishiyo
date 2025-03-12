@@ -9,72 +9,48 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      orders: {
+      funny_biography_books: {
         Row: {
-          book_format: string
-          book_genre: string
-          book_title: string
-          client_id: string
-          created_at: string | null
-          id: string
-          lulu_print_job_id: string | null
-          pdf_url: string | null
-          price: number
-          print_job_status: string | null
-          shipping_address_line1: string | null
-          shipping_address_line2: string | null
-          shipping_city: string | null
-          shipping_country: string | null
-          shipping_name: string | null
-          shipping_postal_code: string | null
-          shipping_state: string | null
-          stripe_payment_intent_id: string | null
-          stripe_session_id: string
-          updated_at: string | null
+          answers: Json | null
+          author: string
+          chapters: Json | null
+          id: number
+          ideas: Json | null
+          images: Json | null
+          order_id: string
+          selected_idea: Json | null
+          status: string | null
+          style: Json | null
+          timestamp: string | null
+          title: string
         }
         Insert: {
-          book_format: string
-          book_genre: string
-          book_title: string
-          client_id: string
-          created_at?: string | null
-          id?: string
-          lulu_print_job_id?: string | null
-          pdf_url?: string | null
-          price: number
-          print_job_status?: string | null
-          shipping_address_line1?: string | null
-          shipping_address_line2?: string | null
-          shipping_city?: string | null
-          shipping_country?: string | null
-          shipping_name?: string | null
-          shipping_postal_code?: string | null
-          shipping_state?: string | null
-          stripe_payment_intent_id?: string | null
-          stripe_session_id: string
-          updated_at?: string | null
+          answers?: Json | null
+          author: string
+          chapters?: Json | null
+          id?: number
+          ideas?: Json | null
+          images?: Json | null
+          order_id: string
+          selected_idea?: Json | null
+          status?: string | null
+          style?: Json | null
+          timestamp?: string | null
+          title: string
         }
         Update: {
-          book_format?: string
-          book_genre?: string
-          book_title?: string
-          client_id?: string
-          created_at?: string | null
-          id?: string
-          lulu_print_job_id?: string | null
-          pdf_url?: string | null
-          price?: number
-          print_job_status?: string | null
-          shipping_address_line1?: string | null
-          shipping_address_line2?: string | null
-          shipping_city?: string | null
-          shipping_country?: string | null
-          shipping_name?: string | null
-          shipping_postal_code?: string | null
-          shipping_state?: string | null
-          stripe_payment_intent_id?: string | null
-          stripe_session_id?: string
-          updated_at?: string | null
+          answers?: Json | null
+          author?: string
+          chapters?: Json | null
+          id?: number
+          ideas?: Json | null
+          images?: Json | null
+          order_id?: string
+          selected_idea?: Json | null
+          status?: string | null
+          style?: Json | null
+          timestamp?: string | null
+          title?: string
         }
         Relationships: []
       }
