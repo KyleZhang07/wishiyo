@@ -1,5 +1,6 @@
 import Stripe from 'stripe';
 import fetch from 'node-fetch';
+import { AbortController } from 'node-abort-controller';
 
 // API config for Vercel environment
 export const config = {
@@ -7,6 +8,30 @@ export const config = {
     bodyParser: false, // Disable default bodyParser
   },
 };
+
+// Helper function to create a fetch request with timeout
+async function fetchWithTimeout(url, options = {}, timeoutMs = 30000) {
+  const controller = new AbortController();
+  const { signal } = controller;
+  
+  // 创建带超时的Promise
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, timeoutMs);
+  
+  try {
+    // 将中止信号添加到fetch选项
+    const response = await fetch(url, { ...options, signal });
+    clearTimeout(timeout);
+    return response;
+  } catch (error) {
+    clearTimeout(timeout);
+    if (error.name === 'AbortError') {
+      throw new Error(`Request to ${url} timed out after ${timeoutMs}ms`);
+    }
+    throw error;
+  }
+}
 
 console.log("===== WEBHOOK FILE LOADED =====");
 
@@ -19,11 +44,28 @@ async function buffer(readable) {
   return Buffer.concat(chunks);
 }
 
+// 构建API基础URL - 优先使用VERCEL_URL，其次使用自定义域名，最后回退到相对路径
+function getBaseUrl() {
+  // Vercel自动设置的URL
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  // 自定义域名
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    return process.env.NEXT_PUBLIC_SITE_URL;
+  }
+  // 本地开发或回退
+  return '';
+}
+
 // Helper function to update book status
 async function updateBookStatus(supabaseUrl, supabaseKey, orderId, status) {
   try {
-    const response = await fetch(
-      `${supabaseUrl}/functions/v1/update-book-data`,
+    const baseUrl = getBaseUrl();
+    // 使用新的API路由
+    console.log(`[WEBHOOK:${orderId}] Updating book status to ${status}`);
+    const response = await fetchWithTimeout(
+      `${baseUrl}/api/update-book-data`,
       {
         method: 'POST',
         headers: {
@@ -31,17 +73,19 @@ async function updateBookStatus(supabaseUrl, supabaseKey, orderId, status) {
           'Authorization': `Bearer ${supabaseKey}`
         },
         body: JSON.stringify({ orderId, status })
-      }
+      },
+      15000 // 15秒超时
     );
     
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Failed to update book status: ${response.status} ${response.statusText} - ${errorText}`);
+      throw new Error(`Failed to update book status to ${status}: ${response.status} ${response.statusText} - ${errorText}`);
     }
     
+    console.log(`[WEBHOOK:${orderId}] Book status successfully updated to ${status}`);
     return await response.json();
   } catch (error) {
-    console.error('Error updating book status:', error);
+    console.error(`[WEBHOOK:${orderId}] Error updating book status to ${status}:`, error);
     throw error;
   }
 }
@@ -49,6 +93,7 @@ async function updateBookStatus(supabaseUrl, supabaseKey, orderId, status) {
 // Full book generation process that replaces startBookGeneration from FormatStep.tsx
 async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
   try {
+    const baseUrl = getBaseUrl();
     // 1. Update book status to "processing"
     await updateBookStatus(supabaseUrl, supabaseKey, orderId, "processing");
     console.log(`[${orderId}] Book status set to processing`);
@@ -81,7 +126,7 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     // 3. Start content generation
     console.log(`[${orderId}] Starting content generation`);
     const contentPromise = fetch(
-      `${supabaseUrl}/functions/v1/generate-book-content`,
+      `${baseUrl}/api/generate-book-content`,
       {
         method: 'POST',
         headers: {
@@ -97,7 +142,7 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     if (images.frontCover && images.spine && images.backCover) {
       console.log(`[${orderId}] Starting cover PDF generation`);
       coverPromise = fetch(
-        `${supabaseUrl}/functions/v1/generate-cover-pdf`,
+        `${baseUrl}/api/generate-cover-pdf`,
         {
           method: 'POST',
           headers: {
@@ -130,7 +175,7 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     if (bookContent) {
       console.log(`[${orderId}] Updating book content in database`);
       await fetch(
-        `${supabaseUrl}/functions/v1/update-book-data`,
+        `${baseUrl}/api/update-book-data`,
         {
           method: 'POST',
           headers: {
@@ -144,8 +189,8 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     
     // 7. Generate interior PDF
     console.log(`[${orderId}] Starting interior PDF generation`);
-    const interiorResponse = await fetch(
-      `${supabaseUrl}/functions/v1/generate-interior-pdf`,
+    const interiorResponse = await fetchWithTimeout(
+      `${baseUrl}/api/generate-interior-pdf`,
       {
         method: 'POST',
         headers: {
@@ -153,7 +198,8 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
           'Authorization': `Bearer ${supabaseKey}`
         },
         body: JSON.stringify({ orderId })
-      }
+      },
+      60000 // PDF生成可能需要更长时间，设置60秒超时
     );
     
     const interiorResult = await interiorResponse.json();
@@ -168,7 +214,7 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     if (interiorPdf) {
       console.log(`[${orderId}] Updating interior PDF in database`);
       await fetch(
-        `${supabaseUrl}/functions/v1/update-book-data`,
+        `${baseUrl}/api/update-book-data`,
         {
           method: 'POST',
           headers: {
@@ -195,7 +241,7 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     if (coverPdf) {
       console.log(`[${orderId}] Updating cover PDF in database`);
       await fetch(
-        `${supabaseUrl}/functions/v1/update-book-data`,
+        `${baseUrl}/api/update-book-data`,
         {
           method: 'POST',
           headers: {
@@ -240,7 +286,7 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
           // 设置书籍为准备打印状态
           if (interiorPdfUrl && coverPdfUrl) {
             await fetch(
-              `${supabaseUrl}/functions/v1/update-book-data`,
+              `${baseUrl}/api/update-book-data`,
               {
                 method: 'POST',
                 headers: {
@@ -283,9 +329,11 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
 }
 
 export default async function handler(req, res) {
-  console.log("===== WEBHOOK CALLED =====");
+  const requestId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+  const startTime = Date.now();
+  console.log(`[WEBHOOK:${requestId}] ===== WEBHOOK CALLED =====`);
   if (req.method !== 'POST') {
-    console.log("Not a POST request:", req.method);
+    console.log(`[WEBHOOK:${requestId}] Not a POST request:`, req.method);
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
@@ -294,8 +342,9 @@ export default async function handler(req, res) {
 
   try {
     // Get raw request body
+    const bufferStart = Date.now();
     const rawBody = await buffer(req);
-    console.log("===== REQUEST BODY RECEIVED =====", rawBody.length, "bytes");
+    console.log(`[WEBHOOK:${requestId}] ===== REQUEST BODY RECEIVED ===== ${rawBody.length} bytes in ${Date.now() - bufferStart}ms`);
     
     // Get Stripe signature header
     const signature = req.headers['stripe-signature'];
@@ -304,22 +353,22 @@ export default async function handler(req, res) {
     let event;
     try {
       event = stripe.webhooks.constructEvent(rawBody, signature, endpointSecret);
-      console.log("===== WEBHOOK SIGNATURE VERIFIED =====");
+      console.log(`[WEBHOOK:${requestId}] ===== WEBHOOK SIGNATURE VERIFIED =====`);
     } catch (err) {
-      console.error(`Webhook signature verification failed: ${err.message}`);
+      console.error(`[WEBHOOK:${requestId}] Webhook signature verification failed: ${err.message}`);
       return res.status(400).json({ error: `Webhook Error: ${err.message}` });
     }
 
     // Check for required environment variables
-    console.log("Environment variables check:", {
+    console.log(`[WEBHOOK:${requestId}] Environment variables check:`, {
       hasStripeSecret: !!process.env.STRIPE_SECRET_KEY,
       hasWebhookSecret: !!process.env.STRIPE_WEBHOOK_SECRET,
       hasSupabaseUrl: !!process.env.SUPABASE_URL,
-      hasSupabaseKey: !!process.env.SUPABASE_ANON_KEY
+      hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
     });
 
     // Handle payment success event
-    console.log("===== EVENT TYPE:", event.type, "=====");
+    console.log(`[WEBHOOK:${requestId}] ===== EVENT TYPE:`, event.type, "=====");
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
       
@@ -372,7 +421,7 @@ export default async function handler(req, res) {
             console.log('Starting funny biography book generation process');
             
             // Check Supabase environment variables
-            if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
+            if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
               console.error('Missing required Supabase environment variables');
               return res.status(200).json({ 
                 received: true, 
@@ -383,17 +432,18 @@ export default async function handler(req, res) {
             // Update shipping info in database
             try {
               const supabaseUrl = process.env.SUPABASE_URL;
-              const supabaseKey = process.env.SUPABASE_ANON_KEY;
+              const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+              const baseUrl = getBaseUrl();
               
-              console.log("===== CALLING SUPABASE FUNCTION =====", {
+              console.log("===== CALLING API ROUTE =====", {
                 supabaseUrl: supabaseUrl,
                 hasKey: !!supabaseKey,
-                endpoint: `${supabaseUrl}/functions/v1/update-book-data`
+                endpoint: `${baseUrl}/api/update-book-data`
               });
               
               // Update shipping address and customer email
-              const updateResponse = await fetch(
-                `${supabaseUrl}/functions/v1/update-book-data`,
+              const updateResponse = await fetchWithTimeout(
+                `${baseUrl}/api/update-book-data`,
                 {
                   method: 'POST',
                   headers: {
@@ -415,7 +465,8 @@ export default async function handler(req, res) {
                     ready_for_printing: false,
                     print_attempts: 0
                   })
-                }
+                },
+                15000 // 15秒超时
               );
               
               const updateResponseText = await updateResponse.text();
@@ -453,9 +504,12 @@ export default async function handler(req, res) {
     }
 
     // Return success response to Stripe
+    const totalTime = Date.now() - startTime;
+    console.log(`[WEBHOOK:${requestId}] Completed webhook processing in ${totalTime}ms`);
     return res.status(200).json({ received: true });
   } catch (error) {
-    console.error('Error processing webhook:', error.message);
+    const totalTime = Date.now() - startTime;
+    console.error(`[WEBHOOK:${requestId}] Error processing webhook in ${totalTime}ms:`, error.message);
     console.error(error.stack); // Print stack trace
     res.status(500).json({ error: 'Failed to process webhook' });
   }
