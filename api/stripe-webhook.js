@@ -1,6 +1,5 @@
 import Stripe from 'stripe';
 import fetch from 'node-fetch';
-import { AbortController } from 'node-abort-controller';
 
 // API config for Vercel environment
 export const config = {
@@ -11,26 +10,18 @@ export const config = {
 
 // Helper function to create a fetch request with timeout
 async function fetchWithTimeout(url, options = {}, timeoutMs = 30000) {
-  const controller = new AbortController();
-  const { signal } = controller;
+  // 创建超时Promise
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => {
+      reject(new Error(`Request to ${url} timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+  });
   
-  // 创建带超时的Promise
-  const timeout = setTimeout(() => {
-    controller.abort();
-  }, timeoutMs);
+  // 创建fetch Promise
+  const fetchPromise = fetch(url, options);
   
-  try {
-    // 将中止信号添加到fetch选项
-    const response = await fetch(url, { ...options, signal });
-    clearTimeout(timeout);
-    return response;
-  } catch (error) {
-    clearTimeout(timeout);
-    if (error.name === 'AbortError') {
-      throw new Error(`Request to ${url} timed out after ${timeoutMs}ms`);
-    }
-    throw error;
-  }
+  // 使用Promise.race返回最先完成的Promise
+  return Promise.race([fetchPromise, timeoutPromise]);
 }
 
 console.log("===== WEBHOOK FILE LOADED =====");
