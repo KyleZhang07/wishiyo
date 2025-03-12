@@ -25,7 +25,6 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid price value' });
     }
     
-
     // 生成随机订单ID
     const orderId = `WY-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
     
@@ -98,7 +97,6 @@ export default async function handler(req, res) {
         productId,
         format: format || 'Standard',
         title: title || 'Custom Book',
-      
       },
     });
 
