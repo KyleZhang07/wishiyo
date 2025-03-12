@@ -46,6 +46,49 @@ async function updateBookStatus(supabaseUrl, supabaseKey, orderId, status) {
   }
 }
 
+// 辅助函数：将PDF数据上传到存储桶并返回公共URL
+async function uploadPdfToStorage(supabaseUrl, supabaseKey, orderId, pdfData, fileName) {
+  try {
+    console.log(`[${orderId}] Uploading ${fileName} to storage...`);
+    
+    // 从base64 Data URI中提取PDF数据
+    let pdfContent = pdfData;
+    if (pdfData.startsWith('data:')) {
+      pdfContent = pdfData.split(',')[1];
+    }
+    const pdfBuffer = Buffer.from(pdfContent, 'base64');
+    
+    // 上传到Supabase Storage
+    const uploadResponse = await fetch(
+      `${supabaseUrl}/storage/v1/object/book-covers/${orderId}/${fileName}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Authorization': `Bearer ${supabaseKey}`,
+          'x-upsert': 'true'
+        },
+        body: pdfBuffer
+      }
+    );
+    
+    if (!uploadResponse.ok) {
+      throw new Error(`Failed to upload PDF: ${await uploadResponse.text()}`);
+    }
+    
+    console.log(`[${orderId}] PDF uploaded successfully to storage`);
+    
+    // 获取公共URL
+    const publicUrl = `${supabaseUrl}/storage/v1/object/public/book-covers/${orderId}/${fileName}`;
+    console.log(`[${orderId}] Generated URL: ${publicUrl}`);
+    
+    return publicUrl;
+  } catch (error) {
+    console.error(`[${orderId}] Error uploading PDF to storage:`, error);
+    return null;
+  }
+}
+
 // Full book generation process that replaces startBookGeneration from FormatStep.tsx
 async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
   try {
@@ -324,6 +367,76 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     const coverPdf = coverResult.pdfOutput || coverResult.pdf;
     if (coverPdf) {
       console.log(`[${orderId}] Updating cover PDF in database`);
+      
+      // 首先上传PDF到存储桶以获取URL
+      try {
+        console.log(`[${orderId}] Uploading cover PDF to storage...`);
+        // 从base64 Data URI中提取PDF数据
+        const pdfData = coverPdf.split(',')[1];
+        const pdfBuffer = Buffer.from(pdfData, 'base64');
+        
+        // 上传到Supabase REST API
+        const uploadResponse = await fetch(
+          `${supabaseUrl}/storage/v1/object/book-covers/${orderId}/cover-full.pdf`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/pdf',
+              'Authorization': `Bearer ${supabaseKey}`,
+              'x-upsert': 'true'
+            },
+            body: pdfBuffer
+          }
+        );
+        
+        if (!uploadResponse.ok) {
+          console.error(`[${orderId}] Failed to upload cover PDF:`, await uploadResponse.text());
+        } else {
+          console.log(`[${orderId}] Cover PDF uploaded successfully to storage`);
+          
+          // 获取公共URL
+          const publicUrlResponse = await fetch(
+            `${supabaseUrl}/storage/v1/object/public/book-covers/${orderId}/cover-full.pdf`,
+            {
+              method: 'GET',
+              headers: {
+                'Authorization': `Bearer ${supabaseKey}`
+              }
+            }
+          );
+          
+          if (publicUrlResponse.ok) {
+            const urlData = await publicUrlResponse.json();
+            const coverSourceUrl = urlData.publicUrl || `${supabaseUrl}/storage/v1/object/public/book-covers/${orderId}/cover-full.pdf`;
+            
+            console.log(`[${orderId}] Generated cover_source_url:`, coverSourceUrl);
+            
+            // 更新数据库，包含PDF数据和URL
+            await fetch(
+              `${supabaseUrl}/functions/v1/update-book-data`,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${supabaseKey}`
+                },
+                body: JSON.stringify({ 
+                  orderId, 
+                  coverPdf,
+                  cover_source_url: coverSourceUrl
+                })
+              }
+            );
+            
+            console.log(`[${orderId}] Database updated with coverPdf and cover_source_url`);
+            return;
+          }
+        }
+      } catch (uploadError) {
+        console.error(`[${orderId}] Error during PDF upload:`, uploadError);
+      }
+      
+      // 如果上传失败，仍然保存PDF到数据库
       await fetch(
         `${supabaseUrl}/functions/v1/update-book-data`,
         {
@@ -347,7 +460,7 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     try {
       // 获取内部和封面PDF公共URL
       const bookResponse = await fetch(
-        `${supabaseUrl}/rest/v1/funny_biography_books?order_id=eq.${orderId}&select=interior_pdf,cover_pdf,book_content`,
+        `${supabaseUrl}/rest/v1/funny_biography_books?order_id=eq.${orderId}&select=interior_pdf,cover_pdf,book_content,cover_source_url,interior_source_url`,
         {
           method: 'GET',
           headers: {
@@ -363,12 +476,23 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
         if (bookData && bookData.length > 0) {
           const book = bookData[0];
           
-          // 假设PDF已经存储到可访问的URL
-          const interiorPdfUrl = book.interior_pdf || '';
-          const coverPdfUrl = book.cover_pdf || '';
+          // 首选使用已存储的source_url字段，如果没有则使用内部PDF数据
+          const interiorSourceUrl = book.interior_source_url || '';
+          const coverSourceUrl = book.cover_source_url || '';
+          
+          // 确保至少有一个有效的URL
+          const hasValidInteriorUrl = !!interiorSourceUrl;
+          const hasValidCoverUrl = !!coverSourceUrl;
+          
+          console.log(`[${orderId}] PDF URL check:`, { 
+            hasValidInteriorUrl, 
+            hasValidCoverUrl,
+            interiorSourceUrl: interiorSourceUrl ? interiorSourceUrl.substring(0, 50) + '...' : 'N/A',
+            coverSourceUrl: coverSourceUrl ? coverSourceUrl.substring(0, 50) + '...' : 'N/A'
+          });
           
           // 设置书籍为准备打印状态
-          if (interiorPdfUrl && coverPdfUrl) {
+          if (hasValidInteriorUrl && hasValidCoverUrl) {
             await fetch(
               `${supabaseUrl}/functions/v1/update-book-data`,
               {
@@ -379,8 +503,8 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
                 },
                 body: JSON.stringify({ 
                   orderId, 
-                  cover_source_url: coverPdfUrl,
-                  interior_source_url: interiorPdfUrl,
+                  cover_source_url: coverSourceUrl,
+                  interior_source_url: interiorSourceUrl,
                   ready_for_printing: true,
                   // 设置页数（简单估算，每页约500字符）
                   page_count: book.book_content ? Math.ceil(book.book_content.length / 500) : 100
@@ -389,7 +513,83 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
             );
             console.log(`[${orderId}] Book set as ready for printing`);
           } else {
-            console.warn(`[${orderId}] Missing PDF files, book not ready for printing`);
+            console.warn(`[${orderId}] Missing PDF URLs, book not ready for printing`);
+            
+            // 处理缺失的URL
+            let updatedCoverUrl = coverSourceUrl;
+            let updatedInteriorUrl = interiorSourceUrl;
+            let needsUpdate = false;
+            
+            // 如果缺少封面URL但有PDF数据，创建URL
+            if (!hasValidCoverUrl && book.cover_pdf) {
+              console.log(`[${orderId}] Cover URL missing but PDF data available. Creating URL...`);
+              updatedCoverUrl = await uploadPdfToStorage(
+                supabaseUrl, 
+                supabaseKey, 
+                orderId, 
+                book.cover_pdf, 
+                'cover-full.pdf'
+              );
+              
+              if (updatedCoverUrl) {
+                console.log(`[${orderId}] Created cover URL: ${updatedCoverUrl}`);
+                needsUpdate = true;
+              }
+            }
+            
+            // 如果缺少内页URL但有PDF数据，创建URL
+            if (!hasValidInteriorUrl && book.interior_pdf) {
+              console.log(`[${orderId}] Interior URL missing but PDF data available. Creating URL...`);
+              updatedInteriorUrl = await uploadPdfToStorage(
+                supabaseUrl, 
+                supabaseKey, 
+                orderId, 
+                book.interior_pdf, 
+                'interior.pdf'
+              );
+              
+              if (updatedInteriorUrl) {
+                console.log(`[${orderId}] Created interior URL: ${updatedInteriorUrl}`);
+                needsUpdate = true;
+              }
+            }
+            
+            // 如果创建了新的URL，更新数据库
+            if (needsUpdate) {
+              console.log(`[${orderId}] Updating database with new PDF URLs`);
+              
+              const updateData = {
+                orderId
+              };
+              
+              if (updatedCoverUrl) {
+                updateData.cover_source_url = updatedCoverUrl;
+              }
+              
+              if (updatedInteriorUrl) {
+                updateData.interior_source_url = updatedInteriorUrl;
+              }
+              
+              // 如果两个URL都有，设置为准备打印
+              if (updatedCoverUrl && updatedInteriorUrl) {
+                updateData.ready_for_printing = true;
+                updateData.page_count = book.book_content ? Math.ceil(book.book_content.length / 500) : 100;
+              }
+              
+              await fetch(
+                `${supabaseUrl}/functions/v1/update-book-data`,
+                {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${supabaseKey}`
+                  },
+                  body: JSON.stringify(updateData)
+                }
+              );
+              
+              console.log(`[${orderId}] Database updated with new PDF URLs`);
+            }
           }
         }
       }

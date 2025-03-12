@@ -124,6 +124,7 @@ serve(async (req) => {
 
     // Convert PDF to base64
     const pdfOutput = pdf.output('datauristring');
+    console.log('PDF generation successful, output length:', pdfOutput.length);
     
     return new Response(
       JSON.stringify({ 
