@@ -11,6 +11,7 @@ import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
 import FriendsLanding from "./pages/FriendsLanding";
 import LoveLanding from "./pages/LoveLanding";
+import OrderSuccess from "./pages/OrderSuccess";
 
 // Friends Book Creation Routes - Funny Biography
 import FunnyBiographyAuthorStep from "./pages/wizard/friends/funny-biography/AuthorStep";
@@ -32,9 +33,6 @@ import LoveStoryCoverStep from "./pages/wizard/love/love-story/CoverStep";
 import LoveStoryGenerateStep from "./pages/wizard/love/love-story/GenerateStep";
 import DebugPromptsStep from "./pages/wizard/love/love-story/DebugPromptsStep";
 import LoveStoryFormatStep from "./pages/wizard/love/love-story/FormatStep";
-
-// Order Success Page
-import OrderSuccess from "./pages/order-success";
 
 // Layout wrapper component that conditionally renders the header
 const AppLayout = () => {

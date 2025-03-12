@@ -89,41 +89,33 @@ const FormatStep = () => {
       localStorage.setItem('funnyBiographyBookPrice', selectedFormatObj.price.toString());
       
       try {
-        // 收集书籍生成所需的用户数据
-        const userAnswers = {};
+        // 收集所有必要的用户数据
+        const userAnswers = localStorage.getItem('funnyBiographyAnswers');
+        const author = localStorage.getItem('funnyBiographyAuthorName');
+        const generatedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
+        const selectedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
+        const tableOfContents = localStorage.getItem('funnyBiographyTOC');
+        const frontCover = localStorage.getItem('funnyBiographyCoverFront');
+        const spine = localStorage.getItem('funnyBiographyCoverSpine');
+        const backCover = localStorage.getItem('funnyBiographyCoverBack');
         
-        // 遍历localStorage，提取所有相关的funny-biography数据
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && key.startsWith('funnyBiography')) {
-            try {
-              const value = localStorage.getItem(key);
-              if (value) {
-                userAnswers[key] = value;
-              }
-            } catch (e) {
-              console.error('Error reading localStorage item:', key, e);
-            }
-          }
+        // 验证所有必要数据是否存在
+        if (!userAnswers || !author || !generatedIdeas || !selectedIdeaIndex || !tableOfContents) {
+          throw new Error('Missing required data for book generation');
         }
         
-        // 构建书籍生成所需的数据
+        // 准备用户数据对象
         const userData = {
-          userAnswers,
-          author: localStorage.getItem('funnyBiographyAuthorName') || '',
-          idea: bookTitle,
-          tableOfContent: []
-        };
-        
-        // 如果有章节目录数据，解析它
-        const tocData = localStorage.getItem('funnyBiographyTableOfContents');
-        if (tocData) {
-          try {
-            userData.tableOfContent = JSON.parse(tocData);
-          } catch (e) {
-            console.error('Error parsing table of contents:', e);
+          userAnswers: JSON.parse(userAnswers),
+          author,
+          bookTitle,
+          tableOfContents: JSON.parse(tableOfContents),
+          coverData: {
+            frontCover,
+            spine,
+            backCover
           }
-        }
+        };
         
         // 调用Stripe支付API
         const response = await fetch('/api/create-checkout-session', {
@@ -137,7 +129,7 @@ const FormatStep = () => {
             format: selectedFormatObj.name,
             price: selectedFormatObj.price.toString(),
             quantity: 1,
-            userData // 包含用户回答、作者、idea（书名）、tableOfContent
+            userData // 添加用户数据
           }),
         });
         

@@ -25,18 +25,13 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid price value' });
     }
     
+    // 如果是funny-biography，验证必要的用户数据
+    if (productId === 'funny-biography' && !userData) {
+      return res.status(400).json({ error: 'Missing user data for book generation' });
+    }
+    
     // 生成随机订单ID
     const orderId = `WY-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
-    
-    // 将userData转换为JSON字符串以存储在metadata中（如果提供）
-    const userDataString = userData ? JSON.stringify(userData) : '';
-    
-    // 确保metadata数据大小不超过Stripe的限制（通常为500个字符）
-    // 如果太大，可以考虑存储在数据库中并只传递引用ID
-    if (userDataString && userDataString.length > 500) {
-      console.warn('userData too large for Stripe metadata, consider storing in database');
-      // 在生产环境中，这里应该将数据存储到数据库并只传引用
-    }
     
     // 创建Stripe Checkout会话，包含shipping address收集
     const session = await stripe.checkout.sessions.create({
@@ -107,7 +102,7 @@ export default async function handler(req, res) {
         productId,
         format: format || 'Standard',
         title: title || 'Custom Book',
-        userData: userDataString && userDataString.length <= 500 ? userDataString : '',
+        userData,
       },
     });
 

@@ -1,15 +1,14 @@
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
-import { createCanvas } from 'canvas';
-import fetch from 'node-fetch';
-import fs from 'fs/promises';
-import path from 'path';
-import os from 'os';
+// Book generation API function
+// This function generates a 20-chapter book with 4 sections per chapter based on user data
+// and converts it to a print-ready PDF according to LuluPress requirements
 
-// For Vercel environment
+import jsPDF from 'jspdf';
+import { fabric } from 'fabric';
+import fetch from 'node-fetch';
+
 export const config = {
   api: {
     bodyParser: true,
-    externalResolver: true,
   },
 };
 
@@ -19,381 +18,289 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { userData, bookData } = req.body;
+    const { userAnswers, author, bookTitle, tableOfContents, coverData } = req.body;
 
-    if (!userData || !bookData) {
-      return res.status(400).json({ error: 'Missing required book data' });
+    if (!userAnswers || !author || !bookTitle || !tableOfContents || !coverData) {
+      return res.status(400).json({ 
+        error: 'Missing required data for book generation'
+      });
     }
 
-    // Extract book information from the request
-    const { 
-      userAnswers, 
-      author, 
-      idea: title, 
-      tableOfContent 
-    } = userData;
+    // Step 1: Generate the book content
+    const bookContent = await generateBookContent(userAnswers, author, bookTitle, tableOfContents);
+    
+    // Step 2: Create interior PDF
+    const interiorPdf = await createInteriorPdf(bookContent, bookTitle, author);
+    
+    // Step 3: Create cover PDF
+    const coverPdf = await createCoverPdf(coverData.frontCover, coverData.spine, coverData.backCover);
+    
+    // Step 4: Send to LuluPress API for printing
+    const printResult = await sendToPrinting(interiorPdf, coverPdf, bookTitle, req.body.shippingAddress);
 
-    console.log('Starting book generation process');
-    console.log('Book title:', title);
-    console.log('Author:', author);
-
-    // Generate book content
-    const bookContent = await generateBookContent(userData, bookData);
-    
-    // Create interior PDF
-    const interiorPdfPath = await createInteriorPdf(bookContent, title, author);
-    
-    // Create cover PDF
-    const coverPdfPath = await createCoverPdf(title, author, bookContent.summary);
-    
-    // Upload PDFs to a temporary storage service to get URLs
-    // (In a production environment, you would upload to S3, Azure Blob, etc.)
-    const interiorUrl = await uploadPdfToStorage(interiorPdfPath);
-    const coverUrl = await uploadPdfToStorage(coverPdfPath);
-    
-    // Submit to Lulupress API
-    const printJobResult = await submitToLulupress(
-      title, 
-      interiorUrl, 
-      coverUrl, 
-      bookData.shippingAddress
-    );
-    
-    // Clean up temporary files
-    await Promise.all([
-      fs.unlink(interiorPdfPath),
-      fs.unlink(coverPdfPath)
-    ]);
-
+    // Return success response
     return res.status(200).json({ 
       success: true, 
-      message: 'Book generated and submitted for printing',
-      printJobId: printJobResult.external_id
+      message: 'Book generated and sent for printing',
+      printOrderId: printResult.printOrderId
     });
   } catch (error) {
     console.error('Error generating book:', error);
-    return res.status(500).json({ error: 'Failed to generate book', details: error.message });
+    return res.status(500).json({ error: 'Failed to generate book' });
   }
 }
 
-/**
- * Generate book content with 20 chapters, 4 sections per chapter
- */
-async function generateBookContent(userData, bookData) {
-  const { userAnswers, tableOfContent } = userData;
-  
-  // In a real application, you might use an AI service to generate content
-  // based on user answers and table of contents
-  const chapters = [];
-  
-  for (let i = 0; i < 20; i++) {
-    const chapterTitle = tableOfContent[i] || `Chapter ${i + 1}`;
-    const sections = [];
-    
-    for (let j = 0; j < 4; j++) {
-      sections.push({
-        title: `Section ${j + 1}`,
-        content: `Content for section ${j + 1} of chapter ${i + 1}, based on user answers: ${JSON.stringify(userAnswers).substring(0, 50)}...`
-      });
-    }
-    
-    chapters.push({
-      title: chapterTitle,
-      sections
-    });
-  }
-  
-  // Generate a summary for the back cover
-  const summary = `A delightful biography about ${userData.idea}, written by ${userData.author}.`;
-  
-  return {
-    title: userData.idea,
-    author: userData.author,
-    chapters,
-    summary
+// Generate the content for a 20-chapter book with 4 sections per chapter
+async function generateBookContent(userAnswers, author, bookTitle, tableOfContents) {
+  // Initialize the book content structure
+  const book = {
+    title: bookTitle,
+    author: author,
+    chapters: []
   };
+
+  // Create 20 chapters, each with 4 sections
+  for (let i = 0; i < 20; i++) {
+    const chapterNumber = i + 1;
+    const chapterTitle = tableOfContents[i] || `Chapter ${chapterNumber}`;
+    
+    const chapter = {
+      number: chapterNumber,
+      title: chapterTitle,
+      sections: []
+    };
+
+    // Create 4 sections for each chapter
+    for (let j = 0; j < 4; j++) {
+      const sectionNumber = j + 1;
+      
+      // Generate content for this section based on user answers
+      // The content generation logic would depend on the specific requirements
+      // Here we're just creating placeholder content
+      const content = generateSectionContent(userAnswers, chapterNumber, sectionNumber);
+      
+      chapter.sections.push({
+        number: sectionNumber,
+        title: `Section ${sectionNumber}`,
+        content: content
+      });
+    }
+
+    book.chapters.push(chapter);
+  }
+
+  return book;
 }
 
-/**
- * Create interior PDF according to Lulupress requirements
- */
-async function createInteriorPdf(bookContent, title, author) {
-  const pdfDoc = await PDFDocument.create();
-  const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman);
-  const timesBoldFont = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
-  
-  // Define page dimensions (US Trade 6x9 inches with bleed)
-  // 6x9 inches = 432x648 points
-  // Adding 0.125 inch bleed = +9 points each side
-  const pageWidth = 450; // 432 + (9 * 2)
-  const pageHeight = 666; // 648 + (9 * 2)
-  
+// Generate content for a specific section based on user answers
+function generateSectionContent(userAnswers, chapterNumber, sectionNumber) {
+  // This function would contain the logic to generate content based on user answers
+  // For simplicity, we're returning placeholder text
+  return `This is the content for Chapter ${chapterNumber}, Section ${sectionNumber}. 
+  It would be generated based on the user's answers: ${JSON.stringify(userAnswers).substring(0, 100)}...`;
+}
+
+// Create interior PDF according to LuluPress requirements
+async function createInteriorPdf(bookContent, bookTitle, author) {
+  // Create a new PDF document
+  // Using standard book dimensions (8.5 x 11 inches)
+  const pdf = new jsPDF({
+    orientation: 'portrait',
+    unit: 'in',
+    format: [8.5, 11],
+    compress: true
+  });
+
   // Add title page
-  const titlePage = pdfDoc.addPage([pageWidth, pageHeight]);
-  titlePage.drawText(title, {
-    x: 225,
-    y: 400,
-    size: 24,
-    font: timesBoldFont,
-    color: rgb(0, 0, 0),
-    maxWidth: 350,
-    align: 'center'
-  });
-  
-  titlePage.drawText(`by ${author}`, {
-    x: 225,
-    y: 350,
-    size: 18,
-    font: timesRomanFont,
-    color: rgb(0, 0, 0),
-    maxWidth: 350,
-    align: 'center'
-  });
-  
+  pdf.setFontSize(24);
+  pdf.text(bookTitle, 4.25, 4, { align: 'center' });
+  pdf.setFontSize(16);
+  pdf.text(`By ${author}`, 4.25, 5, { align: 'center' });
+
   // Add copyright page
-  const copyrightPage = pdfDoc.addPage([pageWidth, pageHeight]);
-  const currentYear = new Date().getFullYear();
-  copyrightPage.drawText(`Copyright © ${currentYear} ${author}`, {
-    x: 72,
-    y: 500,
-    size: 12,
-    font: timesRomanFont,
-    color: rgb(0, 0, 0)
-  });
-  
-  copyrightPage.drawText('All rights reserved.', {
-    x: 72,
-    y: 480,
-    size: 12,
-    font: timesRomanFont,
-    color: rgb(0, 0, 0)
-  });
-  
+  pdf.addPage();
+  pdf.setFontSize(10);
+  pdf.text(`© ${new Date().getFullYear()} ${author}`, 4.25, 10, { align: 'center' });
+
   // Add table of contents
-  const tocPage = pdfDoc.addPage([pageWidth, pageHeight]);
-  tocPage.drawText('Table of Contents', {
-    x: 225,
-    y: 600,
-    size: 18,
-    font: timesBoldFont,
-    color: rgb(0, 0, 0),
-    align: 'center'
-  });
+  pdf.addPage();
+  pdf.setFontSize(16);
+  pdf.text('Table of Contents', 4.25, 1, { align: 'center' });
   
-  let yPosition = 550;
-  bookContent.chapters.forEach((chapter, index) => {
-    tocPage.drawText(`${chapter.title}`, {
-      x: 72,
-      y: yPosition,
-      size: 12,
-      font: timesRomanFont,
-      color: rgb(0, 0, 0)
-    });
-    yPosition -= 20;
-    
-    if (yPosition < 72) {
-      const newTocPage = pdfDoc.addPage([pageWidth, pageHeight]);
-      yPosition = 600;
-    }
+  let yPos = 1.5;
+  bookContent.chapters.forEach(chapter => {
+    pdf.setFontSize(12);
+    pdf.text(`Chapter ${chapter.number}: ${chapter.title}`, 1, yPos);
+    yPos += 0.3;
   });
-  
-  // Add chapter pages
-  bookContent.chapters.forEach((chapter, chapterIndex) => {
-    // Chapter title page
-    const chapterPage = pdfDoc.addPage([pageWidth, pageHeight]);
-    chapterPage.drawText(chapter.title, {
-      x: 225,
-      y: 500,
-      size: 18,
-      font: timesBoldFont,
-      color: rgb(0, 0, 0),
-      maxWidth: 350,
-      align: 'center'
-    });
+
+  // Add chapter content
+  bookContent.chapters.forEach(chapter => {
+    pdf.addPage();
     
-    // Sections content
-    chapter.sections.forEach((section, sectionIndex) => {
-      const sectionPage = pdfDoc.addPage([pageWidth, pageHeight]);
-      
-      // Section title
-      sectionPage.drawText(section.title, {
-        x: 72,
-        y: 600,
-        size: 14,
-        font: timesBoldFont,
-        color: rgb(0, 0, 0)
-      });
+    // Chapter title
+    pdf.setFontSize(18);
+    pdf.text(`Chapter ${chapter.number}: ${chapter.title}`, 4.25, 1, { align: 'center' });
+    
+    let contentYPos = 1.5;
+    
+    // Sections
+    chapter.sections.forEach(section => {
+      pdf.setFontSize(14);
+      pdf.text(`Section ${section.number}`, 1, contentYPos);
+      contentYPos += 0.3;
       
       // Section content
-      const contentLines = splitTextIntoLines(section.content, 60);
-      let contentY = 560;
+      pdf.setFontSize(12);
       
-      contentLines.forEach(line => {
-        sectionPage.drawText(line, {
-          x: 72,
-          y: contentY,
-          size: 12,
-          font: timesRomanFont,
-          color: rgb(0, 0, 0)
-        });
-        contentY -= 16;
-        
-        if (contentY < 72) {
-          const newPage = pdfDoc.addPage([pageWidth, pageHeight]);
-          contentY = 600;
+      // Split the content into lines to fit page width
+      const lines = pdf.splitTextToSize(section.content, 6.5); // 8.5 - 2 (margins)
+      
+      // Add lines to the PDF, creating new pages if needed
+      lines.forEach(line => {
+        if (contentYPos > 10) {
+          pdf.addPage();
+          contentYPos = 1;
         }
+        pdf.text(line, 1, contentYPos);
+        contentYPos += 0.2;
       });
+      
+      contentYPos += 0.5; // Add space after each section
     });
   });
-  
-  // Save PDF to temp file
-  const pdfBytes = await pdfDoc.save();
-  const tempPath = path.join(os.tmpdir(), `interior-${Date.now()}.pdf`);
-  await fs.writeFile(tempPath, pdfBytes);
-  
-  return tempPath;
+
+  // Return the PDF as base64 string
+  return pdf.output('datauristring');
 }
 
-/**
- * Create cover PDF according to Lulupress requirements
- */
-async function createCoverPdf(title, author, summary) {
-  // US Trade 6x9 dimensions
-  const bookWidth = 6; // inches
-  const bookHeight = 9; // inches
-  const spineWidth = 0.5; // This will vary based on page count, assuming 0.5 here
-  const bleed = 0.125; // inches
+// Create cover PDF by merging front cover, spine, and back cover canvases
+async function createCoverPdf(frontCoverCanvas, spineCanvas, backCoverCanvas) {
+  // Create a new canvas for the complete cover
+  const canvas = new fabric.Canvas(null);
   
-  // Convert to pixels at 300 DPI
-  const dpi = 300;
-  const coverWidthPx = Math.ceil((bookWidth * 2 + spineWidth + bleed * 2) * dpi);
-  const coverHeightPx = Math.ceil((bookHeight + bleed * 2) * dpi);
+  // Set canvas dimensions to accommodate front cover, spine, and back cover
+  // Assuming standard dimensions and adding bleed area as per LuluPress requirements
+  canvas.setWidth(17.25); // 8.5 (front) + 0.25 (spine width example) + 8.5 (back) + 0.125 (bleed on each side)
+  canvas.setHeight(11.25); // 11 (height) + 0.125 (bleed on each side)
   
-  // Create canvas for the cover
-  const canvas = createCanvas(coverWidthPx, coverHeightPx);
-  const ctx = canvas.getContext('2d');
+  // Load the canvas objects
+  const frontCover = await loadCanvasFromData(frontCoverCanvas);
+  const spine = await loadCanvasFromData(spineCanvas);
+  const backCover = await loadCanvasFromData(backCoverCanvas);
   
-  // Fill background with white
-  ctx.fillStyle = 'white';
-  ctx.fillRect(0, 0, coverWidthPx, coverHeightPx);
-  
-  // Back cover (left side)
-  ctx.fillStyle = '#f0f0f0'; // Light gray background
-  ctx.fillRect(bleed * dpi, bleed * dpi, bookWidth * dpi, bookHeight * dpi);
-  
-  // Spine (middle)
-  ctx.fillStyle = '#d0d0d0'; // Medium gray for spine
-  ctx.fillRect((bleed + bookWidth) * dpi, bleed * dpi, spineWidth * dpi, bookHeight * dpi);
-  
-  // Front cover (right side)
-  ctx.fillStyle = '#e0e0e0'; // Different gray for front
-  ctx.fillRect((bleed + bookWidth + spineWidth) * dpi, bleed * dpi, bookWidth * dpi, bookHeight * dpi);
-  
-  // Add text to front cover
-  ctx.fillStyle = 'black';
-  ctx.font = 'bold 60px Arial';
-  ctx.textAlign = 'center';
-  
-  // Position text on front cover
-  const frontCoverCenterX = (bleed + bookWidth + spineWidth + bookWidth/2) * dpi;
-  ctx.fillText(title, frontCoverCenterX, 300, bookWidth * dpi * 0.8);
-  
-  ctx.font = '40px Arial';
-  ctx.fillText(`by ${author}`, frontCoverCenterX, 400, bookWidth * dpi * 0.8);
-  
-  // Add summary to back cover
-  ctx.font = '30px Arial';
-  ctx.textAlign = 'left';
-  const backCoverX = (bleed + 0.5) * dpi;
-  const summaryLines = splitTextIntoLines(summary, 40);
-  
-  summaryLines.forEach((line, index) => {
-    ctx.fillText(line, backCoverX, (bleed + 3 + index * 0.4) * dpi, (bookWidth - 1) * dpi);
+  // Position the elements
+  // Back cover on the left, spine in the middle, front cover on the right
+  const backCoverObj = new fabric.Image(backCover, {
+    left: 0.125, // Start after bleed area
+    top: 0.125,
+    selectable: false
   });
   
-  // Add spine text
-  ctx.save();
-  ctx.translate((bleed + bookWidth + spineWidth/2) * dpi, bookHeight * dpi / 2);
-  ctx.rotate(-Math.PI/2);
-  ctx.textAlign = 'center';
-  ctx.font = 'bold 30px Arial';
-  ctx.fillText(title, 0, 0, (bookHeight - 1) * dpi);
-  ctx.restore();
-  
-  // Convert canvas to PDF
-  const pdfDoc = await PDFDocument.create();
-  const page = pdfDoc.addPage([coverWidthPx / dpi * 72, coverHeightPx / dpi * 72]); // Convert to points
-  
-  // Get canvas as PNG
-  const canvasPng = canvas.toBuffer('image/png');
-  const pngImage = await pdfDoc.embedPng(canvasPng);
-  
-  page.drawImage(pngImage, {
-    x: 0,
-    y: 0,
-    width: page.getWidth(),
-    height: page.getHeight(),
+  const spineObj = new fabric.Image(spine, {
+    left: 8.625, // 8.5 (back cover) + 0.125 (bleed)
+    top: 0.125,
+    selectable: false
   });
   
-  // Save PDF to temp file
-  const pdfBytes = await pdfDoc.save();
-  const tempPath = path.join(os.tmpdir(), `cover-${Date.now()}.pdf`);
-  await fs.writeFile(tempPath, pdfBytes);
+  const frontCoverObj = new fabric.Image(frontCover, {
+    left: 8.875, // 8.5 (back cover) + 0.25 (spine) + 0.125 (bleed)
+    top: 0.125,
+    selectable: false
+  });
   
-  return tempPath;
+  // Add elements to the canvas
+  canvas.add(backCoverObj);
+  canvas.add(spineObj);
+  canvas.add(frontCoverObj);
+  
+  // Create a PDF from the canvas
+  const pdf = new jsPDF({
+    orientation: 'landscape',
+    unit: 'in',
+    format: [17.25, 11.25], // Match canvas size
+    compress: true
+  });
+  
+  // Convert canvas to image and add to PDF
+  const canvasImage = canvas.toDataURL({
+    format: 'jpeg',
+    quality: 1.0
+  });
+  
+  pdf.addImage(canvasImage, 'JPEG', 0, 0, 17.25, 11.25);
+  
+  // Return the PDF as base64 string
+  return pdf.output('datauristring');
 }
 
-/**
- * Upload PDF to temporary storage and get URL
- * In production, use a proper storage service like S3
- */
-async function uploadPdfToStorage(pdfPath) {
-  // This is a placeholder - in a real application, you'd upload to your storage service
-  // For demo purposes, we're returning a fake URL
-  // In production, implement an actual upload to S3, Azure Blob, etc.
-  
-  // Read the PDF file
-  const pdfBytes = await fs.readFile(pdfPath);
-  
-  // Example: Upload to a storage service
-  // const response = await fetch('https://your-storage-service.com/upload', {
-  //   method: 'POST',
-  //   body: pdfBytes
-  // });
-  // const result = await response.json();
-  // return result.url;
-  
-  // For this example, return a fake URL
-  return `https://example.com/storage/${path.basename(pdfPath)}`;
+// Helper function to load canvas data
+async function loadCanvasFromData(canvasData) {
+  return new Promise((resolve) => {
+    fabric.Image.fromURL(canvasData, (img) => {
+      resolve(img);
+    });
+  });
 }
 
-/**
- * Submit to Lulupress API
- */
-async function submitToLulupress(title, interiorUrl, coverUrl, shippingAddress) {
-  // Lulupress API credentials
+// Send the generated PDFs to LuluPress for printing
+async function sendToPrinting(interiorPdf, coverPdf, bookTitle, shippingAddress) {
+  // LuluPress API credentials
   const clientKey = process.env.LULUPRESS_CLIENT_KEY;
   const clientSecret = process.env.LULUPRESS_CLIENT_SECRET;
   
   if (!clientKey || !clientSecret) {
-    throw new Error('Missing Lulupress API credentials');
+    throw new Error('LuluPress API credentials not configured');
+  }
+
+  // Authentication 
+  const authCredentials = Buffer.from(`${clientKey}:${clientSecret}`).toString('base64');
+  
+  // Upload interior PDF
+  const interiorResponse = await fetch('https://api.lulu.com/upload-pdf', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Basic ${authCredentials}`,
+      'Content-Type': 'application/pdf'
+    },
+    body: Buffer.from(interiorPdf.replace(/^data:application\/pdf;base64,/, ''), 'base64')
+  });
+  
+  if (!interiorResponse.ok) {
+    throw new Error(`Failed to upload interior PDF: ${interiorResponse.statusText}`);
   }
   
-  // Create authentication header
-  const authString = Buffer.from(`${clientKey}:${clientSecret}`).toString('base64');
+  const interiorData = await interiorResponse.json();
+  const interiorUrl = interiorData.url;
   
-  // Create print job request
-  const externalId = `order-${Date.now()}`;
+  // Upload cover PDF
+  const coverResponse = await fetch('https://api.lulu.com/upload-pdf', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Basic ${authCredentials}`,
+      'Content-Type': 'application/pdf'
+    },
+    body: Buffer.from(coverPdf.replace(/^data:application\/pdf;base64,/, ''), 'base64')
+  });
   
+  if (!coverResponse.ok) {
+    throw new Error(`Failed to upload cover PDF: ${coverResponse.statusText}`);
+  }
+  
+  const coverData = await coverResponse.json();
+  const coverUrl = coverData.url;
+  
+  // Create book printing job
   const book = {
-    external_id: externalId,
-    title: title,
+    external_id: `book-${Date.now()}`,
+    title: bookTitle,
     cover_source_url: coverUrl,
     interior_source_url: interiorUrl,
-    pod_package_id: "0550X0850BWSTDPB060UW444GXX", // Example value, adjust based on your book specs
+    pod_package_id: "0550X0850BWSTDPB060UW444GXX", // Standard package ID for paperback
     quantity: 1,
   };
   
+  // Format address for LuluPress
   const address = {
     name: shippingAddress.name,
     street1: shippingAddress.address.line1,
@@ -402,58 +309,32 @@ async function submitToLulupress(title, interiorUrl, coverUrl, shippingAddress) 
     postcode: shippingAddress.address.postal_code,
     state_code: shippingAddress.address.state,
     country_code: shippingAddress.address.country,
-    phone_number: "0000000000", // Example placeholder, should be provided in production
+    phone_number: shippingAddress.phone || '0000000000',
   };
   
-  // API request to Lulupress
-  // In production, implement this with actual API endpoint
-  // const response = await fetch('https://api.lulupress.com/print-jobs', {
-  //   method: 'POST',
-  //   headers: {
-  //     'Content-Type': 'application/json',
-  //     'Authorization': `Basic ${authString}`
-  //   },
-  //   body: JSON.stringify({
-  //     external_id: externalId,
-  //     shipping_level: 'GROUND',
-  //     shipping_address: address,
-  //     books: [book]
-  //   })
-  // });
-  
-  // const result = await response.json();
-  // return result;
-  
-  // Return mock response for now
-  console.log('Would submit to Lulupress API:', {
-    address,
-    book,
-    shipping_level: 'GROUND'
+  // Create print job
+  const printJobResponse = await fetch('https://api.lulu.com/print-jobs/', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Basic ${authCredentials}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      shipping_level: 'GROUND',
+      external_id: `print-job-${Date.now()}`,
+      line_items: [book],
+      shipping_address: address
+    })
   });
   
-  return { external_id: externalId, status: 'created' };
-}
-
-/**
- * Helper function to split text into lines
- */
-function splitTextIntoLines(text, maxCharsPerLine) {
-  const words = text.split(' ');
-  const lines = [];
-  let currentLine = '';
-  
-  words.forEach(word => {
-    if (currentLine.length + word.length + 1 <= maxCharsPerLine) {
-      currentLine += (currentLine ? ' ' : '') + word;
-    } else {
-      lines.push(currentLine);
-      currentLine = word;
-    }
-  });
-  
-  if (currentLine) {
-    lines.push(currentLine);
+  if (!printJobResponse.ok) {
+    throw new Error(`Failed to create print job: ${printJobResponse.statusText}`);
   }
   
-  return lines;
+  const printJobData = await printJobResponse.json();
+  
+  return {
+    success: true,
+    printOrderId: printJobData.id
+  };
 } 

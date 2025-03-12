@@ -94,27 +94,18 @@ export default async function handler(req, res) {
           console.log('Shipping Address:', shippingAddress);
           console.log('Shipping Option:', shippingOption);
 
-          // 如果书籍类型是funny-biography，则调用Supabase函数生成书籍
+          // 如果书籍类型是funny-biography，则调用generate-book函数生成书籍
           if (productId === 'funny-biography') {
             console.log('Starting to generate funny biography book');
             
             try {
-              // 调用本地的generate-book函数来生成书籍并提交给Lulupress
-              console.log('Calling local generate-book function');
-              
-              // 从客户端提供的元数据中提取存储在localStorage的书籍生成数据
-              const userDataJson = session.metadata.userData;
-              let userData;
-              
-              try {
-                userData = userDataJson ? JSON.parse(userDataJson) : null;
-              } catch (error) {
-                console.error('Error parsing userData JSON:', error);
-                userData = null;
-              }
+              // 从本地存储中获取用户数据
+              // 在实际应用中，这些数据应该存储在数据库中或通过客户端传递
+              // 这里我们假设我们接收到了来自客户端的数据
+              const userData = session.metadata.userData ? JSON.parse(session.metadata.userData) : null;
               
               if (!userData) {
-                console.warn('Missing userData in session metadata, cannot generate book');
+                console.error('Missing user data for book generation');
                 return res.status(200).json({ 
                   received: true, 
                   warning: 'Book generation skipped due to missing user data' 
@@ -123,30 +114,23 @@ export default async function handler(req, res) {
               
               // 构建请求数据
               const generateBookData = {
-                userData: userData, // 包含用户回答、作者、idea（书名）、tableOfContent
-                bookData: {
-                  orderId: orderId,
-                  title: title,
-                  format: format,
-                  shippingAddress: shippingAddress,
-                  shippingOption: shippingOption,
-                  customer: {
-                    email: expandedSession.customer_details?.email
-                  }
-                }
+                userAnswers: userData.userAnswers,
+                author: userData.author,
+                bookTitle: title || userData.bookTitle,
+                tableOfContents: userData.tableOfContents,
+                coverData: userData.coverData,
+                shippingAddress: shippingAddress
               };
 
-              // 调用本地的generate-book函数
-              const response = await fetch(
-                `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/generate-book`,
-                {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify(generateBookData)
-                }
-              );
+              // 调用本地generate-book函数生成并打印书籍
+              const generateBookUrl = new URL('/api/generate-book', process.env.BASE_URL || 'http://localhost:3000').href;
+              const response = await fetch(generateBookUrl, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(generateBookData)
+              });
 
               if (!response.ok) {
                 const errorText = await response.text();
@@ -155,6 +139,11 @@ export default async function handler(req, res) {
 
               const result = await response.json();
               console.log('Book generation initiated:', result);
+              
+              // 通知客户端清除本地存储
+              // 这将需要客户端实现一个处理此事件的机制
+              // 例如，通过WebSocket或在客户端轮询订单状态时进行清除
+              
             } catch (error) {
               console.error('Error calling generate-book function:', error);
               // 记录错误但仍返回成功给Stripe，防止重试逻辑
