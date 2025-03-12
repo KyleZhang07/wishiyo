@@ -97,6 +97,9 @@ export default async function handler(req, res) {
         productId,
         format: format || 'Standard',
         title: title || 'Custom Book',
+        binding_type: format === 'Hardcover' ? 'hardcover' : 'softcover',
+        is_color: false,
+        paper_type: 'Standard'
       },
     });
 

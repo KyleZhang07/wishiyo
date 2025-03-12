@@ -209,6 +209,63 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     console.log(`[${orderId}] Completing book generation process`);
     await updateBookStatus(supabaseUrl, supabaseKey, orderId, "completed");
     
+    // 12. 设置为准备好打印
+    console.log(`[${orderId}] Setting book ready for printing`);
+    // 获取PDF存储URL，准备LuluPress集成
+    try {
+      // 获取内部和封面PDF公共URL
+      const bookResponse = await fetch(
+        `${supabaseUrl}/rest/v1/funny_biography_books?order_id=eq.${orderId}&select=interior_pdf,cover_pdf,book_content`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseKey}`,
+            'apikey': supabaseKey
+          }
+        }
+      );
+      
+      if (bookResponse.ok) {
+        const bookData = await bookResponse.json();
+        if (bookData && bookData.length > 0) {
+          const book = bookData[0];
+          
+          // 假设PDF已经存储到可访问的URL
+          const interiorPdfUrl = book.interior_pdf || '';
+          const coverPdfUrl = book.cover_pdf || '';
+          
+          // 设置书籍为准备打印状态
+          if (interiorPdfUrl && coverPdfUrl) {
+            await fetch(
+              `${supabaseUrl}/functions/v1/update-book-data`,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${supabaseKey}`
+                },
+                body: JSON.stringify({ 
+                  orderId, 
+                  cover_source_url: coverPdfUrl,
+                  interior_source_url: interiorPdfUrl,
+                  ready_for_printing: true,
+                  // 设置页数（简单估算，每页约500字符）
+                  page_count: book.book_content ? Math.ceil(book.book_content.length / 500) : 100
+                })
+              }
+            );
+            console.log(`[${orderId}] Book set as ready for printing`);
+          } else {
+            console.warn(`[${orderId}] Missing PDF files, book not ready for printing`);
+          }
+        }
+      }
+    } catch (pdfError) {
+      console.error(`[${orderId}] Error setting book ready for printing:`, pdfError);
+      // 不抛出错误，让流程继续
+    }
+    
     console.log(`[${orderId}] Book generation process completed successfully`);
     return { success: true, message: 'Book generation completed successfully' };
   } catch (error) {
@@ -268,7 +325,7 @@ export default async function handler(req, res) {
           );
 
           // Extract book info from session metadata
-          const { productId, format, title, orderId } = session.metadata || {};
+          const { productId, format, title, orderId, binding_type, is_color, paper_type } = session.metadata || {};
           
           if (!productId) {
             console.warn('Missing productId in session metadata');
@@ -331,7 +388,16 @@ export default async function handler(req, res) {
                     orderId,
                     shipping_address: shippingAddress,
                     shipping_option: shippingOption,
-                    customer_email: expandedSession.customer_details?.email
+                    customer_email: expandedSession.customer_details?.email,
+                    shipping_level: shippingOption?.display_name === 'Express Shipping' ? 'EXPRESS' : 'GROUND',
+                    recipient_phone: expandedSession.customer_details?.phone || '',
+                    binding_type: binding_type || (format === 'Hardcover' ? 'hardcover' : 'softcover'),
+                    is_color: is_color === 'true' || false,
+                    paper_type: paper_type || 'Standard',
+                    book_size: '6x9',
+                    print_quantity: 1,
+                    ready_for_printing: false,
+                    print_attempts: 0
                   })
                 }
               );
