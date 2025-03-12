@@ -1,4 +1,3 @@
-
 export type TemplateType = {
   id: string;
   name: string;
@@ -9,20 +8,20 @@ export type TemplateType = {
     fontWeight: string;
     textAlign: 'left' | 'center' | 'right';
     offsetY: number;
-    textTransform?: 'uppercase' | 'lowercase' | 'capitalize' | 'none';
+    textTransform?: string;
   };
   subtitleStyle: {
     color: string;
     fontSize: string;
     fontWeight: string;
     fontStyle?: string;
-    textTransform?: 'uppercase' | 'lowercase' | 'capitalize' | 'none';
+    textTransform?: string;
   };
   authorStyle: {
     color: string;
     fontSize: string;
     fontWeight: string;
-    textTransform?: 'uppercase' | 'lowercase' | 'capitalize' | 'none';
+    textTransform?: string;
     letterSpacing?: string;
   };
   imageStyle: {
@@ -53,31 +52,6 @@ export type TemplateType = {
   };
 };
 
-export interface TitleStyle {
-  color: string;
-  fontSize: string;
-  fontWeight: string;
-  textAlign: "center" | "right" | "left";
-  offsetY: number;
-  textTransform?: "uppercase" | "lowercase" | "capitalize" | "none";
-}
-
-export interface SubtitleStyle {
-  color: string;
-  fontSize: string;
-  fontWeight: string;
-  fontStyle?: string;
-  textTransform?: "uppercase" | "lowercase" | "capitalize" | "none";
-}
-
-export interface AuthorStyle {
-  color: string;
-  fontSize: string;
-  fontWeight: string;
-  textTransform?: "uppercase" | "lowercase" | "capitalize" | "none";
-  letterSpacing?: string;
-}
-
 export const coverTemplates: { [key: string]: TemplateType } = {
   modern: {
     id: 'modern',
@@ -97,8 +71,7 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     },
     authorStyle: {
       color: '#9b87f5',
-      fontSize: '1rem',
-      fontWeight: 'normal'
+      fontSize: '1rem'
     },
     imageStyle: {
       filter: 'brightness(0.7)',
@@ -139,7 +112,7 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     },
     imageStyle: {
       filter: 'grayscale(100%)', 
-      opacity: '1',
+      opacity: 1,
       borderRadius: '0' 
     },
     spineStyle: {
@@ -171,8 +144,7 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     },
     authorStyle: {
       color: '#F2FCE2',
-      fontSize: '1rem',
-      fontWeight: 'normal'
+      fontSize: '1rem'
     },
     imageStyle: {
       filter: 'brightness(0.6) contrast(1.2)',
@@ -198,8 +170,6 @@ export const coverTemplates: { [key: string]: TemplateType } = {
       color: '#FFFFFF',
       fontSize: '3rem',
       fontWeight: 'bold',
-      textAlign: 'center',
-      offsetY: 0,
       textTransform: 'uppercase'
     },
     subtitleStyle: {
@@ -263,7 +233,7 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     },
     imageStyle: {
       filter: 'brightness(1.1)', 
-      opacity: '1',
+      opacity: 1,
       borderRadius: '50%' 
     },
     spineStyle: {
@@ -300,7 +270,7 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     },
     imageStyle: {
       filter: 'none',
-      opacity: '1',
+      opacity: 1,
       borderRadius: '0'
     },
     spineStyle: {
@@ -332,8 +302,7 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     },
     authorStyle: {
       color: '#ffffff',
-      fontSize: '1.8rem',
-      fontWeight: 'normal'
+      fontSize: '1.8rem'
     },
     imageStyle: {
       filter: 'none',
@@ -356,171 +325,3 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     }
   }
 };
-
-// Template interface for the default templates
-export interface Template {
-  id: string;
-  name: string;
-  backgroundColor: string;
-  backgroundImageUrl: string | null;
-  textColor: string;
-  titleStyle: TitleStyle;
-  subtitleStyle: SubtitleStyle;
-  authorStyle: AuthorStyle;
-}
-
-export const defaultTemplates: Template[] = [
-  {
-    id: "minimal",
-    name: "Minimal",
-    backgroundColor: "#FFFFFF",
-    backgroundImageUrl: null,
-    textColor: "#000000",
-    titleStyle: {
-      color: "#000000",
-      fontSize: "48px",
-      fontWeight: "bold",
-      textAlign: "center",
-      offsetY: 0,
-      textTransform: "uppercase"
-    },
-    subtitleStyle: {
-      color: "#555555",
-      fontSize: "24px",
-      fontWeight: "normal"
-    },
-    authorStyle: {
-      color: "#333333",
-      fontSize: "18px",
-      fontWeight: "normal"
-    }
-  },
-  {
-    id: "classic",
-    name: "Classic",
-    backgroundColor: "#F5F5DC",
-    backgroundImageUrl: null,
-    textColor: "#8B4513",
-    titleStyle: {
-      color: "#8B4513",
-      fontSize: "42px", 
-      fontWeight: "bold",
-      textAlign: "center",
-      offsetY: 0,
-      textTransform: "uppercase"
-    },
-    subtitleStyle: {
-      color: "#8B4513",
-      fontSize: "24px",
-      fontWeight: "normal"
-    },
-    authorStyle: {
-      color: "#8B4513",
-      fontSize: "18px",
-      fontWeight: "bold"
-    }
-  },
-  {
-    id: "modern",
-    name: "Modern",
-    backgroundColor: "#FFFFFF",
-    backgroundImageUrl: null,
-    textColor: "#000000",
-    titleStyle: {
-      color: "#000000",
-      fontSize: "52px",
-      fontWeight: "900",
-      textAlign: "center",
-      offsetY: 0
-    },
-    subtitleStyle: {
-      color: "#555555",
-      fontSize: "26px",
-      fontWeight: "300",
-      textTransform: "none"
-    },
-    authorStyle: {
-      color: "#000000",
-      fontSize: "20px",
-      fontWeight: "700",
-      letterSpacing: "2px",
-      textTransform: "uppercase"
-    }
-  },
-  {
-    id: "creative",
-    name: "Creative",
-    backgroundColor: "#E0F7FA",
-    backgroundImageUrl: null,
-    textColor: "#006064",
-    titleStyle: {
-      color: "#006064",
-      fontSize: "46px",
-      fontWeight: "bold",
-      textAlign: "center",
-      offsetY: 0,
-      textTransform: "uppercase"
-    },
-    subtitleStyle: {
-      color: "#00838F",
-      fontSize: "24px",
-      fontWeight: "normal"
-    },
-    authorStyle: {
-      color: "#006064",
-      fontSize: "18px",
-      fontWeight: "bold"
-    }
-  },
-  {
-    id: "bold",
-    name: "Bold",
-    backgroundColor: "#000000",
-    backgroundImageUrl: null,
-    textColor: "#FFFFFF",
-    titleStyle: {
-      color: "#FFFFFF",
-      fontSize: "54px",
-      fontWeight: "900",
-      textAlign: "center",
-      offsetY: 0,
-      textTransform: "uppercase"
-    },
-    subtitleStyle: {
-      color: "#FFC107",
-      fontSize: "24px",
-      fontWeight: "normal",
-      textTransform: "uppercase"
-    },
-    authorStyle: {
-      color: "#FFFFFF",
-      fontSize: "18px",
-      fontWeight: "normal"
-    }
-  },
-  {
-    id: "elegant",
-    name: "Elegant",
-    backgroundColor: "#F8F0E3",
-    backgroundImageUrl: null,
-    textColor: "#3E2723",
-    titleStyle: {
-      color: "#3E2723",
-      fontSize: "42px",
-      fontWeight: "normal",
-      textAlign: "center",
-      offsetY: 0
-    },
-    subtitleStyle: {
-      color: "#5D4037",
-      fontSize: "22px",
-      fontWeight: "normal",
-      fontStyle: "italic"
-    },
-    authorStyle: {
-      color: "#3E2723",
-      fontSize: "18px",
-      fontWeight: "bold"
-    }
-  }
-];

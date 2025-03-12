@@ -1,13 +1,9 @@
-
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
 import { Check } from 'lucide-react';
-import { v4 as uuidv4 } from 'uuid';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import CanvasCoverPreview from '@/components/cover-generator/LoveStoryCoverPreview';
+import { useToast } from '@/components/ui/use-toast';
 
 // 封面类型
 interface CoverFormat {
@@ -22,18 +18,11 @@ interface CoverFormat {
 const FormatStep = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [authorName, setAuthorName] = useState('');
-  const [coverTitle, setCoverTitle] = useState('');
-  const [subtitle, setSubtitle] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [selectedFormat, setSelectedFormat] = useState<string>('softcover');
-  const coverCanvasRef = useRef<HTMLDivElement>(null);
-  const spineCanvasRef = useRef<HTMLDivElement>(null);
   
   // 硬封面和软封面的示例图片
   const hardcoverImage = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wgARCADIASwDAREAAhEBAxEB/8QAHAABAAIDAQEBAAAAAAAAAAAAAAUGAwQHAggB/8QAGwEBAAIDAQEAAAAAAAAAAAAAAAMEAQIFBgf/2gAMAwEAAhADEAAAAfqkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARGfUfNbj48/oHyfoWVkpvTm9bwuixrS2trCy1tLS3NLe0tza3Nrc2tza2NrY3tjowdjGf0cZfZxl9HGXucZPZxk+HGP6cYvxxh/nCH+cIP5xgZcjHk5GDJcGHLdmDNeGDNfGDLfGDJkNjFltTFktzDkuDBluDBmu1gZbtYGW7WBku0cZLtHGS6RhjvUUYrpHGC9Rxfv0R869R/QOW1J/K1YPu+tNp2YPvp1Vj0e4AAAAAAAAAAR2pxfB5/H9Z5HQj52r+98/c+jh651jL1WEPRIxgCM16jiRsFfGDLcGHJcmHJcmLLcGDLdmDLdmDJdLEyXRiyXKyMdytDHcrYx3RiYsk0Y8k0ZMs0Y8s0YclxHGR4YGR4YGHIcRhjuY4w5DmIMOQ6ijDkOogw5DqIL+S7jC/kuo4vZLuOL2S6ji/c+xhsvIw2XkUX/Po4v8Ppw+jDi+kHktjk+1v8pp+5+nzcdFd9L2wAAAAAAAAAAARexxNT5zmtLqaPK3q0k5/2I1o7Sx1MAAAAAAAAAAYazTBGmYPO7Zg87smDzuyYNO7Jgk5pGCTmkYJO56QavwaDV+DQavwSDV+CQavwSDV+CQavwSDV+CQS/wASIN74fAk3vh0CXf8Ah0CXT+HwJNP4fAk0/h8CXS+HwJdL4fAljm0Cfc8lqQt6uJKvlB6HnT61zvv9dPV3vfDztMAAAAAAAAAAAAAEbpcNzvmcj1fMmHEQGkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANea4INn6FHS5eW17jGXrh7PX8yYcTAaQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABrvdLC1/Z07PTl5uj1kJ6YAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIrs4aK88iK++HHOcHHesHF+2HEfIHDfQHB/YGn9waX3Bo/gGh+IZ/5BnfoGd+wZn8Bl/0GV/oe/8Ao9X0/pe/6Xt+l7fpe36Xt+l7fpe36Xt+l7fpe36Xr+l6/pev6Xp+l6fpen6Xp+l6fpen6Xp+l6fpWn/9k=";
   
-  const softcoverImage = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wgARCADIASwDAREAAhEBAxEB/8QAHAAAAgMBAQEBAAAAAAAAAAAABAUBAgMGBwAI/8QAGgEAAwEBAQEAAAAAAAAAAAAAAAIDBAEFBv/aAAwDAQACEAMQAAAB9UAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVKEBJtlolLrRCtdNDOL2DMXtGUvaMhe2ZAvaAhe4ZAd4xA75hB3zADwDCDvmAHgGEHgGEHhGAHhGAHhGAfBGAPiMI+IxD4jEPkMA+QwD5DAPoMY+gxj6jEPqMY+wxi9GQXY0AvRuEL0bhC9G4Re1cIXtXBF7dgRe3dEXt3RFbt4Be7eDObzGTOZ1mTGdhkw2dgMH1GrEelzZqdFmTf0GFO9Y2OtoeXJsXSqTjBUNxgoFwoEAsShcJhcJhcJxILhKKBYJRQLhKJhcIxMKxKJxWJROKxMJxSJhUJhSJxOJxSJhQJxQJhQJxQJhUJRQJRQJBQJBoIxoJBoJBoIxoIxoIxsIhsIhsIhqIxqIxsIRsIRsIRsIRsIRsIRsIRuIBuOGc2VHOOm1c5ps6nF3OM07vUPQNxsdHnLuPUrDg0G40MxudDMaGwzGh0MxofDMZnwzGh4NBofDUZHg2GA0GYwGgzGIyGYxGYyGYxGYyGYyGIyGIxGIxGIxGQxGQxGQxGIyGIyGIxGIyGIyGIyGIxGIzGI0GIzGIzGIzGIzGIzGAwGAwGA0GAwGQyGQyGQ2GQyGQ2GQ2GQ2GQyGQyGg3GQ5GwyHI4G45HI5HI4HI5HI5HQ5HI5G46HI6HI6HIbnQbnY5HY7G52Ox0dD/9k=";
+  const softcoverImage = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wgARCADIASwDAREAAhEBAxEB/8QAHAAAAgMBAQEBAAAAAAAAAAAABAUBAgMGBwAI/8QAGgEAAwEBAQEAAAAAAAAAAAAAAAIDBAEFBv/aAAwDAQACEAMQAAAB9UAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVKEBJtlolLrRCtdNDOL2DMXtGUvaMhe2ZAvaAhe4ZAd4xA75hB3zADwDCDvmAHgGEHgGEHhGAHhGAHhGAfBGAPiMI+IxD4jEPkMA+QwD5DAPoMY+gxj6jEPqMY+wxi9GQXY0AvRuEL0bhC9G4Re1cIXtXBF7dgRe3dEXt3RFbt4Be7eDObzGTOZ1mTGdhkw2dgMH1GrEelzZqdFmTf0GFO9Y2OtoeXJsXSqTjBUNxgoFwoEAsShcJhcJhcJxILhKKBYJRQLhKJhcIxMKxKJxWJROKxMJxSJhUJhSJxOJxSJhQJxQJhQJxQJhUJRQJRQJBQJBoIxoJBoJBoIxoIxoIxsIhsIhsIhqIxqIxsIRsIRsIRsIRsIRsIRsIRuIBuOGc2VHOOm1c5ps6nF3OM07vUPQNxsdHnLuPUrDg0G40MxudDMaGwzGh0MxofDMZnwzGh4NBofDUZHg2GA0GYwGgzGIyGYxGYyGYxGYyGYyGIyGIxGIxGIxGQxGQxGQxGIyGIyGIxGIyGIyGIyGIxGIzGI0GIzGIzGIzGIzGIzGAzGAwGA0GAwGQyGQyGQ2GQyGQ2GQ2GQ2GQyGQyGg3GQ5GwyHI4G45HI5HI4HI5HI5HQ5HI5G46HI6HI6HIbnQbnY5HY7G52Ox0dD/9k=";
 
   // 可选的封面格式
   const coverFormats: CoverFormat[] = [
@@ -54,6 +43,10 @@ const FormatStep = () => {
     }
   ];
   
+  // 默认选择软封面
+  const [selectedFormat, setSelectedFormat] = useState<string>('softcover');
+  const [isProcessing, setIsProcessing] = useState(false);
+  
   // 处理格式选择
   const handleFormatSelect = (formatId: string) => {
     setSelectedFormat(formatId);
@@ -65,28 +58,6 @@ const FormatStep = () => {
       localStorage.setItem('loveStoryFormatPrice', selectedFormatObj.price.toString());
     }
   };
-
-  const captureCanvasAsImage = async (canvasRef: React.RefObject<HTMLDivElement>): Promise<string | null> => {
-    if (!canvasRef.current) {
-      console.error('Canvas reference not found');
-      return null;
-    }
-    
-    try {
-      // Find the canvas element inside the div
-      const canvasElement = canvasRef.current.querySelector('canvas');
-      if (!canvasElement) {
-        throw new Error('Canvas element not found inside the ref');
-      }
-      
-      // Get base64 data URL
-      const dataUrl = canvasElement.toDataURL('image/jpeg', 0.9);
-      return dataUrl;
-    } catch (error) {
-      console.error('Error capturing canvas image:', error);
-      return null;
-    }
-  };
   
   // 处理结账
   const handleCheckout = async () => {
@@ -95,76 +66,48 @@ const FormatStep = () => {
     if (selectedFormatObj) {
       setIsProcessing(true);
       
+      // 保存书籍信息到localStorage
+      const bookTitle = 'THE MAGIC IN ' + (localStorage.getItem('loveStoryPersonName') || 'My Love');
+      localStorage.setItem('loveStoryBookTitle', bookTitle);
+      localStorage.setItem('loveStoryBookFormat', selectedFormatObj.name);
+      localStorage.setItem('loveStoryBookPrice', selectedFormatObj.price.toString());
+      
       try {
-        // Capture cover canvas image
-        const coverImageData = await captureCanvasAsImage(coverCanvasRef);
+        // 调用Stripe支付API
+        const response = await fetch('/api/create-checkout-session', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            productId: 'love-story',
+            title: bookTitle,
+            format: selectedFormatObj.name,
+            price: selectedFormatObj.price.toString(),
+            quantity: 1
+          }),
+        });
         
-        if (!coverImageData) {
-          throw new Error('Failed to capture cover image. Canvas not found.');
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
         }
-
-        // Capture spine canvas image (if available)
-        const spineImageData = await captureCanvasAsImage(spineCanvasRef);
-
-        // Generate a unique order ID
-        const orderId = uuidv4();
-        localStorage.setItem('currentOrderId', orderId);
         
-        // 保存书籍信息到localStorage
-        const bookTitle = 'THE MAGIC IN ' + (localStorage.getItem('loveStoryPersonName') || 'My Love');
-        localStorage.setItem('loveStoryBookTitle', bookTitle);
-        localStorage.setItem('loveStoryBookFormat', selectedFormatObj.name);
-        localStorage.setItem('loveStoryBookPrice', selectedFormatObj.price.toString());
+        const { url, orderId } = await response.json();
+        
+        // 保存订单ID
         localStorage.setItem('loveStoryOrderId', orderId);
         
-        // Prepare book data 
-        const bookData = {
-          title: bookTitle,
-          format: selectedFormatObj.name,
-          price: selectedFormatObj.price,
-          personName: localStorage.getItem('loveStoryPersonName') || '',
-          partnerPhoto: localStorage.getItem('loveStoryPartnerPhoto') || '',
-          questions: JSON.parse(localStorage.getItem('loveStoryAnswers') || '[]'),
-          selectedIdea: localStorage.getItem('loveStorySelectedIdea') || '0',
-          ideas: JSON.parse(localStorage.getItem('loveStoryGeneratedIdeas') || '[]'),
-          moments: JSON.parse(localStorage.getItem('loveStoryMoments') || '[]'),
-          imageTexts: JSON.parse(localStorage.getItem('loveStoryImageTexts') || '[]'),
-          style: localStorage.getItem('loveStoryStyle') || '',
-          imagePrompts: JSON.parse(localStorage.getItem('loveStoryImagePrompts') || '[]')
-        };
-        
-        console.log('Uploading book data to Supabase:', { orderId, formatId: selectedFormat, price: selectedFormatObj.price });
-        
-        try {
-          // Upload data and images to Supabase
-          const { data, error } = await supabase.functions.invoke('save-book-data', {
-            body: {
-              orderId,
-              bookData,
-              coverImage: coverImageData,
-              spineImage: spineImageData,
-              clientId: 'anonymous', // We could add user id here if we had authentication
-              productType: 'love-story'
-            }
-          });
-
-          if (error) {
-            throw new Error(`Supabase function error: ${error.message}`);
-          }
-
-          console.log('Book data saved successfully:', data);
-          
-          // Redirect to success page
-          navigate(`/order-success?orderId=${orderId}`);
-        } catch (uploadError: any) {
-          console.error('Error uploading to Supabase:', uploadError);
-          throw new Error(`Failed to save book data: ${uploadError.message}`);
+        // 重定向到Stripe结账页面
+        if (url) {
+          window.location.href = url;
+        } else {
+          throw new Error('No checkout URL returned');
         }
-      } catch (error: any) {
+      } catch (error) {
         console.error('Checkout error:', error);
         toast({
           title: "Checkout Error",
-          description: error.message || "An error occurred during checkout. Please try again.",
+          description: "An error occurred during checkout. Please try again.",
           variant: "destructive"
         });
         setIsProcessing(false);
@@ -178,24 +121,6 @@ const FormatStep = () => {
     if (savedFormat) {
       setSelectedFormat(savedFormat);
     }
-    
-    const personName = localStorage.getItem('loveStoryPersonName') || 'My Love';
-    setCoverTitle('THE MAGIC IN ' + personName);
-    
-    const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
-    const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
-    
-    if (savedIdeas && savedIdeaIndex) {
-      try {
-        const ideas = JSON.parse(savedIdeas);
-        const selectedIdea = ideas[parseInt(savedIdeaIndex)];
-        if (selectedIdea && selectedIdea.description) {
-          setSubtitle(selectedIdea.description);
-        }
-      } catch (error) {
-        console.error('Error parsing saved ideas:', error);
-      }
-    }
   }, []);
   
   return (
@@ -207,20 +132,6 @@ const FormatStep = () => {
       totalSteps={9}
     >
       <div className="max-w-4xl mx-auto">
-        {/* Hidden canvas for capturing the cover image */}
-        <div className="hidden">
-          <div ref={coverCanvasRef}>
-            <CanvasCoverPreview 
-              coverTitle={coverTitle}
-              subtitle={subtitle || ''}
-              authorName={authorName || ''}
-            />
-          </div>
-          <div ref={spineCanvasRef}>
-            {/* Spine canvas would go here if we implement it */}
-          </div>
-        </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* 封面格式选项 */}
           {coverFormats.map((format) => (
@@ -293,7 +204,7 @@ const FormatStep = () => {
             onClick={handleCheckout}
             disabled={isProcessing}
           >
-            {isProcessing ? 'Processing...' : 'Complete My Order'}
+            {isProcessing ? 'Processing...' : 'Checkout'}
           </Button>
         </div>
       </div>
