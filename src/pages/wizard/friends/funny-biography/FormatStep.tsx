@@ -338,7 +338,7 @@ const FormatStep = () => {
             const timerId = setTimeout(() => {
               console.log('Data save operation timeout reached, continuing with redirect');
               resolve(false);
-            }, 3000);
+            }, 10000);
             
             // 如果保存成功完成，取消超时
             savePromise.then(() => {
