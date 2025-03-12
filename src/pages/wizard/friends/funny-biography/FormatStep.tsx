@@ -163,21 +163,27 @@ const FormatStep = () => {
               chapters: chapters || toc, // 优先使用chapters，如果不存在则使用toc
               answers: answers, // 添加answers字段
               status: 'created',
-              timestamp: new Date().toISOString()
+              timestamp: new Date().toISOString(),
+              // Upload PDF images to database
+              images: {
+                frontCover: localStorage.getItem('funnyBiographyFrontCoverImage') || '',
+                spine: localStorage.getItem('funnyBiographySpineImage') || '',
+                backCover: localStorage.getItem('funnyBiographyBackCoverImage') || ''
+              }
             })
             .select();
           
           if (error) {
-            console.error('创建书籍记录错误:', error);
-            throw new Error('无法在数据库中创建书籍记录');
+            console.error('Database error when creating book record:', error);
+            throw new Error('Unable to create book record in database');
           }
           
-          console.log('书籍记录已创建:', data);
+          console.log('Book record created:', data);
           
         } catch (dbError) {
-          console.error('数据库错误:', dbError);
-          // 继续处理结账，尽管数据库出错
-          // 我们将依靠startBookGeneration函数在必要时重试
+          console.error('Database error:', dbError);
+          // Continue with checkout despite database error
+          // We'll rely on startBookGeneration function to retry if necessary
         }
         
         // 开始并行处理：1. 生成书籍内容 2. 生成封面PDF
@@ -223,7 +229,7 @@ const FormatStep = () => {
             const contentResult = await contentResponse.json();
             
             if (!contentResponse.ok || !contentResult.success) {
-              throw new Error('内容生成失败');
+              throw new Error('Content generation failed');
             }
             
             // 更新书籍内容到数据库
@@ -254,7 +260,7 @@ const FormatStep = () => {
             
             const interiorResult = await interiorResponse.json();
             if (!interiorResponse.ok || !interiorResult.success) {
-              throw new Error('内页PDF生成失败');
+              throw new Error('Interior PDF generation failed');
             }
             
             // 更新内页PDF到数据库
@@ -277,7 +283,7 @@ const FormatStep = () => {
             const coverResponse = await coverPromise;
             const coverResult = await coverResponse.json();
             if (!coverResult.success) {
-              throw new Error('封面PDF生成失败');
+              throw new Error('Cover PDF generation failed');
             }
             
             // 更新封面PDF到数据库
@@ -299,9 +305,9 @@ const FormatStep = () => {
             // 7. 所有处理完成，更新状态为"完成"
             await updateBookStatus(orderId, "completed");
             
-            console.log('书籍生成流程已成功完成');
+            console.log('Book generation process completed successfully');
           } catch (error) {
-            console.error('书籍生成过程中出错:', error);
+            console.error('Error during book generation process:', error);
             // 更新状态为"失败"
             await updateBookStatus(orderId, "failed");
           }

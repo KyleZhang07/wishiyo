@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
 import CanvasCoverPreview from '@/components/cover-generator/CanvasCoverPreview';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { jsPDF } from 'jspdf';
 
 // 定义赞美语接口
 interface Praise {
@@ -52,7 +53,7 @@ const stylePresets = [
     font: 'times',
     template: 'pastel-beige',
     layout: 'classic-centered',
-    description: '粉色背景，紫色文字'
+    description: 'Pink background with purple text'
   }
 ];
 
@@ -67,6 +68,15 @@ const FunnyBiographyGenerateStep = () => {
   const [imageScale, setImageScale] = useState(100);
   const [praises, setPraises] = useState<Praise[]>([]);
   const { toast } = useToast();
+  
+  // PDF状态
+  const [frontCoverPdf, setFrontCoverPdf] = useState<string | null>(null);
+  const [backCoverPdf, setBackCoverPdf] = useState<string | null>(null);
+  const [spinePdf, setSpinePdf] = useState<string | null>(null);
+  const [pdfGenerating, setPdfGenerating] = useState(false);
+  
+  // Canvas引用，用于生成PDF
+  const canvasPdfContainerRef = useRef<HTMLDivElement>(null);
 
   // Get the current style preset
   const getCurrentStyle = () => {
@@ -79,6 +89,15 @@ const FunnyBiographyGenerateStep = () => {
     const savedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
     const savedPhotos = localStorage.getItem('funnyBiographyPhoto');
     const savedStyle = localStorage.getItem('funnyBiographySelectedStyle');
+    
+    // 尝试加载已保存的PDF
+    const savedFrontCoverPdf = localStorage.getItem('funnyBiographyFrontCoverImage');
+    const savedBackCoverPdf = localStorage.getItem('funnyBiographyBackCoverImage');
+    const savedSpinePdf = localStorage.getItem('funnyBiographySpineImage');
+    
+    if (savedFrontCoverPdf) setFrontCoverPdf(savedFrontCoverPdf);
+    if (savedBackCoverPdf) setBackCoverPdf(savedBackCoverPdf);
+    if (savedSpinePdf) setSpinePdf(savedSpinePdf);
 
     if (savedAuthor) {
       setAuthorName(savedAuthor);
@@ -110,6 +129,18 @@ const FunnyBiographyGenerateStep = () => {
       handleImageProcessing(savedPhotos);
     }
   }, []);
+  
+  // When style or other related parameters change, generate PDF
+  useEffect(() => {
+    // Only generate PDF when all necessary data is ready
+    if (coverTitle && authorName && coverImage) {
+      // Check if we already have PDFs, don't regenerate if we're returning to this step
+      const hasExistingPdfs = frontCoverPdf && backCoverPdf && spinePdf;
+      if (!hasExistingPdfs) {
+        generatePdfsFromCanvas();
+      }
+    }
+  }, [selectedStyle, coverTitle, subtitle, authorName, coverImage, imagePosition, imageScale]);
 
   const handleImageProcessing = async (imageUrl: string) => {
     try {
@@ -141,11 +172,101 @@ const FunnyBiographyGenerateStep = () => {
   };
 
   const handleStyleChange = (styleId: string) => {
+    // Clear previous PDFs
+    setFrontCoverPdf(null);
+    setBackCoverPdf(null);
+    setSpinePdf(null);
+    
+    // Remove from localStorage
+    localStorage.removeItem('funnyBiographyFrontCoverImage');
+    localStorage.removeItem('funnyBiographyBackCoverImage');
+    localStorage.removeItem('funnyBiographySpineImage');
+    
+    // Set new style
     setSelectedStyle(styleId);
     localStorage.setItem('funnyBiographySelectedStyle', styleId);
   };
+  
+  // Generate PDF from Canvas and save
+  const generatePdfsFromCanvas = async () => {
+    setPdfGenerating(true);
+    
+    // Ensure Canvas is rendered
+    setTimeout(() => {
+      try {
+        if (!canvasPdfContainerRef.current) {
+          console.error('Canvas container not found');
+          setPdfGenerating(false);
+          return;
+        }
+        
+        // Get all Canvas elements
+        const canvases = canvasPdfContainerRef.current.querySelectorAll('canvas');
+        if (canvases.length < 3) {
+          console.error('Not enough canvas elements found');
+          setPdfGenerating(false);
+          return;
+        }
+        
+        // Front cover
+        const frontCoverCanvas = canvases[0];
+        const frontPdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'px',
+          format: [frontCoverCanvas.width, frontCoverCanvas.height]
+        });
+        const frontImgData = frontCoverCanvas.toDataURL('image/jpeg', 1.0);
+        frontPdf.addImage(frontImgData, 'JPEG', 0, 0, frontCoverCanvas.width, frontCoverCanvas.height);
+        const frontPdfData = frontPdf.output('datauristring');
+        setFrontCoverPdf(frontPdfData);
+        localStorage.setItem('funnyBiographyFrontCoverImage', frontPdfData);
+        
+        // Spine
+        const spineCanvas = canvases[1];
+        const spinePdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'px',
+          format: [spineCanvas.width, spineCanvas.height]
+        });
+        const spineImgData = spineCanvas.toDataURL('image/jpeg', 1.0);
+        spinePdf.addImage(spineImgData, 'JPEG', 0, 0, spineCanvas.width, spineCanvas.height);
+        const spinePdfData = spinePdf.output('datauristring');
+        setSpinePdf(spinePdfData);
+        localStorage.setItem('funnyBiographySpineImage', spinePdfData);
+        
+        // Back cover
+        const backCoverCanvas = canvases[2];
+        const backPdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'px',
+          format: [backCoverCanvas.width, backCoverCanvas.height]
+        });
+        const backImgData = backCoverCanvas.toDataURL('image/jpeg', 1.0);
+        backPdf.addImage(backImgData, 'JPEG', 0, 0, backCoverCanvas.width, backCoverCanvas.height);
+        const backPdfData = backPdf.output('datauristring');
+        setBackCoverPdf(backPdfData);
+        localStorage.setItem('funnyBiographyBackCoverImage', backPdfData);
+        
+        console.log('PDFs generated successfully');
+      } catch (error) {
+        console.error('Error generating PDFs:', error);
+        toast({
+          variant: "destructive",
+          title: "Error generating PDFs",
+          description: "Failed to convert canvas to PDF. Please try again."
+        });
+      } finally {
+        setPdfGenerating(false);
+      }
+    }, 500); // Give Canvas some time to render
+  };
 
   const handleGenerateBook = () => {
+    // If PDFs haven't been generated yet, try generating once
+    if (!frontCoverPdf || !backCoverPdf || !spinePdf) {
+      generatePdfsFromCanvas();
+    }
+    
     // Save current style selection to localStorage
     localStorage.setItem('funnyBiographySelectedStyle', selectedStyle);
     
@@ -164,7 +285,8 @@ const FunnyBiographyGenerateStep = () => {
       totalSteps={6}
     >
       <div className="space-y-8">
-        <div className="mx-auto flex justify-center">
+        {/* Canvas container for generating PDF, not directly displayed */}
+        <div className="mx-auto flex justify-center" ref={canvasPdfContainerRef} style={{ position: 'absolute', left: '-9999px', visibility: 'hidden' }}>
           <CanvasCoverPreview
             coverTitle={coverTitle}
             subtitle={subtitle}
@@ -179,7 +301,49 @@ const FunnyBiographyGenerateStep = () => {
             onImageAdjust={handleImageAdjust}
             scaleFactor={0.45}
             praises={praises}
+            previewMode={false}
           />
+        </div>
+        
+        {/* PDF preview area */}
+        <div className="mx-auto flex justify-center">
+          {pdfGenerating ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="animate-spin h-8 w-8 border-4 border-[#F6C744] border-t-transparent rounded-full"></div>
+              <span className="ml-3">Generating PDF...</span>
+            </div>
+          ) : frontCoverPdf ? (
+            <div className="flex items-start space-x-4">
+              <div className="flex flex-col items-center">
+                <p className="text-sm text-gray-600 mb-2">Front Cover</p>
+                <iframe 
+                  src={frontCoverPdf} 
+                  className="w-[300px] h-[450px] border shadow-md"
+                  title="Front Cover PDF"
+                />
+              </div>
+              <div className="flex flex-col items-center">
+                <p className="text-sm text-gray-600 mb-2">Spine</p>
+                <iframe 
+                  src={spinePdf || ''} 
+                  className="w-[40px] h-[450px] border shadow-md"
+                  title="Spine PDF"
+                />
+              </div>
+              <div className="flex flex-col items-center">
+                <p className="text-sm text-gray-600 mb-2">Back Cover</p>
+                <iframe 
+                  src={backCoverPdf || ''} 
+                  className="w-[300px] h-[450px] border shadow-md"
+                  title="Back Cover PDF"
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-64">
+              <p>Preparing cover preview...</p>
+            </div>
+          )}
         </div>
         
         <div className="space-y-4">
@@ -245,8 +409,9 @@ const FunnyBiographyGenerateStep = () => {
           <Button 
             className="w-full py-6 text-lg bg-[#F6C744] hover:bg-[#E5B73E] text-white"
             onClick={handleGenerateBook}
+            disabled={pdfGenerating}
           >
-            Generate Your Book
+            {pdfGenerating ? 'Generating PDF...' : 'Generate Your Book'}
           </Button>
         </div>
       </div>
