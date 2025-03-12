@@ -21,9 +21,9 @@ export const getClientId = (): string => {
 };
 
 /**
- * Ensures that the funny_biography_books table exists
+ * Verifies that the funny_biography_books table exists
  * This is needed to store book data before generating PDFs
- * @returns Boolean indicating if the table exists or was created successfully
+ * @returns Boolean indicating if table exists
  */
 export const ensureFunnyBiographyTableExists = async (): Promise<boolean> => {
   try {
@@ -36,25 +36,15 @@ export const ensureFunnyBiographyTableExists = async (): Promise<boolean> => {
       .limit(1);
     
     if (queryError) {
-      console.log('Table funny_biography_books does not exist, creating it...');
-      
-      // Create the table using SQL - typically this would be done in a migration
-      // but for demonstration we'll do it here
-      const { error: createError } = await supabase.rpc('create_funny_biography_table', {});
-      
-      if (createError) {
-        console.error('Error creating table:', createError);
-        return false;
-      }
-      
-      console.log('Table funny_biography_books created successfully');
-    } else {
-      console.log('Table funny_biography_books already exists');
+      console.error('Table funny_biography_books does not exist or cannot be accessed:', queryError);
+      console.error('This table should be created by migrations. Please check your Supabase setup.');
+      return false;
     }
     
+    console.log('Table funny_biography_books exists and is accessible');
     return true;
   } catch (error) {
-    console.error('Error ensuring table exists:', error);
+    console.error('Error checking table existence:', error);
     return false;
   }
 };

@@ -329,13 +329,39 @@ const FormatStep = () => {
         // 保存订单ID
         localStorage.setItem('funnyBiographyOrderId', orderId);
         
-        // 在重定向前，启动后台保存过程
-        // 使用setTimeout和Promise.race让保存过程在后台进行，不阻塞用户跳转
-        setTimeout(() => {
-          saveDataToSupabase(orderId, bookTitle).catch(err => {
-            console.error('Background save error:', err);
+        // 使用更可靠的方式在后台保存数据
+        try {
+          const savePromise = saveDataToSupabase(orderId, bookTitle);
+          
+          // 创建一个超时Promise，确保在3秒内完成保存或继续跳转
+          const timeoutPromise = new Promise((resolve) => {
+            const timerId = setTimeout(() => {
+              console.log('Data save operation timeout reached, continuing with redirect');
+              resolve(false);
+            }, 3000);
+            
+            // 如果保存成功完成，取消超时
+            savePromise.then(() => {
+              clearTimeout(timerId);
+              resolve(true);
+            }).catch(err => {
+              console.error('Background save error:', err);
+              resolve(false);
+            });
           });
-        }, 0);
+          
+          // 使用navigator.sendBeacon作为备用方法保存订单ID
+          const beaconData = new FormData();
+          beaconData.append('orderId', orderId);
+          beaconData.append('bookTitle', bookTitle);
+          navigator.sendBeacon('/api/save-book-data', beaconData);
+          
+          // 等待保存完成或超时
+          await timeoutPromise;
+        } catch (err) {
+          console.error('Error setting up background save:', err);
+          // 出错时仍继续跳转，不中断用户体验
+        }
         
         // 重定向到Stripe结账页面
         if (url) {
