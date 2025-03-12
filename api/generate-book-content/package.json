@@ -1,0 +1,9 @@
+{
+  "name": "generate-book-content",
+  "version": "1.0.0",
+  "description": "Generate book content using OpenAI",
+  "main": "index.js",
+  "dependencies": {
+    "isomorphic-fetch": "^3.0.0"
+  }
+}

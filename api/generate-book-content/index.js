@@ -1,26 +1,24 @@
-import fetch from 'node-fetch';
+// CommonJS format for Vercel serverless functions
+const fetch = require('isomorphic-fetch');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-export const config = {
-  api: {
-    bodyParser: true,
-    externalResolver: true, // Allows external API calls
-  },
-  maxDuration: 300, // 5 minutes (adjust based on your Vercel plan)
+// API configuration
+module.exports = {
+  config: {
+    api: {
+      bodyParser: true,
+      externalResolver: true, // Allows external API calls
+    },
+    maxDuration: 300, // 5 minutes (adjust based on your Vercel plan)
+  }
 };
 
-// Define book chapter structure
-const BookChapter = {
-  chapterNumber: 0,
-  title: '',
-  sections: []
-};
-
-export default async function handler(req, res) {
+// Main handler function
+module.exports = async function handler(req, res) {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -195,7 +193,7 @@ Format your response as JSON with this structure:
 
     // Update the database with the generated content
     const updateResponse = await fetch(
-      `${SUPABASE_URL}/rest/v1/funny_biography_books`,
+      `${SUPABASE_URL}/rest/v1/funny_biography_books?order_id=eq.${orderId}`,
       {
         method: 'PATCH',
         headers: {

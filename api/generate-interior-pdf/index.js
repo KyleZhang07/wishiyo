@@ -1,22 +1,28 @@
-import { jsPDF } from "jspdf";
-import { autoTable } from "jspdf-autotable";
-import fetch from 'node-fetch';
+// CommonJS format for Vercel serverless functions
+const jspdf = require("jspdf");
+const autotable = require("jspdf-autotable");
+const fetch = require('isomorphic-fetch');
 
+// CORS headers
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '10mb', // Increase size limit for interior PDF generation
+// API configuration
+module.exports = {
+  config: {
+    api: {
+      bodyParser: {
+        sizeLimit: '10mb', // Increase size limit for interior PDF generation
+      },
     },
-  },
-  maxDuration: 300, // 5 minutes (adjust based on your Vercel plan)
+    maxDuration: 300, // 5 minutes (adjust based on your Vercel plan)
+  }
 };
 
-export default async function handler(req, res) {
+// Main handler function
+module.exports = async function handler(req, res) {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -80,7 +86,7 @@ export default async function handler(req, res) {
     const pageWidth = 6 + (bleed * 2);
     const pageHeight = 9 + (bleed * 2);
     
-    const pdf = new jsPDF({
+    const pdf = new jspdf.jsPDF({
       orientation: 'portrait',
       unit: 'in',
       format: [pageWidth, pageHeight]
@@ -200,7 +206,7 @@ export default async function handler(req, res) {
     
     // Update the database with the PDF data
     const updateResponse = await fetch(
-      `${SUPABASE_URL}/rest/v1/funny_biography_books`,
+      `${SUPABASE_URL}/rest/v1/funny_biography_books?order_id=eq.${orderId}`,
       {
         method: 'PATCH',
         headers: {
@@ -210,8 +216,7 @@ export default async function handler(req, res) {
           'Prefer': 'return=minimal'
         },
         body: JSON.stringify({
-          interior_pdf: pdfOutput,
-          order_id: `eq.${orderId}` // Filter condition
+          interior_pdf: pdfOutput
         })
       }
     );

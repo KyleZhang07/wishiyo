@@ -1,11 +1,13 @@
-import Stripe from 'stripe';
-import fetch from 'node-fetch';
+const Stripe = require('stripe');
+const fetch = require('isomorphic-fetch');
 
 // API config for Vercel environment
-export const config = {
-  api: {
-    bodyParser: false, // Disable default bodyParser
-  },
+module.exports = {
+  config: {
+    api: {
+      bodyParser: false, // Disable default bodyParser
+    },
+  }
 };
 
 console.log("===== WEBHOOK FILE LOADED =====");
@@ -624,7 +626,7 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
   }
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   console.log("===== WEBHOOK CALLED =====");
   if (req.method !== 'POST') {
     console.log("Not a POST request:", req.method);

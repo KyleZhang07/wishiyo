@@ -1,19 +1,24 @@
-import { jsPDF } from "jspdf";
+// CommonJS format for Vercel serverless functions
+const jspdf = require("jspdf");
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '10mb', // Increase size limit for larger images
+// Export config for Vercel
+module.exports = {
+  config: {
+    api: {
+      bodyParser: {
+        sizeLimit: '10mb', // Increase size limit for larger images
+      },
     },
-  },
+  }
 };
 
-export default async function handler(req, res) {
+// Main handler function
+module.exports = async function handler(req, res) {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -35,10 +40,10 @@ export default async function handler(req, res) {
 
     console.log('Received cover image URLs for PDF generation');
 
-    // 从URL获取图片数据
+    // Function to get image data from URL
     async function getImageFromUrl(imageUrl) {
       try {
-        // 处理已经是base64数据的情况
+        // Handle data URI format
         if (imageUrl.startsWith('data:')) {
           console.log(`Image is already in data URI format: ${imageUrl.substring(0, 30)}...`);
           return imageUrl;
@@ -51,15 +56,13 @@ export default async function handler(req, res) {
           throw new Error(`Failed to fetch image from ${imageUrl}: ${response.status} ${response.statusText}`);
         }
         
-        // 获取内容类型
+        // Get content type
         const contentType = response.headers.get('content-type') || 'image/jpeg';
         console.log(`Content type of fetched image: ${contentType}`);
         
-        // 如果是PDF，我们需要做特殊处理：将其转换为图像
+        // Special handling for PDF content
         if (contentType.includes('application/pdf')) {
-          console.log('Image URL points to a PDF file, converting to image for PDF generation...');
-          
-          // 直接返回URL，jsPDF会处理
+          console.log('Image URL points to a PDF file, returning directly');
           return imageUrl;
         }
         
@@ -73,7 +76,7 @@ export default async function handler(req, res) {
       }
     }
 
-    // 获取所有图片的base64数据
+    // Get all image data
     console.log('Downloading images from URLs...');
     const frontCoverData = await getImageFromUrl(frontCover);
     const spineData = await getImageFromUrl(spine);
@@ -82,7 +85,7 @@ export default async function handler(req, res) {
 
     // Create a new PDF with appropriate dimensions
     // Standard book cover dimensions with bleed (8.5 x 11 inches plus bleed)
-    const pdf = new jsPDF({
+    const pdf = new jspdf.jsPDF({
       orientation: 'landscape',
       unit: 'in',
       format: [17 + 0.25, 11 + 0.25] // Width (front + spine + back) x Height with 0.125" bleed on each side
@@ -129,6 +132,7 @@ export default async function handler(req, res) {
     const pdfOutput = pdf.output('datauristring');
     console.log('PDF generation successful, output length:', pdfOutput.length);
     
+    // Return success response
     return res.status(200).json({ 
       success: true, 
       pdfData: pdfOutput
