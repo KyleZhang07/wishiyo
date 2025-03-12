@@ -89,6 +89,42 @@ const FormatStep = () => {
       localStorage.setItem('funnyBiographyBookPrice', selectedFormatObj.price.toString());
       
       try {
+        // 收集书籍生成所需的用户数据
+        const userAnswers = {};
+        
+        // 遍历localStorage，提取所有相关的funny-biography数据
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('funnyBiography')) {
+            try {
+              const value = localStorage.getItem(key);
+              if (value) {
+                userAnswers[key] = value;
+              }
+            } catch (e) {
+              console.error('Error reading localStorage item:', key, e);
+            }
+          }
+        }
+        
+        // 构建书籍生成所需的数据
+        const userData = {
+          userAnswers,
+          author: localStorage.getItem('funnyBiographyAuthorName') || '',
+          idea: bookTitle,
+          tableOfContent: []
+        };
+        
+        // 如果有章节目录数据，解析它
+        const tocData = localStorage.getItem('funnyBiographyTableOfContents');
+        if (tocData) {
+          try {
+            userData.tableOfContent = JSON.parse(tocData);
+          } catch (e) {
+            console.error('Error parsing table of contents:', e);
+          }
+        }
+        
         // 调用Stripe支付API
         const response = await fetch('/api/create-checkout-session', {
           method: 'POST',
@@ -100,7 +136,8 @@ const FormatStep = () => {
             title: bookTitle,
             format: selectedFormatObj.name,
             price: selectedFormatObj.price.toString(),
-            quantity: 1
+            quantity: 1,
+            userData // 包含用户回答、作者、idea（书名）、tableOfContent
           }),
         });
         

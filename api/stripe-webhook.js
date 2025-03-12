@@ -98,39 +98,51 @@ export default async function handler(req, res) {
           if (productId === 'funny-biography') {
             console.log('Starting to generate funny biography book');
             
-            // 检查Supabase相关环境变量
-            if (!process.env.SUPABASE_FUNCTIONS_URL || !process.env.SUPABASE_ANON_KEY) {
-              console.error('Missing required Supabase environment variables');
-              return res.status(200).json({ 
-                received: true, 
-                warning: 'Book generation skipped due to missing configuration' 
-              });
-            }
-            
-            // 构建请求数据
-            const generateBookData = {
-              orderId,
-              title,
-              format,
-              shippingAddress,
-              shippingOption,
-              customer: {
-                email: expandedSession.customer_details?.email
-              }
-            };
-
-            // 调用Supabase函数生成书籍
             try {
-              const supabaseUrl = process.env.SUPABASE_FUNCTIONS_URL;
-              const supabaseKey = process.env.SUPABASE_ANON_KEY;
+              // 调用本地的generate-book函数来生成书籍并提交给Lulupress
+              console.log('Calling local generate-book function');
               
+              // 从客户端提供的元数据中提取存储在localStorage的书籍生成数据
+              const userDataJson = session.metadata.userData;
+              let userData;
+              
+              try {
+                userData = userDataJson ? JSON.parse(userDataJson) : null;
+              } catch (error) {
+                console.error('Error parsing userData JSON:', error);
+                userData = null;
+              }
+              
+              if (!userData) {
+                console.warn('Missing userData in session metadata, cannot generate book');
+                return res.status(200).json({ 
+                  received: true, 
+                  warning: 'Book generation skipped due to missing user data' 
+                });
+              }
+              
+              // 构建请求数据
+              const generateBookData = {
+                userData: userData, // 包含用户回答、作者、idea（书名）、tableOfContent
+                bookData: {
+                  orderId: orderId,
+                  title: title,
+                  format: format,
+                  shippingAddress: shippingAddress,
+                  shippingOption: shippingOption,
+                  customer: {
+                    email: expandedSession.customer_details?.email
+                  }
+                }
+              };
+
+              // 调用本地的generate-book函数
               const response = await fetch(
-                `${supabaseUrl}/functions/v1/generate-book`,
+                `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/generate-book`,
                 {
                   method: 'POST',
                   headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${supabaseKey}`
+                    'Content-Type': 'application/json'
                   },
                   body: JSON.stringify(generateBookData)
                 }
