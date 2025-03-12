@@ -4,3 +4,4 @@ project_id = "hbkgbggctzvqffqfrmhl"
 [verify_jwt]
 verify-session = false
 save-book-data = false
+get-book-data = false

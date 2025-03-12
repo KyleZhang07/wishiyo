@@ -41,21 +41,26 @@ serve(async (req) => {
       );
     }
 
+    // Create book-covers bucket if it doesn't exist
+    try {
+      const { data: buckets } = await supabase.storage.listBuckets();
+      if (!buckets?.find(b => b.name === 'book-covers')) {
+        await supabase.storage.createBucket('book-covers', {
+          public: true
+        });
+        console.log("Created book-covers bucket");
+      }
+    } catch (bucketError) {
+      console.error("Error checking/creating bucket:", bucketError);
+      // Continue even if bucket creation fails, as it might already exist
+    }
+
     // Upload cover image to storage if provided
     let coverImageUrl = null;
     if (coverImage) {
       console.log("Uploading cover image to storage");
       
       try {
-        // Ensure the bucket exists
-        const { data: buckets } = await supabase.storage.listBuckets();
-        if (!buckets?.find(b => b.name === 'book-covers')) {
-          await supabase.storage.createBucket('book-covers', {
-            public: true
-          });
-          console.log("Created book-covers bucket");
-        }
-
         // Convert base64 to Blob
         const base64Data = coverImage.split(',')[1];
         const byteArray = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));

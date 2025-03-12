@@ -52,6 +52,31 @@ export type TemplateType = {
   };
 };
 
+export interface TitleStyle {
+  color: string;
+  fontSize: string;
+  fontWeight: string;
+  textAlign: "center" | "right" | "left";
+  offsetY: number;
+  textTransform?: "uppercase" | "lowercase" | "capitalize" | "none";
+}
+
+export interface SubtitleStyle {
+  color: string;
+  fontSize: string;
+  fontWeight: string;
+  fontStyle?: string;
+  textTransform?: "uppercase" | "lowercase" | "capitalize" | "none";
+}
+
+export interface AuthorStyle {
+  color: string;
+  fontSize: string;
+  fontWeight: string;
+  textTransform?: "uppercase" | "lowercase" | "capitalize" | "none";
+  letterSpacing?: string;
+}
+
 export const coverTemplates: { [key: string]: TemplateType } = {
   modern: {
     id: 'modern',
@@ -325,3 +350,159 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     }
   }
 };
+
+export const defaultTemplates: Template[] = [
+  {
+    id: "minimal",
+    name: "Minimal",
+    backgroundColor: "#FFFFFF",
+    backgroundImageUrl: null,
+    textColor: "#000000",
+    titleStyle: {
+      color: "#000000",
+      fontSize: "48px",
+      fontWeight: "bold",
+      textAlign: "center",
+      offsetY: 0,
+      textTransform: "uppercase"
+    },
+    subtitleStyle: {
+      color: "#555555",
+      fontSize: "24px",
+      fontWeight: "normal"
+    },
+    authorStyle: {
+      color: "#333333",
+      fontSize: "18px",
+      fontWeight: "normal"
+    }
+  },
+  {
+    id: "classic",
+    name: "Classic",
+    backgroundColor: "#F5F5DC",
+    backgroundImageUrl: null,
+    textColor: "#8B4513",
+    titleStyle: {
+      color: "#8B4513",
+      fontSize: "42px", 
+      fontWeight: "bold",
+      textAlign: "center",
+      offsetY: 0,
+      textTransform: "uppercase"
+    },
+    subtitleStyle: {
+      color: "#8B4513",
+      fontSize: "24px",
+      fontWeight: "normal"
+    },
+    authorStyle: {
+      color: "#8B4513",
+      fontSize: "18px",
+      fontWeight: "bold"
+    }
+  },
+  {
+    id: "modern",
+    name: "Modern",
+    backgroundColor: "#FFFFFF",
+    backgroundImageUrl: null,
+    textColor: "#000000",
+    titleStyle: {
+      color: "#000000",
+      fontSize: "52px",
+      fontWeight: "900",
+      textAlign: "center",
+      offsetY: 0
+    },
+    subtitleStyle: {
+      color: "#555555",
+      fontSize: "26px",
+      fontWeight: "300",
+      textTransform: "none"
+    },
+    authorStyle: {
+      color: "#000000",
+      fontSize: "20px",
+      fontWeight: "700",
+      letterSpacing: "2px",
+      textTransform: "uppercase"
+    }
+  },
+  {
+    id: "creative",
+    name: "Creative",
+    backgroundColor: "#E0F7FA",
+    backgroundImageUrl: null,
+    textColor: "#006064",
+    titleStyle: {
+      color: "#006064",
+      fontSize: "46px",
+      fontWeight: "bold",
+      textAlign: "center",
+      offsetY: 0,
+      textTransform: "uppercase"
+    },
+    subtitleStyle: {
+      color: "#00838F",
+      fontSize: "24px",
+      fontWeight: "normal"
+    },
+    authorStyle: {
+      color: "#006064",
+      fontSize: "18px",
+      fontWeight: "bold"
+    }
+  },
+  {
+    id: "bold",
+    name: "Bold",
+    backgroundColor: "#000000",
+    backgroundImageUrl: null,
+    textColor: "#FFFFFF",
+    titleStyle: {
+      color: "#FFFFFF",
+      fontSize: "54px",
+      fontWeight: "900",
+      textAlign: "center",
+      offsetY: 0,
+      textTransform: "uppercase"
+    },
+    subtitleStyle: {
+      color: "#FFC107",
+      fontSize: "24px",
+      fontWeight: "normal",
+      textTransform: "uppercase"
+    },
+    authorStyle: {
+      color: "#FFFFFF",
+      fontSize: "18px",
+      fontWeight: "normal"
+    }
+  },
+  {
+    id: "elegant",
+    name: "Elegant",
+    backgroundColor: "#F8F0E3",
+    backgroundImageUrl: null,
+    textColor: "#3E2723",
+    titleStyle: {
+      color: "#3E2723",
+      fontSize: "42px",
+      fontWeight: "normal",
+      textAlign: "center",
+      offsetY: 0
+    },
+    subtitleStyle: {
+      color: "#5D4037",
+      fontSize: "22px",
+      fontWeight: "normal",
+      fontStyle: "italic"
+    },
+    authorStyle: {
+      color: "#3E2723",
+      fontSize: "18px",
+      fontWeight: "bold"
+    }
+  }
+];

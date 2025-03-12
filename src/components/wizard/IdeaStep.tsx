@@ -360,6 +360,10 @@ const IdeaStep = ({
     navigate(nextStep);
   };
 
+  const showExtendedOptions = (creationType: string) => {
+    return creationType === "friends" || creationType === "love" || creationType === "holidays" || creationType === "colleagues";
+  };
+
   useEffect(() => {
     const path = window.location.pathname;
     const bookType = path.split('/')[3];
@@ -560,3 +564,4 @@ const IdeaStep = ({
 };
 
 export default IdeaStep;
+

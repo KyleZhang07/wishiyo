@@ -1,13 +1,13 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
 import { Check } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
-import { getClientId } from '@/integrations/supabase/storage';
-import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
+import { supabase } from '@/integrations/supabase/client';
+import { getClientId } from '@/integrations/supabase/storage';
 
 // 封面类型
 interface CoverFormat {
@@ -16,19 +16,17 @@ interface CoverFormat {
   price: number;
   description: string;
   popular?: boolean;
-  imageSrc?: string; // 添加图片路径属性
+  imageSrc?: string;
 }
 
-const FormatStep = () => {
+const FunnyBiographyFormatStep = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const spineCanvasRef = useRef<HTMLCanvasElement | null>(null);
   
   // 硬封面和软封面的示例图片
-  const hardcoverImage = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wgARCADIASwDAREAAhEBAxEB/8QAHAABAAIDAQEBAAAAAAAAAAAAAAUGAwQHAggB/8QAGwEBAAIDAQEAAAAAAAAAAAAAAAMEAQIFBgf/2gAMAwEAAhADEAAAAfqkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARGfUfNbj48/oHyfoWVkpvTm9bwuixrS2trCy1tLS3NLe0tza3Nrc2tza2NrY3tjowdjGf0cZfZxl9HGXucZPZxk+HGP6cYvxxh/nCH+cIP5xgZcjHk5GDJcGHLdmDNeFgZr4wZL4wZMhsYstsYslwYMlwYMt2sDLdrAy3awMl2jjJdo4yXSMMd6ijFdI4wXqOL9+iPnXqP6By2pP5WrB931ptOzB99OqsejXAAAAAAAAACO1OL4PP4/rPI6EfO1f3vn7n0cPXOsZeqwh6JGMARmvUcSNgr4wZbgw5LkwZLkxZbgwZbswZbswZLpYmS6MWS5WRjuVoY7lbGO6MTFkmjHkmjJlmjHlmjDkuI4yPDAyPDAw5DiMMdzHGHIcxBhyHUUYch1EGHIdRBfyXcYX8l1HF7JdxxeyXUcX7n2MNl5GGy8ii/59HF/h9OH0YcX0g8lscn2t/lNP3P0+bjorXpe2AAAAAAAAAAAAi9jianznNaXU0eVvVpJz/sRrR2ljqYAAAAAAAAAAMNZpgjTMHndswed2TB53ZMGndkwSc0jBJzSMEndNINX4NBq/BoNX4JBq/BINX4JBq/BINX4JBK/wASIN74fAk3vh0CXf8Ah0CXT+HwJNP4fAk0/h8CXS+HwJdL4fAljm0Cfc8lqQt6uJKvlB6HnT61zvv9dPV3vfDztMAAAAAAAAAAAAAEbpcNzvmcj1fMmHEQGkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANea4INn6FHS5eW17jGXrh7PX8yYcTAaQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIrs4aK88iK++HHOcHHesHF+2HEfIHDfQHB/YGn9waX3Bo/gGh+IZ/5BnfoGd+wZn8Bl/0GV/oe/8Ao9X0/pe/6Xt+l7fpe36Xt+l7fpe36Xt+l7fpe36Xr+l6/pev6Xp+l6fpen6Xp+l6fpen6Xp+l6fpWn/9k=";
+  const hardcoverImage = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wgARCADIASwDAREAAhEBAxEB/8QAHAABAAIDAQEBAAAAAAAAAAAAAAUGAwQHAggB/8QAGwEBAAIDAQEAAAAAAAAAAAAAAAMEAQIFBgf/2gAMAwEAAhADEAAAAfqkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARGfUfNbj48/oHyfoWVkpvTm9bwuixrS2trCy1tLS3NLe0tza3Nrc2tza2NrY3tjowdjGf0cZfZxl9HGXucZPZxk+HGP6cYvxxh/nCH+cIP5xgZcjHk5GDJcGHLdmDNeGDNfGDLfGDJkNjFltTFktzDkuDBluDBmu1gZbtYGW7WBku0cZLtHGS6RhjvUUYrpHGC9Rxfv0R869R/QOW1J/K1YPu+tNp2YPvp1Vj0e4AAAAAAAAAAR2pxfB5/H9Z5HQj52r+98/c+jh651jL1WEPRIxgCM16jiRsFfGDLcGHJcmHJcmLLcGDLdmDLdmDJdLEyXRiyXKyMdytDHcrYx3RiYsk0Y8k0ZMs0Y8s0YclxHGR4YGR4YGHIcRhjuY4w5DmIMOQ6ijDkOogw5DqIL+S7jC/kuo4vZLuOL2S6ji/c+xhsvIw2XkUX/Po4v8Ppw+jDi+kHktjk+1v8pp+5+nzcdFd9L2wAAAAAAAAAAARexxNT5zmtLqaPK3q0k5/2I1o7Sx1MAAAAAAAAAAYazTBGmYPO7Zg87smDzuyYNO7Jgk5pGCTmkYJO56QavwaDV+DQavwSDV+CQavwSDV+CQavwSDV+CQS/wASIN74fAk3vh0CXf8Ah0CXT+HwJNP4fAk0/h8CXS+HwJdL4fAljm0Cfc8lqQt6uJKvlB6HnT61zvv9dPV3vfDztMAAAAAAAAAAAAAEbpcNzvmcj1fMmHEQGkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANea4INn6FHS5eW17jGXrh7PX8yYcTAaQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABrvdLC1/Z07PTl5uj1kJ6YAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIrs4aK88iK++HHOcHHesHF+2HEfIHDfQHB/YGn9waX3Bo/gGh+IZ/5BnfoGd+wZn8Bl/0GV/oe/8Ao9X0/pe/6Xt+l7fpe36Xt+l7fpe36Xt+l7fpe36Xr+l6/pev6Xp+l6fpen6Xp+l6fpen6Xp+l6fpWn/9k=";
   
-  const softcoverImage = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wgARCADIASwDAREAAhEBAxEB/8QAHAAAAgMBAQEBAAAAAAAAAAAABAUBAgMGBwAI/8QAGgEAAwEBAQEAAAAAAAAAAAAAAAIDBAEFBv/aAAwDAQACEAMQAAAB9UAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVKEBJtlolLrRCtdNDOL2DMXtGUvaMhe2ZAvaAhe4ZAd4xA75hB3zADwDCDvmAHgGEHgGEHhGAHhGAHhGAfBGAPiMI+IxD4jEPkMA+QwD5DAPoMY+gxj6jEPqMY+wxi9GQXY0AvRuEL0bhC9G4Re1cIXtXBF7dgRe3dEXt3RFbt4Be7eDObzGTOZ1mTGdhkw2dgMH1GrEelzZqdFmTf0GFO9Y2OtoeXJsXSqTjBUNxgoFwoEAsShcJhcJhcJxILhKKBYJRQLhKJhcIxMKxKJxWJROKxMJxSJhUJhSJxOJxSJhQJxQJhQJxQJhUJRQJRQJBoIxoJBoJBoIxoIxoIxsIhsIhsIhqIxqIxsIRsIRsIRsIRsIRsIRsIRuIBuOGc2VHOOm1c5ps6nF3OM07vUPQNxsdHnLuPUrDg0G40MxudDMaGwzGh0MxofDMZnwzGh4NBofDUZHg2GA0GYwGgzGIyGYxGYyGYxGYyGYyGIyGIxGIxGIxGQxGQxGQxGIyGIyGIxGIyGIyGIyGIxGIzGI0GIzGIzGIzGIzGIzGAzGAwGA0GAwGQyGQyGQ2GQyGQ2GQ2GQ2GQyGQyGg3GQ5GwyHI4G45HI5HI4HI5HI5HQ5HI5G46HI6HI6HIbnQbnY5HY7G52Ox0dD/9k=";
+  const softcoverImage = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wgARCADIASwDAREAAhEBAxEB/8QAHAAAAgMBAQEBAAAAAAAAAAAABAUBAgMGBwAI/8QAGgEAAwEBAQEAAAAAAAAAAAAAAAIDBAEFBv/aAAwDAQACEAMQAAAB9UAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVKEBJtlolLrRCtdNDOL2DMXtGUvaMhe2ZAvaAhe4ZAd4xA75hB3zADwDCDvmAHgGEHgGEHhGAHhGAHhGAfBGAPiMI+IxD4jEPkMA+QwD5DAPoMY+gxj6jEPqMY+wxi9GQXY0AvRuEL0bhC9G4Re1cIXtXBF7dgRe3dEXt3RFbt4Be7eDObzGTOZ1mTGdhkw2dgMH1GrEelzZqdFmTf0GFO9Y2OtoeXJsXSqTjBUNxgoFwoEAsShcJhcJhcJxILhKKBYJRQLhKJhcIxMKxKJxWJROKxMJxSJhUJhSJxOJxSJhQJxQJhQJxQJhUJRQJRQJBQJBoIxoJBoJBoIxoIxoIxsIhsIhsIhqIxqIxsIRsIRsIRsIRsIRsIRsIRuIBuOGc2VHOOm1c5ps6nF3OM07vUPQNxsdHnLuPUrDg0G40MxudDMaGwzGh0MxofDMZnwzGh4NBofDUZHg2GA0GYwGgzGIyGYxGYyGYxGYyGYyGIyGIxGIxGIxGQxGQxGQxGIyGIyGIxGIyGIyGIyGIxGIzGI0GIzGIzGIzGIzGIzGAwGA0GAwGQyGQyGQ2GQyGQ2GQ2GQ2GQyGQyGg3GQ5GwyHI4G45HI5HI4HI5HI5HQ5HI5G46HI6HI6HIbnQbnY5HY7G52Ox0dD/9k=";
 
   // 可选的封面格式
   const coverFormats: CoverFormat[] = [
@@ -49,9 +47,13 @@ const FormatStep = () => {
     }
   ];
   
-  // 默认选择软封面
-  const [selectedFormat, setSelectedFormat] = useState<string>('softcover');
+  // 默认选择硬封面
+  const [selectedFormat, setSelectedFormat] = useState<string>('hardcover');
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // 通过Ref获取canvas元素
+  const coverCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const spineCanvasRef = useRef<HTMLCanvasElement | null>(null);
   
   // 处理格式选择
   const handleFormatSelect = (formatId: string) => {
@@ -64,144 +66,135 @@ const FormatStep = () => {
       localStorage.setItem('funnyBiographyFormatPrice', selectedFormatObj.price.toString());
     }
   };
+
+  // 获取canvas元素的图片数据
+  const getCanvasImageData = (canvasRef: React.RefObject<HTMLCanvasElement>): string | null => {
+    if (!canvasRef.current) {
+      console.error('Canvas element not found');
+      return null;
+    }
+    
+    try {
+      return canvasRef.current.toDataURL('image/jpeg', 0.9);
+    } catch (error) {
+      console.error('Error converting canvas to image:', error);
+      return null;
+    }
+  };
+  
+  // 从 DOM 获取 Canvas 元素
+  const getCoverSpineElements = () => {
+    if (!coverCanvasRef.current) {
+      // 尝试直接从DOM获取
+      const coverCanvas = document.getElementById('cover-canvas') as HTMLCanvasElement;
+      if (coverCanvas) {
+        coverCanvasRef.current = coverCanvas;
+      }
+    }
+    
+    if (!spineCanvasRef.current) {
+      // 尝试直接从DOM获取
+      const spineCanvas = document.getElementById('spine-canvas') as HTMLCanvasElement;
+      if (spineCanvas) {
+        spineCanvasRef.current = spineCanvas;
+      }
+    }
+    
+    return { coverCanvas: coverCanvasRef.current, spineCanvas: spineCanvasRef.current };
+  };
+
+  // 构建书籍数据
+  const buildBookData = () => {
+    const bookTitle = localStorage.getItem('funnyBiographyIdea') || 'Untitled Biography';
+    const authorName = localStorage.getItem('funnyBiographyAuthor') || 'Anonymous';
+    const answers = JSON.parse(localStorage.getItem('funnyBiographyAnswers') || '[]');
+    const tableOfContents = JSON.parse(localStorage.getItem('funnyBiographyTableOfContents') || '[]');
+    const selectedPhoto = localStorage.getItem('funnyBiographyPhoto') || '';
+    
+    const selectedFormatObj = coverFormats.find(format => format.id === selectedFormat);
+    
+    return {
+      title: bookTitle,
+      author: authorName,
+      answers: answers,
+      tableOfContents: tableOfContents,
+      photo: selectedPhoto ? selectedPhoto : null,
+      format: selectedFormatObj?.name || 'Hardcover',
+      price: selectedFormatObj?.price || 59.99
+    };
+  };
   
   // 处理结账
   const handleCheckout = async () => {
-    const selectedFormatObj = coverFormats.find(format => format.id === selectedFormat);
+    setIsProcessing(true);
     
-    if (selectedFormatObj) {
-      setIsProcessing(true);
+    try {
+      // 显示加载提示
+      toast({
+        title: "Processing your order",
+        description: "Please wait while we prepare your book...",
+      });
       
-      try {
-        // 生成唯一订单ID
-        const orderId = `FB-${uuidv4().slice(0, 8)}`;
-        localStorage.setItem('funnyBiographyOrderId', orderId);
-        
-        // 保存书籍信息到localStorage
-        const savedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
-        const savedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
-        let bookTitle = '';
-
-        if (savedIdeas && savedIdeaIndex) {
-          const ideas = JSON.parse(savedIdeas);
-          const selectedIdea = ideas[parseInt(savedIdeaIndex)];
-          if (selectedIdea && selectedIdea.title) {
-            bookTitle = selectedIdea.title;
-          }
-        }
-
-        // 如果没有找到title，使用默认值
-        if (!bookTitle) {
-          bookTitle = 'The ' + (localStorage.getItem('funnyBiographyAuthorName') || 'Friend') + ' Chronicles';
-        }
-
-        localStorage.setItem('funnyBiographyBookTitle', bookTitle);
-        localStorage.setItem('funnyBiographyBookFormat', selectedFormatObj.name);
-        localStorage.setItem('funnyBiographyBookPrice', selectedFormatObj.price.toString());
-        
-        // 获取书籍封面图像
-        // 从DOM中获取封面和书脊的canvas元素
-        const coverCanvas = document.getElementById('book-cover-canvas') as HTMLCanvasElement;
-        const spineCanvas = document.getElementById('book-spine-canvas') as HTMLCanvasElement;
-        
-        let coverImageBase64 = null;
-        let spineImageBase64 = null;
-        
-        // 如果找到了canvas元素，转换为base64图像
-        if (coverCanvas) {
-          coverImageBase64 = coverCanvas.toDataURL('image/jpeg', 0.9);
-        }
-        
-        if (spineCanvas) {
-          spineImageBase64 = spineCanvas.toDataURL('image/jpeg', 0.9);
-        }
-        
-        // 收集所有书籍数据
-        const bookData = {
-          // 基本信息
-          title: bookTitle,
-          format: selectedFormatObj.name,
-          price: selectedFormatObj.price,
-          // 作者信息
-          authorName: localStorage.getItem('funnyBiographyAuthorName'),
-          // 内容信息
-          answers: localStorage.getItem('funnyBiographyAnswers') ? 
-            JSON.parse(localStorage.getItem('funnyBiographyAnswers') || '[]') : [],
-          idea: savedIdeas && savedIdeaIndex ? 
-            JSON.parse(savedIdeas)[parseInt(savedIdeaIndex)] : null,
-          // 章节信息
-          chapters: localStorage.getItem('funnyBiographyChapters') ? 
-            JSON.parse(localStorage.getItem('funnyBiographyChapters') || '[]') : [],
-          // 照片信息
-          photo: localStorage.getItem('funnyBiographyPhoto'),
-          // 样式信息
-          selectedStyle: localStorage.getItem('funnyBiographySelectedStyle'),
-          // 封面位置和缩放
-          coverImagePosition: localStorage.getItem('funnyBiographyCoverImagePosition') ? 
-            JSON.parse(localStorage.getItem('funnyBiographyCoverImagePosition') || '{}') : { x: 0, y: 0 },
-          coverImageScale: localStorage.getItem('funnyBiographyCoverImageScale') || 100,
-        };
-        
-        // 获取客户端ID
-        const clientId = getClientId();
-        
-        // 上传数据到Supabase
-        console.log("Saving book data to Supabase...");
-        const { data, error } = await supabase.functions.invoke('save-book-data', {
-          body: {
-            orderId,
-            bookData,
-            coverImage: coverImageBase64,
-            spineImage: spineImageBase64,
-            clientId,
-            productType: 'funny-biography'
-          }
-        });
-        
-        if (error) {
-          console.error("Error saving book data:", error);
-          throw new Error("Failed to save book data");
-        }
-        
-        console.log("Book data saved successfully:", data);
-        
-        // 调用Stripe支付API
-        const response = await fetch('/api/create-checkout-session', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            productId: 'funny-biography',
-            title: bookTitle,
-            format: selectedFormatObj.name,
-            price: selectedFormatObj.price.toString(),
-            quantity: 1,
-            orderId: orderId
-          }),
-        });
-        
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        
-        const { url } = await response.json();
-        
-        // 重定向到Stripe结账页面
-        if (url) {
-          window.location.href = url;
-        } else {
-          throw new Error('No checkout URL returned');
-        }
-      } catch (error) {
-        console.error('Checkout error:', error);
-        toast({
-          title: "Checkout Error",
-          description: "An error occurred during checkout. Please try again.",
-          variant: "destructive"
-        });
-        setIsProcessing(false);
+      // 获取Canvas元素
+      const { coverCanvas, spineCanvas } = getCoverSpineElements();
+      
+      if (!coverCanvas) {
+        throw new Error("Cover canvas not found");
       }
+      
+      // 获取封面和书脊图片
+      const coverImage = getCanvasImageData(coverCanvasRef);
+      const spineImage = spineCanvas ? getCanvasImageData(spineCanvasRef) : null;
+      
+      if (!coverImage) {
+        throw new Error("Failed to get cover image data");
+      }
+      
+      // 构建书籍数据
+      const bookData = buildBookData();
+      
+      // 生成唯一订单ID
+      const orderId = `funny-bio-${uuidv4()}`;
+      
+      // 获取客户端ID
+      const clientId = getClientId();
+      
+      // 将数据保存到Supabase
+      const { data, error } = await supabase.functions.invoke('save-book-data', {
+        body: {
+          orderId,
+          bookData,
+          coverImage,
+          spineImage,
+          clientId,
+          productType: 'funny-biography'
+        }
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      // 保存订单ID用于后续查询
+      localStorage.setItem('currentOrderId', orderId);
+      
+      toast({
+        title: "Order processed successfully",
+        description: "Redirecting to success page...",
+      });
+      
+      // 跳转到成功页面
+      navigate(`/order-success?orderId=${orderId}`);
+    } catch (error: any) {
+      console.error('Checkout error:', error);
+      
+      toast({
+        title: "Checkout Error",
+        description: error.message || "An error occurred during checkout. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
     }
   };
   
@@ -211,6 +204,9 @@ const FormatStep = () => {
     if (savedFormat) {
       setSelectedFormat(savedFormat);
     }
+    
+    // 初始化引用
+    getCoverSpineElements();
   }, []);
   
   return (
@@ -218,8 +214,8 @@ const FormatStep = () => {
       title="Choose a format for your book"
       description="Make your gift even more special with our selection of cover options"
       previousStep="/create/friends/funny-biography/preview"
-      currentStep={8}
-      totalSteps={8}
+      currentStep={7}
+      totalSteps={7}
     >
       <div className="max-w-4xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -229,41 +225,43 @@ const FormatStep = () => {
               key={format.id}
               className={`border rounded-lg overflow-hidden transition-all ${
                 selectedFormat === format.id 
-                  ? 'border-[#0C5C4C] ring-1 ring-[#0C5C4C]' 
+                  ? 'border-primary ring-1 ring-primary' 
                   : 'border-gray-200'
               }`}
             >
               {/* 人气标签 */}
               {format.popular && (
-                <div className="bg-[#FFC83D] text-center py-2">
+                <div className="bg-yellow-300 text-center py-2">
                   <p className="font-medium">Most popular</p>
                 </div>
               )}
               
               {/* 封面图片 */}
-              <div className="aspect-[4/3] bg-gray-50 relative">
-                {format.imageSrc && (
+              <div className="h-64 bg-gray-100 border-b relative">
+                {format.imageSrc ? (
                   <img 
                     src={format.imageSrc} 
-                    alt={format.name}
+                    alt={`${format.name} book`}
                     className="w-full h-full object-cover"
                   />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-500">
+                    {format.name} Preview
+                  </div>
                 )}
                 
                 {/* 选中标记 */}
                 {selectedFormat === format.id && (
-                  <div className="absolute top-2 right-2 bg-[#0C5C4C] text-white rounded-full p-1">
-                    <Check className="w-4 h-4" />
+                  <div className="absolute top-2 right-2 bg-primary text-white rounded-full p-1">
+                    <Check className="w-5 h-5" />
                   </div>
                 )}
               </div>
               
-              {/* 格式描述 */}
-              <div className="p-6">
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="text-xl font-semibold">{format.name}</h3>
-                  <span className="text-xl font-medium">${format.price} USD</span>
-                </div>
+              {/* 文本内容 */}
+              <div className="p-6 text-center">
+                <h3 className="text-2xl font-bold mb-1">{format.name}</h3>
+                <p className="text-2xl font-bold mb-4">${format.price.toFixed(2)} USD</p>
                 <p className="text-gray-600 mb-6">{format.description}</p>
                 
                 {/* 选择按钮 */}
@@ -271,22 +269,16 @@ const FormatStep = () => {
                   variant={selectedFormat === format.id ? "default" : "outline"}
                   className={`w-full ${
                     selectedFormat === format.id 
-                      ? 'bg-[#0C5C4C] hover:bg-[#0C5C4C]/90' 
-                      : 'text-[#0C5C4C] border-[#0C5C4C]'
+                      ? 'bg-primary hover:bg-primary/90' 
+                      : 'border-primary text-primary hover:bg-primary/10'
                   }`}
                   onClick={() => handleFormatSelect(format.id)}
                 >
-                  {selectedFormat === format.id ? 'Selected' : `Select ${format.name}`}
+                  {selectedFormat === format.id ? `${format.name} selected` : `Select ${format.name}`}
                 </Button>
               </div>
             </div>
           ))}
-        </div>
-        
-        {/* 隐藏的canvas用于获取封面图像 */}
-        <div className="hidden">
-          <canvas id="book-cover-canvas" ref={canvasRef}></canvas>
-          <canvas id="book-spine-canvas" ref={spineCanvasRef}></canvas>
         </div>
         
         {/* 结账按钮 */}
@@ -306,4 +298,4 @@ const FormatStep = () => {
   );
 };
 
-export default FormatStep; 
+export default FunnyBiographyFormatStep;
