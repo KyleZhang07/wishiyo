@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
   try {
-    const { productId, title, format, price, quantity = 1, userData } = req.body;
+    const { productId, title, format, price, quantity = 1 } = req.body;
     
     // 验证必要的输入数据
     if (!productId) {
@@ -24,8 +24,6 @@ export default async function handler(req, res) {
     if (!price || isNaN(parseFloat(price)) || parseFloat(price) <= 0) {
       return res.status(400).json({ error: 'Invalid price value' });
     }
-    
-
     
     // 生成随机订单ID
     const orderId = `WY-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
@@ -99,7 +97,6 @@ export default async function handler(req, res) {
         productId,
         format: format || 'Standard',
         title: title || 'Custom Book',
-        userData: userData ? JSON.stringify(userData) : null,
       },
     });
 
