@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,6 +12,7 @@ import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
 import FriendsLanding from "./pages/FriendsLanding";
 import LoveLanding from "./pages/LoveLanding";
+import OrderSuccess from "./pages/OrderSuccess";
 
 // Friends Book Creation Routes - Funny Biography
 import FunnyBiographyAuthorStep from "./pages/wizard/friends/funny-biography/AuthorStep";
@@ -32,47 +34,6 @@ import LoveStoryCoverStep from "./pages/wizard/love/love-story/CoverStep";
 import LoveStoryGenerateStep from "./pages/wizard/love/love-story/GenerateStep";
 import DebugPromptsStep from "./pages/wizard/love/love-story/DebugPromptsStep";
 import LoveStoryFormatStep from "./pages/wizard/love/love-story/FormatStep";
-
-// Simple OrderSuccess component
-const OrderSuccess = () => {
-  // Get order ID from localStorage (either love story or funny biography)
-  const loveStoryOrderId = localStorage.getItem('loveStoryOrderId');
-  const funnyBiographyOrderId = localStorage.getItem('funnyBiographyOrderId');
-  const orderId = loveStoryOrderId || funnyBiographyOrderId || 'WY-UNKNOWN';
-  
-  // Get book title from localStorage (either love story or funny biography)
-  const loveStoryBookTitle = localStorage.getItem('loveStoryBookTitle');
-  const funnyBiographyBookTitle = localStorage.getItem('funnyBiographyBookTitle');
-  const bookTitle = loveStoryBookTitle || funnyBiographyBookTitle || 'Your Custom Book';
-  
-  return (
-    <div className="min-h-screen bg-[#FFFAF5] flex items-center justify-center">
-      <div className="text-center p-8 max-w-md w-full">
-        <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
-        </div>
-        <h1 className="text-4xl font-bold mb-2">Order Successful!</h1>
-        <p className="text-xl text-gray-600 mb-2">Thank you for your purchase</p>
-        <p className="text-gray-500 mb-6">Order ID: {orderId}</p>
-        
-        <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-          <p className="text-gray-600">We have received your order for:</p>
-          <p className="font-bold text-lg my-2">{bookTitle}</p>
-          <p className="text-gray-600 text-sm">Your book will be printed and shipped within 3-5 business days.</p>
-        </div>
-        
-        <button 
-          onClick={() => window.location.href = '/'} 
-          className="px-6 py-3 bg-[#FF7F50] text-white rounded-md hover:bg-[#FF7F50]/80 transition-colors w-full"
-        >
-          Return Home
-        </button>
-      </div>
-    </div>
-  );
-};
 
 // Layout wrapper component that conditionally renders the header
 const AppLayout = () => {

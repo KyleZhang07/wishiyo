@@ -1,9 +1,13 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
 import { Check } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { getClientId } from '@/integrations/supabase/storage';
+import { supabase } from '@/integrations/supabase/client';
+import { v4 as uuidv4 } from 'uuid';
 
 // 封面类型
 interface CoverFormat {
@@ -18,11 +22,13 @@ interface CoverFormat {
 const FormatStep = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const spineCanvasRef = useRef<HTMLCanvasElement | null>(null);
   
   // 硬封面和软封面的示例图片
-  const hardcoverImage = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wgARCADIASwDAREAAhEBAxEB/8QAHAABAAIDAQEBAAAAAAAAAAAAAAUGAwQHAggB/8QAGwEBAAIDAQEAAAAAAAAAAAAAAAMEAQIFBgf/2gAMAwEAAhADEAAAAfqkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARGfUfNbj48/oHyfoWVkpvTm9bwuixrS2trCy1tLS3NLe0tza3Nrc2tza2NrY3tjowdjGf0cZfZxl9HGXucZPZxk+HGP6cYvxxh/nCH+cIP5xgZcjHk5GDJcGHLdmDNeFgZr4wZL4wZMhsYstsYslwYMlwYMt2sDLdrAy3awMl2jjJdo4yXSMMd6ijFdI4wXqOL9+iPnXqP6By2pP5WrB931ptOzB99OqsejXAAAAAAAAACO1OL4PP4/rPI6EfO1f3vn7n0cPXOsZeqwh6JGMARmvUcSNgr4wZbgw5Lkw5LkxZbgwZbswZbswZLpYmS6MWS5WRjuVoY7lbGO6MTFkmjHkmjJlmjHlmjDkuI4yPDAyPDAw5DiMMdzHGHIcxBhyHUUYch1EGHIdRBfyXcYX8l1HF7JdxxeyXUcX7n2MNl5GGy8ii/59HF/h9OH0YcX0g8lscn2t/lNP3P0+bjorXpe2AAAAAAAAAAAAi9jianznNaXU0eVvVpJz/sRrR2ljqYAAAAAAAAAAMNZpgjTMHndswed2TB53ZMGndkwSc0jBJzSMEndNINX4NBq/BoNX4JBq/BINX4JBq/BINX4JBK/wASIN74fAk3vh0CXf8Ah0CXT+HwJNP4fAk0/h8CXS+HwJdL4fAljm0Cfc8lqQt6uJKvlB6HnT61zvv9dPV3vfDztMAAAAAAAAAAAAAEbpcNzvmcj1fMmHEQGkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANea4INn6FHS5eW17jGXrh7PX8yYcTAaQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABrvdLC1/Z07PTl5uj1kJ6YAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIrs4aK88iK++HHOcHHesHF+2HEfIHDfQHB/YGn9waX3Bo/gGh+IZ/5BnfoGd+wZn8Bl/0GV/oe/8Ao9X0/pe/6Xt+l7fpe36Xt+l7fpe36Xt+l7fpe36Xr+l6/pev6Xp+l6fpen6Xp+l6fpen6Xp+l6fpWn/9k=";
+  const hardcoverImage = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wgARCADIASwDAREAAhEBAxEB/8QAHAABAAIDAQEBAAAAAAAAAAAAAAUGAwQHAggB/8QAGwEBAAIDAQEAAAAAAAAAAAAAAAMEAQIFBgf/2gAMAwEAAhADEAAAAfqkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARGfUfNbj48/oHyfoWVkpvTm9bwuixrS2trCy1tLS3NLe0tza3Nrc2tza2NrY3tjowdjGf0cZfZxl9HGXucZPZxk+HGP6cYvxxh/nCH+cIP5xgZcjHk5GDJcGHLdmDNeFgZr4wZL4wZMhsYstsYslwYMlwYMt2sDLdrAy3awMl2jjJdo4yXSMMd6ijFdI4wXqOL9+iPnXqP6By2pP5WrB931ptOzB99OqsejXAAAAAAAAACO1OL4PP4/rPI6EfO1f3vn7n0cPXOsZeqwh6JGMARmvUcSNgr4wZbgw5LkwZLkxZbgwZbswZbswZLpYmS6MWS5WRjuVoY7lbGO6MTFkmjHkmjJlmjHlmjDkuI4yPDAyPDAw5DiMMdzHGHIcxBhyHUUYch1EGHIdRBfyXcYX8l1HF7JdxxeyXUcX7n2MNl5GGy8ii/59HF/h9OH0YcX0g8lscn2t/lNP3P0+bjorXpe2AAAAAAAAAAAAi9jianznNaXU0eVvVpJz/sRrR2ljqYAAAAAAAAAAMNZpgjTMHndswed2TB53ZMGndkwSc0jBJzSMEndNINX4NBq/BoNX4JBq/BINX4JBq/BINX4JBK/wASIN74fAk3vh0CXf8Ah0CXT+HwJNP4fAk0/h8CXS+HwJdL4fAljm0Cfc8lqQt6uJKvlB6HnT61zvv9dPV3vfDztMAAAAAAAAAAAAAEbpcNzvmcj1fMmHEQGkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANea4INn6FHS5eW17jGXrh7PX8yYcTAaQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIrs4aK88iK++HHOcHHesHF+2HEfIHDfQHB/YGn9waX3Bo/gGh+IZ/5BnfoGd+wZn8Bl/0GV/oe/8Ao9X0/pe/6Xt+l7fpe36Xt+l7fpe36Xt+l7fpe36Xr+l6/pev6Xp+l6fpen6Xp+l6fpen6Xp+l6fpWn/9k=";
   
-  const softcoverImage = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wgARCADIASwDAREAAhEBAxEB/8QAHAAAAgMBAQEBAAAAAAAAAAAABAUBAgMGBwAI/8QAGgEAAwEBAQEAAAAAAAAAAAAAAAIDBAEFBv/aAAwDAQACEAMQAAAB9UAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVKEBJtlolLrRCtdNDOL2DMXtGUvaMhe2ZAvaAhe4ZAd4xA75hB3zADwDCDvmAHgGEHgGEHhGAHhGAHhGAfBGAPiMI+IxD4jEPkMA+QwD5DAPoMY+gxj6jEPqMY+wxi9GQXY0AvRuEL0bhC9G4Re1cIXtXBF7dgRe3dEXt3RFbt4Be7eDObzGTOZ1mTGdhkw2dgMH1GrEelzZqdFmTf0GFO9Y2OtoeXJsXSqTjBUNxgoFwoEAsShcJhcJhcJxILhKKBYJRQLhKJhcIxMKxKJxWJROKxMJxSJhUJhSJxOJxSJhQJxQJhQJxQJhUJRQJRQJBQJBoIxoJBoJBoIxoIxoIxsIhsIhsIhqIxqIxsIRsIRsIRsIRsIRsIRsIRuIBuOGc2VHOOm1c5ps6nF3OM07vUPQNxsdHnLuPUrDg0G40MxudDMaGwzGh0MxofDMZnwzGh4NBofDUZHg2GA0GYwGgzGIyGYxGYyGYxGYyGYyGIyGIxGIxGIxGQxGQxGQxGIyGIyGIxGIyGIyGIyGIxGIzGI0GIzGIzGIzGIzGIzGAzGAwGA0GAwGQyGQyGQ2GQyGQ2GQ2GQ2GQyGQyGg3GQ5GwyHI4G45HI5HI4HI5HI5HQ5HI5G46HI6HI6HIbnQbnY5HY7G52Ox0dD/9k=";
+  const softcoverImage = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wgARCADIASwDAREAAhEBAxEB/8QAHAAAAgMBAQEBAAAAAAAAAAAABAUBAgMGBwAI/8QAGgEAAwEBAQEAAAAAAAAAAAAAAAIDBAEFBv/aAAwDAQACEAMQAAAB9UAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVKEBJtlolLrRCtdNDOL2DMXtGUvaMhe2ZAvaAhe4ZAd4xA75hB3zADwDCDvmAHgGEHgGEHhGAHhGAHhGAfBGAPiMI+IxD4jEPkMA+QwD5DAPoMY+gxj6jEPqMY+wxi9GQXY0AvRuEL0bhC9G4Re1cIXtXBF7dgRe3dEXt3RFbt4Be7eDObzGTOZ1mTGdhkw2dgMH1GrEelzZqdFmTf0GFO9Y2OtoeXJsXSqTjBUNxgoFwoEAsShcJhcJhcJxILhKKBYJRQLhKJhcIxMKxKJxWJROKxMJxSJhUJhSJxOJxSJhQJxQJhQJxQJhUJRQJRQJBoIxoJBoJBoIxoIxoIxsIhsIhsIhqIxqIxsIRsIRsIRsIRsIRsIRsIRuIBuOGc2VHOOm1c5ps6nF3OM07vUPQNxsdHnLuPUrDg0G40MxudDMaGwzGh0MxofDMZnwzGh4NBofDUZHg2GA0GYwGgzGIyGYxGYyGYxGYyGYyGIyGIxGIxGIxGQxGQxGQxGIyGIyGIxGIyGIyGIyGIxGIzGI0GIzGIzGIzGIzGIzGAzGAwGA0GAwGQyGQyGQ2GQyGQ2GQ2GQ2GQyGQyGg3GQ5GwyHI4G45HI5HI4HI5HI5HQ5HI5G46HI6HI6HIbnQbnY5HY7G52Ox0dD/9k=";
 
   // 可选的封面格式
   const coverFormats: CoverFormat[] = [
@@ -66,29 +72,99 @@ const FormatStep = () => {
     if (selectedFormatObj) {
       setIsProcessing(true);
       
-      // 保存书籍信息到localStorage
-      const savedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
-      const savedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
-      let bookTitle = '';
-
-      if (savedIdeas && savedIdeaIndex) {
-        const ideas = JSON.parse(savedIdeas);
-        const selectedIdea = ideas[parseInt(savedIdeaIndex)];
-        if (selectedIdea && selectedIdea.title) {
-          bookTitle = selectedIdea.title;
-        }
-      }
-
-      // 如果没有找到title，使用默认值
-      if (!bookTitle) {
-        bookTitle = 'The ' + (localStorage.getItem('funnyBiographyAuthorName') || 'Friend') + ' Chronicles';
-      }
-
-      localStorage.setItem('funnyBiographyBookTitle', bookTitle);
-      localStorage.setItem('funnyBiographyBookFormat', selectedFormatObj.name);
-      localStorage.setItem('funnyBiographyBookPrice', selectedFormatObj.price.toString());
-      
       try {
+        // 生成唯一订单ID
+        const orderId = `FB-${uuidv4().slice(0, 8)}`;
+        localStorage.setItem('funnyBiographyOrderId', orderId);
+        
+        // 保存书籍信息到localStorage
+        const savedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
+        const savedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
+        let bookTitle = '';
+
+        if (savedIdeas && savedIdeaIndex) {
+          const ideas = JSON.parse(savedIdeas);
+          const selectedIdea = ideas[parseInt(savedIdeaIndex)];
+          if (selectedIdea && selectedIdea.title) {
+            bookTitle = selectedIdea.title;
+          }
+        }
+
+        // 如果没有找到title，使用默认值
+        if (!bookTitle) {
+          bookTitle = 'The ' + (localStorage.getItem('funnyBiographyAuthorName') || 'Friend') + ' Chronicles';
+        }
+
+        localStorage.setItem('funnyBiographyBookTitle', bookTitle);
+        localStorage.setItem('funnyBiographyBookFormat', selectedFormatObj.name);
+        localStorage.setItem('funnyBiographyBookPrice', selectedFormatObj.price.toString());
+        
+        // 获取书籍封面图像
+        // 从DOM中获取封面和书脊的canvas元素
+        const coverCanvas = document.getElementById('book-cover-canvas') as HTMLCanvasElement;
+        const spineCanvas = document.getElementById('book-spine-canvas') as HTMLCanvasElement;
+        
+        let coverImageBase64 = null;
+        let spineImageBase64 = null;
+        
+        // 如果找到了canvas元素，转换为base64图像
+        if (coverCanvas) {
+          coverImageBase64 = coverCanvas.toDataURL('image/jpeg', 0.9);
+        }
+        
+        if (spineCanvas) {
+          spineImageBase64 = spineCanvas.toDataURL('image/jpeg', 0.9);
+        }
+        
+        // 收集所有书籍数据
+        const bookData = {
+          // 基本信息
+          title: bookTitle,
+          format: selectedFormatObj.name,
+          price: selectedFormatObj.price,
+          // 作者信息
+          authorName: localStorage.getItem('funnyBiographyAuthorName'),
+          // 内容信息
+          answers: localStorage.getItem('funnyBiographyAnswers') ? 
+            JSON.parse(localStorage.getItem('funnyBiographyAnswers') || '[]') : [],
+          idea: savedIdeas && savedIdeaIndex ? 
+            JSON.parse(savedIdeas)[parseInt(savedIdeaIndex)] : null,
+          // 章节信息
+          chapters: localStorage.getItem('funnyBiographyChapters') ? 
+            JSON.parse(localStorage.getItem('funnyBiographyChapters') || '[]') : [],
+          // 照片信息
+          photo: localStorage.getItem('funnyBiographyPhoto'),
+          // 样式信息
+          selectedStyle: localStorage.getItem('funnyBiographySelectedStyle'),
+          // 封面位置和缩放
+          coverImagePosition: localStorage.getItem('funnyBiographyCoverImagePosition') ? 
+            JSON.parse(localStorage.getItem('funnyBiographyCoverImagePosition') || '{}') : { x: 0, y: 0 },
+          coverImageScale: localStorage.getItem('funnyBiographyCoverImageScale') || 100,
+        };
+        
+        // 获取客户端ID
+        const clientId = getClientId();
+        
+        // 上传数据到Supabase
+        console.log("Saving book data to Supabase...");
+        const { data, error } = await supabase.functions.invoke('save-book-data', {
+          body: {
+            orderId,
+            bookData,
+            coverImage: coverImageBase64,
+            spineImage: spineImageBase64,
+            clientId,
+            productType: 'funny-biography'
+          }
+        });
+        
+        if (error) {
+          console.error("Error saving book data:", error);
+          throw new Error("Failed to save book data");
+        }
+        
+        console.log("Book data saved successfully:", data);
+        
         // 调用Stripe支付API
         const response = await fetch('/api/create-checkout-session', {
           method: 'POST',
@@ -100,7 +176,8 @@ const FormatStep = () => {
             title: bookTitle,
             format: selectedFormatObj.name,
             price: selectedFormatObj.price.toString(),
-            quantity: 1
+            quantity: 1,
+            orderId: orderId
           }),
         });
         
@@ -108,10 +185,7 @@ const FormatStep = () => {
           throw new Error('Network response was not ok');
         }
         
-        const { url, orderId } = await response.json();
-        
-        // 保存订单ID
-        localStorage.setItem('funnyBiographyOrderId', orderId);
+        const { url } = await response.json();
         
         // 重定向到Stripe结账页面
         if (url) {
@@ -207,6 +281,12 @@ const FormatStep = () => {
               </div>
             </div>
           ))}
+        </div>
+        
+        {/* 隐藏的canvas用于获取封面图像 */}
+        <div className="hidden">
+          <canvas id="book-cover-canvas" ref={canvasRef}></canvas>
+          <canvas id="book-spine-canvas" ref={spineCanvasRef}></canvas>
         </div>
         
         {/* 结账按钮 */}

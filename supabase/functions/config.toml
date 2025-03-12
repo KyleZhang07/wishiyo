@@ -1,6 +1,6 @@
 
 project_id = "hbkgbggctzvqffqfrmhl"
-[functions.remove-background]
-verify_jwt = false
-[functions.generate-image-texts]
-verify_jwt = false
+# Disable authentication for these functions
+[verify_jwt]
+verify-session = false
+save-book-data = false
