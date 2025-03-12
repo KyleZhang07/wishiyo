@@ -3,9 +3,26 @@
   "routes": [
     { "handle": "filesystem" },
     { "src": "/api/(.*)", "dest": "/api/$1.js" },
+    { "src": "/api/generate-cover-pdf", "dest": "/api/generate-cover-pdf/index.js" },
+    { "src": "/api/generate-book-content", "dest": "/api/generate-book-content/index.js" },
+    { "src": "/api/generate-interior-pdf", "dest": "/api/generate-interior-pdf/index.js" },
     { "src": "/(.*)", "dest": "/index.html" }
   ],
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
-  "outputDirectory": "dist"
-} 
+  "outputDirectory": "dist",
+  "functions": {
+    "api/generate-cover-pdf/index.js": {
+      "memory": 1024,
+      "maxDuration": 300
+    },
+    "api/generate-book-content/index.js": {
+      "memory": 1024,
+      "maxDuration": 300
+    },
+    "api/generate-interior-pdf/index.js": {
+      "memory": 1024,
+      "maxDuration": 300
+    }
+  }
+}

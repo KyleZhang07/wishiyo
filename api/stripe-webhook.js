@@ -132,9 +132,9 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
       backCoverLength: book.images && book.images.backCover ? book.images.backCover.substring(0, 30) + '...' : 'N/A'
     });
 
-    // 3. Start content generation with detailed logging
-    console.log(`[${orderId}] Starting content generation with Supabase function`);
-    console.log(`[${orderId}] Content generation endpoint: ${supabaseUrl}/functions/v1/generate-book-content`);
+    // 3. Start content generation with Vercel serverless function
+    console.log(`[${orderId}] Starting content generation with Vercel function`);
+    console.log(`[${orderId}] Content generation endpoint: /api/generate-book-content`);
     
     // Log book data (excluding large fields)
     const bookDataLog = { ...book };
@@ -143,13 +143,17 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     if (bookDataLog.book_content) bookDataLog.book_content = 'Truncated for logging';
     console.log(`[${orderId}] Book data for content generation:`, bookDataLog);
     
+    // Get host URL for API calls to our own Vercel functions
+    const hostUrl = process.env.VERCEL_URL ? 
+      `https://${process.env.VERCEL_URL}` : 
+      'http://localhost:3000';
+    
     const contentPromise = fetch(
-      `${supabaseUrl}/functions/v1/generate-book-content`,
+      `${hostUrl}/api/generate-book-content`,
       {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseKey}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ 
           orderId,
@@ -216,13 +220,17 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
         });
       }
       
+      // Get host URL for API calls to our own Vercel functions
+      const hostUrl = process.env.VERCEL_URL ? 
+        `https://${process.env.VERCEL_URL}` : 
+        'http://localhost:3000';
+      
       coverPromise = fetch(
-        `${supabaseUrl}/functions/v1/generate-cover-pdf`,
+        `${hostUrl}/api/generate-cover-pdf`,
         {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabaseKey}`
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify({ 
             frontCover: images.frontCover, 
@@ -278,7 +286,7 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     
     // 7. Generate interior PDF with detailed logging
     console.log(`[${orderId}] Starting interior PDF generation`);
-    console.log(`[${orderId}] Interior PDF generation endpoint: ${supabaseUrl}/functions/v1/generate-interior-pdf`);
+    console.log(`[${orderId}] Interior PDF generation endpoint: /api/generate-interior-pdf`);
     
     try {
       // Check if book content is available
@@ -286,13 +294,17 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
         console.warn(`[${orderId}] No book content available for interior PDF generation. Using fallback content.`);
       }
       
+      // Get host URL for API calls to our own Vercel functions
+      const hostUrl = process.env.VERCEL_URL ? 
+        `https://${process.env.VERCEL_URL}` : 
+        'http://localhost:3000';
+      
       const interiorResponse = await fetch(
-        `${supabaseUrl}/functions/v1/generate-interior-pdf`,
+        `${hostUrl}/api/generate-interior-pdf`,
         {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabaseKey}`
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify({ 
             orderId,
