@@ -59,6 +59,222 @@ const FormatStep = () => {
     }
   };
   
+  // 将用户数据保存到Supabase的辅助函数
+  const saveDataToSupabase = async (orderId: string, bookTitle: string) => {
+    try {
+      // 从localStorage获取所有需要的数据
+      const authorName = localStorage.getItem('funnyBiographyAuthorName') || '';
+      const savedAnswers = localStorage.getItem('funnyBiographyAnswers') || '[]';
+      const savedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas') || '[]';
+      const selectedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea') || '0';
+      const selectedStyle = localStorage.getItem('funnyBiographySelectedStyle') || 'classic-red';
+      const photoUrl = localStorage.getItem('funnyBiographyPhoto') || '';
+      
+      // 解析数据
+      const answers = JSON.parse(savedAnswers);
+      const ideas = JSON.parse(savedIdeas);
+      const selectedIdea = ideas[parseInt(selectedIdeaIndex)] || {};
+      
+      // 导入需要的Supabase工具
+      const { uploadImageToStorage, ensureBucketExists, ensureFunnyBiographyTableExists } = await import('@/integrations/supabase/storage');
+      
+      // 确保存储桶和数据库表都已存在
+      await ensureBucketExists('funny-biography');
+      await ensureFunnyBiographyTableExists();
+      
+      // 从CanvasCoverPreview组件获取封面图像
+      // 创建临时Canvas元素来生成封面图像
+      const frontCoverCanvas = document.createElement('canvas');
+      const spineCanvas = document.createElement('canvas');
+      const backCoverCanvas = document.createElement('canvas');
+      
+      // 设置画布大小
+      const baseWidth = 800;
+      const baseHeight = 1200;
+      const baseSpineWidth = 80;
+      
+      frontCoverCanvas.width = baseWidth;
+      frontCoverCanvas.height = baseHeight;
+      spineCanvas.width = baseSpineWidth;
+      spineCanvas.height = baseHeight;
+      backCoverCanvas.width = baseWidth;
+      backCoverCanvas.height = baseHeight;
+      
+      // 获取上下文
+      const frontCtx = frontCoverCanvas.getContext('2d');
+      const spineCtx = spineCanvas.getContext('2d');
+      const backCtx = backCoverCanvas.getContext('2d');
+      
+      if (!frontCtx || !spineCtx || !backCtx) {
+        throw new Error('Failed to get canvas context');
+      }
+      
+      // 导入需要的模板数据
+      const { coverTemplates, coverLayouts } = await import('@/components/cover-generator/types');
+      
+      // 获取选中的样式
+      const stylePreset = [
+        {
+          id: 'classic-red',
+          name: 'Classic Beige',
+          font: 'merriweather',
+          template: 'classic',
+          layout: 'classic-centered'
+        },
+        {
+          id: 'bestseller-style',
+          name: 'Bestseller',
+          font: 'montserrat',
+          template: 'bestseller',
+          layout: 'bestseller-modern'
+        },
+        {
+          id: 'modern-green',
+          name: 'Modern Green',
+          font: 'montserrat',
+          template: 'vibrant-green',
+          layout: 'bold-header'
+        },
+        {
+          id: 'minimal-gray',
+          name: 'Minimal Gray',
+          font: 'inter',
+          template: 'minimal',
+          layout: 'centered-title'
+        },
+        {
+          id: 'pastel-beige',
+          name: 'Sweet Pink',
+          font: 'times',
+          template: 'pastel-beige',
+          layout: 'classic-centered'
+        }
+      ].find(style => style.id === selectedStyle) || {
+        id: 'classic-red',
+        name: 'Classic Beige',
+        font: 'merriweather',
+        template: 'classic',
+        layout: 'classic-centered'
+      };
+      
+      // 加载图片
+      const loadImage = (url: string): Promise<HTMLImageElement> => {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => resolve(img);
+          img.onerror = reject;
+          img.src = url;
+        });
+      };
+      
+      // 画封面函数 - 简化版，仅供保存使用
+      const drawSimpleCover = (ctx: CanvasRenderingContext2D, type: 'front' | 'spine' | 'back') => {
+        // 选择合适的模板和布局
+        const template = coverTemplates[stylePreset.template] || coverTemplates.modern;
+        const layout = coverLayouts[stylePreset.layout] || coverLayouts['classic-centered'];
+        
+        // 基本背景
+        ctx.fillStyle = template.backgroundColor;
+        ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        
+        // 简单的文字
+        ctx.font = `bold 48px ${stylePreset.font}`;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.textAlign = 'center';
+        
+        if (type === 'front') {
+          // 封面标题
+          ctx.fillText(bookTitle, ctx.canvas.width / 2, ctx.canvas.height / 2);
+          ctx.fillText(authorName, ctx.canvas.width / 2, ctx.canvas.height / 2 + 60);
+        } else if (type === 'spine') {
+          // 书脊
+          ctx.save();
+          ctx.translate(ctx.canvas.width / 2, ctx.canvas.height / 2);
+          ctx.rotate(Math.PI / 2);
+          ctx.fillText(bookTitle, 0, 0);
+          ctx.restore();
+        } else {
+          // 封底
+          ctx.fillText('Back Cover', ctx.canvas.width / 2, ctx.canvas.height / 2);
+        }
+      };
+      
+      // 绘制简单的封面
+      drawSimpleCover(frontCtx, 'front');
+      drawSimpleCover(spineCtx, 'spine');
+      drawSimpleCover(backCtx, 'back');
+      
+      // 转换成base64
+      const frontCoverImage = frontCoverCanvas.toDataURL('image/jpeg');
+      const spineImage = spineCanvas.toDataURL('image/jpeg');
+      const backCoverImage = backCoverCanvas.toDataURL('image/jpeg');
+      
+      // 上传封面图像
+      const frontCoverUrl = await uploadImageToStorage(
+        frontCoverImage, 
+        'funny-biography', 
+        `${orderId}/front-cover`
+      );
+      
+      const spineUrl = await uploadImageToStorage(
+        spineImage, 
+        'funny-biography', 
+        `${orderId}/spine`
+      );
+      
+      const backCoverUrl = await uploadImageToStorage(
+        backCoverImage, 
+        'funny-biography', 
+        `${orderId}/back-cover`
+      );
+      
+      // 如果有照片，也上传照片
+      let profilePhotoUrl = '';
+      if (photoUrl) {
+        profilePhotoUrl = await uploadImageToStorage(
+          photoUrl,
+          'funny-biography',
+          `${orderId}/profile-photo`
+        );
+      }
+      
+      // 整合所有数据
+      const bookData = {
+        orderId,
+        title: bookTitle,
+        author: authorName,
+        selectedIdea,
+        ideas,
+        answers,
+        style: stylePreset,
+        images: {
+          frontCover: frontCoverUrl,
+          spine: spineUrl,
+          backCover: backCoverUrl,
+          profilePhoto: profilePhotoUrl
+        },
+        timestamp: new Date().toISOString()
+      };
+      
+      // 将合并的数据保存到Supabase
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { error } = await supabase
+        .from('funny_biography_books')
+        .insert(bookData);
+        
+      if (error) {
+        console.error('Error inserting data:', error);
+        throw error;
+      }
+      
+      console.log('Successfully saved book data to Supabase:', orderId);
+    } catch (error) {
+      console.error('Error saving data to Supabase:', error);
+      // 失败时不影响结账流程，只记录错误
+    }
+  };
+
   // 处理结账
   const handleCheckout = async () => {
     const selectedFormatObj = coverFormats.find(format => format.id === selectedFormat);
@@ -112,6 +328,14 @@ const FormatStep = () => {
         
         // 保存订单ID
         localStorage.setItem('funnyBiographyOrderId', orderId);
+        
+        // 在重定向前，启动后台保存过程
+        // 使用setTimeout和Promise.race让保存过程在后台进行，不阻塞用户跳转
+        setTimeout(() => {
+          saveDataToSupabase(orderId, bookTitle).catch(err => {
+            console.error('Background save error:', err);
+          });
+        }, 0);
         
         // 重定向到Stripe结账页面
         if (url) {
