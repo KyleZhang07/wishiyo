@@ -25,10 +25,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid price value' });
     }
     
-    // 如果是funny-biography，验证必要的用户数据
-    if (productId === 'funny-biography' && !userData) {
-      return res.status(400).json({ error: 'Missing user data for book generation' });
-    }
+
     
     // 生成随机订单ID
     const orderId = `WY-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
@@ -102,7 +99,7 @@ export default async function handler(req, res) {
         productId,
         format: format || 'Standard',
         title: title || 'Custom Book',
-        userData,
+        userData: userData ? JSON.stringify(userData) : null,
       },
     });
 
