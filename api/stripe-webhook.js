@@ -1,13 +1,11 @@
-const Stripe = require('stripe');
-const fetch = require('isomorphic-fetch');
+import Stripe from 'stripe';
+import fetch from 'node-fetch';
 
 // API config for Vercel environment
-module.exports = {
-  config: {
-    api: {
-      bodyParser: false, // Disable default bodyParser
-    },
-  }
+export const config = {
+  api: {
+    bodyParser: false, // Disable default bodyParser
+  },
 };
 
 console.log("===== WEBHOOK FILE LOADED =====");
@@ -134,9 +132,9 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
       backCoverLength: book.images && book.images.backCover ? book.images.backCover.substring(0, 30) + '...' : 'N/A'
     });
 
-    // 3. Start content generation with Vercel serverless function
-    console.log(`[${orderId}] Starting content generation with Vercel function`);
-    console.log(`[${orderId}] Content generation endpoint: /api/generate-book-content`);
+    // 3. Start content generation with detailed logging
+    console.log(`[${orderId}] Starting content generation with Supabase function`);
+    console.log(`[${orderId}] Content generation endpoint: ${supabaseUrl}/functions/v1/generate-book-content`);
     
     // Log book data (excluding large fields)
     const bookDataLog = { ...book };
@@ -145,17 +143,13 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     if (bookDataLog.book_content) bookDataLog.book_content = 'Truncated for logging';
     console.log(`[${orderId}] Book data for content generation:`, bookDataLog);
     
-    // Get host URL for API calls to our own Vercel functions
-    const hostUrl = process.env.VERCEL_URL ? 
-      `https://${process.env.VERCEL_URL}` : 
-      'http://localhost:3000';
-    
     const contentPromise = fetch(
-      `${hostUrl}/api/generate-book-content`,
+      `${supabaseUrl}/functions/v1/generate-book-content`,
       {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseKey}`
         },
         body: JSON.stringify({ 
           orderId,
@@ -222,17 +216,13 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
         });
       }
       
-      // Get host URL for API calls to our own Vercel functions
-      const hostUrl = process.env.VERCEL_URL ? 
-        `https://${process.env.VERCEL_URL}` : 
-        'http://localhost:3000';
-      
       coverPromise = fetch(
-        `${hostUrl}/api/generate-cover-pdf`,
+        `${supabaseUrl}/functions/v1/generate-cover-pdf`,
         {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseKey}`
           },
           body: JSON.stringify({ 
             frontCover: images.frontCover, 
@@ -288,7 +278,7 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     
     // 7. Generate interior PDF with detailed logging
     console.log(`[${orderId}] Starting interior PDF generation`);
-    console.log(`[${orderId}] Interior PDF generation endpoint: /api/generate-interior-pdf`);
+    console.log(`[${orderId}] Interior PDF generation endpoint: ${supabaseUrl}/functions/v1/generate-interior-pdf`);
     
     try {
       // Check if book content is available
@@ -296,17 +286,13 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
         console.warn(`[${orderId}] No book content available for interior PDF generation. Using fallback content.`);
       }
       
-      // Get host URL for API calls to our own Vercel functions
-      const hostUrl = process.env.VERCEL_URL ? 
-        `https://${process.env.VERCEL_URL}` : 
-        'http://localhost:3000';
-      
       const interiorResponse = await fetch(
-        `${hostUrl}/api/generate-interior-pdf`,
+        `${supabaseUrl}/functions/v1/generate-interior-pdf`,
         {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseKey}`
           },
           body: JSON.stringify({ 
             orderId,
@@ -626,7 +612,7 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
   }
 }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   console.log("===== WEBHOOK CALLED =====");
   if (req.method !== 'POST') {
     console.log("Not a POST request:", req.method);
