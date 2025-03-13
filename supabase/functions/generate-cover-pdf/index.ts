@@ -25,9 +25,6 @@ serve(async (req) => {
     const { frontCover, spine, backCover, orderId } = await req.json();
 
     console.log('Received request for PDF generation with order ID:', orderId);
-    console.log('Front cover URL:', frontCover ? `${frontCover.substring(0, 40)}...` : 'undefined');
-    console.log('Spine URL:', spine ? `${spine.substring(0, 40)}...` : 'undefined');
-    console.log('Back cover URL:', backCover ? `${backCover.substring(0, 40)}...` : 'undefined');
     
     if (!frontCover || !spine || !backCover) {
       throw new Error('Missing required cover image URLs');
@@ -53,12 +50,16 @@ serve(async (req) => {
         
         // 处理已经是base64数据的情况
         if (imageUrl.startsWith('data:')) {
-          console.log('Image is already in data URI format - extracting base64 data');
+          console.log('Image is already in data URI format - using directly');
           return imageUrl;
         }
 
         console.log(`Fetching image from URL: ${imageUrl}`);
-        const response = await fetch(imageUrl);
+        const response = await fetch(imageUrl, {
+          headers: {
+            'Accept': 'image/*,application/pdf',
+          }
+        });
         
         if (!response.ok) {
           throw new Error(`Failed to fetch image from ${imageUrl}: ${response.status} ${response.statusText}`);
@@ -68,27 +69,14 @@ serve(async (req) => {
         const contentType = response.headers.get('content-type') || 'image/jpeg';
         console.log(`Content type of fetched image: ${contentType}`);
         
-        // 如果是PDF文件，需要特殊处理
-        if (contentType.includes('application/pdf')) {
-          console.log('Image URL points to a PDF file, converting to image for PDF generation...');
-          // 对于PDF，我们需要转换成图像 - 简化起见，这里返回一个错误
-          throw new Error(`URL points to a PDF file, not an image: ${imageUrl}`);
-        }
-        
         // 获取图片数据
         const arrayBuffer = await response.arrayBuffer();
-        console.log(`Image data received, size: ${arrayBuffer.byteLength} bytes`);
-        
-        // 将ArrayBuffer转换为base64
         const base64String = btoa(
           new Uint8Array(arrayBuffer)
             .reduce((data, byte) => data + String.fromCharCode(byte), '')
         );
         
-        const dataUri = `data:${contentType};base64,${base64String}`;
-        console.log(`Successfully converted image to data URI, length: ${dataUri.length}`);
-        
-        return dataUri;
+        return `data:${contentType};base64,${base64String}`;
       } catch (error) {
         console.error(`Error downloading image from ${imageUrl.substring(0, 50)}...:`, error);
         throw error;
@@ -98,17 +86,12 @@ serve(async (req) => {
     // 将PDF上传到存储桶并返回公共URL
     async function uploadPdfToStorage(pdfData: string, fileName: string): Promise<string> {
       try {
-        console.log(`Preparing to upload ${fileName} to storage, data length: ${pdfData.length}`);
+        console.log(`Uploading ${fileName} to storage...`);
         
         // 检查存储桶是否存在
         const { data: buckets, error: bucketsError } = await supabase
           .storage
           .listBuckets();
-        
-        if (bucketsError) {
-          console.error('Error listing buckets:', bucketsError);
-          throw bucketsError;
-        }
         
         const bucketExists = buckets?.some(bucket => bucket.name === 'book-covers');
         
@@ -130,25 +113,14 @@ serve(async (req) => {
         }
         
         // 从base64 Data URI中提取PDF数据
-        let base64Data;
-        if (pdfData.includes(',')) {
-          base64Data = pdfData.split(',')[1];
-          console.log(`Extracted base64 data from Data URI, length: ${base64Data.length}`);
-        } else {
-          console.log('PDF data does not contain a comma, using as is');
-          base64Data = pdfData;
-        }
+        const base64Data = pdfData.split(',')[1];
         
         // 将base64转换为Uint8Array
         const binaryString = atob(base64Data);
-        console.log(`Converted base64 to binary string, length: ${binaryString.length}`);
-        
         const bytes = new Uint8Array(binaryString.length);
         for (let i = 0; i < binaryString.length; i++) {
           bytes[i] = binaryString.charCodeAt(i);
         }
-        
-        console.log(`Created Uint8Array for upload, size: ${bytes.length} bytes`);
         
         // 上传到Supabase Storage
         const filePath = `${orderId}/${fileName}`;
@@ -162,8 +134,8 @@ serve(async (req) => {
           });
         
         if (uploadError) {
-          console.error(`Failed to upload PDF:`, uploadError);
-          throw uploadError;
+          const errorText = uploadError.message;
+          throw new Error(`Failed to upload PDF: ${errorText}`);
         }
         
         console.log(`PDF uploaded successfully to storage`);
@@ -175,7 +147,7 @@ serve(async (req) => {
           .getPublicUrl(filePath);
         
         const publicUrl = urlData?.publicUrl || '';
-        console.log(`Generated public URL: ${publicUrl}`);
+        console.log(`Generated URL: ${publicUrl}`);
         
         return publicUrl;
       } catch (error) {
@@ -189,13 +161,13 @@ serve(async (req) => {
     
     // 获取所有图片的base64数据
     const frontCoverData = await getImageFromUrl(frontCover);
-    console.log('Front cover processed successfully, data length:', frontCoverData.length);
+    console.log('Front cover processed successfully');
     
     const spineData = await getImageFromUrl(spine);
-    console.log('Spine processed successfully, data length:', spineData.length);
+    console.log('Spine processed successfully');
     
     const backCoverData = await getImageFromUrl(backCover);
-    console.log('Back cover processed successfully, data length:', backCoverData.length);
+    console.log('Back cover processed successfully');
     
     console.log('All images downloaded and processed successfully');
 
@@ -245,24 +217,10 @@ serve(async (req) => {
       11 // height
     );
 
-    // 保存PDF到内存中
-    console.log('Saving PDF to memory');
-    const pdfArrayBuffer = pdf.output('arraybuffer');
-    console.log(`PDF generated successfully, size: ${pdfArrayBuffer.byteLength} bytes`);
-    
-    // 检查PDF内容是否为空
-    if (pdfArrayBuffer.byteLength < 100) {
-      throw new Error('Generated PDF appears to be empty or corrupt');
-    }
-    
-    // 转换为base64以便在响应中返回和保存到数据库
-    const pdfBase64 = btoa(
-      new Uint8Array(pdfArrayBuffer)
-        .reduce((data, byte) => data + String.fromCharCode(byte), '')
-    );
-    
-    const pdfOutput = 'data:application/pdf;base64,' + pdfBase64;
-    console.log('PDF conversion to base64 successful, output length:', pdfOutput.length);
+    // Convert PDF to base64
+    console.log('Converting PDF to base64');
+    const pdfOutput = pdf.output('datauristring');
+    console.log('PDF generation successful, output length:', pdfOutput.length);
     
     // 上传PDF到存储桶
     console.log(`Uploading cover PDF to storage...`);
