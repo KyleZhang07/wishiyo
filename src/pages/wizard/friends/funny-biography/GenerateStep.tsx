@@ -7,13 +7,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { jsPDF } from 'jspdf';
 
-// 定义赞美语接口
 interface Praise {
   source: string;
   text: string;
 }
 
-// Define combined style presets
 const stylePresets = [
   {
     id: 'classic-red',
@@ -69,16 +67,14 @@ const FunnyBiographyGenerateStep = () => {
   const [praises, setPraises] = useState<Praise[]>([]);
   const { toast } = useToast();
   
-  // PDF状态
   const [frontCoverPdf, setFrontCoverPdf] = useState<string | null>(null);
   const [backCoverPdf, setBackCoverPdf] = useState<string | null>(null);
   const [spinePdf, setSpinePdf] = useState<string | null>(null);
   const [pdfGenerating, setPdfGenerating] = useState(false);
+  const [combinedPdfUrl, setCombinedPdfUrl] = useState<string | null>(null);
   
-  // Canvas引用，用于生成PDF
   const canvasPdfContainerRef = useRef<HTMLDivElement>(null);
 
-  // Get the current style preset
   const getCurrentStyle = () => {
     return stylePresets.find(style => style.id === selectedStyle) || stylePresets[0];
   };
@@ -90,14 +86,15 @@ const FunnyBiographyGenerateStep = () => {
     const savedPhotos = localStorage.getItem('funnyBiographyPhoto');
     const savedStyle = localStorage.getItem('funnyBiographySelectedStyle');
     
-    // 尝试加载已保存的PDF
     const savedFrontCoverPdf = localStorage.getItem('funnyBiographyFrontCoverImage');
     const savedBackCoverPdf = localStorage.getItem('funnyBiographyBackCoverImage');
     const savedSpinePdf = localStorage.getItem('funnyBiographySpineImage');
+    const savedCombinedPdfUrl = localStorage.getItem('funnyBiographyCombinedPdfUrl');
     
     if (savedFrontCoverPdf) setFrontCoverPdf(savedFrontCoverPdf);
     if (savedBackCoverPdf) setBackCoverPdf(savedBackCoverPdf);
     if (savedSpinePdf) setSpinePdf(savedSpinePdf);
+    if (savedCombinedPdfUrl) setCombinedPdfUrl(savedCombinedPdfUrl);
 
     if (savedAuthor) {
       setAuthorName(savedAuthor);
@@ -113,12 +110,10 @@ const FunnyBiographyGenerateStep = () => {
       if (selectedIdea) {
         setCoverTitle(selectedIdea.title || '');
         setSubtitle(selectedIdea.description || '');
-        // Always use the authorName from localStorage, ignore any author field from the idea
         if (savedAuthor) {
           setAuthorName(savedAuthor);
         }
         
-        // 获取赞美语
         if (selectedIdea.praises && Array.isArray(selectedIdea.praises)) {
           setPraises(selectedIdea.praises);
         }
@@ -130,13 +125,11 @@ const FunnyBiographyGenerateStep = () => {
     }
   }, []);
   
-  // When style or other related parameters change, generate PDF
   useEffect(() => {
-    // Only generate PDF when all necessary data is ready
     if (coverTitle && authorName && coverImage) {
-      // Check if we already have PDFs, don't regenerate if we're returning to this step
       const hasExistingPdfs = frontCoverPdf && backCoverPdf && spinePdf;
-      if (!hasExistingPdfs) {
+      if (!hasExistingPdfs && !pdfGenerating) {
+        console.log('Generating PDFs from canvas...');
         generatePdfsFromCanvas();
       }
     }
@@ -172,105 +165,159 @@ const FunnyBiographyGenerateStep = () => {
   };
 
   const handleStyleChange = (styleId: string) => {
-    // Clear previous PDFs
     setFrontCoverPdf(null);
     setBackCoverPdf(null);
     setSpinePdf(null);
+    setCombinedPdfUrl(null);
     
-    // Remove from localStorage
     localStorage.removeItem('funnyBiographyFrontCoverImage');
     localStorage.removeItem('funnyBiographyBackCoverImage');
     localStorage.removeItem('funnyBiographySpineImage');
+    localStorage.removeItem('funnyBiographyCombinedPdfUrl');
     
-    // Set new style
     setSelectedStyle(styleId);
     localStorage.setItem('funnyBiographySelectedStyle', styleId);
   };
   
-  // Generate PDF from Canvas and save
   const generatePdfsFromCanvas = async () => {
     setPdfGenerating(true);
     
-    // Ensure Canvas is rendered
-    setTimeout(() => {
-      try {
-        if (!canvasPdfContainerRef.current) {
-          console.error('Canvas container not found');
+    try {
+      setTimeout(() => {
+        try {
+          if (!canvasPdfContainerRef.current) {
+            console.error('Canvas container not found');
+            setPdfGenerating(false);
+            return;
+          }
+          
+          const canvases = canvasPdfContainerRef.current.querySelectorAll('canvas');
+          if (canvases.length < 3) {
+            console.error('Not enough canvas elements found');
+            setPdfGenerating(false);
+            return;
+          }
+          
+          const frontCoverCanvas = canvases[0];
+          console.log(`Front cover canvas dimensions: ${frontCoverCanvas.width}x${frontCoverCanvas.height}`);
+          
+          const frontPdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'px',
+            format: [frontCoverCanvas.width, frontCoverCanvas.height]
+          });
+          const frontImgData = frontCoverCanvas.toDataURL('image/jpeg', 1.0);
+          frontPdf.addImage(frontImgData, 'JPEG', 0, 0, frontCoverCanvas.width, frontCoverCanvas.height);
+          const frontPdfData = frontPdf.output('datauristring');
+          setFrontCoverPdf(frontPdfData);
+          localStorage.setItem('funnyBiographyFrontCoverImage', frontPdfData);
+          console.log('Front cover PDF generated successfully, length:', frontPdfData.length);
+          
+          const spineCanvas = canvases[1];
+          console.log(`Spine canvas dimensions: ${spineCanvas.width}x${spineCanvas.height}`);
+          
+          const spinePdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'px',
+            format: [spineCanvas.width, spineCanvas.height]
+          });
+          const spineImgData = spineCanvas.toDataURL('image/jpeg', 1.0);
+          spinePdf.addImage(spineImgData, 'JPEG', 0, 0, spineCanvas.width, spineCanvas.height);
+          const spinePdfData = spinePdf.output('datauristring');
+          setSpinePdf(spinePdfData);
+          localStorage.setItem('funnyBiographySpineImage', spinePdfData);
+          console.log('Spine PDF generated successfully, length:', spinePdfData.length);
+          
+          const backCoverCanvas = canvases[2];
+          console.log(`Back cover canvas dimensions: ${backCoverCanvas.width}x${backCoverCanvas.height}`);
+          
+          const backPdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'px',
+            format: [backCoverCanvas.width, backCoverCanvas.height]
+          });
+          const backImgData = backCoverCanvas.toDataURL('image/jpeg', 1.0);
+          backPdf.addImage(backImgData, 'JPEG', 0, 0, backCoverCanvas.width, backCoverCanvas.height);
+          const backPdfData = backPdf.output('datauristring');
+          setBackCoverPdf(backPdfData);
+          localStorage.setItem('funnyBiographyBackCoverImage', backPdfData);
+          console.log('Back cover PDF generated successfully, length:', backPdfData.length);
+          
+          console.log('All PDFs generated successfully');
+          
+          const orderId = localStorage.getItem('funnyBiographyOrderId') || `temp_${Date.now()}`;
+          
+          combinePdfs(frontPdfData, spinePdfData, backPdfData, orderId);
+        } catch (error) {
+          console.error('Error generating PDFs:', error);
+          toast({
+            variant: "destructive",
+            title: "Error generating PDFs",
+            description: "Failed to convert canvas to PDF. Please try again."
+          });
           setPdfGenerating(false);
-          return;
         }
-        
-        // Get all Canvas elements
-        const canvases = canvasPdfContainerRef.current.querySelectorAll('canvas');
-        if (canvases.length < 3) {
-          console.error('Not enough canvas elements found');
-          setPdfGenerating(false);
-          return;
+      }, 500);
+    } catch (error) {
+      console.error('Error in generatePdfsFromCanvas:', error);
+      setPdfGenerating(false);
+      toast({
+        variant: "destructive",
+        title: "Error generating PDFs",
+        description: error instanceof Error ? error.message : "An unknown error occurred"
+      });
+    }
+  };
+
+  const combinePdfs = async (frontCover: string, spine: string, backCover: string, orderId: string) => {
+    try {
+      console.log('Calling generate-cover-pdf edge function to combine PDFs...');
+      
+      const { data, error } = await supabase.functions.invoke('generate-cover-pdf', {
+        body: { 
+          frontCover, 
+          spine, 
+          backCover,
+          orderId
         }
-        
-        // Front cover
-        const frontCoverCanvas = canvases[0];
-        const frontPdf = new jsPDF({
-          orientation: 'portrait',
-          unit: 'px',
-          format: [frontCoverCanvas.width, frontCoverCanvas.height]
-        });
-        const frontImgData = frontCoverCanvas.toDataURL('image/jpeg', 1.0);
-        frontPdf.addImage(frontImgData, 'JPEG', 0, 0, frontCoverCanvas.width, frontCoverCanvas.height);
-        const frontPdfData = frontPdf.output('datauristring');
-        setFrontCoverPdf(frontPdfData);
-        localStorage.setItem('funnyBiographyFrontCoverImage', frontPdfData);
-        
-        // Spine
-        const spineCanvas = canvases[1];
-        const spinePdf = new jsPDF({
-          orientation: 'portrait',
-          unit: 'px',
-          format: [spineCanvas.width, spineCanvas.height]
-        });
-        const spineImgData = spineCanvas.toDataURL('image/jpeg', 1.0);
-        spinePdf.addImage(spineImgData, 'JPEG', 0, 0, spineCanvas.width, spineCanvas.height);
-        const spinePdfData = spinePdf.output('datauristring');
-        setSpinePdf(spinePdfData);
-        localStorage.setItem('funnyBiographySpineImage', spinePdfData);
-        
-        // Back cover
-        const backCoverCanvas = canvases[2];
-        const backPdf = new jsPDF({
-          orientation: 'portrait',
-          unit: 'px',
-          format: [backCoverCanvas.width, backCoverCanvas.height]
-        });
-        const backImgData = backCoverCanvas.toDataURL('image/jpeg', 1.0);
-        backPdf.addImage(backImgData, 'JPEG', 0, 0, backCoverCanvas.width, backCoverCanvas.height);
-        const backPdfData = backPdf.output('datauristring');
-        setBackCoverPdf(backPdfData);
-        localStorage.setItem('funnyBiographyBackCoverImage', backPdfData);
-        
-        console.log('PDFs generated successfully');
-      } catch (error) {
-        console.error('Error generating PDFs:', error);
-        toast({
-          variant: "destructive",
-          title: "Error generating PDFs",
-          description: "Failed to convert canvas to PDF. Please try again."
-        });
-      } finally {
-        setPdfGenerating(false);
+      });
+      
+      if (error) {
+        throw error;
       }
-    }, 500); // Give Canvas some time to render
+      
+      if (data.success && data.coverSourceUrl) {
+        console.log('Combined PDF generated successfully:', data.coverSourceUrl);
+        setCombinedPdfUrl(data.coverSourceUrl);
+        localStorage.setItem('funnyBiographyCombinedPdfUrl', data.coverSourceUrl);
+        localStorage.setItem('funnyBiographyOrderId', orderId);
+        
+        toast({
+          title: "Cover PDF Generated",
+          description: "Your book cover has been successfully generated."
+        });
+      } else {
+        throw new Error('Failed to generate combined PDF');
+      }
+    } catch (error) {
+      console.error('Error combining PDFs:', error);
+      toast({
+        variant: "destructive",
+        title: "Error generating combined PDF",
+        description: error instanceof Error ? error.message : "An unknown error occurred"
+      });
+    } finally {
+      setPdfGenerating(false);
+    }
   };
 
   const handleGenerateBook = () => {
-    // If PDFs haven't been generated yet, try generating once
     if (!frontCoverPdf || !backCoverPdf || !spinePdf) {
       generatePdfsFromCanvas();
+      return;
     }
     
-    // Save current style selection to localStorage
     localStorage.setItem('funnyBiographySelectedStyle', selectedStyle);
-    
-    // Navigate to the preview page
     navigate('/create/friends/funny-biography/preview');
   };
 
@@ -285,7 +332,6 @@ const FunnyBiographyGenerateStep = () => {
       totalSteps={6}
     >
       <div className="space-y-8">
-        {/* Canvas container for generating PDF, not directly displayed */}
         <div className="mx-auto flex justify-center" ref={canvasPdfContainerRef} style={{ position: 'absolute', left: '-9999px', visibility: 'hidden' }}>
           <CanvasCoverPreview
             coverTitle={coverTitle}
@@ -305,12 +351,20 @@ const FunnyBiographyGenerateStep = () => {
           />
         </div>
         
-        {/* PDF preview area */}
         <div className="mx-auto flex justify-center">
           {pdfGenerating ? (
             <div className="flex items-center justify-center h-64">
               <div className="animate-spin h-8 w-8 border-4 border-[#F6C744] border-t-transparent rounded-full"></div>
               <span className="ml-3">Generating PDF...</span>
+            </div>
+          ) : combinedPdfUrl ? (
+            <div className="flex flex-col items-center">
+              <p className="text-sm text-gray-600 mb-2">Complete Cover Preview</p>
+              <iframe 
+                src={combinedPdfUrl} 
+                className="w-[650px] h-[450px] border shadow-md"
+                title="Combined Cover PDF"
+              />
             </div>
           ) : frontCoverPdf ? (
             <div className="flex items-start space-x-4">
@@ -349,74 +403,20 @@ const FunnyBiographyGenerateStep = () => {
         <div className="space-y-4">
           <h3 className="text-lg font-medium text-center mb-4">Choose Your Style</h3>
           <div className="flex flex-wrap justify-center gap-6 mt-4">
-            {[...stylePresets].map((style, index) => {
-              // Get template and layout data based on style configuration
+            {stylePresets.map((style) => {
               const template = style.template;
               
-              // Define style colors to match the image
               let styleConfig;
               if (style.id === 'classic-red') {
-                styleConfig = { bg: '#C41E3A', text: '#FFFFFF', border: 'none' }; // Red with white text (first circle)
+                styleConfig = { bg: '#C41E3A', text: '#FFFFFF', border: 'none' };
               } else if (style.id === 'bestseller-style') {
-                styleConfig = { bg: '#4361EE', text: '#F7DC6F', border: 'none' }; // Blue with yellow text
+                styleConfig = { bg: '#4361EE', text: '#F7DC6F', border: 'none' };
               } else if (style.id === 'modern-green') {
-                styleConfig = { bg: '#E6DEC9', text: '#D4AF37', border: 'none' }; // 折中的奶油色底金字
+                styleConfig = { bg: '#E6DEC9', text: '#D4AF37', border: 'none' };
               } else if (style.id === 'minimal-gray') {
-                styleConfig = { bg: '#D9D9D9', text: '#FFFFFF', border: 'none' }; // 浅灰色背景，白色文字
+                styleConfig = { bg: '#D9D9D9', text: '#FFFFFF', border: 'none' };
               } else if (style.id === 'pastel-beige') {
-                styleConfig = { bg: '#FFC0CB', text: '#8A2BE2', border: 'none' }; // 粉色背景，紫色文字
+                styleConfig = { bg: '#FFC0CB', text: '#8A2BE2', border: 'none' };
               }
-              
-              return (
-                <div 
-                  key={style.id}
-                  onClick={() => handleStyleChange(style.id)}
-                  className="flex flex-col items-center"
-                >
-                  <div 
-                    className={`w-[80px] h-[80px] rounded-full flex items-center justify-center cursor-pointer transition-all ${
-                      selectedStyle === style.id 
-                        ? 'ring-4 ring-[#F6C744] ring-offset-2' 
-                        : 'hover:ring-2 hover:ring-[#F6C744]/50'
-                    }`}
-                    style={{ 
-                      backgroundColor: styleConfig.bg,
-                      border: styleConfig.border
-                    }}
-                  >
-                    <span 
-                      className="text-3xl font-bold"
-                      style={{ 
-                        color: styleConfig.text,
-                        fontFamily: style.font === 'playfair' ? 'serif' 
-                                 : style.font === 'merriweather' ? 'serif' 
-                                 : style.font === 'montserrat' ? 'sans-serif' 
-                                 : style.font === 'roboto' ? 'sans-serif'
-                                 : 'sans-serif',
-                        fontWeight: style.font === 'montserrat' || style.font === 'roboto' ? '700' : '800',
-                      }}
-                    >
-                      Aa
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-        
-        <div className="mt-8">
-          <Button 
-            className="w-full py-6 text-lg bg-[#F6C744] hover:bg-[#E5B73E] text-white"
-            onClick={handleGenerateBook}
-            disabled={pdfGenerating}
-          >
-            {pdfGenerating ? 'Generating PDF...' : 'Generate Your Book'}
-          </Button>
-        </div>
-      </div>
-    </WizardStep>
-  );
-};
 
-export default FunnyBiographyGenerateStep;
+
