@@ -126,7 +126,6 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     // 测试Edge Function调用
     console.log(`[DIAGNOSTIC] Testing Supabase Edge Function call...`);
     try {
-      // 测试update-book-data函数
       const testEdgeResponse = await fetch(
         `${supabaseUrl}/functions/v1/update-book-data`,
         {
@@ -141,64 +140,6 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
       console.log(`[DIAGNOSTIC] Edge Function Test Response Status: ${testEdgeResponse.status}`);
       const testEdgeData = await testEdgeResponse.text();
       console.log(`[DIAGNOSTIC] Edge Function Test Response: ${testEdgeData}`);
-      
-      // 测试generate-cover-pdf函数
-      try {
-        console.log(`[DIAGNOSTIC] Testing generate-cover-pdf function...`);
-        const testCoverResponse = await fetch(
-          `${supabaseUrl}/functions/v1/generate-cover-pdf`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${supabaseKey}`
-            },
-            body: JSON.stringify({ 
-              frontCover: "https://example.com/test.jpg",
-              spine: "https://example.com/test.jpg",
-              backCover: "https://example.com/test.jpg"
-            })
-          }
-        );
-        console.log(`[DIAGNOSTIC] Cover PDF Function Test Status: ${testCoverResponse.status}`);
-        try {
-          const testCoverData = await testCoverResponse.text();
-          console.log(`[DIAGNOSTIC] Cover PDF Function Test Response: ${testCoverData.substring(0, 100)}...`);
-        } catch (parseError) {
-          console.error(`[DIAGNOSTIC] Error parsing cover PDF test response:`, parseError);
-        }
-      } catch (coverTestError) {
-        console.error(`[DIAGNOSTIC] Cover PDF Function Test Error:`, coverTestError);
-      }
-      
-      // 测试generate-book-content函数
-      try {
-        console.log(`[DIAGNOSTIC] Testing generate-book-content function...`);
-        const testContentResponse = await fetch(
-          `${supabaseUrl}/functions/v1/generate-book-content`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${supabaseKey}`
-            },
-            body: JSON.stringify({ 
-              orderId: orderId,
-              title: "Test Title",
-              author: "Test Author"
-            })
-          }
-        );
-        console.log(`[DIAGNOSTIC] Content Function Test Status: ${testContentResponse.status}`);
-        try {
-          const testContentData = await testContentResponse.text();
-          console.log(`[DIAGNOSTIC] Content Function Test Response: ${testContentData.substring(0, 100)}...`);
-        } catch (parseError) {
-          console.error(`[DIAGNOSTIC] Error parsing content test response:`, parseError);
-        }
-      } catch (contentTestError) {
-        console.error(`[DIAGNOSTIC] Content Function Test Error:`, contentTestError);
-      }
     } catch (testEdgeError) {
       console.error(`[DIAGNOSTIC] Edge Function Test Error:`, testEdgeError);
     }
@@ -299,16 +240,6 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
       // 检查图片URL有效性
       const validateImageUrl = (url) => {
         if (!url) return false;
-        
-        // 记录详细的URL信息
-        console.log(`[${orderId}] Validating image URL:`, {
-          url: url.substring(0, 50) + '...',
-          length: url.length,
-          hasJpgPdf: url.includes('.jpg.pdf'),
-          isDataUri: url.startsWith('data:'),
-          isSupabaseUrl: url.includes('supabase.co/storage')
-        });
-        
         // 检查是否是Supabase Storage URL
         if (url.includes('supabase.co/storage/v1/object/public/book-covers')) {
           return true;
@@ -322,7 +253,6 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
           new URL(url);
           return true;
         } catch (e) {
-          console.error(`[${orderId}] Invalid URL format:`, e.message);
           return false;
         }
       };
@@ -338,38 +268,6 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
         });
       }
       
-      // 添加URL格式修正逻辑
-      const fixImageUrl = (url) => {
-        // 检查并修复URL中的`.jpg.pdf`这种格式问题
-        if (url && url.includes('.jpg.pdf')) {
-          console.log(`[${orderId}] Fixing malformed image URL format: ${url.substring(0, 50)}...`);
-          return url.replace('.jpg.pdf', '.jpg');
-        }
-        return url;
-      };
-      
-      // 应用修正
-      const fixedImages = {
-        frontCover: fixImageUrl(images.frontCover),
-        spine: fixImageUrl(images.spine),
-        backCover: fixImageUrl(images.backCover)
-      };
-      
-      console.log(`[${orderId}] Original vs Fixed image URLs:`, {
-        frontCover: {
-          original: images.frontCover?.substring(0, 30) + '...',
-          fixed: fixedImages.frontCover?.substring(0, 30) + '...'
-        },
-        spine: {
-          original: images.spine?.substring(0, 30) + '...',
-          fixed: fixedImages.spine?.substring(0, 30) + '...'
-        },
-        backCover: {
-          original: images.backCover?.substring(0, 30) + '...',
-          fixed: fixedImages.backCover?.substring(0, 30) + '...'
-        }
-      });
-      
       coverPromise = fetch(
         `${supabaseUrl}/functions/v1/generate-cover-pdf`,
         {
@@ -379,9 +277,9 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
             'Authorization': `Bearer ${supabaseKey}`
           },
           body: JSON.stringify({ 
-            frontCover: fixedImages.frontCover, 
-            spine: fixedImages.spine, 
-            backCover: fixedImages.backCover 
+            frontCover: images.frontCover, 
+            spine: images.spine, 
+            backCover: images.backCover 
           })
         }
       );
@@ -390,60 +288,44 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     }
     
     // 5. Wait for content generation to complete
-    console.log(`[${orderId}] Waiting for content generation to complete`);
-    try {
-      const contentResponse = await contentPromise;
-      const contentResult = await contentResponse.json();
-      
-      console.log(`[${orderId}] Content generation response:`, {
-        status: contentResponse.status,
-        success: contentResult.success,
-        hasError: !!contentResult.error,
-        errorMessage: contentResult.error || 'No error'
-      });
-      
-      if (!contentResponse.ok || !contentResult.success) {
-        console.error(`[${orderId}] Content generation failed:`, JSON.stringify(contentResult));
-        console.log(`[${orderId}] Continuing with process despite content generation failure`);
-        // 不中断流程，继续处理其他部分
-      } else {
-        console.log(`[${orderId}] Content generation completed`);
-        
-        // 6. Update book content in database
-        // Extract book content from result
-        const bookContent = contentResult.bookContent;
-        console.log(`[${orderId}] Book content generation result:`, {
-          hasBookContent: !!bookContent,
-          contentLength: bookContent ? bookContent.length : 0,
-          contentPreview: bookContent ? bookContent.substring(0, 100) + '...' : 'No content'
-        });
-        
-        if (bookContent) {
-          console.log(`[${orderId}] Updating book content in database`);
-          const contentUpdateResponse = await fetch(
-            `${supabaseUrl}/functions/v1/update-book-data`,
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${supabaseKey}`
-              },
-              body: JSON.stringify({ orderId, bookContent })
-            }
-          );
-          
-          // Log content update response
-          console.log(`[${orderId}] Book content database update status:`, contentUpdateResponse.status);
-          const contentUpdateResult = await contentUpdateResponse.text();
-          console.log(`[${orderId}] Book content database update result:`, contentUpdateResult);
-        } else {
-          console.warn(`[${orderId}] No book content received from generator, using existing content if available`);
+    const contentResponse = await contentPromise;
+    const contentResult = await contentResponse.json();
+    
+    if (!contentResponse.ok || !contentResult.success) {
+      throw new Error(`Content generation failed: ${JSON.stringify(contentResult)}`);
+    }
+    
+    console.log(`[${orderId}] Content generation completed`);
+    
+    // 6. Update book content in database
+    // Extract book content from result
+    const bookContent = contentResult.bookContent;
+    console.log(`[${orderId}] Book content generation result:`, {
+      hasBookContent: !!bookContent,
+      contentLength: bookContent ? bookContent.length : 0,
+      contentPreview: bookContent ? bookContent.substring(0, 100) + '...' : 'No content'
+    });
+    
+    if (bookContent) {
+      console.log(`[${orderId}] Updating book content in database`);
+      const contentUpdateResponse = await fetch(
+        `${supabaseUrl}/functions/v1/update-book-data`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseKey}`
+          },
+          body: JSON.stringify({ orderId, bookContent })
         }
-      }
-    } catch (contentError) {
-      console.error(`[${orderId}] Error in content generation process:`, contentError);
-      console.log(`[${orderId}] Continuing with process despite content generation error`);
-      // 不中断流程，继续处理其他部分
+      );
+      
+      // Log content update response
+      console.log(`[${orderId}] Book content database update status:`, contentUpdateResponse.status);
+      const contentUpdateResult = await contentUpdateResponse.text();
+      console.log(`[${orderId}] Book content database update result:`, contentUpdateResult);
+    } else {
+      console.warn(`[${orderId}] No book content received from generator, using existing content if available`);
     }
     
     // 7. Generate interior PDF with detailed logging
@@ -532,11 +414,13 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     }
     
     console.log(`[${orderId}] Cover PDF generation completed`);
+    console.log(`[${orderId}] Cover result keys:`, Object.keys(coverResult));
+    console.log(`[${orderId}] Cover result success:`, coverResult.success);
     
     // 10. Update cover PDF in database
-    const coverPdf = coverResult.pdfOutput || coverResult.pdf;
+    const coverPdf = coverResult.pdfOutput || coverResult.pdf || coverResult.pdfData;
     if (coverPdf) {
-      console.log(`[${orderId}] Updating cover PDF in database`);
+      console.log(`[${orderId}] Updating cover PDF in database, data length: ${coverPdf.length}`);
       
       // 首先上传PDF到存储桶以获取URL
       try {
