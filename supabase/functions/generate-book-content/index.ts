@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -34,9 +33,18 @@ serve(async (req) => {
 
     console.log(`Generating book content for order ${orderId}`);
 
+    // Add detailed logging about the URL construction
+    const baseUrl = req.url.split('/generate-book-content')[0];
+    const getBookDataUrl = `${baseUrl}/get-book-data`;
+    
+    console.log('Request URL:', req.url);
+    console.log('Base URL:', baseUrl);
+    console.log('Get Book Data URL:', getBookDataUrl);
+    console.log('Authorization header present:', !!req.headers.get('Authorization'));
+
     // Fetch book data from the database
     const { data: bookData, error: fetchError } = await fetch(
-      `${req.url.split('/generate-book-content')[0]}/get-book-data`,
+      getBookDataUrl,
       {
         method: 'POST',
         headers: {
@@ -46,6 +54,12 @@ serve(async (req) => {
         body: JSON.stringify({ orderId }),
       }
     ).then(res => res.json());
+
+    console.log('Book data fetch response:', { 
+      success: !!bookData, 
+      hasError: !!fetchError, 
+      errorMessage: fetchError?.message || 'none' 
+    });
 
     if (fetchError || !bookData) {
       throw new Error(`Failed to fetch book data: ${fetchError || 'No data returned'}`);
