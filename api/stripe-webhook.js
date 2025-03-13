@@ -51,6 +51,44 @@ async function uploadPdfToStorage(supabaseUrl, supabaseKey, orderId, pdfData, fi
   try {
     console.log(`[${orderId}] Uploading ${fileName} to storage...`);
     
+    // 检查存储桶是否存在
+    const checkBucketResponse = await fetch(
+      `${supabaseUrl}/storage/v1/bucket/book-covers`,
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${supabaseKey}`
+        }
+      }
+    );
+    
+    // 如果存储桶不存在，则创建
+    if (!checkBucketResponse.ok) {
+      console.log(`[${orderId}] Storage bucket 'book-covers' does not exist, creating...`);
+      const createBucketResponse = await fetch(
+        `${supabaseUrl}/storage/v1/bucket`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseKey}`
+          },
+          body: JSON.stringify({
+            id: 'book-covers',
+            name: 'book-covers',
+            public: true,
+            file_size_limit: 52428800 // 50MB
+          })
+        }
+      );
+      
+      if (!createBucketResponse.ok) {
+        console.error(`[${orderId}] Failed to create storage bucket:`, await createBucketResponse.text());
+      } else {
+        console.log(`[${orderId}] Storage bucket 'book-covers' created successfully`);
+      }
+    }
+    
     // 从base64 Data URI中提取PDF数据
     let pdfContent = pdfData;
     if (pdfData.startsWith('data:')) {
@@ -58,7 +96,11 @@ async function uploadPdfToStorage(supabaseUrl, supabaseKey, orderId, pdfData, fi
     }
     const pdfBuffer = Buffer.from(pdfContent, 'base64');
     
+    // 确保orderId文件夹存在
+    console.log(`[${orderId}] Creating folder structure for order...`);
+    
     // 上传到Supabase Storage
+    console.log(`[${orderId}] Uploading to ${supabaseUrl}/storage/v1/object/book-covers/${orderId}/${fileName}`);
     const uploadResponse = await fetch(
       `${supabaseUrl}/storage/v1/object/book-covers/${orderId}/${fileName}`,
       {
@@ -73,7 +115,8 @@ async function uploadPdfToStorage(supabaseUrl, supabaseKey, orderId, pdfData, fi
     );
     
     if (!uploadResponse.ok) {
-      throw new Error(`Failed to upload PDF: ${await uploadResponse.text()}`);
+      const errorText = await uploadResponse.text();
+      throw new Error(`Failed to upload PDF: ${errorText}`);
     }
     
     console.log(`[${orderId}] PDF uploaded successfully to storage`);
@@ -85,6 +128,7 @@ async function uploadPdfToStorage(supabaseUrl, supabaseKey, orderId, pdfData, fi
     return publicUrl;
   } catch (error) {
     console.error(`[${orderId}] Error uploading PDF to storage:`, error);
+    console.error(error.stack || error); // 打印完整错误栈
     return null;
   }
 }
@@ -420,108 +464,47 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     if (coverPdf) {
       console.log(`[${orderId}] Updating cover PDF in database`);
       
-      // 首先上传PDF到存储桶以获取URL
+      // 上传PDF到存储桶以获取URL
       try {
         console.log(`[${orderId}] Uploading cover PDF to storage...`);
-        // 从base64 Data URI中提取PDF数据
-        let pdfData;
-        let pdfBuffer;
+        // 使用封装的上传函数处理base64编码并上传PDF
+        const coverFileUrl = await uploadPdfToStorage(
+          supabaseUrl,
+          supabaseKey,
+          orderId,
+          coverPdf,
+          'cover-full.pdf'
+        );
         
-        // 检查数据格式并适当处理
-        if (coverPdf.includes(',')) {
-          // 这是Data URI格式 (例如: data:application/pdf;base64,XXXXX)
-          console.log(`[${orderId}] Processing PDF as Data URI with comma`);
-          pdfData = coverPdf.split(',')[1];
-          pdfBuffer = Buffer.from(pdfData, 'base64');
-        } else if (coverPdf.startsWith('data:')) {
-          // Data URI格式但没有逗号
-          console.warn(`[${orderId}] PDF Data URI format without comma, trying to parse...`);
-          const matches = coverPdf.match(/^data:[^;]+;base64,(.*)$/);
-          if (matches && matches[1]) {
-            pdfData = matches[1];
-          } else {
-            // 假设整个字符串是base64编码
-            pdfData = coverPdf.replace(/^data:[^;]+;base64,/, '');
-          }
-          pdfBuffer = Buffer.from(pdfData, 'base64');
-        } else {
-          // 假设是纯base64编码字符串
-          console.log(`[${orderId}] Processing PDF as raw base64 string`);
-          try {
-            pdfBuffer = Buffer.from(coverPdf, 'base64');
-          } catch (bufferError) {
-            console.error(`[${orderId}] Error creating buffer from base64:`, bufferError);
-            // 尝试对字符串进行额外处理
-            // 有些库可能会返回不正确的base64 (例如带有换行符)
-            const cleanBase64 = coverPdf.replace(/[\r\n\s]/g, '');
-            pdfBuffer = Buffer.from(cleanBase64, 'base64');
-          }
+        if (!coverFileUrl) {
+          throw new Error('Failed to upload cover PDF to storage');
         }
         
-        console.log(`[${orderId}] PDF buffer created with size: ${pdfBuffer.length} bytes`);
+        console.log(`[${orderId}] Cover PDF uploaded successfully to storage with URL: ${coverFileUrl}`);
         
-        // 打印buffer的前20个字节来诊断内容格式
-        if (pdfBuffer.length > 20) {
-          console.log(`[${orderId}] PDF buffer starts with: ${pdfBuffer.slice(0, 20).toString('hex')}`);
-          // 检查PDF魔数 - PDF文件总是以%PDF开头
-          const isPdfFormat = pdfBuffer.slice(0, 4).toString() === '%PDF';
-          console.log(`[${orderId}] Does buffer appear to be a valid PDF? ${isPdfFormat}`);
-          
-          if (!isPdfFormat) {
-            // 如果不是PDF格式，可能需要进一步处理
-            console.warn(`[${orderId}] Buffer does not appear to be a valid PDF. Will attempt upload anyway.`);
-          }
-        }
-
-        // 上传到Supabase Storage REST API
-        const uploadEndpoint = `${supabaseUrl}/storage/v1/object/book-covers/${orderId}/cover-full.pdf`;
-        console.log(`[${orderId}] Uploading to endpoint: ${uploadEndpoint}`);
+        // 使用已获得的URL
+        const coverSourceUrl = coverFileUrl;
         
-        const uploadResponse = await fetch(
-          uploadEndpoint,
+        console.log(`[${orderId}] Generated cover_source_url:`, coverSourceUrl);
+        
+        // 更新数据库，包含PDF数据和URL
+        await fetch(
+          `${supabaseUrl}/functions/v1/update-book-data`,
           {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/pdf',
-              'Authorization': `Bearer ${supabaseKey}`,
-              'x-upsert': 'true'
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${supabaseKey}`
             },
-            body: pdfBuffer
+            body: JSON.stringify({ 
+              orderId, 
+              coverPdf,
+              cover_source_url: coverSourceUrl
+            })
           }
         );
         
-        // 输出详细的响应信息
-        console.log(`[${orderId}] Upload response status: ${uploadResponse.status}`);
-        
-        if (!uploadResponse.ok) {
-          console.error(`[${orderId}] Failed to upload cover PDF:`, await uploadResponse.text());
-        } else {
-          console.log(`[${orderId}] Cover PDF uploaded successfully to storage`);
-          
-          // 获取公共URL - 直接构建而不是再次请求
-          const coverSourceUrl = `${supabaseUrl}/storage/v1/object/public/book-covers/${orderId}/cover-full.pdf`;
-          console.log(`[${orderId}] Generated cover_source_url:`, coverSourceUrl);
-          
-          // 更新数据库，包含PDF数据和URL
-          await fetch(
-            `${supabaseUrl}/functions/v1/update-book-data`,
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${supabaseKey}`
-              },
-              body: JSON.stringify({ 
-                orderId, 
-                coverPdf,
-                cover_source_url: coverSourceUrl
-              })
-            }
-          );
-          
-          console.log(`[${orderId}] Database updated with coverPdf and cover_source_url`);
-          return;
-        }
+        console.log(`[${orderId}] Database updated with coverPdf and cover_source_url`);
       } catch (uploadError) {
         console.error(`[${orderId}] Error during PDF upload:`, uploadError);
       }
