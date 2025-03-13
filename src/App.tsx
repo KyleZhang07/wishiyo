@@ -16,7 +16,6 @@ import LoveLanding from "./pages/LoveLanding";
 import FunnyBiographyAuthorStep from "./pages/wizard/friends/funny-biography/AuthorStep";
 import FunnyBiographyStoriesStep from "./pages/wizard/friends/funny-biography/StoriesStep";
 import FunnyBiographyIdeasStep from "./pages/wizard/friends/funny-biography/IdeasStep";
-import FunnyBiographyDebugStep from "./pages/wizard/friends/funny-biography/DebugStep";
 import FunnyBiographyPhotosStep from "./pages/wizard/friends/funny-biography/PhotosStep";
 import FunnyBiographyGenerateStep from "./pages/wizard/friends/funny-biography/GenerateStep";
 import FunnyBiographyPreviewStep from "./pages/wizard/friends/funny-biography/PreviewStep";
@@ -96,7 +95,6 @@ const AppLayout = () => {
           <Route path="/create/friends/funny-biography/author" element={<FunnyBiographyAuthorStep />} />
           <Route path="/create/friends/funny-biography/stories" element={<FunnyBiographyStoriesStep />} />
           <Route path="/create/friends/funny-biography/ideas" element={<FunnyBiographyIdeasStep />} />
-          <Route path="/create/friends/funny-biography/debug" element={<FunnyBiographyDebugStep />} />
           <Route path="/create/friends/funny-biography/photos" element={<FunnyBiographyPhotosStep />} />
           <Route path="/create/friends/funny-biography/generate" element={<FunnyBiographyGenerateStep />} />
           <Route path="/create/friends/funny-biography/preview" element={<FunnyBiographyPreviewStep />} />

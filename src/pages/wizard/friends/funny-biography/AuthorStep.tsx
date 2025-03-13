@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Input } from '@/components/ui/input';
@@ -33,8 +32,8 @@ const FunnyBiographyAuthorStep = () => {
 
   return (
     <WizardStep
-      title="Who's Writing This Funny Biography?"
-      description="Let's start with your name - you're about to create something hilarious!"
+      title="Who's writing this book?"
+      description="It can be a friend, family member, or even your pet - anyone you want to create a story about!"
       previousStep="/friends"
       currentStep={1}
       totalSteps={4}
@@ -44,7 +43,7 @@ const FunnyBiographyAuthorStep = () => {
         <div>
           <Input
             id="authorName"
-            placeholder="Enter your name (aka Chief Comedy Officer)"
+            placeholder="Author's name"
             value={authorName}
             onChange={e => setAuthorName(e.target.value)}
           />

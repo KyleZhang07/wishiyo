@@ -78,9 +78,12 @@ const FunnyBiographyGenerateStep = () => {
   // Canvas引用，用于生成PDF
   const canvasPdfContainerRef = useRef<HTMLDivElement>(null);
 
-  // New states
+  // 生成状态追踪
   const [generationStarted, setGenerationStarted] = useState(false);
   const [generationComplete, setGenerationComplete] = useState(false);
+  const [shouldRegenerate, setShouldRegenerate] = useState(false);
+  const [lastUsedImage, setLastUsedImage] = useState<string | null>(null);
+  const [lastUsedStyle, setLastUsedStyle] = useState<string | null>(null);
 
   // 使用模版字符串定义尺寸
   const standardPreviewWidth = 180;
@@ -98,13 +101,17 @@ const FunnyBiographyGenerateStep = () => {
     const savedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
     const savedPhotos = localStorage.getItem('funnyBiographyPhoto');
     const savedStyle = localStorage.getItem('funnyBiographySelectedStyle');
+    const savedGenerationComplete = localStorage.getItem('funnyBiographyGenerationComplete');
     
     // 尝试加载已保存的PDF
     const savedFrontCoverPdf = localStorage.getItem('funnyBiographyFrontCoverImage');
     const savedBackCoverPdf = localStorage.getItem('funnyBiographyBackCoverImage');
     const savedSpinePdf = localStorage.getItem('funnyBiographySpineImage');
     
-    if (savedFrontCoverPdf) setFrontCoverPdf(savedFrontCoverPdf);
+    if (savedFrontCoverPdf) {
+      setFrontCoverPdf(savedFrontCoverPdf);
+      setGenerationComplete(true);
+    }
     if (savedBackCoverPdf) setBackCoverPdf(savedBackCoverPdf);
     if (savedSpinePdf) setSpinePdf(savedSpinePdf);
 
@@ -114,6 +121,7 @@ const FunnyBiographyGenerateStep = () => {
 
     if (savedStyle) {
       setSelectedStyle(savedStyle);
+      setLastUsedStyle(savedStyle);
     }
 
     if (savedIdeas && savedIdeaIndex) {
@@ -136,30 +144,61 @@ const FunnyBiographyGenerateStep = () => {
 
     if (savedPhotos) {
       handleImageProcessing(savedPhotos);
+      setLastUsedImage(savedPhotos);
+    }
+    
+    if (savedGenerationComplete === 'true') {
+      setGenerationComplete(true);
     }
   }, []);
   
-  // When style or other related parameters change, generate PDF
+  // 监听样式变化，只有当样式变化时才触发重新生成
   useEffect(() => {
-    // Only generate PDF when all necessary data is ready
-    if (coverTitle && authorName && coverImage) {
-      // Check if we already have PDFs, don't regenerate if we're returning to this step
-      const hasExistingPdfs = frontCoverPdf && backCoverPdf && spinePdf;
-      if (!hasExistingPdfs) {
-        generateImagesFromCanvas();
-      }
+    if (lastUsedStyle && selectedStyle !== lastUsedStyle) {
+      setShouldRegenerate(true);
+      setLastUsedStyle(selectedStyle);
+      localStorage.setItem('funnyBiographySelectedStyle', selectedStyle);
     }
-  }, [selectedStyle, coverTitle, subtitle, authorName, coverImage, imagePosition, imageScale]);
-
-  // 生成封面逻辑
+  }, [selectedStyle, lastUsedStyle]);
+  
+  // 监听图片变化，只有当图片变化时才触发重新生成
   useEffect(() => {
-    if (coverImage && authorName && coverTitle && !generationStarted && !generationComplete) {
+    if (coverImage && lastUsedImage !== coverImage && !generationComplete) {
+      setShouldRegenerate(true);
+      setLastUsedImage(coverImage);
+    } else if (coverImage && !lastUsedImage) {
+      // 如果是第一次加载图片但没有lastUsedImage记录，只更新lastUsedImage，不触发重新生成
+      setLastUsedImage(coverImage);
+    }
+  }, [coverImage, lastUsedImage, generationComplete]);
+  
+  // 只在需要重新生成时执行生成操作
+  useEffect(() => {
+    if (shouldRegenerate && coverImage && authorName && coverTitle) {
+      // 清除已有的PDF
+      setFrontCoverPdf(null);
+      setBackCoverPdf(null);
+      setSpinePdf(null);
+      
+      // 重置生成状态
       setGenerationStarted(true);
+      setGenerationComplete(false);
+      localStorage.removeItem('funnyBiographyGenerationComplete');
+      
+      // 生成新的图像
       setTimeout(() => {
         generateImagesFromCanvas();
+        setShouldRegenerate(false);
       }, 1000);
     }
-  }, [coverImage, authorName, coverTitle, generationStarted, generationComplete]);
+  }, [shouldRegenerate, coverImage, authorName, coverTitle]);
+
+  // 保存生成完成的状态到localStorage
+  useEffect(() => {
+    if (generationComplete) {
+      localStorage.setItem('funnyBiographyGenerationComplete', 'true');
+    }
+  }, [generationComplete]);
 
   const handleImageProcessing = async (imageUrl: string) => {
     try {
@@ -191,23 +230,14 @@ const FunnyBiographyGenerateStep = () => {
   };
 
   const handleStyleChange = (styleId: string) => {
-    // Clear previous PDFs
-    setFrontCoverPdf(null);
-    setBackCoverPdf(null);
-    setSpinePdf(null);
-    
-    // Remove from localStorage
-    localStorage.removeItem('funnyBiographyFrontCoverImage');
-    localStorage.removeItem('funnyBiographyBackCoverImage');
-    localStorage.removeItem('funnyBiographySpineImage');
-    
-    // Set new style
+    // 更新样式，触发样式变化监听器
     setSelectedStyle(styleId);
-    localStorage.setItem('funnyBiographySelectedStyle', styleId);
   };
   
-  // Generate image from Canvas and save (不再生成PDF)
+  // 生成图像的函数
   const generateImagesFromCanvas = async () => {
+    if (!canvasPdfContainerRef.current || pdfGenerating) return;
+    
     setPdfGenerating(true);
     
     // Ensure Canvas is rendered
@@ -275,7 +305,7 @@ const FunnyBiographyGenerateStep = () => {
   return (
     <WizardStep
       title="Create Your Book Cover"
-      description="Design the perfect cover for your funny biography"
+      description=""
       previousStep="/create/friends/funny-biography/photos"
       currentStep={5}
       totalSteps={6}
@@ -303,12 +333,12 @@ const FunnyBiographyGenerateStep = () => {
         
         {/* PDF预览区域 - 简化版本 */}
         <div className="mx-auto flex flex-col items-center">
-          {pdfGenerating ? (
+          {!frontCoverPdf || pdfGenerating ? (
             <div className="flex items-center justify-center h-64">
               <div className="animate-spin h-8 w-8 border-4 border-[#F6C744] border-t-transparent rounded-full"></div>
               <span className="ml-3">Generating cover...</span>
             </div>
-          ) : frontCoverPdf ? (
+          ) : (
             <div className="flex items-start space-x-2 justify-center">
               {/* 后封面 */}
               <div className="flex flex-col items-center">
@@ -340,16 +370,11 @@ const FunnyBiographyGenerateStep = () => {
                 />
               </div>
             </div>
-          ) : (
-            <div className="flex items-center justify-center h-64">
-              <p>Preparing cover preview...</p>
-            </div>
           )}
         </div>
         
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium text-center mb-4">Choose Your Style</h3>
-          <div className="flex flex-wrap justify-center gap-6 mt-4">
+        <div className="space-y-4 mt-4">
+          <div className="flex flex-wrap justify-center gap-6">
             {[...stylePresets].map((style, index) => {
               // Get template and layout data based on style configuration
               const template = style.template;
@@ -412,7 +437,7 @@ const FunnyBiographyGenerateStep = () => {
             onClick={handleGenerateBook}
             disabled={pdfGenerating}
           >
-            {pdfGenerating ? 'Generating...' : 'Generate Your Book'}
+            Continue
           </Button>
         </div>
       </div>

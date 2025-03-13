@@ -8,11 +8,8 @@ const Home = () => {
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1535905557558-afc4877a26fc?q=80&w=2574')] bg-cover opacity-10"></div>
         <div className="container mx-auto px-4 py-12 md:py-20 relative z-10">
           <div className="text-center max-w-3xl mx-auto">
-            <div className="mb-6 inline-block">
-              <span className="px-3 py-1 rounded-sm bg-primary/20 text-primary text-sm font-medium">AI-Powered Personalized Books</span>
-            </div>
-            <h1 className="text-4xl font-display font-bold mb-6 slide-in md:text-6xl bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/70">
-              Turn memories into magical stories
+            <h1 className="text-3xl font-display font-bold mb-6 slide-in md:text-5xl text-black">
+              Little birthdays. Big surprises.
             </h1>
             <p className="text-xl text-gray-600 mb-8 slide-in max-w-xl mx-auto">
               Personalized Books for Every Special Bond — Create a unique gift that will be cherished forever

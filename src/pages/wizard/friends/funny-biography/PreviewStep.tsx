@@ -27,6 +27,7 @@ const PreviewStep = () => {
   const [subtitle, setSubtitle] = useState('');
   const [authorName, setAuthorName] = useState('');
   const [coverImage, setCoverImage] = useState<string | undefined>();
+  const [frontCoverImage, setFrontCoverImage] = useState<string | undefined>();
   const [selectedStyle, setSelectedStyle] = useState('modern-green');
   const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
   const [imageScale, setImageScale] = useState(100);
@@ -87,6 +88,7 @@ const PreviewStep = () => {
       const savedChapters = localStorage.getItem('funnyBiographyChapters');
       const savedImagePosition = localStorage.getItem('funnyBiographyCoverImagePosition');
       const savedImageScale = localStorage.getItem('funnyBiographyCoverImageScale');
+      const savedFrontCover = localStorage.getItem('funnyBiographyFrontCoverImage');
       
       if (savedAuthor) {
         setAuthorName(savedAuthor);
@@ -108,6 +110,10 @@ const PreviewStep = () => {
 
       if (savedPhotos) {
         setCoverImage(savedPhotos);
+      }
+
+      if (savedFrontCover) {
+        setFrontCoverImage(savedFrontCover);
       }
 
       if (savedStyle) {
@@ -168,50 +174,62 @@ const PreviewStep = () => {
   return (
     <WizardStep
       title="Your Book Preview"
-      description="Review your book cover and table of contents"
+      description=""
       previousStep="/create/friends/funny-biography/generate"
       currentStep={6}
       totalSteps={6}
       onNextClick={handleContinue}
     >
-      <div className="glass-card rounded-2xl p-8 py-[40px]">
-        <div className="max-w-4xl mx-auto space-y-10">
+      <div className="w-full">
+        <div className="max-w-4xl mx-auto space-y-6">
           {/* Book Cover */}
-          <div className="flex flex-col items-center">
-            <h2 className="text-2xl font-bold mb-6">Book Cover</h2>
-            <div className="max-w-md w-full">
-              <CanvasCoverPreview
-                coverTitle={coverTitle}
-                subtitle={subtitle}
-                authorName={authorName}
-                coverImage={coverImage}
-                selectedFont={currentStyle.font}
-                selectedTemplate={currentStyle.template}
-                selectedLayout={currentStyle.layout}
-                category="friends"
-                imagePosition={imagePosition}
-                imageScale={imageScale}
-                previewMode={true}
-                scaleFactor={0.4}
-                praises={praises}
-              />
+          <div className="flex flex-col items-center mb-4">
+            <div className="book-container">
+              <div className="book">
+                {frontCoverImage ? (
+                  <img 
+                    src={frontCoverImage} 
+                    alt="Book Cover"
+                  />
+                ) : (
+                  <div className="canvas-container">
+                    <CanvasCoverPreview
+                      coverTitle={coverTitle}
+                      subtitle={subtitle}
+                      authorName={authorName}
+                      coverImage={coverImage}
+                      selectedFont={currentStyle.font}
+                      selectedTemplate={currentStyle.template}
+                      selectedLayout={currentStyle.layout}
+                      category="friends"
+                      imagePosition={imagePosition}
+                      imageScale={imageScale}
+                      previewMode={true}
+                      scaleFactor={0.4}
+                      praises={praises}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
           {/* Book Details */}
           <div className="flex flex-col items-center">
-            <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold">{coverTitle}</h1>
-              <p className="text-xl mt-2 text-gray-600">{subtitle}</p>
-              <p className="mt-4">by <span className="font-medium">{authorName}</span></p>
-              <p className="mt-2 text-gray-500">240 pages</p>
+            <div className="text-center mb-4">
+              <h1 className="text-2xl font-bold">{coverTitle}</h1>
+              <div className="flex items-center justify-center mt-2">
+                <span>by <span className="font-medium">{authorName}</span></span>
+                <span className="mx-2">•</span>
+                <span className="text-gray-500">240 pages</span>
+              </div>
             </div>
           </div>
 
           {/* Table of Contents */}
-          <div>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold">Table of Contents</h2>
+          <div className="w-[95%] mx-auto mt-1">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-xl font-bold">Table of Contents</h2>
               <Button
                 onClick={generateChapters}
                 disabled={isLoading}
@@ -224,20 +242,20 @@ const PreviewStep = () => {
             </div>
             
             {isLoading ? (
-              <div className="text-center py-8">
+              <div className="text-center py-6">
                 <div className="animate-spin inline-block w-8 h-8 border-4 border-current border-t-transparent rounded-full"></div>
-                <p className="mt-4 text-gray-600">Generating your chapter outlines...</p>
+                <p className="mt-3 text-gray-600">Generating your chapter outlines...</p>
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-5">
                 {chapters.map((chapter, index) => (
-                  <div key={index} className="pb-4">
+                  <div key={index} className="pb-3">
                     <div className="flex justify-between items-baseline">
                       <div className="w-full">
-                        <h3 className="text-xl font-bold mb-2">Chapter {index + 1}: {chapter.title.replace(/^Chapter \d+:?\s*/i, '')}</h3>
-                        <p className="text-gray-600 pr-4">{chapter.description}</p>
+                        <h3 className="text-lg font-bold mb-1.5">Chapter {index + 1}: {chapter.title.replace(/^Chapter \d+:?\s*/i, '')}</h3>
+                        <p className="text-gray-600 pr-4 text-base">{chapter.description}</p>
                       </div>
-                      <span className="text-gray-500 font-normal ml-4 whitespace-nowrap">{chapter.startPage}</span>
+                      <span className="text-gray-500 font-normal ml-3 whitespace-nowrap">{chapter.startPage}</span>
                     </div>
                   </div>
                 ))}

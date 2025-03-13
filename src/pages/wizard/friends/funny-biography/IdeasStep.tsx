@@ -5,7 +5,7 @@ const FunnyBiographyIdeasStep = () => {
     <IdeaStep
       category="friends"
       previousStep="/create/friends/funny-biography/stories"
-      nextStep="/create/friends/funny-biography/debug"
+      nextStep="/create/friends/funny-biography/photos"
     />
   );
 };

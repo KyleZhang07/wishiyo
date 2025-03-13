@@ -94,10 +94,12 @@ const FunnyBiographyPhotosStep = () => {
       
       try {
         localStorage.setItem('funnyBiographyPhoto', compressedDataUrl);
-        toast({
-          title: "Photo uploaded successfully",
-          description: "Your photo has been saved"
-        });
+        // 重置生成状态，确保GenerateStep会重新生成
+        localStorage.removeItem('funnyBiographyGenerationComplete');
+        // 清除已生成的图片，确保会重新生成
+        localStorage.removeItem('funnyBiographyFrontCoverImage');
+        localStorage.removeItem('funnyBiographyBackCoverImage');
+        localStorage.removeItem('funnyBiographySpineImage');
       } catch (error) {
         console.error('Error saving to localStorage:', error);
         toast({
@@ -124,10 +126,12 @@ const FunnyBiographyPhotosStep = () => {
     <WizardStep
       title="Upload a photo"
       description="We'll use it on the cover"
-      previousStep="/create/friends/funny-biography/debug"
+      previousStep="/create/friends/funny-biography/ideas"
       nextStep="/create/friends/funny-biography/generate"
       currentStep={4}
       totalSteps={6}
+      onNextClick={photo ? undefined : () => {}}
+      nextDisabled={!photo}
     >
       <div className="space-y-6">
         <input 
@@ -137,28 +141,26 @@ const FunnyBiographyPhotosStep = () => {
           accept="image/*"
           onChange={handleFileSelect}
         />
-        <div className="aspect-square w-full max-w-md mx-auto border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center">
-          {!photo ? (
-            <Button
-              variant="ghost"
-              className="w-full h-full flex flex-col items-center justify-center gap-4"
-              onClick={handleUploadClick}
-            >
-              <ImagePlus className="h-12 w-12 text-gray-400" />
-              <span className="text-gray-500">Click to upload</span>
-            </Button>
-          ) : (
-            <button
-              className="w-full h-full p-0 hover:opacity-90 transition-opacity relative group"
-              onClick={handleUploadClick}
-            >
-              <img src={photo} alt="" className="w-full h-full object-cover rounded-lg" />
-              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
-                <span className="text-white font-medium">Click to replace photo</span>
-              </div>
-            </button>
-          )}
-        </div>
+        {!photo ? (
+          <div 
+            className="aspect-square w-full max-w-sm mx-auto border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center hover:scale-[1.02] transition-all duration-300"
+            onClick={handleUploadClick}
+          >
+            <ImagePlus className="h-8 w-8 text-gray-400" />
+            <span className="text-gray-500 text-sm mt-2">Click to upload</span>
+          </div>
+        ) : (
+          <div 
+            className="aspect-square w-full max-w-sm mx-auto rounded-lg overflow-hidden border border-gray-200 hover:scale-[1.02] transition-all duration-300"
+            onClick={handleUploadClick}
+          >
+            <img 
+              src={photo} 
+              alt="" 
+              className="w-full h-full object-cover" 
+            />
+          </div>
+        )}
       </div>
     </WizardStep>
   );

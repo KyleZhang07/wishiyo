@@ -12,6 +12,7 @@ interface WizardStepProps {
   currentStep: number;
   totalSteps: number;
   onNextClick?: () => void | Promise<void>;
+  nextDisabled?: boolean;
 }
 
 const WizardStep = ({
@@ -22,7 +23,8 @@ const WizardStep = ({
   nextStep,
   currentStep,
   totalSteps,
-  onNextClick
+  onNextClick,
+  nextDisabled
 }: WizardStepProps) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -32,27 +34,27 @@ const WizardStep = ({
   
   return (
     <div className="min-h-screen bg-[#FFFAF5]">
-      <div className="container mx-auto px-4 pt-8 pb-16 max-w-4xl">
+      <div className="container mx-auto px-4 pt-8 pb-16 max-w-3xl">
         <div className="text-center mb-8">
           <p className="text-sm text-gray-600">Step {currentStep} of {totalSteps}</p>
         </div>
         
-        <div className="relative mb-12">
+        <div className="relative mb-8">
           {previousStep && (
             <button 
               onClick={() => navigate(previousStep)} 
-              className="absolute left-0 top-2 text-gray-600 hover:text-gray-900 transition-colors"
+              className="absolute left-0 top-1 text-gray-600 hover:text-gray-900 transition-colors"
             >
-              <ArrowLeft className="w-6 h-6" />
+              <ArrowLeft className="w-5 h-5" />
             </button>
           )}
-          <h1 className="text-4xl font-display font-bold text-center px-16">
+          <h1 className="text-3xl font-display font-bold text-center px-12">
             {title}
           </h1>
         </div>
         
         {description && (
-          <p className="text-gray-600 text-center mb-10">{description}</p>
+          <p className="text-gray-600 text-center mb-14">{description}</p>
         )}
 
         <div className="space-y-8">
@@ -63,8 +65,9 @@ const WizardStep = ({
               <Button 
                 variant="default"
                 size="lg"
-                className={`w-full ${isLoveCategory ? 'bg-[#FF7F50] hover:bg-[#FF7F50]/80' : 'bg-[#F6C744] hover:bg-[#E5B73E]'} text-white`}
+                className={`w-[95%] ${isLoveCategory ? 'bg-[#FF7F50] hover:bg-[#FF7F50]/80' : 'bg-[#F6C744] hover:bg-[#E5B73E]'} text-white ${nextDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                 onClick={onNextClick ? onNextClick : () => nextStep && navigate(nextStep)}
+                disabled={nextDisabled}
               >
                 Continue
               </Button>

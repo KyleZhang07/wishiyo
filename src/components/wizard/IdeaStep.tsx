@@ -433,127 +433,131 @@ const IdeaStep = ({
 
   return (
     <WizardStep
-      title={category === 'love' ? "Customize Your Love Story" : "Let's pick a fantasy life story"}
+      title={category === 'love' ? "Customize Your Love Story" : "Let's pick your book idea"}
       description={category === 'love' 
         ? "Choose a visual style for your personalized love story."
-        : "Choose from these AI-generated fantasy autobiography ideas or regenerate for more options."}
+        : ""}
       previousStep={previousStep}
       currentStep={4}
       totalSteps={category === 'love' ? 7 : 5}
       onNextClick={handleContinue}
     >
-      <div className="space-y-6">
-        {category === 'love' && (
-          <div className="bg-white rounded-lg p-6 shadow-md mb-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Select an Image Style</h3>
-            <p className="text-gray-500 mb-6">
-              This determines the visual aesthetic of all the generated images in your love story.
-            </p>
-            
-            <div className="space-y-3">
-              {STYLE_OPTIONS.map((style) => (
-                <div 
-                  key={style}
-                  onClick={() => handleStyleSelect(style)}
-                  className={`
-                    flex items-center p-3 rounded-md cursor-pointer transition-all
-                    ${selectedStyle === style 
-                      ? category === 'love'
-                        ? 'bg-[#FF7F50]/10 border border-[#FF7F50]'
-                        : 'bg-[#F6C744]/10 border border-[#F6C744]' 
-                      : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'}
-                  `}
-                >
-                  <div className="flex-shrink-0 mr-3">
-                    {selectedStyle === style ? (
-                      <div className={`w-5 h-5 rounded-full ${category === 'love' ? 'bg-[#FF7F50]' : 'bg-[#F6C744]'} flex items-center justify-center`}>
-                        <Check className="w-3 h-3 text-white" />
-                      </div>
-                    ) : (
-                      <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
-                    )}
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-gray-900">{style}</h4>
-                    <p className="text-sm text-gray-500">
-                      {style === 'Comic Book' && 'Bold outlines and vibrant colors'}
-                      {style === 'Line Art' && 'Elegant, minimalist black and white illustration'}
-                      {style === 'Fantasy Art' && 'Dreamlike and magical aesthetic'}
-                      {style === 'Photographic' && 'Realistic, photography-like images'}
-                      {style === 'Cinematic' && 'Film-like with dramatic lighting and composition'}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {category === 'love' ? (
-          <>
-            <div className="flex justify-end">
-              <Button 
-                variant="outline" 
-                className={`${(category as string) === 'love' ? 'bg-[#FF7F50] text-white hover:bg-[#FF7F50]/80' : 'bg-[#F6C744] text-white hover:bg-[#E5B73E]'}`}
-                onClick={generateIdeas}
-                disabled={isLoading || isGeneratingTexts}
-              >
-                <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-                {isLoading ? 'Generating...' : 'Regenerate Story'}
-              </Button>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="flex justify-end mb-4">
-              <Button 
-                variant="outline" 
-                className={`${(category as string) === 'love' ? 'bg-[#FF7F50] text-white hover:bg-[#FF7F50]/80' : 'bg-[#F6C744] text-white hover:bg-[#E5B73E]'}`}
-                onClick={generateIdeas}
-                disabled={isLoading}
-              >
-                <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-                {isLoading ? 'Generating...' : 'Regenerate'}
-              </Button>
-            </div>
-
-            {isLoading ? (
-              <div className="text-center py-20">
-                <div className="flex flex-col items-center justify-center">
-                  {/* 使用主题色的加载圆环 */}
-                  <div className="relative w-16 h-16 mb-6">
-                    <div className={`absolute top-0 left-0 w-16 h-16 rounded-full border-4 border-t-transparent ${category === 'love' ? 'border-[#FF7F50]' : 'border-[#F6C744]'} animate-spin`}></div>
-                    <div className={`absolute top-0 left-0 w-16 h-16 rounded-full border-4 border-r-transparent border-b-transparent border-l-transparent ${category === 'love' ? 'border-[#FF7F50]/20' : 'border-[#F6C744]/20'}`}></div>
-                  </div>
-                  {/* 主题色的标题文字 */}
-                  <h3 className={`text-xl font-medium ${category === 'love' ? 'text-[#FF7F50]' : 'text-[#F6C744]'}`}>
-                    Creating book ideas
-                  </h3>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {ideas.map((idea, index) => (
+      {category !== 'love' && !isLoading && (
+        <div className="flex justify-end -mt-8 mb-2">
+          <Button 
+            variant="outline" 
+            className="bg-[#F6C744] text-white hover:bg-[#E5B73E]"
+            onClick={generateIdeas}
+            disabled={isLoading}
+          >
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Regenerate
+          </Button>
+        </div>
+      )}
+      
+      <div className="flex justify-center w-full">
+        <div className="space-y-6 w-[95%]">
+          {category === 'love' && (
+            <div className="bg-white rounded-lg p-6 shadow-md mb-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Select an Image Style</h3>
+              <p className="text-gray-500 text-sm mb-6">
+                This determines the visual aesthetic of all the generated images in your love story.
+              </p>
+              
+              <div className="space-y-3">
+                {STYLE_OPTIONS.map((style) => (
                   <div 
-                    key={index} 
-                    className={`bg-white rounded-lg p-6 cursor-pointer transition-all hover:shadow-md ${
-                      selectedIdeaIndex === index 
-                        ? category === 'friends' 
-                          ? 'ring-2 ring-[#F6C744] shadow-lg scale-[1.02]' 
-                          : 'ring-2 ring-[#FF7F50] shadow-lg scale-[1.02]' 
-                        : ''
-                    }`}
-                    onClick={() => handleIdeaSelect(index)}
+                    key={style}
+                    onClick={() => handleStyleSelect(style)}
+                    className={`
+                      flex items-center p-3 rounded-md cursor-pointer transition-all
+                      ${selectedStyle === style 
+                        ? category === 'love'
+                          ? 'bg-[#FF7F50]/10 border border-[#FF7F50]'
+                          : 'bg-[#F6C744]/10 border border-[#F6C744]' 
+                        : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'}
+                    `}
                   >
-                    <h3 className="text-2xl font-bold mb-1">{idea.title}</h3>
-                    <p className="text-gray-600 text-sm mb-4">{idea.author}</p>
-                    <p className="text-gray-800">{idea.description}</p>
+                    <div className="flex-shrink-0 mr-3">
+                      {selectedStyle === style ? (
+                        <div className={`w-5 h-5 rounded-full ${category === 'love' ? 'bg-[#FF7F50]' : 'bg-[#F6C744]'} flex items-center justify-center`}>
+                          <Check className="w-3 h-3 text-white" />
+                        </div>
+                      ) : (
+                        <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-900">{style}</h4>
+                      <p className="text-sm text-gray-500">
+                        {style === 'Comic Book' && 'Bold outlines and vibrant colors'}
+                        {style === 'Line Art' && 'Elegant, minimalist black and white illustration'}
+                        {style === 'Fantasy Art' && 'Dreamlike and magical aesthetic'}
+                        {style === 'Photographic' && 'Realistic, photography-like images'}
+                        {style === 'Cinematic' && 'Film-like with dramatic lighting and composition'}
+                      </p>
+                    </div>
                   </div>
                 ))}
               </div>
-            )}
-          </>
-        )}
+            </div>
+          )}
+
+          {category === 'love' ? (
+            <>
+              <div className="flex justify-end">
+                <Button 
+                  variant="outline" 
+                  className={`${(category as string) === 'love' ? 'bg-[#FF7F50] text-white hover:bg-[#FF7F50]/80' : 'bg-[#F6C744] text-white hover:bg-[#E5B73E]'}`}
+                  onClick={generateIdeas}
+                  disabled={isLoading || isGeneratingTexts}
+                >
+                  <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                  {isLoading ? 'Generating...' : 'Regenerate Story'}
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              {isLoading ? (
+                <div className="text-center py-20">
+                  <div className="flex flex-col items-center justify-center">
+                    {/* 使用主题色的加载圆环 */}
+                    <div className="relative w-16 h-16 mb-6">
+                      <div className={`absolute top-0 left-0 w-16 h-16 rounded-full border-4 border-t-transparent ${category === 'love' ? 'border-[#FF7F50]' : 'border-[#F6C744]'} animate-spin`}></div>
+                      <div className={`absolute top-0 left-0 w-16 h-16 rounded-full border-4 border-r-transparent border-b-transparent border-l-transparent ${category === 'love' ? 'border-[#FF7F50]/20' : 'border-[#F6C744]/20'}`}></div>
+                    </div>
+                    {/* 主题色的标题文字 */}
+                    <h3 className={`text-xl font-medium ${category === 'love' ? 'text-[#FF7F50]' : 'text-[#F6C744]'}`}>
+                      Creating book ideas
+                    </h3>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {ideas.map((idea, index) => (
+                    <div 
+                      key={index} 
+                      className={`bg-white rounded-lg p-5 cursor-pointer transition-all hover:shadow-md ${
+                        selectedIdeaIndex === index 
+                          ? category === 'friends' 
+                            ? 'ring-2 ring-[#F6C744] shadow-lg scale-[1.02]' 
+                            : 'ring-2 ring-[#FF7F50] shadow-lg scale-[1.02]' 
+                          : ''
+                      }`}
+                      onClick={() => handleIdeaSelect(index)}
+                    >
+                      <h3 className="text-xl font-bold mb-1">{idea.title}</h3>
+                      <p className="text-gray-600 text-sm mb-3">{idea.author}</p>
+                      <p className="text-gray-800 text-sm">{idea.description}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </WizardStep>
   );

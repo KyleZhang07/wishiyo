@@ -102,49 +102,44 @@ const FunnyBiographyStoriesStep = () => {
       totalSteps={4}
       onNextClick={handleNext}
     >
-      <div className="space-y-6">
-        {questionsAndAnswers.map((qa, index) => (
-          <div 
-            key={index} 
-            className="bg-white rounded-lg border p-4 relative transition-transform hover:scale-[1.02] cursor-pointer" 
-            onClick={() => handleEditAnswer(qa.question)}
-          >
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute -right-2 -top-2 rounded-full bg-white border shadow-sm hover:bg-[#F6C744]/10 h-8 w-8 p-0"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleRemoveQA(index);
-              }}
+      <div className="flex justify-center w-full">
+        <div className="space-y-6 w-[95%]">
+          {questionsAndAnswers.map((qa, index) => (
+            <div 
+              key={index} 
+              className="bg-white rounded-lg border p-3.5 relative transition-transform hover:scale-[1.02] cursor-pointer" 
+              onClick={() => handleEditAnswer(qa.question)}
             >
-              <X className="h-4 w-4 text-[#F6C744]" />
-            </Button>
-            <h3 className="font-medium mb-2 text-gray-700">{qa.question}</h3>
-            <p className="text-lg">{qa.answer}</p>
-          </div>
-        ))}
-        
-        {questionsAndAnswers.length === 0 && (
-          <div className="text-center py-10 text-gray-500">
-            <p className="text-lg">No stories added yet.</p>
-            <p className="text-sm">Start by selecting a question below.</p>
-          </div>
-        )}
-        
-        <Button
-          variant="outline"
-          className="w-full h-16 border-dashed text-lg bg-gradient-to-r from-[#F6C744]/10 to-[#F6C744]/20 hover:from-[#F6C744]/20 hover:to-[#F6C744]/30 text-gray-700"
-          onClick={() => {
-            setSelectedQuestion(null);
-            setIsDialogOpen(true);
-          }}
-        >
-          <PlusCircle className="mr-2 h-5 w-5 text-[#F6C744]" />
-          {questionsAndAnswers.length === 0 
-            ? "Select a Question and Share a Story" 
-            : "Add Another Story"}
-        </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute -right-2 -top-2 rounded-full bg-white border shadow-sm hover:bg-[#F6C744]/10 h-8 w-8 p-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemoveQA(index);
+                }}
+              >
+                <X className="h-4 w-4 text-[#F6C744]" />
+              </Button>
+              <h3 className="font-medium mb-1.5 text-gray-700">{qa.question}</h3>
+              <p className="text-base">{qa.answer}</p>
+            </div>
+          ))}
+          
+          <Button
+            variant="outline"
+            className="w-full h-16 border-dashed text-lg bg-gradient-to-r from-[#F6C744]/10 to-[#F6C744]/20 hover:from-[#F6C744]/20 hover:to-[#F6C744]/30 text-gray-700"
+            onClick={() => {
+              setSelectedQuestion(null);
+              setIsDialogOpen(true);
+            }}
+          >
+            <PlusCircle className="mr-2 h-5 w-5 text-[#F6C744]" />
+            {questionsAndAnswers.length === 0 
+              ? "Select a Question and Share a Story" 
+              : "Add Another Story"}
+          </Button>
+        </div>
       </div>
       <QuestionDialog
         isOpen={isDialogOpen}
