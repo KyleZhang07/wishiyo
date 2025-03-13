@@ -241,8 +241,7 @@ serve(async (req) => {
         .from('funny_biography_books')
         .update({
           cover_pdf: pdfOutput,
-          cover_source_url: coverFileUrl,
-          updated_at: new Date().toISOString()
+          cover_source_url: coverFileUrl
         })
         .eq('order_id', orderId);
       
@@ -268,8 +267,7 @@ serve(async (req) => {
             .from('funny_biography_books')
             .update({
               ready_for_printing: true,
-              page_count: pageCount,
-              updated_at: new Date().toISOString()
+              page_count: pageCount
             })
             .eq('order_id', orderId);
           

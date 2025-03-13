@@ -300,8 +300,7 @@ serve(async (req) => {
     // 更新数据库，包含PDF数据和URL
     console.log(`Updating database for order ${orderId} with interiorPdf and interior_source_url`);
     const updateData: any = {
-      interior_pdf: pdfOutput,
-      updated_at: new Date().toISOString()
+      interior_pdf: pdfOutput
     };
     
     if (interiorFileUrl) {
@@ -335,8 +334,7 @@ serve(async (req) => {
           .from('funny_biography_books')
           .update({
             ready_for_printing: true,
-            page_count: pageCount,
-            updated_at: new Date().toISOString()
+            page_count: pageCount
           })
           .eq('order_id', orderId);
         

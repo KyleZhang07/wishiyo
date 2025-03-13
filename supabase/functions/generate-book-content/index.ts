@@ -96,7 +96,7 @@ serve(async (req) => {
       : '';
 
     // Generate content for 20 chapters with 4 sections each
-    for (let i = 1; i <= 20; i++) {
+    for (let i = 1; i <= 2; i++) {  // 从20章减少到2章用于测试
       console.log(`Generating chapter ${i} content...`);
       
       let chapterTitle = '';
@@ -125,8 +125,8 @@ ${answersContext}
 This is Chapter ${i}: ${chapterTitle}
 ${chapterDescription ? `Chapter description: ${chapterDescription}` : ''}
 
-Write this chapter with 4 distinct sections. Make it entertaining, humorous and engaging.
-For each section, provide a creative section title and approximately 500-700 words of content.
+Write this chapter with 2 distinct sections. Make it entertaining, humorous and engaging.
+For each section, provide a creative section title and approximately 300-400 words of content.
 Write in a conversational, entertaining style appropriate for a funny biography.
 Include anecdotes, humorous observations, and witty commentary.
 
@@ -153,9 +153,13 @@ Format your response as JSON with this structure:
         },
         body: JSON.stringify({
           model: 'gpt-4o',
-          messages: [{ role: 'user', content: prompt }],
-          temperature: 0.7,
-          max_tokens: 4000,
+          messages: [
+            { role: 'system', content: 'You must respond with valid JSON only. Do not include any explanation outside the JSON structure.' },
+            { role: 'user', content: prompt }
+          ],
+          temperature: 0.5,
+          max_tokens: 3000,
+          response_format: { type: "json_object" }
         }),
       });
 
@@ -173,6 +177,9 @@ Format your response as JSON with this structure:
         bookChapters.push(parsedChapter);
       } catch (parseError) {
         console.error(`Error parsing chapter ${i} content:`, parseError);
+        // 记录原始内容的前300个字符用于调试
+        console.error(`Original content (first 300 chars): ${chapterContent.substring(0, 300)}...`);
+        
         // If parsing fails, create a structured chapter with the raw content
         bookChapters.push({
           chapterNumber: i,
@@ -193,8 +200,7 @@ Format your response as JSON with this structure:
     const { error: updateError } = await supabase
       .from('funny_biography_books')
       .update({
-        book_content: bookChapters,
-        updated_at: new Date().toISOString()
+        book_content: bookChapters
       })
       .eq('order_id', orderId);
 
