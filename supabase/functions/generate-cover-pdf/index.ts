@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { jsPDF } from "https://esm.sh/jspdf@2.5.1";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.8.0";
@@ -247,34 +246,6 @@ serve(async (req) => {
         console.error(`Error updating database:`, updateError);
       } else {
         console.log(`Database updated successfully with coverPdf and cover_source_url`);
-      }
-      
-      // 检查是否可以将图书设置为准备打印
-      const { data: bookData, error: bookError } = await supabase
-        .from('funny_biography_books')
-        .select('interior_source_url,book_content')
-        .eq('order_id', orderId)
-        .single();
-      
-      if (!bookError && bookData) {
-        if (bookData.interior_source_url) {
-          console.log(`Both cover and interior PDFs available, setting book ready for printing`);
-          const pageCount = bookData.book_content ? Math.ceil(bookData.book_content.length / 500) : 100;
-          
-          const { error: readyError } = await supabase
-            .from('funny_biography_books')
-            .update({
-              ready_for_printing: true,
-              page_count: pageCount
-            })
-            .eq('order_id', orderId);
-          
-          if (readyError) {
-            console.error(`Error setting book ready for printing:`, readyError);
-          } else {
-            console.log(`Book marked as ready for printing with ${pageCount} pages`);
-          }
-        }
       }
     }
     

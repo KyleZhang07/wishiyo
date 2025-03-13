@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.8.0";
 
@@ -207,6 +206,36 @@ Format your response as JSON with this structure:
 
     if (updateError) {
       throw new Error(`Failed to update book data: ${updateError.message}`);
+    }
+
+    // 立即触发内页PDF生成
+    console.log(`Immediately triggering interior PDF generation for order ${orderId}`);
+    try {
+      const interiorResponse = await fetch(`${supabaseUrl}/functions/v1/generate-interior-pdf`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseServiceKey}`
+        },
+        body: JSON.stringify({
+          orderId,
+          bookContent: bookChapters,
+          bookTitle: bookTitle,
+          authorName: bookAuthor
+        })
+      });
+
+      const interiorResult = await interiorResponse.json();
+      if (!interiorResponse.ok || !interiorResult.success) {
+        console.error(`Error generating interior PDF: ${JSON.stringify(interiorResult)}`);
+        // 即使PDF生成失败，我们也会返回内容生成成功的响应
+        console.log('Content generation was successful even though PDF generation failed');
+      } else {
+        console.log(`Interior PDF generated successfully with URL: ${interiorResult.interiorSourceUrl || 'No URL'}`);
+      }
+    } catch (error) {
+      console.error('Error calling interior PDF generation:', error);
+      // 我们仍然继续流程，返回内容生成成功的响应
     }
 
     return new Response(

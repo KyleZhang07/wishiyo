@@ -256,69 +256,13 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     console.log(`[${orderId}] Content generation completed`);
     
     // 书籍内容生成和数据库更新已在generate-book-content函数内完成
-    console.log(`[${orderId}] Book content generated and saved to database with ${contentResult.chaptersCount} chapters`);
+    // 内页PDF生成也在generate-book-content函数中直接触发
+    console.log(`[${orderId}] Book content generated and interior PDF generation triggered automatically`);
     
-    // 获取生成的内容用于后续操作（如生成PDF）
+    // 获取生成的内容用于后续操作（如有需要）
     const bookContent = contentResult.bookContent;
     if (!bookContent) {
-      console.warn(`[${orderId}] No book content returned from generator, may use existing content if available`);
-    }
-    
-    // 7. 生成内页PDF并详细记录日志
-    console.log(`[${orderId}] Starting interior PDF generation`);
-    console.log(`[${orderId}] Interior PDF generation endpoint: ${supabaseUrl}/functions/v1/generate-interior-pdf`);
-    
-    try {
-      // 检查是否有可用的图书内容
-      if (!bookContent) {
-        console.warn(`[${orderId}] No book content available for interior PDF generation. Using fallback content.`);
-      }
-      
-      const interiorResponse = await fetch(
-        `${supabaseUrl}/functions/v1/generate-interior-pdf`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabaseKey}`
-          },
-          body: JSON.stringify({ 
-            orderId,
-            // 优先使用content-generation返回的bookContent
-            bookContent: bookContent || "Default book content if none is available.",
-            bookTitle: book.title || "Custom Book",
-            authorName: book.author || "Unknown Author"
-          })
-        }
-      );
-      
-      // 记录响应详情
-      console.log(`[${orderId}] Interior PDF response status:`, interiorResponse.status);
-      
-      // 记录响应头用于调试
-      const interiorHeaders = {};
-      interiorResponse.headers.forEach((value, key) => {
-        interiorHeaders[key] = value;
-      });
-      console.log(`[${orderId}] Interior PDF response headers:`, interiorHeaders);
-      
-      // 解析响应
-      const interiorResult = await interiorResponse.json();
-      
-      if (!interiorResponse.ok || !interiorResult.success) {
-        console.error(`[${orderId}] Interior PDF generation failed:`, JSON.stringify(interiorResult));
-        throw new Error(`内页PDF生成失败: ${JSON.stringify(interiorResult)}`);
-      }
-      
-      console.log(`[${orderId}] Interior PDF generation completed successfully`);
-      
-      // 内页PDF处理现在在函数内部完成
-      // 所有存储上传和数据库更新都在那里处理
-      console.log(`[${orderId}] Interior PDF processed with URL: ${interiorResult.interiorSourceUrl || 'No URL provided'}`);
-    } catch (error) {
-      console.error(`[${orderId}] Error in interior PDF generation process:`, error);
-      // 不抛出错误，这样我们仍然可以尝试处理封面
-      console.log(`[${orderId}] Continuing with process despite interior PDF generation error`);
+      console.warn(`[${orderId}] No book content returned from generator, but interior PDF should already be in progress`);
     }
     
     // 9. 等待封面PDF生成完成
@@ -339,8 +283,8 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     console.log(`[${orderId}] Completing book generation process`);
     await updateBookStatus(supabaseUrl, supabaseKey, orderId, "completed");
     
-    // 12. 设置为准备好打印 - 注意：现在由generate-cover-pdf处理
-    console.log(`[${orderId}] Book ready for printing status is managed by the cover PDF generation process`);
+    // 12. 设置为准备好打印 - 现在由generate-interior-pdf处理
+    console.log(`[${orderId}] Book ready for printing status is managed by the interior PDF generation process`);
     
     console.log(`[${orderId}] Book generation process completed successfully`);
     return { success: true, message: '图书生成成功完成' };

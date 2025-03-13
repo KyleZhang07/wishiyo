@@ -297,7 +297,7 @@ serve(async (req) => {
       console.log(`Interior PDF uploaded successfully to storage with URL: ${interiorFileUrl}`);
     }
     
-    // 更新数据库，包含PDF数据和URL
+    // 更新数据库，填充interior-pdf和interior_source_url字段
     console.log(`Updating database for order ${orderId} with interiorPdf and interior_source_url`);
     const updateData: any = {
       interior_pdf: pdfOutput
@@ -307,6 +307,11 @@ serve(async (req) => {
       updateData.interior_source_url = interiorFileUrl;
     }
     
+    // 同时设置书籍为准备打印状态
+    const pageCount = finalBookContent.length * 5; // 简单估算每章5页
+    updateData.ready_for_printing = true;
+    updateData.page_count = pageCount;
+    
     const { error: updateError } = await supabase
       .from('funny_biography_books')
       .update(updateData)
@@ -315,35 +320,7 @@ serve(async (req) => {
     if (updateError) {
       console.error(`Error updating database:`, updateError);
     } else {
-      console.log(`Database updated successfully with interiorPdf${interiorFileUrl ? ' and interior_source_url' : ''}`);
-    }
-    
-    // 检查是否可以将图书设置为准备打印
-    if (interiorFileUrl) {
-      const { data: bookData, error: bookError } = await supabase
-        .from('funny_biography_books')
-        .select('cover_source_url,book_content')
-        .eq('order_id', orderId)
-        .single();
-      
-      if (!bookError && bookData && bookData.cover_source_url) {
-        console.log(`Both cover and interior PDFs available, setting book ready for printing`);
-        const pageCount = finalBookContent.length * 5; // 简单估算每章5页
-        
-        const { error: readyError } = await supabase
-          .from('funny_biography_books')
-          .update({
-            ready_for_printing: true,
-            page_count: pageCount
-          })
-          .eq('order_id', orderId);
-        
-        if (readyError) {
-          console.error(`Error setting book ready for printing:`, readyError);
-        } else {
-          console.log(`Book marked as ready for printing with estimated ${pageCount} pages`);
-        }
-      }
+      console.log(`Database updated successfully with interior-pdf, interior_source_url, and marked as ready for printing with ${pageCount} pages`);
     }
     
     return new Response(
