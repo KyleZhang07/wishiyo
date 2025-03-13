@@ -812,17 +812,18 @@ export default async function handler(req, res) {
               console.log(`Supabase response body: ${updateResponseText}`);
               
               // Start the book generation process
-              // This runs asynchronously without waiting for completion
+              // 修改为同步处理流程，等待生成完成
               console.log(`===== STARTING BOOK GENERATION FOR ORDER ${orderId} =====`);
-              generateBookProcess(supabaseUrl, supabaseKey, orderId)
-                .then(result => {
-                  console.log(`Book generation process result for ${orderId}:`, result);
-                })
-                .catch(error => {
-                  console.error(`Error in book generation process for ${orderId}:`, error);
-                });
+              try {
+                const result = await generateBookProcess(supabaseUrl, supabaseKey, orderId);
+                console.log(`Book generation process result for ${orderId}:`, result);
+              } catch (error) {
+                console.error(`Error in book generation process for ${orderId}:`, error);
+                // 记录详细错误信息，但不终止webhook处理
+                console.error(`Error details:`, error.stack || error);
+              }
               
-              console.log(`Book generation process initiated for order ${orderId}`);
+              console.log(`Book generation process completed for order ${orderId}`);
             } catch (error) {
               console.error('Error starting book generation process:', error);
               console.error(error.stack); // Print stack trace
