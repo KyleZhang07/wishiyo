@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.8.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -6,6 +7,13 @@ const corsHeaders = {
 };
 
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+
+// 添加Deno类型声明，避免TypeScript错误
+declare const Deno: {
+  env: {
+    get(key: string): string | undefined;
+  };
+};
 
 // Define book chapter structure
 interface BookChapter {
@@ -25,7 +33,7 @@ serve(async (req) => {
   }
 
   try {
-    const { orderId } = await req.json();
+    const { orderId, title, author, format } = await req.json();
 
     if (!orderId) {
       throw new Error('Order ID is required');
@@ -33,27 +41,24 @@ serve(async (req) => {
 
     console.log(`Generating book content for order ${orderId}`);
 
-    // Add detailed logging about the URL construction
-    const baseUrl = req.url.split('/generate-book-content')[0];
-    const getBookDataUrl = `${baseUrl}/get-book-data`;
+    // 获取Supabase连接信息
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
     
-    console.log('Request URL:', req.url);
-    console.log('Base URL:', baseUrl);
-    console.log('Get Book Data URL:', getBookDataUrl);
-    console.log('Authorization header present:', !!req.headers.get('Authorization'));
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error('Missing Supabase credentials');
+    }
 
-    // Fetch book data from the database
-    const { data: bookData, error: fetchError } = await fetch(
-      getBookDataUrl,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': req.headers.get('Authorization') || '',
-        },
-        body: JSON.stringify({ orderId }),
-      }
-    ).then(res => res.json());
+    // 初始化Supabase客户端
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // 从数据库直接获取图书数据
+    console.log(`Fetching book data for order ${orderId} from database`);
+    const { data: bookData, error: fetchError } = await supabase
+      .from('funny_biography_books')
+      .select('*')
+      .eq('order_id', orderId)
+      .single();
 
     console.log('Book data fetch response:', { 
       success: !!bookData, 
@@ -62,12 +67,15 @@ serve(async (req) => {
     });
 
     if (fetchError || !bookData) {
-      throw new Error(`Failed to fetch book data: ${fetchError || 'No data returned'}`);
+      throw new Error(`Failed to fetch book data: ${fetchError?.message || 'No data returned'}`);
     }
 
-    const { title, author, selected_idea, answers, chapters } = bookData;
+    // 使用直接传递的title和author，如果没有则使用数据库值
+    const bookTitle = title || bookData.title;
+    const bookAuthor = author || bookData.author;
+    const { selected_idea, answers, chapters } = bookData;
     
-    if (!title || !author || !selected_idea || !chapters) {
+    if (!bookTitle || !bookAuthor || !selected_idea || !chapters) {
       throw new Error('Incomplete book data for content generation');
     }
 
@@ -108,7 +116,7 @@ serve(async (req) => {
       }
 
       const prompt = `
-You are writing a humorous biography book titled "${title}" about ${author}. 
+You are writing a humorous biography book titled "${bookTitle}" about ${bookAuthor}. 
 The book concept is: ${ideaDescription}
 
 Additional context about the subject:
@@ -180,30 +188,25 @@ Format your response as JSON with this structure:
       }
     }
 
-    // Update the database with the generated content
-    const { error: updateError } = await fetch(
-      `${req.url.split('/generate-book-content')[0]}/update-book-data`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': req.headers.get('Authorization') || '',
-        },
-        body: JSON.stringify({
-          orderId,
-          bookContent: bookChapters,
-        }),
-      }
-    ).then(res => res.json());
+    // 直接更新数据库中的内容，而不是通过另一个函数调用
+    console.log('Updating database with the generated book content');
+    const { error: updateError } = await supabase
+      .from('funny_biography_books')
+      .update({
+        book_content: bookChapters,
+        updated_at: new Date().toISOString()
+      })
+      .eq('order_id', orderId);
 
     if (updateError) {
-      throw new Error(`Failed to update book data: ${updateError}`);
+      throw new Error(`Failed to update book data: ${updateError.message}`);
     }
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         message: 'Book content generated successfully',
+        bookContent: bookChapters,
         chaptersCount: bookChapters.length
       }),
       {

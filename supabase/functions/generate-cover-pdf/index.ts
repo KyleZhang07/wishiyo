@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { jsPDF } from "https://esm.sh/jspdf@2.5.1";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.8.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,13 +21,24 @@ serve(async (req) => {
   }
 
   try {
-    const { frontCover, spine, backCover } = await req.json();
+    const { frontCover, spine, backCover, orderId } = await req.json();
 
     if (!frontCover || !spine || !backCover) {
       throw new Error('Missing required cover image URLs');
     }
 
     console.log('Received cover image URLs for PDF generation');
+
+    // 获取Supabase连接信息
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error('Missing Supabase credentials');
+    }
+
+    // 初始化Supabase客户端
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // 从URL获取图片数据
     async function getImageFromUrl(imageUrl: string): Promise<string> {
@@ -67,6 +79,92 @@ serve(async (req) => {
       } catch (error) {
         console.error(`Error downloading image from ${imageUrl}:`, error);
         throw error;
+      }
+    }
+
+    // 将PDF上传到存储桶并返回公共URL
+    async function uploadPdfToStorage(pdfData: string, fileName: string): Promise<string> {
+      try {
+        console.log(`Uploading ${fileName} to storage...`);
+        
+        // 检查存储桶是否存在
+        const { data: buckets, error: bucketsError } = await supabase
+          .storage
+          .listBuckets();
+        
+        const bucketExists = buckets?.some(bucket => bucket.name === 'book-covers');
+        
+        // 如果存储桶不存在，则创建
+        if (!bucketExists) {
+          console.log(`Storage bucket 'book-covers' does not exist, creating...`);
+          const { error: createBucketError } = await supabase
+            .storage
+            .createBucket('book-covers', {
+              public: true
+            });
+          
+          if (createBucketError) {
+            console.error(`Failed to create storage bucket:`, createBucketError);
+            throw createBucketError;
+          } else {
+            console.log(`Storage bucket 'book-covers' created successfully`);
+          }
+        }
+        
+        // 从base64 Data URI中提取PDF数据
+        let pdfContent = pdfData;
+        let contentType = 'application/pdf';
+        
+        if (pdfData.startsWith('data:')) {
+          const parts = pdfData.split(',');
+          if (parts.length > 1) {
+            const matches = parts[0].match(/^data:([^;]+);base64$/);
+            if (matches && matches[1]) {
+              contentType = matches[1];
+            }
+            pdfContent = parts[1];
+          }
+        }
+        
+        // 将base64转换为Uint8Array
+        const binaryString = atob(pdfContent);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        
+        // 上传到Supabase Storage
+        const filePath = `${orderId}/${fileName}`;
+        console.log(`Uploading to book-covers/${filePath}`);
+        const { error: uploadError } = await supabase
+          .storage
+          .from('book-covers')
+          .upload(filePath, bytes, {
+            contentType,
+            upsert: true
+          });
+        
+        if (uploadError) {
+          const errorText = uploadError.message;
+          throw new Error(`Failed to upload PDF: ${errorText}`);
+        }
+        
+        console.log(`PDF uploaded successfully to storage`);
+        
+        // 获取公共URL
+        const { data: urlData } = supabase
+          .storage
+          .from('book-covers')
+          .getPublicUrl(filePath);
+        
+        const publicUrl = urlData?.publicUrl || '';
+        console.log(`Generated URL: ${publicUrl}`);
+        
+        return publicUrl;
+      } catch (error) {
+        console.error(`Error uploading PDF to storage:`, error);
+        console.error(error.stack || error); // 打印完整错误栈
+        return '';
       }
     }
 
@@ -126,10 +224,69 @@ serve(async (req) => {
     const pdfOutput = pdf.output('datauristring');
     console.log('PDF generation successful, output length:', pdfOutput.length);
     
+    // 上传PDF到存储桶
+    console.log(`Uploading cover PDF to storage...`);
+    const coverFileUrl = await uploadPdfToStorage(pdfOutput, 'cover-full.pdf');
+    
+    if (!coverFileUrl) {
+      throw new Error('Failed to upload cover PDF to storage');
+    }
+    
+    console.log(`Cover PDF uploaded successfully to storage with URL: ${coverFileUrl}`);
+    
+    // 更新数据库，包含PDF数据和URL
+    if (orderId) {
+      console.log(`Updating database for order ${orderId} with coverPdf and cover_source_url`);
+      const { error: updateError } = await supabase
+        .from('funny_biography_books')
+        .update({
+          cover_pdf: pdfOutput,
+          cover_source_url: coverFileUrl,
+          updated_at: new Date().toISOString()
+        })
+        .eq('order_id', orderId);
+      
+      if (updateError) {
+        console.error(`Error updating database:`, updateError);
+      } else {
+        console.log(`Database updated successfully with coverPdf and cover_source_url`);
+      }
+      
+      // 检查是否可以将图书设置为准备打印
+      const { data: bookData, error: bookError } = await supabase
+        .from('funny_biography_books')
+        .select('interior_source_url,book_content')
+        .eq('order_id', orderId)
+        .single();
+      
+      if (!bookError && bookData) {
+        if (bookData.interior_source_url) {
+          console.log(`Both cover and interior PDFs available, setting book ready for printing`);
+          const pageCount = bookData.book_content ? Math.ceil(bookData.book_content.length / 500) : 100;
+          
+          const { error: readyError } = await supabase
+            .from('funny_biography_books')
+            .update({
+              ready_for_printing: true,
+              page_count: pageCount,
+              updated_at: new Date().toISOString()
+            })
+            .eq('order_id', orderId);
+          
+          if (readyError) {
+            console.error(`Error setting book ready for printing:`, readyError);
+          } else {
+            console.log(`Book marked as ready for printing with ${pageCount} pages`);
+          }
+        }
+      }
+    }
+    
     return new Response(
       JSON.stringify({ 
         success: true, 
-        pdfOutput: pdfOutput
+        pdfOutput: pdfOutput,
+        coverSourceUrl: coverFileUrl
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
