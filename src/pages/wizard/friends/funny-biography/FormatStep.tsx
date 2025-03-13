@@ -181,10 +181,9 @@ const FormatStep = () => {
             
             console.log(`Uploading ${fileName}, data URI format:`, dataUri.substring(0, 50) + '...');
             
-            // 确定是PDF还是图片数据
-            const isPdf = dataUri.includes('application/pdf');
-            const contentType = isPdf ? 'application/pdf' : 'image/jpeg';
-            const fileExtension = isPdf ? '.pdf' : '.jpg';
+            // 强制使用图像格式，即使输入是PDF
+            const contentType = 'image/jpeg';
+            const fileExtension = '.jpg';
             const actualFileName = fileName.endsWith(fileExtension) ? fileName : fileName + fileExtension;
             
             // 转换为Blob
