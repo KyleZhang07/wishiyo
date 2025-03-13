@@ -414,13 +414,11 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     }
     
     console.log(`[${orderId}] Cover PDF generation completed`);
-    console.log(`[${orderId}] Cover result keys:`, Object.keys(coverResult));
-    console.log(`[${orderId}] Cover result success:`, coverResult.success);
     
     // 10. Update cover PDF in database
-    const coverPdf = coverResult.pdfOutput || coverResult.pdf || coverResult.pdfData;
+    const coverPdf = coverResult.pdfOutput || coverResult.pdf;
     if (coverPdf) {
-      console.log(`[${orderId}] Updating cover PDF in database, data length: ${coverPdf.length}`);
+      console.log(`[${orderId}] Updating cover PDF in database`);
       
       // 首先上传PDF到存储桶以获取URL
       try {
