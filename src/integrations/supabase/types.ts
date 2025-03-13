@@ -13,12 +13,37 @@ export type Database = {
         Row: {
           answers: Json | null
           author: string
+          binding_type: string | null
+          book_content: Json | null
+          book_size: string | null
           chapters: Json | null
+          cover_pdf: string | null
+          cover_source_url: string | null
+          customer_email: string | null
           id: number
           ideas: Json | null
           images: Json | null
+          interior_pdf: string | null
+          interior_source_url: string | null
+          is_color: boolean | null
+          last_print_attempt: string | null
+          lulu_print_job_id: string | null
+          lulu_print_status: string | null
+          lulu_tracking_number: string | null
+          lulu_tracking_url: string | null
           order_id: string
+          page_count: number | null
+          paper_type: string | null
+          pod_package_id: string | null
+          print_attempts: number | null
+          print_date: string | null
+          print_quantity: number | null
+          ready_for_printing: boolean | null
+          recipient_phone: string | null
           selected_idea: Json | null
+          shipping_address: Json | null
+          shipping_level: string | null
+          shipping_option: Json | null
           status: string | null
           style: Json | null
           timestamp: string | null
@@ -27,12 +52,37 @@ export type Database = {
         Insert: {
           answers?: Json | null
           author: string
+          binding_type?: string | null
+          book_content?: Json | null
+          book_size?: string | null
           chapters?: Json | null
+          cover_pdf?: string | null
+          cover_source_url?: string | null
+          customer_email?: string | null
           id?: number
           ideas?: Json | null
           images?: Json | null
+          interior_pdf?: string | null
+          interior_source_url?: string | null
+          is_color?: boolean | null
+          last_print_attempt?: string | null
+          lulu_print_job_id?: string | null
+          lulu_print_status?: string | null
+          lulu_tracking_number?: string | null
+          lulu_tracking_url?: string | null
           order_id: string
+          page_count?: number | null
+          paper_type?: string | null
+          pod_package_id?: string | null
+          print_attempts?: number | null
+          print_date?: string | null
+          print_quantity?: number | null
+          ready_for_printing?: boolean | null
+          recipient_phone?: string | null
           selected_idea?: Json | null
+          shipping_address?: Json | null
+          shipping_level?: string | null
+          shipping_option?: Json | null
           status?: string | null
           style?: Json | null
           timestamp?: string | null
@@ -41,12 +91,37 @@ export type Database = {
         Update: {
           answers?: Json | null
           author?: string
+          binding_type?: string | null
+          book_content?: Json | null
+          book_size?: string | null
           chapters?: Json | null
+          cover_pdf?: string | null
+          cover_source_url?: string | null
+          customer_email?: string | null
           id?: number
           ideas?: Json | null
           images?: Json | null
+          interior_pdf?: string | null
+          interior_source_url?: string | null
+          is_color?: boolean | null
+          last_print_attempt?: string | null
+          lulu_print_job_id?: string | null
+          lulu_print_status?: string | null
+          lulu_tracking_number?: string | null
+          lulu_tracking_url?: string | null
           order_id?: string
+          page_count?: number | null
+          paper_type?: string | null
+          pod_package_id?: string | null
+          print_attempts?: number | null
+          print_date?: string | null
+          print_quantity?: number | null
+          ready_for_printing?: boolean | null
+          recipient_phone?: string | null
           selected_idea?: Json | null
+          shipping_address?: Json | null
+          shipping_level?: string | null
+          shipping_option?: Json | null
           status?: string | null
           style?: Json | null
           timestamp?: string | null
