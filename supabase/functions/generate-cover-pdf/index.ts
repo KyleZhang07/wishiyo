@@ -24,11 +24,13 @@ serve(async (req) => {
   try {
     const { frontCover, spine, backCover, orderId } = await req.json();
 
+    console.log('Received request for PDF generation with order ID:', orderId);
+    
     if (!frontCover || !spine || !backCover) {
       throw new Error('Missing required cover image URLs');
     }
 
-    console.log('Received cover image URLs for PDF generation');
+    console.log('Processing cover image URLs for PDF generation');
 
     // 获取Supabase连接信息
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
@@ -44,14 +46,20 @@ serve(async (req) => {
     // 从URL获取图片数据
     async function getImageFromUrl(imageUrl: string): Promise<string> {
       try {
+        console.log(`Processing image URL: ${imageUrl.substring(0, 50)}...`);
+        
         // 处理已经是base64数据的情况
         if (imageUrl.startsWith('data:')) {
-          console.log(`Image is already in data URI format: ${imageUrl.substring(0, 30)}...`);
+          console.log('Image is already in data URI format - using directly');
           return imageUrl;
         }
 
         console.log(`Fetching image from URL: ${imageUrl}`);
-        const response = await fetch(imageUrl);
+        const response = await fetch(imageUrl, {
+          headers: {
+            'Accept': 'image/*,application/pdf',
+          }
+        });
         
         if (!response.ok) {
           throw new Error(`Failed to fetch image from ${imageUrl}: ${response.status} ${response.statusText}`);
@@ -61,24 +69,16 @@ serve(async (req) => {
         const contentType = response.headers.get('content-type') || 'image/jpeg';
         console.log(`Content type of fetched image: ${contentType}`);
         
-        // 如果是PDF，我们需要做特殊处理：将其转换为图像
-        if (contentType.includes('application/pdf')) {
-          console.log('Image URL points to a PDF file, converting to image for PDF generation...');
-          
-          // 直接返回URL，jsPDF会处理
-          // 在实际应用中，可能需要将PDF转换为图像，但这需要额外的库
-          return imageUrl;
-        }
-        
-        const imageBuffer = await response.arrayBuffer();
-        const base64Image = btoa(
-          new Uint8Array(imageBuffer)
+        // 获取图片数据
+        const arrayBuffer = await response.arrayBuffer();
+        const base64String = btoa(
+          new Uint8Array(arrayBuffer)
             .reduce((data, byte) => data + String.fromCharCode(byte), '')
         );
         
-        return `data:${contentType};base64,${base64Image}`;
+        return `data:${contentType};base64,${base64String}`;
       } catch (error) {
-        console.error(`Error downloading image from ${imageUrl}:`, error);
+        console.error(`Error downloading image from ${imageUrl.substring(0, 50)}...:`, error);
         throw error;
       }
     }
@@ -113,22 +113,10 @@ serve(async (req) => {
         }
         
         // 从base64 Data URI中提取PDF数据
-        let pdfContent = pdfData;
-        let contentType = 'application/pdf';
-        
-        if (pdfData.startsWith('data:')) {
-          const parts = pdfData.split(',');
-          if (parts.length > 1) {
-            const matches = parts[0].match(/^data:([^;]+);base64$/);
-            if (matches && matches[1]) {
-              contentType = matches[1];
-            }
-            pdfContent = parts[1];
-          }
-        }
+        const base64Data = pdfData.split(',')[1];
         
         // 将base64转换为Uint8Array
-        const binaryString = atob(pdfContent);
+        const binaryString = atob(base64Data);
         const bytes = new Uint8Array(binaryString.length);
         for (let i = 0; i < binaryString.length; i++) {
           bytes[i] = binaryString.charCodeAt(i);
@@ -141,7 +129,7 @@ serve(async (req) => {
           .storage
           .from('book-covers')
           .upload(filePath, bytes, {
-            contentType,
+            contentType: 'application/pdf',
             upsert: true
           });
         
@@ -169,15 +157,23 @@ serve(async (req) => {
       }
     }
 
+    console.log('Starting to download and process images');
+    
     // 获取所有图片的base64数据
-    console.log('Downloading images from URLs...');
     const frontCoverData = await getImageFromUrl(frontCover);
+    console.log('Front cover processed successfully');
+    
     const spineData = await getImageFromUrl(spine);
+    console.log('Spine processed successfully');
+    
     const backCoverData = await getImageFromUrl(backCover);
-    console.log('All images downloaded successfully');
+    console.log('Back cover processed successfully');
+    
+    console.log('All images downloaded and processed successfully');
 
     // Create a new PDF with appropriate dimensions
     // Standard book cover dimensions with bleed (8.5 x 11 inches plus bleed)
+    console.log('Creating PDF document');
     const pdf = new jsPDF({
       orientation: 'landscape',
       unit: 'in',
@@ -191,7 +187,7 @@ serve(async (req) => {
     const backCoverWidth = 8.5;
     
     // Add images to the PDF (coordinate system starts from top-left)
-    // Back cover (positioned first on the left in the spread)
+    console.log('Adding back cover to PDF');
     pdf.addImage(
       backCoverData,
       'JPEG',
@@ -201,7 +197,7 @@ serve(async (req) => {
       11 // height
     );
 
-    // Spine (positioned in the middle)
+    console.log('Adding spine to PDF');
     pdf.addImage(
       spineData,
       'JPEG',
@@ -211,7 +207,7 @@ serve(async (req) => {
       11 // height
     );
 
-    // Front cover (positioned on the right)
+    console.log('Adding front cover to PDF');
     pdf.addImage(
       frontCoverData,
       'JPEG',
@@ -222,6 +218,7 @@ serve(async (req) => {
     );
 
     // Convert PDF to base64
+    console.log('Converting PDF to base64');
     const pdfOutput = pdf.output('datauristring');
     console.log('PDF generation successful, output length:', pdfOutput.length);
     
@@ -284,7 +281,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        pdfOutput: pdfOutput,
+        pdfOutput: pdfOutput.substring(0, 100) + '...',  // Just show a small preview in the response
         coverSourceUrl: coverFileUrl
       }),
       {
