@@ -114,10 +114,6 @@ const LoveStoryMomentsStep = () => {
         setCharacterPhoto(dataUrl);
         localStorage.setItem('loveStoryPartnerPhoto', dataUrl);
         setIsLoading(false);
-        toast({
-          title: "Photo uploaded successfully",
-          description: "Your character's photo has been saved"
-        });
       };
       
       img.onerror = () => {
@@ -157,7 +153,6 @@ const LoveStoryMomentsStep = () => {
     >
       <div className="space-y-6">
         <div className="max-w-md mx-auto">
-          <h3 className="text-lg font-medium mb-4 text-center">Character's Photo</h3>
           <input 
             type="file"
             ref={characterFileInputRef}
@@ -165,44 +160,27 @@ const LoveStoryMomentsStep = () => {
             accept="image/*"
             onChange={handleFileSelect}
           />
-          <div className="aspect-square w-full border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center relative">
-            {isLoading && (
-              <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10 rounded-lg">
-                <div className="text-white">Processing image...</div>
-              </div>
-            )}
-            {!characterPhoto ? (
-              <Button
-                variant="ghost"
-                className="w-full h-full flex flex-col items-center justify-center gap-4"
-                onClick={handleUploadClick}
-                disabled={isLoading}
-              >
-                <ImagePlus className="h-12 w-12 text-gray-400" />
-                <span className="text-gray-500">Click to upload character's photo</span>
-                <span className="text-xs text-gray-400">Photo must contain a clear face</span>
-              </Button>
-            ) : (
-              <button
-                className="w-full h-full p-0 hover:opacity-90 transition-opacity relative group"
-                onClick={handleUploadClick}
-                disabled={isLoading}
-              >
-                <img 
-                  src={characterPhoto} 
-                  alt="Character" 
-                  className="w-full h-full object-cover rounded-lg" 
-                  ref={imageRef}
-                />
-                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
-                  <span className="text-white font-medium">Click to replace photo</span>
-                </div>
-              </button>
-            )}
-          </div>
-          <p className="text-sm text-gray-500 mt-2 text-center">
-            For best results, upload a photo with a clear face and good lighting
-          </p>
+          {!characterPhoto ? (
+            <div 
+              className="aspect-square w-full max-w-sm mx-auto border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center hover:scale-[1.02] transition-all duration-300"
+              onClick={handleUploadClick}
+            >
+              <ImagePlus className="h-8 w-8 text-gray-400" />
+              <span className="text-gray-500 text-sm mt-2">Click to upload</span>
+            </div>
+          ) : (
+            <div 
+              className="aspect-square w-full max-w-sm mx-auto rounded-lg overflow-hidden border border-gray-200 hover:scale-[1.02] transition-all duration-300"
+              onClick={handleUploadClick}
+            >
+              <img 
+                src={characterPhoto} 
+                alt="" 
+                className="w-full h-full object-cover" 
+                ref={imageRef}
+              />
+            </div>
+          )}
         </div>
       </div>
     </WizardStep>

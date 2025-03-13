@@ -56,64 +56,44 @@ const LoveStoryStyleStep = () => {
       onNextClick={handleContinue}
     >
       <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-lg p-6 shadow-md">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">Select a Text Tone</h3>
-          <p className="text-gray-500 mb-6">
-            This determines the writing style of your love story.
-          </p>
-          
-          <div className="space-y-4">
-            {TONE_OPTIONS.map((tone) => (
-              <div 
-                key={tone}
-                onClick={() => handleToneSelect(tone)}
-                className={`
-                  flex items-center p-4 rounded-md cursor-pointer transition-all
-                  ${selectedTone === tone 
-                    ? 'bg-[#FF7F50]/10 border border-[#FF7F50]' 
-                    : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'}
-                `}
-              >
-                <div className="flex-shrink-0 mr-3">
-                  {selectedTone === tone ? (
-                    <div className="w-5 h-5 rounded-full bg-[#FF7F50] flex items-center justify-center">
-                      <Check className="w-3 h-3 text-white" />
-                    </div>
-                  ) : (
-                    <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
-                  )}
-                </div>
-                <div>
-                  <h4 className="font-medium text-gray-900">{tone}</h4>
-                  <p className="text-sm text-gray-500">
-                    {tone === 'Playful' && 'Light-hearted and fun expression'}
-                    {tone === 'Heartfelt' && 'Sincere and deeply emotional'}
-                    {tone === 'Inspirational' && 'Uplifting and motivational'}
-                  </p>
-                </div>
+        <div className="space-y-5 mt-6">
+          {TONE_OPTIONS.map((tone) => (
+            <div 
+              key={tone}
+              onClick={() => handleToneSelect(tone)}
+              className={`
+                overflow-hidden rounded-lg cursor-pointer transition-all duration-300
+                ${selectedTone === tone 
+                  ? 'ring-2 ring-[#FF7F50] shadow-lg' 
+                  : 'border border-gray-200 hover:shadow-md'}
+              `}
+            >
+              <div className={`
+                px-5 py-4 flex justify-between items-center
+                ${selectedTone === tone ? 'bg-[#FF7F50]/10' : 'bg-gray-50'}
+              `}>
+                <h4 className="font-medium text-lg">{tone}</h4>
+                {selectedTone === tone && (
+                  <div className="w-6 h-6 rounded-full bg-[#FF7F50] flex items-center justify-center">
+                    <Check className="w-4 h-4 text-white" />
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-8">
-          <div className="bg-white rounded-lg p-6 shadow-md">
-            <h3 className="text-lg font-medium mb-2">Tone Examples</h3>
-            <p className="text-gray-500 mb-4">
-              Here's how each tone might influence your story
-            </p>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="aspect-video bg-gray-100 rounded-sm flex items-center justify-center">
-                <p className="text-gray-400 text-sm">Heartfelt example</p>
-              </div>
-              <div className="aspect-video bg-gray-100 rounded-sm flex items-center justify-center">
-                <p className="text-gray-400 text-sm">Playful example</p>
-              </div>
-              <div className="aspect-video bg-gray-100 rounded-sm flex items-center justify-center">
-                <p className="text-gray-400 text-sm">Inspirational example</p>
+              
+              <div className="p-5 bg-white">
+                <p className="text-sm text-gray-700 italic mb-2">
+                  {tone === 'Playful' && '"Every moment with you feels like a delightful adventure..."'}
+                  {tone === 'Heartfelt' && '"Your love has touched the deepest corners of my soul..."'}
+                  {tone === 'Inspirational' && '"Together we\'ve risen above challenges to build something beautiful..."'}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {tone === 'Playful' && 'Light-hearted and fun expression'}
+                  {tone === 'Heartfelt' && 'Sincere and deeply emotional'}
+                  {tone === 'Inspirational' && 'Uplifting and motivational'}
+                </p>
               </div>
             </div>
-          </div>
+          ))}
         </div>
       </div>
     </WizardStep>
