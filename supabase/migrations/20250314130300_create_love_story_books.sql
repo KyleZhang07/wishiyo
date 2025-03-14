@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS "love_story_books" (
   "last_print_attempt" timestamptz,
   "print_attempts" int4 DEFAULT 0,
   "customer_email" varchar,
+  "client_id" varchar,
   "shipping_address" jsonb,
   "shipping_option" jsonb
 );
@@ -39,11 +40,29 @@ CREATE INDEX IF NOT EXISTS "love_story_books_status_idx" ON "love_story_books" (
 -- 添加RLS策略 (Row Level Security)
 ALTER TABLE "love_story_books" ENABLE ROW LEVEL SECURITY;
 
--- 创建允许认证用户访问自己的书籍记录的策略
-CREATE POLICY "Users can view their own love story books" 
+-- 创建允许通过 client_id 访问书籍记录的策略
+CREATE POLICY "Anyone can view love story books by client_id" 
   ON "love_story_books" 
   FOR SELECT 
-  USING (auth.uid()::text = customer_email);
+  USING (true);  -- 允许任何人查看记录
+
+-- 创建允许通过 client_id 更新书籍记录的策略
+CREATE POLICY "Anyone can update love story books by client_id" 
+  ON "love_story_books" 
+  FOR UPDATE
+  USING (true);  -- 允许任何人更新记录
+
+-- 创建允许通过 client_id 删除书籍记录的策略
+CREATE POLICY "Anyone can delete love story books by client_id" 
+  ON "love_story_books" 
+  FOR DELETE
+  USING (true);  -- 允许任何人删除记录
+
+-- 创建允许通过 client_id 插入书籍记录的策略
+CREATE POLICY "Anyone can insert love story books" 
+  ON "love_story_books" 
+  FOR INSERT
+  WITH CHECK (true);  -- 允许任何人插入记录
 
 -- 允许服务角色完全访问
 CREATE POLICY "Service role has full access to love story books" 

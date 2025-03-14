@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Check } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { getClientId } from '@/utils/clientId';
 
 // 封面类型
 interface CoverFormat {
@@ -103,6 +104,7 @@ const FormatStep = () => {
         
         try {
           // 添加记录到数据库
+          const clientId = getClientId();
           const { data, error } = await supabase
             .from('love_story_books')
             .insert({
@@ -111,7 +113,8 @@ const FormatStep = () => {
               person_name: personName,
               status: 'created',
               timestamp: new Date().toISOString(),
-              format: selectedFormatObj.name
+              format: selectedFormatObj.name,
+              client_id: clientId
             })
             .select();
           
