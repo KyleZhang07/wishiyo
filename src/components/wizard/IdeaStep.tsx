@@ -459,7 +459,7 @@ const IdeaStep = ({
       <div className="flex justify-center w-full">
         <div className="space-y-6 w-[95%]">
           {category === 'love' && (
-            <div className="bg-white rounded-lg p-6 shadow-md mb-6">
+            <>
               <h3 className="text-xl font-bold text-gray-900 mb-4">Select an Image Style</h3>
               <p className="text-gray-500 text-sm mb-6">
                 This determines the visual aesthetic of all the generated images in your love story.
@@ -501,7 +501,7 @@ const IdeaStep = ({
                   </div>
                 ))}
               </div>
-            </div>
+            </>
           )}
           {category === 'love' ? (
             <>
@@ -538,7 +538,7 @@ const IdeaStep = ({
                   {ideas.map((idea, index) => (
                     <div 
                       key={index} 
-                      className={`bg-white rounded-lg p-5 cursor-pointer transition-all hover:shadow-md ${
+                      className={`${category === 'friends' ? 'bg-white rounded-lg p-5' : ''} cursor-pointer transition-all hover:shadow-md ${
                         selectedIdeaIndex === index 
                           ? category === 'friends' 
                             ? 'ring-2 ring-[#F6C744] shadow-lg scale-[1.02]' 
