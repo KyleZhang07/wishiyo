@@ -15,6 +15,7 @@ serve(async (req) => {
   try {
     const { 
       orderId, 
+      table_name, 
       bookContent, 
       coverPdf, 
       interiorPdf, 
@@ -55,6 +56,9 @@ serve(async (req) => {
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // 确定要更新的表名
+    const targetTable = table_name || 'funny_biography_books'; // 默认为 funny_biography_books
 
     // Prepare update data
     const updateData: Record<string, any> = {};
@@ -161,7 +165,7 @@ serve(async (req) => {
 
     // Update the database
     const { data, error } = await supabase
-      .from('funny_biography_books')
+      .from(targetTable) // 使用动态表名
       .update(updateData)
       .eq('order_id', orderId)
       .select();

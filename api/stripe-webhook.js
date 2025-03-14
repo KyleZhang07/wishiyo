@@ -466,6 +466,101 @@ export default async function handler(req, res) {
               // 记录错误但仍向Stripe返回成功，以防止重试逻辑
             }
           }
+          
+          // 如果图书类型是love-story，启动生成过程
+          else if (productId === 'love-story') {
+            console.log('Starting love story book generation process');
+            
+            // 检查Supabase环境变量
+            if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
+              console.error('缺少必需的Supabase环境变量');
+              return res.status(200).json({ 
+                received: true, 
+                warning: '由于缺少配置，跳过图书生成' 
+              });
+            }
+            
+            // 在数据库中更新运输信息
+            try {
+              // 获取Supabase凭证
+              const supabaseUrl = process.env.SUPABASE_URL;
+              // 优先使用服务角色密钥，如果没有则使用匿名密钥
+              const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+              
+              console.log("===== CALLING SUPABASE FUNCTION FOR LOVE STORY =====", {
+                supabaseUrl: supabaseUrl,
+                hasKey: !!supabaseKey,
+                keyType: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'service_role' : 'anon',
+                endpoint: `${supabaseUrl}/functions/v1/update-book-data`
+              });
+              
+              // 更新运输地址和客户电子邮件
+              const updateResponse = await fetch(
+                `${supabaseUrl}/functions/v1/update-book-data`,
+                {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${supabaseKey}`
+                  },
+                  body: JSON.stringify({ 
+                    orderId,
+                    table_name: 'love_story_books', // 指定表名
+                    shipping_address: shippingAddress,
+                    shipping_option: shippingOption,
+                    customer_email: expandedSession.customer_details?.email,
+                    shipping_level: shippingOption?.display_name === 'Express Shipping' ? 'EXPRESS' : 'GROUND',
+                    recipient_phone: expandedSession.customer_details?.phone || '',
+                    binding_type: binding_type || (format === 'Hardcover' ? 'hardcover' : 'softcover'),
+                    is_color: is_color === 'true' ? true : false,
+                    paper_type: paper_type || 'Standard',
+                    book_size: '6x9',
+                    print_quantity: 1,
+                    ready_for_printing: false,
+                    print_attempts: 0
+                  })
+                }
+              );
+              
+              const updateResponseText = await updateResponse.text();
+              console.log(`Supabase response status for love story: ${updateResponse.status}`);
+              console.log(`Supabase response body for love story: ${updateResponseText}`);
+              
+              // 调用函数生成PDF
+              console.log(`===== STARTING LOVE STORY PDF GENERATION FOR ORDER ${orderId} =====`);
+              try {
+                const pdfResponse = await fetch(
+                  `${supabaseUrl}/functions/v1/generate-love-story-pdfs`,
+                  {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${supabaseKey}`
+                    },
+                    body: JSON.stringify({ orderId })
+                  }
+                );
+                
+                if (!pdfResponse.ok) {
+                  const errorText = await pdfResponse.text();
+                  console.error(`Error generating Love Story PDFs: ${pdfResponse.status} ${pdfResponse.statusText}`, errorText);
+                } else {
+                  const pdfResult = await pdfResponse.json();
+                  console.log(`Love Story PDF generation result for ${orderId}:`, pdfResult);
+                }
+              } catch (error) {
+                console.error(`Error in Love Story PDF generation process for ${orderId}:`, error);
+                // 记录详细错误信息，但不终止webhook处理
+                console.error(`Error details:`, error.stack || error);
+              }
+              
+              console.log(`Love Story book generation process completed for order ${orderId}`);
+            } catch (error) {
+              console.error('启动Love Story图书生成过程时出错:', error);
+              console.error(error.stack); // 打印堆栈跟踪
+              // 记录错误但仍向Stripe返回成功，以防止重试逻辑
+            }
+          }
 
           // 成功处理付款
           return res.status(200).json({ received: true, success: true });

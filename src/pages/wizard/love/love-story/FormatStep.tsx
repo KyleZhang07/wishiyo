@@ -122,24 +122,8 @@ const FormatStep = () => {
           } else {
             console.log('Love story book record created:', data);
             
-            // 调用函数生成PDF
-            try {
-              const pdfResponse = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-love-story-pdfs`, {
-                method: 'POST',
-                body: JSON.stringify({ orderId }),
-                headers: { 
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
-                }
-              });
-              
-              if (!pdfResponse.ok) {
-                console.error('Error generating PDFs:', await pdfResponse.text());
-              }
-            } catch (pdfError) {
-              console.error('Error calling PDF generation function:', pdfError);
-              // 继续结账流程，即使PDF生成失败
-            }
+            // PDF生成将通过Stripe webhook在支付成功后处理
+            console.log('Book generation will be handled by Stripe webhook after payment confirmation');
           }
         } catch (dbError) {
           console.error('Database error:', dbError);

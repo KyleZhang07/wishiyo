@@ -52,15 +52,48 @@ serve(async (req) => {
       )
     }
 
-    // 获取图片列表
-    const { data: imageFiles, error: listError } = await supabaseAdmin
+    // 获取client_id，用于查找图片
+    const clientId = bookData.client_id;
+    
+    if (!clientId) {
+      return new Response(
+        JSON.stringify({ error: 'Client ID not found in book record' }),
+        { headers: { ...headers, 'Content-Type': 'application/json' }, status: 404 }
+      )
+    }
+
+    // 尝试从两个可能的路径获取图片
+    let imageFiles: any[] = [];
+    let listError = null;
+    
+    // 首先尝试从基于client_id的路径获取
+    const { data: clientImages, error: clientListError } = await supabaseAdmin
       .storage
       .from('images')
-      .list(`love-story/${orderId}`)
+      .list(`${clientId}`)
+    
+    if (!clientListError && clientImages && clientImages.length > 0) {
+      imageFiles = clientImages;
+    } else {
+      // 如果没有找到，尝试从love-story/${orderId}路径获取
+      const { data: orderImages, error: orderListError } = await supabaseAdmin
+        .storage
+        .from('images')
+        .list(`love-story/${orderId}`)
+      
+      if (!orderListError && orderImages && orderImages.length > 0) {
+        imageFiles = orderImages;
+        listError = null;
+      } else {
+        // 两个路径都没有找到图片
+        imageFiles = [];
+        listError = clientListError || orderListError;
+      }
+    }
 
-    if (listError || !imageFiles) {
+    if (listError || !imageFiles || imageFiles.length === 0) {
       return new Response(
-        JSON.stringify({ error: 'Failed to list images', details: listError }),
+        JSON.stringify({ error: 'Failed to list images or no images found', details: listError }),
         { headers: { ...headers, 'Content-Type': 'application/json' }, status: 500 }
       )
     }
@@ -69,6 +102,21 @@ serve(async (req) => {
     const coverImages = imageFiles.filter(file => file.name.includes('cover')).sort((a, b) => a.name.localeCompare(b.name))
     const introImages = imageFiles.filter(file => file.name.includes('intro')).sort((a, b) => a.name.localeCompare(b.name))
     const contentImages = imageFiles.filter(file => file.name.includes('content')).sort((a, b) => a.name.localeCompare(b.name))
+
+    // 检查是否有足够的图片
+    if (coverImages.length === 0 || introImages.length === 0 || contentImages.length === 0) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Insufficient images for PDF generation', 
+          details: {
+            coverImagesCount: coverImages.length,
+            introImagesCount: introImages.length,
+            contentImagesCount: contentImages.length
+          }
+        }),
+        { headers: { ...headers, 'Content-Type': 'application/json' }, status: 400 }
+      )
+    }
 
     // 生成封面PDF
     const coverPdf = await generatePdf([coverImages[0]], orderId, supabaseAdmin)
@@ -168,12 +216,54 @@ async function generatePdf(imageFiles: any[], orderId: string, supabase: any): P
 
   let currentPage = 0
 
+  // 首先获取book记录以获取client_id
+  const { data: bookData, error: bookError } = await supabase
+    .from('love_story_books')
+    .select('client_id')
+    .eq('order_id', orderId)
+    .single()
+
+  if (bookError || !bookData) {
+    console.error('Failed to get book data for client_id', bookError)
+    throw new Error('Failed to get book data for client_id')
+  }
+
+  const clientId = bookData.client_id
+
   for (const file of imageFiles) {
-    // 获取图片
-    const { data: imageData, error: imageError } = await supabase
-      .storage
-      .from('images')
-      .download(`love-story/${orderId}/${file.name}`)
+    let imageData = null
+    let imageError = null
+
+    // 首先尝试从client_id路径获取图片
+    if (clientId) {
+      const clientPathResult = await supabase
+        .storage
+        .from('images')
+        .download(`${clientId}/${file.name}`)
+      
+      if (!clientPathResult.error && clientPathResult.data) {
+        imageData = clientPathResult.data
+        imageError = null
+      } else {
+        // 如果从client_id路径获取失败，尝试从order_id路径获取
+        const orderPathResult = await supabase
+          .storage
+          .from('images')
+          .download(`love-story/${orderId}/${file.name}`)
+        
+        imageData = orderPathResult.data
+        imageError = orderPathResult.error
+      }
+    } else {
+      // 如果没有client_id，直接从order_id路径获取
+      const { data, error } = await supabase
+        .storage
+        .from('images')
+        .download(`love-story/${orderId}/${file.name}`)
+      
+      imageData = data
+      imageError = error
+    }
 
     if (imageError || !imageData) {
       console.error(`Failed to download image: ${file.name}`, imageError)
