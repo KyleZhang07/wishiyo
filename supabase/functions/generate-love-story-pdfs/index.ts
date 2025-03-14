@@ -177,7 +177,8 @@ serve(async (req) => {
         interior_pdf: interiorUrl.publicUrl,
         cover_source_url: coverUrl.publicUrl,
         interior_source_url: interiorUrl.publicUrl,
-        status: 'pdf_generated'
+        status: 'pdf_generated',
+        ready_for_printing: true // 设置为准备好打印
       })
       .eq('order_id', orderId)
       .select()
