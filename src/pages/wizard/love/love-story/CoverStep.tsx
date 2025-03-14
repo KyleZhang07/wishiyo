@@ -286,82 +286,74 @@ const LoveStoryCoverStep = () => {
   return (
     <WizardStep 
       title="Design Your Book Cover" 
-      description="Preview and customize your love story cover" 
+      description=""
       previousStep="/create/love/love-story/ideas" 
       currentStep={5} 
       totalSteps={7} 
       onNextClick={handleContinue}
     >
       <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-lg p-6 shadow-md">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">Cover Preview</h3>
-          <p className="text-gray-500 mb-6">
-            This is a preview of your book cover based on your story information.
-          </p>
+        <div className="relative max-w-xl mx-auto">
+          <LoveStoryCoverPreview
+            coverTitle={coverTitle}
+            subtitle={subtitle}
+            authorName={authorName}
+            recipientName={recipientName}
+            coverImage={coverImage}
+            selectedFont={currentStyle.font}
+            style={currentStyle}
+          />
           
-          <div className="relative max-w-xl mx-auto">
-            <LoveStoryCoverPreview
-              coverTitle={coverTitle}
-              subtitle={subtitle}
-              authorName={authorName}
-              recipientName={recipientName}
-              coverImage={coverImage}
-              selectedFont={currentStyle.font}
-              style={currentStyle}
-            />
-            
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
-              <Button
-                variant="secondary"
-                onClick={handleEditCover}
-                disabled={isGeneratingCover}
-              >
-                <Edit className="w-4 h-4 mr-2" />
-                Edit cover
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={handleRegenerateCover}
-                disabled={isGeneratingCover}
-              >
-                <RefreshCw className={`w-4 h-4 mr-2 ${isGeneratingCover ? 'animate-spin' : ''}`} />
-                {isGeneratingCover ? 'Generating...' : 'Regenerate'}
-              </Button>
-            </div>
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
+            <Button
+              variant="secondary"
+              onClick={handleEditCover}
+              disabled={isGeneratingCover}
+            >
+              <Edit className="w-4 h-4 mr-2" />
+              Edit cover
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={handleRegenerateCover}
+              disabled={isGeneratingCover}
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${isGeneratingCover ? 'animate-spin' : ''}`} />
+              {isGeneratingCover ? 'Generating...' : 'Regenerate'}
+            </Button>
           </div>
-          
-          {/* 样式选择器 */}
-          <div className="mt-10">
-            <h3 className="text-2xl font-bold text-center mb-8">Choose Your Style</h3>
-            <div className="flex justify-center gap-4 flex-wrap">
-              {coverStyles.map((style) => (
-                <div 
-                  key={style.id}
-                  onClick={() => handleStyleSelect(style.id)}
-                  className={`relative w-24 h-24 rounded-full cursor-pointer flex items-center justify-center ${
-                    selectedStyle === style.id ? 'ring-2 ring-offset-2 ring-[#FF7F50]' : ''
-                  }`}
-                  style={{
-                    backgroundColor: style.background,
-                    border: style.borderColor ? `3px solid ${style.borderColor}` : 'none'
+        </div>
+        
+        {/* 样式选择器 */}
+        <div className="mt-10">
+          <div className="flex justify-center gap-4 flex-wrap">
+            {coverStyles.map((style) => (
+              <div 
+                key={style.id}
+                onClick={() => handleStyleSelect(style.id)}
+                className={`relative w-24 h-24 rounded-full cursor-pointer flex items-center justify-center ${
+                  selectedStyle === style.id ? 'ring-2 ring-offset-2 ring-[#FF7F50]' : ''
+                }`}
+                style={{
+                  backgroundColor: style.background,
+                  border: style.borderColor ? `3px solid ${style.borderColor}` : 'none'
+                }}
+              >
+                <span 
+                  className="text-4xl font-bold"
+                  style={{ 
+                    fontFamily: style.font === 'playfair' ? 'serif' 
+                      : style.font === 'montserrat' ? 'sans-serif' 
+                      : style.font === 'comic-sans' ? 'cursive' 
+                      : style.font === 'didot' ? 'serif' 
+                      : 'serif',
+                    color: style.subtitleColor
                   }}
                 >
-                  <span 
-                    className="text-4xl font-bold"
-                    style={{ 
-                      fontFamily: style.font === 'playfair' ? 'serif' 
-                        : style.font === 'montserrat' ? 'sans-serif' 
-                        : style.font === 'comic-sans' ? 'cursive' 
-                        : style.font === 'didot' ? 'serif' 
-                        : 'serif',
-                      color: style.subtitleColor
-                    }}
-                  >
-                    Aa
-                  </span>
-                </div>
-              ))}
-            </div>
+                  Aa
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       </div>

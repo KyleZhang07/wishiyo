@@ -129,6 +129,111 @@ export type Database = {
         }
         Relationships: []
       }
+      love_story_books: {
+        Row: {
+          id: number
+          order_id: string
+          title: string | null
+          person_name: string | null
+          status: string | null
+          timestamp: string | null
+          cover_pdf: string | null
+          interior_pdf: string | null
+          pod_package_id: string | null
+          print_quantity: number | null
+          shipping_level: string | null
+          cover_source_url: string | null
+          interior_source_url: string | null
+          lulu_print_job_id: string | null
+          lulu_print_status: string | null
+          lulu_tracking_number: string | null
+          lulu_tracking_url: string | null
+          recipient_phone: string | null
+          book_size: string | null
+          page_count: number | null
+          is_color: boolean | null
+          paper_type: string | null
+          binding_type: string | null
+          ready_for_printing: boolean | null
+          print_date: string | null
+          last_print_attempt: string | null
+          print_attempts: number | null
+          customer_email: string | null
+          shipping_address: Json | null
+          shipping_option: Json | null
+          images: Json | null
+          style: string | null
+        }
+        Insert: {
+          id?: number
+          order_id: string
+          title?: string | null
+          person_name?: string | null
+          status?: string | null
+          timestamp?: string | null
+          cover_pdf?: string | null
+          interior_pdf?: string | null
+          pod_package_id?: string | null
+          print_quantity?: number | null
+          shipping_level?: string | null
+          cover_source_url?: string | null
+          interior_source_url?: string | null
+          lulu_print_job_id?: string | null
+          lulu_print_status?: string | null
+          lulu_tracking_number?: string | null
+          lulu_tracking_url?: string | null
+          recipient_phone?: string | null
+          book_size?: string | null
+          page_count?: number | null
+          is_color?: boolean | null
+          paper_type?: string | null
+          binding_type?: string | null
+          ready_for_printing?: boolean | null
+          print_date?: string | null
+          last_print_attempt?: string | null
+          print_attempts?: number | null
+          customer_email?: string | null
+          shipping_address?: Json | null
+          shipping_option?: Json | null
+          images?: Json | null
+          style?: string | null
+        }
+        Update: {
+          id?: number
+          order_id?: string
+          title?: string | null
+          person_name?: string | null
+          status?: string | null
+          timestamp?: string | null
+          cover_pdf?: string | null
+          interior_pdf?: string | null
+          pod_package_id?: string | null
+          print_quantity?: number | null
+          shipping_level?: string | null
+          cover_source_url?: string | null
+          interior_source_url?: string | null
+          lulu_print_job_id?: string | null
+          lulu_print_status?: string | null
+          lulu_tracking_number?: string | null
+          lulu_tracking_url?: string | null
+          recipient_phone?: string | null
+          book_size?: string | null
+          page_count?: number | null
+          is_color?: boolean | null
+          paper_type?: string | null
+          binding_type?: string | null
+          ready_for_printing?: boolean | null
+          print_date?: string | null
+          last_print_attempt?: string | null
+          print_attempts?: number | null
+          customer_email?: string | null
+          shipping_address?: Json | null
+          shipping_option?: Json | null
+          images?: Json | null
+          style?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

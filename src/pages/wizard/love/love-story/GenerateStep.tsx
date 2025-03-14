@@ -3,7 +3,7 @@ import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { uploadImageToStorage, getAllImagesFromStorage } from '@/integrations/supabase/storage';
+import { uploadImageToStorage, getAllImagesFromStorage, deleteImageFromStorage } from '@/integrations/supabase/storage';
 import { CoverPreviewCard } from './components/CoverPreviewCard';
 import { ContentImageCard } from './components/ContentImageCard';
 
@@ -95,8 +95,6 @@ const GenerateStep = () => {
   };
 
   const handleGenericContentRegeneration = async (index: number, style?: string) => {
-    if (index < 1) return;
-
     const stateSetters = {
       1: setContentImage1,
       2: setContentImage2,
@@ -131,6 +129,23 @@ const GenerateStep = () => {
     
     // Clear existing localStorage entry
     localStorage.removeItem(lsKey);
+
+    // 获取当前图片的URL，用于后续删除
+    const currentImageUrl = localStorage.getItem(`${lsKey}_url`);
+    
+    // 查找当前图片在Supabase中的路径
+    let currentImagePath = '';
+    if (currentImageUrl) {
+      // 从URL中提取路径
+      const currentImageName = currentImageUrl.split('/').pop();
+      if (currentImageName) {
+        // 找到对应的图片对象
+        const currentImage = supabaseImages.find(img => img.name.includes(currentImageName));
+        if (currentImage) {
+          currentImagePath = currentImage.name;
+        }
+      }
+    }
 
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
     const characterPhoto = localStorage.getItem('loveStoryPartnerPhoto');
@@ -215,7 +230,18 @@ const GenerateStep = () => {
       // 5) Store only the URL reference in localStorage
       localStorage.setItem(`${lsKey}_url`, storageUrl);
 
-      // 6) 延迟刷新图片列表，确保上传完成
+      // 6) 删除旧图片
+      if (currentImagePath) {
+        try {
+          await deleteImageFromStorage(currentImagePath, 'images');
+          console.log(`Deleted old image: ${currentImagePath}`);
+        } catch (deleteErr) {
+          console.error(`Failed to delete old image: ${currentImagePath}`, deleteErr);
+          // 继续处理，即使删除失败
+        }
+      }
+
+      // 7) 延迟刷新图片列表，确保上传完成
       setTimeout(() => {
         loadImagesFromSupabase();
       }, 1000);
@@ -256,6 +282,34 @@ const GenerateStep = () => {
     });
 
     try {
+      // 获取当前图片的URL，用于后续删除
+      const currentCoverImageUrl = localStorage.getItem('loveStoryCoverImage_url');
+      const currentIntroImageUrl = localStorage.getItem('loveStoryIntroImage_url');
+      
+      // 查找当前图片在Supabase中的路径
+      let currentCoverImagePath = '';
+      let currentIntroImagePath = '';
+      
+      if (currentCoverImageUrl) {
+        const currentCoverImageName = currentCoverImageUrl.split('/').pop();
+        if (currentCoverImageName) {
+          const currentImage = supabaseImages.find(img => img.name.includes(currentCoverImageName));
+          if (currentImage) {
+            currentCoverImagePath = currentImage.name;
+          }
+        }
+      }
+      
+      if (currentIntroImageUrl) {
+        const currentIntroImageName = currentIntroImageUrl.split('/').pop();
+        if (currentIntroImageName) {
+          const currentImage = supabaseImages.find(img => img.name.includes(currentIntroImageName));
+          if (currentImage) {
+            currentIntroImagePath = currentImage.name;
+          }
+        }
+      }
+
       // 我们现在解析完整的prompts对象，而不是使用传入的字符串
       // 这样我们可以正确访问每个图像对应的提示
       const promptsObj = JSON.parse(localStorage.getItem('loveStoryImagePrompts') || '[]');
@@ -280,11 +334,14 @@ const GenerateStep = () => {
         const coverImageData = data.output[0];
         setCoverImage(coverImageData);
         
+        // 使用时间戳确保文件名唯一
+        const timestamp = Date.now();
+        
         // Upload to Supabase Storage
         const storageUrl = await uploadImageToStorage(
           coverImageData, 
           'images', 
-          'love-story-cover'
+          `love-story-cover-${timestamp}`
         );
         
         // Update storage map
@@ -298,17 +355,31 @@ const GenerateStep = () => {
         
         // Store only the URL reference in localStorage
         localStorage.setItem('loveStoryCoverImage_url', storageUrl);
+        
+        // 删除旧封面图片
+        if (currentCoverImagePath) {
+          try {
+            await deleteImageFromStorage(currentCoverImagePath, 'images');
+            console.log(`Deleted old cover image: ${currentCoverImagePath}`);
+          } catch (deleteErr) {
+            console.error(`Failed to delete old cover image: ${currentCoverImagePath}`, deleteErr);
+            // 继续处理，即使删除失败
+          }
+        }
       }
 
       if (data?.contentImage?.[0]) {
         const introImageData = data.contentImage[0];
         setIntroImage(introImageData);
         
+        // 使用时间戳确保文件名唯一
+        const timestamp = Date.now();
+        
         // Upload to Supabase Storage
         const storageUrl = await uploadImageToStorage(
           introImageData, 
           'images', 
-          'love-story-intro'
+          `love-story-intro-${timestamp}`
         );
         
         // Update storage map
@@ -322,17 +393,45 @@ const GenerateStep = () => {
         
         // Store only the URL reference in localStorage
         localStorage.setItem('loveStoryIntroImage_url', storageUrl);
+        
+        // 删除旧介绍图片
+        if (currentIntroImagePath) {
+          try {
+            await deleteImageFromStorage(currentIntroImagePath, 'images');
+            console.log(`Deleted old intro image: ${currentIntroImagePath}`);
+          } catch (deleteErr) {
+            console.error(`Failed to delete old intro image: ${currentIntroImagePath}`, deleteErr);
+            // 继续处理，即使删除失败
+          }
+        }
       }
 
       if (data?.contentImage2?.[0]) {
         const contentImage1Data = data.contentImage2[0];
         setContentImage1(contentImage1Data);
         
+        // 获取当前内容图片的URL，用于后续删除
+        const currentContentImageUrl = localStorage.getItem('loveStoryContentImage1_url');
+        let currentContentImagePath = '';
+        
+        if (currentContentImageUrl) {
+          const currentContentImageName = currentContentImageUrl.split('/').pop();
+          if (currentContentImageName) {
+            const currentImage = supabaseImages.find(img => img.name.includes(currentContentImageName));
+            if (currentImage) {
+              currentContentImagePath = currentImage.name;
+            }
+          }
+        }
+        
+        // 使用时间戳确保文件名唯一
+        const timestamp = Date.now();
+        
         // Upload to Supabase Storage
         const storageUrl = await uploadImageToStorage(
           contentImage1Data, 
           'images', 
-          'love-story-content-1'
+          `love-story-content-1-${timestamp}`
         );
         
         // Update storage map
@@ -346,17 +445,33 @@ const GenerateStep = () => {
         
         // Store only the URL reference in localStorage
         localStorage.setItem('loveStoryContentImage1_url', storageUrl);
+        
+        // 删除旧内容图片
+        if (currentContentImagePath) {
+          try {
+            await deleteImageFromStorage(currentContentImagePath, 'images');
+            console.log(`Deleted old content image: ${currentContentImagePath}`);
+          } catch (deleteErr) {
+            console.error(`Failed to delete old content image: ${currentContentImagePath}`, deleteErr);
+            // 继续处理，即使删除失败
+          }
+        }
       }
 
       toast({
         title: "Images generated",
-        description: "Your images are ready!",
+        description: "Your love story images are ready!",
       });
-    } catch (error) {
-      console.error('Error generating images:', error);
+      
+      // 刷新图片列表
+      setTimeout(() => {
+        loadImagesFromSupabase();
+      }, 1000);
+    } catch (err: any) {
+      console.error("Error generating images:", err);
       toast({
         title: "Error generating images",
-        description: "Please try again",
+        description: err.message || "Please try again",
         variant: "destructive",
       });
     } finally {
@@ -371,106 +486,182 @@ const GenerateStep = () => {
     try {
       // 获取所有Supabase中的图片
       const images = await getAllImagesFromStorage('images');
-      setSupabaseImages(images);
+      
+      // 按照创建时间排序图片，确保最新的图片显示在前面
+      const sortedImages = [...images].sort((a, b) => {
+        // 首先按照图片类型排序
+        const typeA = getImageType(a.name);
+        const typeB = getImageType(b.name);
+        
+        if (typeA !== typeB) {
+          // 优先显示封面、介绍页和内容页
+          const typeOrder = {
+            'cover': 1,
+            'intro': 2,
+            'content': 3,
+            'other': 4
+          };
+          return (typeOrder[typeA as keyof typeof typeOrder] || 4) - (typeOrder[typeB as keyof typeof typeOrder] || 4);
+        }
+        
+        // 如果是内容图片，按照内容编号排序
+        if (typeA === 'content' && typeB === 'content') {
+          const indexA = getContentIndex(a.name);
+          const indexB = getContentIndex(b.name);
+          if (indexA !== indexB) {
+            return indexA - indexB;
+          }
+        }
+        
+        // 最后按照创建时间排序，最新的在前面
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+      
+      setSupabaseImages(sortedImages);
       
       // 创建一个新的Map用于存储图片引用
       const newImageMap: ImageStorageMap = {};
       
+      // 用于跟踪已处理的图片类型
+      const processedTypes: Record<string, boolean> = {};
+      
       // 遍历所有图片，更新映射 - 修复命名识别问题
-      images.forEach(img => {
+      for (const img of sortedImages) {
         // 从完整路径中提取文件名
         const pathParts = img.name.split('/');
         const fileName = pathParts[pathParts.length - 1];
         
         // 使用正则表达式精确匹配文件名，防止10匹配到1的内容
-        if (/^love-story-cover/.test(fileName)) {
+        if (/^love-story-cover/.test(fileName) && !processedTypes['cover']) {
           setCoverImage(img.url);
           newImageMap['loveStoryCoverImage'] = {
             localStorageKey: 'loveStoryCoverImage',
             url: img.url
           };
-        } else if (/^love-story-intro/.test(fileName)) {
+          localStorage.setItem('loveStoryCoverImage_url', img.url);
+          processedTypes['cover'] = true;
+        } else if (/^love-story-intro/.test(fileName) && !processedTypes['intro']) {
           setIntroImage(img.url);
           newImageMap['loveStoryIntroImage'] = {
             localStorageKey: 'loveStoryIntroImage',
             url: img.url
           };
-        } else if (/^love-story-content-1$|^love-story-content-1-/.test(fileName)) {
+          localStorage.setItem('loveStoryIntroImage_url', img.url);
+          processedTypes['intro'] = true;
+        } else if (/^love-story-content-1($|-)/.test(fileName) && !processedTypes['content1']) {
           // 确保只匹配content-1，而不匹配content-10等
           setContentImage1(img.url);
           newImageMap['loveStoryContentImage1'] = {
             localStorageKey: 'loveStoryContentImage1',
             url: img.url
           };
-        } else if (/^love-story-content-2$|^love-story-content-2-/.test(fileName)) {
+          localStorage.setItem('loveStoryContentImage1_url', img.url);
+          processedTypes['content1'] = true;
+        } else if (/^love-story-content-2($|-)/.test(fileName) && !processedTypes['content2']) {
           setContentImage2(img.url);
           newImageMap['loveStoryContentImage2'] = {
             localStorageKey: 'loveStoryContentImage2',
             url: img.url
           };
-        } else if (/^love-story-content-3$|^love-story-content-3-/.test(fileName)) {
+          localStorage.setItem('loveStoryContentImage2_url', img.url);
+          processedTypes['content2'] = true;
+        } else if (/^love-story-content-3($|-)/.test(fileName) && !processedTypes['content3']) {
           setContentImage3(img.url);
           newImageMap['loveStoryContentImage3'] = {
             localStorageKey: 'loveStoryContentImage3',
             url: img.url
           };
-        } else if (/^love-story-content-4$|^love-story-content-4-/.test(fileName)) {
+          localStorage.setItem('loveStoryContentImage3_url', img.url);
+          processedTypes['content3'] = true;
+        } else if (/^love-story-content-4($|-)/.test(fileName) && !processedTypes['content4']) {
           setContentImage4(img.url);
           newImageMap['loveStoryContentImage4'] = {
             localStorageKey: 'loveStoryContentImage4',
             url: img.url
           };
-        } else if (/^love-story-content-5$|^love-story-content-5-/.test(fileName)) {
+          localStorage.setItem('loveStoryContentImage4_url', img.url);
+          processedTypes['content4'] = true;
+        } else if (/^love-story-content-5($|-)/.test(fileName) && !processedTypes['content5']) {
           setContentImage5(img.url);
           newImageMap['loveStoryContentImage5'] = {
             localStorageKey: 'loveStoryContentImage5',
             url: img.url
           };
-        } else if (/^love-story-content-6$|^love-story-content-6-/.test(fileName)) {
+          localStorage.setItem('loveStoryContentImage5_url', img.url);
+          processedTypes['content5'] = true;
+        } else if (/^love-story-content-6($|-)/.test(fileName) && !processedTypes['content6']) {
           setContentImage6(img.url);
           newImageMap['loveStoryContentImage6'] = {
             localStorageKey: 'loveStoryContentImage6',
             url: img.url
           };
-        } else if (/^love-story-content-7$|^love-story-content-7-/.test(fileName)) {
+          localStorage.setItem('loveStoryContentImage6_url', img.url);
+          processedTypes['content6'] = true;
+        } else if (/^love-story-content-7($|-)/.test(fileName) && !processedTypes['content7']) {
           setContentImage7(img.url);
           newImageMap['loveStoryContentImage7'] = {
             localStorageKey: 'loveStoryContentImage7',
             url: img.url
           };
-        } else if (/^love-story-content-8$|^love-story-content-8-/.test(fileName)) {
+          localStorage.setItem('loveStoryContentImage7_url', img.url);
+          processedTypes['content7'] = true;
+        } else if (/^love-story-content-8($|-)/.test(fileName) && !processedTypes['content8']) {
           setContentImage8(img.url);
           newImageMap['loveStoryContentImage8'] = {
             localStorageKey: 'loveStoryContentImage8',
             url: img.url
           };
-        } else if (/^love-story-content-9$|^love-story-content-9-/.test(fileName)) {
+          localStorage.setItem('loveStoryContentImage8_url', img.url);
+          processedTypes['content8'] = true;
+        } else if (/^love-story-content-9($|-)/.test(fileName) && !processedTypes['content9']) {
           setContentImage9(img.url);
           newImageMap['loveStoryContentImage9'] = {
             localStorageKey: 'loveStoryContentImage9',
             url: img.url
           };
-        } else if (/^love-story-content-10$|^love-story-content-10-/.test(fileName)) {
+          localStorage.setItem('loveStoryContentImage9_url', img.url);
+          processedTypes['content9'] = true;
+        } else if (/^love-story-content-10($|-)/.test(fileName) && !processedTypes['content10']) {
           setContentImage10(img.url);
           newImageMap['loveStoryContentImage10'] = {
             localStorageKey: 'loveStoryContentImage10',
             url: img.url
           };
+          localStorage.setItem('loveStoryContentImage10_url', img.url);
+          processedTypes['content10'] = true;
         }
-      });
+      }
       
-      // 更新存储映射
+      // 更新图片存储映射
       setImageStorageMap(newImageMap);
+      
     } catch (error) {
       console.error('Error loading images from Supabase:', error);
       toast({
         title: "Error loading images",
-        description: "Failed to load images from Supabase storage",
+        description: "Could not load your saved images",
         variant: "destructive",
       });
     } finally {
       setIsLoadingImages(false);
     }
+  };
+  
+  // 辅助函数：获取图片类型
+  const getImageType = (imageName: string): string => {
+    if (imageName.includes('love-story-cover')) return 'cover';
+    if (imageName.includes('love-story-intro')) return 'intro';
+    if (imageName.includes('love-story-content')) return 'content';
+    return 'other';
+  };
+  
+  // 辅助函数：获取内容图片的索引
+  const getContentIndex = (imageName: string): number => {
+    const match = imageName.match(/love-story-content-(\d+)/);
+    if (match && match[1]) {
+      return parseInt(match[1], 10);
+    }
+    return 999; // 默认值，确保未识别的内容排在最后
   };
 
   useEffect(() => {
