@@ -159,10 +159,9 @@ export type Database = {
           last_print_attempt: string | null
           print_attempts: number | null
           customer_email: string | null
+          client_id: string | null
           shipping_address: Json | null
           shipping_option: Json | null
-          images: Json | null
-          style: string | null
         }
         Insert: {
           id?: number
@@ -193,10 +192,9 @@ export type Database = {
           last_print_attempt?: string | null
           print_attempts?: number | null
           customer_email?: string | null
+          client_id?: string | null
           shipping_address?: Json | null
           shipping_option?: Json | null
-          images?: Json | null
-          style?: string | null
         }
         Update: {
           id?: number
@@ -227,10 +225,9 @@ export type Database = {
           last_print_attempt?: string | null
           print_attempts?: number | null
           customer_email?: string | null
+          client_id?: string | null
           shipping_address?: Json | null
           shipping_option?: Json | null
-          images?: Json | null
-          style?: string | null
         }
         Relationships: []
       }
