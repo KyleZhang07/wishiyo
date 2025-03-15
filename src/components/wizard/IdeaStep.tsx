@@ -43,7 +43,7 @@ const STYLE_OPTIONS = [
   'Line Art',
   'Fantasy Art',
   'Photographic',
-  'Cinematic'
+  'Disney Character'
 ];
 
 interface IdeaStepProps {
@@ -495,7 +495,7 @@ const IdeaStep = ({
                         {style === 'Line Art' && 'Elegant, minimalist black and white illustration'}
                         {style === 'Fantasy Art' && 'Dreamlike and magical aesthetic'}
                         {style === 'Photographic' && 'Realistic, photography-like images'}
-                        {style === 'Cinematic' && 'Film-like with dramatic lighting and composition'}
+                        {style === 'Disney Character' && 'Cartoon-like characters with Disney animation style'}
                       </p>
                     </div>
                   </div>

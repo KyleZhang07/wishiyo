@@ -30,7 +30,7 @@ const STYLE_OPTIONS = [
   'Line art',
   'Fantasy art',
   'Photographic (Default)',
-  'Cinematic'
+  'Disney Character'
 ];
 
 export const ContentImageCard = ({
@@ -59,7 +59,7 @@ export const ContentImageCard = ({
         'Line Art': 'Line art',
         'Fantasy Art': 'Fantasy art',
         'Photographic': 'Photographic (Default)',
-        'Cinematic': 'Cinematic'
+        'Disney Character': 'Disney Charactor'
       };
       
       // Use the mapping or the original value
@@ -364,7 +364,7 @@ export const ContentImageCard = ({
                           {style === 'Line art' && 'Elegant, minimalist black and white illustration'}
                           {style === 'Fantasy art' && 'Dreamlike and magical aesthetic'}
                           {style === 'Photographic (Default)' && 'Realistic, photography-like images'}
-                          {style === 'Cinematic' && 'Film-like with dramatic lighting and composition'}
+                          {style === 'Disney Charactor' && 'Cartoon-like characters with Disney animation style'}
                         </p>
                       </div>
                     </div>

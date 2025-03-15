@@ -688,7 +688,7 @@ const GenerateStep = () => {
         'Line Art': 'Line art',
         'Fantasy Art': 'Fantasy art',
         'Photographic': 'Photographic (Default)',
-        'Cinematic': 'Cinematic'
+        'Disney Character': 'Disney Charactor'
       };
       
       // Use the mapping or the original value

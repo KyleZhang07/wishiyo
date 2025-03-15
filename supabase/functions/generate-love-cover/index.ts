@@ -13,7 +13,7 @@ const styleMap: { [key: string]: string } = {
   "Line Art": "Line art",
   "Fantasy Art": "Fantasy art",
   "Photographic": "Photographic (Default)",
-  "Cinematic": "Cinematic",
+  "Disney Character": "Disney Charactor",
 };
 
 // Default style if none is specified
@@ -91,7 +91,7 @@ serve(async (req) => {
             input_image: photo,
             num_outputs: 1,
             guidance_scale: 5.0,
-            style_strength_ratio: 20,
+            style_strength_ratio: 40,
             negative_prompt:
               "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
           },
@@ -117,7 +117,7 @@ serve(async (req) => {
             input_image: photo,
             num_outputs: 1,
             guidance_scale: 5.0,
-            style_strength_ratio: 20,
+            style_strength_ratio: 40,
             negative_prompt:
               "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
           },
@@ -143,7 +143,7 @@ serve(async (req) => {
             input_image: photo,
             num_outputs: 1,
             guidance_scale: 5.0,
-            style_strength_ratio: 20,
+            style_strength_ratio: 40,
             negative_prompt:
               "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
           },
@@ -174,7 +174,7 @@ serve(async (req) => {
             input_image: photo,
             num_outputs: 1,
             guidance_scale: 5.0,
-            style_strength_ratio: 20,
+            style_strength_ratio: 40,
             negative_prompt:
               "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
           },
@@ -190,7 +190,7 @@ serve(async (req) => {
             input_image: photo,
             num_outputs: 1,
             guidance_scale: 5.0,
-            style_strength_ratio: 20,
+            style_strength_ratio: 40,
             negative_prompt:
               "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
           },
@@ -206,7 +206,7 @@ serve(async (req) => {
             input_image: photo,
             num_outputs: 1,
             guidance_scale: 5.0,
-            style_strength_ratio: 20,
+            style_strength_ratio: 40,
             negative_prompt:
               "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
           },
