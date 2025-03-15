@@ -87,46 +87,25 @@ serve(async (req) => {
     console.log(`Mapped to API style_name: "${styleName}"`);
     console.log(`Using ${photoArray.length} photos for generation`);
 
-    // 准备 API 调用参数
-    const prepareInputParams = (promptText: string, additionalPrompt = "") => {
-      const baseParams = {
-        prompt: `${promptText} ${additionalPrompt}`,
-        num_steps: 40,
-        style_name: styleName,
-        num_outputs: 1,
-        guidance_scale: 5.0,
-        style_strength_ratio: 20,
-        negative_prompt:
-          "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
-      };
-
-      // 根据照片数量决定使用 input_image 还是 input_images
-      if (photoArray.length === 1) {
-        return {
-          ...baseParams,
-          input_image: photoArray[0],
-        };
-      } else {
-        return {
-          ...baseParams,
-          input_images: photoArray,
-        };
-      }
-    };
-
     // 仅生成封面
     if (!contentPrompt && !content2Prompt && prompt && photoArray.length > 0) {
       console.log("Generating single cover image with prompt:", prompt);
-      const inputParams = prepareInputParams(prompt, "img");
-      console.log("API input params:", JSON.stringify({
-        ...inputParams,
-        input_image: inputParams.input_image ? "PRESENT" : undefined,
-        input_images: inputParams.input_images ? `Array(${inputParams.input_images.length})` : undefined
-      }));
-      
       const output = await replicate.run(
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
-        { input: inputParams }
+        {
+          input: {
+            prompt: `${prompt} img`,
+            num_steps: 40,
+            style_name: styleName,
+            input_image: photoArray.length === 1 ? photoArray[0] : undefined,
+            input_images: photoArray.length > 1 ? photoArray : undefined,
+            num_outputs: 1,
+            guidance_scale: 5.0,
+            style_strength_ratio: 20,
+            negative_prompt:
+              "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
+          },
+        }
       );
 
       return new Response(
@@ -138,16 +117,22 @@ serve(async (req) => {
     // 仅生成内容图1
     if (!prompt && !content2Prompt && contentPrompt && photoArray.length > 0) {
       console.log("Generating content image 1 with prompt:", contentPrompt);
-      const inputParams = prepareInputParams(contentPrompt, "single-person img, story moment");
-      console.log("API input params:", JSON.stringify({
-        ...inputParams,
-        input_image: inputParams.input_image ? "PRESENT" : undefined,
-        input_images: inputParams.input_images ? `Array(${inputParams.input_images.length})` : undefined
-      }));
-      
       const contentImage = await replicate.run(
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
-        { input: inputParams }
+        {
+          input: {
+            prompt: `${contentPrompt} single-person img, story moment`,
+            num_steps: 40,
+            style_name: styleName,
+            input_image: photoArray.length === 1 ? photoArray[0] : undefined,
+            input_images: photoArray.length > 1 ? photoArray : undefined,
+            num_outputs: 1,
+            guidance_scale: 5.0,
+            style_strength_ratio: 20,
+            negative_prompt:
+              "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
+          },
+        }
       );
 
       return new Response(
@@ -159,16 +144,22 @@ serve(async (req) => {
     // 仅生成内容图2
     if (!prompt && !contentPrompt && content2Prompt && photoArray.length > 0) {
       console.log("Generating content image 2 with prompt:", content2Prompt);
-      const inputParams = prepareInputParams(content2Prompt, "single-person img, story moment");
-      console.log("API input params:", JSON.stringify({
-        ...inputParams,
-        input_image: inputParams.input_image ? "PRESENT" : undefined,
-        input_images: inputParams.input_images ? `Array(${inputParams.input_images.length})` : undefined
-      }));
-      
       const contentImage2 = await replicate.run(
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
-        { input: inputParams }
+        {
+          input: {
+            prompt: `${content2Prompt} single-person img, story moment`,
+            num_steps: 40,
+            style_name: styleName,
+            input_image: photoArray.length === 1 ? photoArray[0] : undefined,
+            input_images: photoArray.length > 1 ? photoArray : undefined,
+            num_outputs: 1,
+            guidance_scale: 5.0,
+            style_strength_ratio: 20,
+            negative_prompt:
+              "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
+          },
+        }
       );
 
       return new Response(
@@ -185,28 +176,57 @@ serve(async (req) => {
     console.log("Using style:", styleName);
     console.log(`Using ${photoArray.length} photos for generation`);
 
-    const coverParams = prepareInputParams(prompt, "img");
-    const content1Params = prepareInputParams(contentPrompt, "single-person img, story moment");
-    const content2Params = prepareInputParams(content2Prompt, "single-person img, story moment");
-
-    console.log("Cover API input params:", JSON.stringify({
-      ...coverParams,
-      input_image: coverParams.input_image ? "PRESENT" : undefined,
-      input_images: coverParams.input_images ? `Array(${coverParams.input_images.length})` : undefined
-    }));
-
     const [output, contentImage, contentImage2] = await Promise.all([
       replicate.run(
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
-        { input: coverParams }
+        {
+          input: {
+            prompt: `${prompt} img`,
+            num_steps: 40,
+            style_name: styleName,
+            input_image: photoArray.length === 1 ? photoArray[0] : undefined,
+            input_images: photoArray.length > 1 ? photoArray : undefined,
+            num_outputs: 1,
+            guidance_scale: 5.0,
+            style_strength_ratio: 20,
+            negative_prompt:
+              "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
+          },
+        }
       ),
       replicate.run(
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
-        { input: content1Params }
+        {
+          input: {
+            prompt: `${contentPrompt} single-person img, story moment`,
+            num_steps: 40,
+            style_name: styleName,
+            input_image: photoArray.length === 1 ? photoArray[0] : undefined,
+            input_images: photoArray.length > 1 ? photoArray : undefined,
+            num_outputs: 1,
+            guidance_scale: 5.0,
+            style_strength_ratio: 20,
+            negative_prompt:
+              "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
+          },
+        }
       ),
       replicate.run(
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
-        { input: content2Params }
+        {
+          input: {
+            prompt: `${content2Prompt} single-person img, story moment`,
+            num_steps: 40,
+            style_name: styleName,
+            input_image: photoArray.length === 1 ? photoArray[0] : undefined,
+            input_images: photoArray.length > 1 ? photoArray : undefined,
+            num_outputs: 1,
+            guidance_scale: 5.0,
+            style_strength_ratio: 20,
+            negative_prompt:
+              "nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
+          },
+        }
       ),
     ]);
 
