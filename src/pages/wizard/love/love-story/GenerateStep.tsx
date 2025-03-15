@@ -148,11 +148,37 @@ const GenerateStep = () => {
     }
 
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
-    const characterPhoto = localStorage.getItem('loveStoryPartnerPhoto');
-    if (!savedPrompts || !characterPhoto) {
+    
+    // 收集所有上传的照片（最多 4 张）
+    const photos = [];
+    
+    // 主照片
+    const mainPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    if (!mainPhoto) {
       toast({
         title: "Missing info",
-        description: "No prompts or character photo found",
+        description: "No character photo found",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    photos.push(mainPhoto);
+    
+    // 额外照片（如果存在）
+    for (let i = 2; i <= 4; i++) {
+      const additionalPhoto = localStorage.getItem(`loveStoryPartnerPhoto${i}`);
+      if (additionalPhoto) {
+        photos.push(additionalPhoto);
+      }
+    }
+    
+    console.log(`Found ${photos.length} photos for content image ${index} regeneration`);
+    
+    if (!savedPrompts) {
+      toast({
+        title: "Missing info",
+        description: "No prompts found",
         variant: "destructive",
       });
       return;
@@ -178,13 +204,20 @@ const GenerateStep = () => {
       }
 
       // 使用更明确的请求格式
-      const requestBody = {
-        prompt: prompts[promptIndex].prompt,
-        photo: characterPhoto,
+      const requestBody: any = {
+        contentPrompt: prompts[promptIndex].prompt,
+        photo: photos[0],
         style: imageStyle,
         contentIndex: index,  // 明确指定内容索引
         type: 'content'       // 明确内容类型
       };
+      
+      // 添加额外照片（如果存在）
+      if (photos.length > 1) {
+        for (let i = 1; i < Math.min(photos.length, 4); i++) {
+          requestBody[`photo${i + 1}`] = photos[i];
+        }
+      }
 
       console.log(`Content ${index} generation request (using prompt ${promptIndex}):`, JSON.stringify(requestBody));
 
@@ -310,6 +343,22 @@ const GenerateStep = () => {
         }
       }
 
+      // 收集所有上传的照片（最多 4 张）
+      const photos = [];
+      
+      // 主照片
+      photos.push(partnerPhoto);
+      
+      // 额外照片（如果存在）
+      for (let i = 2; i <= 4; i++) {
+        const additionalPhoto = localStorage.getItem(`loveStoryPartnerPhoto${i}`);
+        if (additionalPhoto) {
+          photos.push(additionalPhoto);
+        }
+      }
+      
+      console.log(`Found ${photos.length} photos for image generation`);
+
       // 我们现在解析完整的prompts对象，而不是使用传入的字符串
       // 这样我们可以正确访问每个图像对应的提示
       const promptsObj = JSON.parse(localStorage.getItem('loveStoryImagePrompts') || '[]');
@@ -317,15 +366,27 @@ const GenerateStep = () => {
         throw new Error("Not enough prompts for image generation");
       }
 
+      // 准备 API 请求体
+      const requestBody: any = { 
+        prompt: promptsObj[0].prompt,          // 封面使用prompts[0]
+        contentPrompt: promptsObj[1].prompt,   // intro使用prompts[1]
+        content2Prompt: promptsObj[2].prompt,  // Moment 1使用prompts[2]
+        photo: photos[0],                      // 主照片
+        style: selectedStyle
+      };
+      
+      // 添加额外照片（如果存在）
+      if (photos.length > 1) {
+        for (let i = 1; i < Math.min(photos.length, 4); i++) {
+          requestBody[`photo${i + 1}`] = photos[i];
+        }
+      }
+      
+      console.log(`Sending request with ${Object.keys(requestBody).filter(k => k.startsWith('photo')).length} photos`);
+
       // 为每个图像类型使用专门的提示
       const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-        body: { 
-          prompt: promptsObj[0].prompt,          // 封面使用prompts[0]
-          contentPrompt: promptsObj[1].prompt,   // intro使用prompts[1]
-          content2Prompt: promptsObj[2].prompt,  // Moment 1使用prompts[2]
-          photo: partnerPhoto,
-          style: selectedStyle
-        }
+        body: requestBody
       });
 
       if (error) throw error;
@@ -336,14 +397,14 @@ const GenerateStep = () => {
         
         // 使用时间戳确保文件名唯一
         const timestamp = Date.now();
-        
+
         // Upload to Supabase Storage
         const storageUrl = await uploadImageToStorage(
           coverImageData, 
           'images', 
           `love-story-cover-${timestamp}`
         );
-        
+
         // Update storage map
         setImageStorageMap(prev => ({
           ...prev,
@@ -352,10 +413,10 @@ const GenerateStep = () => {
             url: storageUrl
           }
         }));
-        
+
         // Store only the URL reference in localStorage
         localStorage.setItem('loveStoryCoverImage_url', storageUrl);
-        
+
         // 删除旧封面图片
         if (currentCoverImagePath) {
           try {
@@ -374,14 +435,14 @@ const GenerateStep = () => {
         
         // 使用时间戳确保文件名唯一
         const timestamp = Date.now();
-        
+
         // Upload to Supabase Storage
         const storageUrl = await uploadImageToStorage(
           introImageData, 
           'images', 
           `love-story-intro-${timestamp}`
         );
-        
+
         // Update storage map
         setImageStorageMap(prev => ({
           ...prev,
@@ -390,10 +451,10 @@ const GenerateStep = () => {
             url: storageUrl
           }
         }));
-        
+
         // Store only the URL reference in localStorage
         localStorage.setItem('loveStoryIntroImage_url', storageUrl);
-        
+
         // 删除旧介绍图片
         if (currentIntroImagePath) {
           try {
@@ -426,14 +487,14 @@ const GenerateStep = () => {
         
         // 使用时间戳确保文件名唯一
         const timestamp = Date.now();
-        
+
         // Upload to Supabase Storage
         const storageUrl = await uploadImageToStorage(
           contentImage1Data, 
           'images', 
           `love-story-content-1-${timestamp}`
         );
-        
+
         // Update storage map
         setImageStorageMap(prev => ({
           ...prev,
@@ -442,10 +503,10 @@ const GenerateStep = () => {
             url: storageUrl
           }
         }));
-        
+
         // Store only the URL reference in localStorage
         localStorage.setItem('loveStoryContentImage1_url', storageUrl);
-        
+
         // 删除旧内容图片
         if (currentContentImagePath) {
           try {
@@ -747,8 +808,34 @@ const GenerateStep = () => {
     localStorage.removeItem('loveStoryCoverImage_url');
     
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
-    const characterPhoto = localStorage.getItem('loveStoryPartnerPhoto');
-    if (savedPrompts && characterPhoto) {
+    
+    // 收集所有上传的照片（最多 4 张）
+    const photos = [];
+    
+    // 主照片
+    const mainPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    if (!mainPhoto) {
+      toast({
+        title: "Missing info",
+        description: "No character photo found",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    photos.push(mainPhoto);
+    
+    // 额外照片（如果存在）
+    for (let i = 2; i <= 4; i++) {
+      const additionalPhoto = localStorage.getItem(`loveStoryPartnerPhoto${i}`);
+      if (additionalPhoto) {
+        photos.push(additionalPhoto);
+      }
+    }
+    
+    console.log(`Found ${photos.length} photos for cover regeneration`);
+    
+    if (savedPrompts) {
       const prompts = JSON.parse(savedPrompts);
       if (prompts && prompts.length > 0) {
         setIsGeneratingCover(true);
@@ -764,12 +851,19 @@ const GenerateStep = () => {
         
         try {
           // 修复JSON循环引用错误 - 简化请求对象
-          const requestBody = { 
+          const requestBody: any = { 
             prompt: prompts[0].prompt, 
-            photo: characterPhoto,
+            photo: photos[0],
             style: imageStyle,
             type: 'cover'  // 使用明确的type标识
           };
+          
+          // 添加额外照片（如果存在）
+          if (photos.length > 1) {
+            for (let i = 1; i < Math.min(photos.length, 4); i++) {
+              requestBody[`photo${i + 1}`] = photos[i];
+            }
+          }
 
           console.log('Cover generation request:', JSON.stringify(requestBody));
           
@@ -856,8 +950,34 @@ const GenerateStep = () => {
     localStorage.removeItem('loveStoryIntroImage_url');
     
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
-    const characterPhoto = localStorage.getItem('loveStoryPartnerPhoto');
-    if (savedPrompts && characterPhoto) {
+    
+    // 收集所有上传的照片（最多 4 张）
+    const photos = [];
+    
+    // 主照片
+    const mainPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    if (!mainPhoto) {
+      toast({
+        title: "Missing info",
+        description: "No character photo found",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    photos.push(mainPhoto);
+    
+    // 额外照片（如果存在）
+    for (let i = 2; i <= 4; i++) {
+      const additionalPhoto = localStorage.getItem(`loveStoryPartnerPhoto${i}`);
+      if (additionalPhoto) {
+        photos.push(additionalPhoto);
+      }
+    }
+    
+    console.log(`Found ${photos.length} photos for intro regeneration`);
+    
+    if (savedPrompts) {
       const prompts = JSON.parse(savedPrompts);
       if (prompts && prompts.length > 1) {
         setIsGeneratingIntro(true);
@@ -873,12 +993,19 @@ const GenerateStep = () => {
         
         try {
           // 修复请求结构，使用prompts[1]而非prompts[0]（prompts[0]是封面）
-          const requestBody = {
+          const requestBody: any = {
             contentPrompt: prompts[1].prompt, 
-            photo: characterPhoto,
+            photo: photos[0],
             style: imageStyle,
             type: 'intro'
           };
+          
+          // 添加额外照片（如果存在）
+          if (photos.length > 1) {
+            for (let i = 1; i < Math.min(photos.length, 4); i++) {
+              requestBody[`photo${i + 1}`] = photos[i];
+            }
+          }
 
           console.log('Intro generation request (using prompt 1):', JSON.stringify(requestBody));
           
