@@ -86,7 +86,7 @@ serve(async (req) => {
         {
           input: {
             prompt: `${prompt} img`,
-            num_steps: 40,
+            num_steps: 50,
             style_name: styleName,
             input_image: photo,
             num_outputs: 1,
@@ -112,7 +112,7 @@ serve(async (req) => {
         {
           input: {
             prompt: `${contentPrompt} single-person img, story moment`,
-            num_steps: 40,
+            num_steps: 50,
             style_name: styleName,
             input_image: photo,
             num_outputs: 1,
@@ -138,7 +138,7 @@ serve(async (req) => {
         {
           input: {
             prompt: `${content2Prompt} single-person img, story moment`,
-            num_steps: 40,
+            num_steps: 50,
             style_name: styleName,
             input_image: photo,
             num_outputs: 1,
@@ -169,7 +169,7 @@ serve(async (req) => {
         {
           input: {
             prompt: `${prompt} img`,
-            num_steps: 40,
+            num_steps: 50,
             style_name: styleName,
             input_image: photo,
             num_outputs: 1,
@@ -185,7 +185,7 @@ serve(async (req) => {
         {
           input: {
             prompt: `${contentPrompt} single-person img, story moment`,
-            num_steps: 40,
+            num_steps: 50,
             style_name: styleName,
             input_image: photo,
             num_outputs: 1,
@@ -201,7 +201,7 @@ serve(async (req) => {
         {
           input: {
             prompt: `${content2Prompt} single-person img, story moment`,
-            num_steps: 40,
+            num_steps: 50,
             style_name: styleName,
             input_image: photo,
             num_outputs: 1,

@@ -167,6 +167,18 @@ const LoveStoryCoverStep = () => {
       // 获取用户上传的图片
       const uploadedImage = localStorage.getItem('loveStoryPartnerPhoto');
       const savedTone = localStorage.getItem('loveStoryTone') || textTone;
+      const personAge = localStorage.getItem('loveStoryPersonAge') || '0';
+      const ageNumber = parseInt(personAge);
+      
+      // 根据年龄选择不同的 prompt
+      let textPrompt = '';
+      if (ageNumber <= 12) {
+        // 儿童风格 prompt
+        textPrompt = `the person as a cute cartoon character with big expressive eyes, simplified facial features, colorful background, cheerful expression, wearing bright colored clothes, ${savedTone} mood, centered composition`;
+      } else {
+        // 更成熟的风格 prompt
+        textPrompt = `the person as a stylized character with semi-realistic features, detailed facial expression, dynamic lighting, modern outfit, ${savedTone} atmosphere, artistic composition, vibrant color palette`;
+      }
       
       if (uploadedImage) {
         // 使用上传的图片处理
@@ -174,9 +186,9 @@ const LoveStoryCoverStep = () => {
         const { data: enhancedData, error: enhancedError } = await supabase.functions.invoke('generate-love-cover', {
           body: { 
             photo: uploadedImage,
-            style: selectedStyle,
+            style: "Disney Charactor", // 固定使用 Disney Charactor 样式
             type: 'cover',
-            textPrompt: `the person's single person img, but wearing more brilliant clothes, but in a ${savedTone} way.`
+            prompt: textPrompt // 将 textPrompt 改为 prompt
           }
         });
         
