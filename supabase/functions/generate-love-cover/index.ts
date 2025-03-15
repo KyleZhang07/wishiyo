@@ -34,14 +34,25 @@ serve(async (req) => {
       auth: REPLICATE_API_KEY,
     });
 
-    const { prompt, contentPrompt, content2Prompt, photos, style } = await req.json();
+    const { prompt, contentPrompt, content2Prompt, photos, photo, style } = await req.json();
     
-    // 确保 photos 是一个数组
-    const photoArray = Array.isArray(photos) ? photos : (photos ? [photos] : []);
+    // 确保 photos 是一个数组，同时支持旧版的 photo 参数
+    let photoArray: string[] = [];
+    
+    if (Array.isArray(photos) && photos.length > 0) {
+      photoArray = photos;
+    } else if (photos && typeof photos === 'string') {
+      photoArray = [photos];
+    } else if (photo && typeof photo === 'string') {
+      // 向后兼容：支持旧版的 photo 参数
+      photoArray = [photo];
+    }
     
     if (photoArray.length === 0) {
       throw new Error("No photos provided");
     }
+    
+    console.log(`Processing ${photoArray.length} photos`);
     
     // Get the style name to use with the API
     console.log(`Requested style from client: "${style}"`);
@@ -96,8 +107,11 @@ serve(async (req) => {
             prompt: `${prompt} img`,
             num_steps: 40,
             style_name: styleName,
-            input_image: photoArray.length === 1 ? photoArray[0] : undefined,
-            input_images: photoArray.length > 1 ? photoArray : undefined,
+            input_image: photoArray[0],
+            ...(photoArray.length > 1 ? { input_image2: photoArray[1] } : {}),
+            ...(photoArray.length > 2 ? { input_image3: photoArray[2] } : {}),
+            ...(photoArray.length > 3 ? { input_image4: photoArray[3] } : {}),
+            ...(photoArray.length > 4 ? { input_image5: photoArray[4] } : {}),
             num_outputs: 1,
             guidance_scale: 5.0,
             style_strength_ratio: 20,
@@ -123,8 +137,11 @@ serve(async (req) => {
             prompt: `${contentPrompt} single-person img, story moment`,
             num_steps: 40,
             style_name: styleName,
-            input_image: photoArray.length === 1 ? photoArray[0] : undefined,
-            input_images: photoArray.length > 1 ? photoArray : undefined,
+            input_image: photoArray[0],
+            ...(photoArray.length > 1 ? { input_image2: photoArray[1] } : {}),
+            ...(photoArray.length > 2 ? { input_image3: photoArray[2] } : {}),
+            ...(photoArray.length > 3 ? { input_image4: photoArray[3] } : {}),
+            ...(photoArray.length > 4 ? { input_image5: photoArray[4] } : {}),
             num_outputs: 1,
             guidance_scale: 5.0,
             style_strength_ratio: 20,
@@ -150,8 +167,11 @@ serve(async (req) => {
             prompt: `${content2Prompt} single-person img, story moment`,
             num_steps: 40,
             style_name: styleName,
-            input_image: photoArray.length === 1 ? photoArray[0] : undefined,
-            input_images: photoArray.length > 1 ? photoArray : undefined,
+            input_image: photoArray[0],
+            ...(photoArray.length > 1 ? { input_image2: photoArray[1] } : {}),
+            ...(photoArray.length > 2 ? { input_image3: photoArray[2] } : {}),
+            ...(photoArray.length > 3 ? { input_image4: photoArray[3] } : {}),
+            ...(photoArray.length > 4 ? { input_image5: photoArray[4] } : {}),
             num_outputs: 1,
             guidance_scale: 5.0,
             style_strength_ratio: 20,
@@ -183,8 +203,11 @@ serve(async (req) => {
             prompt: `${prompt} img`,
             num_steps: 40,
             style_name: styleName,
-            input_image: photoArray.length === 1 ? photoArray[0] : undefined,
-            input_images: photoArray.length > 1 ? photoArray : undefined,
+            input_image: photoArray[0],
+            ...(photoArray.length > 1 ? { input_image2: photoArray[1] } : {}),
+            ...(photoArray.length > 2 ? { input_image3: photoArray[2] } : {}),
+            ...(photoArray.length > 3 ? { input_image4: photoArray[3] } : {}),
+            ...(photoArray.length > 4 ? { input_image5: photoArray[4] } : {}),
             num_outputs: 1,
             guidance_scale: 5.0,
             style_strength_ratio: 20,
@@ -200,8 +223,11 @@ serve(async (req) => {
             prompt: `${contentPrompt} single-person img, story moment`,
             num_steps: 40,
             style_name: styleName,
-            input_image: photoArray.length === 1 ? photoArray[0] : undefined,
-            input_images: photoArray.length > 1 ? photoArray : undefined,
+            input_image: photoArray[0],
+            ...(photoArray.length > 1 ? { input_image2: photoArray[1] } : {}),
+            ...(photoArray.length > 2 ? { input_image3: photoArray[2] } : {}),
+            ...(photoArray.length > 3 ? { input_image4: photoArray[3] } : {}),
+            ...(photoArray.length > 4 ? { input_image5: photoArray[4] } : {}),
             num_outputs: 1,
             guidance_scale: 5.0,
             style_strength_ratio: 20,
@@ -217,8 +243,11 @@ serve(async (req) => {
             prompt: `${content2Prompt} single-person img, story moment`,
             num_steps: 40,
             style_name: styleName,
-            input_image: photoArray.length === 1 ? photoArray[0] : undefined,
-            input_images: photoArray.length > 1 ? photoArray : undefined,
+            input_image: photoArray[0],
+            ...(photoArray.length > 1 ? { input_image2: photoArray[1] } : {}),
+            ...(photoArray.length > 2 ? { input_image3: photoArray[2] } : {}),
+            ...(photoArray.length > 3 ? { input_image4: photoArray[3] } : {}),
+            ...(photoArray.length > 4 ? { input_image5: photoArray[4] } : {}),
             num_outputs: 1,
             guidance_scale: 5.0,
             style_strength_ratio: 20,
