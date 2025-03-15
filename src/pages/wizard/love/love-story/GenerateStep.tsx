@@ -148,11 +148,33 @@ const GenerateStep = () => {
     }
 
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
-    const characterPhoto = localStorage.getItem('loveStoryPartnerPhoto');
-    if (!savedPrompts || !characterPhoto) {
+    
+    // 获取多张照片
+    let characterPhotos: string[] = [];
+    try {
+      const savedPhotos = localStorage.getItem('loveStoryPartnerPhotos');
+      if (savedPhotos) {
+        const parsedPhotos = JSON.parse(savedPhotos);
+        if (Array.isArray(parsedPhotos) && parsedPhotos.length > 0) {
+          characterPhotos = parsedPhotos;
+        }
+      }
+      
+      // 向后兼容：如果没有找到多张照片，尝试获取单张照片
+      if (characterPhotos.length === 0) {
+        const singlePhoto = localStorage.getItem('loveStoryPartnerPhoto');
+        if (singlePhoto) {
+          characterPhotos = [singlePhoto];
+        }
+      }
+    } catch (error) {
+      console.error('Error parsing character photos:', error);
+    }
+    
+    if (!savedPrompts || characterPhotos.length === 0) {
       toast({
         title: "Missing info",
-        description: "No prompts or character photo found",
+        description: "No prompts or character photos found",
         variant: "destructive",
       });
       return;
@@ -180,7 +202,7 @@ const GenerateStep = () => {
       // 使用更明确的请求格式
       const requestBody = {
         prompt: prompts[promptIndex].prompt,
-        photo: characterPhoto,
+        photos: characterPhotos,
         style: imageStyle,
         contentIndex: index,  // 明确指定内容索引
         type: 'content'       // 明确内容类型
@@ -310,6 +332,33 @@ const GenerateStep = () => {
         }
       }
 
+      // 获取多张照片
+      let characterPhotos: string[] = [];
+      try {
+        const savedPhotos = localStorage.getItem('loveStoryPartnerPhotos');
+        if (savedPhotos) {
+          const parsedPhotos = JSON.parse(savedPhotos);
+          if (Array.isArray(parsedPhotos) && parsedPhotos.length > 0) {
+            characterPhotos = parsedPhotos;
+          }
+        }
+        
+        // 向后兼容：如果没有找到多张照片，使用传入的单张照片
+        if (characterPhotos.length === 0 && partnerPhoto) {
+          characterPhotos = [partnerPhoto];
+        }
+      } catch (error) {
+        console.error('Error parsing character photos:', error);
+        // 向后兼容：如果解析失败，使用传入的单张照片
+        if (partnerPhoto) {
+          characterPhotos = [partnerPhoto];
+        }
+      }
+      
+      if (characterPhotos.length === 0) {
+        throw new Error("No character photos found");
+      }
+
       // 我们现在解析完整的prompts对象，而不是使用传入的字符串
       // 这样我们可以正确访问每个图像对应的提示
       const promptsObj = JSON.parse(localStorage.getItem('loveStoryImagePrompts') || '[]');
@@ -323,7 +372,7 @@ const GenerateStep = () => {
           prompt: promptsObj[0].prompt,          // 封面使用prompts[0]
           contentPrompt: promptsObj[1].prompt,   // intro使用prompts[1]
           content2Prompt: promptsObj[2].prompt,  // Moment 1使用prompts[2]
-          photo: partnerPhoto,
+          photos: characterPhotos,
           style: selectedStyle
         }
       });
