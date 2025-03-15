@@ -34,25 +34,7 @@ serve(async (req) => {
       auth: REPLICATE_API_KEY,
     });
 
-    const { prompt, contentPrompt, content2Prompt, photos, photo, style } = await req.json();
-    
-    // 确保 photos 是一个数组，同时支持旧版的 photo 参数
-    let photoArray: string[] = [];
-    
-    if (Array.isArray(photos) && photos.length > 0) {
-      photoArray = photos;
-    } else if (photos && typeof photos === 'string') {
-      photoArray = [photos];
-    } else if (photo && typeof photo === 'string') {
-      // 向后兼容：支持旧版的 photo 参数
-      photoArray = [photo];
-    }
-    
-    if (photoArray.length === 0) {
-      throw new Error("No photos provided");
-    }
-    
-    console.log(`Processing ${photoArray.length} photos`);
+    const { prompt, contentPrompt, content2Prompt, photo, style } = await req.json();
     
     // Get the style name to use with the API
     console.log(`Requested style from client: "${style}"`);
@@ -95,10 +77,9 @@ serve(async (req) => {
     }
     
     console.log(`Mapped to API style_name: "${styleName}"`);
-    console.log(`Using ${photoArray.length} photos for generation`);
 
     // 仅生成封面
-    if (!contentPrompt && !content2Prompt && prompt && photoArray.length > 0) {
+    if (!contentPrompt && !content2Prompt && prompt && photo) {
       console.log("Generating single cover image with prompt:", prompt);
       const output = await replicate.run(
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
@@ -107,11 +88,7 @@ serve(async (req) => {
             prompt: `${prompt} img`,
             num_steps: 40,
             style_name: styleName,
-            input_image: photoArray[0],
-            ...(photoArray.length > 1 ? { input_image2: photoArray[1] } : {}),
-            ...(photoArray.length > 2 ? { input_image3: photoArray[2] } : {}),
-            ...(photoArray.length > 3 ? { input_image4: photoArray[3] } : {}),
-            ...(photoArray.length > 4 ? { input_image5: photoArray[4] } : {}),
+            input_image: photo,
             num_outputs: 1,
             guidance_scale: 5.0,
             style_strength_ratio: 20,
@@ -128,7 +105,7 @@ serve(async (req) => {
     }
 
     // 仅生成内容图1
-    if (!prompt && !content2Prompt && contentPrompt && photoArray.length > 0) {
+    if (!prompt && !content2Prompt && contentPrompt && photo) {
       console.log("Generating content image 1 with prompt:", contentPrompt);
       const contentImage = await replicate.run(
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
@@ -137,11 +114,7 @@ serve(async (req) => {
             prompt: `${contentPrompt} single-person img, story moment`,
             num_steps: 40,
             style_name: styleName,
-            input_image: photoArray[0],
-            ...(photoArray.length > 1 ? { input_image2: photoArray[1] } : {}),
-            ...(photoArray.length > 2 ? { input_image3: photoArray[2] } : {}),
-            ...(photoArray.length > 3 ? { input_image4: photoArray[3] } : {}),
-            ...(photoArray.length > 4 ? { input_image5: photoArray[4] } : {}),
+            input_image: photo,
             num_outputs: 1,
             guidance_scale: 5.0,
             style_strength_ratio: 20,
@@ -158,7 +131,7 @@ serve(async (req) => {
     }
 
     // 仅生成内容图2
-    if (!prompt && !contentPrompt && content2Prompt && photoArray.length > 0) {
+    if (!prompt && !contentPrompt && content2Prompt && photo) {
       console.log("Generating content image 2 with prompt:", content2Prompt);
       const contentImage2 = await replicate.run(
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
@@ -167,11 +140,7 @@ serve(async (req) => {
             prompt: `${content2Prompt} single-person img, story moment`,
             num_steps: 40,
             style_name: styleName,
-            input_image: photoArray[0],
-            ...(photoArray.length > 1 ? { input_image2: photoArray[1] } : {}),
-            ...(photoArray.length > 2 ? { input_image3: photoArray[2] } : {}),
-            ...(photoArray.length > 3 ? { input_image4: photoArray[3] } : {}),
-            ...(photoArray.length > 4 ? { input_image5: photoArray[4] } : {}),
+            input_image: photo,
             num_outputs: 1,
             guidance_scale: 5.0,
             style_strength_ratio: 20,
@@ -193,7 +162,6 @@ serve(async (req) => {
     console.log("Content 1 prompt:", contentPrompt);
     console.log("Content 2 prompt:", content2Prompt);
     console.log("Using style:", styleName);
-    console.log(`Using ${photoArray.length} photos for generation`);
 
     const [output, contentImage, contentImage2] = await Promise.all([
       replicate.run(
@@ -203,11 +171,7 @@ serve(async (req) => {
             prompt: `${prompt} img`,
             num_steps: 40,
             style_name: styleName,
-            input_image: photoArray[0],
-            ...(photoArray.length > 1 ? { input_image2: photoArray[1] } : {}),
-            ...(photoArray.length > 2 ? { input_image3: photoArray[2] } : {}),
-            ...(photoArray.length > 3 ? { input_image4: photoArray[3] } : {}),
-            ...(photoArray.length > 4 ? { input_image5: photoArray[4] } : {}),
+            input_image: photo,
             num_outputs: 1,
             guidance_scale: 5.0,
             style_strength_ratio: 20,
@@ -223,11 +187,7 @@ serve(async (req) => {
             prompt: `${contentPrompt} single-person img, story moment`,
             num_steps: 40,
             style_name: styleName,
-            input_image: photoArray[0],
-            ...(photoArray.length > 1 ? { input_image2: photoArray[1] } : {}),
-            ...(photoArray.length > 2 ? { input_image3: photoArray[2] } : {}),
-            ...(photoArray.length > 3 ? { input_image4: photoArray[3] } : {}),
-            ...(photoArray.length > 4 ? { input_image5: photoArray[4] } : {}),
+            input_image: photo,
             num_outputs: 1,
             guidance_scale: 5.0,
             style_strength_ratio: 20,
@@ -243,11 +203,7 @@ serve(async (req) => {
             prompt: `${content2Prompt} single-person img, story moment`,
             num_steps: 40,
             style_name: styleName,
-            input_image: photoArray[0],
-            ...(photoArray.length > 1 ? { input_image2: photoArray[1] } : {}),
-            ...(photoArray.length > 2 ? { input_image3: photoArray[2] } : {}),
-            ...(photoArray.length > 3 ? { input_image4: photoArray[3] } : {}),
-            ...(photoArray.length > 4 ? { input_image5: photoArray[4] } : {}),
+            input_image: photo,
             num_outputs: 1,
             guidance_scale: 5.0,
             style_strength_ratio: 20,
