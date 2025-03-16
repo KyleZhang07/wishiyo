@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
   try {
-    const { productId, title, format, price, quantity = 1 } = req.body;
+    const { productId, title, format, price, quantity = 1, coverImage } = req.body;
     
     // 验证必要的输入数据
     if (!productId) {
@@ -99,7 +99,8 @@ export default async function handler(req, res) {
         title: title || 'Custom Book',
         binding_type: format === 'Hardcover' ? 'hardcover' : 'softcover',
         is_color: false,
-        paper_type: 'Standard'
+        paper_type: 'Standard',
+        coverImage: coverImage || '' // 添加封面图片URL
       },
     });
 
