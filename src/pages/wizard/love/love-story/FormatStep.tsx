@@ -102,6 +102,39 @@ const FormatStep = () => {
         // 从localStorage获取必要信息
         const personName = localStorage.getItem('loveStoryPersonName') || '';
         
+        // 首先创建数据库记录，确保在上传图片之前就有记录
+        try {
+          // 添加记录到数据库
+          const clientId = getClientId();
+          
+          // 获取用户选择的封面图片 URL
+          const selectedCoverImageUrl = localStorage.getItem('loveStorySelectedCoverImage_url') || 
+                                       localStorage.getItem('loveStoryCoverImage_url') || '';
+          
+          console.log('Creating database record for order:', orderId);
+          const { data, error } = await supabase
+            .from('love_story_books')
+            .insert({
+              order_id: orderId,
+              title: bookTitle,
+              person_name: personName,
+              status: 'created',
+              timestamp: new Date().toISOString(),
+              client_id: clientId,
+              cover_pdf: selectedCoverImageUrl // 添加用户选择的封面图片 URL
+            })
+            .select();
+          
+          if (error) {
+            console.error('Database error when creating book record:', error);
+          } else {
+            console.log('Love story book record created:', data);
+          }
+        } catch (dbError) {
+          console.error('Database error:', dbError);
+          // 继续结账流程，即使数据库操作失败
+        }
+        
         // 上传完整页面图片到新的存储桶
         try {
           // 获取所有 Canvas 元素
@@ -158,47 +191,39 @@ const FormatStep = () => {
           // 继续结账流程，即使上传失败
         }
         
+        // 获取完整页面URL
+        const completePageCoverUrl = localStorage.getItem('loveStoryCompletePageCover') || '';
+        const completePageIntroUrl = localStorage.getItem('loveStoryCompletePageIntro') || '';
+        const completePageContentUrls = Array.from({ length: 10 }, (_, i) => localStorage.getItem(`loveStoryCompletePageContent_${i}`) || '');
+        
+        // 更新数据库记录，添加完整页面URL
         try {
-          // 添加记录到数据库
           const clientId = getClientId();
+          console.log('Updating database record with complete page URLs for order:', orderId);
           
-          // 获取用户选择的封面图片 URL
-          const selectedCoverImageUrl = localStorage.getItem('loveStorySelectedCoverImage_url') || 
-                                       localStorage.getItem('loveStoryCoverImage_url') || '';
-          
-          // 获取完整页面URL
-          const completePageCoverUrl = localStorage.getItem('loveStoryCompletePageCover') || '';
-          const completePageIntroUrl = localStorage.getItem('loveStoryCompletePageIntro') || '';
-          const completePageContentUrls = Array.from({ length: 10 }, (_, i) => localStorage.getItem(`loveStoryCompletePageContent_${i}`) || '');
-          
+          // 使用现有字段存储完整页面URL
           const { data, error } = await supabase
             .from('love_story_books')
-            .insert({
-              order_id: orderId,
-              title: bookTitle,
-              person_name: personName,
-              status: 'created',
-              timestamp: new Date().toISOString(),
-              client_id: clientId,
-              cover_pdf: selectedCoverImageUrl, // 添加用户选择的封面图片 URL
-              complete_page_cover: completePageCoverUrl, // 添加完整页面URL
-              complete_page_intro: completePageIntroUrl, // 添加介绍页面URL
-              complete_page_content: completePageContentUrls.join(',') // 添加内容页面URL
+            .update({
+              cover_source_url: completePageCoverUrl,
+              interior_source_url: completePageIntroUrl + ',' + completePageContentUrls.filter(url => url).join(',')
             })
+            .eq('order_id', orderId)
+            .eq('client_id', clientId)
             .select();
           
           if (error) {
-            console.error('Database error when creating book record:', error);
+            console.error('Database error when updating book record with complete page URLs:', error);
           } else {
-            console.log('Love story book record created:', data);
-            
-            // PDF生成将通过Stripe webhook在支付成功后处理
-            console.log('Book generation will be handled by Stripe webhook after payment confirmation');
+            console.log('Love story book record updated with complete page URLs:', data);
           }
-        } catch (dbError) {
-          console.error('Database error:', dbError);
-          // 继续结账流程，即使数据库操作失败
+        } catch (dbUpdateError) {
+          console.error('Database update error:', dbUpdateError);
+          // 继续结账流程，即使数据库更新操作失败
         }
+        
+        // PDF生成将通过Stripe webhook在支付成功后处理
+        console.log('Book generation will be handled by Stripe webhook after payment confirmation');
         
         // 重定向到Stripe结账页面
         if (url) {

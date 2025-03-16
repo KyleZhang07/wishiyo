@@ -150,7 +150,7 @@ serve(async (req) => {
     const { error: updateError } = await supabaseAdmin
       .from('love_story_books')
       .update({
-        pdf_url: publicUrlData.publicUrl,
+        interior_pdf: publicUrlData.publicUrl,
         status: 'completed'
       })
       .eq('order_id', orderId)
