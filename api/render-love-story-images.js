@@ -66,197 +66,222 @@ const coverStyles = [
 ];
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
   try {
-    const { 
-      orderId,
-      pageType, // 'cover', 'intro', 或 'content'
-      pageNumber = 0,
-      coverTitle,
-      subtitle,
-      authorName,
-      recipientName,
-      contentText,
-      imageUrl,
-      styleId = 'classic',
-      clientId
-    } = req.body;
+    // 设置 CORS 头部，允许所有来源的请求
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-    if (!orderId || !pageType) {
-      return res.status(400).json({ 
-        error: 'Required parameters missing', 
-        details: 'orderId and pageType are required' 
-      });
+    // 处理 OPTIONS 请求
+    if (req.method === 'OPTIONS') {
+      return res.status(200).end();
     }
 
-    // 初始化Supabase客户端
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    
-    if (!supabaseUrl || !supabaseKey) {
-      return res.status(500).json({ error: 'Missing Supabase credentials' });
+    // 只允许 POST 请求
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    // 注册字体
     try {
-      registerFont(path.join(process.cwd(), 'fonts', 'PlayfairDisplay-Regular.ttf'), { family: 'Playfair Display' });
-      registerFont(path.join(process.cwd(), 'fonts', 'Montserrat-Regular.ttf'), { family: 'Montserrat' });
-      registerFont(path.join(process.cwd(), 'fonts', 'ComicNeue-Regular.ttf'), { family: 'Comic Sans' });
-      registerFont(path.join(process.cwd(), 'fonts', 'GFSDidot-Regular.ttf'), { family: 'Didot' });
-    } catch (error) {
-      console.warn('Warning: Font registration may have failed:', error.message);
-      // 继续执行，我们将使用系统默认字体
-    }
+      const { 
+        orderId,
+        pageType, // 'cover', 'intro', 或 'content'
+        pageNumber = 0,
+        coverTitle,
+        subtitle,
+        authorName,
+        recipientName,
+        contentText,
+        imageUrl,
+        styleId = 'classic',
+        clientId
+      } = req.body;
 
-    // 创建高分辨率 Canvas (300ppi)
-    // 8.5×11 英寸 @ 300ppi = 2550×3300 像素
-    const canvas = createCanvas(2550, 3300);
-    const ctx = canvas.getContext('2d');
+      if (!orderId) {
+        return res.status(400).json({ error: 'Order ID is required' });
+      }
 
-    // 获取选择的样式
-    const style = coverStyles.find(s => s.id === styleId) || coverStyles[0];
+      if (!pageType) {
+        return res.status(400).json({ error: 'Page type is required' });
+      }
 
-    // 设置字体家族
-    let fontFamily = 'serif'; // 默认为衬线字体
-    if (style.font === 'montserrat') {
-      fontFamily = 'Montserrat, sans-serif';
-    } else if (style.font === 'comic-sans') {
-      fontFamily = 'Comic Sans, cursive';
-    } else if (style.font === 'didot') {
-      fontFamily = 'Didot, serif';
-    } else if (style.font === 'playfair') {
-      fontFamily = 'Playfair Display, serif';
-    }
+      // 初始化 Supabase 客户端
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      
+      if (!supabaseUrl || !supabaseKey) {
+        return res.status(500).json({ 
+          error: 'Server configuration error', 
+          details: 'Missing Supabase credentials' 
+        });
+      }
 
-    // 根据页面类型执行不同的渲染逻辑
-    let buffer;
-    
-    if (pageType === 'cover') {
-      buffer = await renderCover(
-        canvas, 
-        ctx, 
-        {
-          style,
-          fontFamily,
-          title: coverTitle,
-          subtitle,
-          authorName,
-          recipientName,
-          imageUrl
-        }
-      );
-    } else if (pageType === 'intro') {
-      buffer = await renderIntro(
-        canvas, 
-        ctx, 
-        {
-          style,
-          fontFamily,
-          title: coverTitle || 'Our Love Story',
-          text: contentText,
-          imageUrl,
-          recipientName
-        }
-      );
-    } else if (pageType === 'content') {
-      buffer = await renderContent(
-        canvas, 
-        ctx, 
-        {
-          style,
-          fontFamily,
-          text: contentText,
-          imageUrl,
-          pageNumber
-        }
-      );
-    } else {
-      return res.status(400).json({ error: 'Invalid pageType. Must be one of: cover, intro, content' });
-    }
+      const supabase = createClient(supabaseUrl, supabaseKey);
 
-    if (!buffer) {
-      return res.status(500).json({ error: 'Failed to render image' });
-    }
+      console.log(`Rendering ${pageType} image for order: ${orderId}`);
 
-    // 上传到 Supabase Storage
-    const timestamp = Date.now();
-    let fileName;
-    
-    if (pageType === 'cover') {
-      fileName = `${clientId}/love-story-cover-${timestamp}.jpg`;
-    } else if (pageType === 'intro') {
-      fileName = `${clientId}/love-story-intro-${timestamp}.jpg`;
-    } else {
-      fileName = `${clientId}/love-story-content-${pageNumber}-${timestamp}.jpg`;
-    }
-    
-    const { data, error } = await supabase.storage
-      .from('images')
-      .upload(fileName, buffer, {
-        contentType: 'image/jpeg',
-        upsert: true,
-        metadata: {
-          client_id: clientId,
+      // 注册字体
+      try {
+        registerFont(path.join(process.cwd(), 'fonts', 'PlayfairDisplay-Regular.ttf'), { family: 'Playfair Display' });
+        registerFont(path.join(process.cwd(), 'fonts', 'Montserrat-Regular.ttf'), { family: 'Montserrat' });
+        registerFont(path.join(process.cwd(), 'fonts', 'ComicNeue-Regular.ttf'), { family: 'Comic Sans' });
+        registerFont(path.join(process.cwd(), 'fonts', 'GFSDidot-Regular.ttf'), { family: 'Didot' });
+      } catch (error) {
+        console.warn('Warning: Font registration may have failed:', error.message);
+        // 继续执行，我们将使用系统默认字体
+      }
+
+      // 创建高分辨率 Canvas (300ppi)
+      // 8.5×11 英寸 @ 300ppi = 2550×3300 像素
+      const canvas = createCanvas(2550, 3300);
+      const ctx = canvas.getContext('2d');
+
+      // 获取选择的样式
+      const style = coverStyles.find(s => s.id === styleId) || coverStyles[0];
+
+      // 设置字体家族
+      let fontFamily = 'serif'; // 默认为衬线字体
+      if (style.font === 'montserrat') {
+        fontFamily = 'Montserrat, sans-serif';
+      } else if (style.font === 'comic-sans') {
+        fontFamily = 'Comic Sans, cursive';
+      } else if (style.font === 'didot') {
+        fontFamily = 'Didot, serif';
+      } else if (style.font === 'playfair') {
+        fontFamily = 'Playfair Display, serif';
+      }
+
+      // 根据页面类型执行不同的渲染逻辑
+      let buffer;
+      
+      if (pageType === 'cover') {
+        buffer = await renderCover(
+          canvas, 
+          ctx, 
+          {
+            style,
+            fontFamily,
+            title: coverTitle,
+            subtitle,
+            authorName,
+            recipientName,
+            imageUrl
+          }
+        );
+      } else if (pageType === 'intro') {
+        buffer = await renderIntro(
+          canvas, 
+          ctx, 
+          {
+            style,
+            fontFamily,
+            title: coverTitle || 'Our Love Story',
+            text: contentText,
+            imageUrl,
+            recipientName
+          }
+        );
+      } else if (pageType === 'content') {
+        buffer = await renderContent(
+          canvas, 
+          ctx, 
+          {
+            style,
+            fontFamily,
+            text: contentText,
+            imageUrl,
+            pageNumber
+          }
+        );
+      } else {
+        return res.status(400).json({ error: 'Invalid pageType. Must be one of: cover, intro, content' });
+      }
+
+      if (!buffer) {
+        return res.status(500).json({ error: 'Failed to render image' });
+      }
+
+      // 上传到 Supabase Storage
+      const timestamp = Date.now();
+      let fileName;
+      
+      if (pageType === 'cover') {
+        fileName = `${clientId}/love-story-cover-${timestamp}.jpg`;
+      } else if (pageType === 'intro') {
+        fileName = `${clientId}/love-story-intro-${timestamp}.jpg`;
+      } else {
+        fileName = `${clientId}/love-story-content-${pageNumber}-${timestamp}.jpg`;
+      }
+      
+      const { data, error } = await supabase.storage
+        .from('images')
+        .upload(fileName, buffer, {
+          contentType: 'image/jpeg',
+          upsert: true,
+          metadata: {
+            client_id: clientId,
+            order_id: orderId,
+            ppi: '300',
+            type: pageType
+          }
+        });
+        
+      if (error) {
+        return res.status(500).json({ 
+          error: 'Failed to upload image', 
+          details: error 
+        });
+      }
+      
+      // 获取公共 URL
+      const { data: publicUrlData } = supabase.storage
+        .from('images')
+        .getPublicUrl(fileName);
+      
+      // 保存元数据以便PDF生成时使用
+      const metadata = {
+        style_id: styleId,
+        title: coverTitle,
+        subtitle: subtitle,
+        author_name: authorName,
+        person_name: recipientName
+      };
+      
+      // 更新数据库记录
+      const { data: pageData, error: pageError } = await supabase.from('love_story_pages')
+        .upsert({
           order_id: orderId,
-          ppi: '300',
-          type: pageType
-        }
-      });
+          page_type: pageType,
+          page_number: pageNumber,
+          image_path: fileName,
+          image_url: publicUrlData.publicUrl,
+          created_at: new Date().toISOString(),
+          metadata: metadata // 添加样式和内容信息
+        });
+        
+      if (pageError) {
+        console.error('Warning: Failed to update database record:', pageError);
+        // 继续返回URL，因为图像已成功上传
+      }
       
-    if (error) {
+      // 返回图像 URL
+      return res.status(200).json({ 
+        success: true,
+        url: publicUrlData.publicUrl,
+        fileName: fileName,
+        pageData: pageData
+      });
+    } catch (error) {
+      console.error('Error rendering image:', error);
       return res.status(500).json({ 
-        error: 'Failed to upload image', 
-        details: error 
+        error: 'Failed to render image', 
+        details: error.message 
       });
     }
-    
-    // 获取公共 URL
-    const { data: publicUrlData } = supabase.storage
-      .from('images')
-      .getPublicUrl(fileName);
-    
-    // 保存元数据以便PDF生成时使用
-    const metadata = {
-      style_id: styleId,
-      title: coverTitle,
-      subtitle: subtitle,
-      author_name: authorName,
-      person_name: recipientName
-    };
-    
-    // 更新数据库记录
-    const { data: pageData, error: pageError } = await supabase.from('love_story_pages')
-      .upsert({
-        order_id: orderId,
-        page_type: pageType,
-        page_number: pageNumber,
-        image_path: fileName,
-        image_url: publicUrlData.publicUrl,
-        created_at: new Date().toISOString(),
-        metadata: metadata // 添加样式和内容信息
-      });
-      
-    if (pageError) {
-      console.error('Warning: Failed to update database record:', pageError);
-      // 继续返回URL，因为图像已成功上传
-    }
-    
-    // 返回图像 URL
-    return res.status(200).json({ 
-      success: true,
-      url: publicUrlData.publicUrl,
-      fileName: fileName,
-      pageData: pageData
-    });
   } catch (error) {
-    console.error('Error rendering image:', error);
+    console.error('Error handling request:', error);
     return res.status(500).json({ 
-      error: 'Failed to render image', 
+      error: 'Internal Server Error', 
       details: error.message 
     });
   }

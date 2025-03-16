@@ -526,12 +526,23 @@ export default async function handler(req, res) {
               console.log(`Supabase response status for love story: ${updateResponse.status}`);
               console.log(`Supabase response body for love story: ${updateResponseText}`);
               
-              // 需要使用绝对 URL 而不是相对路径
-              const vercelApiBaseUrl = process.env.VERCEL_URL ? 
-                `https://${process.env.VERCEL_URL}` : 
-                'https://wishiyo.vercel.app';
-                
-              const pdfResponse = await fetch(
+              let vercelApiBaseUrl;
+              
+              // 根据不同环境确定正确的 base URL
+              if (process.env.NODE_ENV === 'production') {
+                // 生产环境使用主域名
+                vercelApiBaseUrl = 'https://wishiyo.com';
+              } else if (process.env.VERCEL_URL) {
+                // Vercel 预览环境
+                vercelApiBaseUrl = `https://${process.env.VERCEL_URL}`;
+              } else {
+                // 本地开发环境
+                vercelApiBaseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+              }
+              
+              console.log(`Using API base URL: ${vercelApiBaseUrl}`);
+              
+              let pdfResponse = await fetch(
                 `${vercelApiBaseUrl}/api/generate-love-story-pdf`,
                 {
                   method: 'POST',
@@ -542,7 +553,21 @@ export default async function handler(req, res) {
                 }
               );
               
-              const pdfResult = await pdfResponse.json();
+              let pdfResult;
+              try {
+                // 尝试解析 JSON 响应
+                const responseText = await pdfResponse.text();
+                try {
+                  pdfResult = JSON.parse(responseText);
+                } catch (jsonError) {
+                  console.error(`Failed to parse response as JSON: ${responseText.substring(0, 200)}...`);
+                  throw new Error(`JSON parse error: ${jsonError.message}, Response: ${responseText.substring(0, 200)}...`);
+                }
+              } catch (error) {
+                console.error(`Error processing PDF generation response: ${error}`);
+                throw error;
+              }
+              
               if (!pdfResponse.ok) {
                 // 检查错误是否是因为缺少图像
                 if (pdfResult.error && 
@@ -595,7 +620,7 @@ export default async function handler(req, res) {
                     
                     // 重新尝试生成PDF
                     console.log(`Retrying PDF generation for order ${orderId} after rendering images`);
-                    const retryPdfResponse = await fetch(
+                    pdfResponse = await fetch(
                       `${vercelApiBaseUrl}/api/generate-love-story-pdf`,
                       {
                         method: 'POST',
@@ -606,9 +631,22 @@ export default async function handler(req, res) {
                       }
                     );
                     
-                    const retryPdfResult = await retryPdfResponse.json();
-                    if (!retryPdfResponse.ok) {
-                      throw new Error(`PDF generation failed on retry: ${JSON.stringify(retryPdfResult)}`);
+                    try {
+                      // 尝试解析 JSON 响应
+                      const responseText = await pdfResponse.text();
+                      try {
+                        pdfResult = JSON.parse(responseText);
+                      } catch (jsonError) {
+                        console.error(`Failed to parse response as JSON: ${responseText.substring(0, 200)}...`);
+                        throw new Error(`JSON parse error: ${jsonError.message}, Response: ${responseText.substring(0, 200)}...`);
+                      }
+                    } catch (error) {
+                      console.error(`Error processing PDF generation response: ${error}`);
+                      throw error;
+                    }
+                    
+                    if (!pdfResponse.ok) {
+                      throw new Error(`PDF generation failed on retry: ${JSON.stringify(pdfResult)}`);
                     }
                     
                     console.log(`Love story PDF generation completed on retry for order ${orderId}`);
