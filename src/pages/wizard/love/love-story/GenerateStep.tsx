@@ -757,115 +757,6 @@ const GenerateStep = () => {
     });
   };
 
-  const handleRegenerateCover = async (style?: string) => {
-    localStorage.removeItem('loveStoryCoverImage');
-    localStorage.removeItem('loveStoryCoverImage_url');
-    
-    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
-    const characterPhoto = localStorage.getItem('loveStoryPartnerPhoto');
-    if (savedPrompts && characterPhoto) {
-      const prompts = JSON.parse(savedPrompts);
-      if (prompts && prompts.length > 0) {
-        setIsGeneratingCover(true);
-        
-        // Use the provided style or fall back to the stored/default style
-        const imageStyle = style || selectedStyle;
-        
-        // Update the stored style if a new one is provided
-        if (style) {
-          setSelectedStyle(style);
-          localStorage.setItem('loveStoryStyle', style);
-        }
-        
-        try {
-          // 修复JSON循环引用错误 - 简化请求对象
-          const requestBody = { 
-            prompt: prompts[0].prompt, 
-            photo: characterPhoto,
-            style: imageStyle,
-            type: 'cover'  // 使用明确的type标识
-          };
-
-          console.log('Cover generation request:', JSON.stringify(requestBody));
-          
-          const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-            body: requestBody
-          });
-          
-          if (error) throw error;
-
-          console.log('Cover generation response:', data);
-
-          // 更详细地检查和处理响应数据
-          let coverImageData = '';
-          if (data?.output && data.output.length > 0) {
-            coverImageData = data.output[0];
-          } else if (data?.coverImage && data.coverImage.length > 0) {
-            coverImageData = data.coverImage[0];
-          } else {
-            throw new Error("No cover image data in response");
-          }
-          
-          if (coverImageData) {
-            // 尝试扩展图片
-            try {
-              const expandedBase64 = await expandImage(coverImageData);
-              coverImageData = expandedBase64;
-            } catch (expandError) {
-              console.error("Error expanding cover image:", expandError);
-              // 即使扩展失败，继续使用原始图片
-            }
-            
-            setCoverImage(coverImageData);
-            
-            // 使用时间戳确保文件名唯一
-            const timestamp = Date.now();
-            
-            // Upload to Supabase Storage
-            const storageUrl = await uploadImageToStorage(
-              coverImageData, 
-              'images', 
-              `love-story-cover-${timestamp}`
-            );
-            
-            // Update storage map
-            setImageStorageMap(prev => ({
-              ...prev,
-              ['loveStoryCoverImage']: {
-                localStorageKey: 'loveStoryCoverImage',
-                url: storageUrl
-              }
-            }));
-            
-            // Store only the URL reference in localStorage
-            localStorage.setItem('loveStoryCoverImage_url', storageUrl);
-
-            // 延迟刷新图片列表，确保上传完成
-            setTimeout(() => {
-              loadImagesFromSupabase();
-            }, 1000);
-            
-            toast({
-              title: "Cover regenerated",
-              description: `Cover updated with ${imageStyle} style`,
-            });
-          } else {
-            throw new Error("Failed to generate cover image");
-          }
-        } catch (error: any) {
-          console.error('Error regenerating cover:', error);
-          toast({
-            title: "Error regenerating cover image",
-            description: error.message || "Please try again",
-            variant: "destructive",
-          });
-        } finally {
-          setIsGeneratingCover(false);
-        }
-      }
-    }
-  };
-
   const handleRegenerateIntro = async (style?: string) => {
     localStorage.removeItem('loveStoryIntroImage');
     localStorage.removeItem('loveStoryIntroImage_url');
@@ -1091,8 +982,6 @@ const GenerateStep = () => {
               authorName={authorName}
               backCoverText={backCoverText}
               isGeneratingCover={isGeneratingCover}
-              onRegenerateCover={handleRegenerateCover}
-              onEditCover={() => {}}
             />
           </div>
         </div>

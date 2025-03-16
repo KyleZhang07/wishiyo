@@ -6,6 +6,7 @@ import { Check } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { getClientId } from '@/utils/clientId';
+import { getCoverCanvasImage, dataURLToBlob } from './components/CoverPreviewCard';
 
 // 封面类型
 interface CoverFormat {
@@ -26,7 +27,7 @@ const FormatStep = () => {
   
   const softcoverImage = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wgARCADIASwDAREAAhEBAxEB/8QAHAAAAgMBAQEBAAAAAAAAAAAABAUBAgMGBwAI/8QAGgEAAwEBAQEAAAAAAAAAAAAAAAIDBAEFBv/aAAwDAQACEAMQAAAB9UAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVKEBJtlolLrRCtdNDOL2DMXtGUvaMhe2ZAvaAhe4ZAd4xA75hB3zADwDCDvmAHgGEHgGEHhGAHhGAHhGAfBGAPiMI+IxD4jEPkMA+QwD5DAPoMY+gxj6jEPqMY+wxi9GQXY0AvRuEL0bhC9G4Re1cIXtXBF7dgRe3dEXt3RFbt4Be7eDObzGTOZ1mTGdhkw2dgMH1GrEelzZqdFmTf0GFO9Y2OtoeXJsXSqTjBUNxgoFwoEAsShcJhcJhcJxILhKKBYJRQLhKJhcIxMKxKJxWJROKxMJxSJhUJhSJxOJxSJhQJxQJxQJxQJhUJRQJRQJBQJBoIxoJBoJBoIxoIxoIxsIhsIhsIhqIxqIxsIRsIRsIRsIRsIRsIRsIRuIBuOGc2VHOOm1c5ps6nF3OM07vUPQNxsdHnLuPUrDg0G40MxudDMaGwzGh0MxofDMZnwzGh4NBofDUZHg2GA0GYwGgzGIyGYxGYyGYxGYyGIyGIxGIxGIxGQxGQxGQxGIyGIyGIxGIyGIyGIyGIxGIzGI0GIzGIzGIzGIzGIzGAzGAwGAwGQyGQyGQ2GQyGQ2GQ2GQ2GQyGQyGg3GQ5GwyHI4G45HI5HI4HI5HI5HQ5HI5G46HI6HI6HIbnQbnY5HY7G52Ox0dD/9k=";
 
-  // 可选的封面格式
+  // 封面格式选项
   const coverFormats: CoverFormat[] = [
     {
       id: 'hardcover',
@@ -45,7 +46,6 @@ const FormatStep = () => {
     }
   ];
   
-  // 默认选择软封面
   const [selectedFormat, setSelectedFormat] = useState<string>('softcover');
   const [isProcessing, setIsProcessing] = useState(false);
   
@@ -58,6 +58,50 @@ const FormatStep = () => {
     const selectedFormatObj = coverFormats.find(format => format.id === formatId);
     if (selectedFormatObj) {
       localStorage.setItem('loveStoryFormatPrice', selectedFormatObj.price.toString());
+    }
+  };
+  
+  // 上传 Canvas 图像到 Supabase Storage
+  const uploadCanvasImageToStorage = async (orderId: string): Promise<string | null> => {
+    try {
+      // 获取 Canvas 图像数据 URL
+      const canvasDataUrl = await getCoverCanvasImage();
+      
+      // 转换为 Blob
+      const canvasBlob = dataURLToBlob(canvasDataUrl);
+      
+      // 获取 client_id
+      const clientId = getClientId();
+      
+      // 上传到 Supabase Storage
+      const fileName = `love-story-cover-complete-${Date.now()}.jpg`;
+      const filePath = `${clientId}/${fileName}`;
+      
+      const { data, error } = await supabase.storage
+        .from('images')
+        .upload(filePath, canvasBlob, {
+          contentType: 'image/jpeg',
+          cacheControl: '3600'
+        });
+      
+      if (error) {
+        console.error('Error uploading canvas image:', error);
+        return null;
+      }
+      
+      // 获取公共 URL
+      const { data: urlData } = supabase.storage
+        .from('images')
+        .getPublicUrl(filePath);
+      
+      // 保存到 localStorage 以备后用
+      const publicUrl = urlData.publicUrl;
+      localStorage.setItem('loveStoryCoverCompleteImage_url', publicUrl);
+      
+      return publicUrl;
+    } catch (error) {
+      console.error('Error in uploadCanvasImageToStorage:', error);
+      return null;
     }
   };
   
@@ -75,6 +119,9 @@ const FormatStep = () => {
       localStorage.setItem('loveStoryBookPrice', selectedFormatObj.price.toString());
       
       try {
+        // 上传 Canvas 图像到 Supabase Storage
+        const completeImageUrl = await uploadCanvasImageToStorage(getClientId());
+        
         // 调用Stripe支付API
         const response = await fetch('/api/create-checkout-session', {
           method: 'POST',
@@ -106,9 +153,9 @@ const FormatStep = () => {
           // 添加记录到数据库
           const clientId = getClientId();
           
-          // 获取用户选择的封面图片 URL
-          const selectedCoverImageUrl = localStorage.getItem('loveStorySelectedCoverImage_url') || 
-                                       localStorage.getItem('loveStoryCoverImage_url') || '';
+          // 使用完整的 Canvas 图像 URL 而不是仅生成的图片 URL
+          const coverCompleteImageUrl = completeImageUrl || 
+                                      localStorage.getItem('loveStoryCoverCompleteImage_url') || '';
           
           const { data, error } = await supabase
             .from('love_story_books')
@@ -119,7 +166,7 @@ const FormatStep = () => {
               status: 'created',
               timestamp: new Date().toISOString(),
               client_id: clientId,
-              cover_pdf: selectedCoverImageUrl // 添加用户选择的封面图片 URL
+              cover_pdf: coverCompleteImageUrl // 使用完整的 Canvas 图像 URL
             })
             .select();
           

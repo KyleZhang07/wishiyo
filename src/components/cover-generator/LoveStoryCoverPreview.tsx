@@ -26,6 +26,7 @@ interface LoveStoryCoverPreviewProps {
   coverImage?: string;
   selectedFont?: string;
   style?: CoverStyle;
+  canvasRefCallback?: (canvas: HTMLCanvasElement | null) => void;
 }
 
 const LoveStoryCoverPreview = ({
@@ -35,7 +36,8 @@ const LoveStoryCoverPreview = ({
   recipientName,
   coverImage,
   selectedFont = 'playfair',
-  style
+  style,
+  canvasRefCallback
 }: LoveStoryCoverPreviewProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const image = useImageLoader(coverImage);
@@ -46,6 +48,11 @@ const LoveStoryCoverPreview = ({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+
+    // 如果提供了回调函数，则传递 canvas 引用
+    if (canvasRefCallback) {
+      canvasRefCallback(canvas);
+    }
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
