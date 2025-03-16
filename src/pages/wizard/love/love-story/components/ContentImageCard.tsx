@@ -293,7 +293,7 @@ export const ContentImageCard = ({
   return (
     <div className="relative mb-8">
       <div className="max-w-4xl mx-auto">
-        <div className="aspect-[2/1] overflow-hidden relative content-page-card">
+        <div className="aspect-[2/1] overflow-hidden relative">
           {isGenerating ? (
             <div className="h-full flex flex-col justify-center items-center text-center bg-gray-100/50 rounded-sm">
               <RefreshCw className="animate-spin h-8 w-8 mb-4" />
@@ -302,7 +302,7 @@ export const ContentImageCard = ({
           ) : (
             <canvas 
               ref={canvasRef} 
-              className="w-full h-full rounded-sm content-page-canvas"
+              className="w-full h-full rounded-sm"
               width={1200} // 增加分辨率
               height={600}
             />

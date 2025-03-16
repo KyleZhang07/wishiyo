@@ -58,14 +58,6 @@ export const ensureBucketExists = async (bucket = 'images'): Promise<boolean> =>
 };
 
 /**
- * 确保 complete-pages 存储桶存在
- * @returns 是否成功确保存储桶存在
- */
-export const ensureCompletePagesExists = async (): Promise<boolean> => {
-  return ensureBucketExists('complete-pages');
-};
-
-/**
  * Uploads a base64 image to Supabase Storage
  * @param base64Image Base64 encoded image string
  * @param bucket Bucket name
@@ -128,19 +120,6 @@ export const uploadImageToStorage = async (
     console.error('Error uploading image to Supabase Storage:', error);
     throw error;
   }
-};
-
-/**
- * 将图像上传到 complete-pages 存储桶
- * @param base64Image Base64 编码的图像字符串
- * @param path 存储桶内的路径
- * @returns 上传图像的公共 URL
- */
-export const uploadToCompletePages = async (
-  base64Image: string,
-  path: string
-): Promise<string> => {
-  return uploadImageToStorage(base64Image, 'complete-pages', path);
 };
 
 /**

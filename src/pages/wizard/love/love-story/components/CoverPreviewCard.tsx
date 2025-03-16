@@ -99,16 +99,18 @@ export const CoverPreviewCard = ({
   }, []);
 
   return (
-    <div className="relative rounded-lg overflow-hidden shadow-xl cover-preview-card">
-      <LoveStoryCoverPreview
-        coverTitle={coverTitle}
-        subtitle={subtitle}
-        authorName={authorName}
-        recipientName={recipientName}
-        coverImage={coverImage}
-        selectedFont={selectedStyle?.font || "playfair"}
-        style={selectedStyle}
-      />
+    <div className="relative">
+      <div className="max-w-xl mx-auto">
+        <LoveStoryCoverPreview
+          coverTitle={coverTitle}
+          subtitle={subtitle}
+          authorName={authorName}
+          recipientName={recipientName}
+          coverImage={coverImage}
+          selectedFont={selectedStyle?.font || "playfair"}
+          style={selectedStyle}
+        />
+      </div>
     </div>
   );
 };

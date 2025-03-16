@@ -485,7 +485,7 @@ const LoveStoryCoverPreview = ({
       <div className="relative rounded-lg overflow-hidden shadow-xl">
         <canvas
           ref={canvasRef}
-          className="w-full h-full object-contain cover-preview-canvas"
+          className="w-full h-full object-contain"
         />
       </div>
     </div>

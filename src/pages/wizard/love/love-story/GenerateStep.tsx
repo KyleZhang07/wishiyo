@@ -987,7 +987,7 @@ const GenerateStep = () => {
         </div>
         
         {/* 介绍部分 - 将Intro与其他Content分开 */}
-        <div className="mb-16 border-t-2 border-gray-200 pt-10 intro-content-card">
+        <div className="mb-16 border-t-2 border-gray-200 pt-10">
           <h2 className="text-2xl font-bold mb-8">Introduction</h2>
           <div className="mb-8">
             <ContentImageCard 

@@ -5,8 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Check } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { getClientId } from '@/integrations/supabase/storage';
-import { mergeAndUploadLoveStoryPages } from '@/services/canvas-service';
+import { getClientId } from '@/utils/clientId';
 
 // 封面类型
 interface CoverFormat {
@@ -25,7 +24,7 @@ const FormatStep = () => {
   // 硬封面和软封面的示例图片
   const hardcoverImage = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wgARCADIASwDAREAAhEBAxEB/8QAHAABAAIDAQEBAAAAAAAAAAAAAAUGAwQHAggB/8QAGwEBAAIDAQEAAAAAAAAAAAAAAAMEAQIFBgf/2gAMAwEAAhADEAAAAfqkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARGfUfNbj48/oHyfoWVkpvTm9bwuixrS2trCy1tLS3NLe0tza3Nrc2tza2NrY3tjowdjGf0cZfZxl9HGXucZPZxk+HGP6cYvxxh/nCH+cIP5xgZcjHk5GDJcGHLdmDNeGDNfGDLfGDJkNjFltTFktzDkuDBluDBmu1gZbtYGW7WBku0cZLtHGS6RhjvUUYrpHGC9Rxfv0R869R/QOW1J/K1YPu+tNp2YPvp1Vj0e4AAAAAAAAAAR2pxfB5/H9Z5HQj52r+98/c+jh651jL1WEPRIxgCM16jiRsFfGDLcGHJcmHJcmLLcGDLdmDLdmDJdLEyXRiyXKyMdytDHcrYx3RiYsk0Y8k0ZMs0Y8s0YclxHGR4YGR4YGHIcRhjuY4w5DmIMOQ6ijDkOogw5DqIL+S7jC/kuo4vZLuOL2S6ji/c+xhsvIw2XkUX/Po4v8Ppw+jDi+kHktjk+1v8pp+5+nzcdFd9L2wAAAAAAAAAAARexxNT5zmtLqaPK3q0k5/2I1o7Sx1MAAAAAAAAAAYazTBGmYPO7Zg87smDzuyYNO7Jgk5pGCTmkYJO56QavwaDV+DQavwSDV+CQavwSDV+CQavwSDV+CQS/wASIN74fAk3vh0CXf8Ah0CXT+HwJNP4fAk0/h8CXS+HwJdL4fAljm0Cfc8lqQt6uJKvlB6HnT61zvv9dPV3vfDztMAAAAAAAAAAAAAEbpcNzvmcj1fMmHEQGkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANea4INn6FHS5eW17jGXrh7PX8yYcTAaQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABrvdLC1/Z07PTl5uj1kJ6YAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIrs4aK88iK++HHOcHHesHF+2HEfIHDfQHB/YGn9waX3Bo/gGh+IZ/5BnfoGd+wZn8Bl/0GV/oe/8Ao9X0/pe/6Xt+l7fpe36Xt+l7fpe36Xt+l7fpe36Xr+l6/pev6Xp+l6fpen6Xp+l6fpen6Xp+l6fpWn/9k=";
   
-  const softcoverImage = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wgARCADIASwDAREAAhEBAxEB/8QAHAAAAgMBAQEBAAAAAAAAAAAABAUBAgMGBwAI/8QAGgEAAwEBAQEAAAAAAAAAAAAAAAIDBAEFBv/aAAwDAQACEAMQAAAB9UAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVKEBJtlolLrRCtdNDOL2DMXtGUvaMhe2ZAvaAhe4ZAd4xA75hB3zADwDCDvmAHgGEHgGEHhGAHhGAHhGAfBGAPiMI+IxD4jEPkMA+QwD5DAPoMY+gxj6jEPqMY+wxi9GQXY0AvRuEL0bhC9G4Re1cIXtXBF7dgRe3dEXt3RFbt4Be7eDObzGTOZ1mTGdhkw2dgMH1GrEelzZqdFmTf0GFO9Y2OtoeXJsXSqTjBUNxgoFwoEAsShcJhcJhcJxILhKKBYJRQLhKJhcIxMKxKJxWJROKxMJxSJhUJhSJxOJxSJhQJxQJxQJxQJhUJRQJRQJBQJBoIxoJBoJBoIxoIxoIxsIhsIhsIhqIxqIxsIRsIRsIRsIRsIRsIRsIRuIBuOGc2VHOOm1c5ps6nF3OM07vUPQNxsdHnLuPUrDg0G40MxudDMaGwzGh0MxofDMZnwzGh4NBofDUZHg2GA0GYwGgzGIyGYxGYyGYxGYyGIyGIxGIxGIxGQxGQxGQxGIyGIyGIxGIyGIyGIyGIxGIzGI0GIzGIzGIzGIzGIzGAzGAwGAwGQyGQyGQ2GQyGQyGQ2GQ2GQ2GQyGQyGg3GQ5GwyHI4G45HI5HI4HI5HI5HQ5HI5G46HI6HI6HIbnQbnY5HY7G52Ox0dD/9k=";
+  const softcoverImage = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wgARCADIASwDAREAAhEBAxEB/8QAHAAAAgMBAQEBAAAAAAAAAAAABAUBAgMGBwAI/8QAGgEAAwEBAQEAAAAAAAAAAAAAAAIDBAEFBv/aAAwDAQACEAMQAAAB9UAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVKEBJtlolLrRCtdNDOL2DMXtGUvaMhe2ZAvaAhe4ZAd4xA75hB3zADwDCDvmAHgGEHgGEHhGAHhGAHhGAfBGAPiMI+IxD4jEPkMA+QwD5DAPoMY+gxj6jEPqMY+wxi9GQXY0AvRuEL0bhC9G4Re1cIXtXBF7dgRe3dEXt3RFbt4Be7eDObzGTOZ1mTGdhkw2dgMH1GrEelzZqdFmTf0GFO9Y2OtoeXJsXSqTjBUNxgoFwoEAsShcJhcJhcJxILhKKBYJRQLhKJhcIxMKxKJxWJROKxMJxSJhUJhSJxOJxSJhQJxQJxQJxQJhUJRQJRQJBQJBoIxoJBoJBoIxoIxoIxsIhsIhsIhqIxqIxsIRsIRsIRsIRsIRsIRsIRuIBuOGc2VHOOm1c5ps6nF3OM07vUPQNxsdHnLuPUrDg0G40MxudDMaGwzGh0MxofDMZnwzGh4NBofDUZHg2GA0GYwGgzGIyGYxGYyGYxGYyGIyGIxGIxGIxGQxGQxGQxGIyGIyGIxGIyGIyGIyGIxGIzGI0GIzGIzGIzGIzGIzGAzGAwGAwGQyGQyGQ2GQyGQ2GQ2GQ2GQyGQyGg3GQ5GwyHI4G45HI5HI4HI5HI5HQ5HI5G46HI6HI6HIbnQbnY5HY7G52Ox0dD/9k=";
 
   // 可选的封面格式
   const coverFormats: CoverFormat[] = [
@@ -64,59 +63,38 @@ const FormatStep = () => {
   
   // 处理结账
   const handleCheckout = async () => {
-    if (!selectedFormat) {
-      toast({
-        title: "Format Required",
-        description: "Please select a format to continue",
-        variant: "destructive"
-      });
-      return;
-    }
+    const selectedFormatObj = coverFormats.find(format => format.id === selectedFormat);
     
-    setIsProcessing(true);
-    
-    try {
-      // 生成订单ID
-      const orderId = `order_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    if (selectedFormatObj) {
+      setIsProcessing(true);
       
-      // 保存选择到localStorage
-      localStorage.setItem('loveStorySelectedFormat', selectedFormat);
-      
-      // 获取选择的封面格式信息
-      const selectedFormatInfo = coverFormats.find(f => f.id === selectedFormat);
-      const bookTitle = localStorage.getItem('loveStoryBookTitle') || 'Our Love Story';
+      // 保存书籍信息到localStorage
+      const bookTitle = 'THE MAGIC IN ' + (localStorage.getItem('loveStoryPersonName') || 'My Love');
+      localStorage.setItem('loveStoryBookTitle', bookTitle);
+      localStorage.setItem('loveStoryBookFormat', selectedFormatObj.name);
+      localStorage.setItem('loveStoryBookPrice', selectedFormatObj.price.toString());
       
       try {
-        // 合并并上传 canvas 内容到 complete-pages 存储桶
-        const completePageUrls = await mergeAndUploadLoveStoryPages(orderId);
-        console.log('Complete page URLs:', completePageUrls);
-        
-        // 将完整页面 URL 保存到 localStorage
-        if (completePageUrls.length > 0) {
-          localStorage.setItem('loveStoryCompletePages', JSON.stringify(completePageUrls));
-        }
-      } catch (uploadError) {
-        console.error('Error uploading complete pages:', uploadError);
-        // 继续结账流程，即使上传失败
-      }
-      
-      // 创建Stripe结账会话
-      try {
-        const { data: { url }, error } = await supabase.functions.invoke('create-checkout-session', {
-          body: {
-            orderId,
-            productName: `${bookTitle} - ${selectedFormatInfo?.name || 'Custom Book'}`,
-            productDescription: selectedFormatInfo?.description || 'Custom love story book',
-            amount: selectedFormatInfo?.price || 2999,
-            currency: 'usd',
-            bookType: 'love-story',
-            format: selectedFormat
-          }
+        // 调用Stripe支付API
+        const response = await fetch('/api/create-checkout-session', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            productId: 'love-story',
+            title: bookTitle,
+            format: selectedFormatObj.name,
+            price: selectedFormatObj.price.toString(),
+            quantity: 1
+          }),
         });
         
-        if (error) {
-          throw error;
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
         }
+        
+        const { url, orderId } = await response.json();
         
         // 保存订单ID
         localStorage.setItem('loveStoryOrderId', orderId);
@@ -173,9 +151,6 @@ const FormatStep = () => {
         });
         setIsProcessing(false);
       }
-    } catch (error) {
-      console.error('Error during checkout:', error);
-      setIsProcessing(false);
     }
   };
   
@@ -185,33 +160,6 @@ const FormatStep = () => {
     if (savedFormat) {
       setSelectedFormat(savedFormat);
     }
-    
-    // 确保页面加载时能够访问 canvas 元素
-    // 这将确保在 checkout 时能够正确捕获 canvas 内容
-    const script = document.createElement('script');
-    script.innerHTML = `
-      // 添加类名到 canvas 元素，以便于后续捕获
-      document.addEventListener('DOMContentLoaded', () => {
-        // 为封面 canvas 添加类名
-        const coverCanvas = document.querySelector('.cover-preview-card canvas');
-        if (coverCanvas) coverCanvas.classList.add('cover-preview-canvas');
-        
-        // 为介绍页 canvas 添加类名
-        const introCanvas = document.querySelector('.intro-content-card canvas');
-        if (introCanvas) introCanvas.classList.add('intro-content-canvas');
-        
-        // 为内容页 canvas 添加类名
-        const contentCanvases = document.querySelectorAll('.content-page-card canvas');
-        contentCanvases.forEach(canvas => {
-          canvas.classList.add('content-page-canvas');
-        });
-      });
-    `;
-    document.head.appendChild(script);
-    
-    return () => {
-      document.head.removeChild(script);
-    };
   }, []);
   
   return (
