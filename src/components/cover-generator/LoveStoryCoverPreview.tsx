@@ -481,7 +481,7 @@ const LoveStoryCoverPreview = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 love-story-cover-preview">
       <div className="relative rounded-lg overflow-hidden shadow-xl">
         <canvas
           ref={canvasRef}
@@ -492,4 +492,4 @@ const LoveStoryCoverPreview = ({
   );
 };
 
-export default LoveStoryCoverPreview; 
+export default LoveStoryCoverPreview;

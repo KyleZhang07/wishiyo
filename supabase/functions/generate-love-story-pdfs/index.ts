@@ -2,8 +2,17 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.8.0'
 import { jsPDF } from 'https://esm.sh/jspdf@2.5.1'
 
+// 存储桶常量
+const BUCKET_PDFS = 'pdfs';
+const BUCKET_COMPLETE_PAGES = 'complete-pages';
+
 interface RequestBody {
   orderId: string;
+  clientId: string;
+}
+
+interface ImageFile {
+  name: string;
 }
 
 serve(async (req) => {
@@ -21,11 +30,11 @@ serve(async (req) => {
   try {
     // 解析请求体
     const body = await req.json() as RequestBody
-    const { orderId } = body
+    const { orderId, clientId } = body
 
-    if (!orderId) {
+    if (!orderId || !clientId) {
       return new Response(
-        JSON.stringify({ error: 'Order ID is required' }),
+        JSON.stringify({ error: 'Order ID and Client ID are required' }),
         { headers: { ...headers, 'Content-Type': 'application/json' }, status: 400 }
       )
     }
@@ -38,167 +47,130 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // 获取love_story_books记录
-    const { data: bookData, error: bookError } = await supabaseAdmin
-      .from('love_story_books')
-      .select('*')
-      .eq('order_id', orderId)
-      .single()
+    console.log(`Generating PDF for order ${orderId} and client ${clientId}`);
 
-    if (bookError || !bookData) {
-      return new Response(
-        JSON.stringify({ error: 'Book not found', details: bookError }),
-        { headers: { ...headers, 'Content-Type': 'application/json' }, status: 404 }
-      )
-    }
-
-    // 获取client_id，用于查找图片
-    const clientId = bookData.client_id;
-    
-    if (!clientId) {
-      return new Response(
-        JSON.stringify({ error: 'Client ID not found in book record' }),
-        { headers: { ...headers, 'Content-Type': 'application/json' }, status: 404 }
-      )
-    }
-
-    // 尝试从两个可能的路径获取图片
-    let imageFiles: any[] = [];
-    let listError = null;
-    
-    // 首先尝试从基于client_id的路径获取
-    const { data: clientImages, error: clientListError } = await supabaseAdmin
+    // 检查complete-pages桶中的图片
+    const { data: completePages, error: completePagesError } = await supabaseAdmin
       .storage
-      .from('images')
-      .list(`${clientId}`)
+      .from(BUCKET_COMPLETE_PAGES)
+      .list(`${clientId}/${orderId}`)
     
-    if (!clientListError && clientImages && clientImages.length > 0) {
-      imageFiles = clientImages;
-    } else {
-      // 如果没有找到，尝试从love-story/${orderId}路径获取
-      const { data: orderImages, error: orderListError } = await supabaseAdmin
-        .storage
-        .from('images')
-        .list(`love-story/${orderId}`)
-      
-      if (!orderListError && orderImages && orderImages.length > 0) {
-        imageFiles = orderImages;
-        listError = null;
-      } else {
-        // 两个路径都没有找到图片
-        imageFiles = [];
-        listError = clientListError || orderListError;
-      }
-    }
-
-    if (listError || !imageFiles || imageFiles.length === 0) {
+    if (completePagesError) {
+      console.error('Error listing images in complete-pages bucket:', completePagesError);
       return new Response(
-        JSON.stringify({ error: 'Failed to list images or no images found', details: listError }),
+        JSON.stringify({ error: 'Failed to list images in complete-pages bucket' }),
         { headers: { ...headers, 'Content-Type': 'application/json' }, status: 500 }
-      )
+      );
     }
-
+    
+    if (!completePages || completePages.length === 0) {
+      console.log('No images found in complete-pages bucket');
+      return new Response(
+        JSON.stringify({ error: 'No images found in complete-pages bucket' }),
+        { headers: { ...headers, 'Content-Type': 'application/json' }, status: 404 }
+      );
+    }
+    
+    console.log('Found images in complete-pages bucket:', completePages.length);
+    
     // 对图片进行分类和排序
-    const coverImages = imageFiles.filter(file => file.name.includes('cover')).sort((a, b) => a.name.localeCompare(b.name))
-    const introImages = imageFiles.filter(file => file.name.includes('intro')).sort((a, b) => a.name.localeCompare(b.name))
-    const contentImages = imageFiles.filter(file => file.name.includes('content')).sort((a, b) => a.name.localeCompare(b.name))
-
-    // 检查是否有足够的图片
-    if (coverImages.length === 0 || introImages.length === 0 || contentImages.length === 0) {
-      return new Response(
-        JSON.stringify({ 
-          error: 'Insufficient images for PDF generation', 
-          details: {
-            coverImagesCount: coverImages.length,
-            introImagesCount: introImages.length,
-            contentImagesCount: contentImages.length
-          }
-        }),
-        { headers: { ...headers, 'Content-Type': 'application/json' }, status: 400 }
-      )
-    }
-
-    // 生成封面PDF
-    const coverPdf = await generatePdf([coverImages[0]], orderId, supabaseAdmin)
+    const coverImage = completePages.find(file => file.name === 'cover.png');
+    const introImage = completePages.find(file => file.name === 'intro.png');
+    const contentImages = completePages.filter(file => file.name.startsWith('content-')).sort((a, b) => {
+      // 从文件名中提取页码并按数字顺序排序
+      const pageA = parseInt(a.name.match(/content-(\d+)\.png/)?.[1] || '0');
+      const pageB = parseInt(b.name.match(/content-(\d+)\.png/)?.[1] || '0');
+      return pageA - pageB;
+    });
     
-    // 生成内页PDF（合并intro和content图片）
-    const interiorPdf = await generatePdf([...introImages, ...contentImages], orderId, supabaseAdmin)
-
-    // 上传PDF到Storage
-    const coverPdfPath = `love-story/${orderId}/cover.pdf`
-    const interiorPdfPath = `love-story/${orderId}/interior.pdf`
-
-    const { data: coverUploadData, error: coverUploadError } = await supabaseAdmin
+    console.log('Found in complete-pages bucket:', {
+      coverImage: coverImage ? coverImage.name : 'not found',
+      introImage: introImage ? introImage.name : 'not found',
+      contentImages: contentImages.map(img => img.name)
+    });
+    
+    // 检查是否有必要的图片
+    if (!coverImage) {
+      console.log('Cover image not found in complete-pages bucket');
+      return new Response(
+        JSON.stringify({ error: 'Cover image not found in complete-pages bucket' }),
+        { headers: { ...headers, 'Content-Type': 'application/json' }, status: 404 }
+      );
+    }
+    
+    // 生成PDF
+    let pdfBytes: Uint8Array;
+    
+    // 如果有内容页面，生成包含所有页面的PDF
+    if (contentImages.length > 0) {
+      // 按顺序排列所有图片：封面，介绍，内容页
+      const allImages: ImageFile[] = [];
+      if (coverImage) allImages.push(coverImage);
+      if (introImage) allImages.push(introImage);
+      allImages.push(...contentImages);
+      
+      console.log('Generating PDF from all images:', allImages.map(img => img.name));
+      pdfBytes = await generatePdfFromCompletePages(allImages, orderId, clientId, supabaseAdmin);
+    } else if (introImage) {
+      // 只有封面和介绍页
+      const images = [coverImage, introImage].filter(Boolean) as ImageFile[];
+      console.log('Generating PDF from cover and intro images:', images.map(img => img.name));
+      pdfBytes = await generatePdfFromCompletePages(images, orderId, clientId, supabaseAdmin);
+    } else {
+      // 只有封面
+      console.log('Generating PDF from cover image only:', coverImage.name);
+      pdfBytes = await generatePdfFromCompletePage(coverImage, orderId, clientId, supabaseAdmin);
+    }
+    
+    // 上传PDF到Supabase Storage
+    const pdfFileName = `${clientId}/${orderId}/love-story-${Date.now()}.pdf`;
+    const { data: pdfData, error: pdfError } = await supabaseAdmin
       .storage
-      .from('pdfs')
-      .upload(coverPdfPath, coverPdf, {
+      .from(BUCKET_PDFS)
+      .upload(pdfFileName, pdfBytes, {
         contentType: 'application/pdf',
         upsert: true
-      })
-
-    if (coverUploadError) {
+      });
+    
+    if (pdfError) {
+      console.error('Error uploading PDF to Supabase Storage:', pdfError);
       return new Response(
-        JSON.stringify({ error: 'Failed to upload cover PDF', details: coverUploadError }),
+        JSON.stringify({ error: 'Failed to upload PDF' }),
         { headers: { ...headers, 'Content-Type': 'application/json' }, status: 500 }
-      )
+      );
     }
-
-    const { data: interiorUploadData, error: interiorUploadError } = await supabaseAdmin
-      .storage
-      .from('pdfs')
-      .upload(interiorPdfPath, interiorPdf, {
-        contentType: 'application/pdf',
-        upsert: true
-      })
-
-    if (interiorUploadError) {
-      return new Response(
-        JSON.stringify({ error: 'Failed to upload interior PDF', details: interiorUploadError }),
-        { headers: { ...headers, 'Content-Type': 'application/json' }, status: 500 }
-      )
-    }
-
+    
     // 获取PDF的公共URL
-    const { data: coverUrl } = supabaseAdmin
+    const { data: publicUrlData } = supabaseAdmin
       .storage
-      .from('pdfs')
-      .getPublicUrl(coverPdfPath)
-
-    const { data: interiorUrl } = supabaseAdmin
-      .storage
-      .from('pdfs')
-      .getPublicUrl(interiorPdfPath)
-
-    // 更新love_story_books记录
-    const { data: updateData, error: updateError } = await supabaseAdmin
+      .from(BUCKET_PDFS)
+      .getPublicUrl(pdfFileName);
+    
+    // 更新数据库中的记录
+    const { error: updateError } = await supabaseAdmin
       .from('love_story_books')
       .update({
-        cover_pdf: coverUrl.publicUrl,
-        interior_pdf: interiorUrl.publicUrl,
-        cover_source_url: coverUrl.publicUrl,
-        interior_source_url: interiorUrl.publicUrl,
-        status: 'pdf_generated',
-        ready_for_printing: true // 设置为准备好打印
+        pdf_url: publicUrlData.publicUrl,
+        status: 'completed'
       })
       .eq('order_id', orderId)
-      .select()
-
+      .eq('client_id', clientId);
+    
     if (updateError) {
+      console.error('Error updating database record:', updateError);
       return new Response(
-        JSON.stringify({ error: 'Failed to update book record', details: updateError }),
+        JSON.stringify({ error: 'Failed to update database record' }),
         { headers: { ...headers, 'Content-Type': 'application/json' }, status: 500 }
-      )
+      );
     }
-
+    
     return new Response(
       JSON.stringify({
         success: true,
-        coverPdfUrl: coverUrl.publicUrl,
-        interiorPdfUrl: interiorUrl.publicUrl,
-        book: updateData
+        pdf_url: publicUrlData.publicUrl
       }),
       { headers: { ...headers, 'Content-Type': 'application/json' } }
-    )
+    );
   } catch (error) {
     return new Response(
       JSON.stringify({ error: 'Internal server error', details: error.message }),
@@ -207,104 +179,85 @@ serve(async (req) => {
   }
 })
 
-// 辅助函数：生成PDF
-async function generatePdf(imageFiles: any[], orderId: string, supabase: any): Promise<Uint8Array> {
+// 辅助函数：从单个完整页面生成PDF
+async function generatePdfFromCompletePage(imageFile: ImageFile, orderId: string, clientId: string, supabase: any): Promise<Uint8Array> {
   const pdf = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
     format: 'a4'
-  })
+  });
 
-  let currentPage = 0
+  // 从complete-pages桶下载图片
+  const { data: imageData, error: imageError } = await supabase
+    .storage
+    .from(BUCKET_COMPLETE_PAGES)
+    .download(`${clientId}/${orderId}/${imageFile.name}`);
 
-  // 首先获取book记录以获取client_id
-  const { data: bookData, error: bookError } = await supabase
-    .from('love_story_books')
-    .select('client_id')
-    .eq('order_id', orderId)
-    .single()
-
-  if (bookError || !bookData) {
-    console.error('Failed to get book data for client_id', bookError)
-    throw new Error('Failed to get book data for client_id')
+  if (imageError || !imageData) {
+    console.error(`Failed to download image ${imageFile.name}`, imageError);
+    throw new Error(`Failed to download image ${imageFile.name}`);
   }
 
-  const clientId = bookData.client_id
-
-  for (const file of imageFiles) {
-    let imageData = null
-    let imageError = null
-
-    // 首先尝试从client_id路径获取图片
-    if (clientId) {
-      const clientPathResult = await supabase
-        .storage
-        .from('images')
-        .download(`${clientId}/${file.name}`)
-      
-      if (!clientPathResult.error && clientPathResult.data) {
-        imageData = clientPathResult.data
-        imageError = null
-      } else {
-        // 如果从client_id路径获取失败，尝试从order_id路径获取
-        const orderPathResult = await supabase
-          .storage
-          .from('images')
-          .download(`love-story/${orderId}/${file.name}`)
-        
-        imageData = orderPathResult.data
-        imageError = orderPathResult.error
-      }
-    } else {
-      // 如果没有client_id，直接从order_id路径获取
-      const { data, error } = await supabase
-        .storage
-        .from('images')
-        .download(`love-story/${orderId}/${file.name}`)
-      
-      imageData = data
-      imageError = error
-    }
-
-    if (imageError || !imageData) {
-      console.error(`Failed to download image: ${file.name}`, imageError)
-      continue
-    }
-
-    // 转换图片为base64
-    const imageBase64 = await blobToBase64(imageData)
-
-    // 添加新页（除了第一页）
-    if (currentPage > 0) {
-      pdf.addPage()
-    }
-
-    // 添加图片到PDF
-    pdf.addImage(
-      imageBase64,
-      'JPEG',
-      0, // x坐标
-      0, // y坐标
-      210, // 宽度（A4纸宽度为210mm）
-      297, // 高度（A4纸高度为297mm）
-      undefined, // 别名
-      'FAST' // 压缩选项
-    )
-
-    currentPage++
-  }
-
-  // 转换PDF为Uint8Array
-  const pdfOutput = pdf.output('arraybuffer')
-  return new Uint8Array(pdfOutput)
+  // 将Blob转换为base64
+  const imageBase64 = await blobToBase64(imageData);
+  
+  // 添加图片到PDF
+  const imgWidth = 210; // A4宽度
+  const imgHeight = 297; // A4高度
+  
+  pdf.addImage(imageBase64, 'PNG', 0, 0, imgWidth, imgHeight);
+  
+  return pdf.output('arraybuffer');
 }
 
-// 辅助函数：Blob转Base64
+// 辅助函数：从多个完整页面生成PDF
+async function generatePdfFromCompletePages(imageFiles: ImageFile[], orderId: string, clientId: string, supabase: any): Promise<Uint8Array> {
+  const pdf = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4'
+  });
+
+  let currentPage = 0;
+
+  for (const file of imageFiles) {
+    // 从complete-pages桶下载图片
+    const { data: imageData, error: imageError } = await supabase
+      .storage
+      .from(BUCKET_COMPLETE_PAGES)
+      .download(`${clientId}/${orderId}/${file.name}`);
+
+    if (imageError || !imageData) {
+      console.error(`Failed to download image ${file.name}`, imageError);
+      continue;
+    }
+
+    // 将Blob转换为base64
+    const imageBase64 = await blobToBase64(imageData);
+    
+    // 如果不是第一页，添加新页
+    if (currentPage > 0) {
+      pdf.addPage();
+    }
+    
+    // 添加图片到PDF
+    const imgWidth = 210; // A4宽度
+    const imgHeight = 297; // A4高度
+    
+    pdf.addImage(imageBase64, 'PNG', 0, 0, imgWidth, imgHeight);
+    
+    currentPage++;
+  }
+  
+  return pdf.output('arraybuffer');
+}
+
+// 辅助函数：将Blob转换为base64
 async function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onloadend = () => resolve(reader.result as string)
-    reader.onerror = reject
-    reader.readAsDataURL(blob)
-  })
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
 }

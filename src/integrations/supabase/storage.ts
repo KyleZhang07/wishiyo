@@ -1,5 +1,10 @@
 import { supabase } from './client';
 
+// 存储桶常量
+export const BUCKET_IMAGES = 'images';
+export const BUCKET_PDFS = 'pdfs';
+export const BUCKET_COMPLETE_PAGES = 'complete-pages';
+
 // Utility functions for Supabase Storage operations
 
 /**
@@ -197,3 +202,84 @@ export const deleteImageFromStorage = async (path: string, bucket = 'images'): P
     return false;
   }
 }; 
+
+/**
+ * 上传完整页面图片到complete-pages桶
+ * @param canvas HTML Canvas元素
+ * @param pageType 页面类型 (cover, intro, content)
+ * @param orderId 订单ID
+ * @param pageIndex 页面索引 (对于内容页)
+ * @returns 上传后的公共URL
+ */
+export const uploadCompletePage = async (
+  canvas: HTMLCanvasElement,
+  pageType: 'cover' | 'intro' | 'content',
+  orderId: string,
+  pageIndex?: number
+): Promise<string> => {
+  try {
+    // 确保存储桶存在
+    await ensureBucketExists(BUCKET_COMPLETE_PAGES);
+    
+    // 获取客户端ID
+    const clientId = getClientId();
+    
+    // 获取高质量的图像数据
+    const dataUrl = canvas.toDataURL('image/png', 1.0); // 使用PNG格式和最高质量
+    
+    // 构建文件名
+    let fileName: string;
+    if (pageType === 'content' && pageIndex !== undefined) {
+      fileName = `${clientId}/${orderId}/${pageType}-${pageIndex}.png`;
+    } else {
+      fileName = `${clientId}/${orderId}/${pageType}.png`;
+    }
+    
+    // 上传文件到Supabase Storage
+    const { data, error } = await supabase.storage
+      .from(BUCKET_COMPLETE_PAGES)
+      .upload(fileName, dataURLToBlob(dataUrl), {
+        contentType: 'image/png',
+        upsert: true,
+        metadata: {
+          client_id: clientId,
+          order_id: orderId,
+          page_type: pageType,
+          page_index: pageIndex?.toString() || ''
+        }
+      });
+    
+    if (error) {
+      throw error;
+    }
+    
+    // 获取公共URL
+    const { data: publicUrlData } = supabase.storage
+      .from(BUCKET_COMPLETE_PAGES)
+      .getPublicUrl(fileName);
+    
+    return publicUrlData?.publicUrl || '';
+  } catch (error) {
+    console.error('Error uploading complete page to Supabase Storage:', error);
+    throw error;
+  }
+};
+
+/**
+ * 将Data URL转换为Blob对象
+ * @param dataURL Data URL字符串
+ * @returns Blob对象
+ */
+function dataURLToBlob(dataURL: string): Blob {
+  const parts = dataURL.split(';base64,');
+  const contentType = parts[0].split(':')[1];
+  const raw = window.atob(parts[1]);
+  const rawLength = raw.length;
+  const uInt8Array = new Uint8Array(rawLength);
+  
+  for (let i = 0; i < rawLength; ++i) {
+    uInt8Array[i] = raw.charCodeAt(i);
+  }
+  
+  return new Blob([uInt8Array], { type: contentType });
+}

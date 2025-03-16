@@ -1,9 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Edit, RefreshCw } from 'lucide-react';
 import LoveStoryCoverPreview from '@/components/cover-generator/LoveStoryCoverPreview';
-import { useEffect, useState, useRef, forwardRef, useImperativeHandle } from 'react';
-import { uploadImageToStorage } from '@/integrations/supabase/storage';
-import { supabase } from '@/integrations/supabase/client';
+import { useEffect, useState } from 'react';
 
 // 样式接口定义
 interface CoverStyle {
@@ -75,25 +73,19 @@ interface CoverPreviewCardProps {
   isGeneratingCover: boolean;
 }
 
-export interface CoverPreviewCardRef {
-  generateAndUploadCoverPdf: () => Promise<string | null>;
-}
-
-export const CoverPreviewCard = forwardRef<CoverPreviewCardRef, CoverPreviewCardProps>(({
+export const CoverPreviewCard = ({
   coverTitle,
   subtitle,
   authorName,
   coverImage,
   backCoverText,
   isGeneratingCover
-}, ref) => {
+}) => {
   // Get recipient name from localStorage
   const recipientName = localStorage.getItem('loveStoryPersonName') || 'My Love';
   
   // 获取用户选择的样式
   const [selectedStyle, setSelectedStyle] = useState<CoverStyle | undefined>(coverStyles[0]);
-  const [coverPdfUrl, setCoverPdfUrl] = useState<string | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   
   useEffect(() => {
     // 从 localStorage 读取用户选择的样式
@@ -105,39 +97,6 @@ export const CoverPreviewCard = forwardRef<CoverPreviewCardRef, CoverPreviewCard
       }
     }
   }, []);
-
-  // 生成并上传封面PDF的函数
-  const generateAndUploadCoverPdf = async (): Promise<string | null> => {
-    try {
-      if (!canvasRef.current) {
-        console.error('Canvas reference not available');
-        return null;
-      }
-
-      // 获取canvas数据
-      const canvas = canvasRef.current;
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
-      
-      // 上传到Supabase
-      const timestamp = Date.now();
-      const pdfUrl = await uploadImageToStorage(
-        dataUrl,
-        'pdfs',
-        `love-story-cover-pdf-${timestamp}`
-      );
-      
-      setCoverPdfUrl(pdfUrl);
-      return pdfUrl;
-    } catch (error) {
-      console.error('Error generating or uploading cover PDF:', error);
-      return null;
-    }
-  };
-  
-  // 暴露方法给父组件
-  useImperativeHandle(ref, () => ({
-    generateAndUploadCoverPdf
-  }));
 
   return (
     <div className="relative">
@@ -154,4 +113,4 @@ export const CoverPreviewCard = forwardRef<CoverPreviewCardRef, CoverPreviewCard
       </div>
     </div>
   );
-});
+};

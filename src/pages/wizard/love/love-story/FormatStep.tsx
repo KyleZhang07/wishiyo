@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Check } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { getClientId } from '@/utils/clientId';
+import { getClientId, uploadCompletePage } from '@/integrations/supabase/storage';
 
 // 封面类型
 interface CoverFormat {
@@ -24,7 +24,7 @@ const FormatStep = () => {
   // 硬封面和软封面的示例图片
   const hardcoverImage = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wgARCADIASwDAREAAhEBAxEB/8QAHAABAAIDAQEBAAAAAAAAAAAAAAUGAwQHAggB/8QAGwEBAAIDAQEAAAAAAAAAAAAAAAMEAQIFBgf/2gAMAwEAAhADEAAAAfqkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARGfUfNbj48/oHyfoWVkpvTm9bwuixrS2trCy1tLS3NLe0tza3Nrc2tza2NrY3tjowdjGf0cZfZxl9HGXucZPZxk+HGP6cYvxxh/nCH+cIP5xgZcjHk5GDJcGHLdmDNeGDNfGDLfGDJkNjFltTFktzDkuDBluDBmu1gZbtYGW7WBku0cZLtHGS6RhjvUUYrpHGC9Rxfv0R869R/QOW1J/K1YPu+tNp2YPvp1Vj0e4AAAAAAAAAAR2pxfB5/H9Z5HQj52r+98/c+jh651jL1WEPRIxgCM16jiRsFfGDLcGHJcmHJcmLLcGDLdmDLdmDJdLEyXRiyXKyMdytDHcrYx3RiYsk0Y8k0ZMs0Y8s0YclxHGR4YGR4YGHIcRhjuY4w5DmIMOQ6ijDkOogw5DqIL+S7jC/kuo4vZLuOL2S6ji/c+xhsvIw2XkUX/Po4v8Ppw+jDi+kHktjk+1v8pp+5+nzcdFd9L2wAAAAAAAAAAARexxNT5zmtLqaPK3q0k5/2I1o7Sx1MAAAAAAAAAAYazTBGmYPO7Zg87smDzuyYNO7Jgk5pGCTmkYJO56QavwaDV+DQavwSDV+CQavwSDV+CQavwSDV+CQS/wASIN74fAk3vh0CXf8Ah0CXT+HwJNP4fAk0/h8CXS+HwJdL4fAljm0Cfc8lqQt6uJKvlB6HnT61zvv9dPV3vfDztMAAAAAAAAAAAAAEbpcNzvmcj1fMmHEQGkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANea4INn6FHS5eW17jGXrh7PX8yYcTAaQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABrvdLC1/Z07PTl5uj1kJ6YAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIrs4aK88iK++HHOcHHesHF+2HEfIHDfQHB/YGn9waX3Bo/gGh+IZ/5BnfoGd+wZn8Bl/0GV/oe/8Ao9X0/pe/6Xt+l7fpe36Xt+l7fpe36Xt+l7fpe36Xr+l6/pev6Xp+l6fpen6Xp+l6fpen6Xp+l6fpWn/9k=";
   
-  const softcoverImage = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wgARCADIASwDAREAAhEBAxEB/8QAHAAAAgMBAQEBAAAAAAAAAAAABAUBAgMGBwAI/8QAGgEAAwEBAQEAAAAAAAAAAAAAAAIDBAEFBv/aAAwDAQACEAMQAAAB9UAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVKEBJtlolLrRCtdNDOL2DMXtGUvaMhe2ZAvaAhe4ZAd4xA75hB3zADwDCDvmAHgGEHgGEHhGAHhGAHhGAfBGAPiMI+IxD4jEPkMA+QwD5DAPoMY+gxj6jEPqMY+wxi9GQXY0AvRuEL0bhC9G4Re1cIXtXBF7dgRe3dEXt3RFbt4Be7eDObzGTOZ1mTGdhkw2dgMH1GrEelzZqdFmTf0GFO9Y2OtoeXJsXSqTjBUNxgoFwoEAsShcJhcJhcJxILhKKBYJRQLhKJhcIxMKxKJxWJROKxMJxSJhUJhSJxOJxSJhQJxQJxQJxQJhUJRQJRQJBQJBoIxoJBoJBoIxoIxoIxsIhsIhsIhqIxqIxsIRsIRsIRsIRsIRsIRsIRuIBuOGc2VHOOm1c5ps6nF3OM07vUPQNxsdHnLuPUrDg0G40MxudDMaGwzGh0MxofDMZnwzGh4NBofDUZHg2GA0GYwGgzGIyGYxGYyGYxGYyGIyGIxGIxGIxGQxGQxGQxGIyGIyGIxGIyGIyGIyGIxGIzGI0GIzGIzGIzGIzGIzGAzGAwGAwGQyGQyGQ2GQyGQ2GQ2GQ2GQyGQyGg3GQ5GwyHI4G45HI5HI4HI5HI5HQ5HI5G46HI6HI6HIbnQbnY5HY7G52Ox0dD/9k=";
+  const softcoverImage = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wgARCADIASwDAREAAhEBAxEB/8QAHAAAAgMBAQEBAAAAAAAAAAAABAUBAgMGBwAI/8QAGgEAAwEBAQEAAAAAAAAAAAAAAAIDBAEFBv/aAAwDAQACEAMQAAAB9UAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVKEBJtlolLrRCtdNDOL2DMXtGUvaMhe2ZAvaAhe4ZAd4xA75hB3zADwDCDvmAHgGEHgGEHhGAHhGAHhGAfBGAPiMI+IxD4jEPkMA+QwD5DAPoMY+gxj6jEPqMY+wxi9GQXY0AvRuEL0bhC9G4Re1cIXtXBF7dgRe3dEXt3RFbt4Be7eDObzGTOZ1mTGdhkw2dgMH1GrEelzZqdFmTf0GFO9Y2OtoeXJsXSqTjBUNxgoFwoEAsShcJhcJhcJxILhKKBYJRQLhKJhcIxMKxKJxWJROKxMJxSJhUJhSJxOJxSJhQJxQJxQJxQJhUJRQJRQJBQJBoIxoJBoJBoIxoIxoIxsIhsIhsIhqIxqIxsIRsIRsIRsIRsIRsIRsIRuIBuOGc2VHOOm1c5ps6nF3OM07vUPQNxsdHnLuPUrDg0G40MxudDMaGwzGh0MxofDMZnwzGh4NBofDUZHg2GA0GYwGgzGIyGYxGYyGYxGYyGIyGIxGIxGIxGQxGQxGQxGIyGIyGIxGIyGIyGIyGIxGIzGI0GIzGIzGIzGIzGIzGAzGAwGAwGQyGQyGQ2GQyGQyGQ2GQ2GQ2GQyGQyGg3GQ5GwyHI4G45HI5HI4HI5HI5HQ5HI5G46HI6HI6HIbnQbnY5HY7G52Ox0dD/9k=";
 
   // 可选的封面格式
   const coverFormats: CoverFormat[] = [
@@ -102,6 +102,62 @@ const FormatStep = () => {
         // 从localStorage获取必要信息
         const personName = localStorage.getItem('loveStoryPersonName') || '';
         
+        // 上传完整页面图片到新的存储桶
+        try {
+          // 获取所有 Canvas 元素
+          const coverCanvas = document.querySelector('.love-story-cover-preview canvas') as HTMLCanvasElement;
+          const introCanvas = document.querySelector('.introduction-section canvas') as HTMLCanvasElement;
+          const contentCanvases = Array.from(document.querySelectorAll('.content-section canvas')) as HTMLCanvasElement[];
+          
+          // 上传封面页面
+          if (coverCanvas) {
+            const coverPageUrl = await uploadCompletePage(
+              coverCanvas,
+              'cover',
+              orderId
+            );
+            
+            console.log('Cover page uploaded successfully:', coverPageUrl);
+            localStorage.setItem('loveStoryCompletePageCover', coverPageUrl);
+          } else {
+            console.warn('Cover canvas not found');
+          }
+          
+          // 上传介绍页面
+          if (introCanvas) {
+            const introPageUrl = await uploadCompletePage(
+              introCanvas,
+              'intro',
+              orderId
+            );
+            
+            console.log('Intro page uploaded successfully:', introPageUrl);
+            localStorage.setItem('loveStoryCompletePageIntro', introPageUrl);
+          } else {
+            console.warn('Intro canvas not found');
+          }
+          
+          // 上传内容页面
+          if (contentCanvases.length > 0) {
+            for (let i = 0; i < contentCanvases.length; i++) {
+              const contentPageUrl = await uploadCompletePage(
+                contentCanvases[i],
+                'content',
+                orderId,
+                i
+              );
+              
+              console.log(`Content page ${i} uploaded successfully:`, contentPageUrl);
+              localStorage.setItem(`loveStoryCompletePageContent_${i}`, contentPageUrl);
+            }
+          } else {
+            console.warn('No content canvases found');
+          }
+        } catch (uploadError) {
+          console.error('Error uploading complete pages:', uploadError);
+          // 继续结账流程，即使上传失败
+        }
+        
         try {
           // 添加记录到数据库
           const clientId = getClientId();
@@ -109,6 +165,11 @@ const FormatStep = () => {
           // 获取用户选择的封面图片 URL
           const selectedCoverImageUrl = localStorage.getItem('loveStorySelectedCoverImage_url') || 
                                        localStorage.getItem('loveStoryCoverImage_url') || '';
+          
+          // 获取完整页面URL
+          const completePageCoverUrl = localStorage.getItem('loveStoryCompletePageCover') || '';
+          const completePageIntroUrl = localStorage.getItem('loveStoryCompletePageIntro') || '';
+          const completePageContentUrls = Array.from({ length: 10 }, (_, i) => localStorage.getItem(`loveStoryCompletePageContent_${i}`) || '');
           
           const { data, error } = await supabase
             .from('love_story_books')
@@ -119,7 +180,10 @@ const FormatStep = () => {
               status: 'created',
               timestamp: new Date().toISOString(),
               client_id: clientId,
-              cover_pdf: selectedCoverImageUrl // 添加用户选择的封面图片 URL
+              cover_pdf: selectedCoverImageUrl, // 添加用户选择的封面图片 URL
+              complete_page_cover: completePageCoverUrl, // 添加完整页面URL
+              complete_page_intro: completePageIntroUrl, // 添加介绍页面URL
+              complete_page_content: completePageContentUrls.join(',') // 添加内容页面URL
             })
             .select();
           
@@ -151,6 +215,12 @@ const FormatStep = () => {
         });
         setIsProcessing(false);
       }
+    } else {
+      toast({
+        title: "Please Select a Format",
+        description: "Please select a book format before proceeding to checkout.",
+        variant: "destructive"
+      });
     }
   };
   
