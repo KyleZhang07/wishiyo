@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Edit, RefreshCw } from 'lucide-react';
-import LoveStoryCoverPreview from '@/components/cover-generator/LoveStoryCoverPreview';
+import LoveStoryCoverPreview, { LoveStoryCoverPreviewRef } from '@/components/cover-generator/LoveStoryCoverPreview';
 import { useEffect, useState, useRef, forwardRef, useImperativeHandle } from 'react';
 import { uploadImageToStorage } from '@/integrations/supabase/storage';
 import { supabase } from '@/integrations/supabase/client';
@@ -75,14 +75,9 @@ interface CoverPreviewCardProps {
   isGeneratingCover: boolean;
 }
 
-// 添加导出接口
 export interface CoverPreviewCardRef {
   generateAndUploadCoverPdf: () => Promise<string | null>;
   getCoverCanvasImage: () => Promise<string>;
-}
-
-interface LoveStoryCoverPreviewRef {
-  getCanvasImage: () => string | null;
 }
 
 // 创建一个引用来存储 LoveStoryCoverPreview 组件的 canvas 引用
@@ -98,7 +93,7 @@ export const getCoverCanvasImage = (): Promise<string> => {
     
     // 将 canvas 内容转换为 data URL
     try {
-      const dataUrl = canvasRef.toDataURL('image/jpeg', 0.9);
+      const dataUrl = canvasRef.toDataURL('image/jpeg', 0.95);
       resolve(dataUrl);
     } catch (error) {
       reject(error);
@@ -148,11 +143,11 @@ export const CoverPreviewCard = forwardRef<CoverPreviewCardRef, CoverPreviewCard
     }
   }, []);
   
-  // 生成并上传封面 PDF
+  // 生成并上传封面图片
   const generateAndUploadCoverPdf = async (): Promise<string | null> => {
     try {
       // 确保存储桶存在
-      await ensureBucketExists('pdfs');
+      await ensureBucketExists('images');
       
       // 获取 canvas 图片数据
       const imageData = coverPreviewRef.current?.getCanvasImage();
@@ -164,23 +159,31 @@ export const CoverPreviewCard = forwardRef<CoverPreviewCardRef, CoverPreviewCard
       // 生成时间戳和文件名
       const timestamp = Date.now();
       const personName = localStorage.getItem('loveStoryPersonName') || 'user';
-      const fileName = `love-story-cover-${personName.replace(/\s+/g, '-')}-${timestamp}.pdf`;
+      const orderId = localStorage.getItem('currentOrderId') || `order-${timestamp}`;
       
-      // 上传到 pdfs 存储桶
-      const pdfUrl = await uploadImageToStorage(
+      // 确保文件名与现有系统的命名约定兼容
+      // 注意：CoverStep.tsx 中使用 img.name.includes('love-story-cover') 来筛选封面图片
+      const coverFileName = `love-story-cover-${timestamp}.jpg`;
+      const imagePath = `love-story/${orderId}/${coverFileName}`;
+      
+      // 只上传到 images 存储桶，让 generate-love-story-pdfs 函数处理 PDF 生成
+      const imageUrl = await uploadImageToStorage(
         imageData,
-        'pdfs',
-        fileName.replace('.pdf', '') // 移除 .pdf 后缀，因为 uploadImageToStorage 会自动添加 .jpg
+        'images',
+        imagePath
       );
       
       // 保存 URL 到状态和 localStorage
-      setCoverPdfUrl(pdfUrl);
-      localStorage.setItem('loveStoryCoverPdf_url', pdfUrl);
+      setCoverPdfUrl(imageUrl);
+      localStorage.setItem('loveStoryCoverImage_url', imageUrl);
+      localStorage.setItem('loveStoryCoverImagePath', imagePath);
       
-      console.log('Cover PDF generated and uploaded:', pdfUrl);
-      return pdfUrl;
+      console.log('Cover image uploaded:', imageUrl);
+      console.log('PDF generation will be handled by the generate-love-story-pdfs function');
+      
+      return imageUrl;
     } catch (error) {
-      console.error('Error generating and uploading cover PDF:', error);
+      console.error('Error generating and uploading cover image:', error);
       return null;
     }
   };
@@ -188,6 +191,20 @@ export const CoverPreviewCard = forwardRef<CoverPreviewCardRef, CoverPreviewCard
   // 设置 canvas 引用的回调函数
   const setCanvasRef = (canvas: HTMLCanvasElement | null) => {
     canvasRef = canvas;
+  };
+
+  // 获取 Canvas 图像
+  const getCoverCanvasImage = async (): Promise<string> => {
+    try {
+      const imageData = coverPreviewRef.current?.getCanvasImage();
+      if (!imageData) {
+        throw new Error('Failed to get canvas image data');
+      }
+      return imageData;
+    } catch (error) {
+      console.error('Error getting canvas image:', error);
+      throw error;
+    }
   };
 
   // 暴露方法给父组件
@@ -200,6 +217,7 @@ export const CoverPreviewCard = forwardRef<CoverPreviewCardRef, CoverPreviewCard
     <div className="relative">
       <div className="max-w-xl mx-auto">
         <LoveStoryCoverPreview
+          ref={coverPreviewRef}
           coverTitle={coverTitle}
           subtitle={subtitle}
           authorName={authorName}

@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { useImageLoader } from './hooks/useImageLoader';
 import drawTexturedBackground from './TexturedBackground';
 import drawSnowNightBackground from './SnowNightBackground';
@@ -18,6 +18,11 @@ interface CoverStyle {
   borderColor?: string;
 }
 
+// 暴露给父组件的方法
+export interface LoveStoryCoverPreviewRef {
+  getCanvasImage: () => string | null;
+}
+
 interface LoveStoryCoverPreviewProps {
   coverTitle: string;
   subtitle: string;
@@ -29,7 +34,7 @@ interface LoveStoryCoverPreviewProps {
   canvasRefCallback?: (canvas: HTMLCanvasElement | null) => void;
 }
 
-const LoveStoryCoverPreview = ({
+const LoveStoryCoverPreview = forwardRef<LoveStoryCoverPreviewRef, LoveStoryCoverPreviewProps>(({
   coverTitle,
   subtitle,
   authorName,
@@ -38,7 +43,7 @@ const LoveStoryCoverPreview = ({
   selectedFont = 'playfair',
   style,
   canvasRefCallback
-}: LoveStoryCoverPreviewProps) => {
+}, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const image = useImageLoader(coverImage);
   const blueTexture = useImageLoader(blueTextureBackground);
@@ -487,6 +492,14 @@ const LoveStoryCoverPreview = ({
     return lines;
   };
 
+  useImperativeHandle(ref, () => ({
+    getCanvasImage: () => {
+      const canvas = canvasRef.current;
+      if (!canvas) return null;
+      return canvas.toDataURL();
+    }
+  }));
+
   return (
     <div className="space-y-4">
       <div className="relative rounded-lg overflow-hidden shadow-xl">
@@ -497,6 +510,6 @@ const LoveStoryCoverPreview = ({
       </div>
     </div>
   );
-};
+});
 
 export default LoveStoryCoverPreview; 
