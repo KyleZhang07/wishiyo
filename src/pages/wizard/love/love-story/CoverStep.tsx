@@ -78,6 +78,7 @@ const LoveStoryCoverStep = () => {
   const [coverImages, setCoverImages] = useState<string[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
   const [isGeneratingCover, setIsGeneratingCover] = useState<boolean>(false);
+  const [supabaseImages, setSupabaseImages] = useState<any[]>([]);
   const [selectedStyle, setSelectedStyle] = useState<string>('classic');
   const [textTone, setTextTone] = useState<string>('romantic');
   const { toast } = useToast();
@@ -106,6 +107,12 @@ const LoveStoryCoverStep = () => {
       setSelectedStyle(savedStyle);
     }
     
+    // 获取用户之前选择的图片索引
+    const savedImageIndex = localStorage.getItem('loveStorySelectedCoverIndex');
+    if (savedImageIndex) {
+      setCurrentImageIndex(parseInt(savedImageIndex));
+    }
+    
     if (savedIdeas && savedIdeaIndex) {
       try {
         const ideas = JSON.parse(savedIdeas);
@@ -128,18 +135,29 @@ const LoveStoryCoverStep = () => {
       const images = await getAllImagesFromStorage('images');
       const coverImages = images.filter(img => img.name.includes('love-story-cover'));
       
+      // 保存 Supabase 图片信息
+      setSupabaseImages(coverImages);
+      
       if (coverImages.length > 0) {
         // 按创建时间排序，最新的在前面
         const sortedImages = coverImages.sort((a, b) => {
           return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         });
         
-        // 获取所有图片的URL
+        // 获取图片URL数组
         const imageUrls = sortedImages.map(img => img.url);
+        
+        // 更新状态
         setCoverImages(imageUrls);
         
-        // 设置当前显示的图片为第一张
-        setCurrentImageIndex(0);
+        // 获取用户之前选择的图片索引
+        const savedImageIndex = localStorage.getItem('loveStorySelectedCoverIndex');
+        if (savedImageIndex && parseInt(savedImageIndex) < imageUrls.length) {
+          setCurrentImageIndex(parseInt(savedImageIndex));
+        } else {
+          // 默认选择第一张图片
+          setCurrentImageIndex(0);
+        }
       }
     } catch (error) {
       console.error('Error loading cover images from Supabase:', error);
@@ -183,22 +201,35 @@ const LoveStoryCoverStep = () => {
   };
 
   // 切换到上一张图片
-  const handlePreviousImage = () => {
-    setCurrentImageIndex(prevIndex => 
-      prevIndex === 0 ? coverImages.length - 1 : prevIndex - 1
-    );
+  const handlePrevImage = () => {
+    if (coverImages.length <= 1) return;
+    
+    const newIndex = currentImageIndex === 0 ? coverImages.length - 1 : currentImageIndex - 1;
+    setCurrentImageIndex(newIndex);
+    
+    // 保存当前选中的图片索引
+    localStorage.setItem('loveStorySelectedCoverIndex', newIndex.toString());
   };
 
   // 切换到下一张图片
   const handleNextImage = () => {
-    setCurrentImageIndex(prevIndex => 
-      prevIndex === coverImages.length - 1 ? 0 : prevIndex + 1
-    );
+    if (coverImages.length <= 1) return;
+    
+    const newIndex = (currentImageIndex + 1) % coverImages.length;
+    setCurrentImageIndex(newIndex);
+    
+    // 保存当前选中的图片索引
+    localStorage.setItem('loveStorySelectedCoverIndex', newIndex.toString());
   };
 
-  // 直接跳转到指定图片
+  // 直接跳转到指定索引的图片
   const handleDotClick = (index: number) => {
-    setCurrentImageIndex(index);
+    if (index >= 0 && index < coverImages.length) {
+      setCurrentImageIndex(index);
+      
+      // 保存当前选中的图片索引
+      localStorage.setItem('loveStorySelectedCoverIndex', index.toString());
+    }
   };
 
   // 重新生成封面功能
@@ -344,6 +375,29 @@ const LoveStoryCoverStep = () => {
   };
   
   const handleContinue = () => {
+    // 保存当前选中的封面图片到 localStorage
+    if (coverImages.length > 0 && currentImageIndex >= 0 && currentImageIndex < coverImages.length) {
+      const selectedCoverImage = coverImages[currentImageIndex];
+      localStorage.setItem('loveStorySelectedCoverImage', selectedCoverImage);
+      
+      // 如果有 Supabase 存储的 URL，也保存它
+      const images = supabaseImages.filter(img => img.name.includes('love-story-cover'));
+      if (images.length > 0) {
+        // 找到当前显示的图片在 Supabase 中的 URL
+        const sortedImages = images.sort((a, b) => {
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        });
+        
+        // 如果有多张图片，保存当前选中的那张
+        if (sortedImages.length > currentImageIndex) {
+          localStorage.setItem('loveStorySelectedCoverImage_url', sortedImages[currentImageIndex].url);
+        }
+      }
+      
+      // 保存当前选中的图片索引
+      localStorage.setItem('loveStorySelectedCoverIndex', currentImageIndex.toString());
+    }
+    
     toast({
       title: "Cover saved",
       description: "Moving to the next step..."
@@ -376,7 +430,7 @@ const LoveStoryCoverStep = () => {
           {/* 左箭头 */}
           {coverImages.length > 1 && (
             <button 
-              onClick={handlePreviousImage}
+              onClick={handlePrevImage}
               className="absolute left-0 top-1/2 transform -translate-y-1/2 -ml-10 bg-white/80 rounded-full p-2 shadow-md z-10 hover:bg-white transition-colors"
               disabled={isGeneratingCover}
             >

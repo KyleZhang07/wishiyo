@@ -533,12 +533,27 @@ const GenerateStep = () => {
         
         // 使用正则表达式精确匹配文件名，防止10匹配到1的内容
         if (/^love-story-cover/.test(fileName) && !processedTypes['cover']) {
-          setCoverImage(img.url);
-          newImageMap['loveStoryCoverImage'] = {
-            localStorageKey: 'loveStoryCoverImage',
-            url: img.url
-          };
-          localStorage.setItem('loveStoryCoverImage_url', img.url);
+          // 检查用户是否在 CoverStep 中选择了特定的封面图片
+          const selectedCoverImageUrl = localStorage.getItem('loveStorySelectedCoverImage_url');
+          
+          if (selectedCoverImageUrl) {
+            // 如果用户选择了特定的封面图片，使用该图片
+            setCoverImage(selectedCoverImageUrl);
+            newImageMap['loveStoryCoverImage'] = {
+              localStorageKey: 'loveStoryCoverImage',
+              url: selectedCoverImageUrl
+            };
+            localStorage.setItem('loveStoryCoverImage_url', selectedCoverImageUrl);
+          } else {
+            // 否则使用最新的封面图片
+            setCoverImage(img.url);
+            newImageMap['loveStoryCoverImage'] = {
+              localStorageKey: 'loveStoryCoverImage',
+              url: img.url
+            };
+            localStorage.setItem('loveStoryCoverImage_url', img.url);
+          }
+          
           processedTypes['cover'] = true;
         } else if (/^love-story-intro/.test(fileName) && !processedTypes['intro']) {
           setIntroImage(img.url);
