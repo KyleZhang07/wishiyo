@@ -530,26 +530,99 @@ export default async function handler(req, res) {
               console.log(`===== STARTING LOVE STORY PDF GENERATION FOR ORDER ${orderId} =====`);
               try {
                 const pdfResponse = await fetch(
-                  `${supabaseUrl}/functions/v1/generate-love-story-pdfs`,
+                  `/api/generate-love-story-pdf`,
                   {
                     method: 'POST',
                     headers: {
-                      'Content-Type': 'application/json',
-                      'Authorization': `Bearer ${supabaseKey}`
+                      'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ orderId })
                   }
                 );
                 
+                const pdfResult = await pdfResponse.json();
+                console.log(`Love story PDF generation result for ${orderId}:`, pdfResult);
+                
                 if (!pdfResponse.ok) {
-                  const errorText = await pdfResponse.text();
-                  console.error(`Error generating Love Story PDFs: ${pdfResponse.status} ${pdfResponse.statusText}`, errorText);
-                } else {
-                  const pdfResult = await pdfResponse.json();
-                  console.log(`Love Story PDF generation result for ${orderId}:`, pdfResult);
+                  // 检查错误是否是因为缺少图像
+                  if (pdfResult.error && 
+                      (pdfResult.error.includes('No images found') || 
+                       pdfResult.error.includes('Insufficient images'))) {
+                    
+                    console.log(`No rendered images found for order ${orderId}, need to render images first`);
+                    
+                    // 从数据库获取必要信息
+                    const { data: bookData } = await fetch(
+                      `${supabaseUrl}/rest/v1/love_story_books?order_id=eq.${orderId}&select=*`,
+                      {
+                        method: 'GET',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${supabaseKey}`,
+                          'apikey': supabaseKey
+                        }
+                      }
+                    ).then(res => res.json());
+                    
+                    if (bookData && bookData.length > 0) {
+                      const book = bookData[0];
+                      // 使用默认样式渲染封面图像
+                      console.log(`Rendering cover image for order ${orderId}`);
+                      
+                      const renderCoverResponse = await fetch(
+                        `/api/render-love-story-images`,
+                        {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json'
+                          },
+                          body: JSON.stringify({ 
+                            orderId,
+                            pageType: 'cover',
+                            coverTitle: 'THE MAGIC IN',
+                            subtitle: book.person_name || '',
+                            authorName: 'With Love',
+                            recipientName: book.person_name || '',
+                            styleId: 'classic',
+                            clientId: book.client_id
+                          })
+                        }
+                      );
+                      
+                      if (!renderCoverResponse.ok) {
+                        throw new Error(`Failed to render cover image: ${await renderCoverResponse.text()}`);
+                      }
+                      
+                      // 重新尝试生成PDF
+                      console.log(`Retrying PDF generation for order ${orderId} after rendering images`);
+                      const retryPdfResponse = await fetch(
+                        `/api/generate-love-story-pdf`,
+                        {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json'
+                          },
+                          body: JSON.stringify({ orderId })
+                        }
+                      );
+                      
+                      const retryPdfResult = await retryPdfResponse.json();
+                      if (!retryPdfResponse.ok) {
+                        throw new Error(`PDF generation failed on retry: ${JSON.stringify(retryPdfResult)}`);
+                      }
+                      
+                      console.log(`Love story PDF generation completed on retry for order ${orderId}`);
+                    } else {
+                      throw new Error(`Could not find book data for order ${orderId}`);
+                    }
+                  } else {
+                    throw new Error(`PDF generation failed: ${JSON.stringify(pdfResult)}`);
+                  }
                 }
+                
+                console.log(`Love story PDF generation completed successfully for order ${orderId}`);
               } catch (error) {
-                console.error(`Error in Love Story PDF generation process for ${orderId}:`, error);
+                console.error(`Error in love story PDF generation process for ${orderId}:`, error);
                 // 记录详细错误信息，但不终止webhook处理
                 console.error(`Error details:`, error.stack || error);
               }
