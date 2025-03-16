@@ -483,27 +483,7 @@ const GenerateStep = () => {
   // 新增加：从Supabase加载所有图片
   const loadImagesFromSupabase = async () => {
     setIsLoadingImages(true);
-    
     try {
-      // 首先检查是否有 CoverStep 选择的封面图片
-      const selectedCoverImageUrl = localStorage.getItem('loveStoryCoverImage_url');
-      
-      if (selectedCoverImageUrl) {
-        console.log('Using selected cover image from CoverStep (URL):', selectedCoverImageUrl);
-        setCoverImage(selectedCoverImageUrl);
-        
-        // 更新存储映射
-        setImageStorageMap(prev => ({
-          ...prev,
-          ['loveStoryCoverImage']: {
-            localStorageKey: 'loveStoryCoverImage',
-            url: selectedCoverImageUrl
-          }
-        }));
-        
-        // 不再提前返回，继续加载其他图片
-      }
-      
       // 获取所有Supabase中的图片
       const images = await getAllImagesFromStorage('images');
       
@@ -685,37 +665,42 @@ const GenerateStep = () => {
   };
 
   useEffect(() => {
-    // 从localStorage加载已保存的图片
-    const savedCoverImage = localStorage.getItem('loveStoryCoverImage');
-    const savedCoverImageUrl = localStorage.getItem('loveStoryCoverImage_url');
-    const savedIntroImage = localStorage.getItem('loveStoryIntroImage');
-    const savedIntroImageUrl = localStorage.getItem('loveStoryIntroImage_url');
-    const savedTexts = localStorage.getItem('loveStoryImageTexts');
+    // 加载文本内容和设置
+    const savedAuthor = localStorage.getItem('loveStoryAuthorName');
     const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
     const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
-    const savedStyle = localStorage.getItem('loveStoryStyle');
     const savedMoments = localStorage.getItem('loveStoryMoments');
+    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const savedStyle = localStorage.getItem('loveStoryStyle');
+    const savedTexts = localStorage.getItem('loveStoryImageTexts');
     
-    if (savedStyle) {
-      setSelectedStyle(savedStyle);
-    }
-    
-    // 优先使用 CoverStep 中选中的封面图片
-    if (savedCoverImageUrl) {
-      console.log('Using selected cover image URL from CoverStep:', savedCoverImageUrl);
-      setCoverImage(savedCoverImageUrl);
-    } else if (savedCoverImage) {
-      console.log('Using selected cover image data from CoverStep:', savedCoverImage.substring(0, 50) + '...');
-      setCoverImage(savedCoverImage);
-    }
-    
-    // 无论是否有选中的封面图片，都从 Supabase 加载所有图片
+    // 直接从Supabase加载所有图片，不再使用localStorage
     loadImagesFromSupabase();
-    
-    if (savedIntroImage) {
-      setIntroImage(savedIntroImage);
+
+    if (savedAuthor) {
+      setAuthorName(savedAuthor);
     }
-    
+
+    if (savedStyle) {
+      // Map old style names to new API-compatible style names
+      const styleMapping: Record<string, string> = {
+        'Comic Book': 'Comic book',
+        'Line Art': 'Line art',
+        'Fantasy Art': 'Fantasy art',
+        'Photographic': 'Photographic (Default)',
+        'Disney Character': 'Disney Charactor'
+      };
+      
+      // Use the mapping or the original value
+      const normalizedStyle = styleMapping[savedStyle] || savedStyle;
+      setSelectedStyle(normalizedStyle);
+      
+      // Update localStorage with the normalized style if it changed
+      if (normalizedStyle !== savedStyle) {
+        localStorage.setItem('loveStoryStyle', normalizedStyle);
+      }
+    }
+
     if (savedTexts) {
       try {
         setImageTexts(JSON.parse(savedTexts));
@@ -758,9 +743,8 @@ const GenerateStep = () => {
   };
 
   const handleRegenerateCover = async (style?: string) => {
-    // 不要删除选中的封面图片
-    // localStorage.removeItem('loveStoryCoverImage');
-    // localStorage.removeItem('loveStoryCoverImage_url');
+    localStorage.removeItem('loveStoryCoverImage');
+    localStorage.removeItem('loveStoryCoverImage_url');
     
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
     const characterPhoto = localStorage.getItem('loveStoryPartnerPhoto');
@@ -1095,12 +1079,6 @@ const GenerateStep = () => {
               onRegenerateCover={handleRegenerateCover}
               onEditCover={() => {}}
             />
-            {/* 添加调试信息，显示当前使用的封面图片来源 */}
-            <div className="mt-2 text-xs text-gray-500">
-              {coverImage && coverImage.startsWith('http') ? 
-                `Using cover image from URL: ${coverImage.substring(0, 50)}...` : 
-                coverImage ? 'Using cover image from base64 data' : 'No cover image set'}
-            </div>
           </div>
         </div>
         

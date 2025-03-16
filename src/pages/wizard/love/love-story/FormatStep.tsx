@@ -53,7 +53,7 @@ const FormatStep = () => {
   const handleFormatSelect = (formatId: string) => {
     setSelectedFormat(formatId);
     // 保存选择到localStorage
-    localStorage.setItem('loveStoryFormat', formatId);
+    localStorage.setItem('loveStorySelectedFormat', formatId);
     
     const selectedFormatObj = coverFormats.find(format => format.id === formatId);
     if (selectedFormatObj) {
@@ -75,9 +75,6 @@ const FormatStep = () => {
       localStorage.setItem('loveStoryBookPrice', selectedFormatObj.price.toString());
       
       try {
-        // 获取选中的封面图片URL
-        const selectedCoverImageUrl = localStorage.getItem('loveStoryCoverImage_url');
-        
         // 调用Stripe支付API
         const response = await fetch('/api/create-checkout-session', {
           method: 'POST',
@@ -89,8 +86,7 @@ const FormatStep = () => {
             title: bookTitle,
             format: selectedFormatObj.name,
             price: selectedFormatObj.price.toString(),
-            quantity: 1,
-            coverImage: selectedCoverImageUrl // 添加选中的封面图片URL
+            quantity: 1
           }),
         });
         
@@ -117,8 +113,7 @@ const FormatStep = () => {
               person_name: personName,
               status: 'created',
               timestamp: new Date().toISOString(),
-              client_id: clientId,
-              cover_image: localStorage.getItem('loveStoryCoverImage_url') // 添加选中的封面图片URL
+              client_id: clientId
             })
             .select();
           
@@ -155,16 +150,9 @@ const FormatStep = () => {
   
   // 从localStorage加载已保存的选择
   useEffect(() => {
-    // 从localStorage加载已保存的选择
-    const savedFormat = localStorage.getItem('loveStoryFormat');
+    const savedFormat = localStorage.getItem('loveStorySelectedFormat');
     if (savedFormat) {
       setSelectedFormat(savedFormat);
-    }
-    
-    // 检查是否有选中的封面图片
-    const selectedCoverImage = localStorage.getItem('loveStoryCoverImage_url');
-    if (selectedCoverImage) {
-      console.log('Selected cover image found for checkout:', selectedCoverImage);
     }
   }, []);
   

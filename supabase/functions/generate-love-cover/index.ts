@@ -89,7 +89,7 @@ serve(async (req) => {
             num_steps: 50,
             style_name: styleName,
             input_image: photo,
-            num_outputs: 3,  // 从1改为3，生成3张封面图片
+            num_outputs: 4,  // 从1改为4，生成多张封面图片
             guidance_scale: 5.0,
             style_strength_ratio: 40,
             negative_prompt:
@@ -172,7 +172,7 @@ serve(async (req) => {
             num_steps: 50,
             style_name: styleName,
             input_image: photo,
-            num_outputs: 3,  // 从4改为3，生成3张封面图片
+            num_outputs: 4,  // 从1改为4，生成多张封面图片
             guidance_scale: 5.0,
             style_strength_ratio: 40,
             negative_prompt:

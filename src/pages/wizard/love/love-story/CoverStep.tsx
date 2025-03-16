@@ -344,19 +344,6 @@ const LoveStoryCoverStep = () => {
   };
   
   const handleContinue = () => {
-    // 保存当前选中的封面图片到 localStorage
-    if (coverImages.length > 0 && currentImageIndex >= 0 && currentImageIndex < coverImages.length) {
-      const selectedCoverImage = coverImages[currentImageIndex];
-      localStorage.setItem('loveStoryCoverImage', selectedCoverImage);
-      
-      // 如果图片是 Supabase Storage URL，也保存 URL
-      if (selectedCoverImage.startsWith('http')) {
-        localStorage.setItem('loveStoryCoverImage_url', selectedCoverImage);
-      }
-      
-      console.log('Selected cover image saved:', selectedCoverImage);
-    }
-    
     toast({
       title: "Cover saved",
       description: "Moving to the next step..."
