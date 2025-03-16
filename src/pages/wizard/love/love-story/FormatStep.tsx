@@ -106,10 +106,6 @@ const FormatStep = () => {
           // 添加记录到数据库
           const clientId = getClientId();
           
-          // 获取用户选择的封面图片 URL
-          const selectedCoverImageUrl = localStorage.getItem('loveStorySelectedCoverImage_url') || 
-                                       localStorage.getItem('loveStoryCoverImage_url') || '';
-          
           const { data, error } = await supabase
             .from('love_story_books')
             .insert({
@@ -118,9 +114,7 @@ const FormatStep = () => {
               person_name: personName,
               status: 'created',
               timestamp: new Date().toISOString(),
-              client_id: clientId,
-              // 移除 cover_pdf 字段，PDF 将在支付成功后通过 webhook 生成
-              cover_image_url: selectedCoverImageUrl // 保存用户选择的封面图片 URL
+              client_id: clientId
             })
             .select();
           
