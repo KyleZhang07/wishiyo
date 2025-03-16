@@ -1,4 +1,4 @@
-import { useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
+import { useRef, useEffect } from 'react';
 import { useImageLoader } from './hooks/useImageLoader';
 import drawTexturedBackground from './TexturedBackground';
 import drawSnowNightBackground from './SnowNightBackground';
@@ -18,11 +18,6 @@ interface CoverStyle {
   borderColor?: string;
 }
 
-// 暴露给父组件的方法
-export interface LoveStoryCoverPreviewRef {
-  getCanvasImage: () => string | null;
-}
-
 interface LoveStoryCoverPreviewProps {
   coverTitle: string;
   subtitle: string;
@@ -31,19 +26,17 @@ interface LoveStoryCoverPreviewProps {
   coverImage?: string;
   selectedFont?: string;
   style?: CoverStyle;
-  canvasRefCallback?: (canvas: HTMLCanvasElement | null) => void;
 }
 
-const LoveStoryCoverPreview = forwardRef<LoveStoryCoverPreviewRef, LoveStoryCoverPreviewProps>(({
+const LoveStoryCoverPreview = ({
   coverTitle,
   subtitle,
   authorName,
   recipientName,
   coverImage,
   selectedFont = 'playfair',
-  style,
-  canvasRefCallback
-}, ref) => {
+  style
+}: LoveStoryCoverPreviewProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const image = useImageLoader(coverImage);
   const blueTexture = useImageLoader(blueTextureBackground);
@@ -53,11 +46,6 @@ const LoveStoryCoverPreview = forwardRef<LoveStoryCoverPreviewRef, LoveStoryCove
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
-    // 如果提供了回调函数，则传递 canvas 引用
-    if (canvasRefCallback) {
-      canvasRefCallback(canvas);
-    }
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -492,14 +480,6 @@ const LoveStoryCoverPreview = forwardRef<LoveStoryCoverPreviewRef, LoveStoryCove
     return lines;
   };
 
-  useImperativeHandle(ref, () => ({
-    getCanvasImage: () => {
-      const canvas = canvasRef.current;
-      if (!canvas) return null;
-      return canvas.toDataURL();
-    }
-  }));
-
   return (
     <div className="space-y-4">
       <div className="relative rounded-lg overflow-hidden shadow-xl">
@@ -510,6 +490,6 @@ const LoveStoryCoverPreview = forwardRef<LoveStoryCoverPreviewRef, LoveStoryCove
       </div>
     </div>
   );
-});
+};
 
 export default LoveStoryCoverPreview; 
