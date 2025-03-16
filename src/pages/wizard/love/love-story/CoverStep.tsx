@@ -25,10 +25,10 @@ const coverStyles: CoverStyle[] = [
   {
     id: 'classic',
     name: 'Classic',
-    background: '#f5f5f0',
-    titleColor: '#5a5a5a',
-    subtitleColor: '#633d63',
-    authorColor: '#333333',
+    background: '#f6f4ea', // 介于之前两种颜色之间的中间值
+    titleColor: '#444444', // 保持深灰色标题
+    subtitleColor: '#633d63', // 保持紫色副标题
+    authorColor: '#222222', // 保持深灰色作者名
     font: 'playfair',
     borderColor: '#EAC46E'
   },

@@ -1,5 +1,10 @@
 import { useRef, useEffect } from 'react';
 import { useImageLoader } from './hooks/useImageLoader';
+import drawTexturedBackground from './TexturedBackground';
+import drawSnowNightBackground from './SnowNightBackground';
+import blueTextureBackground from '../../assets/Generated Image March 15, 2025 - 3_12PM_LE_upscale_balanced_x4.jpg';
+import greenLeafBackground from '../../assets/leaves.jpg';
+import rainbowBackground from '../../assets/rainbow2.jpg';
 
 // 样式接口定义
 interface CoverStyle {
@@ -34,24 +39,67 @@ const LoveStoryCoverPreview = ({
 }: LoveStoryCoverPreviewProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const image = useImageLoader(coverImage);
+  const blueTexture = useImageLoader(blueTextureBackground);
+  const greenLeaf = useImageLoader(greenLeafBackground);
+  const rainbow = useImageLoader(rainbowBackground);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Set canvas dimensions for 1:1 aspect ratio
+    // 设置画布尺寸为 1:1 比例
     canvas.width = 1000;
     canvas.height = 1000;
 
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // 预加载所有图片，确保在绘制前已加载完成
+    const preloadImages = async () => {
+      try {
+        // 等待所有图片加载完成
+        await Promise.all([
+          blueTexture?.loaded,
+          greenLeaf?.loaded,
+          rainbow?.loaded,
+          image?.loaded
+        ].filter(Boolean));
+        
+        // 清除画布
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // 所有图片加载完成后再绘制
+        drawLoveStoryCover(
+          ctx, 
+          canvas,
+          coverTitle, 
+          subtitle, 
+          authorName, 
+          recipientName, 
+          image, 
+          selectedFont,
+          style
+        );
+      } catch (error) {
+        console.error('Error loading images:', error);
+        
+        // 如果图片加载失败，仍然尝试绘制
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawLoveStoryCover(
+          ctx, 
+          canvas,
+          coverTitle, 
+          subtitle, 
+          authorName, 
+          recipientName, 
+          image, 
+          selectedFont,
+          style
+        );
+      }
+    };
 
-    // Draw the cover
-    drawLoveStoryCover(ctx, canvas, coverTitle, subtitle, authorName, recipientName, image, selectedFont, style);
-    
+    preloadImages();
   }, [coverTitle, subtitle, authorName, recipientName, image, selectedFont, style]);
 
   const drawLoveStoryCover = (
@@ -96,37 +144,61 @@ const LoveStoryCoverPreview = ({
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, width, height);
     
+    // 为 classic 样式添加纹理背景
+    if (style?.id === 'classic') {
+      drawTexturedBackground({
+        ctx,
+        width,
+        height,
+        baseColor: backgroundColor,
+        textureOpacity: 0.8
+      });
+    }
+    
+    // 为 modern 样式添加背景图片
+    if (style?.id === 'modern') {
+      if (blueTexture && blueTexture.element) {
+        // 使用加载的图片作为背景
+        ctx.drawImage(blueTexture.element, 0, 0, width, height);
+        
+        // 添加一些雪花
+        drawSnowflakes(ctx, width, height);
+      } else {
+        // 如果图片未加载，使用纯色背景
+        ctx.fillStyle = '#0a1a3f';
+        ctx.fillRect(0, 0, width, height);
+      }
+    }
+    
+    // 为第三个样式添加绿叶背景
+    if (style?.id === 'playful') {
+      if (greenLeaf && greenLeaf.element) {
+        // 使用加载的图片作为背景
+        ctx.drawImage(greenLeaf.element, 0, 0, width, height);
+      } else {
+        // 如果图片未加载，使用纯色背景
+        ctx.fillStyle = '#4A89DC'; // 回退到原始的蓝色背景
+        ctx.fillRect(0, 0, width, height);
+      }
+    }
+    
+    // 为第四个样式添加彩虹背景
+    if (style?.id === 'elegant') {
+      if (rainbow && rainbow.element) {
+        // 使用加载的图片作为背景
+        ctx.drawImage(rainbow.element, 0, 0, width, height);
+      } else {
+        // 如果图片未加载，使用纯色背景
+        ctx.fillStyle = '#5B4B49'; // 回退到原始的棕色背景
+        ctx.fillRect(0, 0, width, height);
+      }
+    }
+    
     // 为某些风格添加特殊装饰
     if (style?.id === 'elegant') {
-      // 添加金色边框
-      ctx.strokeStyle = style.borderColor || '#D4AF37';
-      ctx.lineWidth = 20;
-      ctx.strokeRect(40, 40, width - 80, height - 80);
-    } else if (style?.id === 'playful') {
-      // 添加彩色角落
-      ctx.fillStyle = '#FF5252';
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(120, 0);
-      ctx.lineTo(0, 120);
-      ctx.closePath();
-      ctx.fill();
-      
-      ctx.fillStyle = '#FFEB3B';
-      ctx.beginPath();
-      ctx.moveTo(width, 0);
-      ctx.lineTo(width - 120, 0);
-      ctx.lineTo(width, 120);
-      ctx.closePath();
-      ctx.fill();
+      // 移除金色边框装饰
     } else if (style?.id === 'pastel') {
-      // 添加柔和条纹
-      ctx.fillStyle = style.borderColor || '#DBDBF5';
-      for (let i = 0; i < width; i += 80) {
-        ctx.fillRect(i, 0, 40, height);
-      }
-      ctx.fillStyle = backgroundColor;
-      ctx.fillRect(50, 50, width - 100, height - 100);
+      // 移除柔和条纹装饰
     }
 
     // Draw main title at the top
@@ -258,6 +330,110 @@ const LoveStoryCoverPreview = ({
         logoColor = '#6A7B8B'; // Pastel样式使用不同颜色
       }
       drawPublisherLogo(ctx, width / 2, height * 0.92, 40, logoColor);
+    }
+  };
+
+  // 绘制雪花函数
+  const drawSnowflakes = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    
+    // 小雪花 - 增加数量
+    for (let i = 0; i < 300; i++) {
+      const x = Math.random() * width;
+      const y = Math.random() * height;
+      const size = 1 + Math.random() * 2;
+      
+      ctx.beginPath();
+      ctx.arc(x, y, size / 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    
+    // 中雪花 - 增加数量
+    for (let i = 0; i < 100; i++) {
+      const x = Math.random() * width;
+      const y = Math.random() * height;
+      const size = 3 + Math.random() * 3;
+      
+      ctx.beginPath();
+      ctx.arc(x, y, size / 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    
+    // 大雪花 - 增加数量
+    for (let i = 0; i < 40; i++) {
+      const x = Math.random() * width;
+      const y = Math.random() * height;
+      const size = 5 + Math.random() * 4;
+      
+      // 为大雪花添加发光效果
+      const glowGradient = ctx.createRadialGradient(x, y, 0, x, y, size * 2);
+      glowGradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+      glowGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.3)');
+      glowGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      
+      ctx.fillStyle = glowGradient;
+      ctx.beginPath();
+      ctx.arc(x, y, size, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // 雪花中心
+      ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+      ctx.beginPath();
+      ctx.arc(x, y, size / 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    
+    // 添加一些雪花结晶 - 新增
+    for (let i = 0; i < 25; i++) {
+      const x = Math.random() * width;
+      const y = Math.random() * height;
+      const size = 8 + Math.random() * 6;
+      
+      // 绘制雪花结晶
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+      ctx.lineWidth = 1;
+      
+      // 中心点
+      ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+      ctx.beginPath();
+      ctx.arc(x, y, size / 8, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // 六个分支
+      for (let j = 0; j < 6; j++) {
+        const angle = (Math.PI / 3) * j;
+        
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(
+          x + Math.cos(angle) * size,
+          y + Math.sin(angle) * size
+        );
+        ctx.stroke();
+        
+        // 每个分支上的小分支
+        const branchLength = size * 0.6;
+        const midX = x + Math.cos(angle) * (size / 2);
+        const midY = y + Math.sin(angle) * (size / 2);
+        
+        // 左侧小分支
+        ctx.beginPath();
+        ctx.moveTo(midX, midY);
+        ctx.lineTo(
+          midX + Math.cos(angle + Math.PI / 4) * branchLength / 2,
+          midY + Math.sin(angle + Math.PI / 4) * branchLength / 2
+        );
+        ctx.stroke();
+        
+        // 右侧小分支
+        ctx.beginPath();
+        ctx.moveTo(midX, midY);
+        ctx.lineTo(
+          midX + Math.cos(angle - Math.PI / 4) * branchLength / 2,
+          midY + Math.sin(angle - Math.PI / 4) * branchLength / 2
+        );
+        ctx.stroke();
+      }
     }
   };
 
