@@ -35,7 +35,7 @@ export default async function handler(req, res) {
     }
 
     try {
-      const { orderId } = req.body;
+      const { orderId, supabaseUrl: passedSupabaseUrl, supabaseKey: passedSupabaseKey } = req.body;
 
       if (!orderId) {
         return res.status(400).json({ error: 'Order ID is required' });
@@ -43,17 +43,22 @@ export default async function handler(req, res) {
 
       console.log(`Generate love story PDF request received for order: ${orderId}`);
 
-      // 初始化Supabase客户端
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      // 初始化Supabase客户端 - 优先使用传递的凭据，如果没有则使用环境变量
+      // 注意：Vercel环境中变量名称为SUPABASE_URL而不是NEXT_PUBLIC_SUPABASE_URL
+      const supabaseUrl = passedSupabaseUrl || process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey = passedSupabaseKey || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
       
       if (!supabaseUrl || !supabaseKey) {
+        console.error('Missing Supabase credentials. Passed credentials:', !!passedSupabaseUrl, !!passedSupabaseKey);
+        console.error('Environment variables available:', Object.keys(process.env).filter(key => key.includes('SUPABASE')).join(', '));
         return res.status(500).json({ 
           error: 'Server configuration error', 
           details: 'Missing Supabase credentials' 
         });
       }
 
+      console.log(`Using Supabase URL: ${supabaseUrl.substring(0, 15)}...`);
+      
       const supabase = createClient(supabaseUrl, supabaseKey);
 
       // 获取love_story_books记录

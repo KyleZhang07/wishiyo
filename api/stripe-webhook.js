@@ -405,9 +405,14 @@ export default async function handler(req, res) {
             // 在数据库中更新运输信息
             try {
               // 获取Supabase凭证
-              const supabaseUrl = process.env.SUPABASE_URL;
-              // 优先使用服务角色密钥，如果没有则使用匿名密钥
+              const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
               const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+              
+              if (!supabaseUrl || !supabaseKey) {
+                console.error('Missing Supabase credentials in webhook. Available env vars:', 
+                  Object.keys(process.env).filter(key => key.includes('SUPABASE')).join(', '));
+                return res.status(500).json({ error: 'Missing Supabase configuration' });
+              }
               
               console.log("===== CALLING SUPABASE FUNCTION =====", {
                 supabaseUrl: supabaseUrl,
@@ -549,7 +554,12 @@ export default async function handler(req, res) {
                   headers: {
                     'Content-Type': 'application/json'
                   },
-                  body: JSON.stringify({ orderId })
+                  body: JSON.stringify({ 
+                    orderId,
+                    // 传递 Supabase 凭据给 API 端点，以便它可以在 Vercel 环境中正常工作
+                    supabaseUrl,
+                    supabaseKey 
+                  })
                 }
               );
               
@@ -609,7 +619,10 @@ export default async function handler(req, res) {
                           authorName: 'With Love',
                           recipientName: book.person_name || '',
                           styleId: 'classic',
-                          clientId: book.client_id
+                          clientId: book.client_id,
+                          // 传递 Supabase 凭据给渲染 API
+                          supabaseUrl,
+                          supabaseKey
                         })
                       }
                     );
@@ -627,7 +640,11 @@ export default async function handler(req, res) {
                         headers: {
                           'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({ orderId })
+                        body: JSON.stringify({ 
+                          orderId,
+                          supabaseUrl,
+                          supabaseKey 
+                        })
                       }
                     );
                     
