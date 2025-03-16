@@ -196,4 +196,81 @@ export const deleteImageFromStorage = async (path: string, bucket = 'images'): P
     console.error('Error deleting image from Supabase Storage:', error);
     return false;
   }
-}; 
+};
+
+/**
+ * Uploads a canvas element's content as an image to the complete-pages bucket
+ * @param canvas HTML Canvas element to capture
+ * @param pageType Type of page (cover, intro, content)
+ * @param pageIndex Index of the page (for content pages)
+ * @param orderId Order ID to associate with the image
+ * @returns Public URL of the uploaded image
+ */
+export const uploadCanvasToCompletePagesStorage = async (
+  canvas: HTMLCanvasElement,
+  pageType: 'cover' | 'intro' | 'content',
+  pageIndex: number,
+  orderId: string
+): Promise<string> => {
+  try {
+    const bucket = 'complete-pages';
+    
+    // Ensure the bucket exists
+    await ensureBucketExists(bucket);
+    
+    // Get client ID for the current user
+    const clientId = getClientId();
+    
+    // Convert canvas to base64 image (high quality JPEG)
+    const base64Image = canvas.toDataURL('image/jpeg', 1.0);
+    
+    // Convert base64 to Blob
+    const base64Data = base64Image.split(',')[1];
+    const byteCharacters = atob(base64Data);
+    const byteArrays = [];
+    
+    for (let i = 0; i < byteCharacters.length; i += 512) {
+      const slice = byteCharacters.slice(i, i + 512);
+      const byteNumbers = new Array(slice.length);
+      for (let j = 0; j < slice.length; j++) {
+        byteNumbers[j] = slice.charCodeAt(j);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      byteArrays.push(byteArray);
+    }
+    
+    const blob = new Blob(byteArrays, { type: 'image/jpeg' });
+    
+    // Create a filename with order ID, page type, and index
+    const timestamp = Date.now();
+    const fileName = `${clientId}/${orderId}/${pageType}-${pageIndex}-${timestamp}.jpg`;
+    
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(fileName, blob, {
+        contentType: 'image/jpeg',
+        upsert: true,
+        // Add metadata to identify owner and order
+        metadata: {
+          client_id: clientId,
+          order_id: orderId,
+          page_type: pageType,
+          page_index: pageIndex.toString()
+        }
+      });
+    
+    if (error) {
+      throw error;
+    }
+    
+    // Get public URL
+    const { data: publicUrlData } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(fileName);
+    
+    return publicUrlData?.publicUrl || '';
+  } catch (error) {
+    console.error('Error uploading canvas to complete-pages storage:', error);
+    throw error;
+  }
+};

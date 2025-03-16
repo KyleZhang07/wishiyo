@@ -972,9 +972,9 @@ const GenerateStep = () => {
         </div>
       
         {/* Cover section - 保持原来大小 */}
-        <div className="mb-12">
+        <div className="mb-12 cover-section">
           <h2 className="text-2xl font-bold mb-8">Cover</h2>
-          <div className="max-w-xl mx-auto">
+          <div className="max-w-xl mx-auto CoverPreviewCard">
             <CoverPreviewCard 
               coverImage={coverImage}
               coverTitle={coverTitle}
@@ -987,7 +987,7 @@ const GenerateStep = () => {
         </div>
         
         {/* 介绍部分 - 将Intro与其他Content分开 */}
-        <div className="mb-16 border-t-2 border-gray-200 pt-10">
+        <div className="mb-16 border-t-2 border-gray-200 pt-10 introduction-section">
           <h2 className="text-2xl font-bold mb-8">Introduction</h2>
           <div className="mb-8">
             <ContentImageCard 
@@ -1003,8 +1003,8 @@ const GenerateStep = () => {
         </div>
         
         {/* 内容部分 */}
-        <div className="border-t-2 border-gray-200 pt-10">
-          <h2 className="text-2xl font-bold mb-8">Story Content</h2>
+        <div className="mb-16 border-t-2 border-gray-200 pt-10 content-section">
+          <h2 className="text-2xl font-bold mb-8">Content</h2>
           <div className="space-y-12">
             {/* 只渲染内容图片，跳过介绍图片 */}
             {renderContentImage(1)}

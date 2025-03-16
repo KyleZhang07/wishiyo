@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Check } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { getClientId } from '@/utils/clientId';
+import { getClientId, uploadCanvasToCompletePagesStorage } from '@/integrations/supabase/storage';
 
 // 封面类型
 interface CoverFormat {
@@ -63,94 +63,155 @@ const FormatStep = () => {
   
   // 处理结账
   const handleCheckout = async () => {
+    if (!selectedFormat) {
+      toast({
+        title: "Please select a format",
+        description: "You must select a format to continue.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+
+    // 获取选择的格式对象
     const selectedFormatObj = coverFormats.find(format => format.id === selectedFormat);
+    if (!selectedFormatObj) {
+      toast({
+        title: "Format Error",
+        description: "The selected format is invalid. Please try again.",
+        variant: "destructive"
+      });
+      setIsProcessing(false);
+      return;
+    }
+
+    // 保存书籍信息到localStorage
+    const bookTitle = 'THE MAGIC IN ' + (localStorage.getItem('loveStoryPersonName') || 'My Love');
+    localStorage.setItem('loveStoryBookTitle', bookTitle);
+    localStorage.setItem('loveStoryBookFormat', selectedFormatObj.name);
+    localStorage.setItem('loveStoryBookPrice', selectedFormatObj.price.toString());
     
-    if (selectedFormatObj) {
-      setIsProcessing(true);
+    try {
+      // 调用Stripe支付API
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          productId: 'love-story',
+          title: bookTitle,
+          format: selectedFormatObj.name,
+          price: selectedFormatObj.price.toString(),
+          quantity: 1
+        }),
+      });
       
-      // 保存书籍信息到localStorage
-      const bookTitle = 'THE MAGIC IN ' + (localStorage.getItem('loveStoryPersonName') || 'My Love');
-      localStorage.setItem('loveStoryBookTitle', bookTitle);
-      localStorage.setItem('loveStoryBookFormat', selectedFormatObj.name);
-      localStorage.setItem('loveStoryBookPrice', selectedFormatObj.price.toString());
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      
+      const { url, orderId } = await response.json();
+      
+      // 保存订单ID
+      localStorage.setItem('loveStoryOrderId', orderId);
+      
+      // 从localStorage获取必要信息
+      const personName = localStorage.getItem('loveStoryPersonName') || '';
       
       try {
-        // 调用Stripe支付API
-        const response = await fetch('/api/create-checkout-session', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            productId: 'love-story',
+        // 添加记录到数据库
+        const clientId = getClientId();
+        
+        // 获取用户选择的封面图片 URL
+        const selectedCoverImageUrl = localStorage.getItem('loveStorySelectedCoverImage_url') || 
+                                     localStorage.getItem('loveStoryCoverImage_url') || '';
+        
+        // 上传完整页面图片到 complete-pages 存储桶
+        await uploadCompletePagesToStorage(orderId);
+        
+        const { data, error } = await supabase
+          .from('love_story_books')
+          .insert({
+            order_id: orderId,
             title: bookTitle,
-            format: selectedFormatObj.name,
-            price: selectedFormatObj.price.toString(),
-            quantity: 1
-          }),
-        });
+            person_name: personName,
+            status: 'created',
+            timestamp: new Date().toISOString(),
+            client_id: clientId,
+            cover_pdf: selectedCoverImageUrl // 添加用户选择的封面图片 URL
+          })
+          .select();
         
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        
-        const { url, orderId } = await response.json();
-        
-        // 保存订单ID
-        localStorage.setItem('loveStoryOrderId', orderId);
-        
-        // 从localStorage获取必要信息
-        const personName = localStorage.getItem('loveStoryPersonName') || '';
-        
-        try {
-          // 添加记录到数据库
-          const clientId = getClientId();
-          
-          // 获取用户选择的封面图片 URL
-          const selectedCoverImageUrl = localStorage.getItem('loveStorySelectedCoverImage_url') || 
-                                       localStorage.getItem('loveStoryCoverImage_url') || '';
-          
-          const { data, error } = await supabase
-            .from('love_story_books')
-            .insert({
-              order_id: orderId,
-              title: bookTitle,
-              person_name: personName,
-              status: 'created',
-              timestamp: new Date().toISOString(),
-              client_id: clientId,
-              cover_pdf: selectedCoverImageUrl // 添加用户选择的封面图片 URL
-            })
-            .select();
-          
-          if (error) {
-            console.error('Database error when creating book record:', error);
-          } else {
-            console.log('Love story book record created:', data);
-            
-            // PDF生成将通过Stripe webhook在支付成功后处理
-            console.log('Book generation will be handled by Stripe webhook after payment confirmation');
-          }
-        } catch (dbError) {
-          console.error('Database error:', dbError);
-          // 继续结账流程，即使数据库操作失败
-        }
-        
-        // 重定向到Stripe结账页面
-        if (url) {
-          window.location.href = url;
+        if (error) {
+          console.error('Database error when creating book record:', error);
         } else {
-          throw new Error('No checkout URL returned');
+          console.log('Love story book record created:', data);
+          
+          // PDF生成将通过Stripe webhook在支付成功后处理
+          console.log('Book generation will be handled by Stripe webhook after payment confirmation');
         }
-      } catch (error) {
-        console.error('Checkout error:', error);
-        toast({
-          title: "Checkout Error",
-          description: "An error occurred during checkout. Please try again.",
-          variant: "destructive"
-        });
-        setIsProcessing(false);
+      } catch (dbError) {
+        console.error('Database error:', dbError);
+        // 继续结账流程，即使数据库操作失败
       }
+      
+      // 重定向到Stripe结账页面
+      if (url) {
+        window.location.href = url;
+      } else {
+        throw new Error('No checkout URL returned');
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      toast({
+        title: "Checkout Error",
+        description: "An error occurred during checkout. Please try again.",
+        variant: "destructive"
+      });
+      setIsProcessing(false);
+    }
+  };
+
+  // 函数：上传完整页面图片到 complete-pages 存储桶
+  const uploadCompletePagesToStorage = async (orderId: string) => {
+    try {
+      console.log('开始上传完整页面图片到 complete-pages 存储桶...');
+      
+      // 1. 获取封面 Canvas
+      const coverCanvas = document.querySelector('.CoverPreviewCard canvas') as HTMLCanvasElement;
+      if (coverCanvas) {
+        await uploadCanvasToCompletePagesStorage(coverCanvas, 'cover', 0, orderId);
+        console.log('封面图片上传成功');
+      } else {
+        console.warn('未找到封面 Canvas 元素');
+      }
+      
+      // 2. 获取介绍页 Canvas
+      const introCanvas = document.querySelector('.introduction-section canvas') as HTMLCanvasElement;
+      if (introCanvas) {
+        await uploadCanvasToCompletePagesStorage(introCanvas, 'intro', 0, orderId);
+        console.log('介绍页图片上传成功');
+      } else {
+        console.warn('未找到介绍页 Canvas 元素');
+      }
+      
+      // 3. 获取所有内容页 Canvas
+      const contentCanvases = Array.from(document.querySelectorAll('.content-section canvas')) as HTMLCanvasElement[];
+      if (contentCanvases.length > 0) {
+        for (let i = 0; i < contentCanvases.length; i++) {
+          await uploadCanvasToCompletePagesStorage(contentCanvases[i], 'content', i, orderId);
+          console.log(`内容页 ${i+1} 图片上传成功`);
+        }
+      } else {
+        console.warn('未找到内容页 Canvas 元素');
+      }
+      
+      console.log('所有完整页面图片上传完成');
+    } catch (error) {
+      console.error('上传完整页面图片时出错:', error);
+      // 不抛出错误，让结账流程继续
     }
   };
   
