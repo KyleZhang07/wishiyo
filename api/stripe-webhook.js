@@ -405,14 +405,9 @@ export default async function handler(req, res) {
             // 在数据库中更新运输信息
             try {
               // 获取Supabase凭证
-              const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+              const supabaseUrl = process.env.SUPABASE_URL;
+              // 优先使用服务角色密钥，如果没有则使用匿名密钥
               const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
-              
-              if (!supabaseUrl || !supabaseKey) {
-                console.error('Missing Supabase credentials in webhook. Available env vars:', 
-                  Object.keys(process.env).filter(key => key.includes('SUPABASE')).join(', '));
-                return res.status(500).json({ error: 'Missing Supabase configuration' });
-              }
               
               console.log("===== CALLING SUPABASE FUNCTION =====", {
                 supabaseUrl: supabaseUrl,
@@ -471,7 +466,7 @@ export default async function handler(req, res) {
               // 记录错误但仍向Stripe返回成功，以防止重试逻辑
             }
           }
-
+          
           // 如果图书类型是love-story，启动生成过程
           else if (productId === 'love-story') {
             console.log('Starting love story book generation process');
@@ -531,158 +526,40 @@ export default async function handler(req, res) {
               console.log(`Supabase response status for love story: ${updateResponse.status}`);
               console.log(`Supabase response body for love story: ${updateResponseText}`);
               
-              let vercelApiBaseUrl;
-              
-              // 根据不同环境确定正确的 base URL
-              if (process.env.NODE_ENV === 'production') {
-                // 生产环境使用主域名
-                vercelApiBaseUrl = 'https://wishiyo.com';
-              } else if (process.env.VERCEL_URL) {
-                // Vercel 预览环境
-                vercelApiBaseUrl = `https://${process.env.VERCEL_URL}`;
-              } else {
-                // 本地开发环境
-                vercelApiBaseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-              }
-              
-              console.log(`Using API base URL: ${vercelApiBaseUrl}`);
-              
-              let pdfResponse = await fetch(
-                `${vercelApiBaseUrl}/api/generate-love-story-pdf`,
-                {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify({ 
-                    orderId,
-                    // 传递 Supabase 凭据给 API 端点，以便它可以在 Vercel 环境中正常工作
-                    supabaseUrl,
-                    supabaseKey 
-                  })
-                }
-              );
-              
-              let pdfResult;
+              // 调用函数生成PDF
+              console.log(`===== STARTING LOVE STORY PDF GENERATION FOR ORDER ${orderId} =====`);
               try {
-                // 尝试解析 JSON 响应
-                const responseText = await pdfResponse.text();
-                try {
-                  pdfResult = JSON.parse(responseText);
-                } catch (jsonError) {
-                  console.error(`Failed to parse response as JSON: ${responseText.substring(0, 200)}...`);
-                  throw new Error(`JSON parse error: ${jsonError.message}, Response: ${responseText.substring(0, 200)}...`);
+                const pdfResponse = await fetch(
+                  `${supabaseUrl}/functions/v1/generate-love-story-pdfs`,
+                  {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${supabaseKey}`
+                    },
+                    body: JSON.stringify({ orderId })
+                  }
+                );
+                
+                if (!pdfResponse.ok) {
+                  const errorText = await pdfResponse.text();
+                  console.error(`Error generating Love Story PDFs: ${pdfResponse.status} ${pdfResponse.statusText}`, errorText);
+                } else {
+                  const pdfResult = await pdfResponse.json();
+                  console.log(`Love Story PDF generation result for ${orderId}:`, pdfResult);
                 }
               } catch (error) {
-                console.error(`Error processing PDF generation response: ${error}`);
-                throw error;
+                console.error(`Error in Love Story PDF generation process for ${orderId}:`, error);
+                // 记录详细错误信息，但不终止webhook处理
+                console.error(`Error details:`, error.stack || error);
               }
               
-              if (!pdfResponse.ok) {
-                // 检查错误是否是因为缺少图像
-                if (pdfResult.error && 
-                    (pdfResult.error.includes('No images found') || 
-                     pdfResult.error.includes('Insufficient images'))) {
-                  
-                  console.log(`No rendered images found for order ${orderId}, need to render images first`);
-                  
-                  // 从数据库获取必要信息
-                  const { data: bookData } = await fetch(
-                    `${supabaseUrl}/rest/v1/love_story_books?order_id=eq.${orderId}&select=*`,
-                    {
-                      method: 'GET',
-                      headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${supabaseKey}`,
-                        'apikey': supabaseKey
-                      }
-                    }
-                  ).then(res => res.json());
-                  
-                  if (bookData && bookData.length > 0) {
-                    const book = bookData[0];
-                    // 使用默认样式渲染封面图像
-                    console.log(`Rendering cover image for order ${orderId}`);
-                    
-                    const renderCoverResponse = await fetch(
-                      `${vercelApiBaseUrl}/api/render-love-story-images`,
-                      {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ 
-                          orderId,
-                          pageType: 'cover',
-                          coverTitle: 'THE MAGIC IN',
-                          subtitle: book.person_name || '',
-                          authorName: 'With Love',
-                          recipientName: book.person_name || '',
-                          styleId: 'classic',
-                          clientId: book.client_id,
-                          // 传递 Supabase 凭据给渲染 API
-                          supabaseUrl,
-                          supabaseKey
-                        })
-                      }
-                    );
-                    
-                    if (!renderCoverResponse.ok) {
-                      throw new Error(`Failed to render cover image: ${await renderCoverResponse.text()}`);
-                    }
-                    
-                    // 重新尝试生成PDF
-                    console.log(`Retrying PDF generation for order ${orderId} after rendering images`);
-                    pdfResponse = await fetch(
-                      `${vercelApiBaseUrl}/api/generate-love-story-pdf`,
-                      {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ 
-                          orderId,
-                          supabaseUrl,
-                          supabaseKey 
-                        })
-                      }
-                    );
-                    
-                    try {
-                      // 尝试解析 JSON 响应
-                      const responseText = await pdfResponse.text();
-                      try {
-                        pdfResult = JSON.parse(responseText);
-                      } catch (jsonError) {
-                        console.error(`Failed to parse response as JSON: ${responseText.substring(0, 200)}...`);
-                        throw new Error(`JSON parse error: ${jsonError.message}, Response: ${responseText.substring(0, 200)}...`);
-                      }
-                    } catch (error) {
-                      console.error(`Error processing PDF generation response: ${error}`);
-                      throw error;
-                    }
-                    
-                    if (!pdfResponse.ok) {
-                      throw new Error(`PDF generation failed on retry: ${JSON.stringify(pdfResult)}`);
-                    }
-                    
-                    console.log(`Love story PDF generation completed on retry for order ${orderId}`);
-                  } else {
-                    throw new Error(`Could not find book data for order ${orderId}`);
-                  }
-                } else {
-                  throw new Error(`PDF generation failed: ${JSON.stringify(pdfResult)}`);
-                }
-              }
-              
-              console.log(`Love story PDF generation completed successfully for order ${orderId}`);
+              console.log(`Love Story book generation process completed for order ${orderId}`);
             } catch (error) {
-              console.error(`Error in love story PDF generation process for ${orderId}:`, error);
-              // 记录详细错误信息，但不终止webhook处理
-              console.error(`Error details:`, error.stack || error);
+              console.error('启动Love Story图书生成过程时出错:', error);
+              console.error(error.stack); // 打印堆栈跟踪
+              // 记录错误但仍向Stripe返回成功，以防止重试逻辑
             }
-            
-            console.log(`Love Story book generation process completed for order ${orderId}`);
           }
 
           // 成功处理付款
