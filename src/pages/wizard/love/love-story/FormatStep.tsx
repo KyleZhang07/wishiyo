@@ -118,8 +118,7 @@ const FormatStep = () => {
               person_name: personName,
               status: 'created',
               timestamp: new Date().toISOString(),
-              client_id: clientId,
-              cover_pdf: selectedCoverImageUrl // 添加用户选择的封面图片 URL
+              client_id: clientId
             })
             .select();
           
