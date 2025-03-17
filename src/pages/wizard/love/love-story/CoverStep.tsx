@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Edit, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -7,6 +7,10 @@ import WizardStep from '@/components/wizard/WizardStep';
 import LoveStoryCoverPreview from '@/components/cover-generator/LoveStoryCoverPreview';
 import { supabase } from '@/integrations/supabase/client';
 import { uploadImageToStorage, getClientId, getAllImagesFromStorage, deleteImageFromStorage } from '@/integrations/supabase/storage';
+// 导入背景图片
+import blueTextureBackground from '../../../../assets/Generated Image March 15, 2025 - 3_12PM_LE_upscale_balanced_x4.jpg';
+import greenLeafBackground from '../../../../assets/leaves.jpg';
+import rainbowBackground from '../../../../assets/rainbow2.jpg';
 
 // 定义封面样式类型
 interface CoverStyle {
@@ -83,6 +87,9 @@ const LoveStoryCoverStep = () => {
   const [textTone, setTextTone] = useState<string>('romantic');
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // 添加Canvas引用
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     // 从localStorage获取标题、作者信息、样式和文本风格
@@ -374,37 +381,292 @@ const LoveStoryCoverStep = () => {
     }
   };
   
-  const handleContinue = () => {
-    // 保存当前选中的封面图片到 localStorage
-    if (coverImages.length > 0 && currentImageIndex >= 0 && currentImageIndex < coverImages.length) {
-      const selectedCoverImage = coverImages[currentImageIndex];
-      localStorage.setItem('loveStorySelectedCoverImage', selectedCoverImage);
-      
-      // 如果有 Supabase 存储的 URL，也保存它
-      const images = supabaseImages.filter(img => img.name.includes('love-story-cover'));
-      if (images.length > 0) {
-        // 找到当前显示的图片在 Supabase 中的 URL
-        const sortedImages = images.sort((a, b) => {
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-        });
+  // 添加一个函数，用于将LoveStoryCoverPreview渲染到Canvas
+  const renderCoverToCanvas = async (): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      try {
+        // 创建一个临时的Canvas
+        const canvas = document.createElement('canvas');
+        canvas.width = 1200;  // 设置较大的尺寸以获得高质量图像
+        canvas.height = 1800;
         
-        // 如果有多张图片，保存当前选中的那张
-        if (sortedImages.length > currentImageIndex) {
-          localStorage.setItem('loveStorySelectedCoverImage_url', sortedImages[currentImageIndex].url);
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Failed to get canvas context'));
+          return;
         }
+        
+        // 加载当前封面图片
+        if (!currentCoverImage) {
+          reject(new Error('No cover image available'));
+          return;
+        }
+
+        // 加载背景图片
+        const loadBackgroundImage = (src: string): Promise<HTMLImageElement> => {
+          return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => resolve(img);
+            img.onerror = () => reject(new Error(`Failed to load background image: ${src}`));
+            img.src = src;
+          });
+        };
+        
+        // 加载人物图片和背景图片
+        const loadAllImages = async () => {
+          try {
+            // 加载人物图片
+            const personImg = new Image();
+            personImg.crossOrigin = 'anonymous';
+            
+            const personImgPromise = new Promise<HTMLImageElement>((resolve, reject) => {
+              personImg.onload = () => resolve(personImg);
+              personImg.onerror = () => reject(new Error('Failed to load cover image'));
+              personImg.src = currentCoverImage!;
+            });
+            
+            // 根据样式选择背景图片
+            let backgroundImgPromise: Promise<HTMLImageElement> | null = null;
+            
+            if (currentStyle.id === 'modern') {
+              backgroundImgPromise = loadBackgroundImage(blueTextureBackground);
+            } else if (currentStyle.id === 'playful') {
+              backgroundImgPromise = loadBackgroundImage(greenLeafBackground);
+            } else if (currentStyle.id === 'elegant') {
+              backgroundImgPromise = loadBackgroundImage(rainbowBackground);
+            }
+            // 注意：classic和vintage样式不使用背景图片，保持使用纯色背景
+            
+            // 等待所有图片加载完成
+            const [personImgLoaded, backgroundImgLoaded] = await Promise.all([
+              personImgPromise,
+              backgroundImgPromise ? backgroundImgPromise : Promise.resolve(null)
+            ]);
+            
+            // 绘制背景
+            if (backgroundImgLoaded) {
+              // 使用加载的背景图片
+              ctx.drawImage(backgroundImgLoaded, 0, 0, canvas.width, canvas.height);
+              
+              // 对于某些背景，添加叠加层以增强效果
+              if (currentStyle.id === 'modern') {
+                // 添加深蓝色半透明叠加层，使图片更暗
+                ctx.fillStyle = 'rgba(10, 26, 63, 0.3)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // 添加雪花效果
+                const snowflakeCount = 100;
+                ctx.fillStyle = '#FFFFFF';
+                
+                for (let i = 0; i < snowflakeCount; i++) {
+                  const x = Math.random() * canvas.width;
+                  const y = Math.random() * canvas.height;
+                  const size = Math.random() * 5 + 1;
+                  
+                  ctx.beginPath();
+                  ctx.arc(x, y, size, 0, Math.PI * 2);
+                  ctx.fill();
+                }
+              } else if (currentStyle.id === 'playful') {
+                // 添加蓝色半透明叠加层
+                ctx.fillStyle = 'rgba(74, 137, 220, 0.2)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+              }
+            } else {
+              // 使用样式的纯色背景
+              if (currentStyle.id === 'classic' || currentStyle.id === 'vintage') {
+                ctx.fillStyle = currentStyle.background;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // 如果有边框颜色，绘制边框
+                if (currentStyle.borderColor) {
+                  ctx.strokeStyle = currentStyle.borderColor;
+                  ctx.lineWidth = 20;
+                  ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+                }
+              } else if (currentStyle.id === 'modern') {
+                // 如果无法加载modern背景图片，使用深蓝色
+                ctx.fillStyle = '#0a1a3f';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+              } else if (currentStyle.id === 'playful') {
+                // 如果无法加载playful背景图片，使用蓝色
+                ctx.fillStyle = '#4A89DC';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+              } else {
+                // 默认白色背景
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+              }
+            }
+            
+            // 计算图像尺寸，保持比例
+            const imgRatio = personImgLoaded.width / personImgLoaded.height;
+            let drawWidth = canvas.width * 0.7;  // 图片占70%的宽度
+            let drawHeight = drawWidth / imgRatio;
+            
+            // 如果高度太大，按高度计算
+            if (drawHeight > canvas.height * 0.6) {
+              drawHeight = canvas.height * 0.6;
+              drawWidth = drawHeight * imgRatio;
+            }
+            
+            // 计算居中位置
+            const x = (canvas.width - drawWidth) / 2;
+            const y = canvas.height * 0.4;  // 图片位置偏上
+            
+            // 绘制人物图像
+            ctx.drawImage(personImgLoaded, x, y, drawWidth, drawHeight);
+            
+            // 绘制标题文本
+            ctx.textAlign = 'center';
+            
+            // 主标题
+            ctx.fillStyle = currentStyle.titleColor;
+            const titleFontSize = canvas.width * 0.06;
+            ctx.font = `bold ${titleFontSize}px ${getFontFamily(currentStyle.font)}`;
+            ctx.fillText(coverTitle, canvas.width / 2, canvas.height * 0.15);
+            
+            // 副标题
+            ctx.fillStyle = currentStyle.subtitleColor;
+            const subtitleFontSize = canvas.width * 0.09;
+            ctx.font = `bold ${subtitleFontSize}px ${getFontFamily(currentStyle.font)}`;
+            ctx.fillText(subtitle || recipientName, canvas.width / 2, canvas.height * 0.26);
+            
+            // 作者名
+            ctx.fillStyle = currentStyle.authorColor;
+            const authorFontSize = canvas.width * 0.035;
+            ctx.font = `italic ${authorFontSize}px ${getFontFamily(currentStyle.font)}`;
+            ctx.fillText(`Written by ${authorName}`, canvas.width * 0.75, canvas.height * 0.9);
+            
+            // 转换为图像
+            const imageData = canvas.toDataURL('image/jpeg', 0.9);
+            resolve(imageData);
+          } catch (error) {
+            reject(error);
+          }
+        };
+        
+        // 开始加载图片
+        loadAllImages();
+      } catch (error) {
+        reject(error);
+      }
+    });
+  };
+  
+  // 辅助函数：根据字体名称获取字体族
+  const getFontFamily = (font: string): string => {
+    switch (font) {
+      case 'montserrat':
+        return 'sans-serif';
+      case 'comic-sans':
+        return 'cursive';
+      case 'didot':
+      case 'playfair':
+      default:
+        return 'serif';
+    }
+  };
+  
+  // 修改handleContinue以添加Canvas渲染和上传功能
+  const handleContinue = async () => {
+    try {
+      toast({
+        title: "Processing cover",
+        description: "Rendering and uploading your cover image..."
+      });
+      
+      // 保存当前选中的封面图片到 localStorage
+      if (coverImages.length > 0 && currentImageIndex >= 0 && currentImageIndex < coverImages.length) {
+        const selectedCoverImage = coverImages[currentImageIndex];
+        localStorage.setItem('loveStorySelectedCoverImage', selectedCoverImage);
+        
+        // 渲染封面到Canvas并获取图像数据
+        const canvasImageData = await renderCoverToCanvas();
+        
+        // 生成时间戳，确保文件名唯一
+        const timestamp = Date.now();
+        const newFilename = `love-cover-${timestamp}`;
+        
+        // 先上传新图片，确保有新图片后再删除旧图片
+        const storageUrl = await uploadImageToStorage(
+          canvasImageData,
+          'images',
+          newFilename
+        );
+        
+        // 保存URL到localStorage
+        localStorage.setItem('loveStorySelectedCoverImage_url', storageUrl);
+        localStorage.setItem('loveStoryCoverImageCanvas', canvasImageData);
+        
+        // 清除Supabase中的旧封面图片，但保留刚刚上传的图片
+        try {
+          // 获取最新的图片列表
+          const allImages = await getAllImagesFromStorage('images');
+          
+          // 过滤出所有love-cover开头的图片，但排除刚刚上传的图片
+          const coverImagesToDelete = allImages.filter(img => 
+            (img.name.includes('love-cover') || img.name.includes('love-story-cover-canvas')) && 
+            !img.name.includes(newFilename)
+          );
+          
+          if (coverImagesToDelete.length > 0) {
+            console.log(`Found ${coverImagesToDelete.length} old cover images to delete`);
+            
+            // 并行删除所有旧图片
+            const deletePromises = coverImagesToDelete.map(img => {
+              // 从完整路径中提取文件名
+              const pathParts = img.name.split('/');
+              const filename = pathParts[pathParts.length - 1];
+              console.log(`Deleting old cover image: ${filename}`);
+              return deleteImageFromStorage(filename, 'images');
+            });
+            
+            // 等待所有删除操作完成
+            await Promise.all(deletePromises);
+            console.log('Successfully deleted all old cover images from Supabase');
+          } else {
+            console.log('No old cover images to delete');
+          }
+        } catch (deleteError) {
+          console.error('Error deleting old cover images:', deleteError);
+          // 继续处理，即使删除失败
+        }
+        
+        // 如果有 Supabase 存储的原始 URL，也保存它
+        const images = supabaseImages.filter(img => img.name.includes('love-story-cover'));
+        if (images.length > 0) {
+          // 找到当前显示的图片在 Supabase 中的 URL
+          const sortedImages = images.sort((a, b) => {
+            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+          });
+          
+          // 如果有多张图片，保存当前选中的那张
+          if (sortedImages.length > currentImageIndex) {
+            localStorage.setItem('loveStoryOriginalCoverImage_url', sortedImages[currentImageIndex].url);
+          }
+        }
+        
+        // 保存当前选中的图片索引
+        localStorage.setItem('loveStorySelectedCoverIndex', currentImageIndex.toString());
       }
       
-      // 保存当前选中的图片索引
-      localStorage.setItem('loveStorySelectedCoverIndex', currentImageIndex.toString());
+      toast({
+        title: "Cover saved",
+        description: "Moving to the next step..."
+      });
+      
+      // 导航到下一步
+      navigate('/create/love/love-story/debug-prompts');
+    } catch (error) {
+      console.error('Error in handleContinue:', error);
+      toast({
+        title: "Error processing cover",
+        description: "There was a problem rendering or uploading your cover.",
+        variant: "destructive"
+      });
     }
-    
-    toast({
-      title: "Cover saved",
-      description: "Moving to the next step..."
-    });
-    
-    // 导航到下一步
-    navigate('/create/love/love-story/debug-prompts');
   };
 
   // 获取收件人名称 - 这将作为主要角色名称显示

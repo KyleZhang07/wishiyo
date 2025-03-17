@@ -6,6 +6,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { uploadImageToStorage, getAllImagesFromStorage, deleteImageFromStorage } from '@/integrations/supabase/storage';
 import { CoverPreviewCard } from './components/CoverPreviewCard';
 import { ContentImageCard } from './components/ContentImageCard';
+import { Edit } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+
+// 导入工具函数
+import { expandImage, handleGenericContentRegeneration as handleContentRegeneration } from './utils/imageProcessingUtils';
+import { renderContentImage, createImageStateMaps } from './utils/renderUtils';
+import { loadImagesFromSupabase as fetchImagesFromSupabase } from './utils/storageUtils';
 
 interface ImageText {
   text: string;
@@ -47,7 +54,8 @@ const GenerateStep = () => {
   const [contentImage8, setContentImage8] = useState<string>();
   const [contentImage9, setContentImage9] = useState<string>();
   const [contentImage10, setContentImage10] = useState<string>();
-
+  
+  // 生成状态
   const [isGeneratingCover, setIsGeneratingCover] = useState(false);
   const [isGeneratingIntro, setIsGeneratingIntro] = useState(false);
   const [isGeneratingContent1, setIsGeneratingContent1] = useState(false);
@@ -61,16 +69,17 @@ const GenerateStep = () => {
   const [isGeneratingContent9, setIsGeneratingContent9] = useState(false);
   const [isGeneratingContent10, setIsGeneratingContent10] = useState(false);
 
+  // 样式和内容
   const [selectedStyle, setSelectedStyle] = useState<string>('Photographic (Default)');
   const [imageTexts, setImageTexts] = useState<ImageText[]>([]);
 
+  // 存储状态
   const [isLoadingImages, setIsLoadingImages] = useState(false);
   const [supabaseImages, setSupabaseImages] = useState<SupabaseImage[]>([]);
+  const [imageStorageMap, setImageStorageMap] = useState<ImageStorageMap>({});
 
   const { toast } = useToast();
-
-  // Add state for tracking Supabase image URLs
-  const [imageStorageMap, setImageStorageMap] = useState<ImageStorageMap>({});
+  const navigate = useNavigate();
 
   const expandImage = async (imageUrl: string): Promise<string> => {
     try {
@@ -94,172 +103,69 @@ const GenerateStep = () => {
     }
   };
 
+  // 刷新 Supabase 图片
+  const refreshSupabaseImages = async () => {
+    try {
+      await fetchImagesFromSupabase(
+        setIsLoadingImages,
+        setSupabaseImages,
+        setImageStorageMap,
+        setCoverImage,
+        setIntroImage,
+        setContentImage1,
+        setContentImage2,
+        setContentImage3,
+        setContentImage4,
+        setContentImage5,
+        setContentImage6,
+        setContentImage7,
+        setContentImage8,
+        setContentImage9,
+        setContentImage10,
+        toast
+      );
+    } catch (error) {
+      console.error('Error refreshing images:', error);
+      toast({
+        title: "Error refreshing images",
+        description: "Failed to load images from storage",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  // 创建一个无参数的回调函数，用于传递给其他函数
+  const refreshImagesCallback = () => {
+    refreshSupabaseImages();
+  };
+
+  // 内容重新生成函数封装
   const handleGenericContentRegeneration = async (index: number, style?: string) => {
     const stateSetters = {
-      1: setContentImage1,
-      2: setContentImage2,
-      3: setContentImage3,
-      4: setContentImage4,
-      5: setContentImage5,
-      6: setContentImage6,
-      7: setContentImage7,
-      8: setContentImage8,
-      9: setContentImage9,
-      10: setContentImage10
+      1: setContentImage1, 2: setContentImage2, 3: setContentImage3, 4: setContentImage4, 
+      5: setContentImage5, 6: setContentImage6, 7: setContentImage7, 8: setContentImage8, 
+      9: setContentImage9, 10: setContentImage10
     };
-
+    
     const loadingSetters = {
-      1: setIsGeneratingContent1,
-      2: setIsGeneratingContent2,
-      3: setIsGeneratingContent3,
-      4: setIsGeneratingContent4, 
-      5: setIsGeneratingContent5,
-      6: setIsGeneratingContent6,
-      7: setIsGeneratingContent7,
-      8: setIsGeneratingContent8,
-      9: setIsGeneratingContent9,
+      1: setIsGeneratingContent1, 2: setIsGeneratingContent2, 3: setIsGeneratingContent3, 
+      4: setIsGeneratingContent4, 5: setIsGeneratingContent5, 6: setIsGeneratingContent6,
+      7: setIsGeneratingContent7, 8: setIsGeneratingContent8, 9: setIsGeneratingContent9,
       10: setIsGeneratingContent10
     };
-
-    const setContentFn = stateSetters[index as keyof typeof stateSetters];
-    const setIsGenerating = loadingSetters[index as keyof typeof loadingSetters];
-    if (!setContentFn || !setIsGenerating) return;
-
-    const lsKey = `loveStoryContentImage${index}`;
     
-    // Clear existing localStorage entry
-    localStorage.removeItem(lsKey);
-
-    // 获取当前图片的URL，用于后续删除
-    const currentImageUrl = localStorage.getItem(`${lsKey}_url`);
-    
-    // 查找当前图片在Supabase中的路径
-    let currentImagePath = '';
-    if (currentImageUrl) {
-      // 从URL中提取路径
-      const currentImageName = currentImageUrl.split('/').pop();
-      if (currentImageName) {
-        // 找到对应的图片对象
-        const currentImage = supabaseImages.find(img => img.name.includes(currentImageName));
-        if (currentImage) {
-          currentImagePath = currentImage.name;
-        }
-      }
-    }
-
-    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
-    const characterPhoto = localStorage.getItem('loveStoryPartnerPhoto');
-    if (!savedPrompts || !characterPhoto) {
-      toast({
-        title: "Missing info",
-        description: "No prompts or character photo found",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsGenerating(true);
-    try {
-      const prompts = JSON.parse(savedPrompts);
-      // 修复索引问题 - 确保正确访问提示数组
-      // 使用index+1因为prompts[0]是封面，prompts[1]是intro，content从prompts[2]开始
-      const promptIndex = index + 1 <= prompts.length ? index + 1 : prompts.length - 1;
-      if (!prompts[promptIndex]) {
-        throw new Error(`No prompt found for content index ${promptIndex}`);
-      }
-      
-      // Use the provided style or fall back to the stored/default style
-      const imageStyle = style || selectedStyle;
-      
-      // Update the stored style if a new one is provided
-      if (style) {
-        setSelectedStyle(style);
-        localStorage.setItem('loveStoryStyle', style);
-      }
-
-      // 使用更明确的请求格式
-      const requestBody = {
-        prompt: prompts[promptIndex].prompt,
-        photo: characterPhoto,
-        style: imageStyle,
-        contentIndex: index,  // 明确指定内容索引
-        type: 'content'       // 明确内容类型
-      };
-
-      console.log(`Content ${index} generation request (using prompt ${promptIndex}):`, JSON.stringify(requestBody));
-
-      // Include style in the request
-      const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-        body: requestBody
-      });
-      
-      if (error) throw error;
-
-      console.log(`Content ${index} generation response:`, data);
-
-      // 后端可能返回 { output: [...]} 或 { contentImageX: [...] }
-      const imageUrl = data?.[`contentImage${index}`]?.[0] || data?.output?.[0];
-      if (!imageUrl) {
-        throw new Error("No image generated from generate-love-cover");
-      }
-
-      // 2) 调用expand-image进行扩展
-      const expandedBase64 = await expandImage(imageUrl);
-
-      // 使用时间戳确保文件名唯一
-      const timestamp = Date.now();
-
-      // 3) Upload to Supabase Storage instead of localStorage - 修复文件名问题
-      // 使用明确的数字标识符和时间戳
-      const storageUrl = await uploadImageToStorage(
-        expandedBase64, 
-        'images', 
-        `love-story-content-${index}-${timestamp}`
-      );
-
-      // 4) Update state and storage map
-      setContentFn(expandedBase64);
-      setImageStorageMap(prev => ({
-        ...prev,
-        [lsKey]: {
-          localStorageKey: lsKey,
-          url: storageUrl
-        }
-      }));
-
-      // 5) Store only the URL reference in localStorage
-      localStorage.setItem(`${lsKey}_url`, storageUrl);
-
-      // 6) 删除旧图片
-      if (currentImagePath) {
-        try {
-          await deleteImageFromStorage(currentImagePath, 'images');
-          console.log(`Deleted old image: ${currentImagePath}`);
-        } catch (deleteErr) {
-          console.error(`Failed to delete old image: ${currentImagePath}`, deleteErr);
-          // 继续处理，即使删除失败
-        }
-      }
-
-      // 7) 延迟刷新图片列表，确保上传完成
-      setTimeout(() => {
-        loadImagesFromSupabase();
-      }, 1000);
-
-      toast({
-        title: "Image regenerated & expanded",
-        description: `Content ${index} successfully updated with ${imageStyle} style`,
-      });
-    } catch (err: any) {
-      console.error("Error in handleGenericContentRegeneration:", err);
-      toast({
-        title: "Error regenerating image",
-        description: err.message || "Please try again",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGenerating(false);
-    }
+    // 调用工具函数中的handleGenericContentRegeneration
+    await handleContentRegeneration(
+      index,
+      style,
+      stateSetters,
+      loadingSetters,
+      supabaseImages,
+      selectedStyle,
+      setSelectedStyle,
+      toast,
+      refreshImagesCallback  // 使用无参数的回调函数
+    );
   };
 
   const handleRegenerateContent1 = (style?: string) => handleGenericContentRegeneration(1, style);
@@ -274,7 +180,6 @@ const GenerateStep = () => {
   const handleRegenerateContent10 = (style?: string) => handleGenericContentRegeneration(10, style);
 
   const generateInitialImages = async (prompts: string, partnerPhoto: string) => {
-    setIsGeneratingCover(true);
     setIsGeneratingIntro(true);
     toast({
       title: "Generating images",
@@ -283,22 +188,10 @@ const GenerateStep = () => {
 
     try {
       // 获取当前图片的URL，用于后续删除
-      const currentCoverImageUrl = localStorage.getItem('loveStoryCoverImage_url');
       const currentIntroImageUrl = localStorage.getItem('loveStoryIntroImage_url');
       
       // 查找当前图片在Supabase中的路径
-      let currentCoverImagePath = '';
       let currentIntroImagePath = '';
-      
-      if (currentCoverImageUrl) {
-        const currentCoverImageName = currentCoverImageUrl.split('/').pop();
-        if (currentCoverImageName) {
-          const currentImage = supabaseImages.find(img => img.name.includes(currentCoverImageName));
-          if (currentImage) {
-            currentCoverImagePath = currentImage.name;
-          }
-        }
-      }
       
       if (currentIntroImageUrl) {
         const currentIntroImageName = currentIntroImageUrl.split('/').pop();
@@ -320,54 +213,25 @@ const GenerateStep = () => {
       // 为每个图像类型使用专门的提示
       const { data, error } = await supabase.functions.invoke('generate-love-cover', {
         body: { 
-          prompt: promptsObj[0].prompt,          // 封面使用prompts[0]
           contentPrompt: promptsObj[1].prompt,   // intro使用prompts[1]
           content2Prompt: promptsObj[2].prompt,  // Moment 1使用prompts[2]
+          content3Prompt: promptsObj[3].prompt,  // Moment 2使用prompts[3]
+          content4Prompt: promptsObj[4].prompt,  // Moment 3使用prompts[4]
+          content5Prompt: promptsObj[5].prompt,  // Moment 4使用prompts[5]
+          content6Prompt: promptsObj[6].prompt,  // Moment 5使用prompts[6]
+          content7Prompt: promptsObj[7].prompt,  // Moment 6使用prompts[7]
+          content8Prompt: promptsObj[8].prompt,  // Moment 7使用prompts[8]
+          content9Prompt: promptsObj[9].prompt,  // Moment 8使用prompts[9]
+          content10Prompt: promptsObj[10].prompt, // Moment 9使用prompts[10]
           photo: partnerPhoto,
-          style: selectedStyle
+          style: selectedStyle,
+          type: 'all'
         }
       });
 
       if (error) throw error;
 
-      if (data?.output?.[0]) {
-        const coverImageData = data.output[0];
-        setCoverImage(coverImageData);
-        
-        // 使用时间戳确保文件名唯一
-        const timestamp = Date.now();
-        
-        // Upload to Supabase Storage
-        const storageUrl = await uploadImageToStorage(
-          coverImageData, 
-          'images', 
-          `love-story-cover-${timestamp}`
-        );
-        
-        // Update storage map
-        setImageStorageMap(prev => ({
-          ...prev,
-          ['loveStoryCoverImage']: {
-            localStorageKey: 'loveStoryCoverImage',
-            url: storageUrl
-          }
-        }));
-        
-        // Store only the URL reference in localStorage
-        localStorage.setItem('loveStoryCoverImage_url', storageUrl);
-        
-        // 删除旧封面图片
-        if (currentCoverImagePath) {
-          try {
-            await deleteImageFromStorage(currentCoverImagePath, 'images');
-            console.log(`Deleted old cover image: ${currentCoverImagePath}`);
-          } catch (deleteErr) {
-            console.error(`Failed to delete old cover image: ${currentCoverImagePath}`, deleteErr);
-            // 继续处理，即使删除失败
-          }
-        }
-      }
-
+      // 处理介绍图片
       if (data?.contentImage?.[0]) {
         const introImageData = data.contentImage[0];
         setIntroImage(introImageData);
@@ -465,7 +329,7 @@ const GenerateStep = () => {
       
       // 刷新图片列表
       setTimeout(() => {
-        loadImagesFromSupabase();
+        refreshImagesCallback();
       }, 1000);
     } catch (err: any) {
       console.error("Error generating images:", err);
@@ -475,7 +339,6 @@ const GenerateStep = () => {
         variant: "destructive",
       });
     } finally {
-      setIsGeneratingCover(false);
       setIsGeneratingIntro(false);
     }
   };
@@ -689,8 +552,8 @@ const GenerateStep = () => {
     const savedStyle = localStorage.getItem('loveStoryStyle');
     const savedTexts = localStorage.getItem('loveStoryImageTexts');
     
-    // 直接从Supabase加载所有图片，不再使用localStorage
-    loadImagesFromSupabase();
+    // 直接从Supabase加载所有图片
+    refreshImagesCallback();
 
     if (savedAuthor) {
       setAuthorName(savedAuthor);
@@ -748,6 +611,8 @@ const GenerateStep = () => {
       title: "Edit Cover",
       description: "Opening cover editor..."
     });
+    // 导航到CoverStep页面
+    navigate('/create/love/love-story/cover');
   };
 
   const handleEditText = () => {
@@ -844,7 +709,7 @@ const GenerateStep = () => {
             
             // 延迟刷新图片列表，确保上传完成
             setTimeout(() => {
-              loadImagesFromSupabase();
+              refreshImagesCallback();
             }, 1000);
             
             toast({
@@ -868,85 +733,27 @@ const GenerateStep = () => {
     }
   };
 
-  // Render content images with text inside the canvas
-  const renderContentImage = (imageIndex: number) => {
-    const imageStateMap: Record<number, string | undefined> = {
-      0: introImage,
-      1: contentImage1,
-      2: contentImage2,
-      3: contentImage3,
-      4: contentImage4,
-      5: contentImage5,
-      6: contentImage6,
-      7: contentImage7,
-      8: contentImage8,
-      9: contentImage9,
-      10: contentImage10,
-    };
-    
-    const loadingStateMap: Record<number, boolean> = {
-      0: isGeneratingIntro,
-      1: isGeneratingContent1,
-      2: isGeneratingContent2,
-      3: isGeneratingContent3,
-      4: isGeneratingContent4, 
-      5: isGeneratingContent5,
-      6: isGeneratingContent6,
-      7: isGeneratingContent7,
-      8: isGeneratingContent8,
-      9: isGeneratingContent9,
-      10: isGeneratingContent10,
-    };
-    
-    const handleRegenerateMap: Record<number, (style?: string) => void> = {
-      0: handleRegenerateIntro,
-      1: handleRegenerateContent1,
-      2: handleRegenerateContent2,
-      3: handleRegenerateContent3,
-      4: handleRegenerateContent4,
-      5: handleRegenerateContent5,
-      6: handleRegenerateContent6,
-      7: handleRegenerateContent7,
-      8: handleRegenerateContent8,
-      9: handleRegenerateContent9,
-      10: handleRegenerateContent10,
-    };
-    
-    const image = imageStateMap[imageIndex];
-    const isLoading = loadingStateMap[imageIndex];
-    const handleRegenerate = handleRegenerateMap[imageIndex];
-    
-    // 修正：图像索引与文本索引对应关系
-    // 根据新逻辑，图像索引1-10对应文本索引2-11(moment3-12重命名为moment1-10)
-    const textIndex = imageIndex + 1; // +1是因为text[0]是cover，text[1]是intro
-    const imageText = imageTexts && imageTexts.length > textIndex ? imageTexts[textIndex] : null;
-    
-    // 显示标题适配新的命名方式 - 显示为Moment 1-10
-    let title = "";  // 不再显示标题
-    
-    return (
-      <div>
-        <ContentImageCard 
-          image={image} 
-          isGenerating={isLoading}
-          onRegenerate={handleRegenerate}
-          index={imageIndex}
-          onEditText={() => {}}
-          text={imageText?.text}
-          title={title}
-        />
-      </div>
-    );
-  };
-
-  // 添加刷新图片的函数
-  const refreshImages = () => {
-    loadImagesFromSupabase();
+  // 处理函数定义
+  const refreshImages = async () => {
     toast({
       title: "Refreshing images",
       description: "Loading latest images from Supabase Storage",
     });
+    
+    await refreshImagesCallback();
   };
+
+  // 创建图像状态映射
+  const { imageStateMap, loadingStateMap, handleRegenerateMap } = createImageStateMaps(
+    introImage, contentImage1, contentImage2, contentImage3, contentImage4,
+    contentImage5, contentImage6, contentImage7, contentImage8, contentImage9, contentImage10,
+    isGeneratingIntro, isGeneratingContent1, isGeneratingContent2, isGeneratingContent3, isGeneratingContent4,
+    isGeneratingContent5, isGeneratingContent6, isGeneratingContent7, isGeneratingContent8, 
+    isGeneratingContent9, isGeneratingContent10,
+    handleRegenerateIntro, handleRegenerateContent1, handleRegenerateContent2, handleRegenerateContent3,
+    handleRegenerateContent4, handleRegenerateContent5, handleRegenerateContent6, handleRegenerateContent7,
+    handleRegenerateContent8, handleRegenerateContent9, handleRegenerateContent10
+  );
 
   return (
     <WizardStep
@@ -958,8 +765,8 @@ const GenerateStep = () => {
       totalSteps={9}
     >
       <div className="max-w-7xl mx-auto px-4">
-        {/* 添加刷新按钮 */}
-        <div className="mb-8 flex justify-end">
+        {/* 添加 Refresh Images 按钮 */}
+        <div className="mb-8 flex justify-end gap-4">
           <Button 
             variant="outline" 
             size="sm" 
@@ -971,18 +778,22 @@ const GenerateStep = () => {
           </Button>
         </div>
       
-        {/* Cover section - 保持原来大小 */}
+        {/* Cover section */}
         <div className="mb-12">
           <h2 className="text-2xl font-bold mb-8">Cover</h2>
           <div className="max-w-xl mx-auto">
-            <CoverPreviewCard 
-              coverImage={coverImage}
-              coverTitle={coverTitle}
-              subtitle={subtitle}
-              authorName={authorName}
-              backCoverText={backCoverText}
-              isGeneratingCover={isGeneratingCover}
-            />
+            {coverImage && (
+              <img 
+                src={coverImage} 
+                alt="Love Story Cover" 
+                className="w-full h-auto rounded-lg shadow-lg"
+              />
+            )}
+            {!coverImage && (
+              <div className="w-full h-96 bg-gray-100 rounded-lg flex items-center justify-center">
+                <p className="text-gray-500">Cover image not available</p>
+              </div>
+            )}
           </div>
         </div>
         
@@ -1006,17 +817,17 @@ const GenerateStep = () => {
         <div className="border-t-2 border-gray-200 pt-10">
           <h2 className="text-2xl font-bold mb-8">Story Content</h2>
           <div className="space-y-12">
-            {/* 只渲染内容图片，跳过介绍图片 */}
-            {renderContentImage(1)}
-            {renderContentImage(2)}
-            {renderContentImage(3)}
-            {renderContentImage(4)}
-            {renderContentImage(5)}
-            {renderContentImage(6)}
-            {renderContentImage(7)}
-            {renderContentImage(8)}
-            {renderContentImage(9)}
-            {renderContentImage(10)}
+            {/* 渲染内容图片 */}
+            {renderContentImage(1, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts)}
+            {renderContentImage(2, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts)}
+            {renderContentImage(3, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts)}
+            {renderContentImage(4, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts)}
+            {renderContentImage(5, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts)}
+            {renderContentImage(6, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts)}
+            {renderContentImage(7, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts)}
+            {renderContentImage(8, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts)}
+            {renderContentImage(9, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts)}
+            {renderContentImage(10, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts)}
           </div>
         </div>
       </div>
