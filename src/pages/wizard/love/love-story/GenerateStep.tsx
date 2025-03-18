@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
@@ -839,3 +840,280 @@ const GenerateStep = () => {
       // 更新imageStorageMap
       setImageStorageMap(prev => ({
         ...prev,
+        ['loveStoryIntroImage']: {
+          localStorageKey: 'loveStoryIntroImage',
+          url: storageUrl
+        }
+      }));
+      
+      toast({
+        title: "Intro image rendered",
+        description: "Introduction image with text has been processed",
+      });
+      
+      // 刷新图片列表
+      setTimeout(() => {
+        refreshImagesCallback();
+      }, 1000);
+    } catch (error) {
+      console.error("Error rendering intro image:", error);
+      toast({
+        title: "Error rendering intro image",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingIntro(false);
+    }
+  };
+
+  // 渲染内容图片到Canvas并上传
+  const handleRenderContentImage = async (index: number) => {
+    try {
+      // 获取内容图片和文本
+      const imageState = imageStateMap[index];
+      if (!imageState) {
+        toast({
+          title: "Error",
+          description: `No content image ${index} found`,
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // 获取内容文本
+      const contentText = imageTexts && imageTexts.length > index ? imageTexts[index].text : "";
+      
+      toast({
+        title: "Rendering content image",
+        description: `Processing content ${index} with text...`,
+      });
+      
+      // 设置加载状态
+      const loadingSetter = loadingStateMap[index];
+      if (loadingSetter) loadingSetter(true);
+      
+      // 渲染并上传图片
+      const storageUrl = await renderContentImage(
+        imageState,
+        contentText || `Moment ${index} of our love story.`,
+        selectedStyle,
+        index,
+        supabaseImages
+      );
+      
+      // 更新状态 - 使用对应的state setter
+      const stateSetter = {
+        1: setContentImage1,
+        2: setContentImage2,
+        3: setContentImage3,
+        4: setContentImage4,
+        5: setContentImage5,
+        6: setContentImage6,
+        7: setContentImage7,
+        8: setContentImage8,
+        9: setContentImage9,
+        10: setContentImage10
+      }[index];
+      
+      if (stateSetter) stateSetter(storageUrl);
+      
+      // 更新localStorage
+      localStorage.setItem(`loveStoryContentImage${index}_url`, storageUrl);
+      
+      // 更新imageStorageMap
+      setImageStorageMap(prev => ({
+        ...prev,
+        [`loveStoryContentImage${index}`]: {
+          localStorageKey: `loveStoryContentImage${index}`,
+          url: storageUrl
+        }
+      }));
+      
+      toast({
+        title: "Content image rendered",
+        description: `Content image ${index} with text has been processed`,
+      });
+      
+      // 刷新图片列表
+      setTimeout(() => {
+        refreshImagesCallback();
+      }, 1000);
+    } catch (error) {
+      console.error(`Error rendering content image ${index}:`, error);
+      toast({
+        title: "Error rendering content image",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      const loadingSetter = loadingStateMap[index];
+      if (loadingSetter) loadingSetter(false);
+    }
+  };
+
+  // 渲染所有页面
+  const renderAllPages = async () => {
+    toast({
+      title: "Rendering all pages",
+      description: "This may take a while...",
+    });
+    
+    try {
+      // 先渲染介绍页
+      if (introImage) {
+        await handleRenderIntroImage();
+      }
+      
+      // 然后渲染所有内容页
+      for (let i = 1; i <= 10; i++) {
+        if (imageStateMap[i]) {
+          await handleRenderContentImage(i);
+        }
+      }
+      
+      toast({
+        title: "All pages rendered",
+        description: "Your book is ready for preview!",
+      });
+    } catch (error) {
+      console.error("Error rendering all pages:", error);
+      toast({
+        title: "Error rendering pages",
+        description: "Not all pages could be rendered. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <WizardStep 
+      title="Generate Story" 
+      description="We'll turn your love story into beautiful images."
+      prevPath="/create/love/love-story/moments"
+      nextPath="/create/love/love-story/format"
+    >
+      <div className="space-y-8">
+        {/* Cover Image Section */}
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-xl font-bold">Cover</h3>
+            <Button 
+              variant="outline" 
+              onClick={handleEditCover}
+              className="flex items-center gap-1"
+            >
+              <Edit className="h-4 w-4" /> Edit Cover
+            </Button>
+          </div>
+          
+          <CoverPreviewCard 
+            coverImage={coverImage}
+            title={coverTitle} 
+            subtitle={subtitle}
+            author={authorName}
+            isGenerating={isGeneratingCover}
+          />
+        </div>
+        
+        {/* Blessing Section */}
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-xl font-bold">Blessing Page</h3>
+            <Button 
+              variant="outline" 
+              onClick={handleRegenerateIntro}
+              disabled={isGeneratingBlessing}
+              className="flex items-center gap-1"
+            >
+              <RefreshCw className={`h-4 w-4 ${isGeneratingBlessing ? 'animate-spin' : ''}`} /> 
+              {isGeneratingBlessing ? 'Generating...' : 'Regenerate Blessing'}
+            </Button>
+          </div>
+          
+          <div className="rounded-lg overflow-hidden border border-gray-200 bg-white">
+            {introImage ? (
+              <div className="aspect-[3/4] relative">
+                <img 
+                  src={introImage} 
+                  alt="Blessing page"
+                  className="w-full h-full object-cover"
+                />
+                {isGeneratingBlessing && (
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                    <div className="text-white text-center">
+                      <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-2" />
+                      <p>Generating blessing...</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="aspect-[3/4] bg-gray-100 flex items-center justify-center">
+                <Button 
+                  variant="default" 
+                  onClick={handleGenerateBlessing}
+                  disabled={isGeneratingBlessing}
+                  className="flex items-center gap-1"
+                >
+                  <Wand2 className="h-4 w-4" /> 
+                  {isGeneratingBlessing ? 'Generating...' : 'Generate Blessing'}
+                </Button>
+              </div>
+            )}
+          </div>
+          
+          {blessing && (
+            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <p className="text-sm italic">{blessing}</p>
+            </div>
+          )}
+        </div>
+        
+        {/* Story Content Section */}
+        <div className="space-y-4">
+          <h3 className="text-xl font-bold">Story Content</h3>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {Array.from({ length: 10 }).map((_, index) => {
+              const contentIndex = index + 1;
+              return (
+                <ContentImageCard
+                  key={`content-${contentIndex}`}
+                  imageUrl={imageStateMap[contentIndex]}
+                  index={contentIndex}
+                  isLoading={loadingStateMap[contentIndex] ? true : false}
+                  onRegenerate={() => handleRegenerateMap[contentIndex]()}
+                />
+              );
+            })}
+          </div>
+        </div>
+        
+        {/* Actions */}
+        <div className="flex flex-wrap gap-4 justify-center">
+          <Button
+            variant="outline"
+            onClick={refreshImages}
+            disabled={isLoadingImages}
+            className="flex items-center gap-1"
+          >
+            <RefreshCw className={`h-4 w-4 ${isLoadingImages ? 'animate-spin' : ''}`} />
+            {isLoadingImages ? 'Refreshing...' : 'Refresh Images'}
+          </Button>
+          
+          <Button
+            variant="default"
+            onClick={renderAllPages}
+            className="flex items-center gap-1"
+          >
+            <Wand2 className="h-4 w-4" />
+            Render All Pages
+          </Button>
+        </div>
+      </div>
+    </WizardStep>
+  );
+};
+
+export default GenerateStep;
