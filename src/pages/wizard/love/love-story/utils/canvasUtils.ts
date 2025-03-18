@@ -317,4 +317,250 @@ export const renderAndUploadIntroImage = async (
     console.error('Error rendering and uploading intro image:', error);
     throw error;
   }
+};
+
+// 渲染祝福语到Canvas
+export const renderBlessingToCanvas = (
+  blessingText: string,
+  authorName: string,
+  recipientName: string,
+  textTone: string = 'Heartfelt'
+): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    try {
+      // 创建Canvas元素
+      const canvas = document.createElement('canvas');
+      canvas.width = 3600;  // 宽度
+      canvas.height = 2400; // 高度 - 3:2比例
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        reject(new Error('Failed to get canvas context'));
+        return;
+      }
+      
+      // 样式定义 - 基于textTone
+      let backgroundColor, textColor, mainFont, accentColor, decorationColor;
+      
+      // 根据不同的语调设置不同的样式
+      if (textTone === 'Heartfelt') {
+        backgroundColor = '#f8e8e8'; // 温暖的浅粉色背景
+        textColor = '#5D4037';  // 深棕色文本
+        mainFont = 'Georgia, serif';
+        accentColor = '#E57373'; // 浅红色点缀
+        decorationColor = '#FFCDD2'; // 更浅的粉色装饰
+      } else if (textTone === 'Playful') {
+        backgroundColor = '#E3F2FD'; // 明亮的浅蓝色背景
+        textColor = '#1565C0';  // 深蓝色文本
+        mainFont = 'Comic Sans MS, cursive';
+        accentColor = '#29B6F6'; // 浅蓝色点缀
+        decorationColor = '#B3E5FC'; // 更浅的蓝色装饰
+      } else if (textTone === 'Inspirational') {
+        backgroundColor = '#E8F5E9'; // 浅绿色背景
+        textColor = '#2E7D32';  // 深绿色文本
+        mainFont = 'Palatino, serif';
+        accentColor = '#66BB6A'; // 浅绿色点缀
+        decorationColor = '#C8E6C9'; // 更浅的绿色装饰
+      } else {
+        // 默认风格
+        backgroundColor = '#FFF9C4'; // 浅黄色背景
+        textColor = '#5D4037';  // 深棕色文本
+        mainFont = 'Verdana, sans-serif';
+        accentColor = '#FBC02D'; // 浅黄色点缀
+        decorationColor = '#FFF59D'; // 更浅的黄色装饰
+      }
+      
+      // 填充背景
+      ctx.fillStyle = backgroundColor;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // 绘制装饰元素
+      ctx.fillStyle = decorationColor;
+      
+      // 绘制四个角的装饰
+      const cornerSize = canvas.width * 0.15;
+      
+      // 左上角装饰
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(cornerSize, 0);
+      ctx.lineTo(0, cornerSize);
+      ctx.closePath();
+      ctx.fill();
+      
+      // 右上角装饰
+      ctx.beginPath();
+      ctx.moveTo(canvas.width, 0);
+      ctx.lineTo(canvas.width - cornerSize, 0);
+      ctx.lineTo(canvas.width, cornerSize);
+      ctx.closePath();
+      ctx.fill();
+      
+      // 左下角装饰
+      ctx.beginPath();
+      ctx.moveTo(0, canvas.height);
+      ctx.lineTo(cornerSize, canvas.height);
+      ctx.lineTo(0, canvas.height - cornerSize);
+      ctx.closePath();
+      ctx.fill();
+      
+      // 右下角装饰
+      ctx.beginPath();
+      ctx.moveTo(canvas.width, canvas.height);
+      ctx.lineTo(canvas.width - cornerSize, canvas.height);
+      ctx.lineTo(canvas.width, canvas.height - cornerSize);
+      ctx.closePath();
+      ctx.fill();
+      
+      // 添加边框
+      const borderWidth = canvas.width * 0.03;
+      ctx.strokeStyle = accentColor;
+      ctx.lineWidth = borderWidth;
+      ctx.strokeRect(
+        borderWidth / 2, 
+        borderWidth / 2, 
+        canvas.width - borderWidth, 
+        canvas.height - borderWidth
+      );
+      
+      // 生成适合每种风格的祝福语
+      let blessing = blessingText;
+      
+      // 如果没有提供祝福语，则根据风格生成
+      if (!blessing || blessing.trim() === '') {
+        if (textTone === 'Heartfelt') {
+          blessing = `Dear ${recipientName},\n\nIn the quiet moments of reflection, I find my heart filled with gratitude for the beautiful journey we've shared. Each memory we've created together is a treasure I hold dear.\n\nWith all my love,\n${authorName}`;
+        } else if (textTone === 'Playful') {
+          blessing = `Hey ${recipientName}!\n\nGuess what? You're absolutely amazing! Every adventure with you turns into an epic story, and I can't wait to see what fun we'll have next! Here's to more laughter and silly moments!\n\nCheers,\n${authorName}`;
+        } else if (textTone === 'Inspirational') {
+          blessing = `To ${recipientName},\n\nMay your path be filled with light, your heart with courage, and your spirit with joy. Remember that you have the strength to overcome any challenge life presents.\n\nBelieving in you always,\n${authorName}`;
+        } else {
+          blessing = `Dear ${recipientName},\n\nSending you warm wishes and fond memories. May this book remind you of all the special moments we've shared.\n\nWith affection,\n${authorName}`;
+        }
+      }
+      
+      // 绘制祝福语文本
+      ctx.fillStyle = textColor;
+      
+      // 设置字体大小和样式
+      const titleFontSize = canvas.width * 0.05;
+      const bodyFontSize = canvas.width * 0.035;
+      const signatureFontSize = canvas.width * 0.04;
+      
+      // 绘制标题 - "Special Message"
+      ctx.font = `bold ${titleFontSize}px ${mainFont}`;
+      ctx.textAlign = 'center';
+      ctx.fillText("Special Message", canvas.width / 2, canvas.height * 0.2);
+      
+      // 绘制主体文本 - 自动换行
+      ctx.font = `${bodyFontSize}px ${mainFont}`;
+      ctx.textAlign = 'left';
+      
+      // 分割文本行
+      const lines = blessing.split('\n');
+      let y = canvas.height * 0.3;
+      
+      // 处理文本换行
+      lines.forEach(line => {
+        if (line.trim() === '') {
+          // 空行，增加一些距离
+          y += bodyFontSize * 0.8;
+          return;
+        }
+        
+        // 文本自动换行
+        const words = line.split(' ');
+        let currentLine = '';
+        const maxWidth = canvas.width * 0.7; // 70% 的画布宽度
+        
+        for (let i = 0; i < words.length; i++) {
+          const word = words[i];
+          const testLine = currentLine + (currentLine ? ' ' : '') + word;
+          const metrics = ctx.measureText(testLine);
+          
+          if (metrics.width > maxWidth && currentLine) {
+            // 如果这行太长，绘制当前行并开始新行
+            ctx.fillText(currentLine, canvas.width * 0.15, y);
+            currentLine = word;
+            y += bodyFontSize * 1.5;
+          } else {
+            currentLine = testLine;
+          }
+        }
+        
+        // 绘制最后一行
+        if (currentLine) {
+          ctx.fillText(currentLine, canvas.width * 0.15, y);
+          y += bodyFontSize * 1.8; // 行距
+        }
+      });
+      
+      // 转换为图像数据
+      const imageData = canvas.toDataURL('image/jpeg', 0.9);
+      resolve(imageData);
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
+// 渲染并上传祝福语图片
+export const renderAndUploadBlessingImage = async (
+  blessingText: string,
+  authorName: string,
+  recipientName: string,
+  textTone: string = 'Heartfelt',
+  supabaseImages: any[] = []
+): Promise<string> => {
+  try {
+    // 渲染图片到Canvas
+    const renderedImage = await renderBlessingToCanvas(blessingText, authorName, recipientName, textTone);
+    
+    // 使用时间戳确保文件名唯一
+    const timestamp = Date.now();
+    
+    // 文件名格式
+    const fileName = `blessing-${timestamp}`;
+    
+    // 上传到Supabase Storage
+    const storageUrl = await uploadImageToStorage(
+      renderedImage,
+      'images',
+      fileName
+    );
+    
+    // 删除之前生成的blessing图片
+    try {
+      // 查找所有包含"blessing-"的图片
+      const oldRenderedImages = supabaseImages.filter(img => 
+        img.name.includes('blessing-') && 
+        !img.name.includes(fileName)
+      );
+      
+      if (oldRenderedImages.length > 0) {
+        console.log(`Found ${oldRenderedImages.length} old blessing images to delete`);
+        
+        // 并行删除所有旧图片
+        const deletePromises = oldRenderedImages.map(img => {
+          // 从完整路径中提取文件名
+          const pathParts = img.name.split('/');
+          const filename = pathParts[pathParts.length - 1];
+          console.log(`Deleting old blessing image: ${filename}`);
+          return deleteImageFromStorage(filename, 'images');
+        });
+        
+        // 等待所有删除操作完成
+        await Promise.all(deletePromises);
+        console.log('Successfully deleted old blessing images');
+      }
+    } catch (deleteError) {
+      console.error('Error deleting old blessing images:', deleteError);
+      // 继续处理，即使删除失败
+    }
+    
+    return storageUrl;
+  } catch (error) {
+    console.error('Error rendering and uploading blessing image:', error);
+    throw error;
+  }
 }; 

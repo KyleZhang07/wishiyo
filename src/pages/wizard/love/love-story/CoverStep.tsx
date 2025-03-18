@@ -792,11 +792,11 @@ const LoveStoryCoverStep = () => {
         description: "Rendering and uploading your cover image..."
       });
       
-      // 保存当前选中的封面图片到 localStorage
-      if (coverImages.length > 0 && currentImageIndex >= 0 && currentImageIndex < coverImages.length) {
-        const selectedCoverImage = coverImages[currentImageIndex];
-        localStorage.setItem('loveStorySelectedCoverImage', selectedCoverImage);
-        
+    // 保存当前选中的封面图片到 localStorage
+    if (coverImages.length > 0 && currentImageIndex >= 0 && currentImageIndex < coverImages.length) {
+      const selectedCoverImage = coverImages[currentImageIndex];
+      localStorage.setItem('loveStorySelectedCoverImage', selectedCoverImage);
+      
         // 渲染封面到Canvas并获取图像数据
         const canvasImageData = await renderCoverToCanvas();
         
@@ -850,30 +850,30 @@ const LoveStoryCoverStep = () => {
         }
         
         // 如果有 Supabase 存储的原始 URL，也保存它
-        const images = supabaseImages.filter(img => img.name.includes('love-story-cover'));
-        if (images.length > 0) {
-          // 找到当前显示的图片在 Supabase 中的 URL
-          const sortedImages = images.sort((a, b) => {
-            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-          });
-          
-          // 如果有多张图片，保存当前选中的那张
-          if (sortedImages.length > currentImageIndex) {
-              localStorage.setItem('loveStoryOriginalCoverImage_url', sortedImages[currentImageIndex].url);
-            }
-        }
+      const images = supabaseImages.filter(img => img.name.includes('love-story-cover'));
+      if (images.length > 0) {
+        // 找到当前显示的图片在 Supabase 中的 URL
+        const sortedImages = images.sort((a, b) => {
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        });
         
-        // 保存当前选中的图片索引
-        localStorage.setItem('loveStorySelectedCoverIndex', currentImageIndex.toString());
+        // 如果有多张图片，保存当前选中的那张
+        if (sortedImages.length > currentImageIndex) {
+              localStorage.setItem('loveStoryOriginalCoverImage_url', sortedImages[currentImageIndex].url);
+        }
       }
       
-      toast({
-        title: "Cover saved",
-        description: "Moving to the next step..."
-      });
-      
-      // 导航到下一步
-      navigate('/create/love/love-story/debug-prompts');
+      // 保存当前选中的图片索引
+      localStorage.setItem('loveStorySelectedCoverIndex', currentImageIndex.toString());
+    }
+    
+    toast({
+      title: "Cover saved",
+      description: "Moving to the next step..."
+    });
+    
+    // 导航到下一步
+    navigate('/create/love/love-story/debug-prompts');
     } catch (error) {
       console.error('Error in handleContinue:', error);
       toast({
