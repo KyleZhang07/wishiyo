@@ -49,9 +49,9 @@ const coverStyles: CoverStyle[] = [
     id: 'playful',
     name: 'Playful',
     background: '#4A89DC',
-    titleColor: '#000000',
-    subtitleColor: '#000000',
-    authorColor: '#000000',
+    titleColor: '#744231',
+    subtitleColor: '#744231',
+    authorColor: '#744231',
     font: 'comic-sans'
   },
   {
@@ -137,7 +137,7 @@ const LoveStoryCoverStep = () => {
             setCoverTitle(savedCoverTitle);
           } else {
             // 默认标题为"THE MAGIC IN"
-            setCoverTitle('THE MAGIC IN');
+          setCoverTitle('THE MAGIC IN');
           }
           // 副标题设置为描述(现在不显示)
           setSubtitle(selectedIdea.description || '');
@@ -540,8 +540,6 @@ const LoveStoryCoverStep = () => {
             
             // 为Playful样式特别处理
             if (currentStyle.id === 'playful') {
-              ctx.font = `bold ${titleFontSize}px cursive`; // 确保使用手写体
-              
               // 确保使用正确的recipientName
               const localName = recipientName || localStorage.getItem('loveStoryPersonName') || 'Your';
               
@@ -549,12 +547,15 @@ const LoveStoryCoverStep = () => {
               let mainTitle = `${localName}'s`;
               let subTitle = "Amazing Adventure";
               
-              // 绘制主标题
-              ctx.fillText(mainTitle, canvas.width / 2, canvas.height * 0.32);
+              // 放大字体并绘制主标题
+              const mainTitleFontSize = titleFontSize * 1.2; // 增大主标题字体
+              ctx.font = `bold ${mainTitleFontSize}px cursive`; // 确保使用手写体
+              ctx.fillText(mainTitle, canvas.width / 2, canvas.height * 0.25); // 上移主标题位置
               
-              // 绘制副标题（字体稍小）
-              ctx.font = `bold ${titleFontSize * 0.9}px cursive`;
-              ctx.fillText(subTitle, canvas.width / 2, canvas.height * 0.38);
+              // 绘制副标题（保持字体稍小，增加间距）
+              const subTitleFontSize = titleFontSize * 1.1; // 增大副标题字体
+              ctx.font = `bold ${subTitleFontSize}px cursive`;
+              ctx.fillText(subTitle, canvas.width / 2, canvas.height * 0.33); // 保持间距，但整体上移
             } else {
               ctx.font = `bold ${titleFontSize}px ${getFontFamily(currentStyle.font)}`;
               ctx.fillText(coverTitle, canvas.width / 2, canvas.height * 0.15);
@@ -564,7 +565,13 @@ const LoveStoryCoverStep = () => {
             ctx.fillStyle = currentStyle.authorColor;
             const authorFontSize = canvas.width * 0.035;
             ctx.font = `italic ${authorFontSize}px ${getFontFamily(currentStyle.font)}`;
-            ctx.fillText(`Written by ${authorName}`, canvas.width * 0.75, canvas.height * 0.9);
+            
+            // 如果是Playful样式，则将作者名放在右下角
+            if (currentStyle.id === 'playful') {
+              ctx.fillText(`Written by ${authorName}`, canvas.width * 0.85, canvas.height * 0.95);
+            } else {
+              ctx.fillText(`Written by ${authorName}`, canvas.width * 0.75, canvas.height * 0.9);
+            }
             
             // 转换为图像
             const imageData = canvas.toDataURL('image/jpeg', 0.9);
@@ -604,11 +611,11 @@ const LoveStoryCoverStep = () => {
         description: "Rendering and uploading your cover image..."
       });
       
-      // 保存当前选中的封面图片到 localStorage
-      if (coverImages.length > 0 && currentImageIndex >= 0 && currentImageIndex < coverImages.length) {
-        const selectedCoverImage = coverImages[currentImageIndex];
-        localStorage.setItem('loveStorySelectedCoverImage', selectedCoverImage);
-        
+    // 保存当前选中的封面图片到 localStorage
+    if (coverImages.length > 0 && currentImageIndex >= 0 && currentImageIndex < coverImages.length) {
+      const selectedCoverImage = coverImages[currentImageIndex];
+      localStorage.setItem('loveStorySelectedCoverImage', selectedCoverImage);
+      
         // 渲染封面到Canvas并获取图像数据
         const canvasImageData = await renderCoverToCanvas();
         
@@ -662,30 +669,30 @@ const LoveStoryCoverStep = () => {
         }
         
         // 如果有 Supabase 存储的原始 URL，也保存它
-        const images = supabaseImages.filter(img => img.name.includes('love-story-cover'));
-        if (images.length > 0) {
-          // 找到当前显示的图片在 Supabase 中的 URL
-          const sortedImages = images.sort((a, b) => {
-            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-          });
-          
-          // 如果有多张图片，保存当前选中的那张
-          if (sortedImages.length > currentImageIndex) {
+      const images = supabaseImages.filter(img => img.name.includes('love-story-cover'));
+      if (images.length > 0) {
+        // 找到当前显示的图片在 Supabase 中的 URL
+        const sortedImages = images.sort((a, b) => {
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        });
+        
+        // 如果有多张图片，保存当前选中的那张
+        if (sortedImages.length > currentImageIndex) {
             localStorage.setItem('loveStoryOriginalCoverImage_url', sortedImages[currentImageIndex].url);
           }
-        }
-        
-        // 保存当前选中的图片索引
-        localStorage.setItem('loveStorySelectedCoverIndex', currentImageIndex.toString());
       }
       
-      toast({
-        title: "Cover saved",
-        description: "Moving to the next step..."
-      });
-      
-      // 导航到下一步
-      navigate('/create/love/love-story/debug-prompts');
+      // 保存当前选中的图片索引
+      localStorage.setItem('loveStorySelectedCoverIndex', currentImageIndex.toString());
+    }
+    
+    toast({
+      title: "Cover saved",
+      description: "Moving to the next step..."
+    });
+    
+    // 导航到下一步
+    navigate('/create/love/love-story/debug-prompts');
     } catch (error) {
       console.error('Error in handleContinue:', error);
       toast({
@@ -703,12 +710,12 @@ const LoveStoryCoverStep = () => {
   const currentCoverImage = coverImages.length > 0 ? coverImages[currentImageIndex] : undefined;
 
   return (
-    <WizardStep
+    <WizardStep 
       title="Design Your Love Story Cover"
       description="Choose and personalize your book cover design."
-      previousStep="/create/love/love-story/ideas"
-      currentStep={5}
-      totalSteps={7}
+      previousStep="/create/love/love-story/ideas" 
+      currentStep={5} 
+      totalSteps={7} 
       onNextClick={handleContinue}
     >
       <div className="max-w-4xl mx-auto px-4">
@@ -738,7 +745,7 @@ const LoveStoryCoverStep = () => {
           )}
           
           {/* 封面预览组件 */}
-          <LoveStoryCoverPreview 
+          <LoveStoryCoverPreview
             coverTitle={coverTitle}
             authorName={authorName}
             coverImage={currentCoverImage}
@@ -757,7 +764,7 @@ const LoveStoryCoverStep = () => {
             </button>
           )}
         </div>
-
+          
         {/* 操作按钮和指示器 - 移动到预览区域下方 */}
         <div className="mb-8">
           {/* 点状指示器 */}

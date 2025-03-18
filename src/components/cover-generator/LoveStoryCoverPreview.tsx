@@ -236,18 +236,19 @@ const LoveStoryCoverPreview = ({
     
     // 为Playful样式特别处理
     if (style?.id === 'playful') {
-      ctx.font = `bold ${titleFontSize}px cursive`; // 确保使用手写体
-      
       // 分割标题为两行
       let mainTitle = `${recipient}'s`;
       let subTitle = "Amazing Adventure";
       
-      // 绘制主标题
-      ctx.fillText(mainTitle, width / 2, height * 0.32);
+      // 放大字体并绘制主标题
+      const mainTitleFontSize = titleFontSize * 1.2; // 增大主标题字体
+      ctx.font = `bold ${mainTitleFontSize}px cursive`; // 确保使用手写体
+      ctx.fillText(mainTitle, width / 2, height * 0.25); // 上移主标题位置
       
-      // 绘制副标题（字体稍小）
-      ctx.font = `bold ${titleFontSize * 0.9}px cursive`;
-      ctx.fillText(subTitle, width / 2, height * 0.38);
+      // 绘制副标题（保持字体稍小，增加间距）
+      const subTitleFontSize = titleFontSize * 1.1; // 增大副标题字体
+      ctx.font = `bold ${subTitleFontSize}px cursive`;
+      ctx.fillText(subTitle, width / 2, height * 0.33); // 保持间距，但整体上移
     } else {
       ctx.font = `bold ${titleFontSize}px ${fontFamily}`;
       ctx.fillText(title, width / 2, height * 0.15);
@@ -257,7 +258,13 @@ const LoveStoryCoverPreview = ({
     ctx.fillStyle = authorColor;
     const authorFontSize = width * 0.035;
     ctx.font = `italic ${authorFontSize}px ${fontFamily}`;
-    ctx.fillText(`Written by ${author}`, width * 0.75, height * 0.9);
+    
+    // 如果是Playful样式，则将作者名放在右下角
+    if (style?.id === 'playful') {
+      ctx.fillText(`Written by ${author}`, width * 0.85, height * 0.95);
+    } else {
+      ctx.fillText(`Written by ${author}`, width * 0.75, height * 0.9);
+    }
   };
 
   // Helper function to get the font family based on the selected font
