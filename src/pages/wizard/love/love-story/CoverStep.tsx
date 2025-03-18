@@ -787,7 +787,7 @@ const LoveStoryCoverStep = () => {
   return (
     <WizardStep 
       title="Design Your Love Story Cover"
-      description="Choose and personalize your book cover design."
+      description=""
       previousStep="/create/love/love-story/ideas" 
       currentStep={5} 
       totalSteps={7} 
@@ -796,7 +796,6 @@ const LoveStoryCoverStep = () => {
       <div className="max-w-4xl mx-auto px-4">
         {/* 封面预览 */}
         <div className="relative mb-5">
-          <h2 className="text-xl font-semibold mb-4">Cover Preview</h2>
           
           {/* 封面图片生成中的加载状态 */}
           {isGeneratingCover && (
