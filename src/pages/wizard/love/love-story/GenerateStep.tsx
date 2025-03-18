@@ -6,14 +6,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { uploadImageToStorage, getAllImagesFromStorage, deleteImageFromStorage } from '@/integrations/supabase/storage';
 import { CoverPreviewCard } from './components/CoverPreviewCard';
 import { ContentImageCard } from './components/ContentImageCard';
-import { Edit, Wand2 } from 'lucide-react';
+import { Edit, Wand2, MessageSquareText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { Textarea } from '@/components/ui/textarea';
 
 // 导入工具函数
 import { expandImage, handleGenericContentRegeneration as handleContentRegeneration } from './utils/imageProcessingUtils';
 import { renderContentImage, createImageStateMaps } from './utils/renderUtils';
 import { loadImagesFromSupabase as fetchImagesFromSupabase } from './utils/storageUtils';
-import { renderAndUploadContentImage, renderAndUploadIntroImage } from './utils/canvasUtils';
+import { renderAndUploadContentImage, renderAndUploadIntroImage, renderAndUploadBlessingImage } from './utils/canvasUtils';
 
 interface ImageText {
   text: string;
@@ -78,6 +79,13 @@ const GenerateStep = () => {
   const [isLoadingImages, setIsLoadingImages] = useState(false);
   const [supabaseImages, setSupabaseImages] = useState<SupabaseImage[]>([]);
   const [imageStorageMap, setImageStorageMap] = useState<ImageStorageMap>({});
+
+  // 添加祝福语相关状态
+  const [blessingImage, setBlessingImage] = useState<string>();
+  const [blessingText, setBlessingText] = useState<string>('');
+  const [isGeneratingBlessing, setIsGeneratingBlessing] = useState(false);
+  const [recipientName, setRecipientName] = useState<string>('');
+  const [textTone, setTextTone] = useState<string>('Heartfelt');
 
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -553,6 +561,17 @@ const GenerateStep = () => {
     const savedStyle = localStorage.getItem('loveStoryStyle');
     const savedTexts = localStorage.getItem('loveStoryImageTexts');
     
+    // 加载封面样式和文本
+    const savedCoverTitle = localStorage.getItem('loveStoryCoverTitle');
+    const savedSubtitle = localStorage.getItem('loveStoryCoverSubtitle');
+    const savedBackCoverText = localStorage.getItem('loveStoryBackCoverText');
+    const savedRecipientName = localStorage.getItem('loveStoryPersonName');
+    const savedTextTone = localStorage.getItem('loveStoryTone');
+    
+    // 加载祝福语相关数据
+    const savedBlessingText = localStorage.getItem('loveStoryBlessingText');
+    const savedBlessingImage = localStorage.getItem('loveStoryBlessingImage_url');
+    
     // 直接从Supabase加载所有图片
     refreshImagesCallback();
 
@@ -605,6 +624,18 @@ const GenerateStep = () => {
         .join('\n\n');
       setBackCoverText(formattedMoments);
     }
+
+    // 设置封面样式和文本
+    if (savedCoverTitle && savedSubtitle) {
+      setCoverTitle(savedCoverTitle);
+      setSubtitle(savedSubtitle);
+    }
+
+    // 设置祝福语数据
+    if (savedBlessingText) setBlessingText(savedBlessingText);
+    if (savedBlessingImage) setBlessingImage(savedBlessingImage);
+    if (savedRecipientName) setRecipientName(savedRecipientName);
+    if (savedTextTone) setTextTone(savedTextTone);
   }, []);
 
   const handleEditCover = () => {
@@ -1024,6 +1055,78 @@ const GenerateStep = () => {
     }
   };
 
+  // 处理祝福语文本变更
+  const handleBlessingTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newText = e.target.value;
+    setBlessingText(newText);
+    localStorage.setItem('loveStoryBlessingText', newText);
+  };
+  
+  // 渲染祝福语图片
+  const handleRenderBlessingImage = async () => {
+    try {
+      setIsGeneratingBlessing(true);
+      
+      toast({
+        title: "Rendering blessing message",
+        description: "Creating a beautiful blessing message...",
+      });
+      
+      // 确保获取最新的数据
+      const currentAuthorName = localStorage.getItem('loveStoryAuthorName') || authorName;
+      const currentRecipientName = localStorage.getItem('loveStoryPersonName') || recipientName;
+      const currentTextTone = localStorage.getItem('loveStoryTone') || textTone;
+      
+      // 设置预设的祝福语文本 - 不允许用户编辑
+      let predefinedBlessingText = '';
+      if (currentTextTone === 'Heartfelt') {
+        predefinedBlessingText = `Dear ${currentRecipientName},\n\nIn the quiet moments of reflection, I find my heart filled with gratitude for the beautiful journey we've shared. Each memory we've created together is a treasure I hold dear.\n\nWith all my love,\n${currentAuthorName}`;
+      } else if (currentTextTone === 'Playful') {
+        predefinedBlessingText = `Hey ${currentRecipientName}!\n\nGuess what? You're absolutely amazing! Every adventure with you turns into an epic story, and I can't wait to see what fun we'll have next! Here's to more laughter and silly moments!\n\nCheers,\n${currentAuthorName}`;
+      } else if (currentTextTone === 'Inspirational') {
+        predefinedBlessingText = `To ${currentRecipientName},\n\nMay your path be filled with light, your heart with courage, and your spirit with joy. Remember that you have the strength to overcome any challenge life presents.\n\nBelieving in you always,\n${currentAuthorName}`;
+      } else {
+        predefinedBlessingText = `Dear ${currentRecipientName},\n\nSending you warm wishes and fond memories. May this book remind you of all the special moments we've shared.\n\nWith affection,\n${currentAuthorName}`;
+      }
+      
+      // 更新祝福语文本状态（不使用用户输入的文本）
+      setBlessingText(predefinedBlessingText);
+      localStorage.setItem('loveStoryBlessingText', predefinedBlessingText);
+      
+      // 渲染并上传祝福语图片
+      const storageUrl = await renderAndUploadBlessingImage(
+        predefinedBlessingText,
+        currentAuthorName,
+        currentRecipientName,
+        currentTextTone,
+        supabaseImages
+      );
+      
+      // 更新状态和localStorage
+      setBlessingImage(storageUrl);
+      localStorage.setItem('loveStoryBlessingImage_url', storageUrl);
+      
+      toast({
+        title: "Blessing message created",
+        description: "Your blessing message has been rendered successfully!",
+      });
+      
+      // 刷新图片列表
+      setTimeout(() => {
+        refreshImagesCallback();
+      }, 1000);
+    } catch (error: any) {
+      console.error('Error rendering blessing image:', error);
+      toast({
+        title: "Error creating blessing",
+        description: error.message || "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingBlessing(false);
+    }
+  };
+
   return (
     <WizardStep
       title="Your Love Story Images"
@@ -1076,6 +1179,49 @@ const GenerateStep = () => {
           </div>
         </div>
         
+        {/* 祝福语部分 - 在Cover和Intro之间 */}
+        <div className="mb-16 border-t-2 border-gray-200 pt-10">
+          <h2 className="text-2xl font-bold mb-8">Special Blessing</h2>
+          
+          <div className="max-w-xl mx-auto">
+            {/* 祝福语预览 */}
+            {isGeneratingBlessing && (
+              <div className="w-full h-96 bg-gray-100 rounded-lg flex items-center justify-center">
+                <div className="text-center">
+                  <Wand2 className="w-8 h-8 mx-auto mb-2 animate-spin text-[#FF7F50]" />
+                  <p className="text-gray-500">Creating your blessing...</p>
+                </div>
+              </div>
+            )}
+            
+            {!isGeneratingBlessing && blessingImage && (
+              <img 
+                src={blessingImage} 
+                alt="Blessing Message" 
+                className="w-full h-auto rounded-lg shadow-lg" 
+              />
+            )}
+            
+            {!isGeneratingBlessing && !blessingImage && (
+              <div className="w-full h-96 bg-gray-100 rounded-lg flex items-center justify-center">
+                <p className="text-gray-500 text-center px-8">
+                  Your blessing will appear here after creation.
+                </p>
+              </div>
+            )}
+            
+            <div className="mt-4 flex justify-center">
+              <Button
+                onClick={handleRenderBlessingImage}
+                disabled={isGeneratingBlessing}
+                className="bg-[#FF7F50] hover:bg-[#FF7F50]/90"
+              >
+                {isGeneratingBlessing ? 'Creating...' : 'Create Blessing Page'}
+              </Button>
+            </div>
+          </div>
+        </div>
+        
         {/* 介绍部分 - 将Intro与其他Content分开 */}
         <div className="mb-16 border-t-2 border-gray-200 pt-10">
           <h2 className="text-2xl font-bold mb-8">Introduction</h2>
@@ -1098,10 +1244,9 @@ const GenerateStep = () => {
                   size="sm"
                   onClick={handleRenderIntroImage}
                   disabled={isGeneratingIntro}
-                  className="bg-[#8e44ad]/10 text-[#8e44ad] hover:bg-[#8e44ad]/20 border-[#8e44ad]/30"
+                  className="bg-[#FF7F50]/10 text-[#FF7F50] hover:bg-[#FF7F50]/20 border-[#FF7F50]/30"
                 >
-                  <Wand2 className="w-4 h-4 mr-2" />
-                  Render with Text
+                  {isGeneratingIntro ? 'Rendering...' : 'Render with Text'}
                 </Button>
               </div>
             )}
