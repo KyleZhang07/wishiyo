@@ -1,4 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
@@ -6,14 +8,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { uploadImageToStorage, getAllImagesFromStorage, deleteImageFromStorage } from '@/integrations/supabase/storage';
 import { CoverPreviewCard } from './components/CoverPreviewCard';
 import { ContentImageCard } from './components/ContentImageCard';
-import { Edit, Wand2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Edit, Wand2, RefreshCw } from 'lucide-react';
 
 // 导入工具函数
 import { expandImage, handleGenericContentRegeneration as handleContentRegeneration } from './utils/imageProcessingUtils';
 import { renderContentImage, createImageStateMaps } from './utils/renderUtils';
 import { loadImagesFromSupabase as fetchImagesFromSupabase } from './utils/storageUtils';
-import { renderAndUploadContentImage, renderAndUploadIntroImage } from './utils/canvasUtils';
+import { renderAndUploadContentImage } from './utils/canvasUtils';
+import { generateAndRenderBlessing } from './utils/blessingUtils';
 
 interface ImageText {
   text: string;
@@ -42,6 +44,7 @@ const GenerateStep = () => {
   const [coverTitle, setCoverTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
   const [authorName, setAuthorName] = useState('');
+  const [personName, setPersonName] = useState('');
   const [backCoverText, setBackCoverText] = useState('');
   const [coverImage, setCoverImage] = useState<string>();
   const [introImage, setIntroImage] = useState<string>();
@@ -72,7 +75,9 @@ const GenerateStep = () => {
 
   // 样式和内容
   const [selectedStyle, setSelectedStyle] = useState<string>('Photographic (Default)');
+  const [selectedTone, setSelectedTone] = useState<string>('Heartfelt');
   const [imageTexts, setImageTexts] = useState<ImageText[]>([]);
+  const [blessing, setBlessing] = useState<string>('');
 
   // 存储状态
   const [isLoadingImages, setIsLoadingImages] = useState(false);
@@ -81,28 +86,6 @@ const GenerateStep = () => {
 
   const { toast } = useToast();
   const navigate = useNavigate();
-
-  const expandImage = async (imageUrl: string): Promise<string> => {
-    try {
-      console.log('Starting image expansion for:', imageUrl);
-      const { data, error } = await supabase.functions.invoke('expand-image', {
-        body: { 
-          imageUrl,
-          textPrompt: "The expanded area MUST be: absolutely 100% empty with ZERO people, ZERO objects, ZERO shapes, ZERO text, and ZERO animals; create ONLY a perfectly clean, solid or simple gradient background; ensure the background is suitable for text placement; create a smooth color gradient matching the edge colors of the original image; ensure seamless and invisible transition from original image; the expanded region MUST be completely plain, uniform, and uncluttered with NO DETAILS whatsoever; treat this expansion like creating empty space around the original image"
-        }
-      });
-      
-      if (error) throw error;
-      if (!data?.imageData) {
-        throw new Error("No imageData returned from expand-image");
-      }
-      
-      return data.imageData;
-    } catch (err) {
-      console.error("Error expanding image:", err);
-      throw err;
-    }
-  };
 
   // 刷新 Supabase 图片
   const refreshSupabaseImages = async () => {
@@ -180,163 +163,54 @@ const GenerateStep = () => {
   const handleRegenerateContent9 = (style?: string) => handleGenericContentRegeneration(9, style);
   const handleRegenerateContent10 = (style?: string) => handleGenericContentRegeneration(10, style);
 
-  const generateInitialImages = async (prompts: string, partnerPhoto: string) => {
+  // 生成祝福语并将其保存为图片
+  const handleGenerateBlessing = async () => {
     setIsGeneratingIntro(true);
-    toast({
-      title: "Generating images",
-      description: "This may take a minute...",
-    });
-
+    
     try {
-      // 获取当前图片的URL，用于后续删除
-      const currentIntroImageUrl = localStorage.getItem('loveStoryIntroImage_url');
-      
-      // 查找当前图片在Supabase中的路径
-      let currentIntroImagePath = '';
-      
-      if (currentIntroImageUrl) {
-        const currentIntroImageName = currentIntroImageUrl.split('/').pop();
-        if (currentIntroImageName) {
-          const currentImage = supabaseImages.find(img => img.name.includes(currentIntroImageName));
-          if (currentImage) {
-            currentIntroImagePath = currentImage.name;
-          }
-        }
-      }
-
-      // 我们现在解析完整的prompts对象，而不是使用传入的字符串
-      // 这样我们可以正确访问每个图像对应的提示
-      const promptsObj = JSON.parse(localStorage.getItem('loveStoryImagePrompts') || '[]');
-      if (!promptsObj || promptsObj.length < 3) {
-        throw new Error("Not enough prompts for image generation");
-      }
-
-      // 为每个图像类型使用专门的提示
-      const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-        body: { 
-          contentPrompt: promptsObj[1].prompt,   // intro使用prompts[1]
-          content2Prompt: promptsObj[2].prompt,  // Moment 1使用prompts[2]
-          content3Prompt: promptsObj[3].prompt,  // Moment 2使用prompts[3]
-          content4Prompt: promptsObj[4].prompt,  // Moment 3使用prompts[4]
-          content5Prompt: promptsObj[5].prompt,  // Moment 4使用prompts[5]
-          content6Prompt: promptsObj[6].prompt,  // Moment 5使用prompts[6]
-          content7Prompt: promptsObj[7].prompt,  // Moment 6使用prompts[7]
-          content8Prompt: promptsObj[8].prompt,  // Moment 7使用prompts[8]
-          content9Prompt: promptsObj[9].prompt,  // Moment 8使用prompts[9]
-          content10Prompt: promptsObj[10].prompt, // Moment 9使用prompts[10]
-          photo: partnerPhoto,
-          style: selectedStyle,
-          type: 'all'
-        }
-      });
-
-      if (error) throw error;
-
-      // 处理介绍图片
-      if (data?.contentImage?.[0]) {
-        const introImageData = data.contentImage[0];
-        setIntroImage(introImageData);
-        
-        // 使用时间戳确保文件名唯一
-        const timestamp = Date.now();
-        
-        // Upload to Supabase Storage
-        const storageUrl = await uploadImageToStorage(
-          introImageData, 
-          'images', 
-          `love-story-intro-${timestamp}`
-        );
-        
-        // Update storage map
-        setImageStorageMap(prev => ({
-          ...prev,
-          ['loveStoryIntroImage']: {
-            localStorageKey: 'loveStoryIntroImage',
-            url: storageUrl
-          }
-        }));
-        
-        // Store only the URL reference in localStorage
-        localStorage.setItem('loveStoryIntroImage_url', storageUrl);
-        
-        // 删除旧介绍图片
-        if (currentIntroImagePath) {
-          try {
-            await deleteImageFromStorage(currentIntroImagePath, 'images');
-            console.log(`Deleted old intro image: ${currentIntroImagePath}`);
-          } catch (deleteErr) {
-            console.error(`Failed to delete old intro image: ${currentIntroImagePath}`, deleteErr);
-            // 继续处理，即使删除失败
-          }
-        }
-      }
-
-      if (data?.contentImage2?.[0]) {
-        const contentImage1Data = data.contentImage2[0];
-        setContentImage1(contentImage1Data);
-        
-        // 获取当前内容图片的URL，用于后续删除
-        const currentContentImageUrl = localStorage.getItem('loveStoryContentImage1_url');
-        let currentContentImagePath = '';
-        
-        if (currentContentImageUrl) {
-          const currentContentImageName = currentContentImageUrl.split('/').pop();
-          if (currentContentImageName) {
-            const currentImage = supabaseImages.find(img => img.name.includes(currentContentImageName));
-            if (currentImage) {
-              currentContentImagePath = currentImage.name;
-            }
-          }
-        }
-        
-        // 使用时间戳确保文件名唯一
-        const timestamp = Date.now();
-        
-        // Upload to Supabase Storage
-        const storageUrl = await uploadImageToStorage(
-          contentImage1Data, 
-          'images', 
-          `love-story-content-1-${timestamp}`
-        );
-        
-        // Update storage map
-        setImageStorageMap(prev => ({
-          ...prev,
-          ['loveStoryContentImage1']: {
-            localStorageKey: 'loveStoryContentImage1',
-            url: storageUrl
-          }
-        }));
-        
-        // Store only the URL reference in localStorage
-        localStorage.setItem('loveStoryContentImage1_url', storageUrl);
-        
-        // 删除旧内容图片
-        if (currentContentImagePath) {
-          try {
-            await deleteImageFromStorage(currentContentImagePath, 'images');
-            console.log(`Deleted old content image: ${currentContentImagePath}`);
-          } catch (deleteErr) {
-            console.error(`Failed to delete old content image: ${currentContentImagePath}`, deleteErr);
-            // 继续处理，即使删除失败
-          }
-        }
-      }
-
       toast({
-        title: "Images generated",
-        description: "Your love story images are ready!",
+        title: "生成祝福语",
+        description: "正在为您生成个性化祝福语...",
       });
       
-      // 刷新图片列表
+      // 获取生成所需的姓名和风格
+      const result = await generateAndRenderBlessing(
+        personName,
+        authorName,
+        selectedTone
+      );
+      
+      // 保存祝福语文本
+      setBlessing(result.blessing);
+      localStorage.setItem('loveStoryBlessing', result.blessing);
+      
+      // 保存祝福语图片URL
+      setIntroImage(result.imageUrl);
+      localStorage.setItem('loveStoryIntroImage_url', result.imageUrl);
+      
+      // 更新imageStorageMap
+      setImageStorageMap(prev => ({
+        ...prev,
+        ['loveStoryIntroImage']: {
+          localStorageKey: 'loveStoryIntroImage',
+          url: result.imageUrl
+        }
+      }));
+      
+      toast({
+        title: "祝福语生成成功",
+        description: "您的个性化祝福语已准备就绪！",
+      });
+      
+      // 刷新图片列表，确保显示新生成的祝福语图片
       setTimeout(() => {
         refreshImagesCallback();
       }, 1000);
-    } catch (err: any) {
-      console.error("Error generating images:", err);
+    } catch (error: any) {
+      console.error("生成祝福语时出错:", error);
       toast({
-        title: "Error generating images",
-        description: err.message || "Please try again",
+        title: "生成祝福语失败",
+        description: error.message || "请重试",
         variant: "destructive",
       });
     } finally {
@@ -344,192 +218,10 @@ const GenerateStep = () => {
     }
   };
 
-  // 新增加：从Supabase加载所有图片
-  const loadImagesFromSupabase = async () => {
-    setIsLoadingImages(true);
-    try {
-      // 获取所有Supabase中的图片
-      const images = await getAllImagesFromStorage('images');
-      
-      // 按照创建时间排序图片，确保最新的图片显示在前面
-      const sortedImages = [...images].sort((a, b) => {
-        // 首先按照图片类型排序
-        const typeA = getImageType(a.name);
-        const typeB = getImageType(b.name);
-        
-        if (typeA !== typeB) {
-          // 优先显示封面、介绍页和内容页
-          const typeOrder = {
-            'cover': 1,
-            'intro': 2,
-            'content': 3,
-            'other': 4
-          };
-          return (typeOrder[typeA as keyof typeof typeOrder] || 4) - (typeOrder[typeB as keyof typeof typeOrder] || 4);
-        }
-        
-        // 如果是内容图片，按照内容编号排序
-        if (typeA === 'content' && typeB === 'content') {
-          const indexA = getContentIndex(a.name);
-          const indexB = getContentIndex(b.name);
-          if (indexA !== indexB) {
-            return indexA - indexB;
-          }
-        }
-        
-        // 最后按照创建时间排序，最新的在前面
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      });
-      
-      setSupabaseImages(sortedImages);
-      
-      // 创建一个新的Map用于存储图片引用
-      const newImageMap: ImageStorageMap = {};
-      
-      // 用于跟踪已处理的图片类型
-      const processedTypes: Record<string, boolean> = {};
-      
-      // 遍历所有图片，更新映射 - 修复命名识别问题
-      for (const img of sortedImages) {
-        // 从完整路径中提取文件名
-        const pathParts = img.name.split('/');
-        const fileName = pathParts[pathParts.length - 1];
-        
-        // 使用正则表达式精确匹配文件名，防止10匹配到1的内容
-        if (/^love-story-cover/.test(fileName) && !processedTypes['cover']) {
-          // 检查用户是否在 CoverStep 中选择了特定的封面图片
-          const selectedCoverImageUrl = localStorage.getItem('loveStorySelectedCoverImage_url');
-          
-          if (selectedCoverImageUrl) {
-            // 如果用户选择了特定的封面图片，使用该图片
-            setCoverImage(selectedCoverImageUrl);
-            newImageMap['loveStoryCoverImage'] = {
-              localStorageKey: 'loveStoryCoverImage',
-              url: selectedCoverImageUrl
-            };
-            localStorage.setItem('loveStoryCoverImage_url', selectedCoverImageUrl);
-          } else {
-            // 否则使用最新的封面图片
-            setCoverImage(img.url);
-            newImageMap['loveStoryCoverImage'] = {
-              localStorageKey: 'loveStoryCoverImage',
-              url: img.url
-            };
-            localStorage.setItem('loveStoryCoverImage_url', img.url);
-          }
-          
-          processedTypes['cover'] = true;
-        } else if (/^love-story-intro/.test(fileName) && !processedTypes['intro']) {
-          setIntroImage(img.url);
-          newImageMap['loveStoryIntroImage'] = {
-            localStorageKey: 'loveStoryIntroImage',
-            url: img.url
-          };
-          localStorage.setItem('loveStoryIntroImage_url', img.url);
-          processedTypes['intro'] = true;
-        } else if (/^love-story-content-1($|-)/.test(fileName) && !processedTypes['content1']) {
-          // 确保只匹配content-1，而不匹配content-10等
-          setContentImage1(img.url);
-          newImageMap['loveStoryContentImage1'] = {
-            localStorageKey: 'loveStoryContentImage1',
-            url: img.url
-          };
-          localStorage.setItem('loveStoryContentImage1_url', img.url);
-          processedTypes['content1'] = true;
-        } else if (/^love-story-content-2($|-)/.test(fileName) && !processedTypes['content2']) {
-          setContentImage2(img.url);
-          newImageMap['loveStoryContentImage2'] = {
-            localStorageKey: 'loveStoryContentImage2',
-            url: img.url
-          };
-          localStorage.setItem('loveStoryContentImage2_url', img.url);
-          processedTypes['content2'] = true;
-        } else if (/^love-story-content-3($|-)/.test(fileName) && !processedTypes['content3']) {
-          setContentImage3(img.url);
-          newImageMap['loveStoryContentImage3'] = {
-            localStorageKey: 'loveStoryContentImage3',
-            url: img.url
-          };
-          localStorage.setItem('loveStoryContentImage3_url', img.url);
-          processedTypes['content3'] = true;
-        } else if (/^love-story-content-4($|-)/.test(fileName) && !processedTypes['content4']) {
-          setContentImage4(img.url);
-          newImageMap['loveStoryContentImage4'] = {
-            localStorageKey: 'loveStoryContentImage4',
-            url: img.url
-          };
-          localStorage.setItem('loveStoryContentImage4_url', img.url);
-          processedTypes['content4'] = true;
-        } else if (/^love-story-content-5($|-)/.test(fileName) && !processedTypes['content5']) {
-          setContentImage5(img.url);
-          newImageMap['loveStoryContentImage5'] = {
-            localStorageKey: 'loveStoryContentImage5',
-            url: img.url
-          };
-          localStorage.setItem('loveStoryContentImage5_url', img.url);
-          processedTypes['content5'] = true;
-        } else if (/^love-story-content-6($|-)/.test(fileName) && !processedTypes['content6']) {
-          setContentImage6(img.url);
-          newImageMap['loveStoryContentImage6'] = {
-            localStorageKey: 'loveStoryContentImage6',
-            url: img.url
-          };
-          localStorage.setItem('loveStoryContentImage6_url', img.url);
-          processedTypes['content6'] = true;
-        } else if (/^love-story-content-7($|-)/.test(fileName) && !processedTypes['content7']) {
-          setContentImage7(img.url);
-          newImageMap['loveStoryContentImage7'] = {
-            localStorageKey: 'loveStoryContentImage7',
-            url: img.url
-          };
-          localStorage.setItem('loveStoryContentImage7_url', img.url);
-          processedTypes['content7'] = true;
-        } else if (/^love-story-content-8($|-)/.test(fileName) && !processedTypes['content8']) {
-          setContentImage8(img.url);
-          newImageMap['loveStoryContentImage8'] = {
-            localStorageKey: 'loveStoryContentImage8',
-            url: img.url
-          };
-          localStorage.setItem('loveStoryContentImage8_url', img.url);
-          processedTypes['content8'] = true;
-        } else if (/^love-story-content-9($|-)/.test(fileName) && !processedTypes['content9']) {
-          setContentImage9(img.url);
-          newImageMap['loveStoryContentImage9'] = {
-            localStorageKey: 'loveStoryContentImage9',
-            url: img.url
-          };
-          localStorage.setItem('loveStoryContentImage9_url', img.url);
-          processedTypes['content9'] = true;
-        } else if (/^love-story-content-10($|-)/.test(fileName) && !processedTypes['content10']) {
-          setContentImage10(img.url);
-          newImageMap['loveStoryContentImage10'] = {
-            localStorageKey: 'loveStoryContentImage10',
-            url: img.url
-          };
-          localStorage.setItem('loveStoryContentImage10_url', img.url);
-          processedTypes['content10'] = true;
-        }
-      }
-      
-      // 更新图片存储映射
-      setImageStorageMap(newImageMap);
-      
-    } catch (error) {
-      console.error('Error loading images from Supabase:', error);
-      toast({
-        title: "Error loading images",
-        description: "Could not load your saved images",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoadingImages(false);
-    }
-  };
-  
   // 辅助函数：获取图片类型
   const getImageType = (imageName: string): string => {
     if (imageName.includes('love-story-cover')) return 'cover';
-    if (imageName.includes('love-story-intro')) return 'intro';
+    if (imageName.includes('love-story-blessing') || imageName.includes('love-story-intro')) return 'intro';
     if (imageName.includes('love-story-content')) return 'content';
     return 'other';
   };
@@ -545,19 +237,30 @@ const GenerateStep = () => {
 
   useEffect(() => {
     // 加载文本内容和设置
-    const savedAuthor = localStorage.getItem('loveStoryAuthorName');
+    const savedAuthorName = localStorage.getItem('loveStoryAuthorName');
+    const savedPersonName = localStorage.getItem('loveStoryPersonName');
     const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
     const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
     const savedMoments = localStorage.getItem('loveStoryMoments');
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
     const savedStyle = localStorage.getItem('loveStoryStyle');
+    const savedTone = localStorage.getItem('loveStoryTone');
     const savedTexts = localStorage.getItem('loveStoryImageTexts');
+    const savedBlessing = localStorage.getItem('loveStoryBlessing');
     
     // 直接从Supabase加载所有图片
     refreshImagesCallback();
 
-    if (savedAuthor) {
-      setAuthorName(savedAuthor);
+    if (savedAuthorName) {
+      setAuthorName(savedAuthorName);
+    }
+
+    if (savedPersonName) {
+      setPersonName(savedPersonName);
+    }
+
+    if (savedTone) {
+      setSelectedTone(savedTone);
     }
 
     if (savedStyle) {
@@ -605,6 +308,14 @@ const GenerateStep = () => {
         .join('\n\n');
       setBackCoverText(formattedMoments);
     }
+    
+    // 加载已保存的祝福语
+    if (savedBlessing) {
+      setBlessing(savedBlessing);
+    } else if (savedPersonName && savedAuthorName && savedTone) {
+      // 如果没有保存的祝福语但有必要的信息，自动生成一个
+      handleGenerateBlessing();
+    }
   }, []);
 
   const handleEditCover = () => {
@@ -614,124 +325,6 @@ const GenerateStep = () => {
     });
     // 导航到CoverStep页面
     navigate('/create/love/love-story/cover');
-  };
-
-  const handleEditText = () => {
-    toast({
-      title: "Edit Text",
-      description: "Opening text editor..."
-    });
-  };
-
-  const handleRegenerateIntro = async (style?: string) => {
-    localStorage.removeItem('loveStoryIntroImage');
-    localStorage.removeItem('loveStoryIntroImage_url');
-    
-    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
-    const characterPhoto = localStorage.getItem('loveStoryPartnerPhoto');
-    if (savedPrompts && characterPhoto) {
-      const prompts = JSON.parse(savedPrompts);
-      if (prompts && prompts.length > 1) {
-        setIsGeneratingIntro(true);
-        
-        // Use the provided style or fall back to the stored/default style
-        const imageStyle = style || selectedStyle;
-        
-        // Update the stored style if a new one is provided
-        if (style) {
-          setSelectedStyle(style);
-          localStorage.setItem('loveStoryStyle', style);
-        }
-        
-        try {
-          // 修复请求结构，使用prompts[1]而非prompts[0]（prompts[0]是封面）
-          const requestBody = {
-            contentPrompt: prompts[1].prompt, 
-            photo: characterPhoto,
-            style: imageStyle,
-            type: 'intro'
-          };
-
-          console.log('Intro generation request (using prompt 1):', JSON.stringify(requestBody));
-          
-          const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-            body: requestBody
-          });
-          
-          if (error) throw error;
-          
-          console.log('Intro generation response:', data);
-          
-          // 检查各种可能的响应格式
-          let introImageData = '';
-          if (data?.contentImage && data.contentImage.length > 0) {
-            introImageData = data.contentImage[0];
-          } else if (data?.output && data.output.length > 0) {
-            introImageData = data.output[0];
-          } else if (data?.introImage && data.introImage.length > 0) {
-            introImageData = data.introImage[0];
-          } else {
-            throw new Error("No intro image data in response");
-          }
-          
-          if (introImageData) {
-            // 尝试扩展图片
-            try {
-              const expandedBase64 = await expandImage(introImageData);
-              introImageData = expandedBase64;
-            } catch (expandError) {
-              console.error("Error expanding intro image:", expandError);
-              // 即使扩展失败，继续使用原始图片
-            }
-            
-            setIntroImage(introImageData);
-            
-            // 使用时间戳确保文件名唯一
-            const timestamp = Date.now();
-            
-            // Upload to Supabase Storage
-            const storageUrl = await uploadImageToStorage(
-              introImageData, 
-              'images', 
-              `love-story-intro-${timestamp}`
-            );
-            
-            // Update storage map
-            setImageStorageMap(prev => ({
-              ...prev,
-              ['loveStoryIntroImage']: {
-                localStorageKey: 'loveStoryIntroImage',
-                url: storageUrl
-              }
-            }));
-            
-            // Store only the URL reference in localStorage
-            localStorage.setItem('loveStoryIntroImage_url', storageUrl);
-            
-            // 延迟刷新图片列表，确保上传完成
-            setTimeout(() => {
-              refreshImagesCallback();
-            }, 1000);
-            
-            toast({
-              title: "Introduction image regenerated",
-              description: `Intro image updated with ${imageStyle} style`,
-            });
-          } else {
-            throw new Error("Failed to generate intro image");
-          }
-        } catch (error: any) {
-          console.error('Error regenerating intro image:', error);
-          toast({
-            title: "Error regenerating intro image",
-            description: error.message || "Please try again",
-            variant: "destructive",
-          });
-        } finally {
-          setIsGeneratingIntro(false);
-        }
-      }
-    }
   };
 
   // 处理函数定义
@@ -744,72 +337,19 @@ const GenerateStep = () => {
     await refreshImagesCallback();
   };
 
-  // 渲染介绍图片到Canvas并上传
-  const handleRenderIntroImage = async () => {
-    try {
-      // 获取介绍图片和文本
-      if (!introImage) {
-        toast({
-          title: "Error",
-          description: "No intro image found",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      // 获取介绍文本 - 索引1对应intro
-      const introText = imageTexts && imageTexts.length > 1 ? imageTexts[1].text : "";
-      
-      toast({
-        title: "Rendering intro image",
-        description: "Processing introduction with text...",
-      });
-      
-      // 设置加载状态
-      setIsGeneratingIntro(true);
-      
-      // 渲染并上传图片
-      const storageUrl = await renderAndUploadIntroImage(
-        introImage,
-        introText || "Welcome to our love story.",
-        selectedStyle,
-        supabaseImages
-      );
-      
-      // 更新状态 - 直接使用渲染后的图片URL
-      setIntroImage(storageUrl);
-      
-      // 更新localStorage
-      localStorage.setItem('loveStoryIntroImage_url', storageUrl);
-      
-      // 更新imageStorageMap
-      setImageStorageMap(prev => ({
-        ...prev,
-        ['loveStoryIntroImage']: {
-          localStorageKey: 'loveStoryIntroImage',
-          url: storageUrl
-        }
-      }));
-      
-      toast({
-        title: "Intro image rendered",
-        description: "Introduction successfully rendered with text",
-      });
-      
-      // 不需要刷新图片列表，因为我们已经直接更新了状态
-    } catch (error: any) {
-      console.error("Error rendering intro image:", error);
-      toast({
-        title: "Error rendering intro image",
-        description: error.message || "Please try again",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGeneratingIntro(false);
-    }
-  };
+  // 创建图像状态映射
+  const { imageStateMap, loadingStateMap, handleRegenerateMap } = createImageStateMaps(
+    introImage, contentImage1, contentImage2, contentImage3, contentImage4,
+    contentImage5, contentImage6, contentImage7, contentImage8, contentImage9, contentImage10,
+    isGeneratingIntro, isGeneratingContent1, isGeneratingContent2, isGeneratingContent3, isGeneratingContent4,
+    isGeneratingContent5, isGeneratingContent6, isGeneratingContent7, isGeneratingContent8, 
+    isGeneratingContent9, isGeneratingContent10,
+    handleRegenerateBlessing, handleRegenerateContent1, handleRegenerateContent2, handleRegenerateContent3,
+    handleRegenerateContent4, handleRegenerateContent5, handleRegenerateContent6, handleRegenerateContent7,
+    handleRegenerateContent8, handleRegenerateContent9, handleRegenerateContent10
+  );
 
-  // 渲染内容图片到Canvas并上传
+  // 处理渲染内容图片的函数
   const handleRenderContentImage = async (index: number) => {
     try {
       // 获取对应的图片和文本
@@ -897,8 +437,6 @@ const GenerateStep = () => {
         title: "Content image rendered",
         description: `Content ${index} successfully rendered with text`,
       });
-      
-      // 不需要刷新图片列表，因为我们已经直接更新了状态
     } catch (error: any) {
       console.error(`Error rendering content image ${index}:`, error);
       toast({
@@ -925,18 +463,6 @@ const GenerateStep = () => {
     }
   };
 
-  // 创建图像状态映射
-  const { imageStateMap, loadingStateMap, handleRegenerateMap } = createImageStateMaps(
-    introImage, contentImage1, contentImage2, contentImage3, contentImage4,
-    contentImage5, contentImage6, contentImage7, contentImage8, contentImage9, contentImage10,
-    isGeneratingIntro, isGeneratingContent1, isGeneratingContent2, isGeneratingContent3, isGeneratingContent4,
-    isGeneratingContent5, isGeneratingContent6, isGeneratingContent7, isGeneratingContent8, 
-    isGeneratingContent9, isGeneratingContent10,
-    handleRegenerateIntro, handleRegenerateContent1, handleRegenerateContent2, handleRegenerateContent3,
-    handleRegenerateContent4, handleRegenerateContent5, handleRegenerateContent6, handleRegenerateContent7,
-    handleRegenerateContent8, handleRegenerateContent9, handleRegenerateContent10
-  );
-
   // 批量渲染所有内容图片
   const handleRenderAllContentImages = async () => {
     toast({
@@ -952,7 +478,7 @@ const GenerateStep = () => {
       }
     }
     
-    if (contentIndices.length === 0 && (!introImage || !imageTexts || imageTexts.length <= 1)) {
+    if (contentIndices.length === 0) {
       toast({
         title: "No content to render",
         description: "Please generate images first",
@@ -962,12 +488,6 @@ const GenerateStep = () => {
     }
 
     try {
-      // 首先渲染介绍图片（如果存在）
-      if (introImage && imageTexts && imageTexts.length > 1) {
-        setIsGeneratingIntro(true);
-        await handleRenderIntroImage();
-      }
-      
       // 设置所有内容为加载状态
       contentIndices.forEach(index => {
         const setLoadingFn = {
@@ -993,7 +513,7 @@ const GenerateStep = () => {
       
       toast({
         title: "All images rendered",
-        description: `Successfully rendered intro and ${contentIndices.length} content images with text`,
+        description: `Successfully rendered ${contentIndices.length} content images with text`,
       });
     } catch (error: any) {
       console.error("Error rendering all images:", error);
@@ -1004,7 +524,6 @@ const GenerateStep = () => {
       });
     } finally {
       // 重置所有加载状态
-      setIsGeneratingIntro(false);
       contentIndices.forEach(index => {
         const setLoadingFn = {
           1: setIsGeneratingContent1,
@@ -1021,6 +540,61 @@ const GenerateStep = () => {
         
         if (setLoadingFn) setLoadingFn(false);
       });
+    }
+  };
+
+  // 重新生成祝福语
+  const handleRegenerateBlessing = async () => {
+    setIsGeneratingIntro(true);
+    
+    try {
+      toast({
+        title: "重新生成祝福语",
+        description: "正在为您生成新的祝福语...",
+      });
+      
+      // 生成新的祝福语并保存为图片
+      const result = await generateAndRenderBlessing(
+        personName,
+        authorName,
+        selectedTone
+      );
+      
+      // 保存祝福语文本
+      setBlessing(result.blessing);
+      localStorage.setItem('loveStoryBlessing', result.blessing);
+      
+      // 保存祝福语图片URL
+      setIntroImage(result.imageUrl);
+      localStorage.setItem('loveStoryIntroImage_url', result.imageUrl);
+      
+      // 更新imageStorageMap
+      setImageStorageMap(prev => ({
+        ...prev,
+        ['loveStoryIntroImage']: {
+          localStorageKey: 'loveStoryIntroImage',
+          url: result.imageUrl
+        }
+      }));
+      
+      toast({
+        title: "祝福语更新成功",
+        description: "您的新祝福语已准备就绪！",
+      });
+      
+      // 刷新图片列表
+      setTimeout(() => {
+        refreshImagesCallback();
+      }, 1000);
+    } catch (error: any) {
+      console.error("重新生成祝福语时出错:", error);
+      toast({
+        title: "重新生成祝福语失败",
+        description: error.message || "请重试",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingIntro(false);
     }
   };
 
@@ -1059,13 +633,27 @@ const GenerateStep = () => {
       
         {/* Cover section */}
         <div className="mb-12">
-          <h2 className="text-2xl font-bold mb-8">Cover</h2>
+          <h2 className="text-2xl font-bold mb-4 flex items-center">
+            Cover
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleEditCover}
+              className="ml-2 text-gray-500 hover:text-gray-700"
+            >
+              <Edit className="w-4 h-4 mr-1" />
+              Edit
+            </Button>
+          </h2>
           <div className="max-w-xl mx-auto">
             {coverImage && (
-              <img 
-                src={coverImage} 
-                alt="Love Story Cover" 
-                className="w-full h-auto rounded-lg shadow-lg"
+              <CoverPreviewCard
+                coverTitle={coverTitle}
+                subtitle={subtitle}
+                authorName={authorName}
+                coverImage={coverImage}
+                backCoverText={backCoverText}
+                isGeneratingCover={isGeneratingCover}
               />
             )}
             {!coverImage && (
@@ -1076,35 +664,63 @@ const GenerateStep = () => {
           </div>
         </div>
         
-        {/* 介绍部分 - 将Intro与其他Content分开 */}
+        {/* 介绍部分 - 祝福语 */}
         <div className="mb-16 border-t-2 border-gray-200 pt-10">
-          <h2 className="text-2xl font-bold mb-8">Introduction</h2>
+          <h2 className="text-2xl font-bold mb-4 flex items-center">
+            Dedication
+          </h2>
           <div className="mb-8">
-            <ContentImageCard 
-              image={introImage} 
-              isGenerating={isGeneratingIntro}
-              onRegenerate={handleRegenerateIntro}
-              index={0}
-              onEditText={() => {}}
-              text={imageTexts && imageTexts.length > 1 ? imageTexts[1]?.text : undefined}
-              title=""
-            />
-            
-            {/* 添加渲染按钮 */}
-            {introImage && imageTexts && imageTexts.length > 1 && (
-              <div className="mt-4 flex justify-end">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleRenderIntroImage}
-                  disabled={isGeneratingIntro}
-                  className="bg-[#8e44ad]/10 text-[#8e44ad] hover:bg-[#8e44ad]/20 border-[#8e44ad]/30"
-                >
-                  <Wand2 className="w-4 h-4 mr-2" />
-                  Render with Text
-                </Button>
+            <div className="max-w-2xl mx-auto bg-white rounded-lg overflow-hidden shadow-lg">
+              {/* 祝福语图片 */}
+              {introImage ? (
+                <div className="relative">
+                  <img 
+                    src={introImage} 
+                    alt="Blessing" 
+                    className="w-full h-auto"
+                  />
+                  {isGeneratingIntro && (
+                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                      <div className="flex flex-col items-center">
+                        <div className="animate-spin h-8 w-8 border-4 border-white border-t-transparent rounded-full mb-2"></div>
+                        <p className="text-white">Generating...</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="w-full h-80 bg-gray-100 flex items-center justify-center">
+                  <p className="text-gray-500">Blessing not generated yet</p>
+                </div>
+              )}
+              
+              {/* 祝福语控制按钮 */}
+              <div className="p-4 bg-white border-t border-gray-200">
+                <div className="flex justify-between items-center">
+                  <div className="text-sm text-gray-500">
+                    Tone: <span className="font-medium">{selectedTone}</span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRegenerateBlessing}
+                    disabled={isGeneratingIntro}
+                    className="flex items-center"
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Regenerate Blessing
+                  </Button>
+                </div>
+                
+                {/* 显示祝福语文本预览 */}
+                {blessing && (
+                  <div className="mt-4 p-4 bg-gray-50 rounded-md">
+                    <h4 className="text-xs uppercase font-medium text-gray-500 mb-2">Blessing Preview:</h4>
+                    <p className="text-sm text-gray-700 italic">{blessing.substring(0, 100)}...</p>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
         </div>
         
@@ -1113,16 +729,46 @@ const GenerateStep = () => {
           <h2 className="text-2xl font-bold mb-8">Story Content</h2>
           <div className="space-y-12">
             {/* 渲染内容图片 */}
-            {renderContentImage(1, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts, handleRenderContentImage)}
-            {renderContentImage(2, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts, handleRenderContentImage)}
-            {renderContentImage(3, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts, handleRenderContentImage)}
-            {renderContentImage(4, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts, handleRenderContentImage)}
-            {renderContentImage(5, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts, handleRenderContentImage)}
-            {renderContentImage(6, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts, handleRenderContentImage)}
-            {renderContentImage(7, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts, handleRenderContentImage)}
-            {renderContentImage(8, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts, handleRenderContentImage)}
-            {renderContentImage(9, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts, handleRenderContentImage)}
-            {renderContentImage(10, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts, handleRenderContentImage)}
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(index => {
+              const image = imageStateMap[index];
+              const isLoading = loadingStateMap[index] || false;
+              const regenerateHandler = handleRegenerateMap[index];
+              
+              // 只显示有图片的内容
+              if (!image) return null;
+              
+              // 图像索引1-10对应文本索引2-11
+              const textIndex = index + 1;
+              const text = imageTexts && imageTexts.length > textIndex ? imageTexts[textIndex].text : undefined;
+              const title = `Moment ${index}`;
+              
+              return (
+                <div key={`content-${index}`} className="mb-12">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-xl font-medium">{title}</h3>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleRenderContentImage(index)}
+                      disabled={isLoading}
+                      className="bg-[#8e44ad]/10 text-[#8e44ad] hover:bg-[#8e44ad]/20 border-[#8e44ad]/30"
+                    >
+                      <Wand2 className="w-4 h-4 mr-2" />
+                      Render with Text
+                    </Button>
+                  </div>
+                  <ContentImageCard
+                    image={image}
+                    isGenerating={isLoading}
+                    onRegenerate={regenerateHandler}
+                    index={index}
+                    onEditText={() => {}}
+                    text={text}
+                    title={title}
+                  />
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
