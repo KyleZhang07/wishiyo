@@ -75,72 +75,64 @@ const coverStyles: CoverStyle[] = [
 ];
 
 const LoveStoryCoverStep = () => {
-  const [coverTitle, setCoverTitle] = useState<string>('THE MAGIC IN');
-  const [subtitle, setSubtitle] = useState<string>('');
+  // 基本状态
   const [authorName, setAuthorName] = useState<string>('Timi Bliss');
+  const [recipientName, setRecipientName] = useState<string>('');
+  const [selectedStyle, setSelectedStyle] = useState<string>('classic');
+  const [textTone, setTextTone] = useState<string>('romantic');
+  
+  // 标题状态，合并为一个结构
+  const [titleData, setTitleData] = useState({
+    mainTitle: '',
+    subTitle: '',
+    fullTitle: 'THE MAGIC IN'
+  });
+  
+  // 封面图片状态
   const [coverImages, setCoverImages] = useState<string[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
   const [isGeneratingCover, setIsGeneratingCover] = useState<boolean>(false);
   const [supabaseImages, setSupabaseImages] = useState<any[]>([]);
-  const [selectedStyle, setSelectedStyle] = useState<string>('classic');
-  const [textTone, setTextTone] = useState<string>('romantic');
   const [isEditTitleDialogOpen, setIsEditTitleDialogOpen] = useState<boolean>(false);
-  const [recipientName, setRecipientName] = useState<string>('');
+  
   const { toast } = useToast();
   const navigate = useNavigate();
-
-  // 添加Canvas引用
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    // 从localStorage获取标题、作者信息、样式和文本风格
-    const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
-    const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
+    // 从localStorage获取基本信息
     const savedAuthorName = localStorage.getItem('loveStoryAuthorName');
     const savedStyle = localStorage.getItem('loveStoryCoverStyle');
     const savedTone = localStorage.getItem('loveStoryTone');
     const savedRecipientName = localStorage.getItem('loveStoryPersonName');
+    const savedImageIndex = localStorage.getItem('loveStorySelectedCoverIndex');
     
     // 从Supabase获取已保存的封面图片
     loadCoverImagesFromSupabase();
     
-    if (savedAuthorName) {
-      setAuthorName(savedAuthorName);
-    }
+    // 设置基本信息
+    if (savedAuthorName) setAuthorName(savedAuthorName);
+    if (savedTone) setTextTone(savedTone);
+    if (savedStyle) setSelectedStyle(savedStyle);
+    if (savedRecipientName) setRecipientName(savedRecipientName);
+    if (savedImageIndex) setCurrentImageIndex(parseInt(savedImageIndex));
     
-    if (savedTone) {
-      setTextTone(savedTone);
-    }
-    
-    if (savedStyle) {
-      setSelectedStyle(savedStyle);
-    }
-
-    if (savedRecipientName) {
-      setRecipientName(savedRecipientName);
-    }
-    
-    // 获取用户之前选择的图片索引
-    const savedImageIndex = localStorage.getItem('loveStorySelectedCoverIndex');
-    if (savedImageIndex) {
-      setCurrentImageIndex(parseInt(savedImageIndex));
-    }
+    // 获取故事idea
+    const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
+    const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
     
     if (savedIdeas && savedIdeaIndex) {
       try {
         const ideas = JSON.parse(savedIdeas);
         const selectedIdea = ideas[parseInt(savedIdeaIndex)];
         if (selectedIdea) {
-          // 从localStorage获取可能已保存的标题
-          const savedCoverTitle = localStorage.getItem('loveStoryCoverTitle');
-          if (savedCoverTitle) {
-            setCoverTitle(savedCoverTitle);
-          } else {
-            // 默认标题为"THE MAGIC IN"
-          setCoverTitle('THE MAGIC IN');
-          }
-          // 副标题设置为描述(现在不显示)
-          setSubtitle(selectedIdea.description || '');
+          // 默认标题
+          setTitleData(prev => ({ 
+            ...prev, 
+            fullTitle: 'THE MAGIC IN',
+            mainTitle: 'THE MAGIC IN',
+            subTitle: savedRecipientName || ''
+          }));
         }
       } catch (error) {
         console.error('Error parsing saved ideas:', error);
@@ -215,10 +207,53 @@ const LoveStoryCoverStep = () => {
     setIsEditTitleDialogOpen(true);
   };
 
-  // 处理标题选择
+  // 修改处理标题选择的函数
   const handleTitleSelect = (title: string) => {
-    setCoverTitle(title);
+    // 解析标题，分为主标题和副标题
+    let mainPart = '';
+    let subPart = '';
+    
+    // 根据具体标题模板进行精确拆分
+    if (title === `${recipientName}'s amazing adventure`) {
+      mainPart = `${recipientName}'s`;
+      subPart = 'amazing adventure';
+    } else if (title === `${authorName}'s wonderful ${recipientName}`) {
+      mainPart = `${authorName}'s wonderful`;
+      subPart = recipientName;
+    } else if (title === `THE MAGIC IN ${recipientName}`) {
+      mainPart = 'THE MAGIC IN';
+      subPart = recipientName;
+    } else if (title === `${recipientName} I love you`) {
+      mainPart = recipientName;
+      subPart = 'I love you';
+    } else if (title === `The little book of ${recipientName}`) {
+      mainPart = 'The little book of';
+      subPart = recipientName;
+    } else {
+      // 默认处理
+      const parts = title.split(' ');
+      if (parts.length > 2) {
+        const midpoint = Math.ceil(parts.length / 2);
+        mainPart = parts.slice(0, midpoint).join(' ');
+        subPart = parts.slice(midpoint).join(' ');
+      } else {
+        mainPart = title;
+        subPart = '';
+      }
+    }
+    
+    console.log('标题已分割为:', { mainPart, subPart });
+    
+    // 更新标题状态
+    setTitleData({
+      mainTitle: mainPart,
+      subTitle: subPart,
+      fullTitle: title
+    });
+    
+    // 仍然保存完整标题到localStorage（其他地方可能需要用到）
     localStorage.setItem('loveStoryCoverTitle', title);
+    
     setIsEditTitleDialogOpen(false);
     
     toast({
@@ -401,13 +436,13 @@ const LoveStoryCoverStep = () => {
     }
   };
   
-  // 添加一个函数，用于将LoveStoryCoverPreview渲染到Canvas
+  // 修改renderCoverToCanvas函数，使用状态中的标题数据
   const renderCoverToCanvas = async (): Promise<string> => {
     return new Promise((resolve, reject) => {
       try {
         // 创建一个临时的Canvas
         const canvas = document.createElement('canvas');
-        canvas.width = 2400;  // 调整为2400x2400的正方形尺寸
+        canvas.width = 2400;
         canvas.height = 2400;
         
         const ctx = canvas.getContext('2d');
@@ -534,31 +569,38 @@ const LoveStoryCoverStep = () => {
             // 绘制标题文本
             ctx.textAlign = 'center';
             
+            // 使用状态中的标题数据
+            const { mainTitle, subTitle, fullTitle } = titleData;
+            
             // 主标题
             ctx.fillStyle = currentStyle.titleColor;
             const titleFontSize = canvas.width * 0.06;
             
-            // 为Playful样式特别处理
-            if (currentStyle.id === 'playful') {
-              // 确保使用正确的recipientName
-              const localName = recipientName || localStorage.getItem('loveStoryPersonName') || 'Your';
-              
-              // 分割标题为两行
-              let mainTitle = `${localName}'s`;
-              let subTitle = "Amazing Adventure";
-              
-              // 放大字体并绘制主标题
-              const mainTitleFontSize = titleFontSize * 1.2; // 增大主标题字体
-              ctx.font = `bold ${mainTitleFontSize}px cursive`; // 确保使用手写体
-              ctx.fillText(mainTitle, canvas.width / 2, canvas.height * 0.25); // 上移主标题位置
-              
-              // 绘制副标题（保持字体稍小，增加间距）
-              const subTitleFontSize = titleFontSize * 1.1; // 增大副标题字体
-              ctx.font = `bold ${subTitleFontSize}px cursive`;
-              ctx.fillText(subTitle, canvas.width / 2, canvas.height * 0.33); // 保持间距，但整体上移
+            // 如果有主副标题，则绘制两行
+            if (mainTitle && subTitle) {
+              // 为Playful样式特别处理字体
+              if (currentStyle.id === 'playful') {
+                // 放大字体并绘制主标题
+                const mainTitleFontSize = titleFontSize * 1.2; // 增大主标题字体
+                ctx.font = `bold ${mainTitleFontSize}px cursive`; // 确保使用手写体
+                ctx.fillText(mainTitle, canvas.width / 2, canvas.height * 0.25); // 上移主标题位置
+                
+                // 绘制副标题（保持字体稍小，增加间距）
+                const subTitleFontSize = titleFontSize * 1.1; // 增大副标题字体
+                ctx.font = `bold ${subTitleFontSize}px cursive`;
+                ctx.fillText(subTitle, canvas.width / 2, canvas.height * 0.33); // 保持间距，但整体上移
+              } else {
+                // 其他样式使用标准字体族但仍保持两行布局
+                ctx.font = `bold ${titleFontSize}px ${getFontFamily(currentStyle.font)}`;
+                ctx.fillText(mainTitle, canvas.width / 2, canvas.height * 0.13);
+                
+                ctx.font = `bold ${titleFontSize * 0.9}px ${getFontFamily(currentStyle.font)}`;
+                ctx.fillText(subTitle, canvas.width / 2, canvas.height * 0.21);
+              }
             } else {
+              // 如果没有分开的标题，则使用完整标题
               ctx.font = `bold ${titleFontSize}px ${getFontFamily(currentStyle.font)}`;
-              ctx.fillText(coverTitle, canvas.width / 2, canvas.height * 0.15);
+              ctx.fillText(fullTitle, canvas.width / 2, canvas.height * 0.15);
             }
             
             // 作者名
@@ -611,11 +653,11 @@ const LoveStoryCoverStep = () => {
         description: "Rendering and uploading your cover image..."
       });
       
-    // 保存当前选中的封面图片到 localStorage
-    if (coverImages.length > 0 && currentImageIndex >= 0 && currentImageIndex < coverImages.length) {
-      const selectedCoverImage = coverImages[currentImageIndex];
-      localStorage.setItem('loveStorySelectedCoverImage', selectedCoverImage);
-      
+      // 保存当前选中的封面图片到 localStorage
+      if (coverImages.length > 0 && currentImageIndex >= 0 && currentImageIndex < coverImages.length) {
+        const selectedCoverImage = coverImages[currentImageIndex];
+        localStorage.setItem('loveStorySelectedCoverImage', selectedCoverImage);
+        
         // 渲染封面到Canvas并获取图像数据
         const canvasImageData = await renderCoverToCanvas();
         
@@ -623,7 +665,7 @@ const LoveStoryCoverStep = () => {
         const timestamp = Date.now();
         const newFilename = `love-cover-${timestamp}`;
         
-        // 先上传新图片，确保有新图片后再删除旧图片
+        // 上传到Supabase
         const storageUrl = await uploadImageToStorage(
           canvasImageData,
           'images',
@@ -634,7 +676,7 @@ const LoveStoryCoverStep = () => {
         localStorage.setItem('loveStorySelectedCoverImage_url', storageUrl);
         localStorage.setItem('loveStoryCoverImageCanvas', canvasImageData);
         
-        // 清除Supabase中的旧封面图片，但保留刚刚上传的图片
+        // 清除Supabase中的旧封面图片
         try {
           // 获取最新的图片列表
           const allImages = await getAllImagesFromStorage('images');
@@ -669,30 +711,30 @@ const LoveStoryCoverStep = () => {
         }
         
         // 如果有 Supabase 存储的原始 URL，也保存它
-      const images = supabaseImages.filter(img => img.name.includes('love-story-cover'));
-      if (images.length > 0) {
-        // 找到当前显示的图片在 Supabase 中的 URL
-        const sortedImages = images.sort((a, b) => {
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-        });
+        const images = supabaseImages.filter(img => img.name.includes('love-story-cover'));
+        if (images.length > 0) {
+          // 找到当前显示的图片在 Supabase 中的 URL
+          const sortedImages = images.sort((a, b) => {
+            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+          });
+          
+          // 如果有多张图片，保存当前选中的那张
+          if (sortedImages.length > currentImageIndex) {
+              localStorage.setItem('loveStoryOriginalCoverImage_url', sortedImages[currentImageIndex].url);
+            }
+        }
         
-        // 如果有多张图片，保存当前选中的那张
-        if (sortedImages.length > currentImageIndex) {
-            localStorage.setItem('loveStoryOriginalCoverImage_url', sortedImages[currentImageIndex].url);
-          }
+        // 保存当前选中的图片索引
+        localStorage.setItem('loveStorySelectedCoverIndex', currentImageIndex.toString());
       }
       
-      // 保存当前选中的图片索引
-      localStorage.setItem('loveStorySelectedCoverIndex', currentImageIndex.toString());
-    }
-    
-    toast({
-      title: "Cover saved",
-      description: "Moving to the next step..."
-    });
-    
-    // 导航到下一步
-    navigate('/create/love/love-story/debug-prompts');
+      toast({
+        title: "Cover saved",
+        description: "Moving to the next step..."
+      });
+      
+      // 导航到下一步
+      navigate('/create/love/love-story/debug-prompts');
     } catch (error) {
       console.error('Error in handleContinue:', error);
       toast({
@@ -744,10 +786,11 @@ const LoveStoryCoverStep = () => {
             </button>
           )}
           
-          {/* 封面预览组件 */}
+          {/* 封面预览组件 - 直接传递titleData而非使用localStorage */}
           <LoveStoryCoverPreview
-            coverTitle={coverTitle}
+            titleData={titleData}
             authorName={authorName}
+            recipientName={recipientName}
             coverImage={currentCoverImage}
             selectedFont={currentStyle.font}
             style={currentStyle}
@@ -846,6 +889,7 @@ const LoveStoryCoverStep = () => {
                 >
                   <div className="flex-1">
                     <h4 className="font-medium text-gray-900">{recipientName}'s amazing adventure</h4>
+                    <p className="text-sm text-gray-500 mt-1">{recipientName}'s 在第一行, amazing adventure 在第二行</p>
                   </div>
                 </div>
                 
@@ -855,6 +899,7 @@ const LoveStoryCoverStep = () => {
                 >
                   <div className="flex-1">
                     <h4 className="font-medium text-gray-900">{authorName}'s wonderful {recipientName}</h4>
+                    <p className="text-sm text-gray-500 mt-1">{authorName}'s wonderful 在第一行, {recipientName} 在第二行</p>
                   </div>
                 </div>
                 
@@ -864,6 +909,7 @@ const LoveStoryCoverStep = () => {
                 >
                   <div className="flex-1">
                     <h4 className="font-medium text-gray-900">THE MAGIC IN {recipientName}</h4>
+                    <p className="text-sm text-gray-500 mt-1">THE MAGIC IN 在第一行, {recipientName} 在第二行</p>
                   </div>
                 </div>
                 
@@ -873,6 +919,7 @@ const LoveStoryCoverStep = () => {
                 >
                   <div className="flex-1">
                     <h4 className="font-medium text-gray-900">{recipientName} I love you</h4>
+                    <p className="text-sm text-gray-500 mt-1">{recipientName} 在第一行, I love you 在第二行</p>
                   </div>
                 </div>
                 
@@ -882,6 +929,7 @@ const LoveStoryCoverStep = () => {
                 >
                   <div className="flex-1">
                     <h4 className="font-medium text-gray-900">The little book of {recipientName}</h4>
+                    <p className="text-sm text-gray-500 mt-1">The little book of 在第一行, {recipientName} 在第二行</p>
                   </div>
                 </div>
               </div>

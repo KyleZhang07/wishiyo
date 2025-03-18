@@ -19,7 +19,11 @@ interface CoverStyle {
 }
 
 interface LoveStoryCoverPreviewProps {
-  coverTitle: string;
+  titleData: {
+    mainTitle: string;
+    subTitle: string;
+    fullTitle: string;
+  };
   subtitle?: string;
   authorName: string;
   recipientName?: string;
@@ -29,7 +33,7 @@ interface LoveStoryCoverPreviewProps {
 }
 
 const LoveStoryCoverPreview = ({
-  coverTitle,
+  titleData,
   subtitle = '',
   authorName,
   recipientName = '',
@@ -43,17 +47,6 @@ const LoveStoryCoverPreview = ({
   const greenLeaf = useImageLoader(greenLeafBackground);
   const rainbow = useImageLoader(rainbowBackground);
   
-  // 添加状态来存储从localStorage获取的人物名称
-  const [localRecipientName, setLocalRecipientName] = useState<string>('');
-
-  useEffect(() => {
-    // 从localStorage获取人物名称
-    const savedRecipientName = localStorage.getItem('loveStoryPersonName');
-    if (savedRecipientName) {
-      setLocalRecipientName(savedRecipientName);
-    }
-  }, []);
-
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -83,10 +76,10 @@ const LoveStoryCoverPreview = ({
         drawLoveStoryCover(
           ctx, 
           canvas,
-          coverTitle, 
+          titleData, 
           subtitle, 
           authorName, 
-          localRecipientName || recipientName, 
+          recipientName, 
           image, 
           selectedFont,
           style
@@ -99,10 +92,10 @@ const LoveStoryCoverPreview = ({
         drawLoveStoryCover(
           ctx, 
           canvas,
-          coverTitle, 
+          titleData, 
           subtitle, 
           authorName, 
-          localRecipientName || recipientName, 
+          recipientName, 
           image, 
           selectedFont,
           style
@@ -111,12 +104,12 @@ const LoveStoryCoverPreview = ({
     };
 
     preloadImages();
-  }, [coverTitle, subtitle, authorName, localRecipientName, recipientName, image, selectedFont, style]);
+  }, [titleData, subtitle, authorName, recipientName, image, selectedFont, style]);
 
   const drawLoveStoryCover = (
     ctx: CanvasRenderingContext2D, 
     canvas: HTMLCanvasElement,
-    title: string,
+    titleData: { mainTitle: string; subTitle: string; fullTitle: string },
     subtitle: string,
     author: string,
     recipient: string,
@@ -234,24 +227,36 @@ const LoveStoryCoverPreview = ({
     ctx.fillStyle = titleColor;
     const titleFontSize = width * 0.06;
     
-    // 为Playful样式特别处理
-    if (style?.id === 'playful') {
-      // 分割标题为两行
-      let mainTitle = `${recipient}'s`;
-      let subTitle = "Amazing Adventure";
-      
-      // 放大字体并绘制主标题
-      const mainTitleFontSize = titleFontSize * 1.2; // 增大主标题字体
-      ctx.font = `bold ${mainTitleFontSize}px cursive`; // 确保使用手写体
-      ctx.fillText(mainTitle, width / 2, height * 0.25); // 上移主标题位置
-      
-      // 绘制副标题（保持字体稍小，增加间距）
-      const subTitleFontSize = titleFontSize * 1.1; // 增大副标题字体
-      ctx.font = `bold ${subTitleFontSize}px cursive`;
-      ctx.fillText(subTitle, width / 2, height * 0.33); // 保持间距，但整体上移
+    // 从titleData获取标题信息
+    const { mainTitle, subTitle, fullTitle } = titleData;
+    
+    console.log('绘制标题:', { mainTitle, subTitle, fullTitle });
+    
+    // 如果有主副标题，则绘制两行
+    if (mainTitle && subTitle) {
+      // 为Playful样式特别处理字体
+      if (style?.id === 'playful') {
+        // 放大字体并绘制主标题
+        const mainTitleFontSize = titleFontSize * 1.2; // 增大主标题字体
+        ctx.font = `bold ${mainTitleFontSize}px cursive`; // 确保使用手写体
+        ctx.fillText(mainTitle, width / 2, height * 0.25); // 上移主标题位置
+        
+        // 绘制副标题（保持字体稍小，增加间距）
+        const subTitleFontSize = titleFontSize * 1.1; // 增大副标题字体
+        ctx.font = `bold ${subTitleFontSize}px cursive`;
+        ctx.fillText(subTitle, width / 2, height * 0.33); // 保持间距，但整体上移
+      } else {
+        // 其他样式使用标准字体族但仍保持两行布局
+        ctx.font = `bold ${titleFontSize}px ${fontFamily}`;
+        ctx.fillText(mainTitle, width / 2, height * 0.13);
+        
+        ctx.font = `bold ${titleFontSize * 0.9}px ${fontFamily}`;
+        ctx.fillText(subTitle, width / 2, height * 0.21);
+      }
     } else {
+      // 如果没有分开的标题，则使用完整标题
       ctx.font = `bold ${titleFontSize}px ${fontFamily}`;
-      ctx.fillText(title, width / 2, height * 0.15);
+      ctx.fillText(fullTitle, width / 2, height * 0.15);
     }
     
     // 作者名
