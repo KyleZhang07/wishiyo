@@ -1,5 +1,7 @@
 import React from 'react';
 import { ContentImageCard } from '../components/ContentImageCard';
+import { Button } from '@/components/ui/button';
+import { Wand2 } from 'lucide-react';
 
 interface ImageText {
   text: string;
@@ -12,7 +14,8 @@ export const renderContentImage = (
   imageStateMap: Record<number, string | undefined>,
   loadingStateMap: Record<number, boolean>,
   handleRegenerateMap: Record<number, (style?: string) => void>,
-  imageTexts: ImageText[] | undefined
+  imageTexts: ImageText[] | undefined,
+  handleRenderContentImage?: (index: number) => Promise<void>
 ) => {
   const image = imageStateMap[imageIndex];
   const isLoading = loadingStateMap[imageIndex];
@@ -26,6 +29,12 @@ export const renderContentImage = (
   // 显示标题适配新的命名方式 - 显示为Moment 1-10
   let title = "";  // 不再显示标题
   
+  // 检查图片是否是渲染后的图片
+  const isRenderedImage = image && (
+    image.includes(`content-${imageIndex}-`) || 
+    image.includes(`love-story-content-rendered-${imageIndex}-`)
+  );
+  
   return (
     <div>
       <ContentImageCard 
@@ -37,6 +46,22 @@ export const renderContentImage = (
         text={imageText?.text}
         title={title}
       />
+      
+      {/* 添加渲染按钮 - 无论是否是渲染后的图片都显示 */}
+      {handleRenderContentImage && image && imageText?.text && (
+        <div className="mt-4 flex justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleRenderContentImage(imageIndex)}
+            disabled={isLoading}
+            className="bg-[#8e44ad]/10 text-[#8e44ad] hover:bg-[#8e44ad]/20 border-[#8e44ad]/30"
+          >
+            <Wand2 className="w-4 h-4 mr-2" />
+            Render with Text
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

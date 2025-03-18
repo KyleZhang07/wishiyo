@@ -20,9 +20,9 @@ interface CoverStyle {
 
 interface LoveStoryCoverPreviewProps {
   coverTitle: string;
-  subtitle: string;
+  subtitle?: string;
   authorName: string;
-  recipientName: string;
+  recipientName?: string;
   coverImage?: string;
   selectedFont?: string;
   style?: CoverStyle;
@@ -30,9 +30,9 @@ interface LoveStoryCoverPreviewProps {
 
 const LoveStoryCoverPreview = ({
   coverTitle,
-  subtitle,
+  subtitle = '',
   authorName,
-  recipientName,
+  recipientName = '',
   coverImage,
   selectedFont = 'playfair',
   style
@@ -119,12 +119,10 @@ const LoveStoryCoverPreview = ({
     // 使用样式或默认值
     const backgroundColor = style?.background || '#f5f5f0';
     const titleColor = style?.titleColor || '#5a5a5a';
-    const subtitleColor = style?.subtitleColor || '#633d63';
     const authorColor = style?.authorColor || '#333333';
     
     // 根据样式调整文字位置
     const titleY = style?.id === 'modern' ? height * 0.15 : height * 0.1;
-    const subtitleY = style?.id === 'modern' ? height * 0.3 : height * 0.25;
     const authorY = style?.id === 'playful' ? height * 0.85 : height * 0.92;
     const authorX = style?.id === 'elegant' ? width * 0.5 : width * 0.9;
     
@@ -210,40 +208,20 @@ const LoveStoryCoverPreview = ({
     // 根据样式ID修改标题
     let displayTitle = title;
     
-    // 对第一个样式(classic)使用特殊的三行式标题格式
+    // 对第一个样式(classic)使用特殊的标题格式
     if (style?.id === 'classic') {
       // 第一行：作者名
       ctx.font = `bold 70px ${fontFamily}`;
       ctx.fillStyle = authorColor;
       ctx.fillText(`${author}'s`, width / 2, height * 0.1);
       
-      // 第二行：wonderful
+      // 第二行：标题
       ctx.font = `bold 50px ${fontFamily}`;
       ctx.fillStyle = titleColor;
-      ctx.fillText(`wonderful`, width / 2, height * 0.2);
-      
-      // 第三行：角色名称
-      ctx.font = `bold 90px ${fontFamily}`;
-      ctx.fillStyle = subtitleColor;
-      ctx.fillText(recipient, width / 2, height * 0.3);
+      ctx.fillText(displayTitle, width / 2, height * 0.2);
     } else {
       // 其他样式保持原来的格式
       ctx.fillText(displayTitle, width / 2, titleY);
-      
-      // Draw subtitle (character name) - larger and more prominent
-      ctx.font = `bold 90px ${fontFamily}`;
-      ctx.fillStyle = subtitleColor;
-      const recipientUpper = recipient.toUpperCase();
-      
-      // Modern风格使用斜体
-      if (style?.id === 'modern') {
-        ctx.font = `bold italic 90px ${fontFamily}`;
-      } else if (style?.id === 'playful') {
-        // Playful风格使用更大字体
-        ctx.font = `bold 110px ${fontFamily}`;
-      }
-      
-      ctx.fillText(recipientUpper + "!", width / 2, subtitleY);
     }
 
     // Draw image in the center if available

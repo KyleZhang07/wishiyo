@@ -6,13 +6,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { uploadImageToStorage, getAllImagesFromStorage, deleteImageFromStorage } from '@/integrations/supabase/storage';
 import { CoverPreviewCard } from './components/CoverPreviewCard';
 import { ContentImageCard } from './components/ContentImageCard';
-import { Edit } from 'lucide-react';
+import { Edit, Wand2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 // 导入工具函数
 import { expandImage, handleGenericContentRegeneration as handleContentRegeneration } from './utils/imageProcessingUtils';
 import { renderContentImage, createImageStateMaps } from './utils/renderUtils';
 import { loadImagesFromSupabase as fetchImagesFromSupabase } from './utils/storageUtils';
+import { renderAndUploadContentImage, renderAndUploadIntroImage } from './utils/canvasUtils';
 
 interface ImageText {
   text: string;
@@ -743,6 +744,187 @@ const GenerateStep = () => {
     await refreshImagesCallback();
   };
 
+  // 渲染介绍图片到Canvas并上传
+  const handleRenderIntroImage = async () => {
+    try {
+      // 获取介绍图片和文本
+      if (!introImage) {
+        toast({
+          title: "Error",
+          description: "No intro image found",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // 获取介绍文本 - 索引1对应intro
+      const introText = imageTexts && imageTexts.length > 1 ? imageTexts[1].text : "";
+      
+      toast({
+        title: "Rendering intro image",
+        description: "Processing introduction with text...",
+      });
+      
+      // 设置加载状态
+      setIsGeneratingIntro(true);
+      
+      // 渲染并上传图片
+      const storageUrl = await renderAndUploadIntroImage(
+        introImage,
+        introText || "Welcome to our love story.",
+        selectedStyle,
+        supabaseImages
+      );
+      
+      // 更新状态 - 直接使用渲染后的图片URL
+      setIntroImage(storageUrl);
+      
+      // 更新localStorage
+      localStorage.setItem('loveStoryIntroImage_url', storageUrl);
+      
+      // 更新imageStorageMap
+      setImageStorageMap(prev => ({
+        ...prev,
+        ['loveStoryIntroImage']: {
+          localStorageKey: 'loveStoryIntroImage',
+          url: storageUrl
+        }
+      }));
+      
+      toast({
+        title: "Intro image rendered",
+        description: "Introduction successfully rendered with text",
+      });
+      
+      // 不需要刷新图片列表，因为我们已经直接更新了状态
+    } catch (error: any) {
+      console.error("Error rendering intro image:", error);
+      toast({
+        title: "Error rendering intro image",
+        description: error.message || "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingIntro(false);
+    }
+  };
+
+  // 渲染内容图片到Canvas并上传
+  const handleRenderContentImage = async (index: number) => {
+    try {
+      // 获取对应的图片和文本
+      const image = imageStateMap[index];
+      // 图像索引1-10对应文本索引2-11
+      const textIndex = index + 1;
+      const text = imageTexts && imageTexts.length > textIndex ? imageTexts[textIndex].text : "";
+      
+      if (!image) {
+        toast({
+          title: "Error",
+          description: `No image found for content ${index}`,
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      toast({
+        title: "Rendering content image",
+        description: `Processing content ${index} with text...`,
+      });
+      
+      // 设置加载状态
+      const setLoadingFn = loadingStateMap[index] !== undefined ? 
+        (value: boolean) => {
+          const setters = {
+            1: setIsGeneratingContent1,
+            2: setIsGeneratingContent2,
+            3: setIsGeneratingContent3,
+            4: setIsGeneratingContent4,
+            5: setIsGeneratingContent5,
+            6: setIsGeneratingContent6,
+            7: setIsGeneratingContent7,
+            8: setIsGeneratingContent8,
+            9: setIsGeneratingContent9,
+            10: setIsGeneratingContent10,
+          };
+          const setter = setters[index as keyof typeof setters];
+          if (setter) setter(value);
+        } : 
+        () => {};
+      
+      setLoadingFn(true);
+      
+      // 渲染并上传图片
+      const storageUrl = await renderAndUploadContentImage(
+        image,
+        text || "A beautiful moment captured in this image.",
+        index,
+        selectedStyle,
+        supabaseImages
+      );
+      
+      // 更新状态 - 直接使用渲染后的图片URL
+      const setContentFn = {
+        1: setContentImage1,
+        2: setContentImage2,
+        3: setContentImage3,
+        4: setContentImage4,
+        5: setContentImage5,
+        6: setContentImage6,
+        7: setContentImage7,
+        8: setContentImage8,
+        9: setContentImage9,
+        10: setContentImage10,
+      }[index];
+      
+      if (setContentFn) {
+        setContentFn(storageUrl);
+        
+        // 更新localStorage
+        localStorage.setItem(`loveStoryContentImage${index}_url`, storageUrl);
+        
+        // 更新imageStorageMap
+        setImageStorageMap(prev => ({
+          ...prev,
+          [`loveStoryContentImage${index}`]: {
+            localStorageKey: `loveStoryContentImage${index}`,
+            url: storageUrl
+          }
+        }));
+      }
+      
+      toast({
+        title: "Content image rendered",
+        description: `Content ${index} successfully rendered with text`,
+      });
+      
+      // 不需要刷新图片列表，因为我们已经直接更新了状态
+    } catch (error: any) {
+      console.error(`Error rendering content image ${index}:`, error);
+      toast({
+        title: "Error rendering image",
+        description: error.message || "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      // 重置加载状态
+      const setLoadingFn = {
+        1: setIsGeneratingContent1,
+        2: setIsGeneratingContent2,
+        3: setIsGeneratingContent3,
+        4: setIsGeneratingContent4,
+        5: setIsGeneratingContent5,
+        6: setIsGeneratingContent6,
+        7: setIsGeneratingContent7,
+        8: setIsGeneratingContent8,
+        9: setIsGeneratingContent9,
+        10: setIsGeneratingContent10,
+      }[index];
+      
+      if (setLoadingFn) setLoadingFn(false);
+    }
+  };
+
   // 创建图像状态映射
   const { imageStateMap, loadingStateMap, handleRegenerateMap } = createImageStateMaps(
     introImage, contentImage1, contentImage2, contentImage3, contentImage4,
@@ -754,6 +936,93 @@ const GenerateStep = () => {
     handleRegenerateContent4, handleRegenerateContent5, handleRegenerateContent6, handleRegenerateContent7,
     handleRegenerateContent8, handleRegenerateContent9, handleRegenerateContent10
   );
+
+  // 批量渲染所有内容图片
+  const handleRenderAllContentImages = async () => {
+    toast({
+      title: "Rendering all images",
+      description: "This may take a minute...",
+    });
+    
+    // 获取所有有图片和文本的内容索引
+    const contentIndices = [];
+    for (let i = 1; i <= 10; i++) {
+      if (imageStateMap[i] && imageTexts && imageTexts.length > i+1) {
+        contentIndices.push(i);
+      }
+    }
+    
+    if (contentIndices.length === 0 && (!introImage || !imageTexts || imageTexts.length <= 1)) {
+      toast({
+        title: "No content to render",
+        description: "Please generate images first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // 首先渲染介绍图片（如果存在）
+      if (introImage && imageTexts && imageTexts.length > 1) {
+        setIsGeneratingIntro(true);
+        await handleRenderIntroImage();
+      }
+      
+      // 设置所有内容为加载状态
+      contentIndices.forEach(index => {
+        const setLoadingFn = {
+          1: setIsGeneratingContent1,
+          2: setIsGeneratingContent2,
+          3: setIsGeneratingContent3,
+          4: setIsGeneratingContent4,
+          5: setIsGeneratingContent5,
+          6: setIsGeneratingContent6,
+          7: setIsGeneratingContent7,
+          8: setIsGeneratingContent8,
+          9: setIsGeneratingContent9,
+          10: setIsGeneratingContent10,
+        }[index];
+        
+        if (setLoadingFn) setLoadingFn(true);
+      });
+
+      // 依次渲染每个内容图片
+      for (const index of contentIndices) {
+        await handleRenderContentImage(index);
+      }
+      
+      toast({
+        title: "All images rendered",
+        description: `Successfully rendered intro and ${contentIndices.length} content images with text`,
+      });
+    } catch (error: any) {
+      console.error("Error rendering all images:", error);
+      toast({
+        title: "Error rendering images",
+        description: error.message || "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      // 重置所有加载状态
+      setIsGeneratingIntro(false);
+      contentIndices.forEach(index => {
+        const setLoadingFn = {
+          1: setIsGeneratingContent1,
+          2: setIsGeneratingContent2,
+          3: setIsGeneratingContent3,
+          4: setIsGeneratingContent4,
+          5: setIsGeneratingContent5,
+          6: setIsGeneratingContent6,
+          7: setIsGeneratingContent7,
+          8: setIsGeneratingContent8,
+          9: setIsGeneratingContent9,
+          10: setIsGeneratingContent10,
+        }[index];
+        
+        if (setLoadingFn) setLoadingFn(false);
+      });
+    }
+  };
 
   return (
     <WizardStep
@@ -767,6 +1036,16 @@ const GenerateStep = () => {
       <div className="max-w-7xl mx-auto px-4">
         {/* 添加 Refresh Images 按钮 */}
         <div className="mb-8 flex justify-end gap-4">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleRenderAllContentImages}
+            disabled={isLoadingImages}
+            className="bg-[#8e44ad]/10 text-[#8e44ad] hover:bg-[#8e44ad]/20 border-[#8e44ad]/30 mr-2"
+          >
+            <Wand2 className="w-4 h-4 mr-2" />
+            Render All Content
+          </Button>
           <Button 
             variant="outline" 
             size="sm" 
@@ -810,6 +1089,22 @@ const GenerateStep = () => {
               text={imageTexts && imageTexts.length > 1 ? imageTexts[1]?.text : undefined}
               title=""
             />
+            
+            {/* 添加渲染按钮 */}
+            {introImage && imageTexts && imageTexts.length > 1 && (
+              <div className="mt-4 flex justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRenderIntroImage}
+                  disabled={isGeneratingIntro}
+                  className="bg-[#8e44ad]/10 text-[#8e44ad] hover:bg-[#8e44ad]/20 border-[#8e44ad]/30"
+                >
+                  <Wand2 className="w-4 h-4 mr-2" />
+                  Render with Text
+                </Button>
+              </div>
+            )}
           </div>
         </div>
         
@@ -818,16 +1113,16 @@ const GenerateStep = () => {
           <h2 className="text-2xl font-bold mb-8">Story Content</h2>
           <div className="space-y-12">
             {/* 渲染内容图片 */}
-            {renderContentImage(1, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts)}
-            {renderContentImage(2, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts)}
-            {renderContentImage(3, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts)}
-            {renderContentImage(4, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts)}
-            {renderContentImage(5, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts)}
-            {renderContentImage(6, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts)}
-            {renderContentImage(7, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts)}
-            {renderContentImage(8, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts)}
-            {renderContentImage(9, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts)}
-            {renderContentImage(10, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts)}
+            {renderContentImage(1, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts, handleRenderContentImage)}
+            {renderContentImage(2, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts, handleRenderContentImage)}
+            {renderContentImage(3, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts, handleRenderContentImage)}
+            {renderContentImage(4, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts, handleRenderContentImage)}
+            {renderContentImage(5, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts, handleRenderContentImage)}
+            {renderContentImage(6, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts, handleRenderContentImage)}
+            {renderContentImage(7, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts, handleRenderContentImage)}
+            {renderContentImage(8, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts, handleRenderContentImage)}
+            {renderContentImage(9, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts, handleRenderContentImage)}
+            {renderContentImage(10, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts, handleRenderContentImage)}
           </div>
         </div>
       </div>

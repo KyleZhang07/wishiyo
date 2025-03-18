@@ -120,7 +120,8 @@ export const loadImagesFromSupabase = async (
           
           processedTypes['cover'] = true;
         }
-      } else if (/^love-story-intro/.test(fileName) && !processedTypes['intro']) {
+      } else if ((/^intro-/.test(fileName) || /^love-story-intro/.test(fileName)) && !processedTypes['intro']) {
+        // 优先使用intro-开头的图片（渲染后的图片）
         setIntroImage(img.url);
         newImageMap['loveStoryIntroImage'] = {
           localStorageKey: 'loveStoryIntroImage',
@@ -128,8 +129,8 @@ export const loadImagesFromSupabase = async (
         };
         localStorage.setItem('loveStoryIntroImage_url', img.url);
         processedTypes['intro'] = true;
-      } else if (/^love-story-content-1($|-)/.test(fileName) && !processedTypes['content1']) {
-        // 确保只匹配content-1，而不匹配content-10等
+      } else if ((/^content-1-/.test(fileName) || /^love-story-content-1($|-)/.test(fileName)) && !processedTypes['content1']) {
+        // 优先使用content-1-开头的图片（渲染后的图片）
         setContentImage1(img.url);
         newImageMap['loveStoryContentImage1'] = {
           localStorageKey: 'loveStoryContentImage1',
@@ -137,7 +138,7 @@ export const loadImagesFromSupabase = async (
         };
         localStorage.setItem('loveStoryContentImage1_url', img.url);
         processedTypes['content1'] = true;
-      } else if (/^love-story-content-2($|-)/.test(fileName) && !processedTypes['content2']) {
+      } else if ((/^content-2-/.test(fileName) || /^love-story-content-2($|-)/.test(fileName)) && !processedTypes['content2']) {
         setContentImage2(img.url);
         newImageMap['loveStoryContentImage2'] = {
           localStorageKey: 'loveStoryContentImage2',
@@ -145,7 +146,7 @@ export const loadImagesFromSupabase = async (
         };
         localStorage.setItem('loveStoryContentImage2_url', img.url);
         processedTypes['content2'] = true;
-      } else if (/^love-story-content-3($|-)/.test(fileName) && !processedTypes['content3']) {
+      } else if ((/^content-3-/.test(fileName) || /^love-story-content-3($|-)/.test(fileName)) && !processedTypes['content3']) {
         setContentImage3(img.url);
         newImageMap['loveStoryContentImage3'] = {
           localStorageKey: 'loveStoryContentImage3',
@@ -153,7 +154,7 @@ export const loadImagesFromSupabase = async (
         };
         localStorage.setItem('loveStoryContentImage3_url', img.url);
         processedTypes['content3'] = true;
-      } else if (/^love-story-content-4($|-)/.test(fileName) && !processedTypes['content4']) {
+      } else if ((/^content-4-/.test(fileName) || /^love-story-content-4($|-)/.test(fileName)) && !processedTypes['content4']) {
         setContentImage4(img.url);
         newImageMap['loveStoryContentImage4'] = {
           localStorageKey: 'loveStoryContentImage4',
@@ -161,7 +162,7 @@ export const loadImagesFromSupabase = async (
         };
         localStorage.setItem('loveStoryContentImage4_url', img.url);
         processedTypes['content4'] = true;
-      } else if (/^love-story-content-5($|-)/.test(fileName) && !processedTypes['content5']) {
+      } else if ((/^content-5-/.test(fileName) || /^love-story-content-5($|-)/.test(fileName)) && !processedTypes['content5']) {
         setContentImage5(img.url);
         newImageMap['loveStoryContentImage5'] = {
           localStorageKey: 'loveStoryContentImage5',
@@ -169,7 +170,7 @@ export const loadImagesFromSupabase = async (
         };
         localStorage.setItem('loveStoryContentImage5_url', img.url);
         processedTypes['content5'] = true;
-      } else if (/^love-story-content-6($|-)/.test(fileName) && !processedTypes['content6']) {
+      } else if ((/^content-6-/.test(fileName) || /^love-story-content-6($|-)/.test(fileName)) && !processedTypes['content6']) {
         setContentImage6(img.url);
         newImageMap['loveStoryContentImage6'] = {
           localStorageKey: 'loveStoryContentImage6',
@@ -177,7 +178,7 @@ export const loadImagesFromSupabase = async (
         };
         localStorage.setItem('loveStoryContentImage6_url', img.url);
         processedTypes['content6'] = true;
-      } else if (/^love-story-content-7($|-)/.test(fileName) && !processedTypes['content7']) {
+      } else if ((/^content-7-/.test(fileName) || /^love-story-content-7($|-)/.test(fileName)) && !processedTypes['content7']) {
         setContentImage7(img.url);
         newImageMap['loveStoryContentImage7'] = {
           localStorageKey: 'loveStoryContentImage7',
@@ -185,7 +186,7 @@ export const loadImagesFromSupabase = async (
         };
         localStorage.setItem('loveStoryContentImage7_url', img.url);
         processedTypes['content7'] = true;
-      } else if (/^love-story-content-8($|-)/.test(fileName) && !processedTypes['content8']) {
+      } else if ((/^content-8-/.test(fileName) || /^love-story-content-8($|-)/.test(fileName)) && !processedTypes['content8']) {
         setContentImage8(img.url);
         newImageMap['loveStoryContentImage8'] = {
           localStorageKey: 'loveStoryContentImage8',
@@ -193,7 +194,7 @@ export const loadImagesFromSupabase = async (
         };
         localStorage.setItem('loveStoryContentImage8_url', img.url);
         processedTypes['content8'] = true;
-      } else if (/^love-story-content-9($|-)/.test(fileName) && !processedTypes['content9']) {
+      } else if ((/^content-9-/.test(fileName) || /^love-story-content-9($|-)/.test(fileName)) && !processedTypes['content9']) {
         setContentImage9(img.url);
         newImageMap['loveStoryContentImage9'] = {
           localStorageKey: 'loveStoryContentImage9',
@@ -201,7 +202,7 @@ export const loadImagesFromSupabase = async (
         };
         localStorage.setItem('loveStoryContentImage9_url', img.url);
         processedTypes['content9'] = true;
-      } else if (/^love-story-content-10($|-)/.test(fileName) && !processedTypes['content10']) {
+      } else if ((/^content-10-/.test(fileName) || /^love-story-content-10($|-)/.test(fileName)) && !processedTypes['content10']) {
         setContentImage10(img.url);
         newImageMap['loveStoryContentImage10'] = {
           localStorageKey: 'loveStoryContentImage10',
