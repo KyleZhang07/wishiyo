@@ -330,7 +330,7 @@ export const renderBlessingToCanvas = (
     try {
       // 创建Canvas元素
       const canvas = document.createElement('canvas');
-      canvas.width = 3600;  // 宽度
+      canvas.width = 2400;  // 宽度
       canvas.height = 2400; // 高度 - 3:2比例
       const ctx = canvas.getContext('2d');
       

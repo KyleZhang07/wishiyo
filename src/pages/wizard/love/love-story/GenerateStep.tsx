@@ -56,7 +56,7 @@ const GenerateStep = () => {
   const [contentImage8, setContentImage8] = useState<string>();
   const [contentImage9, setContentImage9] = useState<string>();
   const [contentImage10, setContentImage10] = useState<string>();
-  
+
   // 生成状态
   const [isGeneratingCover, setIsGeneratingCover] = useState(false);
   const [isGeneratingIntro, setIsGeneratingIntro] = useState(false);
@@ -1067,7 +1067,7 @@ const GenerateStep = () => {
     try {
       setIsGeneratingBlessing(true);
       
-      toast({
+    toast({
         title: "Rendering blessing message",
         description: "Creating a beautiful blessing message...",
       });
