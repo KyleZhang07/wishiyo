@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
@@ -7,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { uploadImageToStorage, getAllImagesFromStorage, deleteImageFromStorage } from '@/integrations/supabase/storage';
 import { CoverPreviewCard } from './components/CoverPreviewCard';
 import { ContentImageCard } from './components/ContentImageCard';
-import { Edit, Wand2, RefreshCw } from 'lucide-react';
+import { Edit, Wand2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 // 导入工具函数
@@ -15,7 +14,6 @@ import { expandImage, handleGenericContentRegeneration as handleContentRegenerat
 import { renderContentImage, createImageStateMaps } from './utils/renderUtils';
 import { loadImagesFromSupabase as fetchImagesFromSupabase } from './utils/storageUtils';
 import { renderAndUploadContentImage, renderAndUploadIntroImage } from './utils/canvasUtils';
-import { generateBlessing, renderAndUploadBlessing } from './utils/blessingUtils';
 
 interface ImageText {
   text: string;
@@ -80,10 +78,6 @@ const GenerateStep = () => {
   const [isLoadingImages, setIsLoadingImages] = useState(false);
   const [supabaseImages, setSupabaseImages] = useState<SupabaseImage[]>([]);
   const [imageStorageMap, setImageStorageMap] = useState<ImageStorageMap>({});
-
-  // New state for blessing
-  const [blessing, setBlessing] = useState<string>('');
-  const [isGeneratingBlessing, setIsGeneratingBlessing] = useState(false);
 
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -186,66 +180,6 @@ const GenerateStep = () => {
   const handleRegenerateContent9 = (style?: string) => handleGenericContentRegeneration(9, style);
   const handleRegenerateContent10 = (style?: string) => handleGenericContentRegeneration(10, style);
 
-  // Generate blessing function
-  const handleGenerateBlessing = async () => {
-    setIsGeneratingBlessing(true);
-    
-    try {
-      // Get data from localStorage
-      const characterName = localStorage.getItem('loveStoryCharacterName') || '';
-      const partnerName = localStorage.getItem('loveStoryPartnerName') || '';
-      const style = localStorage.getItem('loveStoryStyle') || 'Photographic (Default)';
-      
-      toast({
-        title: "Generating blessing",
-        description: "Creating a personalized blessing...",
-      });
-      
-      // Generate blessing text
-      const generatedBlessing = await generateBlessing(characterName, partnerName, style);
-      setBlessing(generatedBlessing);
-      
-      // Store blessing in localStorage
-      localStorage.setItem('loveStoryBlessing', generatedBlessing);
-      
-      // Render and upload blessing image
-      const blessingImageUrl = await renderAndUploadBlessing(generatedBlessing);
-      
-      // Set this as the intro image
-      setIntroImage(blessingImageUrl);
-      
-      // Update localStorage and imageStorageMap
-      localStorage.setItem('loveStoryIntroImage_url', blessingImageUrl);
-      setImageStorageMap(prev => ({
-        ...prev,
-        ['loveStoryIntroImage']: {
-          localStorageKey: 'loveStoryIntroImage',
-          url: blessingImageUrl
-        }
-      }));
-      
-      toast({
-        title: "Blessing generated",
-        description: "Your personalized blessing is ready!",
-      });
-      
-      // Refresh images to show the new blessing image
-      setTimeout(() => {
-        refreshImagesCallback();
-      }, 1000);
-    } catch (error: any) {
-      console.error("Error generating blessing:", error);
-      toast({
-        title: "Error generating blessing",
-        description: error.message || "Please try again",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGeneratingBlessing(false);
-    }
-  };
-
-  // Generate initial images function - modified to include blessing
   const generateInitialImages = async (prompts: string, partnerPhoto: string) => {
     setIsGeneratingIntro(true);
     toast({
@@ -254,29 +188,6 @@ const GenerateStep = () => {
     });
 
     try {
-      // Generate blessing if it doesn't exist yet
-      if (!blessing) {
-        const characterName = localStorage.getItem('loveStoryCharacterName') || '';
-        const partnerName = localStorage.getItem('loveStoryPartnerName') || '';
-        const style = localStorage.getItem('loveStoryStyle') || 'Photographic (Default)';
-        
-        const generatedBlessing = await generateBlessing(characterName, partnerName, style);
-        setBlessing(generatedBlessing);
-        localStorage.setItem('loveStoryBlessing', generatedBlessing);
-        
-        // Render and upload blessing image
-        const blessingImageUrl = await renderAndUploadBlessing(generatedBlessing);
-        setIntroImage(blessingImageUrl);
-        localStorage.setItem('loveStoryIntroImage_url', blessingImageUrl);
-        setImageStorageMap(prev => ({
-          ...prev,
-          ['loveStoryIntroImage']: {
-            localStorageKey: 'loveStoryIntroImage',
-            url: blessingImageUrl
-          }
-        }));
-      }
-      
       // 获取当前图片的URL，用于后续删除
       const currentIntroImageUrl = localStorage.getItem('loveStoryIntroImage_url');
       
@@ -694,12 +605,6 @@ const GenerateStep = () => {
         .join('\n\n');
       setBackCoverText(formattedMoments);
     }
-    
-    // Load blessing from localStorage if it exists
-    const savedBlessing = localStorage.getItem('loveStoryBlessing');
-    if (savedBlessing) {
-      setBlessing(savedBlessing);
-    }
   }, []);
 
   const handleEditCover = () => {
@@ -718,76 +623,116 @@ const GenerateStep = () => {
     });
   };
 
-  // Handle regenerate intro - modified to use blessing
-  const handleRegenerateIntro = async () => {
-    setIsGeneratingBlessing(true);
+  const handleRegenerateIntro = async (style?: string) => {
+    localStorage.removeItem('loveStoryIntroImage');
+    localStorage.removeItem('loveStoryIntroImage_url');
     
-    try {
-      // Get data from localStorage
-      const characterName = localStorage.getItem('loveStoryCharacterName') || '';
-      const partnerName = localStorage.getItem('loveStoryPartnerName') || '';
-      const style = localStorage.getItem('loveStoryStyle') || 'Photographic (Default)';
-      
-      toast({
-        title: "Regenerating blessing",
-        description: "Creating a new personalized blessing...",
-      });
-      
-      // Generate new blessing text
-      const generatedBlessing = await generateBlessing(characterName, partnerName, style);
-      setBlessing(generatedBlessing);
-      
-      // Store blessing in localStorage
-      localStorage.setItem('loveStoryBlessing', generatedBlessing);
-      
-      // Render and upload blessing image
-      const blessingImageUrl = await renderAndUploadBlessing(generatedBlessing);
-      
-      // Set this as the intro image
-      setIntroImage(blessingImageUrl);
-      
-      // Update localStorage and imageStorageMap
-      localStorage.setItem('loveStoryIntroImage_url', blessingImageUrl);
-      setImageStorageMap(prev => ({
-        ...prev,
-        ['loveStoryIntroImage']: {
-          localStorageKey: 'loveStoryIntroImage',
-          url: blessingImageUrl
+    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const characterPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    if (savedPrompts && characterPhoto) {
+      const prompts = JSON.parse(savedPrompts);
+      if (prompts && prompts.length > 1) {
+        setIsGeneratingIntro(true);
+        
+        // Use the provided style or fall back to the stored/default style
+        const imageStyle = style || selectedStyle;
+        
+        // Update the stored style if a new one is provided
+        if (style) {
+          setSelectedStyle(style);
+          localStorage.setItem('loveStoryStyle', style);
         }
-      }));
-      
-      toast({
-        title: "Blessing regenerated",
-        description: "Your new personalized blessing is ready!",
-      });
-      
-      // Refresh images to show the new blessing image
-      setTimeout(() => {
-        refreshImagesCallback();
-      }, 1000);
-    } catch (error: any) {
-      console.error("Error regenerating blessing:", error);
-      toast({
-        title: "Error regenerating blessing",
-        description: error.message || "Please try again",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGeneratingBlessing(false);
+        
+        try {
+          // 修复请求结构，使用prompts[1]而非prompts[0]（prompts[0]是封面）
+          const requestBody = {
+            contentPrompt: prompts[1].prompt, 
+            photo: characterPhoto,
+            style: imageStyle,
+            type: 'intro'
+          };
+
+          console.log('Intro generation request (using prompt 1):', JSON.stringify(requestBody));
+          
+          const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+            body: requestBody
+          });
+          
+          if (error) throw error;
+          
+          console.log('Intro generation response:', data);
+          
+          // 检查各种可能的响应格式
+          let introImageData = '';
+          if (data?.contentImage && data.contentImage.length > 0) {
+            introImageData = data.contentImage[0];
+          } else if (data?.output && data.output.length > 0) {
+            introImageData = data.output[0];
+          } else if (data?.introImage && data.introImage.length > 0) {
+            introImageData = data.introImage[0];
+          } else {
+            throw new Error("No intro image data in response");
+          }
+          
+          if (introImageData) {
+            // 尝试扩展图片
+            try {
+              const expandedBase64 = await expandImage(introImageData);
+              introImageData = expandedBase64;
+            } catch (expandError) {
+              console.error("Error expanding intro image:", expandError);
+              // 即使扩展失败，继续使用原始图片
+            }
+            
+            setIntroImage(introImageData);
+            
+            // 使用时间戳确保文件名唯一
+            const timestamp = Date.now();
+            
+            // Upload to Supabase Storage
+            const storageUrl = await uploadImageToStorage(
+              introImageData, 
+              'images', 
+              `love-story-intro-${timestamp}`
+            );
+            
+            // Update storage map
+            setImageStorageMap(prev => ({
+              ...prev,
+              ['loveStoryIntroImage']: {
+                localStorageKey: 'loveStoryIntroImage',
+                url: storageUrl
+              }
+            }));
+            
+            // Store only the URL reference in localStorage
+            localStorage.setItem('loveStoryIntroImage_url', storageUrl);
+            
+            // 延迟刷新图片列表，确保上传完成
+            setTimeout(() => {
+              refreshImagesCallback();
+            }, 1000);
+            
+            toast({
+              title: "Introduction image regenerated",
+              description: `Intro image updated with ${imageStyle} style`,
+            });
+          } else {
+            throw new Error("Failed to generate intro image");
+          }
+        } catch (error: any) {
+          console.error('Error regenerating intro image:', error);
+          toast({
+            title: "Error regenerating intro image",
+            description: error.message || "Please try again",
+            variant: "destructive",
+          });
+        } finally {
+          setIsGeneratingIntro(false);
+        }
+      }
     }
   };
-
-  // 创建图像状态映射
-  const { imageStateMap, loadingStateMap, handleRegenerateMap } = createImageStateMaps(
-    introImage, contentImage1, contentImage2, contentImage3, contentImage4,
-    contentImage5, contentImage6, contentImage7, contentImage8, contentImage9, contentImage10,
-    isGeneratingIntro, isGeneratingContent1, isGeneratingContent2, isGeneratingContent3, isGeneratingContent4,
-    isGeneratingContent5, isGeneratingContent6, isGeneratingContent7, isGeneratingContent8, 
-    isGeneratingContent9, isGeneratingContent10,
-    handleRegenerateIntro, handleRegenerateContent1, handleRegenerateContent2, handleRegenerateContent3,
-    handleRegenerateContent4, handleRegenerateContent5, handleRegenerateContent6, handleRegenerateContent7,
-    handleRegenerateContent8, handleRegenerateContent9, handleRegenerateContent10
-  );
 
   // 处理函数定义
   const refreshImages = async () => {
@@ -848,18 +793,15 @@ const GenerateStep = () => {
       
       toast({
         title: "Intro image rendered",
-        description: "Introduction image with text has been processed",
+        description: "Introduction successfully rendered with text",
       });
       
-      // 刷新图片列表
-      setTimeout(() => {
-        refreshImagesCallback();
-      }, 1000);
-    } catch (error) {
+      // 不需要刷新图片列表，因为我们已经直接更新了状态
+    } catch (error: any) {
       console.error("Error rendering intro image:", error);
       toast({
         title: "Error rendering intro image",
-        description: "Please try again",
+        description: error.message || "Please try again",
         variant: "destructive",
       });
     } finally {
@@ -870,19 +812,20 @@ const GenerateStep = () => {
   // 渲染内容图片到Canvas并上传
   const handleRenderContentImage = async (index: number) => {
     try {
-      // 获取内容图片和文本
-      const imageState = imageStateMap[index];
-      if (!imageState) {
+      // 获取对应的图片和文本
+      const image = imageStateMap[index];
+      // 图像索引1-10对应文本索引2-11
+      const textIndex = index + 1;
+      const text = imageTexts && imageTexts.length > textIndex ? imageTexts[textIndex].text : "";
+      
+      if (!image) {
         toast({
           title: "Error",
-          description: `No content image ${index} found`,
+          description: `No image found for content ${index}`,
           variant: "destructive",
         });
         return;
       }
-      
-      // 获取内容文本
-      const contentText = imageTexts && imageTexts.length > index ? imageTexts[index].text : "";
       
       toast({
         title: "Rendering content image",
@@ -890,20 +833,38 @@ const GenerateStep = () => {
       });
       
       // 设置加载状态
-      const loadingSetter = loadingStateMap[index];
-      if (loadingSetter) loadingSetter(true);
+      const setLoadingFn = loadingStateMap[index] !== undefined ? 
+        (value: boolean) => {
+          const setters = {
+            1: setIsGeneratingContent1,
+            2: setIsGeneratingContent2,
+            3: setIsGeneratingContent3,
+            4: setIsGeneratingContent4,
+            5: setIsGeneratingContent5,
+            6: setIsGeneratingContent6,
+            7: setIsGeneratingContent7,
+            8: setIsGeneratingContent8,
+            9: setIsGeneratingContent9,
+            10: setIsGeneratingContent10,
+          };
+          const setter = setters[index as keyof typeof setters];
+          if (setter) setter(value);
+        } : 
+        () => {};
+      
+      setLoadingFn(true);
       
       // 渲染并上传图片
-      const storageUrl = await renderContentImage(
-        imageState,
-        contentText || `Moment ${index} of our love story.`,
-        selectedStyle,
+      const storageUrl = await renderAndUploadContentImage(
+        image,
+        text || "A beautiful moment captured in this image.",
         index,
+        selectedStyle,
         supabaseImages
       );
       
-      // 更新状态 - 使用对应的state setter
-      const stateSetter = {
+      // 更新状态 - 直接使用渲染后的图片URL
+      const setContentFn = {
         1: setContentImage1,
         2: setContentImage2,
         3: setContentImage3,
@@ -913,203 +874,256 @@ const GenerateStep = () => {
         7: setContentImage7,
         8: setContentImage8,
         9: setContentImage9,
-        10: setContentImage10
+        10: setContentImage10,
       }[index];
       
-      if (stateSetter) stateSetter(storageUrl);
-      
-      // 更新localStorage
-      localStorage.setItem(`loveStoryContentImage${index}_url`, storageUrl);
-      
-      // 更新imageStorageMap
-      setImageStorageMap(prev => ({
-        ...prev,
-        [`loveStoryContentImage${index}`]: {
-          localStorageKey: `loveStoryContentImage${index}`,
-          url: storageUrl
-        }
-      }));
+      if (setContentFn) {
+        setContentFn(storageUrl);
+        
+        // 更新localStorage
+        localStorage.setItem(`loveStoryContentImage${index}_url`, storageUrl);
+        
+        // 更新imageStorageMap
+        setImageStorageMap(prev => ({
+          ...prev,
+          [`loveStoryContentImage${index}`]: {
+            localStorageKey: `loveStoryContentImage${index}`,
+            url: storageUrl
+          }
+        }));
+      }
       
       toast({
         title: "Content image rendered",
-        description: `Content image ${index} with text has been processed`,
+        description: `Content ${index} successfully rendered with text`,
       });
       
-      // 刷新图片列表
-      setTimeout(() => {
-        refreshImagesCallback();
-      }, 1000);
-    } catch (error) {
+      // 不需要刷新图片列表，因为我们已经直接更新了状态
+    } catch (error: any) {
       console.error(`Error rendering content image ${index}:`, error);
       toast({
-        title: "Error rendering content image",
-        description: "Please try again",
+        title: "Error rendering image",
+        description: error.message || "Please try again",
         variant: "destructive",
       });
     } finally {
-      const loadingSetter = loadingStateMap[index];
-      if (loadingSetter) loadingSetter(false);
+      // 重置加载状态
+      const setLoadingFn = {
+        1: setIsGeneratingContent1,
+        2: setIsGeneratingContent2,
+        3: setIsGeneratingContent3,
+        4: setIsGeneratingContent4,
+        5: setIsGeneratingContent5,
+        6: setIsGeneratingContent6,
+        7: setIsGeneratingContent7,
+        8: setIsGeneratingContent8,
+        9: setIsGeneratingContent9,
+        10: setIsGeneratingContent10,
+      }[index];
+      
+      if (setLoadingFn) setLoadingFn(false);
     }
   };
 
-  // 渲染所有页面
-  const renderAllPages = async () => {
+  // 创建图像状态映射
+  const { imageStateMap, loadingStateMap, handleRegenerateMap } = createImageStateMaps(
+    introImage, contentImage1, contentImage2, contentImage3, contentImage4,
+    contentImage5, contentImage6, contentImage7, contentImage8, contentImage9, contentImage10,
+    isGeneratingIntro, isGeneratingContent1, isGeneratingContent2, isGeneratingContent3, isGeneratingContent4,
+    isGeneratingContent5, isGeneratingContent6, isGeneratingContent7, isGeneratingContent8, 
+    isGeneratingContent9, isGeneratingContent10,
+    handleRegenerateIntro, handleRegenerateContent1, handleRegenerateContent2, handleRegenerateContent3,
+    handleRegenerateContent4, handleRegenerateContent5, handleRegenerateContent6, handleRegenerateContent7,
+    handleRegenerateContent8, handleRegenerateContent9, handleRegenerateContent10
+  );
+
+  // 批量渲染所有内容图片
+  const handleRenderAllContentImages = async () => {
     toast({
-      title: "Rendering all pages",
-      description: "This may take a while...",
+      title: "Rendering all images",
+      description: "This may take a minute...",
     });
     
+    // 获取所有有图片和文本的内容索引
+    const contentIndices = [];
+    for (let i = 1; i <= 10; i++) {
+      if (imageStateMap[i] && imageTexts && imageTexts.length > i+1) {
+        contentIndices.push(i);
+      }
+    }
+    
+    if (contentIndices.length === 0 && (!introImage || !imageTexts || imageTexts.length <= 1)) {
+      toast({
+        title: "No content to render",
+        description: "Please generate images first",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      // 先渲染介绍页
-      if (introImage) {
+      // 首先渲染介绍图片（如果存在）
+      if (introImage && imageTexts && imageTexts.length > 1) {
+        setIsGeneratingIntro(true);
         await handleRenderIntroImage();
       }
       
-      // 然后渲染所有内容页
-      for (let i = 1; i <= 10; i++) {
-        if (imageStateMap[i]) {
-          await handleRenderContentImage(i);
-        }
+      // 设置所有内容为加载状态
+      contentIndices.forEach(index => {
+        const setLoadingFn = {
+          1: setIsGeneratingContent1,
+          2: setIsGeneratingContent2,
+          3: setIsGeneratingContent3,
+          4: setIsGeneratingContent4,
+          5: setIsGeneratingContent5,
+          6: setIsGeneratingContent6,
+          7: setIsGeneratingContent7,
+          8: setIsGeneratingContent8,
+          9: setIsGeneratingContent9,
+          10: setIsGeneratingContent10,
+        }[index];
+        
+        if (setLoadingFn) setLoadingFn(true);
+      });
+
+      // 依次渲染每个内容图片
+      for (const index of contentIndices) {
+        await handleRenderContentImage(index);
       }
       
       toast({
-        title: "All pages rendered",
-        description: "Your book is ready for preview!",
+        title: "All images rendered",
+        description: `Successfully rendered intro and ${contentIndices.length} content images with text`,
       });
-    } catch (error) {
-      console.error("Error rendering all pages:", error);
+    } catch (error: any) {
+      console.error("Error rendering all images:", error);
       toast({
-        title: "Error rendering pages",
-        description: "Not all pages could be rendered. Please try again.",
+        title: "Error rendering images",
+        description: error.message || "Please try again",
         variant: "destructive",
+      });
+    } finally {
+      // 重置所有加载状态
+      setIsGeneratingIntro(false);
+      contentIndices.forEach(index => {
+        const setLoadingFn = {
+          1: setIsGeneratingContent1,
+          2: setIsGeneratingContent2,
+          3: setIsGeneratingContent3,
+          4: setIsGeneratingContent4,
+          5: setIsGeneratingContent5,
+          6: setIsGeneratingContent6,
+          7: setIsGeneratingContent7,
+          8: setIsGeneratingContent8,
+          9: setIsGeneratingContent9,
+          10: setIsGeneratingContent10,
+        }[index];
+        
+        if (setLoadingFn) setLoadingFn(false);
       });
     }
   };
 
   return (
-    <WizardStep 
-      title="Generate Story" 
-      description="We'll turn your love story into beautiful images."
-      prevPath="/create/love/love-story/moments"
-      nextPath="/create/love/love-story/format"
+    <WizardStep
+      title="Your Love Story Images"
+      description="Here are your personalized love story images with accompanying text."
+      previousStep="/create/love/love-story/debug-prompts"
+      nextStep="/create/love/love-story/format"
+      currentStep={7}
+      totalSteps={9}
     >
-      <div className="space-y-8">
-        {/* Cover Image Section */}
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-xl font-bold">Cover</h3>
-            <Button 
-              variant="outline" 
-              onClick={handleEditCover}
-              className="flex items-center gap-1"
-            >
-              <Edit className="h-4 w-4" /> Edit Cover
-            </Button>
+      <div className="max-w-7xl mx-auto px-4">
+        {/* 添加 Refresh Images 按钮 */}
+        <div className="mb-8 flex justify-end gap-4">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleRenderAllContentImages}
+            disabled={isLoadingImages}
+            className="bg-[#8e44ad]/10 text-[#8e44ad] hover:bg-[#8e44ad]/20 border-[#8e44ad]/30 mr-2"
+          >
+            <Wand2 className="w-4 h-4 mr-2" />
+            Render All Content
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={refreshImages}
+            disabled={isLoadingImages}
+            className="bg-[#FF7F50]/10 text-[#FF7F50] hover:bg-[#FF7F50]/20 border-[#FF7F50]/30"
+          >
+            {isLoadingImages ? 'Loading...' : 'Refresh Images'}
+          </Button>
+        </div>
+      
+        {/* Cover section */}
+        <div className="mb-12">
+          <h2 className="text-2xl font-bold mb-8">Cover</h2>
+          <div className="max-w-xl mx-auto">
+            {coverImage && (
+              <img 
+                src={coverImage} 
+                alt="Love Story Cover" 
+                className="w-full h-auto rounded-lg shadow-lg"
+              />
+            )}
+            {!coverImage && (
+              <div className="w-full h-96 bg-gray-100 rounded-lg flex items-center justify-center">
+                <p className="text-gray-500">Cover image not available</p>
+              </div>
+            )}
           </div>
-          
-          <CoverPreviewCard 
-            coverImage={coverImage}
-            title={coverTitle} 
-            subtitle={subtitle}
-            author={authorName}
-            isGenerating={isGeneratingCover}
-          />
         </div>
         
-        {/* Blessing Section */}
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-xl font-bold">Blessing Page</h3>
-            <Button 
-              variant="outline" 
-              onClick={handleRegenerateIntro}
-              disabled={isGeneratingBlessing}
-              className="flex items-center gap-1"
-            >
-              <RefreshCw className={`h-4 w-4 ${isGeneratingBlessing ? 'animate-spin' : ''}`} /> 
-              {isGeneratingBlessing ? 'Generating...' : 'Regenerate Blessing'}
-            </Button>
-          </div>
-          
-          <div className="rounded-lg overflow-hidden border border-gray-200 bg-white">
-            {introImage ? (
-              <div className="aspect-[3/4] relative">
-                <img 
-                  src={introImage} 
-                  alt="Blessing page"
-                  className="w-full h-full object-cover"
-                />
-                {isGeneratingBlessing && (
-                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                    <div className="text-white text-center">
-                      <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-2" />
-                      <p>Generating blessing...</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="aspect-[3/4] bg-gray-100 flex items-center justify-center">
-                <Button 
-                  variant="default" 
-                  onClick={handleGenerateBlessing}
-                  disabled={isGeneratingBlessing}
-                  className="flex items-center gap-1"
+        {/* 介绍部分 - 将Intro与其他Content分开 */}
+        <div className="mb-16 border-t-2 border-gray-200 pt-10">
+          <h2 className="text-2xl font-bold mb-8">Introduction</h2>
+          <div className="mb-8">
+            <ContentImageCard 
+              image={introImage} 
+              isGenerating={isGeneratingIntro}
+              onRegenerate={handleRegenerateIntro}
+              index={0}
+              onEditText={() => {}}
+              text={imageTexts && imageTexts.length > 1 ? imageTexts[1]?.text : undefined}
+              title=""
+            />
+            
+            {/* 添加渲染按钮 */}
+            {introImage && imageTexts && imageTexts.length > 1 && (
+              <div className="mt-4 flex justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRenderIntroImage}
+                  disabled={isGeneratingIntro}
+                  className="bg-[#8e44ad]/10 text-[#8e44ad] hover:bg-[#8e44ad]/20 border-[#8e44ad]/30"
                 >
-                  <Wand2 className="h-4 w-4" /> 
-                  {isGeneratingBlessing ? 'Generating...' : 'Generate Blessing'}
+                  <Wand2 className="w-4 h-4 mr-2" />
+                  Render with Text
                 </Button>
               </div>
             )}
           </div>
-          
-          {blessing && (
-            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <p className="text-sm italic">{blessing}</p>
-            </div>
-          )}
         </div>
         
-        {/* Story Content Section */}
-        <div className="space-y-4">
-          <h3 className="text-xl font-bold">Story Content</h3>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {Array.from({ length: 10 }).map((_, index) => {
-              const contentIndex = index + 1;
-              return (
-                <ContentImageCard
-                  key={`content-${contentIndex}`}
-                  imageUrl={imageStateMap[contentIndex]}
-                  index={contentIndex}
-                  isLoading={loadingStateMap[contentIndex] ? true : false}
-                  onRegenerate={() => handleRegenerateMap[contentIndex]()}
-                />
-              );
-            })}
+        {/* 内容部分 */}
+        <div className="border-t-2 border-gray-200 pt-10">
+          <h2 className="text-2xl font-bold mb-8">Story Content</h2>
+          <div className="space-y-12">
+            {/* 渲染内容图片 */}
+            {renderContentImage(1, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts, handleRenderContentImage)}
+            {renderContentImage(2, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts, handleRenderContentImage)}
+            {renderContentImage(3, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts, handleRenderContentImage)}
+            {renderContentImage(4, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts, handleRenderContentImage)}
+            {renderContentImage(5, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts, handleRenderContentImage)}
+            {renderContentImage(6, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts, handleRenderContentImage)}
+            {renderContentImage(7, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts, handleRenderContentImage)}
+            {renderContentImage(8, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts, handleRenderContentImage)}
+            {renderContentImage(9, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts, handleRenderContentImage)}
+            {renderContentImage(10, imageStateMap, loadingStateMap, handleRegenerateMap, imageTexts, handleRenderContentImage)}
           </div>
-        </div>
-        
-        {/* Actions */}
-        <div className="flex flex-wrap gap-4 justify-center">
-          <Button
-            variant="outline"
-            onClick={refreshImages}
-            disabled={isLoadingImages}
-            className="flex items-center gap-1"
-          >
-            <RefreshCw className={`h-4 w-4 ${isLoadingImages ? 'animate-spin' : ''}`} />
-            {isLoadingImages ? 'Refreshing...' : 'Refresh Images'}
-          </Button>
-          
-          <Button
-            variant="default"
-            onClick={renderAllPages}
-            className="flex items-center gap-1"
-          >
-            <Wand2 className="h-4 w-4" />
-            Render All Pages
-          </Button>
         </div>
       </div>
     </WizardStep>

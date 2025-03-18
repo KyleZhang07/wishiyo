@@ -131,103 +131,103 @@ export type Database = {
       }
       love_story_books: {
         Row: {
-          binding_type: string | null
-          book_size: string | null
-          client_id: string | null
-          cover_pdf: string | null
-          cover_source_url: string | null
-          customer_email: string | null
           id: number
+          order_id: string
+          title: string | null
+          person_name: string | null
+          status: string | null
+          timestamp: string | null
+          cover_pdf: string | null
           interior_pdf: string | null
+          pod_package_id: string | null
+          print_quantity: number | null
+          shipping_level: string | null
+          cover_source_url: string | null
           interior_source_url: string | null
-          is_color: boolean | null
-          last_print_attempt: string | null
           lulu_print_job_id: string | null
           lulu_print_status: string | null
           lulu_tracking_number: string | null
           lulu_tracking_url: string | null
-          order_id: string
-          page_count: number | null
-          paper_type: string | null
-          person_name: string | null
-          pod_package_id: string | null
-          print_attempts: number | null
-          print_date: string | null
-          print_quantity: number | null
-          ready_for_printing: boolean | null
           recipient_phone: string | null
+          book_size: string | null
+          page_count: number | null
+          is_color: boolean | null
+          paper_type: string | null
+          binding_type: string | null
+          ready_for_printing: boolean | null
+          print_date: string | null
+          last_print_attempt: string | null
+          print_attempts: number | null
+          customer_email: string | null
+          client_id: string | null
           shipping_address: Json | null
-          shipping_level: string | null
           shipping_option: Json | null
-          status: string | null
-          timestamp: string | null
-          title: string | null
         }
         Insert: {
-          binding_type?: string | null
-          book_size?: string | null
-          client_id?: string | null
-          cover_pdf?: string | null
-          cover_source_url?: string | null
-          customer_email?: string | null
           id?: number
+          order_id: string
+          title?: string | null
+          person_name?: string | null
+          status?: string | null
+          timestamp?: string | null
+          cover_pdf?: string | null
           interior_pdf?: string | null
+          pod_package_id?: string | null
+          print_quantity?: number | null
+          shipping_level?: string | null
+          cover_source_url?: string | null
           interior_source_url?: string | null
-          is_color?: boolean | null
-          last_print_attempt?: string | null
           lulu_print_job_id?: string | null
           lulu_print_status?: string | null
           lulu_tracking_number?: string | null
           lulu_tracking_url?: string | null
-          order_id: string
-          page_count?: number | null
-          paper_type?: string | null
-          person_name?: string | null
-          pod_package_id?: string | null
-          print_attempts?: number | null
-          print_date?: string | null
-          print_quantity?: number | null
-          ready_for_printing?: boolean | null
           recipient_phone?: string | null
+          book_size?: string | null
+          page_count?: number | null
+          is_color?: boolean | null
+          paper_type?: string | null
+          binding_type?: string | null
+          ready_for_printing?: boolean | null
+          print_date?: string | null
+          last_print_attempt?: string | null
+          print_attempts?: number | null
+          customer_email?: string | null
+          client_id?: string | null
           shipping_address?: Json | null
-          shipping_level?: string | null
           shipping_option?: Json | null
-          status?: string | null
-          timestamp?: string | null
-          title?: string | null
         }
         Update: {
-          binding_type?: string | null
-          book_size?: string | null
-          client_id?: string | null
-          cover_pdf?: string | null
-          cover_source_url?: string | null
-          customer_email?: string | null
           id?: number
+          order_id?: string
+          title?: string | null
+          person_name?: string | null
+          status?: string | null
+          timestamp?: string | null
+          cover_pdf?: string | null
           interior_pdf?: string | null
+          pod_package_id?: string | null
+          print_quantity?: number | null
+          shipping_level?: string | null
+          cover_source_url?: string | null
           interior_source_url?: string | null
-          is_color?: boolean | null
-          last_print_attempt?: string | null
           lulu_print_job_id?: string | null
           lulu_print_status?: string | null
           lulu_tracking_number?: string | null
           lulu_tracking_url?: string | null
-          order_id?: string
-          page_count?: number | null
-          paper_type?: string | null
-          person_name?: string | null
-          pod_package_id?: string | null
-          print_attempts?: number | null
-          print_date?: string | null
-          print_quantity?: number | null
-          ready_for_printing?: boolean | null
           recipient_phone?: string | null
+          book_size?: string | null
+          page_count?: number | null
+          is_color?: boolean | null
+          paper_type?: string | null
+          binding_type?: string | null
+          ready_for_printing?: boolean | null
+          print_date?: string | null
+          last_print_attempt?: string | null
+          print_attempts?: number | null
+          customer_email?: string | null
+          client_id?: string | null
           shipping_address?: Json | null
-          shipping_level?: string | null
           shipping_option?: Json | null
-          status?: string | null
-          timestamp?: string | null
-          title?: string | null
         }
         Relationships: []
       }
