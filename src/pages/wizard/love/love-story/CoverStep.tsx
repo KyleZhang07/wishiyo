@@ -37,6 +37,15 @@ const coverStyles: CoverStyle[] = [
     font: 'playfair'
   },
   {
+    id: 'vintage',
+    name: 'Vintage',
+    background: '#F5F5DC',
+    titleColor: '#8B4513',
+    subtitleColor: '#A0522D',
+    authorColor: '#8B4513',
+    font: 'playfair'
+  },
+  {
     id: 'modern',
     name: 'Modern',
     background: '#000000',
@@ -62,15 +71,6 @@ const coverStyles: CoverStyle[] = [
     subtitleColor: '#333333',
     authorColor: '#000000',
     font: 'didot'
-  },
-  {
-    id: 'vintage',
-    name: 'Vintage',
-    background: '#F5F5DC',
-    titleColor: '#8B4513',
-    subtitleColor: '#A0522D',
-    authorColor: '#8B4513',
-    font: 'playfair'
   }
 ];
 
@@ -85,6 +85,7 @@ const LoveStoryCoverStep = () => {
   const [titleData, setTitleData] = useState({
     mainTitle: '',
     subTitle: '',
+    thirdLine: '',
     fullTitle: 'THE MAGIC IN'
   });
   
@@ -209,45 +210,61 @@ const LoveStoryCoverStep = () => {
 
   // 修改处理标题选择的函数
   const handleTitleSelect = (title: string) => {
-    // 解析标题，分为主标题和副标题
+    // 解析标题，分为三部分
     let mainPart = '';
     let subPart = '';
+    let thirdPart = '';
     
     // 根据具体标题模板进行精确拆分
     if (title === `${recipientName}'s amazing adventure`) {
       mainPart = `${recipientName}'s`;
       subPart = 'amazing adventure';
+      thirdPart = '';
     } else if (title === `${authorName}'s wonderful ${recipientName}`) {
-      mainPart = `${authorName}'s wonderful`;
-      subPart = recipientName;
+      mainPart = `${authorName}'s`;
+      subPart = 'wonderful';
+      thirdPart = recipientName;
     } else if (title === `THE MAGIC IN ${recipientName}`) {
       mainPart = 'THE MAGIC IN';
       subPart = recipientName;
+      thirdPart = '';
     } else if (title === `${recipientName} I love you`) {
       mainPart = recipientName;
       subPart = 'I love you';
+      thirdPart = '';
     } else if (title === `The little book of ${recipientName}`) {
       mainPart = 'The little book of';
       subPart = recipientName;
+      thirdPart = '';
     } else {
       // 默认处理
       const parts = title.split(' ');
-      if (parts.length > 2) {
-        const midpoint = Math.ceil(parts.length / 2);
-        mainPart = parts.slice(0, midpoint).join(' ');
-        subPart = parts.slice(midpoint).join(' ');
+      if (parts.length > 3) {
+        mainPart = parts.slice(0, Math.ceil(parts.length / 3)).join(' ');
+        subPart = parts.slice(Math.ceil(parts.length / 3), Math.ceil(parts.length * 2 / 3)).join(' ');
+        thirdPart = parts.slice(Math.ceil(parts.length * 2 / 3)).join(' ');
+      } else if (parts.length > 2) {
+        mainPart = parts[0];
+        subPart = parts[1];
+        thirdPart = parts[2];
+      } else if (parts.length > 1) {
+        mainPart = parts[0];
+        subPart = parts[1];
+        thirdPart = '';
       } else {
         mainPart = title;
         subPart = '';
+        thirdPart = '';
       }
     }
     
-    console.log('标题已分割为:', { mainPart, subPart });
+    console.log('标题已分割为:', { mainPart, subPart, thirdPart });
     
     // 更新标题状态
     setTitleData({
       mainTitle: mainPart,
       subTitle: subPart,
+      thirdLine: thirdPart, 
       fullTitle: title
     });
     
@@ -436,7 +453,7 @@ const LoveStoryCoverStep = () => {
     }
   };
   
-  // 修改renderCoverToCanvas函数，使用状态中的标题数据
+  // 修改renderCoverToCanvas函数，使其支持三行标题
   const renderCoverToCanvas = async (): Promise<string> => {
     return new Promise((resolve, reject) => {
       try {
@@ -570,32 +587,48 @@ const LoveStoryCoverStep = () => {
             ctx.textAlign = 'center';
             
             // 使用状态中的标题数据
-            const { mainTitle, subTitle, fullTitle } = titleData;
+            const { mainTitle, subTitle, thirdLine, fullTitle } = titleData;
             
             // 主标题
             ctx.fillStyle = currentStyle.titleColor;
             const titleFontSize = canvas.width * 0.06;
             
-            // 如果有主副标题，则绘制两行
-            if (mainTitle && subTitle) {
+            // 如果有主副标题，则绘制多行
+            if (mainTitle) {
               // 为Playful样式特别处理字体
               if (currentStyle.id === 'playful') {
                 // 放大字体并绘制主标题
                 const mainTitleFontSize = titleFontSize * 1.2; // 增大主标题字体
                 ctx.font = `bold ${mainTitleFontSize}px cursive`; // 确保使用手写体
-                ctx.fillText(mainTitle, canvas.width / 2, canvas.height * 0.25); // 上移主标题位置
+                ctx.fillText(mainTitle, canvas.width / 2, canvas.height * 0.20); // 上移主标题位置
                 
                 // 绘制副标题（保持字体稍小，增加间距）
                 const subTitleFontSize = titleFontSize * 1.1; // 增大副标题字体
                 ctx.font = `bold ${subTitleFontSize}px cursive`;
-                ctx.fillText(subTitle, canvas.width / 2, canvas.height * 0.33); // 保持间距，但整体上移
+                
+                if (thirdLine) {
+                  // 三行标题的情况
+                  ctx.fillText(subTitle, canvas.width / 2, canvas.height * 0.28); 
+                  ctx.fillText(thirdLine, canvas.width / 2, canvas.height * 0.36);
+                } else {
+                  // 两行标题的情况
+                  ctx.fillText(subTitle, canvas.width / 2, canvas.height * 0.33); 
+                }
               } else {
-                // 其他样式使用标准字体族但仍保持两行布局
+                // 其他样式使用标准字体族但仍保持多行布局
                 ctx.font = `bold ${titleFontSize}px ${getFontFamily(currentStyle.font)}`;
                 ctx.fillText(mainTitle, canvas.width / 2, canvas.height * 0.13);
                 
                 ctx.font = `bold ${titleFontSize * 0.9}px ${getFontFamily(currentStyle.font)}`;
-                ctx.fillText(subTitle, canvas.width / 2, canvas.height * 0.21);
+                
+                if (thirdLine) {
+                  // 三行标题的情况  
+                  ctx.fillText(subTitle, canvas.width / 2, canvas.height * 0.21);
+                  ctx.fillText(thirdLine, canvas.width / 2, canvas.height * 0.29);
+                } else {
+                  // 两行标题的情况
+                  ctx.fillText(subTitle, canvas.width / 2, canvas.height * 0.21);
+                }
               }
             } else {
               // 如果没有分开的标题，则使用完整标题
@@ -899,7 +932,7 @@ const LoveStoryCoverStep = () => {
                 >
                   <div className="flex-1">
                     <h4 className="font-medium text-gray-900">{authorName}'s wonderful {recipientName}</h4>
-                    <p className="text-sm text-gray-500 mt-1">{authorName}'s wonderful 在第一行, {recipientName} 在第二行</p>
+                    <p className="text-sm text-gray-500 mt-1">{authorName}'s 在第一行, wonderful 在第二行, {recipientName} 在第三行</p>
                   </div>
                 </div>
                 

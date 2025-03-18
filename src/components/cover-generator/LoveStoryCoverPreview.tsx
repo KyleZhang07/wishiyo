@@ -22,6 +22,7 @@ interface LoveStoryCoverPreviewProps {
   titleData: {
     mainTitle: string;
     subTitle: string;
+    thirdLine: string;
     fullTitle: string;
   };
   subtitle?: string;
@@ -109,7 +110,7 @@ const LoveStoryCoverPreview = ({
   const drawLoveStoryCover = (
     ctx: CanvasRenderingContext2D, 
     canvas: HTMLCanvasElement,
-    titleData: { mainTitle: string; subTitle: string; fullTitle: string },
+    titleData: { mainTitle: string; subTitle: string; thirdLine: string; fullTitle: string },
     subtitle: string,
     author: string,
     recipient: string,
@@ -214,7 +215,7 @@ const LoveStoryCoverPreview = ({
       
       // 计算居中位置
       const x = (width - drawWidth) / 2;
-      const y = height * 0.4;  // 图片位置偏上
+      const y = height * 0.4;  // 图片位置上移
       
       // 绘制人物图像
       ctx.drawImage(image.element, x, y, drawWidth, drawHeight);
@@ -228,47 +229,158 @@ const LoveStoryCoverPreview = ({
     const titleFontSize = width * 0.06;
     
     // 从titleData获取标题信息
-    const { mainTitle, subTitle, fullTitle } = titleData;
+    const { mainTitle, subTitle, thirdLine, fullTitle } = titleData;
     
-    console.log('绘制标题:', { mainTitle, subTitle, fullTitle });
+    console.log('绘制标题:', { mainTitle, subTitle, thirdLine, fullTitle });
     
-    // 如果有主副标题，则绘制两行
-    if (mainTitle && subTitle) {
+    // 如果有主副标题，则绘制多行
+    if (mainTitle) {
       // 为Playful样式特别处理字体
-      if (style?.id === 'playful') {
+      if (style?.id === 'playful' || style?.id === 'modern' || style?.id === 'elegant') {
         // 放大字体并绘制主标题
         const mainTitleFontSize = titleFontSize * 1.2; // 增大主标题字体
-        ctx.font = `bold ${mainTitleFontSize}px cursive`; // 确保使用手写体
-        ctx.fillText(mainTitle, width / 2, height * 0.25); // 上移主标题位置
+        ctx.font = `bold ${mainTitleFontSize}px ${style?.id === 'playful' ? 'cursive' : style?.id === 'modern' ? "'Palatino', serif" : "'Comic Sans MS', cursive"}`;
         
-        // 绘制副标题（保持字体稍小，增加间距）
-        const subTitleFontSize = titleFontSize * 1.1; // 增大副标题字体
-        ctx.font = `bold ${subTitleFontSize}px cursive`;
-        ctx.fillText(subTitle, width / 2, height * 0.33); // 保持间距，但整体上移
-      } else {
-        // 其他样式使用标准字体族但仍保持两行布局
+        // 只处理特定的三行标题模式：${authorName}'s wonderful ${recipientName}
+        if (thirdLine && mainTitle.includes("'s") && subTitle === 'wonderful') {
+          // 三行标题位置，增加间距，整体下移0.015
+          ctx.fillText(mainTitle, width / 2, height * (0.16 + 0.015));
+          
+          const subTitleFontSize = titleFontSize * 1.1; // 增大副标题字体
+          ctx.font = `bold ${subTitleFontSize}px ${style?.id === 'playful' ? 'cursive' : style?.id === 'modern' ? "'Palatino', serif" : "'Comic Sans MS', cursive"}`;
+          ctx.fillText(subTitle, width / 2, height * (0.26 + 0.015));
+          ctx.fillText(thirdLine, width / 2, height * (0.36 + 0.015));
+        } else if (thirdLine) {
+          // 其他三行标题情况，增加间距，整体下移0.015
+          ctx.fillText(mainTitle, width / 2, height * (0.16 + 0.015));
+          
+          const subTitleFontSize = titleFontSize * 1.1; // 增大副标题字体
+          ctx.font = `bold ${subTitleFontSize}px ${style?.id === 'playful' ? 'cursive' : style?.id === 'modern' ? "'Palatino', serif" : "'Comic Sans MS', cursive"}`;
+          ctx.fillText(subTitle, width / 2, height * (0.26 + 0.015));
+          ctx.fillText(thirdLine, width / 2, height * (0.36 + 0.015));
+        } else {
+          // 两行标题的情况位置，增加间距，整体下移0.01
+          ctx.fillText(mainTitle, width / 2, height * (0.215 + 0.01));
+          
+          // 绘制副标题，增加间距
+          const subTitleFontSize = titleFontSize * 1.1;
+          ctx.font = `bold ${subTitleFontSize}px ${style?.id === 'playful' ? 'cursive' : style?.id === 'modern' ? "'Palatino', serif" : "'Comic Sans MS', cursive"}`;
+          ctx.fillText(subTitle, width / 2, height * (0.315 + 0.01)); 
+        }
+      }
+      // Classic和Vintage样式，使用与其他样式相同的位置
+      else if (style?.id === 'classic' || style?.id === 'vintage') {
+        const mainTitleFontSize = titleFontSize * 1.2; // 增大主标题字体
+        ctx.font = `bold ${mainTitleFontSize}px ${fontFamily}`;
+        
+        // 只处理特定的三行标题模式：${authorName}'s wonderful ${recipientName}
+        if (thirdLine && mainTitle.includes("'s") && subTitle === 'wonderful') {
+          // 使用与其他样式相同的位置
+          ctx.fillText(mainTitle, width / 2, height * (0.16 + 0.015));
+          
+          const subTitleFontSize = titleFontSize * 1.1;
+          ctx.font = `bold ${subTitleFontSize}px ${fontFamily}`;
+          ctx.fillText(subTitle, width / 2, height * (0.26 + 0.015));
+          ctx.fillText(thirdLine, width / 2, height * (0.36 + 0.015));
+        } else if (thirdLine) {
+          // 其他三行标题情况
+          ctx.fillText(mainTitle, width / 2, height * (0.16 + 0.015));
+          
+          const subTitleFontSize = titleFontSize * 1.1;
+          ctx.font = `bold ${subTitleFontSize}px ${fontFamily}`;
+          ctx.fillText(subTitle, width / 2, height * (0.26 + 0.015));
+          ctx.fillText(thirdLine, width / 2, height * (0.36 + 0.015));
+        } else {
+          // 两行标题的情况
+          ctx.fillText(mainTitle, width / 2, height * (0.215 + 0.01));
+          
+          const subTitleFontSize = titleFontSize * 1.1;
+          ctx.font = `bold ${subTitleFontSize}px ${fontFamily}`;
+          ctx.fillText(subTitle, width / 2, height * (0.315 + 0.01));
+        }
+      }
+      else {
+        // 其他样式使用标准字体族但仍保持多行布局
         ctx.font = `bold ${titleFontSize}px ${fontFamily}`;
-        ctx.fillText(mainTitle, width / 2, height * 0.13);
         
-        ctx.font = `bold ${titleFontSize * 0.9}px ${fontFamily}`;
-        ctx.fillText(subTitle, width / 2, height * 0.21);
+        // 只处理特定的三行标题模式：${authorName}'s wonderful ${recipientName}
+        if (thirdLine && mainTitle.includes("'s") && subTitle === 'wonderful') {
+          // 三行标题位置，增加间距，整体下移0.015
+          ctx.fillText(mainTitle, width / 2, height * (0.09 + 0.015));
+          
+          ctx.font = `bold ${titleFontSize * 0.9}px ${fontFamily}`;
+          ctx.fillText(subTitle, width / 2, height * (0.19 + 0.015));
+          ctx.fillText(thirdLine, width / 2, height * (0.29 + 0.015));
+        } else if (thirdLine) {
+          // 其他三行标题情况，增加间距，整体下移0.015
+          ctx.fillText(mainTitle, width / 2, height * (0.09 + 0.015));
+          
+          ctx.font = `bold ${titleFontSize * 0.9}px ${fontFamily}`;
+          ctx.fillText(subTitle, width / 2, height * (0.19 + 0.015));
+          ctx.fillText(thirdLine, width / 2, height * (0.29 + 0.015));
+        } else {
+          // 两行标题的情况位置，增加间距，整体下移0.01
+          ctx.fillText(mainTitle, width / 2, height * (0.11 + 0.01));
+          
+          ctx.font = `bold ${titleFontSize * 0.9}px ${fontFamily}`;
+          // 副标题也增加间距
+          ctx.fillText(subTitle, width / 2, height * (0.21 + 0.01));
+        }
       }
     } else {
-      // 如果没有分开的标题，则使用完整标题
-      ctx.font = `bold ${titleFontSize}px ${fontFamily}`;
-      ctx.fillText(fullTitle, width / 2, height * 0.15);
+      // 如果没有分开的标题，则使用完整标题，下移0.01
+      if (style?.id === 'modern') {
+        // 使用白色字体和更手写风格的字体
+        ctx.fillStyle = '#FFFFFF';
+        const modernTitleFontSize = titleFontSize * 1.3;
+        ctx.font = `bold ${modernTitleFontSize}px 'Palatino', serif`;
+        ctx.fillText(fullTitle, width / 2, height * (0.125 + 0.01));
+      } else if (style?.id === 'elegant') {
+        // 使用白色字体和手写风格的字体
+        ctx.fillStyle = '#FFFFFF';
+        const elegantTitleFontSize = titleFontSize * 1.3;
+        ctx.font = `bold ${elegantTitleFontSize}px 'Comic Sans MS', cursive`;
+        ctx.fillText(fullTitle, width / 2, height * (0.125 + 0.01));
+      } else {
+        // 其他样式使用默认字体
+        ctx.font = `bold ${titleFontSize}px ${fontFamily}`;
+        ctx.fillText(fullTitle, width / 2, height * (0.125 + 0.01));
+      }
     }
     
     // 作者名
-    ctx.fillStyle = authorColor;
-    const authorFontSize = width * 0.035;
-    ctx.font = `italic ${authorFontSize}px ${fontFamily}`;
-    
-    // 如果是Playful样式，则将作者名放在右下角
-    if (style?.id === 'playful') {
-      ctx.fillText(`Written by ${author}`, width * 0.85, height * 0.95);
-    } else {
-      ctx.fillText(`Written by ${author}`, width * 0.75, height * 0.9);
+    // 如果是modern样式，使用白色字体，但位置与playful保持一致
+    if (style?.id === 'modern') {
+      ctx.fillStyle = '#FFFFFF';
+      const authorFontSize = width * 0.035;
+      ctx.font = `italic ${authorFontSize}px 'Palatino', serif`;
+      ctx.fillText(`Written by ${author}`, width * 0.85, height * 0.95); // 与playful位置一致
+    } 
+    // 如果是elegant样式，使用白色字体，但位置与playful保持一致
+    else if (style?.id === 'elegant') {
+      ctx.fillStyle = '#FFFFFF';
+      const authorFontSize = width * 0.035;
+      ctx.font = `italic ${authorFontSize}px 'Comic Sans MS', cursive`;
+      ctx.fillText(`Written by ${author}`, width * 0.85, height * 0.95); // 与playful位置一致
+    }
+    // Classic和Vintage样式，使用与playful相同的位置
+    else if (style?.id === 'classic' || style?.id === 'vintage') {
+      ctx.fillStyle = authorColor;
+      const authorFontSize = width * 0.035;
+      ctx.font = `italic ${authorFontSize}px ${fontFamily}`;
+      ctx.fillText(`Written by ${author}`, width * 0.85, height * 0.95); // 与playful位置一致
+    }
+    else {
+      ctx.fillStyle = authorColor;
+      const authorFontSize = width * 0.035;
+      ctx.font = `italic ${authorFontSize}px ${fontFamily}`;
+      
+      // 如果是Playful样式，则将作者名放在右下角
+      if (style?.id === 'playful') {
+        ctx.fillText(`Written by ${author}`, width * 0.85, height * 0.95);
+      } else {
+        ctx.fillText(`Written by ${author}`, width * 0.75, height * 0.9);
+      }
     }
   };
 
