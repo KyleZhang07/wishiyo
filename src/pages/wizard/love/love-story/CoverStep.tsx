@@ -537,8 +537,16 @@ const LoveStoryCoverStep = () => {
             // 主标题
             ctx.fillStyle = currentStyle.titleColor;
             const titleFontSize = canvas.width * 0.06;
-            ctx.font = `bold ${titleFontSize}px ${getFontFamily(currentStyle.font)}`;
-            ctx.fillText(coverTitle, canvas.width / 2, canvas.height * 0.15);
+            
+            // 为Playful样式特别处理
+            if (currentStyle.id === 'playful') {
+              ctx.font = `bold ${titleFontSize}px cursive`; // 确保使用手写体
+              // 将标题放在更靠下的位置（图片上方）
+              ctx.fillText(coverTitle, canvas.width / 2, canvas.height * 0.35);
+            } else {
+              ctx.font = `bold ${titleFontSize}px ${getFontFamily(currentStyle.font)}`;
+              ctx.fillText(coverTitle, canvas.width / 2, canvas.height * 0.15);
+            }
             
             // 作者名
             ctx.fillStyle = currentStyle.authorColor;
@@ -692,30 +700,8 @@ const LoveStoryCoverStep = () => {
       onNextClick={handleContinue}
     >
       <div className="max-w-4xl mx-auto px-4">
-        {/* 封面样式选择 */}
-        <div className="mb-10">
-          <h2 className="text-xl font-semibold mb-4">Choose a Cover Style</h2>
-          <div className="flex justify-center space-x-8">
-            {coverStyles.map(style => (
-              <div 
-                key={style.id}
-                onClick={() => handleStyleSelect(style.id)}
-                className={`relative w-24 h-24 rounded-full cursor-pointer flex items-center justify-center ${
-                  selectedStyle === style.id ? 'ring-2 ring-offset-2 ring-[#FF7F50]' : ''
-                }`}
-                style={{
-                  backgroundColor: style.background,
-                  border: 'none'
-                }}
-              >
-                <span className="text-center text-xs">{style.name}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        
         {/* 封面预览 */}
-        <div className="relative mb-10">
+        <div className="relative mb-5">
           <h2 className="text-xl font-semibold mb-4">Cover Preview</h2>
           
           {/* 封面图片生成中的加载状态 */}
@@ -758,10 +744,13 @@ const LoveStoryCoverStep = () => {
               <ChevronRight className="w-6 h-6 text-gray-700" />
             </button>
           )}
-          
+        </div>
+
+        {/* 操作按钮和指示器 - 移动到预览区域下方 */}
+        <div className="mb-8">
           {/* 点状指示器 */}
           {coverImages.length > 1 && (
-            <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
+            <div className="flex justify-center gap-2 mb-4">
               {coverImages.map((_, index) => (
                 <button
                   key={index}
@@ -778,7 +767,7 @@ const LoveStoryCoverStep = () => {
           )}
           
           {/* 操作按钮 */}
-          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
+          <div className="flex justify-center gap-2">
             <Button
               variant="secondary"
               onClick={handleEditCover}
@@ -796,74 +785,96 @@ const LoveStoryCoverStep = () => {
               {isGeneratingCover ? 'Generating...' : 'Regenerate'}
             </Button>
           </div>
-          
-          {/* 添加标题选择对话框 */}
-          <Dialog open={isEditTitleDialogOpen} onOpenChange={setIsEditTitleDialogOpen}>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Choose a Book Title</DialogTitle>
-                <DialogDescription>
-                  Select a title for your love story book
-                </DialogDescription>
-              </DialogHeader>
-              
-              <div className="space-y-4 py-4">
-                <div className="grid grid-cols-1 gap-3">
-                  <div 
-                    onClick={() => handleTitleSelect(`${recipientName}'s amazing adventure`)}
-                    className="flex items-center p-3 rounded-md cursor-pointer transition-all bg-gray-50 hover:bg-gray-100 border border-gray-200"
-                  >
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-900">{recipientName}'s amazing adventure</h4>
-                    </div>
+        </div>
+        
+        {/* 封面样式选择 */}
+        <div className="mb-10">
+          <h2 className="text-xl font-semibold mb-4">Choose a Cover Style</h2>
+          <div className="flex justify-center space-x-8">
+            {coverStyles.map(style => (
+              <div 
+                key={style.id}
+                onClick={() => handleStyleSelect(style.id)}
+                className={`relative w-24 h-24 rounded-full cursor-pointer flex items-center justify-center ${
+                  selectedStyle === style.id ? 'ring-2 ring-offset-2 ring-[#FF7F50]' : ''
+                }`}
+                style={{
+                  backgroundColor: style.background,
+                  border: 'none'
+                }}
+              >
+                <span className="text-center text-xs">{style.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        {/* 添加标题选择对话框 */}
+        <Dialog open={isEditTitleDialogOpen} onOpenChange={setIsEditTitleDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Choose a Book Title</DialogTitle>
+              <DialogDescription>
+                Select a title for your love story book
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-1 gap-3">
+                <div 
+                  onClick={() => handleTitleSelect(`${recipientName}'s amazing adventure`)}
+                  className="flex items-center p-3 rounded-md cursor-pointer transition-all bg-gray-50 hover:bg-gray-100 border border-gray-200"
+                >
+                  <div className="flex-1">
+                    <h4 className="font-medium text-gray-900">{recipientName}'s amazing adventure</h4>
                   </div>
-                  
-                  <div 
-                    onClick={() => handleTitleSelect(`${authorName}'s wonderful ${recipientName}`)}
-                    className="flex items-center p-3 rounded-md cursor-pointer transition-all bg-gray-50 hover:bg-gray-100 border border-gray-200"
-                  >
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-900">{authorName}'s wonderful {recipientName}</h4>
-                    </div>
+                </div>
+                
+                <div 
+                  onClick={() => handleTitleSelect(`${authorName}'s wonderful ${recipientName}`)}
+                  className="flex items-center p-3 rounded-md cursor-pointer transition-all bg-gray-50 hover:bg-gray-100 border border-gray-200"
+                >
+                  <div className="flex-1">
+                    <h4 className="font-medium text-gray-900">{authorName}'s wonderful {recipientName}</h4>
                   </div>
-                  
-                  <div 
-                    onClick={() => handleTitleSelect(`THE MAGIC IN ${recipientName}`)}
-                    className="flex items-center p-3 rounded-md cursor-pointer transition-all bg-gray-50 hover:bg-gray-100 border border-gray-200"
-                  >
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-900">THE MAGIC IN {recipientName}</h4>
-                    </div>
+                </div>
+                
+                <div 
+                  onClick={() => handleTitleSelect(`THE MAGIC IN ${recipientName}`)}
+                  className="flex items-center p-3 rounded-md cursor-pointer transition-all bg-gray-50 hover:bg-gray-100 border border-gray-200"
+                >
+                  <div className="flex-1">
+                    <h4 className="font-medium text-gray-900">THE MAGIC IN {recipientName}</h4>
                   </div>
-                  
-                  <div 
-                    onClick={() => handleTitleSelect(`${recipientName} I love you`)}
-                    className="flex items-center p-3 rounded-md cursor-pointer transition-all bg-gray-50 hover:bg-gray-100 border border-gray-200"
-                  >
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-900">{recipientName} I love you</h4>
-                    </div>
+                </div>
+                
+                <div 
+                  onClick={() => handleTitleSelect(`${recipientName} I love you`)}
+                  className="flex items-center p-3 rounded-md cursor-pointer transition-all bg-gray-50 hover:bg-gray-100 border border-gray-200"
+                >
+                  <div className="flex-1">
+                    <h4 className="font-medium text-gray-900">{recipientName} I love you</h4>
                   </div>
-                  
-                  <div 
-                    onClick={() => handleTitleSelect(`The little book of ${recipientName}`)}
-                    className="flex items-center p-3 rounded-md cursor-pointer transition-all bg-gray-50 hover:bg-gray-100 border border-gray-200"
-                  >
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-900">The little book of {recipientName}</h4>
-                    </div>
+                </div>
+                
+                <div 
+                  onClick={() => handleTitleSelect(`The little book of ${recipientName}`)}
+                  className="flex items-center p-3 rounded-md cursor-pointer transition-all bg-gray-50 hover:bg-gray-100 border border-gray-200"
+                >
+                  <div className="flex-1">
+                    <h4 className="font-medium text-gray-900">The little book of {recipientName}</h4>
                   </div>
                 </div>
               </div>
-              
-              <div className="flex justify-end">
-                <Button variant="outline" onClick={() => setIsEditTitleDialogOpen(false)}>
-                  Cancel
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
+            </div>
+            
+            <div className="flex justify-end">
+              <Button variant="outline" onClick={() => setIsEditTitleDialogOpen(false)}>
+                Cancel
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </WizardStep>
   );

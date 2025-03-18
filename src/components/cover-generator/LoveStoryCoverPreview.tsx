@@ -222,8 +222,16 @@ const LoveStoryCoverPreview = ({
     // 主标题
     ctx.fillStyle = titleColor;
     const titleFontSize = width * 0.06;
-    ctx.font = `bold ${titleFontSize}px ${fontFamily}`;
-    ctx.fillText(title, width / 2, height * 0.15);
+    
+    // 为Playful样式特别处理
+    if (style?.id === 'playful') {
+      ctx.font = `bold ${titleFontSize}px cursive`; // 确保使用手写体
+      // 将标题放在更靠下的位置（图片上方）
+      ctx.fillText(title, width / 2, height * 0.35);
+    } else {
+      ctx.font = `bold ${titleFontSize}px ${fontFamily}`;
+      ctx.fillText(title, width / 2, height * 0.15);
+    }
     
     // 作者名
     ctx.fillStyle = authorColor;
