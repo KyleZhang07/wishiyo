@@ -49,9 +49,9 @@ const coverStyles: CoverStyle[] = [
     id: 'playful',
     name: 'Playful',
     background: '#4A89DC',
-    titleColor: '#FFEB3B',
-    subtitleColor: '#FFFFFF',
-    authorColor: '#FFEB3B',
+    titleColor: '#000000',
+    subtitleColor: '#000000',
+    authorColor: '#000000',
     font: 'comic-sans'
   },
   {
@@ -541,8 +541,20 @@ const LoveStoryCoverStep = () => {
             // 为Playful样式特别处理
             if (currentStyle.id === 'playful') {
               ctx.font = `bold ${titleFontSize}px cursive`; // 确保使用手写体
-              // 将标题放在更靠下的位置（图片上方）
-              ctx.fillText(coverTitle, canvas.width / 2, canvas.height * 0.35);
+              
+              // 确保使用正确的recipientName
+              const localName = recipientName || localStorage.getItem('loveStoryPersonName') || 'Your';
+              
+              // 分割标题为两行
+              let mainTitle = `${localName}'s`;
+              let subTitle = "Amazing Adventure";
+              
+              // 绘制主标题
+              ctx.fillText(mainTitle, canvas.width / 2, canvas.height * 0.32);
+              
+              // 绘制副标题（字体稍小）
+              ctx.font = `bold ${titleFontSize * 0.9}px cursive`;
+              ctx.fillText(subTitle, canvas.width / 2, canvas.height * 0.38);
             } else {
               ctx.font = `bold ${titleFontSize}px ${getFontFamily(currentStyle.font)}`;
               ctx.fillText(coverTitle, canvas.width / 2, canvas.height * 0.15);

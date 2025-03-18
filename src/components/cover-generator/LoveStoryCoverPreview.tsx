@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { useImageLoader } from './hooks/useImageLoader';
 import drawTexturedBackground from './TexturedBackground';
 import drawSnowNightBackground from './SnowNightBackground';
@@ -42,6 +42,17 @@ const LoveStoryCoverPreview = ({
   const blueTexture = useImageLoader(blueTextureBackground);
   const greenLeaf = useImageLoader(greenLeafBackground);
   const rainbow = useImageLoader(rainbowBackground);
+  
+  // 添加状态来存储从localStorage获取的人物名称
+  const [localRecipientName, setLocalRecipientName] = useState<string>('');
+
+  useEffect(() => {
+    // 从localStorage获取人物名称
+    const savedRecipientName = localStorage.getItem('loveStoryPersonName');
+    if (savedRecipientName) {
+      setLocalRecipientName(savedRecipientName);
+    }
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -75,7 +86,7 @@ const LoveStoryCoverPreview = ({
           coverTitle, 
           subtitle, 
           authorName, 
-          recipientName, 
+          localRecipientName || recipientName, 
           image, 
           selectedFont,
           style
@@ -91,7 +102,7 @@ const LoveStoryCoverPreview = ({
           coverTitle, 
           subtitle, 
           authorName, 
-          recipientName, 
+          localRecipientName || recipientName, 
           image, 
           selectedFont,
           style
@@ -100,7 +111,7 @@ const LoveStoryCoverPreview = ({
     };
 
     preloadImages();
-  }, [coverTitle, subtitle, authorName, recipientName, image, selectedFont, style]);
+  }, [coverTitle, subtitle, authorName, localRecipientName, recipientName, image, selectedFont, style]);
 
   const drawLoveStoryCover = (
     ctx: CanvasRenderingContext2D, 
@@ -226,8 +237,17 @@ const LoveStoryCoverPreview = ({
     // 为Playful样式特别处理
     if (style?.id === 'playful') {
       ctx.font = `bold ${titleFontSize}px cursive`; // 确保使用手写体
-      // 将标题放在更靠下的位置（图片上方）
-      ctx.fillText(title, width / 2, height * 0.35);
+      
+      // 分割标题为两行
+      let mainTitle = `${recipient}'s`;
+      let subTitle = "Amazing Adventure";
+      
+      // 绘制主标题
+      ctx.fillText(mainTitle, width / 2, height * 0.32);
+      
+      // 绘制副标题（字体稍小）
+      ctx.font = `bold ${titleFontSize * 0.9}px cursive`;
+      ctx.fillText(subTitle, width / 2, height * 0.38);
     } else {
       ctx.font = `bold ${titleFontSize}px ${fontFamily}`;
       ctx.fillText(title, width / 2, height * 0.15);
