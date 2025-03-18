@@ -51,8 +51,8 @@ const LoveStoryCoverPreview = ({
     if (!ctx) return;
 
     // 设置画布尺寸为 1:1 比例
-    canvas.width = 1000;
-    canvas.height = 1000;
+    canvas.width = 2400;
+    canvas.height = 2400;
 
     // 预加载所有图片，确保在绘制前已加载完成
     const preloadImages = async () => {
@@ -308,7 +308,7 @@ const LoveStoryCoverPreview = ({
 
   return (
     <div className="space-y-4">
-      <div className="relative rounded-lg overflow-hidden shadow-xl">
+      <div className="relative rounded-lg overflow-hidden shadow-xl" style={{ maxWidth: '600px', margin: '0 auto' }}>
         <canvas
           ref={canvasRef}
           className="w-full h-full object-contain"
