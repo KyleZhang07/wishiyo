@@ -121,297 +121,145 @@ const LoveStoryCoverPreview = ({
     const titleColor = style?.titleColor || '#5a5a5a';
     const authorColor = style?.authorColor || '#333333';
     
-    // 根据样式调整文字位置
-    const titleY = style?.id === 'modern' ? height * 0.15 : height * 0.1;
-    const authorY = style?.id === 'playful' ? height * 0.85 : height * 0.92;
-    const authorX = style?.id === 'elegant' ? width * 0.5 : width * 0.9;
-    
-    // 根据样式设置字体家族
-    let fontFamily = 'serif'; // 默认为衬线字体
-    if (font === 'montserrat' || (style?.font === 'montserrat')) {
-      fontFamily = 'sans-serif';
-    } else if (font === 'comic-sans' || (style?.font === 'comic-sans')) {
-      fontFamily = 'cursive';
-    } else if (font === 'didot' || (style?.font === 'didot')) {
-      fontFamily = 'serif';
-    } else if (font === 'georgia' || (style?.font === 'georgia')) {
-      fontFamily = 'serif';
-    }
-
-    // Draw background
+    // Draw background first
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, width, height);
     
-    // 为 classic 样式添加纹理背景
-    if (style?.id === 'classic') {
-      drawTexturedBackground({
-        ctx,
-        width,
-        height,
-        baseColor: backgroundColor,
-        textureOpacity: 0.8
-      });
-    }
-    
+    // 根据样式设置字体家族
+    let fontFamily = getFontFamily(style?.font || font);
+
+    // 根据样式选择和应用背景
     // 为 modern 样式添加背景图片
     if (style?.id === 'modern') {
       if (blueTexture && blueTexture.element) {
         // 使用加载的图片作为背景
         ctx.drawImage(blueTexture.element, 0, 0, width, height);
         
-        // 添加一些雪花
-        drawSnowflakes(ctx, width, height);
+        // 添加深蓝色半透明叠加层，使图片更暗
+        ctx.fillStyle = 'rgba(10, 26, 63, 0.3)';
+        ctx.fillRect(0, 0, width, height);
+        
+        // 添加雪花效果
+        const snowflakeCount = 100;
+        ctx.fillStyle = '#FFFFFF';
+        
+        for (let i = 0; i < snowflakeCount; i++) {
+          const x = Math.random() * width;
+          const y = Math.random() * height;
+          const size = Math.random() * 5 + 1;
+          
+          ctx.beginPath();
+          ctx.arc(x, y, size, 0, Math.PI * 2);
+          ctx.fill();
+        }
       } else {
-        // 如果图片未加载，使用纯色背景
+        // 如果无法加载modern背景图片，使用深蓝色
         ctx.fillStyle = '#0a1a3f';
         ctx.fillRect(0, 0, width, height);
       }
-    }
-    
-    // 为第三个样式添加绿叶背景
-    if (style?.id === 'playful') {
+    } 
+    // 为 playful 样式添加绿叶背景
+    else if (style?.id === 'playful') {
       if (greenLeaf && greenLeaf.element) {
         // 使用加载的图片作为背景
         ctx.drawImage(greenLeaf.element, 0, 0, width, height);
+        
+        // 添加蓝色半透明叠加层
+        ctx.fillStyle = 'rgba(74, 137, 220, 0.2)';
+        ctx.fillRect(0, 0, width, height);
       } else {
-        // 如果图片未加载，使用纯色背景
-        ctx.fillStyle = '#4A89DC'; // 回退到原始的蓝色背景
+        // 如果无法加载playful背景图片，使用蓝色
+        ctx.fillStyle = '#4A89DC';
         ctx.fillRect(0, 0, width, height);
       }
-    }
-    
-    // 为第四个样式添加彩虹背景
-    if (style?.id === 'elegant') {
+    } 
+    // 为 elegant 样式添加彩虹背景
+    else if (style?.id === 'elegant') {
       if (rainbow && rainbow.element) {
         // 使用加载的图片作为背景
         ctx.drawImage(rainbow.element, 0, 0, width, height);
       } else {
-        // 如果图片未加载，使用纯色背景
-        ctx.fillStyle = '#5B4B49'; // 回退到原始的棕色背景
+        // 如果无法加载彩虹背景图片，使用白色
+        ctx.fillStyle = '#FFFFFF';
         ctx.fillRect(0, 0, width, height);
       }
     }
-    
-    // 为某些风格添加特殊装饰
-    if (style?.id === 'elegant') {
-      // 移除金色边框装饰
-    } else if (style?.id === 'pastel') {
-      // 移除柔和条纹装饰
+    // classic 和 vintage 样式使用纯色背景
+    else if (style?.id === 'classic' || style?.id === 'vintage') {
+      ctx.fillStyle = style.background;
+      ctx.fillRect(0, 0, width, height);
+    }
+    // 默认白色背景
+    else {
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, width, height);
     }
 
-    // Draw main title at the top
-    ctx.font = `bold 50px ${fontFamily}`;
-    ctx.fillStyle = titleColor;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    
-    // 根据样式ID修改标题
-    let displayTitle = title;
-    
-    // 对第一个样式(classic)使用特殊的标题格式
-    if (style?.id === 'classic') {
-      // 第一行：作者名
-      ctx.font = `bold 70px ${fontFamily}`;
-      ctx.fillStyle = authorColor;
-      ctx.fillText(`${author}'s`, width / 2, height * 0.1);
-      
-      // 第二行：标题
-      ctx.font = `bold 50px ${fontFamily}`;
-      ctx.fillStyle = titleColor;
-      ctx.fillText(displayTitle, width / 2, height * 0.2);
-    } else {
-      // 其他样式保持原来的格式
-      ctx.fillText(displayTitle, width / 2, titleY);
-    }
-
-    // Draw image in the center if available
+    // Draw image if available
     if (image?.element) {
-      const { width: imgWidth, height: imgHeight } = image.element;
+      // 计算图像尺寸，保持比例
+      const imgRatio = image.element.width / image.element.height;
+      let drawWidth = width * 0.7;  // 图片占70%的宽度
+      let drawHeight = drawWidth / imgRatio;
       
-      // Calculate aspect ratios
-      const canvasAspect = width / height;
-      const imageAspect = imgWidth / imgHeight;
-      
-      // 根据样式调整图片大小和位置
-      let drawWidth = width * 0.7; // 默认宽度70%
-      let drawHeight = height * 0.5; // 默认高度50%
-      let x = (width - drawWidth) / 2;
-      let y = height * 0.35; // 默认位置在中间
-      
-      if (style?.id === 'modern') {
-        // Modern样式图片更大，居中
-        drawWidth = width * 0.8;
-        drawHeight = height * 0.5;
-        y = height * 0.4;
-      } else if (style?.id === 'playful') {
-        // Playful样式图片更小，向上移动
-        drawWidth = width * 0.6;
-        drawHeight = height * 0.4;
-        y = height * 0.45;
-      } else if (style?.id === 'elegant') {
-        // Elegant样式图片稍小，位置更居中
-        drawWidth = width * 0.65;
-        drawHeight = height * 0.5;
-        y = height * 0.37;
+      // 如果高度太大，按高度计算
+      if (drawHeight > height * 0.6) {
+        drawHeight = height * 0.6;
+        drawWidth = drawHeight * imgRatio;
       }
       
-      // Maintain aspect ratio while fitting in the designated space
-      if (imageAspect > 1) {
-        // Landscape image
-        drawHeight = drawWidth / imageAspect;
-      } else {
-        // Portrait image
-        drawWidth = drawHeight * imageAspect;
-        x = (width - drawWidth) / 2;
-      }
-
-      // 为特定样式添加图片效果
-      if (style?.id === 'modern') {
-        // 为Modern风格添加黑白滤镜
-        ctx.filter = 'grayscale(100%)';
-      } else if (style?.id === 'elegant') {
-        // 为Elegant风格添加复古滤镜
-        ctx.filter = 'sepia(30%)';
-      } else if (style?.id === 'pastel') {
-        // 为Pastel风格添加柔和滤镜
-        ctx.filter = 'brightness(1.1) contrast(0.9)';
-      }
-
-      // Draw image 
+      // 计算居中位置
+      const x = (width - drawWidth) / 2;
+      const y = height * 0.4;  // 图片位置偏上
+      
+      // 绘制人物图像
       ctx.drawImage(image.element, x, y, drawWidth, drawHeight);
-      ctx.filter = 'none'; // 重置滤镜
     }
 
-    // Draw author name 
-    ctx.font = `normal 30px ${fontFamily}`;
+    // 绘制标题文本
+    ctx.textAlign = 'center';
+    
+    // 主标题
+    ctx.fillStyle = titleColor;
+    const titleFontSize = width * 0.06;
+    ctx.font = `bold ${titleFontSize}px ${fontFamily}`;
+    ctx.fillText(title, width / 2, height * 0.15);
+    
+    // 作者名
     ctx.fillStyle = authorColor;
-    
-    // 根据样式调整作者名称样式和位置
-    if (style?.id === 'elegant') {
-      // Elegant样式作者名居中
-      ctx.textAlign = 'center';
-      ctx.font = `italic 30px ${fontFamily}`;
-    } else if (style?.id === 'modern') {
-      // Modern样式使用更小字体
-      ctx.textAlign = 'right';
-      ctx.font = `bold 24px ${fontFamily}`;
-    } else {
-      ctx.textAlign = 'right';
-    }
-    
-    ctx.fillText(`Written by ${author}`, authorX, authorY);
-    
-    // 只有Classic和Pastel样式显示出版商标志
-    if (style?.id === 'classic' || style?.id === 'pastel') {
-      let logoColor = '#1e7e7e'; // 默认颜色
-      if (style.id === 'pastel') {
-        logoColor = '#6A7B8B'; // Pastel样式使用不同颜色
-      }
-      drawPublisherLogo(ctx, width / 2, height * 0.92, 40, logoColor);
+    const authorFontSize = width * 0.035;
+    ctx.font = `italic ${authorFontSize}px ${fontFamily}`;
+    ctx.fillText(`Written by ${author}`, width * 0.75, height * 0.9);
+  };
+
+  // Helper function to get the font family based on the selected font
+  const getFontFamily = (selectedFont?: string): string => {
+    switch (selectedFont) {
+      case 'montserrat':
+        return 'sans-serif';
+      case 'comic-sans':
+        return 'cursive';
+      case 'didot':
+      case 'playfair':
+        return 'serif';
+      default:
+        return 'serif';
     }
   };
 
-  // 绘制雪花函数
+  // Helper to draw snowflakes
   const drawSnowflakes = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-    
-    // 小雪花 - 增加数量
-    for (let i = 0; i < 300; i++) {
+    const count = 100;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+
+    for (let i = 0; i < count; i++) {
       const x = Math.random() * width;
       const y = Math.random() * height;
-      const size = 1 + Math.random() * 2;
-      
-      ctx.beginPath();
-      ctx.arc(x, y, size / 2, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    
-    // 中雪花 - 增加数量
-    for (let i = 0; i < 100; i++) {
-      const x = Math.random() * width;
-      const y = Math.random() * height;
-      const size = 3 + Math.random() * 3;
-      
-      ctx.beginPath();
-      ctx.arc(x, y, size / 2, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    
-    // 大雪花 - 增加数量
-    for (let i = 0; i < 40; i++) {
-      const x = Math.random() * width;
-      const y = Math.random() * height;
-      const size = 5 + Math.random() * 4;
-      
-      // 为大雪花添加发光效果
-      const glowGradient = ctx.createRadialGradient(x, y, 0, x, y, size * 2);
-      glowGradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
-      glowGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.3)');
-      glowGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-      
-      ctx.fillStyle = glowGradient;
+      const size = Math.random() * 4 + 1;
+
       ctx.beginPath();
       ctx.arc(x, y, size, 0, Math.PI * 2);
       ctx.fill();
-      
-      // 雪花中心
-      ctx.fillStyle = 'rgba(255, 255, 255, 1)';
-      ctx.beginPath();
-      ctx.arc(x, y, size / 2, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    
-    // 添加一些雪花结晶 - 新增
-    for (let i = 0; i < 25; i++) {
-      const x = Math.random() * width;
-      const y = Math.random() * height;
-      const size = 8 + Math.random() * 6;
-      
-      // 绘制雪花结晶
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
-      ctx.lineWidth = 1;
-      
-      // 中心点
-      ctx.fillStyle = 'rgba(255, 255, 255, 1)';
-      ctx.beginPath();
-      ctx.arc(x, y, size / 8, 0, Math.PI * 2);
-      ctx.fill();
-      
-      // 六个分支
-      for (let j = 0; j < 6; j++) {
-        const angle = (Math.PI / 3) * j;
-        
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.lineTo(
-          x + Math.cos(angle) * size,
-          y + Math.sin(angle) * size
-        );
-        ctx.stroke();
-        
-        // 每个分支上的小分支
-        const branchLength = size * 0.6;
-        const midX = x + Math.cos(angle) * (size / 2);
-        const midY = y + Math.sin(angle) * (size / 2);
-        
-        // 左侧小分支
-        ctx.beginPath();
-        ctx.moveTo(midX, midY);
-        ctx.lineTo(
-          midX + Math.cos(angle + Math.PI / 4) * branchLength / 2,
-          midY + Math.sin(angle + Math.PI / 4) * branchLength / 2
-        );
-        ctx.stroke();
-        
-        // 右侧小分支
-        ctx.beginPath();
-        ctx.moveTo(midX, midY);
-        ctx.lineTo(
-          midX + Math.cos(angle - Math.PI / 4) * branchLength / 2,
-          midY + Math.sin(angle - Math.PI / 4) * branchLength / 2
-        );
-        ctx.stroke();
-      }
     }
   };
 
