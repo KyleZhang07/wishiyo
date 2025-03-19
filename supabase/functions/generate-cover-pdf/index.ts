@@ -171,49 +171,62 @@ serve(async (req) => {
     console.log('All images downloaded and processed successfully');
 
     // Create a new PDF with appropriate dimensions
-    // Standard book cover dimensions with bleed (8.5 x 11 inches plus bleed)
+    // Book cover dimensions with bleed based on Lulu requirements (6 x 9 inches plus bleed)
     console.log('Creating PDF document');
     const pdf = new jsPDF({
       orientation: 'landscape',
       unit: 'in',
-      format: [17 + 0.25, 11 + 0.25] // Width (front + spine + back) x Height with 0.125" bleed on each side
+      format: [12.38, 9.25] // Width x Height with bleed areas as specified by Lulu
     });
 
-    // Calculate positions (with bleed area)
-    const bleed = 0.125;
-    const frontCoverWidth = 8.5;
-    const spineWidth = 0.5; // Example spine width, would depend on page count
-    const backCoverWidth = 8.5;
+    // Calculate positions and dimensions
+    const bleed = 0.125; // Bleed area: 0.125"
+    const safetyMargin = 0.5; // Safety margin: 0.5"
+    const frontCoverWidth = 6.0; // Book trim size width: 6"
+    const bookHeight = 9.0; // Book trim size height: 9"
+    
+    // Calculate spine width based on page count (minimum 32 pages = 0.1321")
+    // In a real implementation, this should come from the database or request
+    const pageCount = 32; // Minimum page count per Lulu
+    // Estimate spine width: 0.0035" per page for perfect binding (this is an approximation)
+    // Use at least the minimum width of 0.1321" for 32 pages
+    const spineWidth = Math.max(0.1321, pageCount * 0.0035);
+    const backCoverWidth = 6.0; // Same as front cover
+    
+    // Total width check
+    const totalWidth = frontCoverWidth + spineWidth + backCoverWidth + (bleed * 2);
+    console.log(`Total calculated width: ${totalWidth}", PDF width: 12.38"`);
     
     // Add images to the PDF (coordinate system starts from top-left)
+    // Starting position accounts for bleed area
     console.log('Adding back cover to PDF');
     pdf.addImage(
       backCoverData,
       'JPEG',
-      bleed, // x-position
-      bleed, // y-position
+      bleed, // x-position starts after left bleed
+      bleed, // y-position starts after top bleed
       backCoverWidth, // width
-      11 // height
+      bookHeight // height
     );
 
     console.log('Adding spine to PDF');
     pdf.addImage(
       spineData,
       'JPEG',
-      backCoverWidth + bleed, // x-position
+      backCoverWidth + bleed, // x-position after back cover
       bleed, // y-position
-      spineWidth, // width
-      11 // height
+      spineWidth, // width based on page count
+      bookHeight // height
     );
 
     console.log('Adding front cover to PDF');
     pdf.addImage(
       frontCoverData,
       'JPEG',
-      backCoverWidth + spineWidth + bleed, // x-position
+      backCoverWidth + spineWidth + bleed, // x-position after spine
       bleed, // y-position
       frontCoverWidth, // width
-      11 // height
+      bookHeight // height
     );
 
     // Convert PDF to base64
