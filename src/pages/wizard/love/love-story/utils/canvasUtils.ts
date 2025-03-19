@@ -331,7 +331,7 @@ export const renderBlessingToCanvas = (
       // 创建Canvas元素
       const canvas = document.createElement('canvas');
       canvas.width = 2400;  // 宽度
-      canvas.height = 2400; // 高度 - 3:2比例
+      canvas.height = 2400; // 高度 - 正方形比例
       const ctx = canvas.getContext('2d');
       
       if (!ctx) {
@@ -339,89 +339,28 @@ export const renderBlessingToCanvas = (
         return;
       }
       
-      // 样式定义 - 基于textTone
-      let backgroundColor, textColor, mainFont, accentColor, decorationColor;
+      // 样式定义 - 统一使用简洁样式，类似参考图片
+      let textColor, mainFont;
       
-      // 根据不同的语调设置不同的样式
+      // 根据不同的语调只调整文本颜色和字体，背景保持纯白
       if (textTone === 'Heartfelt') {
-        backgroundColor = '#f8e8e8'; // 温暖的浅粉色背景
-        textColor = '#5D4037';  // 深棕色文本
+        textColor = '#333333';  // 深灰色文本
         mainFont = 'Georgia, serif';
-        accentColor = '#E57373'; // 浅红色点缀
-        decorationColor = '#FFCDD2'; // 更浅的粉色装饰
       } else if (textTone === 'Playful') {
-        backgroundColor = '#E3F2FD'; // 明亮的浅蓝色背景
-        textColor = '#1565C0';  // 深蓝色文本
-        mainFont = 'Comic Sans MS, cursive';
-        accentColor = '#29B6F6'; // 浅蓝色点缀
-        decorationColor = '#B3E5FC'; // 更浅的蓝色装饰
+        textColor = '#333333';  // 深灰色文本
+        mainFont = 'Arial, sans-serif';
       } else if (textTone === 'Inspirational') {
-        backgroundColor = '#E8F5E9'; // 浅绿色背景
-        textColor = '#2E7D32';  // 深绿色文本
+        textColor = '#333333';  // 深灰色文本
         mainFont = 'Palatino, serif';
-        accentColor = '#66BB6A'; // 浅绿色点缀
-        decorationColor = '#C8E6C9'; // 更浅的绿色装饰
       } else {
         // 默认风格
-        backgroundColor = '#FFF9C4'; // 浅黄色背景
-        textColor = '#5D4037';  // 深棕色文本
-        mainFont = 'Verdana, sans-serif';
-        accentColor = '#FBC02D'; // 浅黄色点缀
-        decorationColor = '#FFF59D'; // 更浅的黄色装饰
+        textColor = '#333333';  // 深灰色文本
+        mainFont = 'Times New Roman, serif';
       }
       
-      // 填充背景
-      ctx.fillStyle = backgroundColor;
+      // 填充纯白色背景
+      ctx.fillStyle = '#FFFFFF';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
-      // 绘制装饰元素
-      ctx.fillStyle = decorationColor;
-      
-      // 绘制四个角的装饰
-      const cornerSize = canvas.width * 0.15;
-      
-      // 左上角装饰
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(cornerSize, 0);
-      ctx.lineTo(0, cornerSize);
-      ctx.closePath();
-      ctx.fill();
-      
-      // 右上角装饰
-      ctx.beginPath();
-      ctx.moveTo(canvas.width, 0);
-      ctx.lineTo(canvas.width - cornerSize, 0);
-      ctx.lineTo(canvas.width, cornerSize);
-      ctx.closePath();
-      ctx.fill();
-      
-      // 左下角装饰
-      ctx.beginPath();
-      ctx.moveTo(0, canvas.height);
-      ctx.lineTo(cornerSize, canvas.height);
-      ctx.lineTo(0, canvas.height - cornerSize);
-      ctx.closePath();
-      ctx.fill();
-      
-      // 右下角装饰
-      ctx.beginPath();
-      ctx.moveTo(canvas.width, canvas.height);
-      ctx.lineTo(canvas.width - cornerSize, canvas.height);
-      ctx.lineTo(canvas.width, canvas.height - cornerSize);
-      ctx.closePath();
-      ctx.fill();
-      
-      // 添加边框
-      const borderWidth = canvas.width * 0.03;
-      ctx.strokeStyle = accentColor;
-      ctx.lineWidth = borderWidth;
-      ctx.strokeRect(
-        borderWidth / 2, 
-        borderWidth / 2, 
-        canvas.width - borderWidth, 
-        canvas.height - borderWidth
-      );
       
       // 生成适合每种风格的祝福语
       let blessing = blessingText;
@@ -439,39 +378,33 @@ export const renderBlessingToCanvas = (
         }
       }
       
-      // 绘制祝福语文本
+      // 绘制祝福语文本 - 使用更小的字号
       ctx.fillStyle = textColor;
       
-      // 设置字体大小和样式
-      const titleFontSize = canvas.width * 0.05;
-      const bodyFontSize = canvas.width * 0.035;
-      const signatureFontSize = canvas.width * 0.04;
-      
-      // 绘制标题 - "Special Message"
-      ctx.font = `bold ${titleFontSize}px ${mainFont}`;
-      ctx.textAlign = 'center';
-      ctx.fillText("Special Message", canvas.width / 2, canvas.height * 0.2);
+      // 设置较小的字体大小，类似参考图片
+      const bodyFontSize = canvas.width * 0.025; // 减小字体大小
+      const signatureFontSize = canvas.width * 0.025; // 保持签名与正文字体一致
       
       // 绘制主体文本 - 自动换行
       ctx.font = `${bodyFontSize}px ${mainFont}`;
-      ctx.textAlign = 'left';
+      ctx.textAlign = 'center'; // 居中对齐所有文本
       
       // 分割文本行
       const lines = blessing.split('\n');
-      let y = canvas.height * 0.3;
+      let y = canvas.height * 0.4; // 将文本垂直位置调整到画布中间位置
       
       // 处理文本换行
       lines.forEach(line => {
         if (line.trim() === '') {
           // 空行，增加一些距离
-          y += bodyFontSize * 0.8;
+          y += bodyFontSize * 1.2;
           return;
         }
         
         // 文本自动换行
         const words = line.split(' ');
         let currentLine = '';
-        const maxWidth = canvas.width * 0.7; // 70% 的画布宽度
+        const maxWidth = canvas.width * 0.6; // 控制文本宽度，留出足够边距
         
         for (let i = 0; i < words.length; i++) {
           const word = words[i];
@@ -480,7 +413,7 @@ export const renderBlessingToCanvas = (
           
           if (metrics.width > maxWidth && currentLine) {
             // 如果这行太长，绘制当前行并开始新行
-            ctx.fillText(currentLine, canvas.width * 0.15, y);
+            ctx.fillText(currentLine, canvas.width / 2, y); // 居中绘制
             currentLine = word;
             y += bodyFontSize * 1.5;
           } else {
@@ -490,7 +423,7 @@ export const renderBlessingToCanvas = (
         
         // 绘制最后一行
         if (currentLine) {
-          ctx.fillText(currentLine, canvas.width * 0.15, y);
+          ctx.fillText(currentLine, canvas.width / 2, y); // 居中绘制
           y += bodyFontSize * 1.8; // 行距
         }
       });
