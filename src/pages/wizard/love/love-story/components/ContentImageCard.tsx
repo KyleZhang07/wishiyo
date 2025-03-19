@@ -13,6 +13,8 @@ import { Check } from 'lucide-react';
 
 interface ContentImageCardProps {
   image?: string;
+  leftImageUrl?: string;
+  rightImageUrl?: string;
   isGenerating: boolean;
   onEditText: () => void;
   onRegenerate: (style?: string) => void;
@@ -35,6 +37,8 @@ const STYLE_OPTIONS = [
 
 export const ContentImageCard = ({
   image,
+  leftImageUrl,
+  rightImageUrl,
   isGenerating,
   onEditText,
   onRegenerate,
@@ -47,6 +51,8 @@ export const ContentImageCard = ({
 }: ContentImageCardProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedStyle, setSelectedStyle] = useState<string>('Photographic (Default)');
+  const [leftImageLoaded, setLeftImageLoaded] = useState(false);
+  const [rightImageLoaded, setRightImageLoaded] = useState(false);
 
   useEffect(() => {
     // Load the current style from localStorage
@@ -87,6 +93,14 @@ export const ContentImageCard = ({
     onRegenerate(selectedStyle);
   };
 
+  const handleLeftImageLoad = () => {
+    setLeftImageLoaded(true);
+  };
+
+  const handleRightImageLoad = () => {
+    setRightImageLoaded(true);
+  };
+
   return (
     <div className="relative mb-8">
       <div className="max-w-4xl mx-auto">
@@ -98,14 +112,41 @@ export const ContentImageCard = ({
             </div>
           ) : (
             <div className="w-full h-full rounded-sm overflow-hidden">
-              {image && (
+              {leftImageUrl && rightImageUrl ? (
+                <div className="w-full h-full flex items-center justify-center">
+                  <div className="flex w-full h-full relative shadow-lg">
+                    <div className="w-1/2 h-full relative overflow-hidden border-r border-gray-200">
+                      <img 
+                        src={leftImageUrl} 
+                        alt={`${title || `Content ${index}`} (left page)`}
+                        className="w-full h-full object-cover"
+                        onLoad={handleLeftImageLoad}
+                        style={{ opacity: leftImageLoaded ? 1 : 0 }}
+                      />
+                      <div className="absolute top-0 right-0 w-8 h-full bg-gradient-to-l from-black/20 to-transparent"></div>
+                    </div>
+                    
+                    <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-2 h-full bg-gray-200 z-10 shadow-[0_0_8px_rgba(0,0,0,0.3)]"></div>
+                    
+                    <div className="w-1/2 h-full relative overflow-hidden border-l border-gray-200">
+                      <img 
+                        src={rightImageUrl} 
+                        alt={`${title || `Content ${index}`} (right page)`}
+                        className="w-full h-full object-cover"
+                        onLoad={handleRightImageLoad}
+                        style={{ opacity: rightImageLoaded ? 1 : 0 }}
+                      />
+                      <div className="absolute top-0 left-0 w-8 h-full bg-gradient-to-r from-black/20 to-transparent"></div>
+                    </div>
+                  </div>
+                </div>
+              ) : image ? (
                 <img 
                   src={image} 
                   alt={title || `Content ${index}`}
                   className="w-full h-full object-cover"
                 />
-              )}
-              {!image && (
+              ) : (
                 <div className="h-full flex flex-col justify-center items-center text-center bg-gray-100 rounded-sm">
                   <ImageIcon className="h-8 w-8 mb-4 text-gray-400" />
                   <p className="text-gray-600">No image available</p>

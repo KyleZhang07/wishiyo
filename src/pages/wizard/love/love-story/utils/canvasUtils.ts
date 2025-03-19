@@ -203,7 +203,11 @@ export const renderAndUploadContentImage = async (
   index: number,
   style: string = 'modern',
   supabaseImages: any[] = []
-): Promise<string> => {
+): Promise<{
+  fullImageUrl: string,
+  leftImageUrl: string,
+  rightImageUrl: string
+}> => {
   try {
     // 渲染图片到Canvas
     const renderedImage = await renderContentToCanvas(contentImage, contentText, index, style);
@@ -215,7 +219,7 @@ export const renderAndUploadContentImage = async (
     const fileName = `content-${index}-${timestamp}`;
     
     // 上传到Supabase Storage
-    const storageUrl = await uploadImageToStorage(
+    const fullImageUrl = await uploadImageToStorage(
       renderedImage,
       'images',
       fileName
@@ -251,7 +255,19 @@ export const renderAndUploadContentImage = async (
       // 继续处理，即使删除失败
     }
     
-    return storageUrl;
+    // 裁剪图片并上传
+    console.log(`Splitting content image ${index} into two parts...`);
+    const { leftUrl, rightUrl } = await splitImageAndUpload(
+      renderedImage,
+      `content-${index}`,
+      supabaseImages
+    );
+    
+    return {
+      fullImageUrl,
+      leftImageUrl: leftUrl,
+      rightImageUrl: rightUrl
+    };
   } catch (error) {
     console.error('Error rendering and uploading content image:', error);
     throw error;
@@ -264,7 +280,11 @@ export const renderAndUploadIntroImage = async (
   introText: string,
   style: string = 'modern',
   supabaseImages: any[] = []
-): Promise<string> => {
+): Promise<{
+  fullImageUrl: string,
+  leftImageUrl: string,
+  rightImageUrl: string
+}> => {
   try {
     // 渲染图片到Canvas
     const renderedImage = await renderContentToCanvas(introImage, introText, 0, style);
@@ -276,7 +296,7 @@ export const renderAndUploadIntroImage = async (
     const fileName = `intro-${timestamp}`;
     
     // 上传到Supabase Storage
-    const storageUrl = await uploadImageToStorage(
+    const fullImageUrl = await uploadImageToStorage(
       renderedImage,
       'images',
       fileName
@@ -312,7 +332,19 @@ export const renderAndUploadIntroImage = async (
       // 继续处理，即使删除失败
     }
     
-    return storageUrl;
+    // 裁剪图片并上传
+    console.log('Splitting intro image into two parts...');
+    const { leftUrl, rightUrl } = await splitImageAndUpload(
+      renderedImage,
+      'intro',
+      supabaseImages
+    );
+    
+    return {
+      fullImageUrl,
+      leftImageUrl: leftUrl,
+      rightImageUrl: rightUrl
+    };
   } catch (error) {
     console.error('Error rendering and uploading intro image:', error);
     throw error;
@@ -494,6 +526,130 @@ export const renderAndUploadBlessingImage = async (
     return storageUrl;
   } catch (error) {
     console.error('Error rendering and uploading blessing image:', error);
+    throw error;
+  }
+};
+
+// 将图片沿中线垂直裁剪为两部分，并分别上传
+export const splitImageAndUpload = async (
+  imageData: string,
+  baseFileName: string,
+  supabaseImages: any[] = []
+): Promise<{leftUrl: string, rightUrl: string}> => {
+  try {
+    // 创建一个新的图像对象来加载原始图像
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    
+    return new Promise((resolve, reject) => {
+      img.onload = async () => {
+        try {
+          // 创建左侧画布
+          const leftCanvas = document.createElement('canvas');
+          leftCanvas.width = img.width / 2;  // 图片的左半部分
+          leftCanvas.height = img.height;
+          const leftCtx = leftCanvas.getContext('2d');
+
+          // 创建右侧画布
+          const rightCanvas = document.createElement('canvas');
+          rightCanvas.width = img.width / 2;  // 图片的右半部分
+          rightCanvas.height = img.height;
+          const rightCtx = rightCanvas.getContext('2d');
+
+          if (!leftCtx || !rightCtx) {
+            reject(new Error('Failed to get canvas context'));
+            return;
+          }
+
+          // 在左侧画布上绘制图像的左半部分
+          leftCtx.drawImage(
+            img,                  // 源图像
+            0, 0,                 // 源图像起始点(左上角)
+            img.width / 2, img.height, // 源图像的宽高(取左半部分)
+            0, 0,                 // 目标画布的起始点
+            leftCanvas.width, leftCanvas.height  // 目标画布的尺寸
+          );
+
+          // 在右侧画布上绘制图像的右半部分
+          rightCtx.drawImage(
+            img,                  // 源图像
+            img.width / 2, 0,     // 源图像起始点(中线左上角)
+            img.width / 2, img.height, // 源图像的宽高(取右半部分)
+            0, 0,                 // 目标画布的起始点
+            rightCanvas.width, rightCanvas.height  // 目标画布的尺寸
+          );
+
+          // 转换为图像数据
+          const leftImageData = leftCanvas.toDataURL('image/jpeg', 0.9);
+          const rightImageData = rightCanvas.toDataURL('image/jpeg', 0.9);
+
+          // 使用时间戳确保文件名唯一
+          const timestamp = Date.now();
+          
+          // 为左右两部分分别创建文件名
+          const leftFileName = `${baseFileName}-1-${timestamp}`;
+          const rightFileName = `${baseFileName}-2-${timestamp}`;
+
+          // 上传到Supabase Storage
+          const leftStorageUrl = await uploadImageToStorage(
+            leftImageData,
+            'images',
+            leftFileName
+          );
+
+          const rightStorageUrl = await uploadImageToStorage(
+            rightImageData,
+            'images',
+            rightFileName
+          );
+
+          // 删除之前生成的切分图片
+          try {
+            // 查找所有包含基本文件名并后缀为-1或-2的图片
+            const oldSplitImages = supabaseImages.filter(img => 
+              (img.name.includes(`${baseFileName}-1-`) || img.name.includes(`${baseFileName}-2-`)) && 
+              !img.name.includes(leftFileName) && 
+              !img.name.includes(rightFileName)
+            );
+            
+            if (oldSplitImages.length > 0) {
+              console.log(`Found ${oldSplitImages.length} old split images to delete for ${baseFileName}`);
+              
+              // 并行删除所有旧图片
+              const deletePromises = oldSplitImages.map(img => {
+                // 从完整路径中提取文件名
+                const pathParts = img.name.split('/');
+                const filename = pathParts[pathParts.length - 1];
+                console.log(`Deleting old split image: ${filename}`);
+                return deleteImageFromStorage(filename, 'images');
+              });
+              
+              // 等待所有删除操作完成
+              await Promise.all(deletePromises);
+              console.log(`Successfully deleted old split images for ${baseFileName}`);
+            }
+          } catch (deleteError) {
+            console.error(`Error deleting old split images for ${baseFileName}:`, deleteError);
+            // 继续处理，即使删除失败
+          }
+
+          resolve({
+            leftUrl: leftStorageUrl,
+            rightUrl: rightStorageUrl
+          });
+        } catch (error) {
+          reject(error);
+        }
+      };
+      
+      img.onerror = () => {
+        reject(new Error('Failed to load image for splitting'));
+      };
+      
+      img.src = imageData;
+    });
+  } catch (error) {
+    console.error('Error splitting and uploading image:', error);
     throw error;
   }
 }; 
