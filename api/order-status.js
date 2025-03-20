@@ -1,14 +1,17 @@
 // API endpoint to check and update order status
 import { createClient } from '@supabase/supabase-js';
 
-// 初始化Supabase客户端
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+// 初始化Supabase客户端 - 优先使用服务器变量
+const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 export default async function handler(req, res) {
   // 检查Supabase凭证
   if (!supabaseUrl || !supabaseServiceKey) {
-    console.error('Missing Supabase credentials');
+    console.error('Missing Supabase credentials', { 
+      hasUrl: !!supabaseUrl, 
+      hasServiceKey: !!supabaseServiceKey 
+    });
     return res.status(500).json({ 
       success: false, 
       error: 'Server configuration error' 

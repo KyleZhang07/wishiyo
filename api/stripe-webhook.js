@@ -49,10 +49,16 @@ async function updateBookStatus(supabaseUrl, supabaseKey, orderId, status) {
 // 添加一个触发打印请求检查的函数
 async function triggerPrintRequestCheck(orderId, type) {
   try {
-    // 获取基础URL - 使用环境变量或默认值
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8080';
+    // 获取基础URL - 在生产环境中使用域名或环境变量
+    const baseUrl = process.env.VERCEL_ENV === 'production' 
+      ? `https://${process.env.VERCEL_URL || 'wishiyo.com'}`
+      : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8080';
     
-    console.log(`Triggering print request check for orderId: ${orderId}`);
+    console.log(`Triggering print request check for orderId: ${orderId}`, {
+      baseUrl,
+      environment: process.env.VERCEL_ENV || 'development'
+    });
+    
     const response = await fetch(`${baseUrl}/api/order-status`, {
       method: 'POST',
       headers: {
@@ -69,7 +75,10 @@ async function triggerPrintRequestCheck(orderId, type) {
       return true;
     } else {
       const errorText = await response.text();
-      console.error(`Error triggering print request check: ${response.status} ${response.statusText} - ${errorText}`);
+      console.error(`Error triggering print request check: ${response.status} ${response.statusText}`, {
+        errorText,
+        baseUrl
+      });
       return false;
     }
   } catch (error) {
