@@ -166,8 +166,8 @@ serve(async (req) => {
 
     // Create a new PDF - US Trade (6x9 inches) with bleed
     const bleed = 0.125; // 0.125 inches bleed
-    const pageWidth = 6 + (bleed * 2);
-    const pageHeight = 9 + (bleed * 2);
+    const pageWidth = 6 + (bleed * 2);  // 6.25 inches total with bleed
+    const pageHeight = 9 + (bleed * 2); // 9.25 inches total with bleed
     
     const pdf = new jsPDF({
       orientation: 'portrait',
@@ -182,17 +182,70 @@ serve(async (req) => {
       bottom: 0.5 + bleed,
       left: 0.5 + bleed
     };
-
-    // Set up font to ensure embedding
-    pdf.setFont('Helvetica', 'normal');
     
+    // Debug lines flag - set to true to show safety margins and trim lines
+    const debugLines = true;
+
     // Function to add a page with proper margins and bleed
     const addPage = () => {
       pdf.addPage([pageWidth, pageHeight]);
+      
+      // Draw debug lines when enabled
+      if (debugLines) {
+        // Blue outer bleed area rectangle (total document size)
+        pdf.setDrawColor(0, 162, 232); // Light blue for bleed area
+        pdf.setLineWidth(0.01);
+        pdf.rect(0, 0, pageWidth, pageHeight);
+        
+        // Dark blue trim rectangle (actual book size after cutting)
+        pdf.setDrawColor(0, 0, 255); // Blue for trim lines
+        pdf.rect(bleed, bleed, 6, 9);
+        
+        // Red safety margin rectangle
+        pdf.setDrawColor(255, 0, 0); // Red for safety margin
+        pdf.rect(bleed + 0.5, bleed + 0.5, 5, 8);
+        
+        // Add text labels if needed
+        pdf.setFontSize(6);
+        pdf.setTextColor(0, 162, 232);
+        pdf.text('TRIM / BLEED AREA', pageWidth/2, 0.1, { align: 'center' });
+        pdf.text('TRIM / BLEED AREA', pageWidth/2, pageHeight - 0.05, { align: 'center' });
+        
+        pdf.setTextColor(100, 100, 100);
+        pdf.text('SAFETY MARGIN', pageWidth/2, 0.25 + bleed, { align: 'center' });
+        pdf.text('SAFETY MARGIN', pageWidth/2, pageHeight - 0.25 - bleed, { align: 'center' });
+      }
     };
 
     // Add title page
+    if (debugLines) {
+      // Draw debug lines on first page
+      // Blue outer bleed area rectangle (total document size)
+      pdf.setDrawColor(0, 162, 232); // Light blue for bleed area
+      pdf.setLineWidth(0.01);
+      pdf.rect(0, 0, pageWidth, pageHeight);
+      
+      // Dark blue trim rectangle (actual book size after cutting)
+      pdf.setDrawColor(0, 0, 255); // Blue for trim lines
+      pdf.rect(bleed, bleed, 6, 9);
+      
+      // Red safety margin rectangle
+      pdf.setDrawColor(255, 0, 0); // Red for safety margin
+      pdf.rect(bleed + 0.5, bleed + 0.5, 5, 8);
+      
+      // Add text labels
+      pdf.setFontSize(6);
+      pdf.setTextColor(0, 162, 232);
+      pdf.text('TRIM / BLEED AREA', pageWidth/2, 0.1, { align: 'center' });
+      pdf.text('TRIM / BLEED AREA', pageWidth/2, pageHeight - 0.05, { align: 'center' });
+      
+      pdf.setTextColor(100, 100, 100);
+      pdf.text('SAFETY MARGIN', pageWidth/2, 0.25 + bleed, { align: 'center' });
+      pdf.text('SAFETY MARGIN', pageWidth/2, pageHeight - 0.25 - bleed, { align: 'center' });
+    }
+
     pdf.setFontSize(24);
+    pdf.setTextColor(0, 0, 0);
     pdf.text(title, pageWidth / 2, pageHeight / 3, { align: 'center' });
     
     pdf.setFontSize(16);
