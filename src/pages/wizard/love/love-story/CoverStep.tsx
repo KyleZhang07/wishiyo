@@ -1008,11 +1008,11 @@ const LoveStoryCoverStep = () => {
         description: "Rendering and uploading your cover images..."
       });
       
-      // 保存当前选中的封面图片到 localStorage
-      if (coverImages.length > 0 && currentImageIndex >= 0 && currentImageIndex < coverImages.length) {
-        const selectedCoverImage = coverImages[currentImageIndex];
-        localStorage.setItem('loveStorySelectedCoverImage', selectedCoverImage);
-        
+    // 保存当前选中的封面图片到 localStorage
+    if (coverImages.length > 0 && currentImageIndex >= 0 && currentImageIndex < coverImages.length) {
+      const selectedCoverImage = coverImages[currentImageIndex];
+      localStorage.setItem('loveStorySelectedCoverImage', selectedCoverImage);
+      
         // 渲染封面到Canvas并获取图像数据
         const canvasImageData = await renderCoverToCanvas();
         
@@ -1092,9 +1092,9 @@ const LoveStoryCoverStep = () => {
         } catch (deleteError) {
           console.error('Error deleting old cover images:', deleteError);
           // 继续处理，即使删除失败
-        }
-        
-        toast({
+    }
+    
+    toast({
           title: "Cover processed successfully",
           description: "Your cover has been saved. Proceeding to the next step..."
         });
@@ -1104,8 +1104,8 @@ const LoveStoryCoverStep = () => {
       localStorage.setItem('loveStoryCoverTitle', titleData.mainTitle || titleData.fullTitle);
       localStorage.setItem('loveStoryCoverSubtitle', titleData.subTitle || '');
       localStorage.setItem('loveStoryCoverThirdLine', titleData.thirdLine || '');
-      
-      // 导航到下一步
+    
+    // 导航到下一步
       navigate('/create/love/love-story/generate');
     } catch (error) {
       console.error('Error processing cover:', error);

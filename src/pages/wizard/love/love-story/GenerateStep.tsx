@@ -1476,7 +1476,7 @@ const GenerateStep = () => {
                       >
                         {isLoading ? 'Rendering...' : 'Render with Text'}
                       </Button>
-                    </div>
+          </div>
                   )}
                 </div>
               );
