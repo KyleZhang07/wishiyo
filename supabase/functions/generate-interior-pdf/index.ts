@@ -8,14 +8,12 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// 添加Deno类型声明，避免TypeScript错误
 declare const Deno: {
   env: {
     get(key: string): string | undefined;
   };
 };
 
-// Define book chapter structure to match the output from generate-book-content
 interface BookChapter {
   chapterNumber: number;
   title: string;
@@ -27,7 +25,6 @@ interface BookChapter {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -41,7 +38,6 @@ serve(async (req) => {
 
     console.log(`Generating interior PDF for order ${orderId}`);
 
-    // 获取Supabase连接信息
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
     
@@ -49,10 +45,8 @@ serve(async (req) => {
       throw new Error('Missing Supabase credentials');
     }
 
-    // 初始化Supabase客户端
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // 从数据库直接获取图书数据（如果未提供）
     let finalBookContent = bookContent;
     let title = bookTitle;
     let author = authorName;
@@ -78,19 +72,16 @@ serve(async (req) => {
       throw new Error('Incomplete book data for PDF generation');
     }
 
-    // 将PDF上传到存储桶并返回公共URL
     async function uploadPdfToStorage(pdfData: string, fileName: string): Promise<string> {
       try {
         console.log(`Uploading ${fileName} to storage...`);
         
-        // 检查存储桶是否存在
         const { data: buckets, error: bucketsError } = await supabase
           .storage
           .listBuckets();
         
         const bucketExists = buckets?.some(bucket => bucket.name === 'book-covers');
         
-        // 如果存储桶不存在，则创建
         if (!bucketExists) {
           console.log(`Storage bucket 'book-covers' does not exist, creating...`);
           const { error: createBucketError } = await supabase
@@ -107,7 +98,6 @@ serve(async (req) => {
           }
         }
         
-        // 从base64 Data URI中提取PDF数据
         let pdfContent = pdfData;
         let contentType = 'application/pdf';
         
@@ -122,14 +112,12 @@ serve(async (req) => {
           }
         }
         
-        // 将base64转换为Uint8Array
         const binaryString = atob(pdfContent);
         const bytes = new Uint8Array(binaryString.length);
         for (let i = 0; i < binaryString.length; i++) {
           bytes[i] = binaryString.charCodeAt(i);
         }
         
-        // 上传到Supabase Storage
         const filePath = `${orderId}/${fileName}`;
         console.log(`Uploading to book-covers/${filePath}`);
         const { error: uploadError } = await supabase
@@ -147,7 +135,6 @@ serve(async (req) => {
         
         console.log(`PDF uploaded successfully to storage`);
         
-        // 获取公共URL
         const { data: urlData } = supabase
           .storage
           .from('book-covers')
@@ -159,53 +146,44 @@ serve(async (req) => {
         return publicUrl;
       } catch (error) {
         console.error(`Error uploading PDF to storage:`, error);
-        console.error(error.stack || error); // 打印完整错误栈
+        console.error(error.stack || error);
         return '';
       }
     }
 
-    // Create a new PDF - US Trade (6x9 inches) with bleed
-    const bleed = 0.125; // 0.125 inches bleed
-    const pageWidth = 6 + (bleed * 2);  // 6.25 inches total with bleed
-    const pageHeight = 9 + (bleed * 2); // 9.25 inches total with bleed
-    
+    const bleed = 0.125;
+    const pageWidth = 6 + (bleed * 2);
+    const pageHeight = 9 + (bleed * 2);
+
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'in',
       format: [pageWidth, pageHeight]
     });
 
-    // Set up safety margins
     const margin = {
       top: 0.5 + bleed,
       right: 0.5 + bleed,
       bottom: 0.5 + bleed,
       left: 0.5 + bleed
     };
-    
-    // Debug lines flag - set to true to show safety margins and trim lines
+
     const debugLines = true;
 
-    // Function to add a page with proper margins and bleed
     const addPage = () => {
       pdf.addPage([pageWidth, pageHeight]);
       
-      // Draw debug lines when enabled
       if (debugLines) {
-        // Blue outer bleed area rectangle (total document size)
-        pdf.setDrawColor(0, 162, 232); // Light blue for bleed area
+        pdf.setDrawColor(0, 162, 232);
         pdf.setLineWidth(0.01);
         pdf.rect(0, 0, pageWidth, pageHeight);
         
-        // Dark blue trim rectangle (actual book size after cutting)
-        pdf.setDrawColor(0, 0, 255); // Blue for trim lines
+        pdf.setDrawColor(0, 0, 255);
         pdf.rect(bleed, bleed, 6, 9);
         
-        // Red safety margin rectangle
-        pdf.setDrawColor(255, 0, 0); // Red for safety margin
+        pdf.setDrawColor(255, 0, 0);
         pdf.rect(bleed + 0.5, bleed + 0.5, 5, 8);
         
-        // Add text labels if needed
         pdf.setFontSize(6);
         pdf.setTextColor(0, 162, 232);
         pdf.text('TRIM / BLEED AREA', pageWidth/2, 0.1, { align: 'center' });
@@ -217,33 +195,6 @@ serve(async (req) => {
       }
     };
 
-    // Add title page
-    if (debugLines) {
-      // Draw debug lines on first page
-      // Blue outer bleed area rectangle (total document size)
-      pdf.setDrawColor(0, 162, 232); // Light blue for bleed area
-      pdf.setLineWidth(0.01);
-      pdf.rect(0, 0, pageWidth, pageHeight);
-      
-      // Dark blue trim rectangle (actual book size after cutting)
-      pdf.setDrawColor(0, 0, 255); // Blue for trim lines
-      pdf.rect(bleed, bleed, 6, 9);
-      
-      // Red safety margin rectangle
-      pdf.setDrawColor(255, 0, 0); // Red for safety margin
-      pdf.rect(bleed + 0.5, bleed + 0.5, 5, 8);
-      
-      // Add text labels
-      pdf.setFontSize(6);
-      pdf.setTextColor(0, 162, 232);
-      pdf.text('TRIM / BLEED AREA', pageWidth/2, 0.1, { align: 'center' });
-      pdf.text('TRIM / BLEED AREA', pageWidth/2, pageHeight - 0.05, { align: 'center' });
-      
-      pdf.setTextColor(100, 100, 100);
-      pdf.text('SAFETY MARGIN', pageWidth/2, 0.25 + bleed, { align: 'center' });
-      pdf.text('SAFETY MARGIN', pageWidth/2, pageHeight - 0.25 - bleed, { align: 'center' });
-    }
-
     pdf.setFontSize(24);
     pdf.setTextColor(0, 0, 0);
     pdf.text(title, pageWidth / 2, pageHeight / 3, { align: 'center' });
@@ -251,7 +202,6 @@ serve(async (req) => {
     pdf.setFontSize(16);
     pdf.text(`by ${author}`, pageWidth / 2, pageHeight / 3 + 0.5, { align: 'center' });
 
-    // Add copyright page
     addPage();
     pdf.setFontSize(10);
     const year = new Date().getFullYear();
@@ -260,7 +210,6 @@ serve(async (req) => {
     pdf.text('This is a work of fiction. Names, characters, places, and incidents either are the', margin.left, margin.top + 2);
     pdf.text('product of the author\'s imagination or are used fictitiously.', margin.left, margin.top + 2.3);
 
-    // Add table of contents page
     addPage();
     pdf.setFontSize(18);
     pdf.text('Table of Contents', pageWidth / 2, margin.top + 0.5, { align: 'center' });
@@ -268,16 +217,13 @@ serve(async (req) => {
     pdf.setFontSize(12);
     let tocY = margin.top + 1.2;
     
-    // Keeping track of current page number for TOC
-    let currentPage = 4; // Starting page for content (after title, copyright, TOC)
-    
+    let currentPage = 4;
+
     finalBookContent.forEach((chapter: BookChapter) => {
       pdf.text(`Chapter ${chapter.chapterNumber}: ${chapter.title}`, margin.left, tocY);
       pdf.text(`${currentPage}`, pageWidth - margin.right, tocY, { align: 'right' });
       tocY += 0.3;
       
-      // Each chapter will have at least one page, plus we estimate one page per 500 words
-      // This is just an estimate for TOC page numbers
       const estimatedSectionPages = chapter.sections.reduce((total, section) => {
         const wordCount = section.content.split(/\s+/).length;
         return total + Math.ceil(wordCount / 500);
@@ -286,18 +232,14 @@ serve(async (req) => {
       currentPage += Math.max(1, estimatedSectionPages);
     });
 
-    // Add blank page if needed to make content start on right-hand page
     if (currentPage % 2 !== 0) {
-      addPage(); // Add blank page
+      addPage();
       currentPage++;
     }
 
-    // Process and add chapter content
     finalBookContent.forEach((chapter: BookChapter) => {
-      // Start each chapter on a new page
       addPage();
       
-      // Chapter title
       pdf.setFontSize(18);
       pdf.text(`Chapter ${chapter.chapterNumber}`, pageWidth / 2, margin.top + 0.5, { align: 'center' });
       pdf.setFontSize(16);
@@ -305,42 +247,32 @@ serve(async (req) => {
       
       let contentY = margin.top + 1.5;
       
-      // Process chapter sections
       chapter.sections.forEach((section) => {
-        // Add section title
         pdf.setFontSize(14);
         pdf.text(section.title, margin.left, contentY);
         contentY += 0.4;
         
-        // Process section content with word wrapping
         pdf.setFontSize(12);
         
-        // Split content into paragraphs
         const paragraphs = section.content.split('\n\n');
         
         paragraphs.forEach((paragraph) => {
-          // Check if we need a new page
           if (contentY > pageHeight - margin.bottom) {
             addPage();
             contentY = margin.top;
           }
           
-          // Create wrapped text
           const textLines = pdf.splitTextToSize(paragraph, pageWidth - margin.left - margin.right);
           
-          // Add text to PDF
           pdf.text(textLines, margin.left, contentY);
           
-          // Move Y position down based on text height
-          contentY += (textLines.length * 0.2) + 0.2; // 0.2 inch line height + paragraph spacing
+          contentY += (textLines.length * 0.2) + 0.2;
         });
       });
     });
 
-    // Convert PDF to base64
     const pdfOutput = pdf.output('datauristring');
     
-    // 上传PDF到存储桶
     console.log(`Uploading interior PDF to storage...`);
     const interiorFileUrl = await uploadPdfToStorage(pdfOutput, 'interior.pdf');
     
@@ -350,8 +282,7 @@ serve(async (req) => {
       console.log(`Interior PDF uploaded successfully to storage with URL: ${interiorFileUrl}`);
     }
     
-    // 更新数据库，填充interior-pdf和interior_source_url字段
-    console.log(`Updating database for order ${orderId} with interiorPdf and interior_source_url`);
+    const pageCount = finalBookContent.length * 5;
     const updateData: any = {
       interior_pdf: pdfOutput
     };
@@ -360,8 +291,6 @@ serve(async (req) => {
       updateData.interior_source_url = interiorFileUrl;
     }
     
-    // 同时设置书籍为准备打印状态
-    const pageCount = finalBookContent.length * 5; // 简单估算每章5页
     updateData.ready_for_printing = true;
     updateData.page_count = pageCount;
     
