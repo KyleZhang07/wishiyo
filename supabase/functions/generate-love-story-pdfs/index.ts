@@ -247,11 +247,11 @@ serve(async (req) => {
 
 // 新增函数：生成完整封面PDF（封底+书脊+封面）
 async function generateCoverPdf(backCoverFile: any, spineFile: any, frontCoverFile: any, orderId: string, supabase: any): Promise<Uint8Array> {
-  // 创建PDF，横向模式以容纳封面+书脊+封底
+  // 创建PDF，设置为Lulu要求的总文档尺寸 (19" x 10.25")
   const pdf = new jsPDF({
     orientation: 'landscape',
     unit: 'in',
-    format: [11, 8.5] // 横向A4尺寸大约是11x8.5英寸
+    format: [19, 10.25] // Lulu模板总文档尺寸
   })
   
   // 获取book记录以获取client_id
@@ -319,75 +319,107 @@ async function generateCoverPdf(backCoverFile: any, spineFile: any, frontCoverFi
   const spineBase64 = await downloadImage(spineFile)
   const frontCoverBase64 = await downloadImage(frontCoverFile)
   
-  // 设置页面尺寸，根据Lulu要求调整 - 8.625" x 8.75"
-  const coverWidth = 8.625 // 英寸
-  const coverHeight = 8.75 // 英寸
-  const spineWidth = 0.25 // 英寸
+  // Lulu模板中的精确尺寸设置（根据图1）
+  const bookCoverWidth = 8.625   // 书籍封面宽度 (Book Cover Size)
+  const bookCoverHeight = 8.75   // 书籍封面高度
+  const bookTrimWidth = 8.5      // 书籍裁切尺寸宽度 (Book Trim Size)
+  const bookTrimHeight = 8.5     // 书籍裁切尺寸高度
+  const spineWidth = 0.25        // 书脊宽度 (Minimum Spine Width)
+  const wrapAreaWidth = 0.75     // 出血区域宽度 (Wrap Area)
+  const safetyMarginWidth = 0.5  // 安全边距 (Safety Margin)
+  const bleedWidth = 0.125       // 出血边缘宽度（从trim到cover）
   
-  // 出血区域宽度 - 通常为0.125"
-  const bleedWidth = 0.125 // 英寸
+  // 计算完整文档的布局（根据图1）
+  const totalDocWidth = 19       // 总文档宽度 (外边缘到外边缘)
+  const totalDocHeight = 10.25   // 总文档高度
   
-  // 计算位置，从左到右放置：封底 + 书脊 + 封面
-  // 包括出血区域的总宽度
-  const totalWidth = (coverWidth + bleedWidth * 2) * 2 + spineWidth
-  const startX = (11 - totalWidth) / 2 // 居中放置
+  // 计算各部分的精确位置
+  // 在Lulu模板中，从左到右布局是：安全边距 + 封底 + 安全边距 + 书脊 + 安全边距 + 封面 + 安全边距
+  // 确保出血区域正确覆盖
   
-  // 添加封底 (左侧) - 包括出血区域
+  // 安全区域开始位置
+  const safetyMarginLeft = wrapAreaWidth
+  const safetyMarginRight = totalDocWidth - wrapAreaWidth
+  const safetyMarginTop = (totalDocHeight - bookCoverHeight) / 2
+  const safetyMarginBottom = safetyMarginTop + bookCoverHeight
+  
+  // 封底位置：从左边出血区域开始
+  const backCoverX = 0 // 左侧出血区域开始
+  const backCoverWidth = bookCoverWidth + wrapAreaWidth // 封底宽度 + 左侧出血区域
+  
+  // 书脊位置：紧接着封底后
+  const spineX = backCoverWidth 
+  
+  // 封面位置：紧接着书脊后
+  const frontCoverX = spineX + spineWidth
+  const frontCoverWidth = bookCoverWidth + wrapAreaWidth // 封面宽度 + 右侧出血区域
+  
+  // Y轴位置（居中）
+  const coverY = 0 // 从PDF顶部开始
+  const coverHeight = totalDocHeight // 整个高度包括上下出血区域
+  
+  // 添加封底（左侧）- 包括左侧和上下出血区域
   pdf.addImage(
     backCoverBase64,
     'JPEG',
-    startX, // x坐标
-    0, // y坐标
-    coverWidth + bleedWidth * 2, // 宽度（包括左右出血区域）
-    coverHeight + bleedWidth * 2, // 高度（包括上下出血区域）
-    undefined, // 别名
-    'FAST' // 压缩选项
+    backCoverX,
+    coverY,
+    backCoverWidth,
+    coverHeight,
+    undefined,
+    'FAST'
   )
   
-  // 添加书脊 (中间)
+  // 添加书脊（中间）
   pdf.addImage(
     spineBase64,
     'JPEG',
-    startX + coverWidth + bleedWidth * 2, // x坐标 (紧跟封底)
-    0, // y坐标
-    spineWidth, // 宽度
-    coverHeight + bleedWidth * 2, // 高度（包括上下出血区域）
-    undefined, // 别名
-    'FAST' // 压缩选项
+    spineX,
+    coverY,
+    spineWidth,
+    coverHeight,
+    undefined,
+    'FAST'
   )
   
-  // 添加封面 (右侧) - 包括出血区域
+  // 添加封面（右侧）- 包括右侧和上下出血区域
   pdf.addImage(
     frontCoverBase64,
     'JPEG',
-    startX + coverWidth + bleedWidth * 2 + spineWidth, // x坐标 (紧跟书脊)
-    0, // y坐标
-    coverWidth + bleedWidth * 2, // 宽度（包括左右出血区域）
-    coverHeight + bleedWidth * 2, // 高度（包括上下出血区域）
-    undefined, // 别名
-    'FAST' // 压缩选项
+    frontCoverX,
+    coverY,
+    frontCoverWidth,
+    coverHeight,
+    undefined,
+    'FAST'
   )
   
-  // 绘制安全边距指示线（可选，用于调试）
-  /*
-  const safetyMargin = 0.5; // 安全边距，通常为0.5英寸
-  pdf.setDrawColor(255, 0, 0);
-  pdf.setLineWidth(0.01);
-  // 封底安全边距
-  pdf.rect(
-    startX + bleedWidth + safetyMargin, 
-    bleedWidth + safetyMargin, 
-    coverWidth - safetyMargin * 2, 
-    coverHeight - safetyMargin * 2
-  );
-  // 封面安全边距
-  pdf.rect(
-    startX + coverWidth + bleedWidth * 2 + spineWidth + bleedWidth + safetyMargin, 
-    bleedWidth + safetyMargin, 
-    coverWidth - safetyMargin * 2, 
-    coverHeight - safetyMargin * 2
-  );
-  */
+  // 如果需要，可以添加辅助线来标记安全边距、裁切线等（仅用于调试）
+  const debugLines = false; // 设置为true以显示调试线
+  if (debugLines) {
+    pdf.setDrawColor(255, 0, 0); // 红色
+    pdf.setLineWidth(0.01);
+    
+    // 封底安全边距
+    pdf.rect(
+      safetyMarginLeft, 
+      safetyMarginTop, 
+      bookCoverWidth - 2 * safetyMarginWidth, 
+      bookCoverHeight - 2 * safetyMarginWidth
+    );
+    
+    // 封面安全边距
+    pdf.rect(
+      frontCoverX + safetyMarginWidth, 
+      safetyMarginTop, 
+      bookCoverWidth - 2 * safetyMarginWidth, 
+      bookCoverHeight - 2 * safetyMarginWidth
+    );
+    
+    // 标记出书脊区域
+    pdf.setDrawColor(0, 0, 255); // 蓝色
+    pdf.rect(spineX, safetyMarginTop, spineWidth, bookCoverHeight);
+  }
   
   // 转换PDF为Uint8Array
   const pdfOutput = pdf.output('arraybuffer')

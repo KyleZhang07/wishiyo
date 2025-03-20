@@ -29,6 +29,8 @@ interface ImageStorageMap {
   [key: string]: {
     localStorageKey: string;
     url?: string;  // Supabase Storage URL
+    leftUrl?: string;
+    rightUrl?: string;
   };
 }
 
@@ -822,6 +824,37 @@ const GenerateStep = () => {
         }
       }));
       
+      // 清除原始介绍图片（love-story-intro 等）
+      try {
+        // 查找所有包含原始介绍图片名称的图片
+        const originalIntroImages = supabaseImages.filter(img => {
+          // 匹配 love-story-intro-数字-时间戳 模式，但不匹配 intro-数字-数字 模式
+          const isOriginalImage = img.name.includes('love-story-intro-');
+          const isProcessedImage = /intro-\d+-\d+/.test(img.name);
+          return isOriginalImage && !isProcessedImage;
+        });
+        
+        if (originalIntroImages.length > 0) {
+          console.log(`Found ${originalIntroImages.length} original intro images to delete`);
+          
+          // 并行删除所有原始图片
+          const deletePromises = originalIntroImages.map(img => {
+            // 从完整路径中提取文件名
+            const pathParts = img.name.split('/');
+            const filename = pathParts[pathParts.length - 1];
+            console.log(`Deleting original intro image: ${filename}`);
+            return deleteImageFromStorage(filename, 'images');
+          });
+          
+          // 等待所有删除操作完成
+          await Promise.all(deletePromises);
+          console.log('Successfully deleted original intro images');
+        }
+      } catch (deleteError) {
+        console.error('Error deleting original intro images:', deleteError);
+        // 继续处理，即使删除失败
+      }
+      
       toast({
         title: "Intro image rendered",
         description: "Introduction successfully rendered with text and split into two parts",
@@ -905,6 +938,37 @@ const GenerateStep = () => {
           rightUrl: result.rightImageUrl
         }
       }));
+      
+      // 清除原始图片（love-story-content-3 等）
+      try {
+        // 查找所有包含原始内容图片名称的图片
+        const originalContentImages = supabaseImages.filter(img => {
+          // 匹配 love-story-content-数字-时间戳 模式，但不匹配 content-数字-数字 模式
+          const isOriginalImage = img.name.includes(`love-story-content-${index}`);
+          const isProcessedImage = /content-\d+-\d+/.test(img.name);
+          return isOriginalImage && !isProcessedImage;
+        });
+        
+        if (originalContentImages.length > 0) {
+          console.log(`Found ${originalContentImages.length} original content images to delete for content ${index}`);
+          
+          // 并行删除所有原始图片
+          const deletePromises = originalContentImages.map(img => {
+            // 从完整路径中提取文件名
+            const pathParts = img.name.split('/');
+            const filename = pathParts[pathParts.length - 1];
+            console.log(`Deleting original content image: ${filename}`);
+            return deleteImageFromStorage(filename, 'images');
+          });
+          
+          // 等待所有删除操作完成
+          await Promise.all(deletePromises);
+          console.log(`Successfully deleted original content images for content ${index}`);
+        }
+      } catch (deleteError) {
+        console.error(`Error deleting original content images for content ${index}:`, deleteError);
+        // 继续处理，即使删除失败
+      }
       
       toast({
         title: "Content image rendered",
@@ -1034,6 +1098,37 @@ const GenerateStep = () => {
           }
         }));
         
+        // 清除原始介绍图片
+        try {
+          // 查找所有包含原始介绍图片名称的图片
+          const originalIntroImages = supabaseImages.filter(img => {
+            // 匹配 love-story-intro-数字-时间戳 模式，但不匹配 intro-数字-数字 模式
+            const isOriginalImage = img.name.includes('love-story-intro-');
+            const isProcessedImage = /intro-\d+-\d+/.test(img.name);
+            return isOriginalImage && !isProcessedImage;
+          });
+          
+          if (originalIntroImages.length > 0) {
+            console.log(`Found ${originalIntroImages.length} original intro images to delete`);
+            
+            // 并行删除所有原始图片
+            const deletePromises = originalIntroImages.map(img => {
+              // 从完整路径中提取文件名
+              const pathParts = img.name.split('/');
+              const filename = pathParts[pathParts.length - 1];
+              console.log(`Deleting original intro image: ${filename}`);
+              return deleteImageFromStorage(filename, 'images');
+            });
+            
+            // 等待所有删除操作完成
+            await Promise.all(deletePromises);
+            console.log('Successfully deleted original intro images');
+          }
+        } catch (deleteError) {
+          console.error('Error deleting original intro images:', deleteError);
+          // 继续处理，即使删除失败
+        }
+        
         console.log('Intro image rendered and split successfully');
       }
 
@@ -1071,6 +1166,37 @@ const GenerateStep = () => {
               rightUrl: contentResult.rightImageUrl
             }
           }));
+          
+          // 清除原始图片（love-story-content-3 等）
+          try {
+            // 查找所有包含原始内容图片名称的图片
+            const originalContentImages = supabaseImages.filter(img => {
+              // 匹配 love-story-content-数字-时间戳 模式，但不匹配 content-数字-数字 模式
+              const isOriginalImage = img.name.includes(`love-story-content-${index}`);
+              const isProcessedImage = /content-\d+-\d+/.test(img.name);
+              return isOriginalImage && !isProcessedImage;
+            });
+            
+            if (originalContentImages.length > 0) {
+              console.log(`Found ${originalContentImages.length} original content images to delete for content ${index}`);
+              
+              // 并行删除所有原始图片
+              const deletePromises = originalContentImages.map(img => {
+                // 从完整路径中提取文件名
+                const pathParts = img.name.split('/');
+                const filename = pathParts[pathParts.length - 1];
+                console.log(`Deleting original content image: ${filename}`);
+                return deleteImageFromStorage(filename, 'images');
+              });
+              
+              // 等待所有删除操作完成
+              await Promise.all(deletePromises);
+              console.log(`Successfully deleted original content images for content ${index}`);
+            }
+          } catch (deleteError) {
+            console.error(`Error deleting original content images for content ${index}:`, deleteError);
+            // 继续处理，即使删除失败
+          }
           
           console.log(`Content image ${index} rendered and split successfully`);
         } catch (error) {
