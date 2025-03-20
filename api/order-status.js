@@ -204,13 +204,7 @@ async function submitPrintRequest(book, type) {
     // 添加调试日志，检查地址信息
     console.log(`Order ${book.order_id} address information:`, {
       has_shipping_address: !!book.shipping_address,
-      has_split_address: !!(book.recipient_name || book.address_line1 || book.city),
-      recipient_name: book.recipient_name,
-      address_line1: book.address_line1,
-      city: book.city,
-      state: book.state,
-      postal_code: book.postal_code,
-      country: book.country
+      shipping_address: book.shipping_address ? JSON.stringify(book.shipping_address) : null
     });
     
     // 调用Vercel API函数发送打印请求

@@ -110,27 +110,10 @@ export default async function handler(req, res) {
         shipping_address_value: order.shipping_address
       });
       
-      // 尝试从拆分字段构建地址对象
-      if (order.recipient_name || order.address_line1 || order.city || order.state || order.postal_code || order.country) {
-        console.log(`Attempting to construct shipping address from split fields for order ${orderId}`);
-        order.shipping_address = {
-          name: order.recipient_name || order.customer_email || 'Customer',
-          address: {
-            line1: order.address_line1 || 'Address not provided',
-            line2: order.address_line2 || '',
-            city: order.city || 'Unknown',
-            state: order.state || 'Unknown',
-            postal_code: order.postal_code || 'Unknown',
-            country: order.country || 'US'
-          }
-        };
-        console.log(`Constructed shipping address: ${JSON.stringify(order.shipping_address)}`);
-      } else {
-        return res.status(400).json({
-          success: false,
-          error: 'Order is missing shipping address information'
-        });
-      }
+      return res.status(400).json({
+        success: false,
+        error: 'Order is missing shipping address information'
+      });
     }
     
     // 检查shipping_address的结构
@@ -151,24 +134,6 @@ export default async function handler(req, res) {
         console.error(`Failed to parse shipping_address string: ${e.message}`);
       }
     }
-    
-    // 检查是否有嵌套的address对象
-    if (!shippingAddress.address && shippingAddress.line1) {
-      // 如果address字段缺失但直接有line1等字段，重构对象
-      shippingAddress = {
-        name: shippingAddress.name || order.customer_email || 'Customer',
-        address: {
-          line1: shippingAddress.line1,
-          line2: shippingAddress.line2 || '',
-          city: shippingAddress.city,
-          state: shippingAddress.state,
-          postal_code: shippingAddress.postal_code || shippingAddress.zip,
-          country: shippingAddress.country
-        }
-      };
-    }
-    
-    console.log(`Restructured shipping address:`, JSON.stringify(shippingAddress));
     
     // 使用订单提供的shipping_level或默认值
     const shippingLevel = order.shipping_level || 'MAIL';
