@@ -199,7 +199,7 @@ export default async function handler(req, res) {
     const { error: updateError } = await supabase
       .from(tableName)
       .update({
-        print_status: 'SUBMITTED',
+        lulu_print_status: 'SUBMITTED',
         status: 'print_submitted',
         print_job_id: printJobId,
         print_submission_date: new Date().toISOString()

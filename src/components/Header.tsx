@@ -60,9 +60,9 @@ const Header = () => {
     if (!orderStatus) return 'Unknown';
     
     // 根据状态返回描述
-    if (orderStatus.print_status === 'SUBMITTED') return 'Printing in progress';
-    if (orderStatus.print_status === 'SHIPPED') return 'Shipped';
-    if (orderStatus.print_status === 'DELIVERED') return 'Delivered';
+    if (orderStatus.lulu_print_status === 'SUBMITTED') return 'Printing in progress';
+    if (orderStatus.lulu_print_status === 'SHIPPED') return 'Shipped';
+    if (orderStatus.lulu_print_status === 'DELIVERED') return 'Delivered';
     
     // 根据ready_for_printing和status判断
     if (orderStatus.ready_for_printing) {
@@ -82,9 +82,9 @@ const Header = () => {
   const getOrderStatusColor = () => {
     if (!orderStatus) return 'bg-gray-400';
     
-    if (orderStatus.print_status === 'SHIPPED' || orderStatus.print_status === 'DELIVERED') 
+    if (orderStatus.lulu_print_status === 'SHIPPED' || orderStatus.lulu_print_status === 'DELIVERED') 
       return 'bg-green-500';
-    if (orderStatus.print_status === 'SUBMITTED') 
+    if (orderStatus.lulu_print_status === 'SUBMITTED') 
       return 'bg-blue-500';
     if (orderStatus.ready_for_printing) 
       return 'bg-amber-500';

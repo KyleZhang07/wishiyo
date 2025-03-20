@@ -74,7 +74,7 @@ export default async function handler(req, res) {
           .from('love_story_books')
           .select('*')
           .eq('ready_for_printing', true)
-          .is('print_status', null);
+          .is('lulu_print_status', null);
           
         if (loveStoryError) {
           console.error('Error fetching love story books:', loveStoryError);
@@ -94,7 +94,7 @@ export default async function handler(req, res) {
           .from('funny_biography_books')
           .select('*')
           .eq('ready_for_printing', true)
-          .is('print_status', null);
+          .is('lulu_print_status', null);
           
         if (funnyBiographyError) {
           console.error('Error fetching funny biography books:', funnyBiographyError);
