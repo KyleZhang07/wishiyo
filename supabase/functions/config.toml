@@ -14,3 +14,5 @@ verify_jwt = false
 verify_jwt = false
 [functions.get-book-data]
 verify_jwt = false
+[functions.generate-love-story-pdfs]
+verify_jwt = false
