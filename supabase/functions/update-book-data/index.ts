@@ -40,7 +40,15 @@ serve(async (req) => {
       lulu_tracking_number,
       lulu_tracking_url,
       print_date,
-      print_attempts
+      print_attempts,
+      // 添加拆分的地址字段
+      recipient_name,
+      address_line1,
+      address_line2,
+      city,
+      state,
+      postal_code,
+      country
     } = await req.json();
 
     // Debug logging for shipping address
@@ -49,7 +57,16 @@ serve(async (req) => {
       table_name,
       has_shipping_address: !!shipping_address,
       shipping_address_type: shipping_address ? typeof shipping_address : 'N/A',
-      shipping_address_json: shipping_address ? JSON.stringify(shipping_address) : 'N/A'
+      shipping_address_json: shipping_address ? JSON.stringify(shipping_address) : 'N/A',
+      // 添加拆分字段的日志
+      has_split_address: !!(recipient_name || address_line1 || city || state || postal_code || country),
+      recipient_name,
+      address_line1,
+      address_line2,
+      city,
+      state,
+      postal_code,
+      country
     });
 
     if (!orderId) {
@@ -123,6 +140,51 @@ serve(async (req) => {
         // If all else fails, try storing as a plain nested object
         updateData.shipping_address = { data: shipping_address };
       }
+    }
+    
+    // 处理拆分的地址字段
+    if (recipient_name) {
+      updateData.recipient_name = recipient_name;
+    }
+    
+    if (address_line1) {
+      updateData.address_line1 = address_line1;
+    }
+    
+    if (address_line2) {
+      updateData.address_line2 = address_line2;
+    }
+    
+    if (city) {
+      updateData.city = city;
+    }
+    
+    if (state) {
+      updateData.state = state;
+    }
+    
+    if (postal_code) {
+      updateData.postal_code = postal_code;
+    }
+    
+    if (country) {
+      updateData.country = country;
+    }
+    
+    // 如果没有传递 shipping_address 但有拆分字段，尝试构建 shipping_address
+    if (!shipping_address && (recipient_name || address_line1 || city || state || postal_code || country)) {
+      updateData.shipping_address = {
+        name: recipient_name || '',
+        address: {
+          line1: address_line1 || '',
+          line2: address_line2 || '',
+          city: city || '',
+          state: state || '',
+          postal_code: postal_code || '',
+          country: country || ''
+        }
+      };
+      console.log('Constructed shipping_address from split fields:', JSON.stringify(updateData.shipping_address));
     }
     
     if (shipping_option) {

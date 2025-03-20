@@ -104,17 +104,35 @@ export default async function handler(req, res) {
     
     // 检查订单的shipping_address
     if (!order.shipping_address) {
-      console.error(`Order ${orderId} is missing shipping address information`, {
+      console.log(`Order ${orderId} is missing shipping address information`, {
         order_id: order.order_id,
         order_keys: Object.keys(order),
         shipping_address_value: order.shipping_address
       });
-      return res.status(400).json({
-        success: false,
-        error: 'Order is missing shipping address information'
-      });
+      
+      // 尝试从拆分字段构建地址对象
+      if (order.recipient_name || order.address_line1 || order.city || order.state || order.postal_code || order.country) {
+        console.log(`Attempting to construct shipping address from split fields for order ${orderId}`);
+        order.shipping_address = {
+          name: order.recipient_name || order.customer_email || 'Customer',
+          address: {
+            line1: order.address_line1 || 'Address not provided',
+            line2: order.address_line2 || '',
+            city: order.city || 'Unknown',
+            state: order.state || 'Unknown',
+            postal_code: order.postal_code || 'Unknown',
+            country: order.country || 'US'
+          }
+        };
+        console.log(`Constructed shipping address: ${JSON.stringify(order.shipping_address)}`);
+      } else {
+        return res.status(400).json({
+          success: false,
+          error: 'Order is missing shipping address information'
+        });
+      }
     }
-
+    
     // 检查shipping_address的结构
     console.log(`Order ${orderId} shipping address debug:`, {
       shipping_address_type: typeof order.shipping_address,
@@ -283,4 +301,4 @@ export default async function handler(req, res) {
       error: `Internal server error: ${error.message}`
     });
   }
-} 
+}
