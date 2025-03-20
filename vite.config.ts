@@ -11,9 +11,9 @@ export default defineConfig(({ mode }) => ({
     proxy: {
       // 代理API请求到API服务器
       '/api': {
-        target: 'http://localhost:3001',
+        target: 'http://localhost:8080',
         changeOrigin: true,
-        secure: false,
+        rewrite: (path) => path
       }
     }
   },

@@ -46,6 +46,38 @@ async function updateBookStatus(supabaseUrl, supabaseKey, orderId, status) {
   }
 }
 
+// 添加一个触发打印请求检查的函数
+async function triggerPrintRequestCheck(orderId, type) {
+  try {
+    // 获取基础URL - 使用环境变量或默认值
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8080';
+    
+    console.log(`Triggering print request check for orderId: ${orderId}`);
+    const response = await fetch(`${baseUrl}/api/order-status`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        autoSubmit: true
+      })
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      console.log('Print request check triggered successfully:', result);
+      return true;
+    } else {
+      const errorText = await response.text();
+      console.error(`Error triggering print request check: ${response.status} ${response.statusText} - ${errorText}`);
+      return false;
+    }
+  } catch (error) {
+    console.error('Error in triggerPrintRequestCheck:', error);
+    return false;
+  }
+}
+
 // 完整的图书生成过程，替代FormatStep.tsx中的startBookGeneration
 async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
   try {
@@ -287,6 +319,16 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     console.log(`[${orderId}] Book ready for printing status is managed by the interior PDF generation process`);
     
     console.log(`[${orderId}] Book generation process completed successfully`);
+    
+    // 触发打印请求检查
+    try {
+      console.log('Triggering print request check for newly completed orders...');
+      await triggerPrintRequestCheck(orderId, 'funny_biography');
+    } catch (printCheckError) {
+      console.error('Error triggering print request check:', printCheckError);
+      // 不中断处理流程
+    }
+    
     return { success: true, message: '图书生成成功完成' };
   } catch (error) {
     console.error(`[${orderId}] Error during book generation process:`, error);
@@ -555,6 +597,15 @@ export default async function handler(req, res) {
               }
               
               console.log(`Love Story book generation process completed for order ${orderId}`);
+              
+              // 触发打印请求检查
+              try {
+                console.log('Triggering print request check for newly completed orders...');
+                await triggerPrintRequestCheck(orderId, 'love_story');
+              } catch (printCheckError) {
+                console.error('Error triggering print request check:', printCheckError);
+                // 不中断处理流程
+              }
             } catch (error) {
               console.error('启动Love Story图书生成过程时出错:', error);
               console.error(error.stack); // 打印堆栈跟踪
