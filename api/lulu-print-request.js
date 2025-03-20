@@ -41,7 +41,14 @@ export default async function handler(req, res) {
     // 验证LuluPress API凭证
     const LULU_API_KEY = process.env.LULU_CLIENT_ID;
     const LULU_API_SECRET = process.env.LULU_CLIENT_SECRET;
-    const LULU_API_ENDPOINT = process.env.LULU_API_ENDPOINT || 'https://api.lulu.com';
+    
+    // 确定是否使用sandbox环境，并设置正确的API端点
+    const isSandbox = process.env.LULU_SANDBOX === 'true' || process.env.NODE_ENV !== 'production';
+    const LULU_API_ENDPOINT = isSandbox 
+      ? 'https://api.sandbox.lulu.com' 
+      : (process.env.LULU_API_ENDPOINT || 'https://api.lulu.com');
+    
+    console.log(`Using Lulu API endpoint: ${LULU_API_ENDPOINT} (Sandbox: ${isSandbox})`);
     
     if (!LULU_API_KEY || !LULU_API_SECRET) {
       console.error('Missing Lulu API credentials', {
@@ -153,29 +160,39 @@ export default async function handler(req, res) {
     // 准备打印请求
     // 构建打印请求数据
     const printJobData = {
-      name: `Order ${orderId} - ${order.title || 'Custom Book'}`,
       contact_email: 'orders@wishiyo.com',
       external_id: orderId,
       line_items: [
         {
+          external_id: `${orderId}-item-1`,
           title: order.title || 'Custom Book',
-          cover_url: order.cover_pdf_url,
-          interior_url: order.interior_pdf_url,
-          pod_package_id: 'PAPERBACK_BOOK',
           quantity: 1,
+          pod_package_id: order.pod_package_id || 'PAPERBACK_BOOK',
           shipping_level: 'MAIL', // 或者 'GROUND_HD' 或其他选项
-          shipping_address: {
-            name: `${customer.first_name} ${customer.last_name}`,
-            street1: customer.address_line1,
-            street2: customer.address_line2 || '',
-            city: customer.city,
-            state_code: customer.state,
-            country_code: customer.country || 'US',
-            postcode: customer.postal_code
+          // 使用printable_normalization结构，根据API文档要求
+          printable_normalization: {
+            cover: {
+              source_url: order.cover_pdf_url
+            },
+            interior: {
+              source_url: order.interior_pdf_url
+            }
           }
         }
-      ]
+      ],
+      shipping_address: {
+        name: `${customer.first_name} ${customer.last_name}`,
+        street1: customer.address_line1,
+        street2: customer.address_line2 || '',
+        city: customer.city,
+        state_code: customer.state,
+        country_code: customer.country || 'US',
+        postcode: customer.postal_code,
+        phone_number: customer.phone || ''
+      }
     };
+    
+    console.log('Print job payload:', JSON.stringify(printJobData, null, 2));
     
     // 使用获取的令牌提交打印作业
     console.log('Submitting print job to Lulu...');
