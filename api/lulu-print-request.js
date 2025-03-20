@@ -140,7 +140,15 @@ export default async function handler(req, res) {
     
     // 获取Lulu API访问令牌
     console.log('Requesting token from Lulu API...');
-    const tokenResponse = await fetch(`${LULU_API_ENDPOINT}/auth/realms/glasstree/protocol/openid-connect/token`, {
+    console.log(`Using Lulu API endpoint: ${LULU_API_ENDPOINT}`);
+    
+    // 使用正确的令牌端点
+    const tokenEndpoint = LULU_API_ENDPOINT.endsWith('/print-jobs/') 
+      ? LULU_API_ENDPOINT.replace('/print-jobs/', '/oauth2/token') 
+      : `${LULU_API_ENDPOINT}/oauth2/token`;
+    
+    console.log(`Token endpoint: ${tokenEndpoint}`);
+    const tokenResponse = await fetch(tokenEndpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
@@ -192,7 +200,12 @@ export default async function handler(req, res) {
     
     // 使用获取的令牌提交打印作业
     console.log('Submitting print job to Lulu...');
-    const printResponse = await fetch(`${LULU_API_ENDPOINT}/print-jobs/`, {
+    const printEndpoint = LULU_API_ENDPOINT.endsWith('/print-jobs/') 
+      ? LULU_API_ENDPOINT 
+      : `${LULU_API_ENDPOINT}/print-jobs/v1/print-jobs`;
+    
+    console.log(`Print endpoint: ${printEndpoint}`);
+    const printResponse = await fetch(printEndpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
