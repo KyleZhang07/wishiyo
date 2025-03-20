@@ -423,6 +423,27 @@ async function generateCoverPdf(backCoverFile: any, spineFile: any, frontCoverFi
     // 标记出书脊区域
     pdf.setDrawColor(0, 0, 255); // 蓝色
     pdf.rect(spineX, safetyMarginTop, spineWidth, bookCoverHeight);
+
+    // 标记出总文档尺寸（包括出血区域）
+    pdf.setDrawColor(0, 162, 232); // 浅蓝色
+    pdf.rect(0, 0, totalDocWidth, totalDocHeight);
+    
+    // 添加标签文本
+    pdf.setFontSize(6);
+    pdf.setTextColor(0, 162, 232);
+    pdf.text('TRIM / BLEED AREA', totalDocWidth/2, 0.1, { align: 'center' });
+    pdf.text('TRIM / BLEED AREA', totalDocWidth/2, totalDocHeight - 0.05, { align: 'center' });
+    
+    pdf.setTextColor(100, 100, 100);
+    pdf.text('SAFETY MARGIN', totalDocWidth/2, 0.25, { align: 'center' });
+    pdf.text('SAFETY MARGIN', totalDocWidth/2, totalDocHeight - 0.25, { align: 'center' });
+    
+    // 添加部分标签
+    pdf.setTextColor(0, 0, 255);
+    pdf.text('SPINE', spineX + (spineWidth/2), totalDocHeight/2, { angle: 90, align: 'center' });
+    
+    pdf.text('BACK COVER', safetyMarginLeft + (bookCoverWidth - 2 * safetyMarginWidth)/2, safetyMarginTop - 0.1, { align: 'center' });
+    pdf.text('FRONT COVER', frontCoverX + safetyMarginWidth + (bookCoverWidth - 2 * safetyMarginWidth)/2, safetyMarginTop - 0.1, { align: 'center' });
   }
   
   // 转换PDF为Uint8Array
@@ -543,6 +564,20 @@ async function generatePdf(imageFiles: any[], orderId: string, supabase: any): P
         bookTrimSize, 
         bookTrimSize
       );
+      
+      // 添加总文档边界
+      pdf.setDrawColor(0, 162, 232); // 浅蓝色
+      pdf.rect(0, 0, totalDocSize, totalDocSize);
+      
+      // 添加标签文本
+      pdf.setFontSize(6);
+      pdf.setTextColor(0, 162, 232);
+      pdf.text('TRIM / BLEED AREA', totalDocSize/2, 0.1, { align: 'center' });
+      pdf.text('TRIM / BLEED AREA', totalDocSize/2, totalDocSize - 0.05, { align: 'center' });
+      
+      // 添加页码标签
+      pdf.setTextColor(0, 0, 0);
+      pdf.text(`PAGE ${currentPage + 1}`, totalDocSize/2, bleedWidth/2, { align: 'center' });
     }
 
     currentPage++

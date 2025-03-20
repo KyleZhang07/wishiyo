@@ -197,6 +197,9 @@ serve(async (req) => {
     const totalWidth = frontCoverWidth + spineWidth + backCoverWidth + (bleed * 2);
     console.log(`Total calculated width: ${totalWidth}", PDF width: 12.38"`);
     
+    // Debug lines flag - set to true to show safety margins and trim lines
+    const debugLines = true;
+    
     // Add images to the PDF (coordinate system starts from top-left)
     // Starting position accounts for bleed area
     console.log('Adding back cover to PDF');
@@ -228,6 +231,68 @@ serve(async (req) => {
       frontCoverWidth, // width
       bookHeight // height
     );
+    
+    // Draw debug lines when enabled
+    if (debugLines) {
+      console.log('Adding debug lines to PDF');
+      
+      // Blue outer bleed area rectangle (total document size)
+      pdf.setDrawColor(0, 162, 232); // Light blue for bleed area
+      pdf.setLineWidth(0.01);
+      pdf.rect(0, 0, totalWidth, bookHeight + (bleed * 2));
+      
+      // Dark blue trim rectangles (actual book size after cutting)
+      pdf.setDrawColor(0, 0, 255); // Blue for trim lines
+      
+      // Back cover trim
+      pdf.rect(bleed, bleed, backCoverWidth, bookHeight);
+      
+      // Spine trim
+      pdf.rect(backCoverWidth + bleed, bleed, spineWidth, bookHeight);
+      
+      // Front cover trim
+      pdf.rect(backCoverWidth + spineWidth + bleed, bleed, frontCoverWidth, bookHeight);
+      
+      // Red safety margin rectangles
+      pdf.setDrawColor(255, 0, 0); // Red for safety margin
+      
+      // Back cover safety margin
+      pdf.rect(
+        bleed + safetyMargin, 
+        bleed + safetyMargin, 
+        backCoverWidth - (safetyMargin * 2), 
+        bookHeight - (safetyMargin * 2)
+      );
+      
+      // Front cover safety margin
+      pdf.rect(
+        backCoverWidth + spineWidth + bleed + safetyMargin,
+        bleed + safetyMargin,
+        frontCoverWidth - (safetyMargin * 2),
+        bookHeight - (safetyMargin * 2)
+      );
+      
+      // Add text labels
+      pdf.setFontSize(6);
+      pdf.setTextColor(0, 162, 232);
+      
+      // Top and bottom trim/bleed labels
+      pdf.text('TRIM / BLEED AREA', totalWidth/2, 0.1, { align: 'center' });
+      pdf.text('TRIM / BLEED AREA', totalWidth/2, bookHeight + (bleed * 2) - 0.05, { align: 'center' });
+      
+      // Safety margin labels
+      pdf.setTextColor(100, 100, 100);
+      pdf.text('SAFETY MARGIN', totalWidth/2, 0.25 + bleed, { align: 'center' });
+      pdf.text('SAFETY MARGIN', totalWidth/2, bookHeight + bleed - 0.25, { align: 'center' });
+      
+      // Spine label
+      pdf.setTextColor(0, 0, 255);
+      pdf.text('SPINE', backCoverWidth + bleed + (spineWidth/2), bookHeight/2, { angle: 90, align: 'center' });
+      
+      // Cover labels
+      pdf.text('BACK COVER', bleed + (backCoverWidth/2), bleed - 0.1, { align: 'center' });
+      pdf.text('FRONT COVER', backCoverWidth + spineWidth + bleed + (frontCoverWidth/2), bleed - 0.1, { align: 'center' });
+    }
 
     // Convert PDF to base64
     console.log('Converting PDF to base64');
