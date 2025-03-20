@@ -1324,9 +1324,6 @@ const GenerateStep = () => {
               const textIndex = index + 1;
               const text = imageTexts && imageTexts.length > textIndex ? imageTexts[textIndex]?.text : undefined;
               
-              // 如果图片为空，不渲染此卡片
-              if (!image) return null;
-              
               return (
                 <div key={index}>
                   <ContentImageCard
