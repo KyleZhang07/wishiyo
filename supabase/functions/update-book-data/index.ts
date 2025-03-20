@@ -43,6 +43,15 @@ serve(async (req) => {
       print_attempts
     } = await req.json();
 
+    // Debug logging for shipping address
+    console.log('update-book-data DEBUG INFO:', {
+      orderId,
+      table_name,
+      has_shipping_address: !!shipping_address,
+      shipping_address_type: shipping_address ? typeof shipping_address : 'N/A',
+      shipping_address_json: shipping_address ? JSON.stringify(shipping_address) : 'N/A'
+    });
+
     if (!orderId) {
       throw new Error('Order ID is required');
     }
@@ -80,7 +89,40 @@ serve(async (req) => {
     }
 
     if (shipping_address) {
-      updateData.shipping_address = shipping_address;
+      console.log('Setting shipping_address in database:', JSON.stringify(shipping_address));
+      
+      // Handle different formats of shipping_address to ensure proper JSONB storage
+      try {
+        // First determine if shipping_address is already a string or an object
+        let shippingAddressObj;
+        
+        if (typeof shipping_address === 'string') {
+          // If it's a string, parse it to ensure it's valid JSON
+          try {
+            shippingAddressObj = JSON.parse(shipping_address);
+          } catch (e) {
+            console.error('Failed to parse shipping_address string:', e);
+            // If parsing fails, use the original string
+            shippingAddressObj = { raw: shipping_address };
+          }
+        } else {
+          // If it's already an object, use it directly
+          shippingAddressObj = shipping_address;
+        }
+        
+        // Now ensure we have a proper object for JSONB field
+        // For PostgreSQL JSONB, we need a plain JavaScript object that can be stringified
+        updateData.shipping_address = shippingAddressObj;
+        
+        console.log('Final shipping_address format for database:', 
+          typeof updateData.shipping_address, 
+          JSON.stringify(updateData.shipping_address)
+        );
+      } catch (error) {
+        console.error('Error processing shipping_address:', error);
+        // If all else fails, try storing as a plain nested object
+        updateData.shipping_address = { data: shipping_address };
+      }
     }
     
     if (shipping_option) {

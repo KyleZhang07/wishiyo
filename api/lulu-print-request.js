@@ -104,12 +104,53 @@ export default async function handler(req, res) {
     
     // 检查订单的shipping_address
     if (!order.shipping_address) {
-      console.error(`Order ${orderId} is missing shipping address information`);
+      console.error(`Order ${orderId} is missing shipping address information`, {
+        order_id: order.order_id,
+        order_keys: Object.keys(order),
+        shipping_address_value: order.shipping_address
+      });
       return res.status(400).json({
         success: false,
         error: 'Order is missing shipping address information'
       });
     }
+
+    // 检查shipping_address的结构
+    console.log(`Order ${orderId} shipping address debug:`, {
+      shipping_address_type: typeof order.shipping_address,
+      shipping_address_keys: order.shipping_address ? Object.keys(order.shipping_address) : [],
+      shipping_address_json: JSON.stringify(order.shipping_address)
+    });
+    
+    // 确保shipping_address具有期望的结构
+    let shippingAddress = order.shipping_address;
+    
+    // 如果是字符串，尝试解析
+    if (typeof shippingAddress === 'string') {
+      try {
+        shippingAddress = JSON.parse(shippingAddress);
+      } catch (e) {
+        console.error(`Failed to parse shipping_address string: ${e.message}`);
+      }
+    }
+    
+    // 检查是否有嵌套的address对象
+    if (!shippingAddress.address && shippingAddress.line1) {
+      // 如果address字段缺失但直接有line1等字段，重构对象
+      shippingAddress = {
+        name: shippingAddress.name || order.customer_email || 'Customer',
+        address: {
+          line1: shippingAddress.line1,
+          line2: shippingAddress.line2 || '',
+          city: shippingAddress.city,
+          state: shippingAddress.state,
+          postal_code: shippingAddress.postal_code || shippingAddress.zip,
+          country: shippingAddress.country
+        }
+      };
+    }
+    
+    console.log(`Restructured shipping address:`, JSON.stringify(shippingAddress));
     
     // 使用订单提供的shipping_level或默认值
     const shippingLevel = order.shipping_level || 'MAIL';
@@ -166,7 +207,7 @@ export default async function handler(req, res) {
     // 构建打印请求数据
     const printJobData = {
       name: `Order ${orderId} - ${order.title || 'Custom Book'}`,
-      contact_email: order.customer_email || 'orders@wishiyo.com',
+      contact_email: order.customer_email || customer?.email || 'support@wishiyo.com',
       external_id: orderId,
       line_items: [
         {
@@ -174,17 +215,9 @@ export default async function handler(req, res) {
           cover_url: order.cover_source_url,
           interior_url: order.interior_source_url,
           pod_package_id: 'PAPERBACK_BOOK',
-          quantity: 1,
+          quantity: order.print_quantity || 1,
           shipping_level: shippingLevel,
-          shipping_address: {
-            name: order.shipping_address?.name || 'Customer',
-            street1: order.shipping_address?.address?.line1,
-            street2: order.shipping_address?.address?.line2 || '',
-            city: order.shipping_address?.address?.city,
-            state_code: order.shipping_address?.address?.state,
-            country_code: order.shipping_address?.address?.country || 'US',
-            postcode: order.shipping_address?.address?.postal_code
-          }
+          shipping_address: shippingAddress
         }
       ]
     };

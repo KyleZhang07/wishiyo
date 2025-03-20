@@ -431,10 +431,13 @@ export default async function handler(req, res) {
           // 调试日志 - 详细输出shipping地址信息
           console.log('DETAILED SHIPPING ADDRESS DEBUG:', {
             hasShipping: !!expandedSession.shipping,
-            shippingAddress: shippingAddress,
-            shippingName: expandedSession.shipping?.name,
-            shippingAddressLine1: expandedSession.shipping?.address?.line1,
-            customerPhone: expandedSession.customer_details?.phone
+            shippingAddress: JSON.stringify(shippingAddress),
+            expandedSession: JSON.stringify({
+              customer: expandedSession.customer ? { id: expandedSession.customer.id, email: expandedSession.customer.email } : null,
+              shipping: expandedSession.shipping,
+              customer_details: expandedSession.customer_details
+            }),
+            sessionId: session.id
           });
           
           // 提取运输速度信息
@@ -503,7 +506,8 @@ export default async function handler(req, res) {
                 }
               );
               
-              const updateResponseText = await updateResponse.text();
+              const updateResponseJson = await updateResponse.json().catch(e => ({ error: e.message }));
+              const updateResponseText = JSON.stringify(updateResponseJson);
               console.log(`Supabase response status: ${updateResponse.status}`);
               console.log(`Supabase response body: ${updateResponseText}`);
               
@@ -582,7 +586,8 @@ export default async function handler(req, res) {
                 }
               );
               
-              const updateResponseText = await updateResponse.text();
+              const updateResponseJson = await updateResponse.json().catch(e => ({ error: e.message }));
+              const updateResponseText = JSON.stringify(updateResponseJson);
               console.log(`Supabase response status for love story: ${updateResponse.status}`);
               console.log(`Supabase response body for love story: ${updateResponseText}`);
               
