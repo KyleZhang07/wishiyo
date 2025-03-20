@@ -103,7 +103,10 @@ serve(async (req) => {
     const backCoverImages = imageFiles.filter(file => file.name.includes('love-back-cover-')).sort((a, b) => a.name.localeCompare(b.name))
     const spineImages = imageFiles.filter(file => file.name.includes('love-spine-')).sort((a, b) => a.name.localeCompare(b.name))
     
-    // 修改介绍图片筛选逻辑，只使用 intro-1, intro-2 这种格式
+    // 添加blessing图片筛选
+    const blessingImages = imageFiles.filter(file => file.name.includes('blessing')).sort((a, b) => a.name.localeCompare(b.name))
+    
+    // 修改介绍图片筛选逻辑，只使用 intro-数字 格式
     const introImages = imageFiles.filter(file => {
       // 使用正则表达式匹配 intro-数字 格式
       const introPattern = /intro-\d+/;
@@ -117,9 +120,9 @@ serve(async (req) => {
     
     // 修改内容图片筛选逻辑，只使用 content-数字-数字 格式
     const contentImages = imageFiles.filter(file => {
-      // 使用正则表达式匹配 content-数字-数字 格式
+      // 使用正则表达式匹配 content-数字-数字 格式，但排除love-story-content前缀
       const contentPattern = /content-\d+-\d+/;
-      return contentPattern.test(file.name);
+      return contentPattern.test(file.name) && !file.name.includes('love-story-content');
     }).sort((a, b) => {
       // 提取第一个数字进行主排序，第二个数字进行次排序
       const matchA = a.name.match(/content-(\d+)-(\d+)/);
@@ -148,6 +151,7 @@ serve(async (req) => {
             coverImagesCount: coverImages.length,
             backCoverImagesCount: backCoverImages.length,
             spineImagesCount: spineImages.length,
+            blessingImagesCount: blessingImages.length,
             introImagesCount: introImages.length,
             contentImagesCount: contentImages.length
           }
@@ -159,8 +163,8 @@ serve(async (req) => {
     // 生成完整封面PDF (封底 + 书脊 + 封面)
     const coverPdf = await generateCoverPdf(backCoverImages[0], spineImages[0], coverImages[0], orderId, supabaseAdmin)
     
-    // 生成内页PDF（合并intro和content图片）
-    const interiorPdf = await generatePdf([...introImages, ...contentImages], orderId, supabaseAdmin)
+    // 生成内页PDF（按顺序合并：blessing + intro + content图片）
+    const interiorPdf = await generatePdf([...blessingImages, ...introImages, ...contentImages], orderId, supabaseAdmin)
 
     // 上传PDF到Storage
     const coverPdfPath = `love-story/${orderId}/cover.pdf`
@@ -395,7 +399,7 @@ async function generateCoverPdf(backCoverFile: any, spineFile: any, frontCoverFi
   )
   
   // 如果需要，可以添加辅助线来标记安全边距、裁切线等（仅用于调试）
-  const debugLines = false; // 设置为true以显示调试线
+  const debugLines = true; // 设置为true以显示调试线
   if (debugLines) {
     pdf.setDrawColor(255, 0, 0); // 红色
     pdf.setLineWidth(0.01);
@@ -428,12 +432,19 @@ async function generateCoverPdf(backCoverFile: any, spineFile: any, frontCoverFi
 
 // 辅助函数：生成PDF
 async function generatePdf(imageFiles: any[], orderId: string, supabase: any): Promise<Uint8Array> {
+  // 根据Lulu模板修改为方形格式
   const pdf = new jsPDF({
     orientation: 'portrait',
-    unit: 'mm',
-    format: 'a4'
+    unit: 'in',
+    format: [8.75, 8.75] // 总文档尺寸 8.75" x 8.75"
   })
 
+  // Lulu内页模板尺寸设置
+  const totalDocSize = 8.75;       // 总文档尺寸
+  const bookTrimSize = 8.5;        // 书籍裁切尺寸
+  const bleedWidth = 0.125;        // 出血区域宽度
+  const safetyMarginWidth = 0.5;   // 安全边距宽度
+  
   let currentPage = 0
 
   // 首先获取book记录以获取client_id
@@ -498,17 +509,41 @@ async function generatePdf(imageFiles: any[], orderId: string, supabase: any): P
       pdf.addPage()
     }
 
-    // 添加图片到PDF
+    // 添加图片到PDF - 填满整个页面包括出血区域
     pdf.addImage(
       imageBase64,
       'JPEG',
       0, // x坐标
       0, // y坐标
-      210, // 宽度（A4纸宽度为210mm）
-      297, // 高度（A4纸高度为297mm）
+      totalDocSize, // 宽度（总文档宽度）
+      totalDocSize, // 高度（总文档高度）
       undefined, // 别名
       'FAST' // 压缩选项
     )
+    
+    // 添加安全边距指示线（仅用于调试）
+    const debugLines = true; // 设置为true显示调试线
+    if (debugLines) {
+      pdf.setDrawColor(255, 0, 0); // 红色
+      pdf.setLineWidth(0.01);
+      
+      // 安全边距矩形
+      pdf.rect(
+        safetyMarginWidth, 
+        safetyMarginWidth, 
+        totalDocSize - (2 * safetyMarginWidth), 
+        totalDocSize - (2 * safetyMarginWidth)
+      );
+      
+      // 裁切线（Trim Size）
+      pdf.setDrawColor(0, 0, 255); // 蓝色
+      pdf.rect(
+        bleedWidth, 
+        bleedWidth, 
+        bookTrimSize, 
+        bookTrimSize
+      );
+    }
 
     currentPage++
   }
