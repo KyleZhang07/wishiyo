@@ -48,6 +48,12 @@ export default async function handler(req, res) {
       shipping_address_collection: {
         allowed_countries: ['US', 'CA', 'GB', 'AU'], // 允许的国家列表
       },
+      // 收集联系电话 
+      phone_number_collection: {
+        enabled: true, // 启用电话号码收集
+      },
+      // 收集完整联系信息
+      billing_address_collection: 'required',
       shipping_options: [
         {
           shipping_rate_data: {

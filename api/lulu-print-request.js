@@ -41,16 +41,7 @@ export default async function handler(req, res) {
     // 验证LuluPress API凭证
     const LULU_API_KEY = process.env.LULU_CLIENT_ID;
     const LULU_API_SECRET = process.env.LULU_CLIENT_SECRET;
-    
-    // 确定是否使用sandbox环境，并设置正确的API端点
-    // 强制使用sandbox环境进行测试
-    const forceSandbox = true; // 临时设置，之后可以改为false或使用环境变量
-    const isSandbox = forceSandbox || process.env.LULU_SANDBOX === 'true';
-    const LULU_API_ENDPOINT = isSandbox 
-      ? 'https://api.sandbox.lulu.com' 
-      : (process.env.LULU_API_ENDPOINT || 'https://api.lulu.com');
-    
-    console.log(`Using Lulu API endpoint: ${LULU_API_ENDPOINT} (Sandbox: ${isSandbox})`);
+    const LULU_API_ENDPOINT = process.env.LULU_API_ENDPOINT || 'https://api.lulu.com';
     
     if (!LULU_API_KEY || !LULU_API_SECRET) {
       console.error('Missing Lulu API credentials', {
@@ -104,30 +95,79 @@ export default async function handler(req, res) {
     }
     
     // 检查必要的PDF URL
-    if (!order.cover_source_url || !order.interior_source_url) {
-      console.error('Missing required PDF URLs:', {
-        hasCoverUrl: !!order.cover_source_url,
-        hasInteriorUrl: !!order.interior_source_url,
-        coverUrl: order.cover_source_url,
-        interiorUrl: order.interior_source_url
-      });
+    if (!order.cover_pdf_url || !order.interior_pdf_url) {
       return res.status(400).json({
         success: false,
         error: 'Order is missing required PDF files'
       });
     }
     
-    // 检查是否有收货地址信息
+    // 检查订单的shipping_address
     if (!order.shipping_address) {
-      console.error('Missing shipping address for order:', orderId);
+      console.log(`Order ${orderId} is missing shipping_address, attempting to create from other fields...`);
+      
+      // 如果没有shipping_address，尝试从其他字段创建
+      if (order.customer_email || order.recipient_phone) {
+        const addressName = order.customer_name || 'Customer';
+        
+        // 如果有recipient_phone，使用它构建一个基本的地址
+        if (order.recipient_phone) {
+          order.shipping_address = {
+            name: addressName,
+            address: {
+              line1: '(Required by printer, will be updated later)',
+              city: '(Required by printer)',
+              state: 'NY',
+              country: 'US',
+              postal_code: '10001'
+            }
+          };
+          console.log(`Created basic shipping address for order ${orderId} using recipient_phone`);
+        } else {
+          return res.status(400).json({
+            success: false,
+            error: 'Order is missing required shipping address information'
+          });
+        }
+      } else {
+        return res.status(400).json({
+          success: false,
+          error: 'Order is missing required shipping address information'
+        });
+      }
+    }
+    
+    // 验证shipping_address的必要字段
+    if (!order.shipping_address.name || 
+        !order.shipping_address.address || 
+        !order.shipping_address.address.line1 || 
+        !order.shipping_address.address.city || 
+        !order.shipping_address.address.postal_code) {
+      
+      console.error(`Order ${orderId} shipping address is missing required fields`);
       return res.status(400).json({
         success: false,
-        error: 'Order is missing shipping address information'
+        error: 'Shipping address is missing required fields'
       });
     }
-
-    // 解析收货地址
-    const shippingAddress = order.shipping_address;
+    
+    // 使用订单提供的shipping_level或默认值
+    const shippingLevel = order.shipping_level || 'MAIL';
+    
+    // 获取客户信息
+    const { data: customer, error: customerError } = await supabase
+      .from('customers')
+      .select('*')
+      .eq('client_id', order.client_id)
+      .single();
+      
+    if (customerError || !customer) {
+      console.error(`Error fetching customer for order ${orderId}:`, customerError);
+      return res.status(404).json({
+        success: false,
+        error: `Customer information not found: ${customerError?.message || 'Unknown error'}`
+      });
+    }
     
     // 获取Lulu API访问令牌
     console.log('Requesting token from Lulu API...');
@@ -165,45 +205,34 @@ export default async function handler(req, res) {
     // 准备打印请求
     // 构建打印请求数据
     const printJobData = {
+      name: `Order ${orderId} - ${order.title || 'Custom Book'}`,
       contact_email: order.customer_email || 'orders@wishiyo.com',
       external_id: orderId,
       line_items: [
         {
-          external_id: `${orderId}-item-1`,
           title: order.title || 'Custom Book',
-          quantity: 1,
-          // 使用printable_normalization结构，根据API文档要求
-          printable_normalization: {
-            pod_package_id: order.pod_package_id || '0600X0900BWSTDPB060UW444MXX',
-            cover: {
-              source_url: order.cover_source_url
-            },
-            interior: {
-              source_url: order.interior_source_url
-            }
-          },
-          shipping_level: 'MAIL' // 或者 'GROUND_HD' 或其他选项
+          cover_url: order.cover_pdf_url,
+          interior_url: order.interior_pdf_url,
+          pod_package_id: 'PAPERBACK_BOOK',
+          quantity: order.print_quantity || 1,
+          shipping_level: shippingLevel,
+          shipping_address: {
+            name: order.shipping_address.name || 'Customer',
+            street1: order.shipping_address.address.line1,
+            street2: order.shipping_address.address?.line2 || '',
+            city: order.shipping_address.address.city,
+            state_code: order.shipping_address.address.state,
+            country_code: order.shipping_address.address.country || 'US',
+            postcode: order.shipping_address.address.postal_code,
+            phone_number: order.recipient_phone || ''
+          }
         }
-      ],
-      shipping_address: {
-        name: shippingAddress.name,
-        street1: shippingAddress.street1 || shippingAddress.address_line1,
-        street2: shippingAddress.street2 || shippingAddress.address_line2 || '',
-        city: shippingAddress.city,
-        state_code: shippingAddress.state_code || shippingAddress.state,
-        country_code: shippingAddress.country_code || shippingAddress.country || 'US',
-        postcode: shippingAddress.postcode || shippingAddress.postal_code,
-        phone_number: shippingAddress.phone_number || shippingAddress.phone || '0000000000',
-        email: shippingAddress.email || order.customer_email || 'orders@wishiyo.com'
-      }
+      ]
     };
     
-    console.log('Print job payload:', JSON.stringify(printJobData, null, 2));
-    
-    // 发送请求时显示完整端点
-    const printJobsEndpoint = `${LULU_API_ENDPOINT}/print-jobs/`;
-    console.log(`Submitting print job to: ${printJobsEndpoint}`);
-    const printResponse = await fetch(printJobsEndpoint, {
+    // 使用获取的令牌提交打印作业
+    console.log('Submitting print job to Lulu...');
+    const printResponse = await fetch(`${LULU_API_ENDPOINT}/print-jobs/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
