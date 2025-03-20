@@ -102,8 +102,42 @@ serve(async (req) => {
     const coverImages = imageFiles.filter(file => file.name.includes('love-cover-') && !file.name.includes('back')).sort((a, b) => a.name.localeCompare(b.name))
     const backCoverImages = imageFiles.filter(file => file.name.includes('love-back-cover-')).sort((a, b) => a.name.localeCompare(b.name))
     const spineImages = imageFiles.filter(file => file.name.includes('love-spine-')).sort((a, b) => a.name.localeCompare(b.name))
-    const introImages = imageFiles.filter(file => file.name.includes('intro')).sort((a, b) => a.name.localeCompare(b.name))
-    const contentImages = imageFiles.filter(file => file.name.includes('content')).sort((a, b) => a.name.localeCompare(b.name))
+    
+    // 修改介绍图片筛选逻辑，只使用 intro-1, intro-2 这种格式
+    const introImages = imageFiles.filter(file => {
+      // 使用正则表达式匹配 intro-数字 格式
+      const introPattern = /intro-\d+/;
+      return introPattern.test(file.name);
+    }).sort((a, b) => {
+      // 提取数字进行排序
+      const numA = parseInt(a.name.match(/intro-(\d+)/)?.[1] || '0');
+      const numB = parseInt(b.name.match(/intro-(\d+)/)?.[1] || '0');
+      return numA - numB;
+    });
+    
+    // 修改内容图片筛选逻辑，只使用 content-数字-数字 格式
+    const contentImages = imageFiles.filter(file => {
+      // 使用正则表达式匹配 content-数字-数字 格式
+      const contentPattern = /content-\d+-\d+/;
+      return contentPattern.test(file.name);
+    }).sort((a, b) => {
+      // 提取第一个数字进行主排序，第二个数字进行次排序
+      const matchA = a.name.match(/content-(\d+)-(\d+)/);
+      const matchB = b.name.match(/content-(\d+)-(\d+)/);
+      
+      if (!matchA || !matchB) return 0;
+      
+      const firstNumA = parseInt(matchA[1]);
+      const firstNumB = parseInt(matchB[1]);
+      
+      if (firstNumA !== firstNumB) {
+        return firstNumA - firstNumB;
+      }
+      
+      const secondNumA = parseInt(matchA[2]);
+      const secondNumB = parseInt(matchB[2]);
+      return secondNumA - secondNumB;
+    });
 
     // 检查是否有足够的图片
     if (coverImages.length === 0 || introImages.length === 0 || contentImages.length === 0 || backCoverImages.length === 0 || spineImages.length === 0) {
