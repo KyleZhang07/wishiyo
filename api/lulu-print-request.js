@@ -117,20 +117,17 @@ export default async function handler(req, res) {
       });
     }
     
-    // 获取客户信息
-    const { data: customer, error: customerError } = await supabase
-      .from('customers')
-      .select('*')
-      .eq('client_id', order.client_id)
-      .single();
-      
-    if (customerError || !customer) {
-      console.error(`Error fetching customer for order ${orderId}:`, customerError);
-      return res.status(404).json({
+    // 检查是否有收货地址信息
+    if (!order.shipping_address) {
+      console.error('Missing shipping address for order:', orderId);
+      return res.status(400).json({
         success: false,
-        error: `Customer information not found: ${customerError?.message || 'Unknown error'}`
+        error: 'Order is missing shipping address information'
       });
     }
+
+    // 解析收货地址
+    const shippingAddress = order.shipping_address;
     
     // 获取Lulu API访问令牌
     console.log('Requesting token from Lulu API...');
@@ -168,7 +165,7 @@ export default async function handler(req, res) {
     // 准备打印请求
     // 构建打印请求数据
     const printJobData = {
-      contact_email: 'orders@wishiyo.com',
+      contact_email: order.customer_email || 'orders@wishiyo.com',
       external_id: orderId,
       line_items: [
         {
@@ -189,15 +186,15 @@ export default async function handler(req, res) {
         }
       ],
       shipping_address: {
-        name: `${customer.first_name} ${customer.last_name}`,
-        street1: customer.address_line1,
-        street2: customer.address_line2 || '',
-        city: customer.city,
-        state_code: customer.state,
-        country_code: customer.country || 'US',
-        postcode: customer.postal_code,
-        phone_number: customer.phone || '',
-        email: customer.email || order.customer_email || 'orders@wishiyo.com'
+        name: shippingAddress.name,
+        street1: shippingAddress.street1 || shippingAddress.address_line1,
+        street2: shippingAddress.street2 || shippingAddress.address_line2 || '',
+        city: shippingAddress.city,
+        state_code: shippingAddress.state_code || shippingAddress.state,
+        country_code: shippingAddress.country_code || shippingAddress.country || 'US',
+        postcode: shippingAddress.postcode || shippingAddress.postal_code,
+        phone_number: shippingAddress.phone_number || shippingAddress.phone || '0000000000',
+        email: shippingAddress.email || order.customer_email || 'orders@wishiyo.com'
       }
     };
     
