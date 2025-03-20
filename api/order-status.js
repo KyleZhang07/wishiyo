@@ -189,10 +189,17 @@ async function submitPrintRequest(book, type) {
   try {
     console.log(`Submitting print request for ${type} book: ${book.order_id}`);
     
-    // 获取基础URL - 使用当前域名
-    const baseUrl = typeof window !== 'undefined' 
-      ? window.location.origin 
-      : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8080';
+    // 获取基础URL - 修正为使用Vercel URL环境变量或域名
+    let baseUrl;
+    if (process.env.NODE_ENV === 'production') {
+      baseUrl = process.env.VERCEL_URL 
+        ? `https://${process.env.VERCEL_URL}`
+        : 'https://wishiyo.com';
+    } else {
+      baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    }
+    
+    console.log(`Using baseUrl: ${baseUrl} for print request`);
     
     // 调用Vercel API函数发送打印请求
     const response = await fetch(`${baseUrl}/api/lulu-print-request`, {
