@@ -42,6 +42,9 @@ export default async function handler(req, res) {
     const LULU_API_KEY = process.env.LULU_CLIENT_ID;
     const LULU_API_SECRET = process.env.LULU_CLIENT_SECRET;
     const LULU_API_ENDPOINT = process.env.LULU_API_ENDPOINT || 'https://api.lulu.com';
+    // 定义认证端点和打印作业端点
+    const AUTH_ENDPOINT = 'https://api.lulu.com/auth/realms/glasstree/protocol/openid-connect/token';
+    const PRINT_JOBS_ENDPOINT = 'https://api.lulu.com/print-jobs/v1/print-jobs';
     
     if (!LULU_API_KEY || !LULU_API_SECRET) {
       console.error('Missing Lulu API credentials', {
@@ -143,7 +146,7 @@ export default async function handler(req, res) {
     console.log(`Using Lulu API endpoint: ${LULU_API_ENDPOINT}`);
     
     // 使用正确的令牌端点
-    const authEndpoint = `${LULU_API_ENDPOINT}/auth/realms/glasstree/protocol/openid-connect/token`;
+    const authEndpoint = AUTH_ENDPOINT;
     console.log(`Auth endpoint: ${authEndpoint}`);
     
     // 创建 Basic Auth 凭证
@@ -200,7 +203,7 @@ export default async function handler(req, res) {
     
     // 使用获取的令牌提交打印作业
     console.log('Submitting print job to Lulu...');
-    const printEndpoint = `${LULU_API_ENDPOINT}/print-jobs/v1/print-jobs`;
+    const printEndpoint = PRINT_JOBS_ENDPOINT;
     
     console.log(`Print endpoint: ${printEndpoint}`);
     const printResponse = await fetch(printEndpoint, {
