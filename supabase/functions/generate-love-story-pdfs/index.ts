@@ -106,11 +106,11 @@ serve(async (req) => {
     // 添加blessing图片筛选
     const blessingImages = imageFiles.filter(file => file.name.includes('blessing')).sort((a, b) => a.name.localeCompare(b.name))
     
-    // 修改介绍图片筛选逻辑，只使用 intro-数字 格式
+    // 修改介绍图片筛选逻辑，只使用 intro-数字 格式，并排除旧的 love-story-intro 格式
     const introImages = imageFiles.filter(file => {
-      // 使用正则表达式匹配 intro-数字 格式
+      // 使用正则表达式匹配 intro-数字 格式，但排除love-story-intro前缀
       const introPattern = /intro-\d+/;
-      return introPattern.test(file.name);
+      return introPattern.test(file.name) && !file.name.includes('love-story-intro');
     }).sort((a, b) => {
       // 提取数字进行排序
       const numA = parseInt(a.name.match(/intro-(\d+)/)?.[1] || '0');
@@ -330,7 +330,7 @@ async function generateCoverPdf(backCoverFile: any, spineFile: any, frontCoverFi
   const bookTrimHeight = 8.5     // 书籍裁切尺寸高度
   const spineWidth = 0.25        // 书脊宽度 (Minimum Spine Width)
   const wrapAreaWidth = 0.75     // 出血区域宽度 (Wrap Area)
-  const safetyMarginWidth = 0.5  // 安全边距 (Safety Margin)
+  const safetyMarginWidth = 0.5  // 安全边距宽度
   const bleedWidth = 0.125       // 出血边缘宽度（从trim到cover）
   
   // 计算完整文档的布局（根据图1）

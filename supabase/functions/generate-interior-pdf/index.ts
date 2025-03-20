@@ -3,6 +3,7 @@ import { jsPDF } from "https://esm.sh/jspdf@2.5.1";
 import { autoTable } from "https://esm.sh/jspdf-autotable@3.8.1";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.8.0";
 
+// CORS 头设置
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -38,6 +39,7 @@ serve(async (req) => {
 
     console.log(`Generating interior PDF for order ${orderId}`);
 
+    // 获取 Supabase 凭证
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
     
@@ -51,6 +53,7 @@ serve(async (req) => {
     let title = bookTitle;
     let author = authorName;
 
+    // 如果未提供内容，从数据库获取
     if (!finalBookContent || !title || !author) {
       console.log(`Fetching book data for order ${orderId} from database to get missing info`);
       const { data: bookData, error: fetchError } = await supabase
@@ -151,6 +154,7 @@ serve(async (req) => {
       }
     }
 
+    // 设置页面出血和尺寸
     const bleed = 0.125;
     const pageWidth = 6 + (bleed * 2);
     const pageHeight = 9 + (bleed * 2);
@@ -161,6 +165,7 @@ serve(async (req) => {
       format: [pageWidth, pageHeight]
     });
 
+    // 设置页边距
     const margin = {
       top: 0.5 + bleed,
       right: 0.5 + bleed,
@@ -170,6 +175,7 @@ serve(async (req) => {
 
     const debugLines = true;
 
+    // 添加新页面的函数
     const addPage = () => {
       pdf.addPage([pageWidth, pageHeight]);
       
@@ -195,6 +201,7 @@ serve(async (req) => {
       }
     };
 
+    // 添加标题页
     pdf.setFontSize(24);
     pdf.setTextColor(0, 0, 0);
     pdf.text(title, pageWidth / 2, pageHeight / 3, { align: 'center' });
@@ -232,11 +239,13 @@ serve(async (req) => {
       currentPage += Math.max(1, estimatedSectionPages);
     });
 
+    // 确保章节从偶数页开始
     if (currentPage % 2 !== 0) {
       addPage();
       currentPage++;
     }
 
+    // 添加章节内容
     finalBookContent.forEach((chapter: BookChapter) => {
       addPage();
       
@@ -271,6 +280,7 @@ serve(async (req) => {
       });
     });
 
+    // 生成 PDF 输出
     const pdfOutput = pdf.output('datauristring');
     
     console.log(`Uploading interior PDF to storage...`);
@@ -282,6 +292,7 @@ serve(async (req) => {
       console.log(`Interior PDF uploaded successfully to storage with URL: ${interiorFileUrl}`);
     }
     
+    // 更新数据库
     const pageCount = finalBookContent.length * 5;
     const updateData: any = {
       interior_pdf: pdfOutput
