@@ -41,7 +41,8 @@ export default async function handler(req, res) {
     // 验证LuluPress API凭证
     const LULU_API_KEY = process.env.LULU_CLIENT_ID;
     const LULU_API_SECRET = process.env.LULU_CLIENT_SECRET;
-    const LULU_API_ENDPOINT = 'https://api.lulu.com'; // 直接使用正确的端点，不再依赖环境变量
+    // 使用沙盒环境
+    const LULU_API_ENDPOINT = 'https://api.sandbox.lulu.com'; // 使用沙盒环境
     // 定义认证端点和打印作业端点
     const AUTH_ENDPOINT = `${LULU_API_ENDPOINT}/auth/realms/glasstree/protocol/openid-connect/token`;
     const PRINT_JOBS_ENDPOINT = `${LULU_API_ENDPOINT}/print-jobs/v1/print-jobs`;
@@ -233,8 +234,9 @@ export default async function handler(req, res) {
           title: order.title || 'Custom Book',
           cover_url: order.cover_source_url,
           interior_url: order.interior_source_url,
-          pod_package_id: 'PAPERBACK_BOOK',
-          quantity: order.print_quantity || 1
+          pod_package_id: '0600X0900BWSTDPB060UW444MXX', // 使用文档中的有效值
+          quantity: order.print_quantity || 1,
+          page_count: order.page_count || 100 // 添加默认页数
         }
       ],
       shipping_level: shippingLevel,
