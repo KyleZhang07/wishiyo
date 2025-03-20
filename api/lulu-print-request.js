@@ -138,21 +138,6 @@ export default async function handler(req, res) {
     // 使用订单提供的shipping_level或默认值
     const shippingLevel = order.shipping_level || 'MAIL';
     
-    // 获取客户信息
-    const { data: customer, error: customerError } = await supabase
-      .from('customers')
-      .select('*')
-      .eq('client_id', order.client_id)
-      .single();
-      
-    if (customerError || !customer) {
-      console.error(`Error fetching customer for order ${orderId}:`, customerError);
-      return res.status(404).json({
-        success: false,
-        error: `Customer information not found: ${customerError?.message || 'Unknown error'}`
-      });
-    }
-    
     // 获取Lulu API访问令牌
     console.log('Requesting token from Lulu API...');
     const tokenResponse = await fetch(`${LULU_API_ENDPOINT}/auth/realms/glasstree/protocol/openid-connect/token`, {
@@ -190,7 +175,7 @@ export default async function handler(req, res) {
     // 构建打印请求数据
     const printJobData = {
       name: `Order ${orderId} - ${order.title || 'Custom Book'}`,
-      contact_email: order.customer_email || customer?.email || 'support@wishiyo.com',
+      contact_email: order.customer_email || 'support@wishiyo.com',
       external_id: orderId,
       line_items: [
         {
