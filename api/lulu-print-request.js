@@ -95,7 +95,7 @@ export default async function handler(req, res) {
     }
     
     // 检查必要的PDF URL
-    if (!order.cover_pdf_url || !order.interior_pdf_url) {
+    if (!order.cover_source_url || !order.interior_source_url) {
       return res.status(400).json({
         success: false,
         error: 'Order is missing required PDF files'
@@ -104,50 +104,10 @@ export default async function handler(req, res) {
     
     // 检查订单的shipping_address
     if (!order.shipping_address) {
-      console.log(`Order ${orderId} is missing shipping_address, attempting to create from other fields...`);
-      
-      // 如果没有shipping_address，尝试从其他字段创建
-      if (order.customer_email || order.recipient_phone) {
-        const addressName = order.customer_name || 'Customer';
-        
-        // 如果有recipient_phone，使用它构建一个基本的地址
-        if (order.recipient_phone) {
-          order.shipping_address = {
-            name: addressName,
-            address: {
-              line1: '(Required by printer, will be updated later)',
-              city: '(Required by printer)',
-              state: 'NY',
-              country: 'US',
-              postal_code: '10001'
-            }
-          };
-          console.log(`Created basic shipping address for order ${orderId} using recipient_phone`);
-        } else {
-          return res.status(400).json({
-            success: false,
-            error: 'Order is missing required shipping address information'
-          });
-        }
-      } else {
-        return res.status(400).json({
-          success: false,
-          error: 'Order is missing required shipping address information'
-        });
-      }
-    }
-    
-    // 验证shipping_address的必要字段
-    if (!order.shipping_address.name || 
-        !order.shipping_address.address || 
-        !order.shipping_address.address.line1 || 
-        !order.shipping_address.address.city || 
-        !order.shipping_address.address.postal_code) {
-      
-      console.error(`Order ${orderId} shipping address is missing required fields`);
+      console.error(`Order ${orderId} is missing shipping address information`);
       return res.status(400).json({
         success: false,
-        error: 'Shipping address is missing required fields'
+        error: 'Order is missing shipping address information'
       });
     }
     
@@ -211,20 +171,19 @@ export default async function handler(req, res) {
       line_items: [
         {
           title: order.title || 'Custom Book',
-          cover_url: order.cover_pdf_url,
-          interior_url: order.interior_pdf_url,
+          cover_url: order.cover_source_url,
+          interior_url: order.interior_source_url,
           pod_package_id: 'PAPERBACK_BOOK',
-          quantity: order.print_quantity || 1,
+          quantity: 1,
           shipping_level: shippingLevel,
           shipping_address: {
-            name: order.shipping_address.name || 'Customer',
-            street1: order.shipping_address.address.line1,
-            street2: order.shipping_address.address?.line2 || '',
-            city: order.shipping_address.address.city,
-            state_code: order.shipping_address.address.state,
-            country_code: order.shipping_address.address.country || 'US',
-            postcode: order.shipping_address.address.postal_code,
-            phone_number: order.recipient_phone || ''
+            name: order.shipping_address?.name || 'Customer',
+            street1: order.shipping_address?.address?.line1,
+            street2: order.shipping_address?.address?.line2 || '',
+            city: order.shipping_address?.address?.city,
+            state_code: order.shipping_address?.address?.state,
+            country_code: order.shipping_address?.address?.country || 'US',
+            postcode: order.shipping_address?.address?.postal_code
           }
         }
       ]

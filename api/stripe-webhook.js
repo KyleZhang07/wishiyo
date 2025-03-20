@@ -428,6 +428,15 @@ export default async function handler(req, res) {
             }
           } : null;
           
+          // 调试日志 - 详细输出shipping地址信息
+          console.log('DETAILED SHIPPING ADDRESS DEBUG:', {
+            hasShipping: !!expandedSession.shipping,
+            shippingAddress: shippingAddress,
+            shippingName: expandedSession.shipping?.name,
+            shippingAddressLine1: expandedSession.shipping?.address?.line1,
+            customerPhone: expandedSession.customer_details?.phone
+          });
+          
           // 提取运输速度信息
           const shippingOption = expandedSession.shipping_cost ? {
             shipping_rate: expandedSession.shipping_cost.shipping_rate,
