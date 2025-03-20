@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import nodeFetch from 'node-fetch';
 
 // 初始化Supabase客户端 - 优先使用服务器变量
 const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -41,11 +42,11 @@ export default async function handler(req, res) {
     // 验证LuluPress API凭证
     const LULU_API_KEY = process.env.LULU_CLIENT_ID;
     const LULU_API_SECRET = process.env.LULU_CLIENT_SECRET;
-    // 使用沙盒环境
-    const LULU_API_ENDPOINT = 'https://api.sandbox.lulu.com'; // 使用沙盒环境
+    // 从环境变量中获取API端点
+    const LULU_API_ENDPOINT = process.env.LULU_API_ENDPOINT || 'https://api.sandbox.lulu.com';
     // 定义认证端点和打印作业端点
     const AUTH_ENDPOINT = `${LULU_API_ENDPOINT}/auth/realms/glasstree/protocol/openid-connect/token`;
-    const PRINT_JOBS_ENDPOINT = `${LULU_API_ENDPOINT}/print-jobs/v1/print-jobs`;
+    const PRINT_JOBS_ENDPOINT = `${LULU_API_ENDPOINT}/print-jobs`;
     
     if (!LULU_API_KEY || !LULU_API_SECRET) {
       console.error('Missing Lulu API credentials', {
@@ -176,33 +177,26 @@ export default async function handler(req, res) {
     // 使用订单提供的shipping_level或默认值
     let shippingLevel = order.shipping_level || 'MAIL';
     
-    // 验证shipping_level是否为有效值
-    const validShippingLevels = ['MAIL', 'PRIORITY_MAIL', 'GROUND', 'EXPEDITED', 'EXPRESS'];
-    if (!validShippingLevels.includes(shippingLevel)) {
-      console.warn(`Invalid shipping level: ${shippingLevel}, using default: MAIL`);
+    // 更宽松的shipping_level验证，只在明显错误时才使用默认值
+    // 不再限制为固定的几个值，而是只检查是否为非空字符串
+    if (!shippingLevel || typeof shippingLevel !== 'string' || shippingLevel.trim() === '') {
+      console.warn(`Invalid shipping_level: ${shippingLevel}, using default: MAIL`);
       shippingLevel = 'MAIL';
     }
     
     // 获取Lulu API访问令牌
-    console.log('Requesting token from Lulu API...');
-    console.log(`Using Lulu API endpoint: ${LULU_API_ENDPOINT}`);
+    console.log('Requesting Lulu API access token...');
     
-    // 使用正确的令牌端点
-    const authEndpoint = AUTH_ENDPOINT;
-    console.log(`Auth endpoint: ${authEndpoint}`);
+    // 使用 nodeFetch 或全局 fetch
+    const fetchFunc = typeof fetch !== 'undefined' ? fetch : nodeFetch;
     
-    // 创建 Basic Auth 凭证
-    const credentials = Buffer.from(`${LULU_API_KEY}:${LULU_API_SECRET}`).toString('base64');
-    
-    const tokenResponse = await fetch(authEndpoint, {
+    const tokenResponse = await fetchFunc(AUTH_ENDPOINT, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': `Basic ${credentials}`
+        'Authorization': `Basic ${Buffer.from(`${LULU_API_KEY}:${LULU_API_SECRET}`).toString('base64')}`
       },
-      body: new URLSearchParams({
-        'grant_type': 'client_credentials'
-      })
+      body: 'grant_type=client_credentials'
     });
     
     if (!tokenResponse.ok) {
@@ -243,15 +237,12 @@ export default async function handler(req, res) {
       shipping_address: shippingAddress
     };
     
-    // 使用获取的令牌提交打印作业
-    console.log('Submitting print job to Lulu...');
-    const printEndpoint = PRINT_JOBS_ENDPOINT;
-    
-    console.log(`Print endpoint: ${printEndpoint}`);
+    // 提交打印作业到Lulu API
+    console.log('Submitting print job to Lulu API...');
     console.log('Print job data:', JSON.stringify(printJobData, null, 2));
     
     try {
-      const printResponse = await fetch(printEndpoint, {
+      const printResponse = await fetchFunc(PRINT_JOBS_ENDPOINT, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
