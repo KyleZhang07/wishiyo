@@ -43,7 +43,9 @@ export default async function handler(req, res) {
     const LULU_API_SECRET = process.env.LULU_CLIENT_SECRET;
     
     // 确定是否使用sandbox环境，并设置正确的API端点
-    const isSandbox = process.env.LULU_SANDBOX === 'true' || process.env.NODE_ENV !== 'production';
+    // 强制使用sandbox环境进行测试
+    const forceSandbox = true; // 临时设置，之后可以改为false或使用环境变量
+    const isSandbox = forceSandbox || process.env.LULU_SANDBOX === 'true';
     const LULU_API_ENDPOINT = isSandbox 
       ? 'https://api.sandbox.lulu.com' 
       : (process.env.LULU_API_ENDPOINT || 'https://api.lulu.com');
@@ -167,17 +169,17 @@ export default async function handler(req, res) {
           external_id: `${orderId}-item-1`,
           title: order.title || 'Custom Book',
           quantity: 1,
-          pod_package_id: order.pod_package_id || 'PAPERBACK_BOOK',
-          shipping_level: 'MAIL', // 或者 'GROUND_HD' 或其他选项
           // 使用printable_normalization结构，根据API文档要求
           printable_normalization: {
+            pod_package_id: order.pod_package_id || '0600X0900BWSTDPB060UW444MXX',
             cover: {
               source_url: order.cover_pdf_url
             },
             interior: {
               source_url: order.interior_pdf_url
             }
-          }
+          },
+          shipping_level: 'MAIL' // 或者 'GROUND_HD' 或其他选项
         }
       ],
       shipping_address: {
@@ -188,15 +190,17 @@ export default async function handler(req, res) {
         state_code: customer.state,
         country_code: customer.country || 'US',
         postcode: customer.postal_code,
-        phone_number: customer.phone || ''
+        phone_number: customer.phone || '',
+        email: customer.email || order.customer_email || 'orders@wishiyo.com'
       }
     };
     
     console.log('Print job payload:', JSON.stringify(printJobData, null, 2));
     
-    // 使用获取的令牌提交打印作业
-    console.log('Submitting print job to Lulu...');
-    const printResponse = await fetch(`${LULU_API_ENDPOINT}/print-jobs/`, {
+    // 发送请求时显示完整端点
+    const printJobsEndpoint = `${LULU_API_ENDPOINT}/print-jobs/`;
+    console.log(`Submitting print job to: ${printJobsEndpoint}`);
+    const printResponse = await fetch(printJobsEndpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
