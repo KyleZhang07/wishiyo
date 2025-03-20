@@ -472,16 +472,17 @@ export default async function handler(req, res) {
               // 优先使用服务角色密钥，如果没有则使用匿名密钥
               const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
               
-              console.log("===== CALLING SUPABASE FUNCTION =====", {
-                supabaseUrl: supabaseUrl,
-                hasKey: !!supabaseKey,
-                keyType: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'service_role' : 'anon',
-                endpoint: `${supabaseUrl}/functions/v1/update-book-data`
+              console.log("===== CALLING UPDATE BOOK DATA API FOR FUNNY BIOGRAPHY =====", {
+                baseUrl: process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000',
+                endpoint: `/api/update-book-data`
               });
+              
+              // 获取基础 URL
+              const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
               
               // 更新运输地址和客户电子邮件
               const updateResponse = await fetch(
-                `${supabaseUrl}/functions/v1/update-book-data`,
+                `${baseUrl}/api/update-book-data`,
                 {
                   method: 'POST',
                   headers: {
@@ -558,16 +559,17 @@ export default async function handler(req, res) {
               // 优先使用服务角色密钥，如果没有则使用匿名密钥
               const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
               
-              console.log("===== CALLING SUPABASE FUNCTION FOR LOVE STORY =====", {
-                supabaseUrl: supabaseUrl,
-                hasKey: !!supabaseKey,
-                keyType: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'service_role' : 'anon',
-                endpoint: `${supabaseUrl}/functions/v1/update-book-data`
+              console.log("===== CALLING UPDATE BOOK DATA API FOR LOVE STORY =====", {
+                baseUrl: process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000',
+                endpoint: `/api/update-book-data`
               });
+              
+              // 获取基础 URL
+              const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
               
               // 更新运输地址和客户电子邮件
               const updateResponse = await fetch(
-                `${supabaseUrl}/functions/v1/update-book-data`,
+                `${baseUrl}/api/update-book-data`,
                 {
                   method: 'POST',
                   headers: {
