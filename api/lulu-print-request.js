@@ -39,11 +39,15 @@ export default async function handler(req, res) {
     }
     
     // 验证LuluPress API凭证
-    const LULU_API_KEY = process.env.LULU_API_KEY;
-    const LULU_API_SECRET = process.env.LULU_API_SECRET;
+    const LULU_API_KEY = process.env.LULU_CLIENT_ID;
+    const LULU_API_SECRET = process.env.LULU_CLIENT_SECRET;
+    const LULU_API_ENDPOINT = process.env.LULU_API_ENDPOINT || 'https://api.lulu.com';
     
     if (!LULU_API_KEY || !LULU_API_SECRET) {
-      console.error('Missing Lulu API credentials');
+      console.error('Missing Lulu API credentials', {
+        hasClientId: !!LULU_API_KEY,
+        hasClientSecret: !!LULU_API_SECRET
+      });
       return res.status(500).json({
         success: false,
         error: 'Server configuration error'
@@ -113,8 +117,9 @@ export default async function handler(req, res) {
       });
     }
     
-    // 获取Lulu API认证token
-    const tokenResponse = await fetch('https://api.lulu.com/auth/realms/glasstree/protocol/openid-connect/token', {
+    // 获取Lulu API访问令牌
+    console.log('Requesting token from Lulu API...');
+    const tokenResponse = await fetch(`${LULU_API_ENDPOINT}/auth/realms/glasstree/protocol/openid-connect/token`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
@@ -172,12 +177,13 @@ export default async function handler(req, res) {
       ]
     };
     
-    // 发送打印请求到Lulu API
-    const printResponse = await fetch('https://api.lulu.com/print-jobs/', {
+    // 使用获取的令牌提交打印作业
+    console.log('Submitting print job to Lulu...');
+    const printResponse = await fetch(`${LULU_API_ENDPOINT}/print-jobs/`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
       },
       body: JSON.stringify(printJobData)
     });
