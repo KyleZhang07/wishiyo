@@ -426,12 +426,26 @@ export default async function handler(req, res) {
               postal_code: expandedSession.shipping.address.postal_code,
               country: expandedSession.shipping.address.country
             }
-          } : null;
+          } : (expandedSession.customer_details?.address ? {
+            name: expandedSession.customer_details.name || '',
+            address: {
+              line1: expandedSession.customer_details.address.line1 || '',
+              line2: expandedSession.customer_details.address.line2 || '',
+              city: expandedSession.customer_details.address.city || '',
+              state: expandedSession.customer_details.address.state || '',
+              postal_code: expandedSession.customer_details.address.postal_code || '',
+              country: expandedSession.customer_details.address.country || ''
+            }
+          } : null);
           
           // 调试日志 - 详细输出shipping地址信息
           console.log('DETAILED SHIPPING ADDRESS DEBUG:', {
             hasShipping: !!expandedSession.shipping,
+            hasCustomerDetails: !!expandedSession.customer_details,
+            hasCustomerAddress: !!expandedSession.customer_details?.address,
             shippingAddress: JSON.stringify(shippingAddress),
+            customerDetailsName: expandedSession.customer_details?.name,
+            customerDetailsAddress: expandedSession.customer_details?.address ? JSON.stringify(expandedSession.customer_details.address) : null,
             expandedSession: JSON.stringify({
               customer: expandedSession.customer ? { id: expandedSession.customer.id, email: expandedSession.customer.email } : null,
               shipping: expandedSession.shipping,
@@ -472,17 +486,16 @@ export default async function handler(req, res) {
               // 优先使用服务角色密钥，如果没有则使用匿名密钥
               const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
               
-              console.log("===== CALLING UPDATE BOOK DATA API FOR FUNNY BIOGRAPHY =====", {
-                baseUrl: process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000',
-                endpoint: `/api/update-book-data`
+              console.log("===== CALLING SUPABASE FUNCTION =====", {
+                supabaseUrl: supabaseUrl,
+                hasKey: !!supabaseKey,
+                keyType: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'service_role' : 'anon',
+                endpoint: `${supabaseUrl}/functions/v1/update-book-data`
               });
-              
-              // 获取基础 URL
-              const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
               
               // 更新运输地址和客户电子邮件
               const updateResponse = await fetch(
-                `${baseUrl}/api/update-book-data`,
+                `${supabaseUrl}/functions/v1/update-book-data`,
                 {
                   method: 'POST',
                   headers: {
@@ -492,13 +505,13 @@ export default async function handler(req, res) {
                   body: JSON.stringify({ 
                     orderId,
                     shipping_address: shippingAddress,
-                    recipient_name: expandedSession.shipping?.name || '',
-                    address_line1: expandedSession.shipping?.address?.line1 || '',
-                    address_line2: expandedSession.shipping?.address?.line2 || '',
-                    city: expandedSession.shipping?.address?.city || '',
-                    state: expandedSession.shipping?.address?.state || '',
-                    postal_code: expandedSession.shipping?.address?.postal_code || '',
-                    country: expandedSession.shipping?.address?.country || '',
+                    recipient_name: expandedSession.customer_details?.name || '',
+                    address_line1: expandedSession.customer_details?.address?.line1 || '',
+                    address_line2: expandedSession.customer_details?.address?.line2 || '',
+                    city: expandedSession.customer_details?.address?.city || '',
+                    state: expandedSession.customer_details?.address?.state || '',
+                    postal_code: expandedSession.customer_details?.address?.postal_code || '',
+                    country: expandedSession.customer_details?.address?.country || '',
                     shipping_option: shippingOption,
                     customer_email: expandedSession.customer_details?.email,
                     shipping_level: shippingOption?.display_name === 'Express Shipping' ? 'EXPRESS' : 'GROUND',
@@ -559,17 +572,16 @@ export default async function handler(req, res) {
               // 优先使用服务角色密钥，如果没有则使用匿名密钥
               const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
               
-              console.log("===== CALLING UPDATE BOOK DATA API FOR LOVE STORY =====", {
-                baseUrl: process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000',
-                endpoint: `/api/update-book-data`
+              console.log("===== CALLING SUPABASE FUNCTION FOR LOVE STORY =====", {
+                supabaseUrl: supabaseUrl,
+                hasKey: !!supabaseKey,
+                keyType: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'service_role' : 'anon',
+                endpoint: `${supabaseUrl}/functions/v1/update-book-data`
               });
-              
-              // 获取基础 URL
-              const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
               
               // 更新运输地址和客户电子邮件
               const updateResponse = await fetch(
-                `${baseUrl}/api/update-book-data`,
+                `${supabaseUrl}/functions/v1/update-book-data`,
                 {
                   method: 'POST',
                   headers: {
@@ -580,13 +592,13 @@ export default async function handler(req, res) {
                     orderId,
                     table_name: 'love_story_books', // 指定表名
                     shipping_address: shippingAddress,
-                    recipient_name: expandedSession.shipping?.name || '',
-                    address_line1: expandedSession.shipping?.address?.line1 || '',
-                    address_line2: expandedSession.shipping?.address?.line2 || '',
-                    city: expandedSession.shipping?.address?.city || '',
-                    state: expandedSession.shipping?.address?.state || '',
-                    postal_code: expandedSession.shipping?.address?.postal_code || '',
-                    country: expandedSession.shipping?.address?.country || '',
+                    recipient_name: expandedSession.customer_details?.name || '',
+                    address_line1: expandedSession.customer_details?.address?.line1 || '',
+                    address_line2: expandedSession.customer_details?.address?.line2 || '',
+                    city: expandedSession.customer_details?.address?.city || '',
+                    state: expandedSession.customer_details?.address?.state || '',
+                    postal_code: expandedSession.customer_details?.address?.postal_code || '',
+                    country: expandedSession.customer_details?.address?.country || '',
                     shipping_option: shippingOption,
                     customer_email: expandedSession.customer_details?.email,
                     shipping_level: shippingOption?.display_name === 'Express Shipping' ? 'EXPRESS' : 'GROUND',
