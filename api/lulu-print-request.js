@@ -104,7 +104,13 @@ export default async function handler(req, res) {
     }
     
     // 检查必要的PDF URL
-    if (!order.cover_pdf_url || !order.interior_pdf_url) {
+    if (!order.cover_source_url || !order.interior_source_url) {
+      console.error('Missing required PDF URLs:', {
+        hasCoverUrl: !!order.cover_source_url,
+        hasInteriorUrl: !!order.interior_source_url,
+        coverUrl: order.cover_source_url,
+        interiorUrl: order.interior_source_url
+      });
       return res.status(400).json({
         success: false,
         error: 'Order is missing required PDF files'
@@ -173,10 +179,10 @@ export default async function handler(req, res) {
           printable_normalization: {
             pod_package_id: order.pod_package_id || '0600X0900BWSTDPB060UW444MXX',
             cover: {
-              source_url: order.cover_pdf_url
+              source_url: order.cover_source_url
             },
             interior: {
-              source_url: order.interior_pdf_url
+              source_url: order.interior_source_url
             }
           },
           shipping_level: 'MAIL' // 或者 'GROUND_HD' 或其他选项
