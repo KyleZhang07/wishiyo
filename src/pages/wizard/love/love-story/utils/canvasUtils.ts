@@ -204,56 +204,12 @@ export const renderAndUploadContentImage = async (
   style: string = 'modern',
   supabaseImages: any[] = []
 ): Promise<{
-  fullImageUrl: string,
   leftImageUrl: string,
   rightImageUrl: string
 }> => {
   try {
     // 渲染图片到Canvas
     const renderedImage = await renderContentToCanvas(contentImage, contentText, index, style);
-    
-    // 使用时间戳确保文件名唯一
-    const timestamp = Date.now();
-    
-    // 修改文件名为content
-    const fileName = `content-${index}-${timestamp}`;
-    
-    // 上传到Supabase Storage
-    const fullImageUrl = await uploadImageToStorage(
-      renderedImage,
-      'images',
-      fileName
-    );
-    
-    // 删除之前生成的rendered图片
-    try {
-      // 查找所有包含"content-rendered"或"content"的图片
-      const oldRenderedImages = supabaseImages.filter(img => 
-        // 只删除content-${index}-开头的渲染图片，不删除love-story-content开头的原始图片
-        img.name.includes(`content-${index}-`) && 
-        !img.name.includes(fileName)
-      );
-      
-      if (oldRenderedImages.length > 0) {
-        console.log(`Found ${oldRenderedImages.length} old rendered images to delete for content ${index}`);
-        
-        // 并行删除所有旧图片
-        const deletePromises = oldRenderedImages.map(img => {
-          // 从完整路径中提取文件名
-          const pathParts = img.name.split('/');
-          const filename = pathParts[pathParts.length - 1];
-          console.log(`Deleting old rendered image: ${filename}`);
-          return deleteImageFromStorage(filename, 'images');
-        });
-        
-        // 等待所有删除操作完成
-        await Promise.all(deletePromises);
-        console.log(`Successfully deleted old rendered images for content ${index}`);
-      }
-    } catch (deleteError) {
-      console.error(`Error deleting old rendered images for content ${index}:`, deleteError);
-      // 继续处理，即使删除失败
-    }
     
     // 裁剪图片并上传
     console.log(`Splitting content image ${index} into two parts...`);
@@ -264,7 +220,6 @@ export const renderAndUploadContentImage = async (
     );
     
     return {
-      fullImageUrl,
       leftImageUrl: leftUrl,
       rightImageUrl: rightUrl
     };
@@ -281,56 +236,12 @@ export const renderAndUploadIntroImage = async (
   style: string = 'modern',
   supabaseImages: any[] = []
 ): Promise<{
-  fullImageUrl: string,
   leftImageUrl: string,
   rightImageUrl: string
 }> => {
   try {
     // 渲染图片到Canvas
     const renderedImage = await renderContentToCanvas(introImage, introText, 0, style);
-    
-    // 使用时间戳确保文件名唯一
-    const timestamp = Date.now();
-    
-    // 修改文件名为intro
-    const fileName = `intro-${timestamp}`;
-    
-    // 上传到Supabase Storage
-    const fullImageUrl = await uploadImageToStorage(
-      renderedImage,
-      'images',
-      fileName
-    );
-    
-    // 删除之前生成的rendered图片
-    try {
-      // 查找所有包含"intro-"或"love-story-intro-rendered"的图片
-      const oldRenderedImages = supabaseImages.filter(img => 
-        // 只删除intro-开头的渲染图片，不删除love-story-intro开头的原始图片
-        img.name.includes('intro-') && 
-        !img.name.includes(fileName)
-      );
-      
-      if (oldRenderedImages.length > 0) {
-        console.log(`Found ${oldRenderedImages.length} old rendered intro images to delete`);
-        
-        // 并行删除所有旧图片
-        const deletePromises = oldRenderedImages.map(img => {
-          // 从完整路径中提取文件名
-          const pathParts = img.name.split('/');
-          const filename = pathParts[pathParts.length - 1];
-          console.log(`Deleting old rendered intro image: ${filename}`);
-          return deleteImageFromStorage(filename, 'images');
-        });
-        
-        // 等待所有删除操作完成
-        await Promise.all(deletePromises);
-        console.log('Successfully deleted old rendered intro images');
-      }
-    } catch (deleteError) {
-      console.error('Error deleting old rendered intro images:', deleteError);
-      // 继续处理，即使删除失败
-    }
     
     // 裁剪图片并上传
     console.log('Splitting intro image into two parts...');
@@ -341,7 +252,6 @@ export const renderAndUploadIntroImage = async (
     );
     
     return {
-      fullImageUrl,
       leftImageUrl: leftUrl,
       rightImageUrl: rightUrl
     };
@@ -579,9 +489,9 @@ export const splitImageAndUpload = async (
             rightCanvas.width, rightCanvas.height  // 目标画布的尺寸
           );
 
-          // 转换为图像数据
-          const leftImageData = leftCanvas.toDataURL('image/jpeg', 0.9);
-          const rightImageData = rightCanvas.toDataURL('image/jpeg', 0.9);
+          // 转换为图像数据 - 使用最高质量1.0确保无损
+          const leftImageData = leftCanvas.toDataURL('image/jpeg', 1.0);
+          const rightImageData = rightCanvas.toDataURL('image/jpeg', 1.0);
 
           // 使用时间戳确保文件名唯一
           const timestamp = Date.now();

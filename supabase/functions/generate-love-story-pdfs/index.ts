@@ -99,17 +99,21 @@ serve(async (req) => {
     }
 
     // 对图片进行分类和排序
-    const coverImages = imageFiles.filter(file => file.name.includes('cover')).sort((a, b) => a.name.localeCompare(b.name))
+    const coverImages = imageFiles.filter(file => file.name.includes('love-cover-') && !file.name.includes('back')).sort((a, b) => a.name.localeCompare(b.name))
+    const backCoverImages = imageFiles.filter(file => file.name.includes('love-back-cover-')).sort((a, b) => a.name.localeCompare(b.name))
+    const spineImages = imageFiles.filter(file => file.name.includes('love-spine-')).sort((a, b) => a.name.localeCompare(b.name))
     const introImages = imageFiles.filter(file => file.name.includes('intro')).sort((a, b) => a.name.localeCompare(b.name))
     const contentImages = imageFiles.filter(file => file.name.includes('content')).sort((a, b) => a.name.localeCompare(b.name))
 
     // 检查是否有足够的图片
-    if (coverImages.length === 0 || introImages.length === 0 || contentImages.length === 0) {
+    if (coverImages.length === 0 || introImages.length === 0 || contentImages.length === 0 || backCoverImages.length === 0 || spineImages.length === 0) {
       return new Response(
         JSON.stringify({ 
           error: 'Insufficient images for PDF generation', 
           details: {
             coverImagesCount: coverImages.length,
+            backCoverImagesCount: backCoverImages.length,
+            spineImagesCount: spineImages.length,
             introImagesCount: introImages.length,
             contentImagesCount: contentImages.length
           }
@@ -118,8 +122,8 @@ serve(async (req) => {
       )
     }
 
-    // 生成封面PDF
-    const coverPdf = await generatePdf([coverImages[0]], orderId, supabaseAdmin)
+    // 生成完整封面PDF (封底 + 书脊 + 封面)
+    const coverPdf = await generateCoverPdf(backCoverImages[0], spineImages[0], coverImages[0], orderId, supabaseAdmin)
     
     // 生成内页PDF（合并intro和content图片）
     const interiorPdf = await generatePdf([...introImages, ...contentImages], orderId, supabaseAdmin)
@@ -206,6 +210,155 @@ serve(async (req) => {
     )
   }
 })
+
+// 新增函数：生成完整封面PDF（封底+书脊+封面）
+async function generateCoverPdf(backCoverFile: any, spineFile: any, frontCoverFile: any, orderId: string, supabase: any): Promise<Uint8Array> {
+  // 创建PDF，横向模式以容纳封面+书脊+封底
+  const pdf = new jsPDF({
+    orientation: 'landscape',
+    unit: 'in',
+    format: [11, 8.5] // 横向A4尺寸大约是11x8.5英寸
+  })
+  
+  // 获取book记录以获取client_id
+  const { data: bookData, error: bookError } = await supabase
+    .from('love_story_books')
+    .select('client_id')
+    .eq('order_id', orderId)
+    .single()
+
+  if (bookError || !bookData) {
+    console.error('Failed to get book data for client_id', bookError)
+    throw new Error('Failed to get book data for client_id')
+  }
+
+  const clientId = bookData.client_id
+  
+  // 从Supabase下载图片
+  async function downloadImage(file: any): Promise<string> {
+    let imageData = null
+    let imageError = null
+
+    // 首先尝试从client_id路径获取图片
+    if (clientId) {
+      const clientPathResult = await supabase
+        .storage
+        .from('images')
+        .download(`${clientId}/${file.name}`)
+      
+      if (!clientPathResult.error && clientPathResult.data) {
+        imageData = clientPathResult.data
+        imageError = null
+      } else {
+        // 如果从client_id路径获取失败，尝试从order_id路径获取
+        const orderPathResult = await supabase
+          .storage
+          .from('images')
+          .download(`love-story/${orderId}/${file.name}`)
+        
+        imageData = orderPathResult.data
+        imageError = orderPathResult.error
+      }
+    } else {
+      // 如果没有client_id，直接从order_id路径获取
+      const { data, error } = await supabase
+        .storage
+        .from('images')
+        .download(`love-story/${orderId}/${file.name}`)
+      
+      imageData = data
+      imageError = error
+    }
+
+    if (imageError || !imageData) {
+      console.error(`Failed to download image: ${file.name}`, imageError)
+      throw new Error(`Failed to download image: ${file.name}`)
+    }
+
+    // 转换图片为base64
+    const imageBase64 = await blobToBase64(imageData)
+    return imageBase64
+  }
+  
+  // 下载所有需要的图片
+  const backCoverBase64 = await downloadImage(backCoverFile)
+  const spineBase64 = await downloadImage(spineFile)
+  const frontCoverBase64 = await downloadImage(frontCoverFile)
+  
+  // 设置页面尺寸，根据Lulu要求调整 - 8.625" x 8.75"
+  const coverWidth = 8.625 // 英寸
+  const coverHeight = 8.75 // 英寸
+  const spineWidth = 0.25 // 英寸
+  
+  // 出血区域宽度 - 通常为0.125"
+  const bleedWidth = 0.125 // 英寸
+  
+  // 计算位置，从左到右放置：封底 + 书脊 + 封面
+  // 包括出血区域的总宽度
+  const totalWidth = (coverWidth + bleedWidth * 2) * 2 + spineWidth
+  const startX = (11 - totalWidth) / 2 // 居中放置
+  
+  // 添加封底 (左侧) - 包括出血区域
+  pdf.addImage(
+    backCoverBase64,
+    'JPEG',
+    startX, // x坐标
+    0, // y坐标
+    coverWidth + bleedWidth * 2, // 宽度（包括左右出血区域）
+    coverHeight + bleedWidth * 2, // 高度（包括上下出血区域）
+    undefined, // 别名
+    'FAST' // 压缩选项
+  )
+  
+  // 添加书脊 (中间)
+  pdf.addImage(
+    spineBase64,
+    'JPEG',
+    startX + coverWidth + bleedWidth * 2, // x坐标 (紧跟封底)
+    0, // y坐标
+    spineWidth, // 宽度
+    coverHeight + bleedWidth * 2, // 高度（包括上下出血区域）
+    undefined, // 别名
+    'FAST' // 压缩选项
+  )
+  
+  // 添加封面 (右侧) - 包括出血区域
+  pdf.addImage(
+    frontCoverBase64,
+    'JPEG',
+    startX + coverWidth + bleedWidth * 2 + spineWidth, // x坐标 (紧跟书脊)
+    0, // y坐标
+    coverWidth + bleedWidth * 2, // 宽度（包括左右出血区域）
+    coverHeight + bleedWidth * 2, // 高度（包括上下出血区域）
+    undefined, // 别名
+    'FAST' // 压缩选项
+  )
+  
+  // 绘制安全边距指示线（可选，用于调试）
+  /*
+  const safetyMargin = 0.5; // 安全边距，通常为0.5英寸
+  pdf.setDrawColor(255, 0, 0);
+  pdf.setLineWidth(0.01);
+  // 封底安全边距
+  pdf.rect(
+    startX + bleedWidth + safetyMargin, 
+    bleedWidth + safetyMargin, 
+    coverWidth - safetyMargin * 2, 
+    coverHeight - safetyMargin * 2
+  );
+  // 封面安全边距
+  pdf.rect(
+    startX + coverWidth + bleedWidth * 2 + spineWidth + bleedWidth + safetyMargin, 
+    bleedWidth + safetyMargin, 
+    coverWidth - safetyMargin * 2, 
+    coverHeight - safetyMargin * 2
+  );
+  */
+  
+  // 转换PDF为Uint8Array
+  const pdfOutput = pdf.output('arraybuffer')
+  return new Uint8Array(pdfOutput)
+}
 
 // 辅助函数：生成PDF
 async function generatePdf(imageFiles: any[], orderId: string, supabase: any): Promise<Uint8Array> {

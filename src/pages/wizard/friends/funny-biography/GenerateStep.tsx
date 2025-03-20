@@ -340,13 +340,13 @@ const FunnyBiographyGenerateStep = () => {
             </div>
           ) : (
             <div className="flex items-start space-x-2 justify-center">
-              {/* 后封面 */}
+              {/* 前封面 */}
               <div className="flex flex-col items-center">
-                <p className="text-sm text-gray-600 mb-2">Back Cover</p>
-                <img 
-                  src={backCoverPdf || ''} 
+                <p className="text-sm text-gray-600 mb-2">Front Cover</p>
+                <img
+                  src={frontCoverPdf} 
                   className={`w-[${standardPreviewWidth}px] h-[${standardPreviewHeight}px] border shadow-md object-cover bg-gray-50`}
-                  alt="Back Cover"
+                  alt="Front Cover"
                 />
               </div>
               
@@ -360,13 +360,13 @@ const FunnyBiographyGenerateStep = () => {
                 />
               </div>
               
-              {/* 前封面 */}
+              {/* 后封面 */}
               <div className="flex flex-col items-center">
-                <p className="text-sm text-gray-600 mb-2">Front Cover</p>
-                <img
-                  src={frontCoverPdf} 
+                <p className="text-sm text-gray-600 mb-2">Back Cover</p>
+                <img 
+                  src={backCoverPdf || ''} 
                   className={`w-[${standardPreviewWidth}px] h-[${standardPreviewHeight}px] border shadow-md object-cover bg-gray-50`}
-                  alt="Front Cover"
+                  alt="Back Cover"
                 />
               </div>
             </div>

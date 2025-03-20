@@ -16,6 +16,9 @@ import { renderContentImage, createImageStateMaps } from './utils/renderUtils';
 import { loadImagesFromSupabase as fetchImagesFromSupabase } from './utils/storageUtils';
 import { renderAndUploadContentImage, renderAndUploadIntroImage, renderAndUploadBlessingImage } from './utils/canvasUtils';
 
+// 导入新增的BackCoverPreviewCard组件
+import { BackCoverPreviewCard } from './components/BackCoverPreviewCard';
+
 interface ImageText {
   text: string;
   tone: string;
@@ -1356,6 +1359,17 @@ const GenerateStep = () => {
               );
             })}
           </div>
+        </div>
+
+        {/* 添加封底预览部分 */}
+        <div className="mb-16 border-t-2 border-gray-200 pt-10">
+          <h2 className="text-2xl font-bold mb-4">Back Cover Preview</h2>
+          <p className="text-gray-500 mb-8">This is how your back cover will appear in the final book.</p>
+          
+          <BackCoverPreviewCard 
+            authorName={authorName}
+            backCoverText={backCoverText}
+          />
         </div>
       </div>
     </WizardStep>
