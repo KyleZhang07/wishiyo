@@ -2,3 +2,19 @@
 project_id = "hbkgbggctzvqffqfrmhl"
 [functions.generate-ideas]
 verify_jwt = false
+[functions.remove-background]
+verify_jwt = false
+[functions.generate-image-texts]
+verify_jwt = false
+[functions.generate-cover-pdf]
+verify_jwt = false
+[functions.generate-book-content]
+verify_jwt = false
+[functions.generate-interior-pdf]
+verify_jwt = false
+[functions.update-book-data]
+verify_jwt = false
+[functions.get-book-data]
+verify_jwt = false
+[functions.generate-love-story-pdfs]
+verify_jwt = false
