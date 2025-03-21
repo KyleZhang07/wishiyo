@@ -563,3 +563,104 @@ export const splitImageAndUpload = async (
     throw error;
   }
 }; 
+
+// 渲染结束页面到Canvas
+export const renderEndingToCanvas = (): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    try {
+      // 创建Canvas元素 - 与blessing页面保持相同尺寸
+      const canvas = document.createElement('canvas');
+      canvas.width = 2400;  // 宽度
+      canvas.height = 2400; // 高度 - 正方形比例
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        reject(new Error('Failed to get canvas context'));
+        return;
+      }
+      
+      // 填充纯白色背景
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // 设置文本样式
+      ctx.fillStyle = '#333333'; // 深灰色文本
+      const mainFont = 'Georgia, serif';
+      
+      // 设置字体大小
+      const titleFontSize = canvas.width * 0.03;
+      const bodyFontSize = canvas.width * 0.02;
+      
+      // 绘制标题
+      ctx.font = `bold ${titleFontSize}px ${mainFont}`;
+      ctx.textAlign = 'center';
+      ctx.fillText('WISHIYO', canvas.width / 2, canvas.height * 0.4);
+      
+      // 绘制版权信息
+      ctx.font = `${bodyFontSize}px ${mainFont}`;
+      
+      const currentYear = new Date().getFullYear();
+      const copyrightText = ` ${currentYear} Wishiyo. All rights reserved.`;
+      ctx.fillText(copyrightText, canvas.width / 2, canvas.height * 0.47);
+      
+      // 添加额外信息
+      const infoLines = [
+        'This book was created with love using Wishiyo.',
+        'No part of this publication may be reproduced, distributed, or',
+        'transmitted in any form or by any means without prior written permission.',
+        '',
+        'Printed in the United States of America',
+        '',
+        'www.wishiyo.com'
+      ];
+      
+      let y = canvas.height * 0.53;
+      infoLines.forEach(line => {
+        ctx.fillText(line, canvas.width / 2, y);
+        y += bodyFontSize * 1.5;
+      });
+      
+      // 转换为图像数据
+      const imageData = canvas.toDataURL('image/jpeg', 0.9);
+      resolve(imageData);
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
+// 渲染并上传结束页面图片
+export const renderAndUploadEndingImage = async (
+  supabaseImages: any[] = []
+): Promise<string> => {
+  try {
+    // 渲染结束页面
+    const imageData = await renderEndingToCanvas();
+    
+    // 生成唯一文件名
+    const timestamp = new Date().getTime();
+    const fileName = `ending-page-${timestamp}.jpg`;
+    
+    // 检查是否有现有图片需要删除
+    const existingImage = supabaseImages.find(img => img.name.startsWith('ending-page-'));
+    if (existingImage) {
+      await deleteImageFromStorage('book-pages', existingImage.name);
+    }
+    
+    // 上传到Supabase Storage
+    const publicUrl = await uploadImageToStorage(
+      'book-pages',
+      fileName,
+      imageData
+    );
+    
+    if (!publicUrl) {
+      throw new Error('Failed to upload ending image: No public URL returned');
+    }
+    
+    return publicUrl;
+  } catch (error) {
+    console.error('Error in renderAndUploadEndingImage:', error);
+    throw error;
+  }
+};

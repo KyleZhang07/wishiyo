@@ -106,6 +106,9 @@ serve(async (req) => {
     // 添加blessing图片筛选
     const blessingImages = imageFiles.filter(file => file.name.includes('blessing')).sort((a, b) => a.name.localeCompare(b.name))
     
+    // 添加ending page图片筛选
+    const endingImages = imageFiles.filter(file => file.name.includes('ending-page-')).sort((a, b) => a.name.localeCompare(b.name))
+    
     // 修改介绍图片筛选逻辑，只使用 intro-数字 格式，并排除旧的 love-story-intro 格式
     const introImages = imageFiles.filter(file => {
       // 使用正则表达式匹配 intro-数字 格式，但排除love-story-intro前缀
@@ -153,7 +156,8 @@ serve(async (req) => {
             spineImagesCount: spineImages.length,
             blessingImagesCount: blessingImages.length,
             introImagesCount: introImages.length,
-            contentImagesCount: contentImages.length
+            contentImagesCount: contentImages.length,
+            endingImagesCount: endingImages.length
           }
         }),
         { headers: { ...headers, 'Content-Type': 'application/json' }, status: 400 }
@@ -164,7 +168,7 @@ serve(async (req) => {
     const coverPdf = await generateCoverPdf(backCoverImages[0], spineImages[0], coverImages[0], orderId, clientId, supabaseAdmin)
     
     // 生成内页PDF（按顺序合并：blessing + intro + content图片）
-    const interiorPdf = await generatePdf([...blessingImages, ...introImages, ...contentImages], orderId, clientId, supabaseAdmin)
+    const interiorPdf = await generatePdf([...blessingImages, ...introImages, ...contentImages, ...endingImages], orderId, clientId, supabaseAdmin)
 
     // 上传PDF到Storage
     const coverPdfPath = `love-story/${orderId}/cover.pdf`
