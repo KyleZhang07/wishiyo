@@ -170,18 +170,21 @@ export default async function handler(req, res) {
       external_id: orderId,
       line_items: [
         {
+          external_id: `item-${orderId}`,
           title: order.title || 'Custom Book',
-          cover: {
-            source_url: order.cover_source_url
+          printable_normalization: {
+            cover: {
+              source_url: order.cover_source_url
+            },
+            interior: {
+              source_url: order.interior_source_url
+            },
+            pod_package_id: '0600X0900BWSTDPB060UW444MXX' // 使用文档中的有效值
           },
-          interior: {
-            source_url: order.interior_source_url
-          },
-          pod_package_id: '0600X0900BWSTDPB060UW444MXX', // 使用文档中的有效值
-          quantity: order.print_quantity || 1,
-          page_count: order.page_count || 100 // 添加默认页数
+          quantity: order.print_quantity || 1
         }
       ],
+      production_delay: 48, // 添加生产延迟字段，单位为小时
       shipping_level: shippingLevel,
       shipping_address: null // 将在验证文件后设置
     };
@@ -236,8 +239,8 @@ export default async function handler(req, res) {
           street1: address.line1,
           street2: address.line2 || '',
           city: address.city,
-          state_code: address.state,
-          postal_code: address.postal_code,
+          state_code: address.state || '',
+          postcode: address.postal_code,
           country_code: address.country
         };
       }
