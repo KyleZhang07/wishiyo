@@ -49,9 +49,6 @@ const GenerateStep = () => {
   const [subtitle, setSubtitle] = useState('');
   const [authorName, setAuthorName] = useState('');
   const [backCoverText, setBackCoverText] = useState('');
-  const [partnerName, setPartnerName] = useState('');
-  const [partnerAge, setPartnerAge] = useState('');
-  const [partnerGender, setPartnerGender] = useState<'male' | 'female' | ''>('');
   const [coverImage, setCoverImage] = useState<string>();
   const [introImage, setIntroImage] = useState<string>();
   const [contentImage1, setContentImage1] = useState<string>();
@@ -242,8 +239,6 @@ const GenerateStep = () => {
           content10Prompt: promptsObj[10].prompt, // Moment 9使用prompts[10]
           photo: partnerPhoto,
           style: selectedStyle,
-          age: partnerAge,
-          gender: partnerGender,
           type: 'all'
         }
       });
@@ -576,8 +571,6 @@ const GenerateStep = () => {
     const savedSubtitle = localStorage.getItem('loveStoryCoverSubtitle');
     const savedBackCoverText = localStorage.getItem('loveStoryBackCoverText');
     const savedRecipientName = localStorage.getItem('loveStoryPersonName');
-    const savedRecipientAge = localStorage.getItem('loveStoryPersonAge');
-    const savedRecipientGender = localStorage.getItem('loveStoryPersonGender');
     const savedTextTone = localStorage.getItem('loveStoryTone');
     
     // 加载祝福语相关数据
@@ -647,8 +640,6 @@ const GenerateStep = () => {
     if (savedBlessingText) setBlessingText(savedBlessingText);
     if (savedBlessingImage) setBlessingImage(savedBlessingImage);
     if (savedRecipientName) setRecipientName(savedRecipientName);
-    if (savedRecipientAge) setPartnerAge(savedRecipientAge);
-    if (savedRecipientGender) setPartnerGender(savedRecipientGender as 'male' | 'female');
     if (savedTextTone) setTextTone(savedTextTone);
   }, []);
 
@@ -694,8 +685,6 @@ const GenerateStep = () => {
             contentPrompt: prompts[1].prompt, 
             photo: characterPhoto,
             style: imageStyle,
-            age: partnerAge,
-            gender: partnerGender,
             type: 'intro'
           };
 

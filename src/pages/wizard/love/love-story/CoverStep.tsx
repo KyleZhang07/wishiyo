@@ -80,8 +80,6 @@ const LoveStoryCoverStep = () => {
   const [recipientName, setRecipientName] = useState<string>('');
   const [selectedStyle, setSelectedStyle] = useState<string>('classic');
   const [textTone, setTextTone] = useState<string>('romantic');
-  const [partnerAge, setPartnerAge] = useState<string>('');
-  const [partnerGender, setPartnerGender] = useState<'male' | 'female' | ''>('');
   
   // 标题状态，合并为一个结构
   const [titleData, setTitleData] = useState({
@@ -108,8 +106,6 @@ const LoveStoryCoverStep = () => {
     const savedStyle = localStorage.getItem('loveStoryCoverStyle');
     const savedTone = localStorage.getItem('loveStoryTone');
     const savedRecipientName = localStorage.getItem('loveStoryPersonName');
-    const savedRecipientAge = localStorage.getItem('loveStoryPersonAge');
-    const savedRecipientGender = localStorage.getItem('loveStoryPersonGender');
     const savedImageIndex = localStorage.getItem('loveStorySelectedCoverIndex');
     
     // 从Supabase获取已保存的封面图片
@@ -120,8 +116,6 @@ const LoveStoryCoverStep = () => {
     if (savedTone) setTextTone(savedTone);
     if (savedStyle) setSelectedStyle(savedStyle);
     if (savedRecipientName) setRecipientName(savedRecipientName);
-    if (savedRecipientAge) setPartnerAge(savedRecipientAge);
-    if (savedRecipientGender) setPartnerGender(savedRecipientGender as 'male' | 'female' | '');
     if (savedImageIndex) setCurrentImageIndex(parseInt(savedImageIndex));
     
     // 获取故事idea
@@ -332,7 +326,7 @@ const LoveStoryCoverStep = () => {
       // 获取用户上传的图片
       const uploadedImage = localStorage.getItem('loveStoryPartnerPhoto');
       const savedTone = localStorage.getItem('loveStoryTone') || textTone;
-      const personAge = localStorage.getItem('loveStoryPersonAge') || partnerAge;
+      const personAge = localStorage.getItem('loveStoryPersonAge') || '0';
       const ageNumber = parseInt(personAge);
       
       // 根据年龄选择不同的 prompt
@@ -353,9 +347,7 @@ const LoveStoryCoverStep = () => {
             photo: uploadedImage,
             style: "Disney Charactor", // 固定使用 Disney Charactor 样式
             type: 'cover',
-            prompt: textPrompt, // 将 textPrompt 改为 prompt
-            age: partnerAge,
-            gender: partnerGender
+            prompt: textPrompt // 将 textPrompt 改为 prompt
           }
         });
         
@@ -1016,11 +1008,11 @@ const LoveStoryCoverStep = () => {
         description: "Rendering and uploading your cover images..."
       });
       
-      // 保存当前选中的封面图片到 localStorage
-      if (coverImages.length > 0 && currentImageIndex >= 0 && currentImageIndex < coverImages.length) {
-        const selectedCoverImage = coverImages[currentImageIndex];
-        localStorage.setItem('loveStorySelectedCoverImage', selectedCoverImage);
-        
+    // 保存当前选中的封面图片到 localStorage
+    if (coverImages.length > 0 && currentImageIndex >= 0 && currentImageIndex < coverImages.length) {
+      const selectedCoverImage = coverImages[currentImageIndex];
+      localStorage.setItem('loveStorySelectedCoverImage', selectedCoverImage);
+      
         // 渲染封面到Canvas并获取图像数据
         const canvasImageData = await renderCoverToCanvas();
         
@@ -1101,35 +1093,17 @@ const LoveStoryCoverStep = () => {
           console.error('Error deleting old cover images:', deleteError);
           // 继续处理，即使删除失败
         }
-      }
+    }
+    
+    toast({
+        title: "Cover processed successfully",
+        description: "Your cover has been saved. Proceeding to the next step..."
+      });
       
       // 保存标题数据到localStorage - 移到if语句外，确保始终执行
       localStorage.setItem('loveStoryCoverTitle', titleData.mainTitle || titleData.fullTitle);
       localStorage.setItem('loveStoryCoverSubtitle', titleData.subTitle || '');
       localStorage.setItem('loveStoryCoverThirdLine', titleData.thirdLine || '');
-      
-      // 生成并上传版权信息页面
-      try {
-        // 获取最新的图片列表
-        const allImages = await getAllImagesFromStorage('book-pages');
-        
-        // 导入并调用renderAndUploadEndingImage函数
-        const { renderAndUploadEndingImage } = await import('./utils/canvasUtils');
-        const endingPageUrl = await renderAndUploadEndingImage(allImages);
-        
-        // 保存URL到localStorage
-        localStorage.setItem('loveStoryEndingPage_url', endingPageUrl);
-        
-        console.log('Successfully generated and uploaded ending page');
-      } catch (endingError) {
-        console.error('Error generating ending page:', endingError);
-        // 继续处理，即使生成失败
-      }
-      
-      toast({
-        title: "Cover processed successfully",
-        description: "Your cover has been saved. Proceeding to the next step..."
-      });
       
       // 导航到下一步 - 移到if语句外，确保始终执行
       navigate('/create/love/love-story/generate');
