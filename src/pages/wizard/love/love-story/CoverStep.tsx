@@ -80,6 +80,8 @@ const LoveStoryCoverStep = () => {
   const [recipientName, setRecipientName] = useState<string>('');
   const [selectedStyle, setSelectedStyle] = useState<string>('classic');
   const [textTone, setTextTone] = useState<string>('romantic');
+  const [partnerAge, setPartnerAge] = useState<string>('');
+  const [partnerGender, setPartnerGender] = useState<'male' | 'female' | ''>('');
   
   // 标题状态，合并为一个结构
   const [titleData, setTitleData] = useState({
@@ -106,6 +108,8 @@ const LoveStoryCoverStep = () => {
     const savedStyle = localStorage.getItem('loveStoryCoverStyle');
     const savedTone = localStorage.getItem('loveStoryTone');
     const savedRecipientName = localStorage.getItem('loveStoryPersonName');
+    const savedRecipientAge = localStorage.getItem('loveStoryPersonAge');
+    const savedRecipientGender = localStorage.getItem('loveStoryPersonGender');
     const savedImageIndex = localStorage.getItem('loveStorySelectedCoverIndex');
     
     // 从Supabase获取已保存的封面图片
@@ -116,6 +120,8 @@ const LoveStoryCoverStep = () => {
     if (savedTone) setTextTone(savedTone);
     if (savedStyle) setSelectedStyle(savedStyle);
     if (savedRecipientName) setRecipientName(savedRecipientName);
+    if (savedRecipientAge) setPartnerAge(savedRecipientAge);
+    if (savedRecipientGender) setPartnerGender(savedRecipientGender as 'male' | 'female' | '');
     if (savedImageIndex) setCurrentImageIndex(parseInt(savedImageIndex));
     
     // 获取故事idea
@@ -326,7 +332,7 @@ const LoveStoryCoverStep = () => {
       // 获取用户上传的图片
       const uploadedImage = localStorage.getItem('loveStoryPartnerPhoto');
       const savedTone = localStorage.getItem('loveStoryTone') || textTone;
-      const personAge = localStorage.getItem('loveStoryPersonAge') || '0';
+      const personAge = localStorage.getItem('loveStoryPersonAge') || partnerAge;
       const ageNumber = parseInt(personAge);
       
       // 根据年龄选择不同的 prompt
@@ -347,7 +353,9 @@ const LoveStoryCoverStep = () => {
             photo: uploadedImage,
             style: "Disney Charactor", // 固定使用 Disney Charactor 样式
             type: 'cover',
-            prompt: textPrompt // 将 textPrompt 改为 prompt
+            prompt: textPrompt, // 将 textPrompt 改为 prompt
+            age: partnerAge,
+            gender: partnerGender
           }
         });
         

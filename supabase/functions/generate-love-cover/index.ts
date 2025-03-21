@@ -34,7 +34,7 @@ serve(async (req) => {
       auth: REPLICATE_API_KEY,
     });
 
-    const { prompt, contentPrompt, content2Prompt, photo, style } = await req.json();
+    const { prompt, contentPrompt, content2Prompt, photo, style, age, gender } = await req.json();
     
     // Get the style name to use with the API
     console.log(`Requested style from client: "${style}"`);
@@ -79,13 +79,13 @@ serve(async (req) => {
     console.log(`Mapped to API style_name: "${styleName}"`);
 
     // 仅生成封面
-    if (!contentPrompt && !content2Prompt && prompt && photo) {
+    if (prompt && !contentPrompt && !content2Prompt && photo) {
       console.log("Generating single cover image with prompt:", prompt);
       const output = await replicate.run(
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
         {
           input: {
-            prompt: `${prompt} img`,
+            prompt: `${prompt} img${age ? `, ${age} years old` : ''}${gender ? `, ${gender}` : ''}`,
             num_steps: 50,
             style_name: styleName,
             input_image: photo,
@@ -111,7 +111,7 @@ serve(async (req) => {
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
         {
           input: {
-            prompt: `${contentPrompt} single-person img, story moment`,
+            prompt: `${contentPrompt} single-person img, story moment${age ? `, ${age} years old` : ''}${gender ? `, ${gender}` : ''}`,
             num_steps: 50,
             style_name: styleName,
             input_image: photo,
@@ -133,11 +133,11 @@ serve(async (req) => {
     // 仅生成内容图2
     if (!prompt && !contentPrompt && content2Prompt && photo) {
       console.log("Generating content image 2 with prompt:", content2Prompt);
-      const contentImage2 = await replicate.run(
+      const content2Image = await replicate.run(
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
         {
           input: {
-            prompt: `${content2Prompt} single-person img, story moment`,
+            prompt: `${content2Prompt} single-person img, story moment${age ? `, ${age} years old` : ''}${gender ? `, ${gender}` : ''}`,
             num_steps: 50,
             style_name: styleName,
             input_image: photo,
@@ -151,7 +151,7 @@ serve(async (req) => {
       );
 
       return new Response(
-        JSON.stringify({ contentImage2 }),
+        JSON.stringify({ content2Image }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -163,12 +163,12 @@ serve(async (req) => {
     console.log("Content 2 prompt:", content2Prompt);
     console.log("Using style:", styleName);
 
-    const [output, contentImage, contentImage2] = await Promise.all([
+    const [output, contentImage, content2Image] = await Promise.all([
       replicate.run(
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
         {
           input: {
-            prompt: `${prompt} img`,
+            prompt: `${prompt} img${age ? `, ${age} years old` : ''}${gender ? `, ${gender}` : ''}`,
             num_steps: 50,
             style_name: styleName,
             input_image: photo,
@@ -184,7 +184,7 @@ serve(async (req) => {
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
         {
           input: {
-            prompt: `${contentPrompt} single-person img, story moment`,
+            prompt: `${contentPrompt} single-person img, story moment${age ? `, ${age} years old` : ''}${gender ? `, ${gender}` : ''}`,
             num_steps: 50,
             style_name: styleName,
             input_image: photo,
@@ -200,7 +200,7 @@ serve(async (req) => {
         "tencentarc/photomaker:ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4",
         {
           input: {
-            prompt: `${content2Prompt} single-person img, story moment`,
+            prompt: `${content2Prompt} single-person img, story moment${age ? `, ${age} years old` : ''}${gender ? `, ${gender}` : ''}`,
             num_steps: 50,
             style_name: styleName,
             input_image: photo,
@@ -218,7 +218,7 @@ serve(async (req) => {
       JSON.stringify({
         output,
         contentImage,
-        contentImage2,
+        content2Image,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
