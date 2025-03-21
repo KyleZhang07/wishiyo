@@ -118,8 +118,7 @@ const FormatStep = () => {
               person_name: personName,
               status: 'created',
               timestamp: new Date().toISOString(),
-              client_id: clientId,
-              binding_type: selectedFormat
+              client_id: clientId
             })
             .select();
           

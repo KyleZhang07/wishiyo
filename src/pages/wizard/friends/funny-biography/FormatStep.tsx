@@ -280,7 +280,6 @@ const FormatStep = () => {
                 answers: answers, // 添加answers字段
                 status: 'created',
                 timestamp: new Date().toISOString(),
-                binding_type: selectedFormat, // 直接在创建记录时添加binding_type
                 // 保存图片URL到数据库
                 images: {
                   frontCover: frontCoverUrl,
