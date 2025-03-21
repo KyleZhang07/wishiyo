@@ -179,7 +179,7 @@ export default async function handler(req, res) {
             interior: {
               source_url: order.interior_source_url
             },
-            pod_package_id: getPodPackageId(tableName, order.binding_type)
+            pod_package_id: '0600X0900BWSTDPB060UW444MXX' // 使用文档中的有效值
           },
           quantity: order.print_quantity || 1
         }
@@ -188,37 +188,6 @@ export default async function handler(req, res) {
       shipping_level: shippingLevel,
       shipping_address: null // 将在验证文件后设置
     };
-    
-    // 根据书籍类型和装订类型获取正确的 pod_package_id
-    function getPodPackageId(bookType, bindingType) {
-      // 默认值，以防没有指定装订类型
-      const defaultId = '0600X0900BWSTDPB060UW444MXX';
-      
-      // 如果没有指定装订类型，使用默认值
-      if (!bindingType) {
-        return defaultId;
-      }
-      
-      // 根据书籍类型和装订类型选择正确的 pod_package_id
-      if (bookType === 'love_story_books') {
-        // Love Story 书籍
-        if (bindingType.toLowerCase() === 'hardcover') {
-          return '0850X0850FCPRECW080CW444GXX'; // 精装
-        } else {
-          return '0850X0850FCPREPB080CW444GXX'; // 平装
-        }
-      } else if (bookType === 'funny_biography_books') {
-        // Funny Biography 书籍
-        if (bindingType.toLowerCase() === 'hardcover') {
-          return '0600X0900BWSTDCW060CU444MXX'; // 精装
-        } else {
-          return '0600X0900BWSTDPB060CU444MXX'; // 平装
-        }
-      }
-      
-      // 如果无法确定，使用默认值
-      return defaultId;
-    }
     
     // =====================================================================
     // 6. 验证文件 (Validate Files)
