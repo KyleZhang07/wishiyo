@@ -115,7 +115,7 @@ export default async function handler(req, res) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': 'Basic NDIwZTExYjAtMzYyMS00M2FjLWE0YmQtYWMxMDQ3NTkxY2UxOk1INGVZbmJHS1ZGVFNDSW5iSkJKS2g0a2dlZmVvRkdV'
+          'Authorization': 'Basic YTAyMjU0YjQtYmZkYS00NmIzLTkzNWYtYzg5OTU5NzVhNGM3OmlVWHpGRXYzM3kydDJXc0M4RlU0ZzZLdWJuY0R3WTB1'
         },
         body: 'grant_type=client_credentials'
       });
