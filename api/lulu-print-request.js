@@ -49,15 +49,15 @@ export default async function handler(req, res) {
     // 1. 沙盒环境 (Sandbox Environment)
     // =====================================================================
     // 验证LuluPress API凭证
-    const LULU_API_KEY = process.env.LULU_CLIENT_ID;
-    const LULU_API_SECRET = process.env.LULU_CLIENT_SECRET;
+    const LULU_CLIENT_KEY = process.env.LULU_CLIENT_KEY;
+    const LULU_CLIENT_SECRET = process.env.LULU_CLIENT_SECRET;
     // 从环境变量中获取API端点，默认为沙盒环境
     const LULU_API_ENDPOINT = process.env.LULU_API_ENDPOINT || 'https://api.sandbox.lulu.com';
     // 定义认证端点和打印作业端点
     const AUTH_ENDPOINT = `${LULU_API_ENDPOINT}/auth/realms/glasstree/protocol/openid-connect/token`;
     const PRINT_JOBS_ENDPOINT = `${LULU_API_ENDPOINT}/print-jobs`;
     
-    if (!LULU_API_KEY || !LULU_API_SECRET) {
+    if (!LULU_CLIENT_KEY || !LULU_CLIENT_SECRET) {
       console.error('Missing Lulu API credentials');
       return res.status(500).json({
         success: false,
@@ -115,7 +115,7 @@ export default async function handler(req, res) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': `Basic NDIwZTExYjAtMzYyMS00M2FjLWE0YmQtYWMxMDQ3NTkxY2UxOk1INGVZbmJHS1ZGVFNDSW5iSkJKS2g0a2dlZmVvRkdV`
+          'Authorization': 'Basic NDIwZTExYjAtMzYyMS00M2FjLWE0YmQtYWMxMDQ3NTkxY2UxOk1INGVZbmJHS1ZGVFNDSW5iSkJKS2g0a2dlZmVvRkdV'
         },
         body: 'grant_type=client_credentials'
       });
