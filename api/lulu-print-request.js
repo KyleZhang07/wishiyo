@@ -171,8 +171,12 @@ export default async function handler(req, res) {
       line_items: [
         {
           title: order.title || 'Custom Book',
-          cover_url: order.cover_source_url,
-          interior_url: order.interior_source_url,
+          cover: {
+            source_url: order.cover_source_url
+          },
+          interior: {
+            source_url: order.interior_source_url
+          },
           pod_package_id: '0600X0900BWSTDPB060UW444MXX', // 使用文档中的有效值
           quantity: order.print_quantity || 1,
           page_count: order.page_count || 100 // 添加默认页数
