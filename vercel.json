@@ -7,11 +7,5 @@
   ],
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
-  "outputDirectory": "dist",
-  "crons": [
-    {
-      "path": "/api/check-pending-prints",
-      "schedule": "*/5 * * * *"
-    }
-  ]
-}
+  "outputDirectory": "dist"
+} 

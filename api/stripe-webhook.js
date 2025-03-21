@@ -59,11 +59,14 @@ async function triggerPrintRequestCheck(orderId, type) {
       environment: process.env.VERCEL_ENV || 'development'
     });
     
-    const response = await fetch(`${baseUrl}/api/check-pending-prints`, {
-      method: 'GET',
+    const response = await fetch(`${baseUrl}/api/order-status`, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-      }
+      },
+      body: JSON.stringify({
+        autoSubmit: true
+      })
     });
 
     if (response.ok) {
@@ -321,37 +324,12 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     console.log(`[${orderId}] Completing book generation process`);
     await updateBookStatus(supabaseUrl, supabaseKey, orderId, "completed");
     
-    // 12. 设置为准备好打印
-    console.log(`[${orderId}] Setting book as ready for printing`);
-    
-    // 获取基础URL
-    const baseUrl = process.env.VERCEL_ENV === 'production' 
-      ? `https://${process.env.VERCEL_URL || 'wishiyo.com'}`
-      : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8080';
-    
-    // 调用 update-order API 将 ready_to_print 设置为 true
-    const updateOrderResponse = await fetch(`${baseUrl}/api/update-order`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        orderId,
-        type: 'funny_biography',
-        ready_to_print: true
-      })
-    });
-    
-    if (updateOrderResponse.ok) {
-      console.log(`[${orderId}] Book successfully marked as ready for printing`);
-    } else {
-      const errorText = await updateOrderResponse.text();
-      console.error(`[${orderId}] Failed to mark book as ready for printing: ${updateOrderResponse.status} ${updateOrderResponse.statusText}`, errorText);
-    }
+    // 12. 设置为准备好打印 - 现在由generate-interior-pdf处理
+    console.log(`[${orderId}] Book ready for printing status is managed by the interior PDF generation process`);
     
     console.log(`[${orderId}] Book generation process completed successfully`);
     
-    // 触发打印请求检查 - 可选，因为我们现在有定时任务
+    // 触发打印请求检查
     try {
       console.log('Triggering print request check for newly completed orders...');
       await triggerPrintRequestCheck(orderId, 'funny_biography');
@@ -434,10 +412,7 @@ export default async function handler(req, res) {
           
           if (!productId) {
             console.warn('会话元数据中缺少productId');
-            return res.status(200).json({ 
-              received: true, 
-              warning: '元数据中缺少productId' 
-            });
+            return res.status(200).json({ received: true, warning: '元数据中缺少productId' });
           }
 
           // 提取运输地址信息
