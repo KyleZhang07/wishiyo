@@ -5,6 +5,12 @@ import nodeFetch from 'node-fetch';
 const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+/**
+ * 处理Lulu打印请求
+ * @param {Object} req - HTTP请求对象
+ * @param {Object} res - HTTP响应对象
+ * @returns {Promise<Object>} - HTTP响应
+ */
 export default async function handler(req, res) {
   // 设置CORS头
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -39,35 +45,32 @@ export default async function handler(req, res) {
       });
     }
     
+    // =====================================================================
+    // 1. 沙盒环境 (Sandbox Environment)
+    // =====================================================================
     // 验证LuluPress API凭证
     const LULU_API_KEY = process.env.LULU_CLIENT_ID;
     const LULU_API_SECRET = process.env.LULU_CLIENT_SECRET;
-    // 从环境变量中获取API端点
+    // 从环境变量中获取API端点，默认为沙盒环境
     const LULU_API_ENDPOINT = process.env.LULU_API_ENDPOINT || 'https://api.sandbox.lulu.com';
     // 定义认证端点和打印作业端点
     const AUTH_ENDPOINT = `${LULU_API_ENDPOINT}/auth/realms/glasstree/protocol/openid-connect/token`;
     const PRINT_JOBS_ENDPOINT = `${LULU_API_ENDPOINT}/print-jobs`;
     
     if (!LULU_API_KEY || !LULU_API_SECRET) {
-      console.error('Missing Lulu API credentials', {
-        hasClientId: !!LULU_API_KEY,
-        hasClientSecret: !!LULU_API_SECRET
-      });
+      console.error('Missing Lulu API credentials');
       return res.status(500).json({
         success: false,
-        error: 'Server configuration error'
+        error: 'Server configuration error: Missing Lulu API credentials'
       });
     }
     
     // 验证Supabase凭证
     if (!supabaseUrl || !supabaseServiceKey) {
-      console.error('Missing Supabase credentials', { 
-        hasUrl: !!supabaseUrl, 
-        hasServiceKey: !!supabaseServiceKey 
-      });
+      console.error('Missing Supabase credentials');
       return res.status(500).json({
         success: false,
-        error: 'Server configuration error'
+        error: 'Server configuration error: Missing Supabase credentials'
       });
     }
     
@@ -99,6 +102,89 @@ export default async function handler(req, res) {
       });
     }
     
+    // =====================================================================
+    // 2. 认证 (Authorization) & 3. 生成令牌 (Generate a Token)
+    // =====================================================================
+    // 使用 nodeFetch 或全局 fetch
+    const fetchFunc = typeof fetch !== 'undefined' ? fetch : nodeFetch;
+    
+    // 获取Lulu API访问令牌
+    let accessToken;
+    try {
+      const tokenResponse = await fetchFunc(AUTH_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': `Basic NDIwZTExYjAtMzYyMS00M2FjLWE0YmQtYWMxMDQ3NTkxY2UxOk1INGVZbmJHS1ZGVFNDSW5iSkJKS2g0a2dlZmVvRkdV`
+        },
+        body: 'grant_type=client_credentials'
+      });
+      
+      if (!tokenResponse.ok) {
+        const errorText = await tokenResponse.text();
+        throw new Error(`Token request failed: ${tokenResponse.status} ${tokenResponse.statusText} - ${errorText}`);
+      }
+      
+      const tokenData = await tokenResponse.json();
+      accessToken = tokenData.access_token;
+      
+      if (!accessToken) {
+        throw new Error('No access token received from Lulu API');
+      }
+      
+      // 验证token是否获取成功（仅显示token的前10个字符，后面用***替代，保护安全）
+      console.log('Lulu API token获取成功:', {
+        token_preview: accessToken.substring(0, 10) + '***',
+        token_length: accessToken.length,
+        expires_in: tokenData.expires_in || 'unknown',
+        token_type: tokenData.token_type || 'unknown'
+      });
+      
+    } catch (error) {
+      console.error('Error obtaining Lulu API token:', error);
+      return res.status(500).json({
+        success: false,
+        error: `Failed to authenticate with Lulu API: ${error.message}`
+      });
+    }
+    
+    // =====================================================================
+    // 4. 认证请求准备 (Prepare authenticated requests)
+    // =====================================================================
+    // 使用订单提供的shipping_level或默认值
+    let shippingLevel = order.shipping_level || 'MAIL';
+    
+    // 更宽松的shipping_level验证，只在明显错误时才使用默认值
+    // 不再限制为固定的几个值，而是只检查是否为非空字符串
+    if (!shippingLevel || typeof shippingLevel !== 'string' || shippingLevel.trim() === '') {
+      console.warn(`Invalid shipping_level: ${shippingLevel}, using default: MAIL`);
+      shippingLevel = 'MAIL';
+    }
+    
+    // =====================================================================
+    // 5. 选择产品 (Select a Product)
+    // =====================================================================
+    // 准备打印请求数据
+    const printJobData = {
+      contact_email: order.customer_email || 'support@wishiyo.com',
+      external_id: orderId,
+      line_items: [
+        {
+          title: order.title || 'Custom Book',
+          cover_url: order.cover_source_url,
+          interior_url: order.interior_source_url,
+          pod_package_id: '0600X0900BWSTDPB060UW444MXX', // 使用文档中的有效值
+          quantity: order.print_quantity || 1,
+          page_count: order.page_count || 100 // 添加默认页数
+        }
+      ],
+      shipping_level: shippingLevel,
+      shipping_address: null // 将在验证文件后设置
+    };
+    
+    // =====================================================================
+    // 6. 验证文件 (Validate Files)
+    // =====================================================================
     // 检查必要的PDF URL
     if (!order.cover_source_url || !order.interior_source_url) {
       return res.status(400).json({
@@ -109,26 +195,13 @@ export default async function handler(req, res) {
     
     // 检查订单的shipping_address
     if (!order.shipping_address) {
-      console.log(`Order ${orderId} is missing shipping address information`, {
-        order_id: order.order_id,
-        order_keys: Object.keys(order),
-        shipping_address_value: order.shipping_address
-      });
-      
       return res.status(400).json({
         success: false,
         error: 'Order is missing shipping address information'
       });
     }
     
-    // 检查shipping_address的结构
-    console.log(`Order ${orderId} shipping address debug:`, {
-      shipping_address_type: typeof order.shipping_address,
-      shipping_address_keys: order.shipping_address ? Object.keys(order.shipping_address) : [],
-      shipping_address_json: JSON.stringify(order.shipping_address)
-    });
-    
-    // 确保shipping_address具有期望的结构
+    // 处理shipping_address
     let shippingAddress;
     
     try {
@@ -165,7 +238,9 @@ export default async function handler(req, res) {
         };
       }
       
-      console.log(`Formatted shipping address for order ${orderId}:`, shippingAddress);
+      // 设置验证后的收货地址
+      printJobData.shipping_address = shippingAddress;
+      
     } catch (error) {
       console.error(`Error formatting shipping address for order ${orderId}:`, error);
       return res.status(400).json({
@@ -174,73 +249,10 @@ export default async function handler(req, res) {
       });
     }
     
-    // 使用订单提供的shipping_level或默认值
-    let shippingLevel = order.shipping_level || 'MAIL';
-    
-    // 更宽松的shipping_level验证，只在明显错误时才使用默认值
-    // 不再限制为固定的几个值，而是只检查是否为非空字符串
-    if (!shippingLevel || typeof shippingLevel !== 'string' || shippingLevel.trim() === '') {
-      console.warn(`Invalid shipping_level: ${shippingLevel}, using default: MAIL`);
-      shippingLevel = 'MAIL';
-    }
-    
-    // 获取Lulu API访问令牌
-    console.log('Requesting Lulu API access token...');
-    
-    // 使用 nodeFetch 或全局 fetch
-    const fetchFunc = typeof fetch !== 'undefined' ? fetch : nodeFetch;
-    
-    const tokenResponse = await fetchFunc(AUTH_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': `Basic ${Buffer.from(`${LULU_API_KEY}:${LULU_API_SECRET}`).toString('base64')}`
-      },
-      body: 'grant_type=client_credentials'
-    });
-    
-    if (!tokenResponse.ok) {
-      const errorText = await tokenResponse.text();
-      console.error(`Error getting Lulu token: ${tokenResponse.status} ${tokenResponse.statusText} - ${errorText}`);
-      return res.status(500).json({
-        success: false,
-        error: 'Failed to authenticate with Lulu API'
-      });
-    }
-    
-    const tokenData = await tokenResponse.json();
-    const accessToken = tokenData.access_token;
-    
-    if (!accessToken) {
-      return res.status(500).json({
-        success: false,
-        error: 'Failed to obtain access token from Lulu API'
-      });
-    }
-    
-    // 准备打印请求
-    // 构建打印请求数据
-    const printJobData = {
-      contact_email: order.customer_email || 'support@wishiyo.com',
-      external_id: orderId,
-      line_items: [
-        {
-          title: order.title || 'Custom Book',
-          cover_url: order.cover_source_url,
-          interior_url: order.interior_source_url,
-          pod_package_id: '0600X0900BWSTDPB060UW444MXX', // 使用文档中的有效值
-          quantity: order.print_quantity || 1,
-          page_count: order.page_count || 100 // 添加默认页数
-        }
-      ],
-      shipping_level: shippingLevel,
-      shipping_address: shippingAddress
-    };
-    
+    // =====================================================================
+    // 7. 创建打印作业 (Create a Print-Job)
+    // =====================================================================
     // 提交打印作业到Lulu API
-    console.log('Submitting print job to Lulu API...');
-    console.log('Print job data:', JSON.stringify(printJobData, null, 2));
-    
     try {
       const printResponse = await fetchFunc(PRINT_JOBS_ENDPOINT, {
         method: 'POST',
@@ -251,39 +263,32 @@ export default async function handler(req, res) {
         body: JSON.stringify(printJobData)
       });
       
-      console.log(`Print job response status: ${printResponse.status}`);
-      
-      // 检查响应是否为 JSON
-      const contentType = printResponse.headers.get('content-type');
-      console.log(`Response content type: ${contentType}`);
-      
+      // 处理响应
       if (!printResponse.ok) {
-        let errorText;
+        let errorData = '';
         try {
+          const contentType = printResponse.headers.get('content-type');
           if (contentType && contentType.includes('application/json')) {
-            const errorData = await printResponse.json();
-            errorText = JSON.stringify(errorData);
+            const errorJson = await printResponse.json();
+            errorData = JSON.stringify(errorJson);
           } else {
-            errorText = await printResponse.text();
+            errorData = await printResponse.text();
           }
         } catch (e) {
-          errorText = `Failed to parse error response: ${e.message}`;
+          errorData = 'Failed to parse error response';
         }
         
-        console.error(`Error from Lulu API: ${printResponse.status} ${printResponse.statusText}`, errorText);
-        return res.status(500).json({
-          success: false,
-          error: `Failed to create print job: ${printResponse.status} ${printResponse.statusText} - ${errorText}`
-        });
+        throw new Error(`Print job request failed: ${printResponse.status} ${printResponse.statusText} - ${errorData}`);
       }
       
       const printData = await printResponse.json();
-      
-      console.log('Print job response:', JSON.stringify(printData, null, 2));
-      
-      // 更新数据库中的订单状态
       const printJobId = printData.id || printData.job_id;
       
+      if (!printJobId) {
+        throw new Error('Print job was created but no job ID was returned');
+      }
+      
+      // 更新数据库中的订单状态
       const { error: updateError } = await supabase
         .from(tableName)
         .update({
@@ -295,7 +300,7 @@ export default async function handler(req, res) {
         .eq('order_id', orderId);
         
       if (updateError) {
-        console.error(`Error updating order status: ${updateError.message}`);
+        console.error(`Error updating order status:`, updateError);
         // 尽管更新失败，打印请求已成功提交
         return res.status(200).json({
           success: true,
@@ -317,7 +322,7 @@ export default async function handler(req, res) {
       console.error('Error submitting print job:', error);
       return res.status(500).json({
         success: false,
-        error: `Internal server error: ${error.message}`
+        error: `Failed to submit print job: ${error.message}`
       });
     }
     
