@@ -301,7 +301,7 @@ export default async function handler(req, res) {
         .update({
           lulu_print_status: 'SUBMITTED',
           status: 'print_submitted',
-          print_job_id: printJobId,
+          lulu_print_job_id: printJobId,
           print_submission_date: new Date().toISOString()
         })
         .eq('order_id', orderId);
