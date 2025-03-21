@@ -509,7 +509,8 @@ export default async function handler(req, res) {
                     customer_email: expandedSession.customer_details?.email,
                     shipping_level: shippingOption?.display_name === 'Express Shipping' ? 'EXPRESS' : 'GROUND',
                     recipient_phone: expandedSession.customer_details?.phone || '',
-                    binding_type: binding_type || (format === 'Hardcover' ? 'hardcover' : 'softcover'),
+                    // 如果数据库中已经有binding_type，则不覆盖它
+                    // binding_type: binding_type || (format === 'Hardcover' ? 'hardcover' : 'softcover'),
                     is_color: is_color === 'true' ? true : false,
                     paper_type: paper_type || 'Standard',
                     book_size: '6x9',
@@ -589,7 +590,8 @@ export default async function handler(req, res) {
                     customer_email: expandedSession.customer_details?.email,
                     shipping_level: shippingOption?.display_name === 'Express Shipping' ? 'EXPRESS' : 'GROUND',
                     recipient_phone: expandedSession.customer_details?.phone || '',
-                    binding_type: binding_type || (format === 'Hardcover' ? 'hardcover' : 'softcover'),
+                    // 如果数据库中已经有binding_type，则不覆盖它
+                    // binding_type: binding_type || (format === 'Hardcover' ? 'hardcover' : 'softcover'),
                     is_color: is_color === 'true' ? true : false,
                     paper_type: paper_type || 'Standard',
                     book_size: '6x9',
