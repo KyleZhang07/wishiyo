@@ -225,7 +225,7 @@ serve(async (req) => {
       console.log(`内页PDF上传成功`)
     } else {
       // 对于大文件，我们需要一个替代方案
-      console.log(`内页PDF过大 (${Math.round(interiorPdfSize/1024/1024 * 100) / 100} MB)，使用分割上传并自动合并`)
+      console.log(`内页PDF过大 (${Math.round(interiorPdfSize/1024/1024 * 100) / 100} MB)，使用分割上传`)
       
       try {
         // 将大PDF分割成多个较小的PDF文件上传
@@ -287,108 +287,68 @@ serve(async (req) => {
           throw new Error(`上传索引文件失败: ${JSON.stringify(indexUploadError)}`);
         }
         
-        console.log(`索引文件上传成功，现在开始合并PDF部分`);
+        console.log(`索引文件上传成功，现在异步触发合并操作`);
         
-        // 自动合并PDF部分并上传到最终位置
+        // 异步触发合并操作
+        // 获取当前请求的origin
+        const origin = req.headers.get('origin') || 'https://wishiyo.com';
+        const mergeEndpoint = `${origin}/api/merge-pdf`;
+        
+        // 使用fetch API发送POST请求，不等待响应
         try {
-          // 下载所有PDF部分
-          const pdfParts: ArrayBuffer[] = [];
-          for (const partPath of pageInfoArray) {
-            console.log(`下载PDF部分: ${partPath}`);
-            const { data: partData, error: partError } = await supabaseAdmin
-              .storage
-              .from('pdfs')
-              .download(partPath);
-              
-            if (partError) {
-              console.error(`下载PDF部分失败: ${partPath}`, JSON.stringify(partError));
-              throw new Error(`下载PDF部分失败: ${partPath}`);
-            }
-            
-            if (partData) {
-              pdfParts.push(partData);
-            }
-          }
+          // 使用fire-and-forget模式，不等待响应
+          fetch(mergeEndpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              orderId: orderId,
+              type: 'interior'
+            })
+          }).catch(err => {
+            // 记录错误但不中断主流程
+            console.warn(`触发合并操作失败，但这不会影响上传流程:`, err);
+          });
           
-          // 合并所有PDF部分
-          console.log(`开始合并 ${pdfParts.length} 个PDF部分`);
-          const mergedPdf = new Uint8Array(interiorPdfSize);
-          let offset = 0;
-          
-          for (const part of pdfParts) {
-            mergedPdf.set(new Uint8Array(part), offset);
-            offset += part.byteLength;
-          }
-          
-          // 上传合并后的PDF到最终位置
-          console.log(`上传合并后的PDF到最终位置: ${interiorPdfPath}`);
-          const { error: finalUploadError } = await supabaseAdmin
-            .storage
-            .from('pdfs')
-            .upload(interiorPdfPath, mergedPdf, {
-              contentType: 'application/pdf',
-              upsert: true
-            });
-            
-          if (finalUploadError) {
-            console.error(`上传合并后的PDF失败:`, JSON.stringify(finalUploadError));
-            throw new Error(`上传合并后的PDF失败: ${JSON.stringify(finalUploadError)}`);
-          }
-          
-          console.log(`合并后的PDF上传成功`);
-          
-          // 可选：清理临时文件
-          // 注意：这可能会增加函数执行时间，如果时间有限可以跳过
-          // 或者创建一个单独的清理函数定期执行
-          /*
-          console.log(`开始清理临时文件`);
-          const filesToRemove = [...pageInfoArray, indexPath];
-          const { error: removeError } = await supabaseAdmin
-            .storage
-            .from('pdfs')
-            .remove(filesToRemove);
-            
-          if (removeError) {
-            console.warn(`清理临时文件失败:`, JSON.stringify(removeError));
-            // 不抛出错误，因为这不影响主要功能
-          } else {
-            console.log(`临时文件清理成功`);
-          }
-          */
-          
-        } catch (mergeError) {
-          console.error(`合并PDF时出错:`, mergeError);
-          
-          // 如果合并失败，上传一个占位PDF，包含分割信息和手动下载链接
-          console.log(`合并失败，上传占位PDF`);
-          
-          const placeholderPdf = new jsPDF();
-          placeholderPdf.text('此PDF已被分割成多个部分以便上传', 10, 10);
-          placeholderPdf.text(`原始文件大小: ${Math.round(interiorPdfSize/1024/1024 * 100) / 100} MB`, 10, 20);
-          placeholderPdf.text(`分割成 ${splitPdfCount} 个部分`, 10, 30);
-          placeholderPdf.text(`订单ID: ${orderId}`, 10, 40);
-          placeholderPdf.text(`自动合并失败，请联系管理员`, 10, 50);
-          
-          const placeholderPdfBytes = placeholderPdf.output('arraybuffer');
-          
-          const { error: placeholderUploadError } = await supabaseAdmin
-            .storage
-            .from('pdfs')
-            .upload(interiorPdfPath, new Uint8Array(placeholderPdfBytes), {
-              contentType: 'application/pdf',
-              upsert: true
-            });
-            
-          if (placeholderUploadError) {
-            console.error(`上传占位PDF失败:`, JSON.stringify(placeholderUploadError));
-            throw new Error(`上传占位PDF失败: ${JSON.stringify(placeholderUploadError)}`);
-          }
-          
-          // 继续执行，不中断流程
-          console.log(`占位PDF上传成功`);
+          console.log(`已触发合并操作，继续执行`);
+        } catch (triggerError) {
+          // 记录错误但不中断主流程
+          console.warn(`触发合并操作失败，但这不会影响上传流程:`, triggerError);
         }
         
-        console.log(`PDF分割上传和合并流程完成`);
+        // 上传一个小的占位PDF文件到原始路径，以便前端可以获取URL
+        // 这个文件包含一个说明页，告知用户完整PDF正在处理中
+        const placeholderPdf = new jsPDF();
+        placeholderPdf.text('您的PDF正在处理中...', 10, 10);
+        placeholderPdf.text(`原始文件大小: ${Math.round(interiorPdfSize/1024/1024 * 100) / 100} MB`, 10, 20);
+        placeholderPdf.text(`分割成 ${splitPdfCount} 个部分`, 10, 30);
+        placeholderPdf.text(`订单ID: ${orderId}`, 10, 40);
+        placeholderPdf.text('系统正在后台合并您的PDF，请稍后刷新页面查看。', 10, 50);
+        
+        // 使用当前请求的URL构建合并服务链接
+        const mergeUrl = `${origin}/api/merge-pdf?orderId=${orderId}&type=interior`;
+        placeholderPdf.setTextColor(0, 0, 255);
+        placeholderPdf.text('如果长时间未完成，请点击此处手动下载', 10, 60);
+        placeholderPdf.link(10, 57, 180, 10, { url: mergeUrl });
+        placeholderPdf.setTextColor(0, 0, 0);
+        
+        const placeholderPdfBytes = placeholderPdf.output('arraybuffer');
+        
+        const { error: placeholderUploadError } = await supabaseAdmin
+          .storage
+          .from('pdfs')
+          .upload(interiorPdfPath, new Uint8Array(placeholderPdfBytes), {
+            contentType: 'application/pdf',
+            upsert: true
+          });
+          
+        if (placeholderUploadError) {
+          console.error(`上传占位PDF失败:`, JSON.stringify(placeholderUploadError));
+          throw new Error(`上传占位PDF失败: ${JSON.stringify(placeholderUploadError)}`);
+        }
+        
+        console.log(`PDF分割上传成功，共 ${splitPdfCount} 个部分，已触发后台合并`);
         
       } catch (error) {
         console.error(`PDF分割上传过程中出错:`, error);
