@@ -110,12 +110,14 @@ export default async function handler(req, res) {
 
     try {
       // 获取上传URL
-      const { data: { signedURL }, error: signedURLError } = await supabase
+      const { data, error: signedURLError } = await supabase
         .storage
         .from('pdfs')
-        .createSignedUploadUrl(finalPath);
+        .createSignedUrl(finalPath, 3600, {
+          upsert: true
+        });
 
-      if (signedURLError) {
+      if (signedURLError || !data?.signedUrl) {
         console.error('获取签名上传URL失败:', signedURLError);
         return res.status(500).json({ error: '获取签名上传URL失败', details: signedURLError });
       }
@@ -123,7 +125,7 @@ export default async function handler(req, res) {
       console.log('获取到签名上传URL，准备上传文件');
 
       // 使用fetch直接上传到签名URL
-      const uploadResponse = await fetch(signedURL, {
+      const uploadResponse = await fetch(data.signedUrl, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/pdf'
