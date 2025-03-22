@@ -50,7 +50,7 @@ async function generateCoverPdf(frontCover, spine, backCover) {
     const pageHeight = 215.9; // 8.5英寸
     
     // 计算每个部分的宽度
-    // 假设封面和背面各占45%，书脊占10%
+    // 假设封面和背面各占45%,书脊占10%
     const coverWidth = pageWidth * 0.45;
     const spineWidth = pageWidth * 0.1;
     
@@ -89,13 +89,14 @@ export default async function handler(req, res) {
     }
     
     // 获取环境变量
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     
     if (!supabaseUrl || !supabaseKey) {
       console.error('Supabase configuration missing:', { 
         hasUrl: !!supabaseUrl, 
-        hasKey: !!supabaseKey 
+        hasKey: !!supabaseKey,
+        envVars: Object.keys(process.env).filter(key => key.includes('SUPA'))
       });
       return res.status(500).json({ error: 'Supabase configuration missing' });
     }
