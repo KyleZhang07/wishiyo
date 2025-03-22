@@ -448,7 +448,7 @@ async function generateCoverPdf(backCoverFile: any, spineFile: any, frontCoverFi
 // 辅助函数：生成PDF
 async function generatePdf(imageFiles: any[], orderId: string, clientId: string | null, supabase: any): Promise<Uint8Array> {
   console.log(`开始生成PDF，处理 ${imageFiles.length} 张图片...`)
-  console.log(`使用超时配置：60秒，订单ID: ${orderId}`)
+  console.log(`订单ID: ${orderId}`)
   
   // 根据Lulu模板修改为方形格式
   const pdf = new jsPDF({
@@ -466,130 +466,158 @@ async function generatePdf(imageFiles: any[], orderId: string, clientId: string 
   let currentPage = 0
   let successCount = 0
   let errorCount = 0
-
-  // 移除重复查询client_id的代码，直接使用传入的参数
-  for (const file of imageFiles) {
-    try {
-      console.log(`处理图片 ${currentPage + 1}/${imageFiles.length}: ${file.name}`)
-      
-      let imageData = null
-      let imageError = null
-
-      // 首先尝试从client_id路径获取图片
-      if (clientId) {
-        const clientPathResult = await supabase
-          .storage
-          .from('images')
-          .download(`${clientId}/${file.name}`)
+  
+  // 分批处理图片，每批处理5张
+  const batchSize = 5;
+  const totalBatches = Math.ceil(imageFiles.length / batchSize);
+  
+  for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
+    console.log(`处理批次 ${batchIndex + 1}/${totalBatches}...`);
+    
+    // 计算当前批次的起始和结束索引
+    const startIndex = batchIndex * batchSize;
+    const endIndex = Math.min(startIndex + batchSize, imageFiles.length);
+    const currentBatchFiles = imageFiles.slice(startIndex, endIndex);
+    
+    // 处理当前批次的图片
+    for (const file of currentBatchFiles) {
+      try {
+        console.log(`处理图片 ${currentPage + 1}/${imageFiles.length}: ${file.name}`);
         
-        if (!clientPathResult.error && clientPathResult.data) {
-          imageData = clientPathResult.data
-          imageError = null
-        } else {
-          // 如果从client_id路径获取失败，尝试从order_id路径获取
-          const orderPathResult = await supabase
+        let imageData = null;
+        let imageError = null;
+
+        // 首先尝试从client_id路径获取图片
+        if (clientId) {
+          const clientPathResult = await supabase
             .storage
             .from('images')
-            .download(`love-story/${orderId}/${file.name}`)
+            .download(`${clientId}/${file.name}`);
           
-          imageData = orderPathResult.data
-          imageError = orderPathResult.error
+          if (!clientPathResult.error && clientPathResult.data) {
+            imageData = clientPathResult.data;
+            imageError = null;
+          } else {
+            // 如果从client_id路径获取失败，尝试从order_id路径获取
+            const orderPathResult = await supabase
+              .storage
+              .from('images')
+              .download(`love-story/${orderId}/${file.name}`);
+            
+            imageData = orderPathResult.data;
+            imageError = orderPathResult.error;
+          }
+        } else {
+          // 如果没有client_id，直接从order_id路径获取
+          const { data, error } = await supabase
+            .storage
+            .from('images')
+            .download(`love-story/${orderId}/${file.name}`);
+          
+          imageData = data;
+          imageError = error;
         }
-      } else {
-        // 如果没有client_id，直接从order_id路径获取
-        const { data, error } = await supabase
-          .storage
-          .from('images')
-          .download(`love-story/${orderId}/${file.name}`)
+
+        if (imageError || !imageData) {
+          console.error(`无法下载图片 ${file.name}:`, imageError);
+          errorCount++;
+          continue; // 跳过这张图片，继续处理下一张
+        }
+
+        // 转换图片为base64
+        const imageBase64 = await blobToBase64(imageData);
         
-        imageData = data
-        imageError = error
-      }
+        // 立即释放原始图片数据内存
+        imageData = null;
 
-      if (imageError || !imageData) {
-        console.error(`无法下载图片 ${file.name}:`, imageError)
-        errorCount++
-        continue // 跳过这张图片，继续处理下一张
-      }
+        // 添加新页（除了第一页）
+        if (currentPage > 0) {
+          pdf.addPage();
+        }
 
-      // 转换图片为base64
-      const imageBase64 = await blobToBase64(imageData)
-
-      // 添加新页（除了第一页）
-      if (currentPage > 0) {
-        pdf.addPage()
-      }
-
-      // 添加图片到PDF - 填满整个页面包括出血区域
-      pdf.addImage(
-        imageBase64,
-        'JPEG',
-        0, // x坐标
-        0, // y坐标
-        totalDocSize, // 宽度（总文档宽度）
-        totalDocSize // 高度（总文档高度）
-      )
-      
-      // 添加安全边距指示线（仅用于调试）
-      const debugLines = true; // 保持原有设置
-      if (debugLines) {
-        pdf.setDrawColor(255, 0, 0); // 红色
-        pdf.setLineWidth(0.01);
-        
-        // 安全边距矩形 - 修正计算方式
-        pdf.rect(
-          bleedWidth + safetyMarginWidth, 
-          bleedWidth + safetyMarginWidth, 
-          bookTrimSize - (2 * safetyMarginWidth), 
-          bookTrimSize - (2 * safetyMarginWidth)
+        // 添加图片到PDF - 填满整个页面包括出血区域
+        pdf.addImage(
+          imageBase64,
+          'JPEG',
+          0, // x坐标
+          0, // y坐标
+          totalDocSize, // 宽度（总文档宽度）
+          totalDocSize, // 高度（总文档高度）
+          `img_${currentPage}` // 唯一ID，避免重复
         );
         
-        // 裁切线（Trim Size）
-        pdf.setDrawColor(0, 0, 255); // 蓝色
-        pdf.rect(
-          bleedWidth, 
-          bleedWidth, 
-          bookTrimSize, 
-          bookTrimSize
-        );
-        
-        // 添加总文档边界
-        pdf.setDrawColor(0, 162, 232); // 浅蓝色
-        pdf.rect(0, 0, totalDocSize, totalDocSize);
-        
-        // 添加标签文本
-        pdf.setFontSize(6);
-        pdf.setTextColor(0, 162, 232);
-        pdf.text('TRIM / BLEED AREA', totalDocSize/2, 0.1, { align: 'center' });
-        pdf.text('TRIM / BLEED AREA', totalDocSize/2, totalDocSize - 0.05, { align: 'center' });
-        
-        // 添加页码标签
-        pdf.setTextColor(0, 0, 0);
-        pdf.text(`PAGE ${currentPage + 1}`, totalDocSize/2, bleedWidth/2, { align: 'center' });
-      }
+        // 添加安全边距指示线（仅用于调试）
+        const debugLines = true; // 保持原有设置
+        if (debugLines) {
+          pdf.setDrawColor(255, 0, 0); // 红色
+          pdf.setLineWidth(0.01);
+          
+          // 安全边距矩形 - 修正计算方式
+          pdf.rect(
+            bleedWidth + safetyMarginWidth, 
+            bleedWidth + safetyMarginWidth, 
+            bookTrimSize - (2 * safetyMarginWidth), 
+            bookTrimSize - (2 * safetyMarginWidth)
+          );
+          
+          // 裁切线（Trim Size）
+          pdf.setDrawColor(0, 0, 255); // 蓝色
+          pdf.rect(
+            bleedWidth, 
+            bleedWidth, 
+            bookTrimSize, 
+            bookTrimSize
+          );
+          
+          // 添加总文档边界
+          pdf.setDrawColor(0, 162, 232); // 浅蓝色
+          pdf.rect(0, 0, totalDocSize, totalDocSize);
+          
+          // 添加标签文本
+          pdf.setFontSize(6);
+          pdf.setTextColor(0, 162, 232);
+          pdf.text('TRIM / BLEED AREA', totalDocSize/2, 0.1, { align: 'center' });
+          pdf.text('TRIM / BLEED AREA', totalDocSize/2, totalDocSize - 0.05, { align: 'center' });
+          
+          // 添加页码标签
+          pdf.setTextColor(0, 0, 0);
+          pdf.text(`PAGE ${currentPage + 1}`, totalDocSize/2, bleedWidth/2, { align: 'center' });
+        }
 
-      currentPage++
-      successCount++
-      
-      // 每处理10张图片输出一次进度
-      if (currentPage % 10 === 0) {
-        console.log(`已处理 ${currentPage}/${imageFiles.length} 张图片 (成功: ${successCount}, 失败: ${errorCount})`)
+        currentPage++;
+        successCount++;
+        
+        // 每处理一张图片就尝试手动触发垃圾回收
+        if (typeof global !== 'undefined' && global.gc) {
+          global.gc();
+        }
+      } catch (error) {
+        console.error(`处理图片 ${file.name} 时出错:`, error);
+        errorCount++;
+        // 继续处理下一张图片，而不是中断整个过程
       }
-    } catch (error) {
-      console.error(`处理图片 ${file.name} 时出错:`, error)
-      errorCount++
-      // 继续处理下一张图片，而不是中断整个过程
     }
+    
+    // 每批次处理完毕后，输出内存使用情况
+    if (typeof process !== 'undefined' && process.memoryUsage) {
+      const memoryUsage = process.memoryUsage();
+      console.log(`批次 ${batchIndex + 1} 完成，内存使用：${Math.round(memoryUsage.heapUsed / 1024 / 1024 * 100) / 100} MB / ${Math.round(memoryUsage.heapTotal / 1024 / 1024 * 100) / 100} MB`);
+    } else {
+      console.log(`批次 ${batchIndex + 1} 完成，已处理 ${currentPage}/${imageFiles.length} 张图片 (成功: ${successCount}, 失败: ${errorCount})`);
+    }
+    
+    // 批次间暂停一小段时间，让系统有机会回收内存
+    await new Promise(resolve => setTimeout(resolve, 100));
   }
 
-  console.log(`PDF生成完成，共处理 ${imageFiles.length} 张图片 (成功: ${successCount}, 失败: ${errorCount})`)
+  console.log(`PDF生成完成，共处理 ${imageFiles.length} 张图片 (成功: ${successCount}, 失败: ${errorCount})`);
   
   // 转换PDF为Uint8Array
-  const pdfOutput = pdf.output('arraybuffer')
-  const pdfSize = pdfOutput.byteLength
-  console.log(`生成的PDF大小: ${pdfSize} 字节 (${Math.round(pdfSize/1024/1024 * 100) / 100} MB)`)
+  const pdfOutput = pdf.output('arraybuffer');
+  const pdfSize = pdfOutput.byteLength;
+  console.log(`生成的PDF大小: ${pdfSize} 字节 (${Math.round(pdfSize/1024/1024 * 100) / 100} MB)`);
   
-  return new Uint8Array(pdfOutput)
+  return new Uint8Array(pdfOutput);
 }
 
 // 辅助函数：Blob转Base64
