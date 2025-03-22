@@ -109,6 +109,25 @@ export default async function handler(req, res) {
     console.log(`准备上传合并后的PDF到: ${finalPath}，大小: ${mergedPdf.byteLength} 字节`);
 
     try {
+      // 先尝试删除已存在的文件
+      console.log('尝试删除已存在的文件...');
+      await supabase
+        .storage
+        .from('pdfs')
+        .remove([finalPath])
+        .then(({ error }) => {
+          if (error) {
+            // 如果是因为文件不存在而删除失败，这不是错误
+            if (error.message && error.message.includes('Object not found')) {
+              console.log('文件不存在，无需删除');
+            } else {
+              console.warn('删除已存在文件时出现警告:', error);
+            }
+          } else {
+            console.log('已成功删除旧文件');
+          }
+        });
+
       // 获取上传URL
       console.log('尝试获取签名上传URL...');
       const { data, error: signedURLError } = await supabase
@@ -118,37 +137,58 @@ export default async function handler(req, res) {
 
       if (signedURLError) {
         console.error('获取签名上传URL失败:', signedURLError);
-        return res.status(500).json({ error: '获取签名上传URL失败', details: signedURLError });
-      }
+        
+        // 如果签名URL失败，尝试直接上传（带upsert选项）
+        console.log('尝试使用直接上传方式（带upsert选项）...');
+        const { error: directUploadError } = await supabase
+          .storage
+          .from('pdfs')
+          .upload(finalPath, mergedPdf, {
+            contentType: 'application/pdf',
+            upsert: true
+          });
+          
+        if (directUploadError) {
+          console.error('直接上传也失败了:', directUploadError);
+          return res.status(500).json({ 
+            error: '上传PDF失败', 
+            details: directUploadError 
+          });
+        }
+        
+        console.log('使用直接上传成功');
+        // 直接上传成功，跳到获取公共URL部分
+      } else {
+        // 签名URL获取成功，继续处理
+        if (!data || !data.signedURL) {
+          console.error('签名URL数据为空:', data);
+          return res.status(500).json({ error: '签名URL数据为空', details: data });
+        }
 
-      if (!data || !data.signedURL) {
-        console.error('签名URL数据为空:', data);
-        return res.status(500).json({ error: '签名URL数据为空', details: data });
-      }
+        const { signedURL } = data;
+        console.log('获取到签名上传URL，准备上传文件');
 
-      const { signedURL } = data;
-      console.log('获取到签名上传URL，准备上传文件');
-
-      // 使用fetch直接上传到签名URL
-      const uploadResponse = await fetch(signedURL, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/pdf'
-        },
-        body: mergedPdf
-      });
-
-      if (!uploadResponse.ok) {
-        const errorText = await uploadResponse.text();
-        console.error(`上传失败: ${uploadResponse.status} - ${errorText}`);
-        return res.status(500).json({ 
-          error: '上传PDF失败', 
-          status: uploadResponse.status,
-          details: errorText 
+        // 使用fetch直接上传到签名URL
+        const uploadResponse = await fetch(signedURL, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/pdf'
+          },
+          body: mergedPdf
         });
-      }
 
-      console.log('PDF上传成功');
+        if (!uploadResponse.ok) {
+          const errorText = await uploadResponse.text();
+          console.error(`上传失败: ${uploadResponse.status} - ${errorText}`);
+          return res.status(500).json({ 
+            error: '上传PDF失败', 
+            status: uploadResponse.status,
+            details: errorText 
+          });
+        }
+
+        console.log('PDF上传成功');
+      }
     } catch (uploadError) {
       console.error('上传过程中发生错误:', uploadError);
       return res.status(500).json({ error: '上传过程中发生错误', details: uploadError.message || uploadError });
