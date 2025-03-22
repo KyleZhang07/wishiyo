@@ -54,9 +54,14 @@ export default async function handler(req, res) {
     
     if (!supabaseUrl || !supabaseKey) {
       console.log('缺少Supabase配置');
+      console.log('SUPABASE_URL:', process.env.SUPABASE_URL);
+      console.log('NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
+      console.log('SUPABASE_SERVICE_ROLE_KEY是否存在:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
       return res.status(500).json({ error: 'Supabase configuration missing' });
     }
-
+    
+    console.log('使用Supabase URL:', supabaseUrl);
+    
     const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
 
     // 获取love_story_books记录
@@ -202,7 +207,7 @@ export default async function handler(req, res) {
       });
 
     if (coverUploadError) {
-      console.log(`上传封面PDF失败：${coverUploadError}`);
+      console.log(`上传封面PDF失败：${JSON.stringify(coverUploadError)}`);
       return res.status(500).json({ error: 'Failed to upload cover PDF', details: coverUploadError });
     }
 
@@ -216,7 +221,7 @@ export default async function handler(req, res) {
       });
 
     if (interiorUploadError) {
-      console.log(`上传内页PDF失败：${interiorUploadError}`);
+      console.log(`上传内页PDF失败：${JSON.stringify(interiorUploadError)}`);
       return res.status(500).json({ error: 'Failed to upload interior PDF', details: interiorUploadError });
     }
 
@@ -235,7 +240,7 @@ export default async function handler(req, res) {
       .eq('order_id', orderId);
 
     if (updateError) {
-      console.log(`更新书籍记录失败：${updateError}`);
+      console.log(`更新书籍记录失败：${JSON.stringify(updateError)}`);
       return res.status(500).json({ error: 'Failed to update book record', details: updateError });
     }
 
@@ -250,7 +255,7 @@ export default async function handler(req, res) {
       }
     });
   } catch (error) {
-    console.error('Error in PDF generation:', error);
+    console.error('Error in PDF generation:', JSON.stringify(error));
     return res.status(500).json({ 
       error: 'Internal server error', 
       message: error.message,
@@ -305,7 +310,7 @@ async function generateCoverPdf(backCoverFile, spineFile, frontCoverFile, orderI
     }
 
     if (imageError || !imageData) {
-      console.error(`Failed to download image: ${file.name}`, imageError);
+      console.error(`Failed to download image: ${file.name}`, JSON.stringify(imageError));
       throw new Error(`Failed to download image: ${file.name}`);
     }
 
@@ -505,7 +510,7 @@ async function generatePdf(imageFiles, orderId, clientId, supabase) {
     }
 
     if (imageError || !imageData) {
-      console.error(`Failed to download image: ${file.name}`, imageError);
+      console.error(`Failed to download image: ${file.name}`, JSON.stringify(imageError));
       continue;
     }
 
