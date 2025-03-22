@@ -174,6 +174,7 @@ serve(async (req) => {
     const coverPdfPath = `love-story/${orderId}/cover.pdf`
     const interiorPdfPath = `love-story/${orderId}/interior.pdf`
 
+    console.log(`开始上传封面PDF到路径: ${coverPdfPath}`)
     const { data: coverUploadData, error: coverUploadError } = await supabaseAdmin
       .storage
       .from('pdfs')
@@ -183,12 +184,15 @@ serve(async (req) => {
       })
 
     if (coverUploadError) {
+      console.error(`上传封面PDF失败:`, JSON.stringify(coverUploadError))
       return new Response(
         JSON.stringify({ error: 'Failed to upload cover PDF', details: coverUploadError }),
         { headers: { ...headers, 'Content-Type': 'application/json' }, status: 500 }
       )
     }
+    console.log(`封面PDF上传成功`)
 
+    console.log(`开始上传内页PDF到路径: ${interiorPdfPath}`)
     const { data: interiorUploadData, error: interiorUploadError } = await supabaseAdmin
       .storage
       .from('pdfs')
@@ -198,11 +202,13 @@ serve(async (req) => {
       })
 
     if (interiorUploadError) {
+      console.error(`上传内页PDF失败:`, JSON.stringify(interiorUploadError))
       return new Response(
         JSON.stringify({ error: 'Failed to upload interior PDF', details: interiorUploadError }),
         { headers: { ...headers, 'Content-Type': 'application/json' }, status: 500 }
       )
     }
+    console.log(`内页PDF上传成功`)
 
     // 获取PDF的公共URL
     const { data: coverUrl } = supabaseAdmin
@@ -215,6 +221,10 @@ serve(async (req) => {
       .from('pdfs')
       .getPublicUrl(interiorPdfPath)
 
+    console.log(`开始更新数据库记录，订单ID: ${orderId}`)
+    console.log(`封面PDF URL: ${coverUrl.publicUrl}`)
+    console.log(`内页PDF URL: ${interiorUrl.publicUrl}`)
+    
     // 更新love_story_books记录
     const { data: updateData, error: updateError } = await supabaseAdmin
       .from('love_story_books')
@@ -230,11 +240,13 @@ serve(async (req) => {
       .select()
 
     if (updateError) {
+      console.error(`更新数据库记录失败:`, JSON.stringify(updateError))
       return new Response(
         JSON.stringify({ error: 'Failed to update book record', details: updateError }),
         { headers: { ...headers, 'Content-Type': 'application/json' }, status: 500 }
       )
     }
+    console.log(`数据库记录更新成功`)
 
     return new Response(
       JSON.stringify({
