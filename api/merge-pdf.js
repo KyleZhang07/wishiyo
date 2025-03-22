@@ -1,8 +1,8 @@
 // 导入所需模块
 import { createClient } from '@supabase/supabase-js';
 
-// 初始化Supabase客户端 - 使用硬编码的URL
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://xdxlgqpjmxontjtfmeey.supabase.co';
+// 初始化Supabase客户端 - 使用正确的URL
+const supabaseUrl = process.env.SUPABASE_URL || 'https://hbkgbggctzvqffqfrmhl.supabase.co';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 export default async function handler(req, res) {
