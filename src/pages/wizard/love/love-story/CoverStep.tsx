@@ -1103,7 +1103,7 @@ const LoveStoryCoverStep = () => {
       // 生成并上传版权信息页面
       try {
         // 获取最新的图片列表
-        const allImages = await getAllImagesFromStorage('book-pages');
+        const allImages = await getAllImagesFromStorage('images');
         
         // 导入并调用renderAndUploadEndingImage函数
         const { renderAndUploadEndingImage } = await import('./utils/canvasUtils');

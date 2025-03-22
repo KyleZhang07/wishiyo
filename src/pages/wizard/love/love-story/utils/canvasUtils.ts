@@ -639,19 +639,19 @@ export const renderAndUploadEndingImage = async (
     
     // 生成唯一文件名
     const timestamp = new Date().getTime();
-    const fileName = `ending-page-${timestamp}.jpg`;
+    const fileName = `ending-page-${timestamp}`;
     
     // 检查是否有现有图片需要删除
     const existingImage = supabaseImages.find(img => img.name.startsWith('ending-page-'));
     if (existingImage) {
-      await deleteImageFromStorage('book-pages', existingImage.name);
+      await deleteImageFromStorage(existingImage.name, 'images');
     }
     
     // 上传到Supabase Storage
     const publicUrl = await uploadImageToStorage(
-      'book-pages',
-      fileName,
-      imageData
+      imageData,
+      'images',
+      fileName
     );
     
     if (!publicUrl) {
