@@ -265,7 +265,58 @@ serve(async (req) => {
   }
 })
 
-// 新增函数：生成完整封面PDF（封底+书脊+封面）
+// 辅助函数：提取图片尺寸信息
+function extractImageDimensionsFromBase64(base64String: string): { width: number; height: number } | null {
+  // 使用正则表达式提取图片类型（如data:image/jpeg;base64,...）
+  const match = base64String.match(/^data:image\/(\w+);base64,(.*)$/);
+  
+  if (!match) return null;
+  
+  const mimeType = match[1];
+  const base64Data = match[2];
+  
+  // 根据图片类型决定如何提取尺寸信息
+  switch (mimeType) {
+    case 'jpeg':
+    case 'jpg':
+      // JPEG图片的尺寸信息位于文件头部的第3和第4字节（高位在前）
+      const jpegData = atob(base64Data);
+      const jpegBuffer = new Uint8Array(jpegData.length);
+      for (let i = 0; i < jpegData.length; i++) {
+        jpegBuffer[i] = jpegData.charCodeAt(i);
+      }
+      
+      // 寻找0xFFC0标记，之后的两个字节表示高度，接着的两个字节表示宽度
+      let offset = 2; // 跳过文件头
+      while (offset < jpegBuffer.length - 2) {
+        if (jpegBuffer[offset] === 0xFF && jpegBuffer[offset + 1] === 0xC0) {
+          const height = (jpegBuffer[offset + 5] << 8) | jpegBuffer[offset + 6];
+          const width = (jpegBuffer[offset + 7] << 8) | jpegBuffer[offset + 8];
+          return { width, height };
+        }
+        offset++;
+      }
+      break;
+    case 'png':
+      // PNG图片的尺寸信息位于文件头部的第17和第21字节（低位在前）
+      const pngData = atob(base64Data);
+      const pngBuffer = new Uint8Array(pngData.length);
+      for (let i = 0; i < pngData.length; i++) {
+        pngBuffer[i] = pngData.charCodeAt(i);
+      }
+      
+      // IHDR块包含图片尺寸信息
+      const width = (pngBuffer[16] << 24) | (pngBuffer[17] << 16) | (pngBuffer[18] << 8) | pngBuffer[19];
+      const height = (pngBuffer[20] << 24) | (pngBuffer[21] << 16) | (pngBuffer[22] << 8) | pngBuffer[23];
+      return { width, height };
+    default:
+      return null;
+  }
+  
+  return null;
+}
+
+// 辅助函数：生成完整封面PDF（封底+书脊+封面）
 async function generateCoverPdf(backCoverFile: any, spineFile: any, frontCoverFile: any, orderId: string, clientId: string | null, supabase: any): Promise<Uint8Array> {
   // 创建PDF，设置为Lulu要求的总文档尺寸 (19" x 10.25")
   const pdf = new jsPDF({
@@ -542,6 +593,32 @@ async function generatePdf(imageFiles: any[], orderId: string, clientId: string 
         // 立即释放原始图片数据内存
         imageData = null;
 
+        // 创建临时Image对象检查分辨率
+        const checkResolution = true; // 启用图片分辨率检查
+        
+        if (checkResolution) {
+          try {
+            // 从base64字符串中提取图像尺寸信息
+            // 这种方法不需要创建Image对象，适用于Deno环境
+            const dimensions = extractImageDimensionsFromBase64(imageBase64);
+            if (dimensions) {
+              // 计算PPI (基于8.75英寸的PDF尺寸)
+              const widthPPI = dimensions.width / totalDocSize;
+              const heightPPI = dimensions.height / totalDocSize;
+              
+              console.log(`图片 ${file.name} 分辨率: ${dimensions.width}x${dimensions.height} 像素, 计算PPI: ${Math.round(widthPPI)}x${Math.round(heightPPI)}`);
+              
+              if (widthPPI < 300 || heightPPI < 300) {
+                console.warn(`警告: 图片 ${file.name} 的PPI低于300 (${Math.round(widthPPI)}x${Math.round(heightPPI)}), 可能影响打印质量`);
+              }
+            } else {
+              console.log(`无法从图片 ${file.name} 中提取尺寸信息`);
+            }
+          } catch (error) {
+            console.error(`检查图片分辨率时出错:`, error);
+          }
+        }
+
         // 添加新页（除了第一页）
         if (currentPage > 0) {
           pdf.addPage();
@@ -555,7 +632,9 @@ async function generatePdf(imageFiles: any[], orderId: string, clientId: string 
           0, // y坐标
           totalDocSize, // 宽度（总文档宽度）
           totalDocSize, // 高度（总文档高度）
-          `img_${currentPage}` // 唯一ID，避免重复
+          `img_${currentPage}`, // 唯一ID，避免重复
+          'MEDIUM', // 使用中等质量压缩以减小文件大小
+          false // 不启用别名，提高性能
         );
         
         // 添加安全边距指示线（仅用于调试）
