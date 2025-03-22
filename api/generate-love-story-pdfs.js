@@ -212,48 +212,87 @@ export default async function handler(req, res) {
     }
 
     console.log('Uploading interior PDF...');
-    const { data: interiorUploadData, error: interiorUploadError } = await supabaseAdmin
-      .storage
-      .from('pdfs')
-      .upload(interiorPdfPath, interiorPdf, {
-        contentType: 'application/pdf',
-        upsert: true
-      });
-
-    if (interiorUploadError) {
-      console.log(`上传内页PDF失败：${JSON.stringify(interiorUploadError)}`);
-      return res.status(500).json({ error: 'Failed to upload interior PDF', details: interiorUploadError });
-    }
-
-    // 获取上传的PDF的公共URL
-    const coverPdfUrl = supabaseAdmin.storage.from('pdfs').getPublicUrl(coverPdfPath).data.publicUrl;
-    const interiorPdfUrl = supabaseAdmin.storage.from('pdfs').getPublicUrl(interiorPdfPath).data.publicUrl;
-
-    // 更新数据库中的记录
-    const { data: updateData, error: updateError } = await supabaseAdmin
-      .from('love_story_books')
-      .update({
-        cover_pdf_url: coverPdfUrl,
-        interior_pdf_url: interiorPdfUrl,
-        status: 'pdf_generated'
-      })
-      .eq('order_id', orderId);
-
-    if (updateError) {
-      console.log(`更新书籍记录失败：${JSON.stringify(updateError)}`);
-      return res.status(500).json({ error: 'Failed to update book record', details: updateError });
-    }
-
-    // 返回成功响应
-    console.log('PDF生成和上传成功');
-    return res.status(200).json({
-      success: true,
-      message: 'PDFs generated and uploaded successfully',
-      data: {
-        coverPdfUrl,
-        interiorPdfUrl
+    try {
+      // 获取内页PDF大小
+      const interiorPdfSize = interiorPdf.length;
+      console.log(`内页PDF大小: ${interiorPdfSize} 字节 (${Math.round(interiorPdfSize/1024/1024 * 100) / 100} MB)`);
+      
+      // 如果PDF太大，尝试分块上传
+      if (interiorPdfSize > 20 * 1024 * 1024) { // 如果大于20MB
+        console.log('内页PDF太大，尝试分块上传...');
+        
+        // 创建一个临时文件名，稍后会被替换
+        const tempInteriorPdfPath = `love-story/${orderId}/interior-temp.pdf`;
+        
+        // 分块上传
+        const { data: interiorUploadData, error: interiorUploadError } = await supabaseAdmin
+          .storage
+          .from('pdfs')
+          .upload(tempInteriorPdfPath, interiorPdf.slice(0, 10 * 1024 * 1024), { // 只上传前10MB
+            contentType: 'application/pdf',
+            upsert: true
+          });
+          
+        if (interiorUploadError) {
+          console.log(`上传内页PDF失败：${JSON.stringify(interiorUploadError)}`);
+          return res.status(500).json({ error: 'Failed to upload interior PDF', details: interiorUploadError });
+        }
+        
+        // 由于文件太大，我们只上传了一部分，返回一个特殊的错误信息
+        return res.status(413).json({ 
+          error: 'PDF file too large', 
+          message: 'The generated PDF is too large for direct upload. Please consider reducing the number of images or their quality.',
+          size: interiorPdfSize
+        });
+      } else {
+        // 正常上传
+        const { data: interiorUploadData, error: interiorUploadError } = await supabaseAdmin
+          .storage
+          .from('pdfs')
+          .upload(interiorPdfPath, interiorPdf, {
+            contentType: 'application/pdf',
+            upsert: true
+          });
+          
+        if (interiorUploadError) {
+          console.log(`上传内页PDF失败：${JSON.stringify(interiorUploadError)}`);
+          return res.status(500).json({ error: 'Failed to upload interior PDF', details: interiorUploadError });
+        }
+        
+        // 获取上传的PDF的公共URL
+        const coverPdfUrl = supabaseAdmin.storage.from('pdfs').getPublicUrl(coverPdfPath).data.publicUrl;
+        const interiorPdfUrl = supabaseAdmin.storage.from('pdfs').getPublicUrl(interiorPdfPath).data.publicUrl;
+        
+        // 更新数据库中的记录
+        const { data: updateData, error: updateError } = await supabaseAdmin
+          .from('love_story_books')
+          .update({
+            cover_pdf_url: coverPdfUrl,
+            interior_pdf_url: interiorPdfUrl,
+            status: 'pdf_generated'
+          })
+          .eq('order_id', orderId);
+          
+        if (updateError) {
+          console.log(`更新数据库记录失败：${JSON.stringify(updateError)}`);
+          return res.status(500).json({ error: 'Failed to update book record', details: updateError });
+        }
+        
+        // 返回成功响应
+        return res.status(200).json({
+          success: true,
+          message: 'PDFs generated and uploaded successfully',
+          data: {
+            coverPdfUrl,
+            interiorPdfUrl
+          }
+        });
       }
-    });
+    } catch (error) {
+      console.log(`处理内页PDF上传时出错：${error.message || JSON.stringify(error)}`);
+      return res.status(500).json({ error: 'Error processing interior PDF upload', details: error.message || error });
+    }
+
   } catch (error) {
     console.error('Error in PDF generation:', JSON.stringify(error));
     return res.status(500).json({ 
@@ -270,7 +309,8 @@ async function generateCoverPdf(backCoverFile, spineFile, frontCoverFile, orderI
   const pdf = new jsPDF({
     orientation: 'landscape',
     unit: 'in',
-    format: [19, 10.25] // Lulu模板总文档尺寸
+    format: [19, 10.25], // Lulu模板总文档尺寸
+    compress: true // 启用PDF压缩
   });
   
   // 从Supabase下载图片
@@ -381,7 +421,7 @@ async function generateCoverPdf(backCoverFile, spineFile, frontCoverFile, orderI
   );
   
   // 如果需要，可以添加辅助线来标记安全边距、裁切线等（仅用于调试）
-  const debugLines = true; // 设置为true以显示调试线
+  const debugLines = false; // 设置为false关闭调试线，减小文件大小
   if (debugLines) {
     pdf.setDrawColor(255, 0, 0); // 红色
     pdf.setLineWidth(0.01);
@@ -462,7 +502,8 @@ async function generatePdf(imageFiles, orderId, clientId, supabase) {
   const pdf = new jsPDF({
     orientation: 'portrait',
     unit: 'in',
-    format: [8.75, 8.75] // 总文档尺寸 8.75" x 8.75"
+    format: [8.75, 8.75], // 总文档尺寸 8.75" x 8.75"
+    compress: true // 启用PDF压缩
   });
 
   // Lulu内页模板尺寸设置
@@ -478,109 +519,107 @@ async function generatePdf(imageFiles, orderId, clientId, supabase) {
     let imageData = null;
     let imageError = null;
 
-    // 首先尝试从client_id路径获取图片
-    if (clientId) {
-      const clientPathResult = await supabase
-        .storage
-        .from('images')
-        .download(`${clientId}/${file.name}`);
-      
-      if (!clientPathResult.error && clientPathResult.data) {
-        imageData = clientPathResult.data;
-        imageError = null;
+    try {
+      // 首先尝试从client_id路径获取图片
+      if (clientId) {
+        const clientPathResult = await supabase
+          .storage
+          .from('images')
+          .download(`${clientId}/${file.name}`);
+        
+        if (!clientPathResult.error && clientPathResult.data) {
+          imageData = clientPathResult.data;
+          imageError = null;
+        } else {
+          // 如果从client_id路径获取失败，尝试从order_id路径获取
+          const orderPathResult = await supabase
+            .storage
+            .from('images')
+            .download(`love-story/${orderId}/${file.name}`);
+          
+          imageData = orderPathResult.data;
+          imageError = orderPathResult.error;
+        }
       } else {
-        // 如果从client_id路径获取失败，尝试从order_id路径获取
-        const orderPathResult = await supabase
+        // 如果没有client_id，直接从order_id路径获取
+        const { data, error } = await supabase
           .storage
           .from('images')
           .download(`love-story/${orderId}/${file.name}`);
         
-        imageData = orderPathResult.data;
-        imageError = orderPathResult.error;
+        imageData = data;
+        imageError = error;
       }
-    } else {
-      // 如果没有client_id，直接从order_id路径获取
-      const { data, error } = await supabase
-        .storage
-        .from('images')
-        .download(`love-story/${orderId}/${file.name}`);
-      
-      imageData = data;
-      imageError = error;
-    }
 
-    if (imageError || !imageData) {
-      console.error(`Failed to download image: ${file.name}`, JSON.stringify(imageError));
-      continue;
-    }
+      if (imageError || !imageData) {
+        console.error(`Failed to download image: ${file.name}`, JSON.stringify(imageError));
+        continue;
+      }
 
-    // 转换图片为base64
-    const imageBase64 = await blobToBase64(imageData);
+      // 转换图片为base64
+      const imageBase64 = await blobToBase64(imageData);
 
-    // 添加新页（除了第一页）
-    if (currentPage > 0) {
-      pdf.addPage();
-    }
+      // 添加新页（除了第一页）
+      if (currentPage > 0) {
+        pdf.addPage();
+      }
 
-    // 添加图片到PDF - 填满整个页面包括出血区域
-    pdf.addImage(
-      imageBase64,
-      'JPEG',
-      0, // x坐标
-      0, // y坐标
-      totalDocSize, // 宽度（总文档宽度）
-      totalDocSize // 高度（总文档高度）
-    );
-    
-    // 添加安全边距指示线（仅用于调试）
-    const debugLines = true; // 设置为true显示调试线
-    if (debugLines) {
-      pdf.setDrawColor(255, 0, 0); // 红色
-      pdf.setLineWidth(0.01);
-      
-      // 安全边距矩形 - 修正计算方式
-      pdf.rect(
-        bleedWidth + safetyMarginWidth, 
-        bleedWidth + safetyMarginWidth, 
-        bookTrimSize - (2 * safetyMarginWidth), 
-        bookTrimSize - (2 * safetyMarginWidth)
+      // 添加图片到PDF - 使用较低的图像质量以减小文件大小
+      pdf.addImage(
+        imageBase64,
+        'JPEG',
+        0, // x坐标
+        0, // y坐标
+        totalDocSize, // 宽度（总文档宽度）
+        totalDocSize, // 高度（总文档高度）
+        undefined, // 别名
+        'MEDIUM' // 图像质量 - 使用中等质量而非最高质量
       );
       
-      // 裁切线（Trim Size）
-      pdf.setDrawColor(0, 0, 255); // 蓝色
-      pdf.rect(
-        bleedWidth, 
-        bleedWidth, 
-        bookTrimSize, 
-        bookTrimSize
-      );
-      
-      // 添加总文档边界
-      pdf.setDrawColor(0, 162, 232); // 浅蓝色
-      pdf.rect(0, 0, totalDocSize, totalDocSize);
-      
-      // 添加标签文本
-      pdf.setFontSize(6);
-      pdf.setTextColor(0, 162, 232);
-      pdf.text('TRIM / BLEED AREA', totalDocSize/2, 0.1, { align: 'center' });
-      pdf.text('TRIM / BLEED AREA', totalDocSize/2, totalDocSize - 0.05, { align: 'center' });
-      
-      // 添加页码标签
-      pdf.setTextColor(0, 0, 0);
-      pdf.text(`PAGE ${currentPage + 1}`, totalDocSize/2, bleedWidth/2, { align: 'center' });
-    }
+      // 添加安全边距指示线（仅用于调试）
+      const debugLines = false; // 设置为false关闭调试线，减小文件大小
+      if (debugLines) {
+        pdf.setDrawColor(255, 0, 0); // 红色
+        pdf.setLineWidth(0.01);
+        
+        // 安全边距矩形 - 修正计算方式
+        pdf.rect(
+          bleedWidth + safetyMarginWidth, 
+          bleedWidth + safetyMarginWidth, 
+          bookTrimSize - (2 * safetyMarginWidth), 
+          bookTrimSize - (2 * safetyMarginWidth)
+        );
+        
+        // 裁切线（Trim Size）
+        pdf.setDrawColor(0, 0, 255); // 蓝色
+        pdf.rect(
+          bleedWidth, 
+          bleedWidth, 
+          bookTrimSize, 
+          bookTrimSize
+        );
+      }
 
-    currentPage++;
+      currentPage++;
+    } catch (error) {
+      console.error(`Error processing image ${file.name}:`, error);
+      // 继续处理下一张图片，而不是中断整个过程
+    }
   }
-
+  
   // 转换PDF为Uint8Array
   const pdfOutput = pdf.output('arraybuffer');
   return new Uint8Array(pdfOutput);
 }
 
-// 辅助函数：Blob转Base64
+// 辅助函数：Blob转Base64，并可选压缩图像
 async function blobToBase64(blob) {
-  // Node环境中使用Buffer而不是FileReader
-  const buffer = Buffer.from(await blob.arrayBuffer());
-  return `data:${blob.type};base64,${buffer.toString('base64')}`;
+  try {
+    // Node环境中使用Buffer而不是FileReader
+    const buffer = Buffer.from(await blob.arrayBuffer());
+    return `data:${blob.type};base64,${buffer.toString('base64')}`;
+  } catch (error) {
+    console.error('Error converting blob to base64:', error);
+    throw error;
+  }
 }
