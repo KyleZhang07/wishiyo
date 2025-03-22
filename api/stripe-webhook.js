@@ -530,11 +530,12 @@ export default async function handler(req, res) {
               try {
                 // 异步触发图书生成，但不等待其完成
                 fetch(
-                  `/api/generate-book-content`,
+                  `${supabaseUrl}/functions/v1/generate-book-content`,
                   {
                     method: 'POST',
                     headers: {
-                      'Content-Type': 'application/json'
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${supabaseKey}`
                     },
                     body: JSON.stringify({ 
                       orderId,
@@ -623,9 +624,14 @@ export default async function handler(req, res) {
               // 调用函数生成PDF
               console.log(`===== STARTING LOVE STORY PDF GENERATION FOR ORDER ${orderId} ASYNCHRONOUSLY =====`);
               try {
+                // 获取当前站点的URL
+                const baseUrl = process.env.VERCEL_URL 
+                  ? `https://${process.env.VERCEL_URL}` 
+                  : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+                
                 // 异步触发PDF生成，但不等待其完成
                 fetch(
-                  `/api/generate-love-story-pdfs`,
+                  `${baseUrl}/api/generate-love-story-pdfs`,
                   {
                     method: 'POST',
                     headers: {
