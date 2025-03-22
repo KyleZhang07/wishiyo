@@ -624,41 +624,19 @@ export default async function handler(req, res) {
               // 调用函数生成PDF
               console.log(`===== STARTING LOVE STORY PDF GENERATION FOR ORDER ${orderId} ASYNCHRONOUSLY =====`);
               try {
-                // 获取当前站点的URL
-                const baseUrl = process.env.VERCEL_URL 
-                  ? `https://${process.env.VERCEL_URL}` 
-                  : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-                
-                // 记录完整的API URL
-                const apiUrl = `${baseUrl}/api/generate-love-story-pdfs`;
-                console.log(`[${orderId}] 调用Vercel API端点: ${apiUrl}`);
-                
                 // 异步触发PDF生成，但不等待其完成
                 fetch(
-                  apiUrl,
+                  `${supabaseUrl}/functions/v1/generate-love-story-pdfs`,
                   {
                     method: 'POST',
                     headers: {
-                      'Content-Type': 'application/json'
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${supabaseKey}`
                     },
                     body: JSON.stringify({ orderId })
                   }
-                ).then(response => {
-                  if (response.ok) {
-                    console.log(`[${orderId}] Vercel API调用成功，状态码: ${response.status}`);
-                  } else {
-                    console.error(`[${orderId}] Vercel API调用失败，状态码: ${response.status}`);
-                  }
-                  return response.text();
-                }).then(text => {
-                  try {
-                    const data = JSON.parse(text);
-                    console.log(`[${orderId}] Vercel API响应: `, data);
-                  } catch (e) {
-                    console.log(`[${orderId}] Vercel API响应(非JSON): ${text.substring(0, 200)}`);
-                  }
-                }).catch(error => {
-                  console.error(`[${orderId}] Async error in Love Story PDF generation process:`, error);
+                ).catch(error => {
+                  console.error(`Async error in Love Story PDF generation process for ${orderId}:`, error);
                 });
                 
                 console.log(`Love Story PDF generation triggered asynchronously for order ${orderId}`);

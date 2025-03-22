@@ -7,10 +7,5 @@
   ],
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
-  "outputDirectory": "dist",
-  "functions": {
-    "api/generate-love-story-pdfs.js": {
-      "maxDuration": 60
-    }
-  }
-}
+  "outputDirectory": "dist"
+} 
