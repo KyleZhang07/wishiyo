@@ -156,8 +156,8 @@ serve(async (req) => {
     // 检查是否有足够的图片
     if (coverImages.length === 0 || introImages.length === 0 || contentImages.length === 0 || backCoverImages.length === 0 || spineImages.length === 0) {
       return new Response(
-        JSON.stringify({ 
-          error: 'Insufficient images for PDF generation', 
+        JSON.stringify({
+          error: 'Insufficient images for PDF generation',
           details: {
             coverImagesCount: coverImages.length,
             backCoverImagesCount: backCoverImages.length,
@@ -188,29 +188,17 @@ serve(async (req) => {
     console.log(`封面PDF大小: ${coverPdfSize} 字节 (${Math.round(coverPdfSize/1024/1024 * 100) / 100} MB)`)
     
     // 上传封面PDF（通常较小，直接上传）
-    const { data: coverUploadData, error: coverUploadError } = await supabaseAdmin
-      .storage
-      .from('pdfs')
-      .upload(coverPdfPath, coverPdf, {
-        contentType: 'application/pdf',
-        upsert: true
-      })
-
-    if (coverUploadError) {
-      console.error(`上传封面PDF失败:`, JSON.stringify(coverUploadError))
-      return new Response(
-        JSON.stringify({ error: 'Failed to upload cover PDF', details: coverUploadError }),
-        { headers: { ...headers, 'Content-Type': 'application/json' }, status: 500 }
-      )
-    }
-    console.log(`封面PDF上传成功`)
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+    const coverPdfUrl = await uploadPdf(coverPdf, coverPdfPath, supabaseUrl, supabaseKey)
+    console.log(`封面PDF上传成功: ${coverPdfUrl}`)
 
     // 检查内页PDF大小
     const interiorPdfSize = interiorPdf.byteLength;
     console.log(`内页PDF大小: ${interiorPdfSize} 字节 (${Math.round(interiorPdfSize/1024/1024 * 100) / 100} MB)`)
     
     // 定义大小限制
-    const MAX_UPLOAD_SIZE = 50 * 1024 * 1024; // 50MB 限制
+    const MAX_UPLOAD_SIZE = 200 * 1024 * 1024; // 200MB 限制
     
     // 如果PDF太大，返回错误
     if (interiorPdfSize > MAX_UPLOAD_SIZE) {
@@ -218,7 +206,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           error: 'PDF file too large', 
-          details: `PDF size (${Math.round(interiorPdfSize/1024/1024 * 100) / 100} MB) exceeds maximum allowed size (${MAX_UPLOAD_SIZE/1024/1024} MB)` 
+          details: `PDF size (${Math.round(interiorPdfSize/1024/1024 * 100) / 100} MB) exceeds maximum allowed size (${MAX_UPLOAD_SIZE/1024/1024} MB). Please reduce the number of images or their quality.` 
         }),
         { headers: { ...headers, 'Content-Type': 'application/json' }, status: 400 }
       )
@@ -228,35 +216,73 @@ serve(async (req) => {
     
     try {
       // 使用直接的HTTP请求上传PDF，绕过Supabase客户端的大小限制
-      const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
-      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+      const interiorPdfUrl = await uploadPdf(interiorPdf, interiorPdfPath, supabaseUrl, supabaseKey)
+      console.log(`内页PDF上传成功: ${interiorPdfUrl}`)
       
-      if (!supabaseUrl || !supabaseKey) {
-        throw new Error('Missing Supabase environment variables')
+      // 获取PDF的公共URL
+      const { data: coverUrl } = supabaseAdmin
+        .storage
+        .from('pdfs')
+        .getPublicUrl(coverPdfPath)
+
+      const { data: interiorUrl } = supabaseAdmin
+        .storage
+        .from('pdfs')
+        .getPublicUrl(interiorPdfPath)
+
+      console.log(`开始更新数据库记录，订单ID: ${orderId}`)
+      console.log(`封面PDF URL: ${coverUrl.publicUrl}`)
+      console.log(`内页PDF URL: ${interiorUrl.publicUrl}`)
+      
+      // 更新love_story_books记录
+      const { data: updateData, error: updateError } = await supabaseAdmin
+        .from('love_story_books')
+        .update({
+          cover_pdf: coverUrl.publicUrl,
+          interior_pdf: interiorUrl.publicUrl,
+          cover_source_url: coverUrl.publicUrl,
+          interior_source_url: interiorUrl.publicUrl,
+          status: 'pdf_generated',
+          ready_for_printing: true // 设置为准备好打印
+        })
+        .eq('order_id', orderId)
+        .select()
+
+      if (updateError) {
+        console.error(`更新数据库记录失败:`, JSON.stringify(updateError))
+        return new Response(
+          JSON.stringify({ error: 'Failed to update book record', details: updateError }),
+          { headers: { ...headers, 'Content-Type': 'application/json' }, status: 500 }
+        )
       }
-      
-      // 构建上传URL
-      const bucketName = 'pdfs'
-      const uploadUrl = `${supabaseUrl}/storage/v1/object/${bucketName}/${interiorPdfPath}`
-      
-      // 执行上传
-      const uploadResponse = await fetch(uploadUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${supabaseKey}`,
-          'Content-Type': 'application/pdf',
-          'x-upsert': 'true'
-        },
-        body: interiorPdf
-      })
-      
-      if (!uploadResponse.ok) {
-        const errorText = await uploadResponse.text()
-        console.error(`上传内页PDF失败: ${uploadResponse.status} ${uploadResponse.statusText}`, errorText)
-        throw new Error(`上传内页PDF失败: ${uploadResponse.status} ${uploadResponse.statusText} - ${errorText}`)
+      console.log(`数据库记录更新成功`)
+
+      // 更新订单状态
+      const { error: orderUpdateError } = await supabaseAdmin
+        .from('orders')
+        .update({
+          cover_pdf_url: coverPdfUrl,
+          interior_pdf_url: interiorPdfUrl,
+          status: 'pdf_generated'
+        })
+        .eq('id', orderId)
+
+      if (orderUpdateError) {
+        console.error(`更新订单状态失败:`, orderUpdateError)
+        throw new Error(`更新订单状态失败: ${orderUpdateError.message}`)
       }
-      
-      console.log(`内页PDF上传成功`)
+
+      console.log(`订单状态已更新为 'pdf_generated'`)
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          coverPdfUrl: coverUrl.publicUrl,
+          interiorPdfUrl: interiorUrl.publicUrl,
+          book: updateData
+        }),
+        { headers: { ...headers, 'Content-Type': 'application/json' } }
+      )
     } catch (error) {
       console.error(`上传内页PDF失败:`, error)
       return new Response(
@@ -264,54 +290,6 @@ serve(async (req) => {
         { headers: { ...headers, 'Content-Type': 'application/json' }, status: 500 }
       )
     }
-
-    // 获取PDF的公共URL
-    const { data: coverUrl } = supabaseAdmin
-      .storage
-      .from('pdfs')
-      .getPublicUrl(coverPdfPath)
-
-    const { data: interiorUrl } = supabaseAdmin
-      .storage
-      .from('pdfs')
-      .getPublicUrl(interiorPdfPath)
-
-    console.log(`开始更新数据库记录，订单ID: ${orderId}`)
-    console.log(`封面PDF URL: ${coverUrl.publicUrl}`)
-    console.log(`内页PDF URL: ${interiorUrl.publicUrl}`)
-    
-    // 更新love_story_books记录
-    const { data: updateData, error: updateError } = await supabaseAdmin
-      .from('love_story_books')
-      .update({
-        cover_pdf: coverUrl.publicUrl,
-        interior_pdf: interiorUrl.publicUrl,
-        cover_source_url: coverUrl.publicUrl,
-        interior_source_url: interiorUrl.publicUrl,
-        status: 'pdf_generated',
-        ready_for_printing: true // 设置为准备好打印
-      })
-      .eq('order_id', orderId)
-      .select()
-
-    if (updateError) {
-      console.error(`更新数据库记录失败:`, JSON.stringify(updateError))
-      return new Response(
-        JSON.stringify({ error: 'Failed to update book record', details: updateError }),
-        { headers: { ...headers, 'Content-Type': 'application/json' }, status: 500 }
-      )
-    }
-    console.log(`数据库记录更新成功`)
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        coverPdfUrl: coverUrl.publicUrl,
-        interiorPdfUrl: interiorUrl.publicUrl,
-        book: updateData
-      }),
-      { headers: { ...headers, 'Content-Type': 'application/json' } }
-    )
   } catch (error) {
     return new Response(
       JSON.stringify({ error: 'Internal server error', details: error.message }),
@@ -319,6 +297,87 @@ serve(async (req) => {
     )
   }
 })
+
+// 直接上传PDF到Supabase Storage
+async function uploadPdf(pdfData: Uint8Array, path: string, supabaseUrl: string, supabaseKey: string): Promise<string> {
+  const url = `${supabaseUrl}/storage/v1/object/pdfs/${path}`
+  
+  console.log(`开始上传PDF到路径: ${path}`)
+  console.log(`PDF大小: ${pdfData.byteLength} 字节 (${Math.round(pdfData.byteLength/1024/1024 * 100) / 100} MB)`)
+  
+  // 设置重试参数
+  const maxRetries = 3
+  const retryDelay = 2000 // 2秒
+  
+  // 重试函数
+  const fetchWithRetry = async (attempt = 1): Promise<Response> => {
+    try {
+      // 设置较长的超时时间，大文件上传需要更多时间
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 180000) // 3分钟超时
+      
+      console.log(`上传尝试 ${attempt}/${maxRetries}...`)
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/pdf',
+          'x-upsert': 'true' // 如果文件已存在则覆盖
+        },
+        body: pdfData,
+        signal: controller.signal
+      })
+      
+      clearTimeout(timeoutId)
+      
+      if (response.ok) {
+        console.log(`上传成功，HTTP状态码: ${response.status}`)
+      } else {
+        console.error(`上传失败，HTTP状态码: ${response.status} ${response.statusText}`)
+      }
+      
+      return response
+    } catch (error) {
+      console.error(`上传尝试 ${attempt}/${maxRetries} 失败:`, error)
+      
+      if (attempt >= maxRetries) {
+        console.error(`已达到最大重试次数 (${maxRetries})，放弃上传`)
+        throw error
+      }
+      
+      console.log(`等待 ${retryDelay/1000} 秒后重试...`)
+      await new Promise(resolve => setTimeout(resolve, retryDelay))
+      return fetchWithRetry(attempt + 1)
+    }
+  }
+  
+  try {
+    // 使用重试机制执行上传
+    const response = await fetchWithRetry()
+    
+    if (!response.ok) {
+      let errorText = ''
+      try {
+        errorText = await response.text()
+      } catch (e) {
+        errorText = 'Unable to read error response'
+      }
+      
+      console.error(`上传PDF失败: ${response.status} ${response.statusText}`, errorText)
+      throw new Error(`上传PDF失败: ${response.status} ${response.statusText} - ${errorText}`)
+    }
+    
+    const data = await response.json()
+    console.log(`PDF上传成功: ${path}`)
+    
+    // 返回完整的访问URL
+    return `${supabaseUrl}/storage/v1/object/public/pdfs/${path}`
+  } catch (error) {
+    console.error(`上传PDF时发生错误:`, error)
+    throw error
+  }
+}
 
 // 新增函数：生成完整封面PDF（封底+书脊+封面）
 async function generateCoverPdf(backCoverFile: any, spineFile: any, frontCoverFile: any, orderId: string, clientId: string | null, supabase: any): Promise<Uint8Array> {
@@ -534,84 +593,92 @@ async function generatePdf(imageFiles: any[], orderId: string, clientId: string 
   let successCount = 0
   let errorCount = 0
   
-  // 分批处理图片，每批处理5张
-  const batchSize = 5;
+  // 分批处理图片，每批处理3张以减少内存使用
+  const batchSize = 3;
   const totalBatches = Math.ceil(imageFiles.length / batchSize);
   
   for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
     console.log(`处理批次 ${batchIndex + 1}/${totalBatches}...`);
     
-    // 计算当前批次的起始和结束索引
-    const startIndex = batchIndex * batchSize;
-    const endIndex = Math.min(startIndex + batchSize, imageFiles.length);
-    const currentBatchFiles = imageFiles.slice(startIndex, endIndex);
+    const startIdx = batchIndex * batchSize;
+    const endIdx = Math.min(startIdx + batchSize, imageFiles.length);
+    const batchFiles = imageFiles.slice(startIdx, endIdx);
     
-    // 处理当前批次的图片
-    for (const file of currentBatchFiles) {
+    // 串行处理每批图片，避免并行处理导致内存溢出
+    for (const file of batchFiles) {
       try {
-        console.log(`处理图片 ${currentPage + 1}/${imageFiles.length}: ${file.name}`);
+        console.log(`处理图片: ${file.name}`);
         
+        // 从Supabase下载图片
         let imageData = null;
         let imageError = null;
-
+        
         // 首先尝试从client_id路径获取图片
         if (clientId) {
           const clientPathResult = await supabase
             .storage
             .from('images')
-            .download(`${clientId}/${file.name}`);
+            .download(`${clientId}/${file.name}`)
           
           if (!clientPathResult.error && clientPathResult.data) {
-            imageData = clientPathResult.data;
-            imageError = null;
+            imageData = clientPathResult.data
+            imageError = null
           } else {
             // 如果从client_id路径获取失败，尝试从order_id路径获取
             const orderPathResult = await supabase
               .storage
               .from('images')
-              .download(`love-story/${orderId}/${file.name}`);
+              .download(`love-story/${orderId}/${file.name}`)
             
-            imageData = orderPathResult.data;
-            imageError = orderPathResult.error;
+            imageData = orderPathResult.data
+            imageError = orderPathResult.error
           }
         } else {
           // 如果没有client_id，直接从order_id路径获取
           const { data, error } = await supabase
             .storage
             .from('images')
-            .download(`love-story/${orderId}/${file.name}`);
+            .download(`love-story/${orderId}/${file.name}`)
           
-          imageData = data;
-          imageError = error;
+          imageData = data
+          imageError = error
         }
-
-        if (imageError || !imageData) {
-          console.error(`无法下载图片 ${file.name}:`, imageError);
-          errorCount++;
-          continue; // 跳过这张图片，继续处理下一张
-        }
-
-        // 转换图片为base64
-        const imageBase64 = await blobToBase64(imageData);
         
-        // 立即释放原始图片数据内存
-        imageData = null;
-
-        // 添加新页（除了第一页）
-        if (currentPage > 0) {
-          pdf.addPage();
+        if (imageError || !imageData) {
+          console.error(`Failed to download image: ${file.name}`, imageError)
+          errorCount++
+          continue
         }
-
-        // 添加图片到PDF - 填满整个页面包括出血区域
+        
+        // 转换图片为base64
+        const imageBase64 = await blobToBase64(imageData)
+        
+        // 释放原始图片数据以节省内存
+        imageData = null
+        
+        // 如果是第一页之后的页面，添加新页
+        if (currentPage > 0) {
+          pdf.addPage()
+        }
+        
+        // 添加图片到PDF
         pdf.addImage(
           imageBase64,
           'JPEG',
-          0, // x坐标
-          0, // y坐标
-          totalDocSize, // 宽度（总文档宽度）
-          totalDocSize, // 高度（总文档高度）
-          `img_${currentPage}` // 唯一ID，避免重复
-        );
+          0,
+          0,
+          totalDocSize,
+          totalDocSize,
+          undefined
+        )
+        
+        currentPage++
+        successCount++
+        
+        // 手动触发垃圾回收（如果可用）
+        if (typeof global !== 'undefined' && global.gc) {
+          global.gc();
+        }
         
         // 添加安全边距指示线（仅用于调试）
         const debugLines = true; // 保持原有设置
@@ -648,43 +715,27 @@ async function generatePdf(imageFiles: any[], orderId: string, clientId: string 
           
           // 添加页码标签
           pdf.setTextColor(0, 0, 0);
-          pdf.text(`PAGE ${currentPage + 1}`, totalDocSize/2, bleedWidth/2, { align: 'center' });
-        }
-
-        currentPage++;
-        successCount++;
-        
-        // 每处理一张图片就尝试手动触发垃圾回收
-        if (typeof global !== 'undefined' && global.gc) {
-          global.gc();
+          pdf.text(`PAGE ${currentPage}`, totalDocSize/2, bleedWidth/2, { align: 'center' });
         }
       } catch (error) {
-        console.error(`处理图片 ${file.name} 时出错:`, error);
-        errorCount++;
-        // 继续处理下一张图片，而不是中断整个过程
+        console.error(`Error processing image: ${file.name}`, error)
+        errorCount++
       }
     }
     
-    // 每批次处理完毕后，输出内存使用情况
-    if (typeof process !== 'undefined' && process.memoryUsage) {
-      const memoryUsage = process.memoryUsage();
-      console.log(`批次 ${batchIndex + 1} 完成，内存使用：${Math.round(memoryUsage.heapUsed / 1024 / 1024 * 100) / 100} MB / ${Math.round(memoryUsage.heapTotal / 1024 / 1024 * 100) / 100} MB`);
-    } else {
-      console.log(`批次 ${batchIndex + 1} 完成，已处理 ${currentPage}/${imageFiles.length} 张图片 (成功: ${successCount}, 失败: ${errorCount})`);
-    }
-    
-    // 批次间暂停一小段时间，让系统有机会回收内存
+    // 每处理完一批，记录进度并暂停一小段时间，让系统有机会回收内存
+    console.log(`已处理 ${Math.min((batchIndex + 1) * batchSize, imageFiles.length)}/${imageFiles.length} 张图片`)
     await new Promise(resolve => setTimeout(resolve, 100));
   }
-
-  console.log(`PDF生成完成，共处理 ${imageFiles.length} 张图片 (成功: ${successCount}, 失败: ${errorCount})`);
+  
+  console.log(`PDF生成完成。成功: ${successCount}, 失败: ${errorCount}, 总页数: ${currentPage}`)
   
   // 转换PDF为Uint8Array
-  const pdfOutput = pdf.output('arraybuffer');
-  const pdfSize = pdfOutput.byteLength;
-  console.log(`生成的PDF大小: ${pdfSize} 字节 (${Math.round(pdfSize/1024/1024 * 100) / 100} MB)`);
+  const pdfOutput = pdf.output('arraybuffer')
+  const pdfSize = pdfOutput.byteLength
+  console.log(`生成的PDF大小: ${pdfSize} 字节 (${Math.round(pdfSize/1024/1024 * 100) / 100} MB)`)
   
-  return new Uint8Array(pdfOutput);
+  return new Uint8Array(pdfOutput)
 }
 
 // 辅助函数：Blob转Base64
