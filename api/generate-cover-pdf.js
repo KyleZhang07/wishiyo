@@ -93,6 +93,10 @@ export default async function handler(req, res) {
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     
     if (!supabaseUrl || !supabaseKey) {
+      console.error('Supabase configuration missing:', { 
+        hasUrl: !!supabaseUrl, 
+        hasKey: !!supabaseKey 
+      });
       return res.status(500).json({ error: 'Supabase configuration missing' });
     }
     
