@@ -106,20 +106,46 @@ export default async function handler(req, res) {
 
     // 上传合并后的PDF
     const finalPath = `${pdfPath}.pdf`;
-    console.log(`上传合并后的PDF到: ${finalPath}`);
-    const { error: uploadError } = await supabase
-      .storage
-      .from('pdfs')
-      .upload(finalPath, mergedPdf, {
-        contentType: 'application/pdf',
-        upsert: true // 确保覆盖已存在的文件
+    console.log(`准备上传合并后的PDF到: ${finalPath}，大小: ${mergedPdf.byteLength} 字节`);
+
+    try {
+      // 获取上传URL
+      const { data: { signedURL }, error: signedURLError } = await supabase
+        .storage
+        .from('pdfs')
+        .createSignedUploadUrl(finalPath);
+
+      if (signedURLError) {
+        console.error('获取签名上传URL失败:', signedURLError);
+        return res.status(500).json({ error: '获取签名上传URL失败', details: signedURLError });
+      }
+
+      console.log('获取到签名上传URL，准备上传文件');
+
+      // 使用fetch直接上传到签名URL
+      const uploadResponse = await fetch(signedURL, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/pdf'
+        },
+        body: mergedPdf
       });
 
-    if (uploadError) {
-      console.error(`上传合并后的PDF失败:`, uploadError);
-      return res.status(500).json({ error: '上传合并后的PDF失败', details: uploadError });
+      if (!uploadResponse.ok) {
+        const errorText = await uploadResponse.text();
+        console.error(`上传失败: ${uploadResponse.status} - ${errorText}`);
+        return res.status(500).json({ 
+          error: '上传PDF失败', 
+          status: uploadResponse.status,
+          details: errorText 
+        });
+      }
+
+      console.log('PDF上传成功');
+    } catch (uploadError) {
+      console.error('上传过程中发生错误:', uploadError);
+      return res.status(500).json({ error: '上传过程中发生错误', details: uploadError });
     }
-    console.log(`PDF上传完成，已用时: ${(Date.now() - startTime)/1000}秒`);
 
     // 获取公共URL
     const { data: publicUrlData } = supabase
