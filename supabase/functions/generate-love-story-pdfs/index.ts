@@ -1,6 +1,14 @@
+// 导入必要的依赖
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.8.0'
 import { jsPDF } from 'https://esm.sh/jspdf@2.5.1'
+
+// 为Deno添加类型声明
+declare const Deno: {
+  env: {
+    get(key: string): string | undefined;
+  };
+};
 
 interface RequestBody {
   orderId: string;
@@ -201,125 +209,60 @@ serve(async (req) => {
     const interiorPdfSize = interiorPdf.byteLength;
     console.log(`内页PDF大小: ${interiorPdfSize} 字节 (${Math.round(interiorPdfSize/1024/1024 * 100) / 100} MB)`)
     
-    // 定义分块上传的大小限制
-    const MAX_CHUNK_SIZE = 1.5 * 1024 * 1024; // 1.5MB 每块
+    // 定义大小限制
+    const MAX_UPLOAD_SIZE = 50 * 1024 * 1024; // 50MB 限制
     
-    // 如果PDF较小，直接上传
-    if (interiorPdfSize <= MAX_CHUNK_SIZE) {
-      console.log(`开始上传内页PDF到路径: ${interiorPdfPath}`)
-      const { data: interiorUploadData, error: interiorUploadError } = await supabaseAdmin
-        .storage
-        .from('pdfs')
-        .upload(interiorPdfPath, interiorPdf, {
-          contentType: 'application/pdf',
-          upsert: true
-        })
-
-      if (interiorUploadError) {
-        console.error(`上传内页PDF失败:`, JSON.stringify(interiorUploadError))
-        return new Response(
-          JSON.stringify({ error: 'Failed to upload interior PDF', details: interiorUploadError }),
-          { headers: { ...headers, 'Content-Type': 'application/json' }, status: 500 }
-        )
-      }
-      console.log(`内页PDF上传成功`)
-    } else {
-      // 对于大文件，我们需要一个替代方案
-      console.log(`内页PDF过大 (${Math.round(interiorPdfSize/1024/1024 * 100) / 100} MB)，超过了上传限制`)
+    // 如果PDF太大，返回错误
+    if (interiorPdfSize > MAX_UPLOAD_SIZE) {
+      console.error(`内页PDF过大 (${Math.round(interiorPdfSize/1024/1024 * 100) / 100} MB)，超过了最大限制 ${MAX_UPLOAD_SIZE/1024/1024}MB`)
+      return new Response(
+        JSON.stringify({ 
+          error: 'PDF file too large', 
+          details: `PDF size (${Math.round(interiorPdfSize/1024/1024 * 100) / 100} MB) exceeds maximum allowed size (${MAX_UPLOAD_SIZE/1024/1024} MB)` 
+        }),
+        { headers: { ...headers, 'Content-Type': 'application/json' }, status: 400 }
+      )
+    }
+    
+    console.log(`开始上传内页PDF到路径: ${interiorPdfPath}`)
+    
+    try {
+      // 使用直接的HTTP请求上传PDF，绕过Supabase客户端的大小限制
+      const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
+      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
       
-      try {
-        // 方案1：将大PDF分割成多个较小的PDF文件上传
-        const splitPdfCount = Math.ceil(interiorPdfSize / MAX_CHUNK_SIZE);
-        console.log(`将PDF分割成 ${splitPdfCount} 个较小的文件上传`);
-        
-        // 创建一个包含所有页面信息的数组
-        const pageInfoArray: string[] = [];
-        for (let i = 0; i < splitPdfCount; i++) {
-          const partPath = `love-story/${orderId}/interior-part${i+1}.pdf`;
-          pageInfoArray.push(partPath);
-        }
-        
-        // 将原始PDF拆分成多个较小的PDF文件
-        // 注意：由于我们不能在Edge Function中直接拆分PDF，
-        // 所以我们将整个PDF按字节拆分，而不是按页面拆分
-        for (let i = 0; i < splitPdfCount; i++) {
-          const start = i * MAX_CHUNK_SIZE;
-          const end = Math.min(start + MAX_CHUNK_SIZE, interiorPdfSize);
-          const chunk = interiorPdf.slice(start, end);
-          
-          const partPath = `love-story/${orderId}/interior-part${i+1}.pdf`;
-          console.log(`上传PDF部分 ${i+1}/${splitPdfCount} 到 ${partPath}, 大小: ${chunk.byteLength} 字节`);
-          
-          const { error: partUploadError } = await supabaseAdmin
-            .storage
-            .from('pdfs')
-            .upload(partPath, chunk, {
-              contentType: 'application/pdf',
-              upsert: true
-            });
-            
-          if (partUploadError) {
-            console.error(`上传PDF部分 ${i+1} 失败:`, JSON.stringify(partUploadError));
-            throw new Error(`上传PDF部分 ${i+1} 失败: ${JSON.stringify(partUploadError)}`);
-          }
-        }
-        
-        // 创建一个索引文件，记录所有部分文件的路径
-        const indexContent = JSON.stringify({
-          orderId: orderId,
-          parts: pageInfoArray,
-          totalSize: interiorPdfSize,
-          createdAt: new Date().toISOString()
-        });
-        
-        // 上传索引文件
-        const indexPath = `love-story/${orderId}/interior-index.json`;
-        const { error: indexUploadError } = await supabaseAdmin
-          .storage
-          .from('pdfs')
-          .upload(indexPath, new TextEncoder().encode(indexContent), {
-            contentType: 'application/json',
-            upsert: true
-          });
-          
-        if (indexUploadError) {
-          console.error(`上传索引文件失败:`, JSON.stringify(indexUploadError));
-          throw new Error(`上传索引文件失败: ${JSON.stringify(indexUploadError)}`);
-        }
-        
-        // 上传一个小的占位PDF文件到原始路径，以便前端可以获取URL
-        // 这个文件包含一个说明页，告知用户完整PDF已被分割
-        const placeholderPdf = new jsPDF();
-        placeholderPdf.text('此PDF已被分割成多个部分以便上传', 10, 10);
-        placeholderPdf.text(`原始文件大小: ${Math.round(interiorPdfSize/1024/1024 * 100) / 100} MB`, 10, 20);
-        placeholderPdf.text(`分割成 ${splitPdfCount} 个部分`, 10, 30);
-        placeholderPdf.text(`订单ID: ${orderId}`, 10, 40);
-        placeholderPdf.text('请使用索引文件查看所有部分', 10, 50);
-        
-        const placeholderPdfBytes = placeholderPdf.output('arraybuffer');
-        
-        const { error: placeholderUploadError } = await supabaseAdmin
-          .storage
-          .from('pdfs')
-          .upload(interiorPdfPath, new Uint8Array(placeholderPdfBytes), {
-            contentType: 'application/pdf',
-            upsert: true
-          });
-          
-        if (placeholderUploadError) {
-          console.error(`上传占位PDF失败:`, JSON.stringify(placeholderUploadError));
-          throw new Error(`上传占位PDF失败: ${JSON.stringify(placeholderUploadError)}`);
-        }
-        
-        console.log(`PDF分割上传成功，共 ${splitPdfCount} 个部分`);
-        
-      } catch (error) {
-        console.error(`PDF分割上传过程中出错:`, error);
-        return new Response(
-          JSON.stringify({ error: 'Failed to upload interior PDF using split upload', details: error }),
-          { headers: { ...headers, 'Content-Type': 'application/json' }, status: 500 }
-        );
+      if (!supabaseUrl || !supabaseKey) {
+        throw new Error('Missing Supabase environment variables')
       }
+      
+      // 构建上传URL
+      const bucketName = 'pdfs'
+      const uploadUrl = `${supabaseUrl}/storage/v1/object/${bucketName}/${interiorPdfPath}`
+      
+      // 执行上传
+      const uploadResponse = await fetch(uploadUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/pdf',
+          'x-upsert': 'true'
+        },
+        body: interiorPdf
+      })
+      
+      if (!uploadResponse.ok) {
+        const errorText = await uploadResponse.text()
+        console.error(`上传内页PDF失败: ${uploadResponse.status} ${uploadResponse.statusText}`, errorText)
+        throw new Error(`上传内页PDF失败: ${uploadResponse.status} ${uploadResponse.statusText} - ${errorText}`)
+      }
+      
+      console.log(`内页PDF上传成功`)
+    } catch (error) {
+      console.error(`上传内页PDF失败:`, error)
+      return new Response(
+        JSON.stringify({ error: 'Failed to upload interior PDF', details: error }),
+        { headers: { ...headers, 'Content-Type': 'application/json' }, status: 500 }
+      )
     }
 
     // 获取PDF的公共URL
