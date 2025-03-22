@@ -20,6 +20,11 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'authorization, x-client-info, apikey, content-type');
 
+  // 记录API调用
+  console.log('===== VERCEL API: generate-love-story-pdfs 被调用 =====');
+  console.log('请求方法:', req.method);
+  console.log('请求头:', JSON.stringify(req.headers, null, 2));
+  
   // 处理OPTIONS请求
   if (req.method === 'OPTIONS') {
     return res.status(200).end('ok');
@@ -27,22 +32,28 @@ export default async function handler(req, res) {
 
   // 只处理POST请求
   if (req.method !== 'POST') {
+    console.log('非POST请求被拒绝');
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
     // 解析请求体
     const { orderId } = req.body;
+    console.log('请求体:', JSON.stringify(req.body, null, 2));
 
     if (!orderId) {
+      console.log('缺少订单ID');
       return res.status(400).json({ error: 'Order ID is required' });
     }
+
+    console.log(`开始处理订单 ${orderId} 的PDF生成`);
 
     // 创建Supabase客户端
     const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     
     if (!supabaseUrl || !supabaseKey) {
+      console.log('缺少Supabase配置');
       return res.status(500).json({ error: 'Supabase configuration missing' });
     }
 
@@ -56,6 +67,7 @@ export default async function handler(req, res) {
       .single();
 
     if (bookError || !bookData) {
+      console.log(`获取书籍记录失败：${bookError}`);
       return res.status(404).json({ error: 'Book not found', details: bookError });
     }
 
@@ -63,6 +75,7 @@ export default async function handler(req, res) {
     const clientId = bookData.client_id;
     
     if (!clientId) {
+      console.log('书籍记录中缺少Client ID');
       return res.status(404).json({ error: 'Client ID not found in book record' });
     }
 
@@ -96,6 +109,7 @@ export default async function handler(req, res) {
     }
 
     if (listError || !imageFiles || imageFiles.length === 0) {
+      console.log(`获取图片列表失败：${listError}`);
       return res.status(500).json({ 
         error: 'Failed to list images or no images found', 
         details: listError 
@@ -151,6 +165,7 @@ export default async function handler(req, res) {
 
     // 检查是否有足够的图片
     if (coverImages.length === 0 || introImages.length === 0 || contentImages.length === 0 || backCoverImages.length === 0 || spineImages.length === 0) {
+      console.log('图片数量不足');
       return res.status(400).json({ 
         error: 'Insufficient images for PDF generation', 
         details: {
@@ -187,6 +202,7 @@ export default async function handler(req, res) {
       });
 
     if (coverUploadError) {
+      console.log(`上传封面PDF失败：${coverUploadError}`);
       return res.status(500).json({ error: 'Failed to upload cover PDF', details: coverUploadError });
     }
 
@@ -200,6 +216,7 @@ export default async function handler(req, res) {
       });
 
     if (interiorUploadError) {
+      console.log(`上传内页PDF失败：${interiorUploadError}`);
       return res.status(500).json({ error: 'Failed to upload interior PDF', details: interiorUploadError });
     }
 
@@ -218,10 +235,12 @@ export default async function handler(req, res) {
       .eq('order_id', orderId);
 
     if (updateError) {
+      console.log(`更新书籍记录失败：${updateError}`);
       return res.status(500).json({ error: 'Failed to update book record', details: updateError });
     }
 
     // 返回成功响应
+    console.log('PDF生成和上传成功');
     return res.status(200).json({
       success: true,
       message: 'PDFs generated and uploaded successfully',
