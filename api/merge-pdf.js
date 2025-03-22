@@ -44,6 +44,10 @@ export default async function handler(req, res) {
 
     console.log(`开始处理订单 ${orderId} 的 ${type} PDF合并请求`);
 
+    // 记录开始时间，用于计算处理时间
+    const startTime = Date.now();
+    console.log(`合并处理开始时间: ${new Date(startTime).toISOString()}`);
+
     // 确定文件路径
     const pdfPath = `love-story/${orderId}/${type}`;
     const indexPath = `${pdfPath}-index.json`;
@@ -66,6 +70,7 @@ export default async function handler(req, res) {
     const { parts, totalSize } = indexJson;
 
     console.log(`索引文件解析成功，共有 ${parts.length} 个部分，总大小: ${totalSize} 字节`);
+    console.log(`已用时: ${(Date.now() - startTime)/1000}秒`);
 
     // 下载所有PDF部分
     console.log(`开始下载 ${parts.length} 个PDF部分`);
@@ -85,6 +90,7 @@ export default async function handler(req, res) {
       // 将PDF部分转换为Uint8Array并添加到数组中
       const arrayBuffer = await partData.arrayBuffer();
       pdfParts.push(new Uint8Array(arrayBuffer));
+      console.log(`已下载 ${pdfParts.length}/${parts.length} 个部分，已用时: ${(Date.now() - startTime)/1000}秒`);
     }
 
     // 合并所有PDF部分
@@ -96,6 +102,7 @@ export default async function handler(req, res) {
       mergedPdf.set(part, offset);
       offset += part.byteLength;
     }
+    console.log(`PDF合并完成，总大小: ${mergedPdf.byteLength} 字节，已用时: ${(Date.now() - startTime)/1000}秒`);
 
     // 上传合并后的PDF
     const finalPath = `${pdfPath}.pdf`;
@@ -105,13 +112,14 @@ export default async function handler(req, res) {
       .from('pdfs')
       .upload(finalPath, mergedPdf, {
         contentType: 'application/pdf',
-        upsert: true
+        upsert: true // 确保覆盖已存在的文件
       });
 
     if (uploadError) {
       console.error(`上传合并后的PDF失败:`, uploadError);
       return res.status(500).json({ error: '上传合并后的PDF失败', details: uploadError });
     }
+    console.log(`PDF上传完成，已用时: ${(Date.now() - startTime)/1000}秒`);
 
     // 获取公共URL
     const { data: publicUrlData } = supabase

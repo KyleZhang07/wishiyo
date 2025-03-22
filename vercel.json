@@ -7,5 +7,10 @@
   ],
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
-  "outputDirectory": "dist"
+  "outputDirectory": "dist",
+  "functions": {
+    "api/merge-pdf.js": {
+      "maxDuration": 60
+    }
+  }
 } 
