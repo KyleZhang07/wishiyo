@@ -201,11 +201,14 @@ serve(async (req) => {
     const interiorPdfSize = interiorPdf.byteLength;
     console.log(`内页PDF大小: ${interiorPdfSize} 字节 (${Math.round(interiorPdfSize/1024/1024 * 100) / 100} MB)`)
     
-    // 定义分块上传的大小限制
-    const MAX_CHUNK_SIZE = 1.5 * 1024 * 1024; // 1.5MB 每块
+    // 定义分块上传的大小限制 - 增大每块大小，减少分割份数
+    const MAX_CHUNKS = 6; // 最多分成6份
+    const MIN_CHUNK_SIZE = 1.5 * 1024 * 1024; // 最小块大小为1.5MB
+    // 根据文件大小和最大块数计算块大小
+    const CHUNK_SIZE = Math.max(MIN_CHUNK_SIZE, Math.ceil(interiorPdfSize / MAX_CHUNKS));
     
     // 如果PDF较小，直接上传
-    if (interiorPdfSize <= MAX_CHUNK_SIZE) {
+    if (interiorPdfSize <= MIN_CHUNK_SIZE) {
       console.log(`开始上传内页PDF到路径: ${interiorPdfPath}`)
       const { data: interiorUploadData, error: interiorUploadError } = await supabaseAdmin
         .storage
@@ -229,8 +232,8 @@ serve(async (req) => {
       
       try {
         // 将大PDF分割成多个较小的PDF文件上传
-        const splitPdfCount = Math.ceil(interiorPdfSize / MAX_CHUNK_SIZE);
-        console.log(`将PDF分割成 ${splitPdfCount} 个较小的文件上传`);
+        const splitPdfCount = Math.min(MAX_CHUNKS, Math.ceil(interiorPdfSize / CHUNK_SIZE));
+        console.log(`将PDF分割成 ${splitPdfCount} 个较小的文件上传，每个文件大约 ${Math.round(CHUNK_SIZE/1024/1024 * 100) / 100} MB`);
         
         // 创建一个包含所有页面信息的数组
         const pageInfoArray: string[] = [];
@@ -243,8 +246,8 @@ serve(async (req) => {
         // 注意：由于我们不能在Edge Function中直接拆分PDF，
         // 所以我们将整个PDF按字节拆分，而不是按页面拆分
         for (let i = 0; i < splitPdfCount; i++) {
-          const start = i * MAX_CHUNK_SIZE;
-          const end = Math.min(start + MAX_CHUNK_SIZE, interiorPdfSize);
+          const start = i * CHUNK_SIZE;
+          const end = Math.min(start + CHUNK_SIZE, interiorPdfSize);
           const chunk = interiorPdf.slice(start, end);
           
           const partPath = `love-story/${orderId}/interior-part${i+1}.pdf`;
