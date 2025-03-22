@@ -14,10 +14,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Badge } from '@/components/ui/badge';
-import { Package, ShoppingBag, Clock, Calendar, Printer } from 'lucide-react';
+import { Package, ShoppingBag, Clock, Calendar } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from '@/components/ui/use-toast';
-import { Toaster } from '@/components/ui/toaster';
 
 // 验证表单的 schema
 const formSchema = z.object({
@@ -65,7 +63,6 @@ const OrdersPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [verifiedEmail, setVerifiedEmail] = useState('');
-  const [isSubmittingPrint, setIsSubmittingPrint] = useState(false);
   
   // 初始化表单
   const form = useForm<z.infer<typeof formSchema>>({
@@ -105,96 +102,6 @@ const OrdersPage = () => {
     fetchAllOrders();
   }, []);
   
-  // 手动触发向Lulu发送打印请求
-  const handleManualPrintRequest = async (orderId: string, bookType: string) => {
-    try {
-      // 查找订单并检查是否准备好打印
-      const orderToSubmit = orders.find(order => order.order_id === orderId);
-      
-      if (!orderToSubmit) {
-        throw new Error('订单未找到');
-      }
-      
-      // 检查订单是否准备好打印
-      if (orderToSubmit.ready_for_printing !== true) {
-        toast({
-          title: "无法提交打印请求",
-          description: "该订单尚未准备好打印，请等待内容生成完成。",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      // 检查订单是否已经提交过打印请求
-      if (orderToSubmit.print_submission_date || 
-          ['print_submitted', 'SUBMITTED', 'SHIPPED', 'DELIVERED'].includes(orderToSubmit.status)) {
-        toast({
-          title: "无法提交打印请求",
-          description: "该订单已经提交过打印请求。",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      setIsSubmittingPrint(true);
-      
-      // 确定书籍类型
-      const type = bookType === 'love_story' ? 'love_story' : 'funny_biography';
-      
-      // 调用API发送打印请求
-      const response = await fetch('/api/lulu-print-request', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          orderId,
-          type
-        }),
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to submit print request');
-      }
-      
-      if (data.success) {
-        toast({
-          title: "打印请求已提交",
-          description: `订单 ${orderId} 的打印请求已成功提交到LuluPress。`,
-          variant: "default",
-        });
-        
-        // 刷新订单列表
-        const updatedOrders = orders.map(order => {
-          if (order.order_id === orderId) {
-            return {
-              ...order,
-              status: 'print_submitted',
-              lulu_print_status: 'SUBMITTED',
-              print_submission_date: new Date().toISOString()
-            };
-          }
-          return order;
-        });
-        
-        setOrders(updatedOrders);
-      } else {
-        throw new Error(data.error || 'Failed to submit print request');
-      }
-    } catch (err: any) {
-      console.error('Error submitting print request:', err);
-      toast({
-        title: "打印请求失败",
-        description: err.message || 'An error occurred while submitting the print request',
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmittingPrint(false);
-    }
-  };
-  
   // 提交表单 - 暂时不使用
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     // 此函数暂时不使用
@@ -215,7 +122,6 @@ const OrdersPage = () => {
   
   return (
     <div className="container mx-auto px-4 py-24">
-      <Toaster />
       <h1 className="text-3xl font-bold mb-8 text-center">My Orders</h1>
       
       <div className="space-y-6">
@@ -288,32 +194,12 @@ const OrdersPage = () => {
                     </div>
                   </CardContent>
                   <CardFooter className="text-sm text-gray-500 border-t pt-3">
-                    <div className="flex justify-between items-center w-full">
-                      <div>
-                        {order.print_submission_date && (
-                          <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4" />
-                            <span>Print submitted: {formatDate(order.print_submission_date)}</span>
-                          </div>
-                        )}
+                    {order.print_submission_date && (
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        <span>Print submitted: {formatDate(order.print_submission_date)}</span>
                       </div>
-                      
-                      {/* 手动打印按钮 - 仅显示在符合条件的订单上 */}
-                      {order.ready_for_printing === true && 
-                       !order.print_submission_date && 
-                       !['print_submitted', 'SUBMITTED', 'SHIPPED', 'DELIVERED'].includes(order.status) && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="flex items-center gap-1"
-                          onClick={() => handleManualPrintRequest(order.order_id, order.book_type)}
-                          disabled={isSubmittingPrint}
-                        >
-                          <Printer className="h-4 w-4" />
-                          <span>发送到LuluPress</span>
-                        </Button>
-                      )}
-                    </div>
+                    )}
                   </CardFooter>
                 </Card>
               );
