@@ -183,8 +183,8 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     });
 
     // 3. 开始内容生成并详细记录日志
-    console.log(`[${orderId}] Starting content generation with Supabase function`);
-    console.log(`[${orderId}] Content generation endpoint: ${supabaseUrl}/functions/v1/generate-book-content`);
+    console.log(`[${orderId}] Starting content generation with Vercel API`);
+    console.log(`[${orderId}] Content generation endpoint: /api/generate-book-content`);
     
     // 记录图书数据（排除大型字段）
     const bookDataLog = { ...book };
@@ -194,12 +194,11 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     console.log(`[${orderId}] Book data for content generation:`, bookDataLog);
     
     const contentPromise = fetch(
-      `${supabaseUrl}/functions/v1/generate-book-content`,
+      `/api/generate-book-content`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseKey}`
         },
         body: JSON.stringify({ 
           orderId,
@@ -267,12 +266,11 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
       }
       
       coverPromise = fetch(
-        `${supabaseUrl}/functions/v1/generate-cover-pdf`,
+        `/api/generate-cover-pdf`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabaseKey}`
           },
           body: JSON.stringify({ 
             frontCover: images.frontCover, 
@@ -530,12 +528,11 @@ export default async function handler(req, res) {
               try {
                 // 异步触发图书生成，但不等待其完成
                 fetch(
-                  `${supabaseUrl}/functions/v1/generate-book-content`,
+                  `/api/generate-book-content`,
                   {
                     method: 'POST',
                     headers: {
-                      'Content-Type': 'application/json',
-                      'Authorization': `Bearer ${supabaseKey}`
+                      'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ 
                       orderId,
@@ -626,12 +623,11 @@ export default async function handler(req, res) {
               try {
                 // 异步触发PDF生成，但不等待其完成
                 fetch(
-                  `${supabaseUrl}/functions/v1/generate-love-story-pdfs`,
+                  `/api/generate-love-story-pdfs`,
                   {
                     method: 'POST',
                     headers: {
-                      'Content-Type': 'application/json',
-                      'Authorization': `Bearer ${supabaseKey}`
+                      'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ orderId })
                   }
