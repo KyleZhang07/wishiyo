@@ -448,6 +448,7 @@ async function generateCoverPdf(backCoverFile: any, spineFile: any, frontCoverFi
 // 辅助函数：生成PDF
 async function generatePdf(imageFiles: any[], orderId: string, clientId: string | null, supabase: any): Promise<Uint8Array> {
   console.log(`开始生成PDF，处理 ${imageFiles.length} 张图片...`)
+  console.log(`使用超时配置：60秒，订单ID: ${orderId}`)
   
   // 根据Lulu模板修改为方形格式
   const pdf = new jsPDF({
