@@ -69,6 +69,13 @@ export default async function handler(req, res) {
       
       // 如果autoSubmit参数为true，则自动查找并提交准备好打印的订单
       if (autoSubmit) {
+        console.log('Auto-submitting print requests for all ready orders');
+        
+        let submittedCount = 0;
+        let failedCount = 0;
+        let successfulOrders = [];
+        let failedOrders = [];
+        
         // 查询Love Story书籍，状态为ready_for_printing=true但print_status为空
         const { data: loveStoryBooks, error: loveStoryError } = await supabase
           .from('love_story_books')
@@ -84,7 +91,24 @@ export default async function handler(req, res) {
           // 处理每个准备好打印的love story书籍
           if (loveStoryBooks && loveStoryBooks.length > 0) {
             for (const book of loveStoryBooks) {
-              await submitPrintRequest(book, 'love_story');
+              const result = await submitPrintRequest(book, 'love_story');
+              if (result.success) {
+                submittedCount++;
+                successfulOrders.push({
+                  id: book.id,
+                  order_id: book.order_id,
+                  type: 'love_story',
+                  print_job_id: result.print_job_id
+                });
+              } else {
+                failedCount++;
+                failedOrders.push({
+                  id: book.id,
+                  order_id: book.order_id,
+                  type: 'love_story',
+                  error: result.message
+                });
+              }
             }
           }
         }
@@ -104,7 +128,24 @@ export default async function handler(req, res) {
           // 处理每个准备好打印的funny biography书籍
           if (funnyBiographyBooks && funnyBiographyBooks.length > 0) {
             for (const book of funnyBiographyBooks) {
-              await submitPrintRequest(book, 'funny_biography');
+              const result = await submitPrintRequest(book, 'funny_biography');
+              if (result.success) {
+                submittedCount++;
+                successfulOrders.push({
+                  id: book.id,
+                  order_id: book.order_id,
+                  type: 'funny_biography',
+                  print_job_id: result.print_job_id
+                });
+              } else {
+                failedCount++;
+                failedOrders.push({
+                  id: book.id,
+                  order_id: book.order_id,
+                  type: 'funny_biography',
+                  error: result.message
+                });
+              }
             }
           }
         }
@@ -112,8 +153,13 @@ export default async function handler(req, res) {
         return res.status(200).json({
           success: true,
           message: 'Print job submission process completed',
+          submittedCount,
+          failedCount,
+          totalProcessed: submittedCount + failedCount,
           loveStoryCount: loveStoryBooks?.length || 0,
-          funnyBiographyCount: funnyBiographyBooks?.length || 0
+          funnyBiographyCount: funnyBiographyBooks?.length || 0,
+          successfulOrders,
+          failedOrders
         });
       }
       
@@ -251,4 +297,4 @@ async function submitPrintRequest(book, type) {
       order: book
     };
   }
-} 
+}
