@@ -183,14 +183,8 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     });
 
     // 3. 开始内容生成并详细记录日志
-    console.log(`[${orderId}] Starting content generation with Vercel API`);
-    
-    // 获取当前环境的基础URL
-    const baseUrl = process.env.VERCEL_URL 
-      ? `https://${process.env.VERCEL_URL}` 
-      : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-    
-    console.log(`[${orderId}] Content generation endpoint: ${baseUrl}/api/generate-book-content`);
+    console.log(`[${orderId}] Starting content generation with Supabase function`);
+    console.log(`[${orderId}] Content generation endpoint: ${supabaseUrl}/functions/v1/generate-book-content`);
     
     // 记录图书数据（排除大型字段）
     const bookDataLog = { ...book };
@@ -200,11 +194,12 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     console.log(`[${orderId}] Book data for content generation:`, bookDataLog);
     
     const contentPromise = fetch(
-      `${baseUrl}/api/generate-book-content`,
+      `${supabaseUrl}/functions/v1/generate-book-content`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseKey}`
         },
         body: JSON.stringify({ 
           orderId,
@@ -272,11 +267,12 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
       }
       
       coverPromise = fetch(
-        `${baseUrl}/api/generate-cover-pdf`,
+        `${supabaseUrl}/functions/v1/generate-cover-pdf`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseKey}`
           },
           body: JSON.stringify({ 
             frontCover: images.frontCover, 
@@ -532,14 +528,9 @@ export default async function handler(req, res) {
               // 启动图书生成过程
               console.log(`===== STARTING BOOK GENERATION FOR ORDER ${orderId} ASYNCHRONOUSLY =====`);
               try {
-                // 获取当前环境的基础URL
-                const baseUrl = process.env.VERCEL_URL 
-                  ? `https://${process.env.VERCEL_URL}` 
-                  : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-                
                 // 异步触发图书生成，但不等待其完成
                 fetch(
-                  `${baseUrl}/api/generate-book-content`,
+                  `/api/generate-book-content`,
                   {
                     method: 'POST',
                     headers: {
@@ -632,14 +623,9 @@ export default async function handler(req, res) {
               // 调用函数生成PDF
               console.log(`===== STARTING LOVE STORY PDF GENERATION FOR ORDER ${orderId} ASYNCHRONOUSLY =====`);
               try {
-                // 获取当前环境的基础URL
-                const baseUrl = process.env.VERCEL_URL 
-                  ? `https://${process.env.VERCEL_URL}` 
-                  : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-                
                 // 异步触发PDF生成，但不等待其完成
                 fetch(
-                  `${baseUrl}/api/generate-love-story-pdfs`,
+                  `/api/generate-love-story-pdfs`,
                   {
                     method: 'POST',
                     headers: {
