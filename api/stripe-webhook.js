@@ -517,18 +517,28 @@ export default async function handler(req, res) {
               console.log(`Supabase response body: ${updateResponseText}`);
               
               // 启动图书生成过程
-              // 修改为同步处理流程，等待生成完成
+              // 修改为异步处理流程，不等待生成完成
               console.log(`===== STARTING BOOK GENERATION FOR ORDER ${orderId} =====`);
               try {
-                const result = await generateBookProcess(supabaseUrl, supabaseKey, orderId);
-                console.log(`Book generation process result for ${orderId}:`, result);
+                // 异步调用生成过程，不等待其完成
+                generateBookProcess(supabaseUrl, supabaseKey, orderId)
+                  .then(result => {
+                    console.log(`Book generation process result for ${orderId}:`, result);
+                    console.log(`Book generation process completed for order ${orderId}`);
+                  })
+                  .catch(error => {
+                    console.error(`Error in book generation process for ${orderId}:`, error);
+                    // 记录详细错误信息，但不终止webhook处理
+                    console.error(`Error details:`, error.stack || error);
+                  });
+                
+                // 立即返回成功响应，不等待生成过程完成
+                console.log(`Book generation process started asynchronously for order ${orderId}`);
               } catch (error) {
-                console.error(`Error in book generation process for ${orderId}:`, error);
-                // 记录详细错误信息，但不终止webhook处理
-                console.error(`Error details:`, error.stack || error);
+                console.error(`Error initiating book generation process for ${orderId}:`, error);
+                console.error(error.stack); // 打印堆栈跟踪
+                // 记录错误但仍向Stripe返回成功，以防止重试逻辑
               }
-              
-              console.log(`Book generation process completed for order ${orderId}`);
             } catch (error) {
               console.error('启动图书生成过程时出错:', error);
               console.error(error.stack); // 打印堆栈跟踪
@@ -599,7 +609,8 @@ export default async function handler(req, res) {
               // 调用函数生成PDF
               console.log(`===== STARTING LOVE STORY PDF GENERATION FOR ORDER ${orderId} =====`);
               try {
-                const pdfResponse = await fetch(
+                // 使用异步方式调用PDF生成函数，不等待其完成
+                fetch(
                   `${supabaseUrl}/functions/v1/generate-love-story-pdfs`,
                   {
                     method: 'POST',
@@ -609,22 +620,27 @@ export default async function handler(req, res) {
                     },
                     body: JSON.stringify({ orderId })
                   }
-                );
+                ).then(async (pdfResponse) => {
+                  if (!pdfResponse.ok) {
+                    const errorText = await pdfResponse.text();
+                    console.error(`Error generating Love Story PDFs: ${pdfResponse.status} ${pdfResponse.statusText}`, errorText);
+                  } else {
+                    const pdfResult = await pdfResponse.json();
+                    console.log(`Love Story PDF generation result for ${orderId}:`, pdfResult);
+                  }
+                  console.log(`Love Story book generation process completed for order ${orderId}`);
+                }).catch(error => {
+                  console.error(`Error in Love Story PDF generation process for ${orderId}:`, error);
+                  console.error(`Error details:`, error.stack || error);
+                });
                 
-                if (!pdfResponse.ok) {
-                  const errorText = await pdfResponse.text();
-                  console.error(`Error generating Love Story PDFs: ${pdfResponse.status} ${pdfResponse.statusText}`, errorText);
-                } else {
-                  const pdfResult = await pdfResponse.json();
-                  console.log(`Love Story PDF generation result for ${orderId}:`, pdfResult);
-                }
+                // 立即返回成功响应，不等待PDF生成完成
+                console.log(`Love Story PDF generation started asynchronously for order ${orderId}`);
               } catch (error) {
-                console.error(`Error in Love Story PDF generation process for ${orderId}:`, error);
-                // 记录详细错误信息，但不终止webhook处理
+                console.error(`Error initiating Love Story PDF generation for ${orderId}:`, error);
+                // 记录错误但不终止webhook处理
                 console.error(`Error details:`, error.stack || error);
               }
-              
-              console.log(`Love Story book generation process completed for order ${orderId}`);
             } catch (error) {
               console.error('启动Love Story图书生成过程时出错:', error);
               console.error(error.stack); // 打印堆栈跟踪
