@@ -1,8 +1,8 @@
 // 导入所需模块
 import { createClient } from '@supabase/supabase-js';
 
-// 初始化Supabase客户端
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+// 初始化Supabase客户端 - 使用硬编码的URL
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://xdxlgqpjmxontjtfmeey.supabase.co';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 export default async function handler(req, res) {
@@ -16,7 +16,7 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  // 只允许GET请求
+  // 只允许GET和POST请求
   if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ error: '方法不允许' });
   }
@@ -30,7 +30,13 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: '缺少必要参数' });
     }
 
+    console.log(`处理订单 ${orderId} 的 ${type} PDF合并请求，使用Supabase URL: ${supabaseUrl}`);
+
     // 初始化Supabase客户端
+    if (!supabaseUrl) {
+      return res.status(500).json({ error: 'Supabase URL未设置' });
+    }
+    
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     if (!supabase) {
       return res.status(500).json({ error: '无法初始化Supabase客户端' });
@@ -114,26 +120,35 @@ export default async function handler(req, res) {
       .getPublicUrl(finalPath);
 
     const publicUrl = publicUrlData.publicUrl;
+    console.log(`合并后的PDF公共URL: ${publicUrl}`);
 
     // 更新数据库中的URL
     if (type === 'interior') {
-      console.log(`更新数据库中的interior_pdf_url字段`);
+      console.log(`更新数据库中的interior_pdf和interior_source_url字段为合并后的PDF URL`);
       const { error: updateError } = await supabase
-        .from('love_story_orders')
-        .update({ interior_pdf_url: publicUrl })
-        .eq('id', orderId);
+        .from('love_story_books')
+        .update({ 
+          interior_pdf: publicUrl,
+          interior_source_url: publicUrl
+        })
+        .eq('order_id', orderId);
 
       if (updateError) {
         console.error(`更新数据库失败:`, updateError);
         // 不返回错误，因为PDF已经成功合并和上传
         console.warn(`数据库更新失败，但PDF已成功合并和上传`);
+      } else {
+        console.log(`数据库更新成功，interior_source_url和interior_pdf现在指向合并后的PDF`);
       }
     } else if (type === 'cover') {
-      console.log(`更新数据库中的cover_pdf_url字段`);
+      console.log(`更新数据库中的cover_pdf和cover_source_url字段`);
       const { error: updateError } = await supabase
-        .from('love_story_orders')
-        .update({ cover_pdf_url: publicUrl })
-        .eq('id', orderId);
+        .from('love_story_books')
+        .update({ 
+          cover_pdf: publicUrl,
+          cover_source_url: publicUrl 
+        })
+        .eq('order_id', orderId);
 
       if (updateError) {
         console.error(`更新数据库失败:`, updateError);
