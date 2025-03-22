@@ -110,22 +110,27 @@ export default async function handler(req, res) {
 
     try {
       // 获取上传URL
+      console.log('尝试获取签名上传URL...');
       const { data, error: signedURLError } = await supabase
         .storage
         .from('pdfs')
-        .createSignedUrl(finalPath, 3600, {
-          upsert: true
-        });
+        .createSignedUploadUrl(finalPath);
 
-      if (signedURLError || !data?.signedUrl) {
+      if (signedURLError) {
         console.error('获取签名上传URL失败:', signedURLError);
         return res.status(500).json({ error: '获取签名上传URL失败', details: signedURLError });
       }
 
+      if (!data || !data.signedURL) {
+        console.error('签名URL数据为空:', data);
+        return res.status(500).json({ error: '签名URL数据为空', details: data });
+      }
+
+      const { signedURL } = data;
       console.log('获取到签名上传URL，准备上传文件');
 
       // 使用fetch直接上传到签名URL
-      const uploadResponse = await fetch(data.signedUrl, {
+      const uploadResponse = await fetch(signedURL, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/pdf'
@@ -146,7 +151,7 @@ export default async function handler(req, res) {
       console.log('PDF上传成功');
     } catch (uploadError) {
       console.error('上传过程中发生错误:', uploadError);
-      return res.status(500).json({ error: '上传过程中发生错误', details: uploadError });
+      return res.status(500).json({ error: '上传过程中发生错误', details: uploadError.message || uploadError });
     }
 
     // 获取公共URL
