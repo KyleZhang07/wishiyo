@@ -329,15 +329,6 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     
     console.log(`[${orderId}] Book generation process completed successfully`);
     
-    // 触发打印请求检查
-    try {
-      console.log('Triggering print request check for newly completed orders...');
-      await triggerPrintRequestCheck(orderId, 'funny_biography');
-    } catch (printCheckError) {
-      console.error('Error triggering print request check:', printCheckError);
-      // 不中断处理流程
-    }
-    
     return { success: true, message: '图书生成成功完成' };
   } catch (error) {
     console.error(`[${orderId}] Error during book generation process:`, error);
@@ -634,15 +625,6 @@ export default async function handler(req, res) {
               }
               
               console.log(`Love Story book generation process completed for order ${orderId}`);
-              
-              // 触发打印请求检查
-              try {
-                console.log('Triggering print request check for newly completed orders...');
-                await triggerPrintRequestCheck(orderId, 'love_story');
-              } catch (printCheckError) {
-                console.error('Error triggering print request check:', printCheckError);
-                // 不中断处理流程
-              }
             } catch (error) {
               console.error('启动Love Story图书生成过程时出错:', error);
               console.error(error.stack); // 打印堆栈跟踪
