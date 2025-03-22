@@ -160,12 +160,22 @@ export default async function handler(req, res) {
         // 直接上传成功，跳到获取公共URL部分
       } else {
         // 签名URL获取成功，继续处理
-        if (!data || !data.signedURL) {
+        if (!data) {
           console.error('签名URL数据为空:', data);
           return res.status(500).json({ error: '签名URL数据为空', details: data });
         }
 
-        const { signedURL } = data;
+        // 检查返回的数据结构
+        console.log('获取到的签名URL数据:', JSON.stringify(data));
+        
+        // 兼容处理signedURL和signedUrl两种字段名
+        const signedURL = data.signedURL || data.signedUrl;
+        
+        if (!signedURL) {
+          console.error('签名URL字段不存在:', data);
+          return res.status(500).json({ error: '签名URL字段不存在', details: data });
+        }
+
         console.log('获取到签名上传URL，准备上传文件');
 
         // 使用fetch直接上传到签名URL
