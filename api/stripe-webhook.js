@@ -349,6 +349,12 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: '方法不允许' });
   }
 
+  // 确保异步操作能够在webhook处理完成后继续执行
+  // 这是为了防止Node.js在响应发送后过早终止进程
+  res.on('finish', () => {
+    console.log("Webhook response sent, but keeping process alive for async operations");
+  });
+
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
   const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -520,8 +526,11 @@ export default async function handler(req, res) {
               // 修改为异步处理流程，不等待生成完成
               console.log(`===== STARTING BOOK GENERATION FOR ORDER ${orderId} =====`);
               try {
-                // 异步调用生成过程，不等待其完成
-                generateBookProcess(supabaseUrl, supabaseKey, orderId)
+                // 创建一个异步生成过程，确保它能够在webhook处理完成后继续执行
+                const bookGenerationPromise = generateBookProcess(supabaseUrl, supabaseKey, orderId);
+                
+                // 不等待生成过程完成，但确保它已经开始
+                bookGenerationPromise
                   .then(result => {
                     console.log(`Book generation process result for ${orderId}:`, result);
                     console.log(`Book generation process completed for order ${orderId}`);
@@ -609,8 +618,8 @@ export default async function handler(req, res) {
               // 调用函数生成PDF
               console.log(`===== STARTING LOVE STORY PDF GENERATION FOR ORDER ${orderId} =====`);
               try {
-                // 使用异步方式调用PDF生成函数，不等待其完成
-                fetch(
+                // 创建一个完整的请求，确保它能够在webhook处理完成后继续执行
+                const pdfRequest = fetch(
                   `${supabaseUrl}/functions/v1/generate-love-story-pdfs`,
                   {
                     method: 'POST',
@@ -620,7 +629,10 @@ export default async function handler(req, res) {
                     },
                     body: JSON.stringify({ orderId })
                   }
-                ).then(async (pdfResponse) => {
+                );
+                
+                // 不等待请求完成，但确保它已经开始
+                pdfRequest.then(async (pdfResponse) => {
                   if (!pdfResponse.ok) {
                     const errorText = await pdfResponse.text();
                     console.error(`Error generating Love Story PDFs: ${pdfResponse.status} ${pdfResponse.statusText}`, errorText);
