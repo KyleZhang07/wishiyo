@@ -1008,11 +1008,11 @@ const LoveStoryCoverStep = () => {
         description: "Rendering and uploading your cover images..."
       });
       
-    // 保存当前选中的封面图片到 localStorage
-    if (coverImages.length > 0 && currentImageIndex >= 0 && currentImageIndex < coverImages.length) {
-      const selectedCoverImage = coverImages[currentImageIndex];
-      localStorage.setItem('loveStorySelectedCoverImage', selectedCoverImage);
-      
+      // 保存当前选中的封面图片到 localStorage
+      if (coverImages.length > 0 && currentImageIndex >= 0 && currentImageIndex < coverImages.length) {
+        const selectedCoverImage = coverImages[currentImageIndex];
+        localStorage.setItem('loveStorySelectedCoverImage', selectedCoverImage);
+        
         // 渲染封面到Canvas并获取图像数据
         const canvasImageData = await renderCoverToCanvas();
         
@@ -1093,17 +1093,35 @@ const LoveStoryCoverStep = () => {
           console.error('Error deleting old cover images:', deleteError);
           // 继续处理，即使删除失败
         }
-    }
-    
-    toast({
-        title: "Cover processed successfully",
-        description: "Your cover has been saved. Proceeding to the next step..."
-      });
+      }
       
       // 保存标题数据到localStorage - 移到if语句外，确保始终执行
       localStorage.setItem('loveStoryCoverTitle', titleData.mainTitle || titleData.fullTitle);
       localStorage.setItem('loveStoryCoverSubtitle', titleData.subTitle || '');
       localStorage.setItem('loveStoryCoverThirdLine', titleData.thirdLine || '');
+      
+      // 生成并上传版权信息页面
+      try {
+        // 获取最新的图片列表
+        const allImages = await getAllImagesFromStorage('images');
+        
+        // 导入并调用renderAndUploadEndingImage函数
+        const { renderAndUploadEndingImage } = await import('./utils/canvasUtils');
+        const endingPageUrl = await renderAndUploadEndingImage(allImages);
+        
+        // 保存URL到localStorage
+        localStorage.setItem('loveStoryEndingPage_url', endingPageUrl);
+        
+        console.log('Successfully generated and uploaded ending page');
+      } catch (endingError) {
+        console.error('Error generating ending page:', endingError);
+        // 继续处理，即使生成失败
+      }
+      
+      toast({
+        title: "Cover processed successfully",
+        description: "Your cover has been saved. Proceeding to the next step..."
+      });
       
       // 导航到下一步 - 移到if语句外，确保始终执行
       navigate('/create/love/love-story/generate');
