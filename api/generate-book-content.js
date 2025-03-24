@@ -169,6 +169,20 @@ async function processNextBatch(
   existingChapters, 
   apiKey
 ) {
+  // 验证 API 密钥
+  if (!apiKey) {
+    console.error(`Missing OpenAI API key for order ${orderId}`);
+    return;
+  }
+  
+  // 验证 API 密钥格式
+  if (!apiKey.startsWith('sk-') || apiKey.length < 20) {
+    console.error(`Invalid OpenAI API key format for order ${orderId}`);
+    return;
+  }
+  
+  console.log(`API key for order ${orderId} validated, length: ${apiKey.length}`);
+  
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
   const fetchFunc = typeof fetch !== 'undefined' ? fetch : nodeFetch;
   
@@ -305,41 +319,32 @@ async function generateAllChapters(
  * @param {Function} fetchFunc - Fetch函数
  * @returns {Promise<Object>} - 生成的章节内容
  */
-async function generateChapter(chapterNumber, bookTitle, bookAuthor, selectedIdea, answers, chapters, apiKey, fetchFunc) {
-  let chapterTitle = '';
-  let chapterDescription = '';
+async function generateChapter(
+  chapterNumber, 
+  bookTitle, 
+  bookAuthor, 
+  selectedIdea, 
+  answers, 
+  chapters, 
+  apiKey,
+  fetchFunc = fetch
+) {
+  console.log(`Starting to generate chapter ${chapterNumber} with API key length: ${apiKey ? apiKey.length : 0}`);
   
-  // 尝试找到匹配的章节
-  if (chapters && Array.isArray(chapters) && chapters.length >= chapterNumber) {
-    const existingChapter = chapters[chapterNumber - 1];
-    if (existingChapter) {
-      chapterTitle = existingChapter.title || `Chapter ${chapterNumber}`;
-      chapterDescription = existingChapter.description || '';
-    }
-  }
+  // 章节标题
+  const chapterTitle = chapters[chapterNumber - 1];
   
-  if (!chapterTitle) {
-    chapterTitle = `Chapter ${chapterNumber}`;
-  }
-
-  // 处理问题答案作为额外上下文
-  const answersContext = answers && Array.isArray(answers) 
-    ? answers.map((answer) => `Q: ${answer.question}\nA: ${answer.answer}`).join('\n\n')
-    : '';
-
   // 构建提示词
   const prompt = `
-You are writing a humorous biography book titled "${bookTitle}" about ${bookAuthor}. 
-The book concept is: ${selectedIdea.description || ''}
+Generate chapter ${chapterNumber} for a funny biography book titled "${bookTitle}" about ${bookAuthor}.
+The chapter title is: "${chapterTitle}"
 
-Additional context about the subject:
-${answersContext}
+The book is based on the idea: ${selectedIdea}
 
-This is Chapter ${chapterNumber}: ${chapterTitle}
-${chapterDescription ? `Chapter description: ${chapterDescription}` : ''}
+User provided these details:
+${Object.entries(answers).map(([key, value]) => `- ${key}: ${value}`).join('\n')}
 
-Write this chapter with 2 distinct sections. Make it entertaining, humorous and engaging.
-For each section, provide a creative section title and approximately 300-400 words of content.
+Create a chapter with 3-4 sections. Each section should have a title and content.
 Write in a conversational, entertaining style appropriate for a funny biography.
 Include anecdotes, humorous observations, and witty commentary.
 
@@ -358,59 +363,89 @@ Format your response as JSON with this structure:
 }
 `;
 
+  console.log(`Prompt for chapter ${chapterNumber} created, length: ${prompt.length} characters`);
+
   // 添加重试逻辑
   let retries = 0;
   const maxRetries = 3;
   
   while (retries < maxRetries) {
     try {
-      console.log(`Sending OpenAI API request for chapter ${chapterNumber}...`);
-      const response = await fetchFunc('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o',
-          messages: [
-            { role: 'system', content: 'You must respond with valid JSON only. Do not include any explanation outside the JSON structure.' },
-            { role: 'user', content: prompt }
-          ],
-          temperature: 0.5,
-          max_tokens: 3000,
-          response_format: { type: "json_object" }
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`OpenAI API error status: ${response.status}, response: ${errorText}`);
-        throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
-      }
-
-      const result = await response.json();
-      console.log(`Received OpenAI API response for chapter ${chapterNumber}`);
+      console.log(`Sending OpenAI API request for chapter ${chapterNumber} (attempt ${retries + 1}/${maxRetries})...`);
       
-      if (!result.choices || !result.choices[0] || !result.choices[0].message || !result.choices[0].message.content) {
-        console.error(`Invalid OpenAI API response format for chapter ${chapterNumber}:`, JSON.stringify(result));
-        throw new Error(`Invalid OpenAI API response format: ${JSON.stringify(result)}`);
-      }
+      // 创建 AbortController 用于超时控制
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60秒超时，增加超时时间
       
-      const chapterContent = result.choices[0].message.content;
-      console.log(`Successfully extracted content for chapter ${chapterNumber}`);
-      
-      // 解析JSON响应
       try {
-        const parsedChapter = JSON.parse(chapterContent);
-        console.log(`Successfully parsed JSON for chapter ${chapterNumber}`);
-        return parsedChapter;
-      } catch (parseError) {
-        console.error(`Error parsing JSON for chapter ${chapterNumber}:`, parseError);
-        console.error(`Raw content: ${chapterContent}`);
-        throw new Error(`JSON parse error: ${parseError.message}`);
+        console.log(`OpenAI API request details for chapter ${chapterNumber}:
+- Model: gpt-4o
+- Temperature: 0.5
+- Max tokens: 3000
+- Using response_format: json_object`);
+
+        const response = await fetchFunc('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o',
+            messages: [
+              { role: 'system', content: 'You must respond with valid JSON only. Do not include any explanation outside the JSON structure.' },
+              { role: 'user', content: prompt }
+            ],
+            temperature: 0.5,
+            max_tokens: 3000,
+            response_format: { type: "json_object" }
+          }),
+          signal: controller.signal
+        });
+        
+        // 清除超时
+        clearTimeout(timeoutId);
+        
+        console.log(`OpenAI API response status for chapter ${chapterNumber}: ${response.status}`);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`OpenAI API error status: ${response.status}, response: ${errorText}`);
+          throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
+        }
+
+        const result = await response.json();
+        console.log(`Received OpenAI API response for chapter ${chapterNumber} with ID: ${result.id || 'unknown'}`);
+        
+        if (!result.choices || !result.choices[0] || !result.choices[0].message || !result.choices[0].message.content) {
+          console.error(`Invalid OpenAI API response format for chapter ${chapterNumber}:`, JSON.stringify(result));
+          throw new Error(`Invalid OpenAI API response format: ${JSON.stringify(result)}`);
+        }
+        
+        const chapterContent = result.choices[0].message.content;
+        console.log(`Successfully extracted content for chapter ${chapterNumber}, content length: ${chapterContent.length}`);
+        
+        // 解析JSON响应
+        try {
+          const parsedChapter = JSON.parse(chapterContent);
+          console.log(`Successfully parsed JSON for chapter ${chapterNumber}, with ${parsedChapter.sections?.length || 0} sections`);
+          return parsedChapter;
+        } catch (parseError) {
+          console.error(`Error parsing JSON for chapter ${chapterNumber}:`, parseError);
+          console.error(`Raw content: ${chapterContent}`);
+          throw new Error(`JSON parse error: ${parseError.message}`);
+        }
+      } catch (fetchError) {
+        // 清除超时
+        clearTimeout(timeoutId);
+        
+        if (fetchError.name === 'AbortError') {
+          console.error(`OpenAI API request timeout for chapter ${chapterNumber} after 60 seconds`);
+          throw new Error('API request timed out after 60 seconds');
+        }
+        
+        throw fetchError;
       }
-      
     } catch (error) {
       retries++;
       console.error(`Error generating chapter ${chapterNumber}, attempt ${retries}:`, error);
