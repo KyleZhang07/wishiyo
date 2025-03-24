@@ -66,84 +66,36 @@ export default async function handler(req, res) {
       });
     }
 
-    // 创建Supabase客户端
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // 从数据库获取书籍数据
-    console.log(`Fetching book data for order ${orderId} from database`);
-    const { data, error: fetchError } = await supabase
-      .from('funny_biography_books')
-      .select('*')
-      .eq('order_id', orderId);
-
-    console.log('Book data fetch response:', {
-      success: !!data,
-      hasError: !!fetchError,
-      recordCount: data?.length || 0,
-      errorMessage: fetchError?.message || 'none'
-    });
-
-    if (fetchError) {
-      throw new Error(`Failed to fetch book data: ${fetchError.message}`);
-    }
-
-    if (!data || data.length === 0) {
-      throw new Error(`No book data found for order ID: ${orderId}`);
-    }
-
-    // 使用第一条记录
-    const bookData = data[0];
-
-    // 使用直接传递的title和author，如果没有则使用数据库值
-    const bookTitle = title || bookData.title;
-    const bookAuthor = author || bookData.author;
-    const { selected_idea, answers, chapters } = bookData;
-
-    if (!bookTitle || !bookAuthor || !selected_idea || !chapters) {
-      throw new Error('Incomplete book data for content generation');
-    }
-
-    // 初始化空的章节数组
-    let bookChapters = [];
-
-    // 检查是否已有内容
-    if (bookData.book_content && Array.isArray(bookData.book_content) && bookData.book_content.length > 0) {
-      // 如果已经有完整内容，直接返回成功
-      if (bookData.book_content.length >= 20) {
-        return res.status(200).json({
-          success: true,
-          message: 'Book content already exists'
-        });
-      }
-      
-      // 使用已有内容
-      bookChapters = [...bookData.book_content];
-    }
-
-    // 使用 nodeFetch 或全局 fetch
-    const fetchFunc = typeof fetch !== 'undefined' ? fetch : nodeFetch;
-
     // 立即返回响应，不等待任何章节生成
     res.status(200).json({
       success: true,
       message: 'Book content generation started'
     });
 
-    // 异步生成所有章节
-    generateAllChapters(
-      orderId, 
-      bookTitle, 
-      bookAuthor, 
-      selected_idea, 
-      answers, 
-      chapters, 
-      bookChapters, 
-      OPENAI_API_KEY, 
-      fetchFunc,
-      supabaseUrl,
-      supabaseServiceKey
-    );
-
+    // 触发第一批章节生成（通过单独的API调用）
+    try {
+      // 使用绝对URL调用自身API来处理第一批章节
+      const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+      const fetchFunc = typeof fetch !== 'undefined' ? fetch : nodeFetch;
+      fetchFunc(`${baseUrl}/api/generate-book-batch`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          orderId,
+          title: title,
+          author: author,
+          batchNumber: 1,
+          existingChapters: 0
+        })
+      }).catch(error => {
+        console.error(`Error triggering batch generation for order ${orderId}:`, error);
+      });
+    } catch (error) {
+      console.error(`Error initiating batch generation for order ${orderId}:`, error);
+      // 不抛出错误，因为响应已经发送
+    }
   } catch (error) {
     console.error('Error generating book content:', error);
     return res.status(500).json({
@@ -154,138 +106,7 @@ export default async function handler(req, res) {
 }
 
 /**
- * 异步生成所有章节
- * @param {string} orderId - 订单ID
- * @param {string} bookTitle - 书籍标题
- * @param {string} bookAuthor - 书籍作者
- * @param {Object} selectedIdea - 选定的创意
- * @param {Array} answers - 用户问题回答
- * @param {Array} chapters - 章节大纲
- * @param {Array} existingChapters - 已生成的章节
- * @param {string} apiKey - OpenAI API密钥
- * @param {Function} fetchFunc - Fetch函数
- * @param {string} supabaseUrl - Supabase URL
- * @param {string} supabaseKey - Supabase密钥
- * @returns {Promise<void>}
- */
-async function generateAllChapters(
-  orderId, 
-  bookTitle, 
-  bookAuthor, 
-  selectedIdea, 
-  answers, 
-  chapters, 
-  existingChapters, 
-  apiKey, 
-  fetchFunc,
-  supabaseUrl,
-  supabaseKey
-) {
-  const supabase = createClient(supabaseUrl, supabaseKey);
-  
-  try {
-    let bookChapters = [...existingChapters];
-    const startChapter = bookChapters.length + 1;
-    
-    // 分批处理所有章节
-    // 批次1：章节startChapter到startChapter+4，但不超过20
-    const batch1End = Math.min(startChapter + 4, 20);
-    for (let i = startChapter; i <= batch1End; i++) {
-      console.log(`Generating chapter ${i} content...`);
-      const chapter = await generateChapter(i, bookTitle, bookAuthor, selectedIdea, answers, chapters, apiKey, fetchFunc);
-      bookChapters.push(chapter);
-    }
-    
-    // 更新数据库
-    await updateDatabase(supabase, orderId, bookChapters);
-    
-    // 如果还有更多章节
-    if (batch1End < 20) {
-      // 批次2：下一批5章，但不超过20
-      const batch2End = Math.min(batch1End + 5, 20);
-      for (let i = batch1End + 1; i <= batch2End; i++) {
-        console.log(`Generating chapter ${i} content...`);
-        const chapter = await generateChapter(i, bookTitle, bookAuthor, selectedIdea, answers, chapters, apiKey, fetchFunc);
-        bookChapters.push(chapter);
-      }
-      
-      // 更新数据库
-      await updateDatabase(supabase, orderId, bookChapters);
-      
-      // 如果还有更多章节
-      if (batch2End < 20) {
-        // 批次3：下一批5章，但不超过20
-        const batch3End = Math.min(batch2End + 5, 20);
-        for (let i = batch2End + 1; i <= batch3End; i++) {
-          console.log(`Generating chapter ${i} content...`);
-          const chapter = await generateChapter(i, bookTitle, bookAuthor, selectedIdea, answers, chapters, apiKey, fetchFunc);
-          bookChapters.push(chapter);
-        }
-        
-        // 更新数据库
-        await updateDatabase(supabase, orderId, bookChapters);
-        
-        // 如果还有更多章节
-        if (batch3End < 20) {
-          // 批次4：最后一批，直到20章
-          for (let i = batch3End + 1; i <= 20; i++) {
-            console.log(`Generating chapter ${i} content...`);
-            const chapter = await generateChapter(i, bookTitle, bookAuthor, selectedIdea, answers, chapters, apiKey, fetchFunc);
-            bookChapters.push(chapter);
-          }
-          
-          // 最终更新
-          await updateDatabase(supabase, orderId, bookChapters);
-        }
-      }
-    }
-    
-    // 确保只有在生成了完整的20章后才触发PDF生成
-    if (bookChapters.length >= 20) {
-      console.log(`All 20 chapters generated successfully for order ${orderId}, triggering PDF generation`);
-      await triggerInteriorPdfGeneration(orderId, bookChapters, bookTitle, bookAuthor, supabaseUrl, supabaseKey, fetchFunc);
-    } else {
-      console.warn(`Warning: Only ${bookChapters.length} chapters were generated for order ${orderId}, not triggering PDF generation`);
-    }
-    
-  } catch (error) {
-    console.error('Error generating chapters:', error);
-    // 记录错误但不中断流程
-  }
-}
-
-/**
- * 异步生成剩余章节
- * @param {string} orderId - 订单ID
- * @param {string} bookTitle - 书籍标题
- * @param {string} bookAuthor - 书籍作者
- * @param {Object} selectedIdea - 选定的创意
- * @param {Array} answers - 用户问题回答
- * @param {Array} chapters - 章节大纲
- * @param {Array} existingChapters - 已生成的章节
- * @param {number} startFrom - 开始生成的章节编号
- * @param {string} apiKey - OpenAI API密钥
- * @param {Function} fetchFunc - Fetch函数
- * @returns {Promise<void>}
- */
-async function generateRemainingChapters(
-  orderId, 
-  bookTitle, 
-  bookAuthor, 
-  selectedIdea, 
-  answers, 
-  chapters, 
-  existingChapters, 
-  startFrom, 
-  apiKey, 
-  fetchFunc
-) {
-  // 这个函数保留但不再使用，为了向后兼容
-  console.warn('generateRemainingChapters is deprecated, use generateAllChapters instead');
-}
-
-/**
- * 生成单个章节内容
+ * 异步生成单个章节内容
  * @param {number} chapterNumber - 章节编号
  * @param {string} bookTitle - 书籍标题
  * @param {string} bookAuthor - 书籍作者
