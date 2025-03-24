@@ -1,4 +1,6 @@
+// @deno-types="https://deno.land/std@0.168.0/http/server.ts"
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// @deno-types="https://esm.sh/@supabase/supabase-js@2.8.0"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.8.0";
 
 const corsHeaders = {
@@ -6,11 +8,11 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// 环境变量获取函数
-const env = {
-  get(key: string): string | undefined {
-    return Deno.env.get(key);
-  }
+// 添加Deno类型声明，避免TypeScript错误
+declare const Deno: {
+  env: {
+    get(key: string): string | undefined;
+  };
 };
 
 // 定义书籍章节结构
@@ -49,10 +51,10 @@ serve(async (req) => {
 
     console.log(`Generating book content for order ${orderId}, batch ${batchNumber} (chapters ${startChapter}-${endChapter})`);
 
-    // 获取Supabase连接信息
-    const OPENAI_API_KEY = env.get('OPENAI_API_KEY');
-    const supabaseUrl = env.get('SUPABASE_URL') || '';
-    const supabaseServiceKey = env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+    // 获取Supabase连接信息和OpenAI API Key
+    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
     
     if (!supabaseUrl || !supabaseServiceKey || !OPENAI_API_KEY) {
       throw new Error('Missing required environment variables');
@@ -120,7 +122,7 @@ serve(async (req) => {
       }
 
       // 带重试机制的OpenAI API调用
-      let chapterContent = null;
+      let chapterContent: string | null = null;
       let retries = 0;
       
       while (retries < MAX_RETRIES) {
@@ -334,8 +336,8 @@ Format your response as JSON with this structure:
         
         // 等待一段时间后重试
         setTimeout(() => {
-          const supabaseUrl = env.get('SUPABASE_URL') || '';
-          const supabaseServiceKey = env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+          const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+          const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
           
           if (supabaseUrl && supabaseServiceKey) {
             fetch(`${supabaseUrl}/functions/v1/generate-book-content`, {
