@@ -127,7 +127,7 @@ serve(async (req) => {
                         This is for an illustrated book featuring ${personName || 'my love'}, who is ${personAge || 'adult'} years old.
                         
                         Personal information about ${personName}:
-                        ${personalInfo || `${personName} is someone special and loved.`}
+                        ${personalInfo || `${personName} is someone special.`}
                         
                         The caption should relate to this prompt's theme: ${prompt.question}
                         
