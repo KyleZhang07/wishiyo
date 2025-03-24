@@ -202,23 +202,48 @@ async function processNextBatch(
     if (batchEnd < 20) {
       console.log(`Triggering next batch generation for order ${orderId}`);
       // 使用绝对URL调用API
-      const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
-      const response = await fetchFunc(`${baseUrl}/api/generate-book-content`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ 
-          orderId,
-          title: bookTitle,
-          author: bookAuthor
-        })
-      });
-      
-      if (!response.ok) {
-        console.error(`Error triggering next batch for order ${orderId}: ${response.status} ${response.statusText}`);
+      let baseUrl;
+      if (process.env.VERCEL_URL) {
+        // Vercel 环境
+        baseUrl = `https://${process.env.VERCEL_URL}`;
+      } else if (process.env.VERCEL_ENV === 'production') {
+        // Vercel 生产环境但没有 VERCEL_URL
+        baseUrl = 'https://wishiyo.vercel.app'; // 替换为您的实际域名
+      } else if (process.env.VERCEL_ENV === 'preview') {
+        // Vercel 预览环境
+        baseUrl = `https://${process.env.VERCEL_URL}`;
       } else {
-        console.log(`Successfully triggered next batch for order ${orderId}`);
+        // 本地开发环境
+        baseUrl = 'http://localhost:3000';
+      }
+      
+      console.log(`Using base URL: ${baseUrl} for next batch API call`);
+      
+      try {
+        const response = await fetchFunc(`${baseUrl}/api/generate-book-content`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ 
+            orderId,
+            title: bookTitle,
+            author: bookAuthor,
+            format: 'Paperback' // 确保包含所有必要参数
+          })
+        });
+        
+        if (!response.ok) {
+          console.error(`Error triggering next batch for order ${orderId}: ${response.status} ${response.statusText}`);
+          // 尝试使用备用方法
+          await triggerNextBatchWithFetch(orderId, bookTitle, bookAuthor);
+        } else {
+          console.log(`Successfully triggered next batch for order ${orderId}`);
+        }
+      } catch (error) {
+        console.error(`Error calling next batch API for order ${orderId}:`, error);
+        // 尝试使用备用方法
+        await triggerNextBatchWithFetch(orderId, bookTitle, bookAuthor);
       }
     } else {
       // 如果已经生成了所有章节，触发PDF生成
@@ -230,8 +255,20 @@ async function processNextBatch(
     // 尝试重新触发，以便下次继续
     setTimeout(async () => {
       try {
-        const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
-        await fetchFunc(`${baseUrl}/api/generate-book-content`, {
+        let baseUrl;
+        if (process.env.VERCEL_URL) {
+          baseUrl = `https://${process.env.VERCEL_URL}`;
+        } else if (process.env.VERCEL_ENV === 'production') {
+          baseUrl = 'https://wishiyo.vercel.app';
+        } else if (process.env.VERCEL_ENV === 'preview') {
+          baseUrl = `https://${process.env.VERCEL_URL}`;
+        } else {
+          baseUrl = 'http://localhost:3000';
+        }
+        
+        console.log(`Retry using base URL: ${baseUrl} for order ${orderId}`);
+        
+        const response = await fetchFunc(`${baseUrl}/api/generate-book-content`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -239,14 +276,61 @@ async function processNextBatch(
           body: JSON.stringify({ 
             orderId,
             title: bookTitle,
-            author: bookAuthor
+            author: bookAuthor,
+            format: 'Paperback'
           })
         });
-        console.log(`Retried batch processing for order ${orderId} after error`);
+        
+        if (!response.ok) {
+          console.error(`Retry failed for order ${orderId}: ${response.status}`);
+          // 最后尝试使用备用方法
+          await triggerNextBatchWithFetch(orderId, bookTitle, bookAuthor);
+        } else {
+          console.log(`Retry succeeded for order ${orderId}`);
+        }
       } catch (retryError) {
         console.error(`Failed to retry batch for order ${orderId}:`, retryError);
       }
     }, 5000); // 5秒后重试
+  }
+}
+
+/**
+ * 使用备用方法触发下一批生成
+ * @param {string} orderId - 订单ID
+ * @param {string} bookTitle - 书籍标题
+ * @param {string} bookAuthor - 书籍作者
+ * @returns {Promise<void>}
+ */
+async function triggerNextBatchWithFetch(orderId, bookTitle, bookAuthor) {
+  console.log(`Attempting to trigger next batch with alternative method for order ${orderId}`);
+  try {
+    // 尝试使用 node-fetch 和绝对 URL
+    const nodeFetch = require('node-fetch');
+    const absoluteUrl = process.env.VERCEL_ENV === 'production' 
+      ? 'https://wishiyo.vercel.app/api/generate-book-content'
+      : 'https://wishiyo.vercel.app/api/generate-book-content'; // 使用固定的生产 URL
+    
+    const response = await nodeFetch(absoluteUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ 
+        orderId,
+        title: bookTitle,
+        author: bookAuthor,
+        format: 'Paperback'
+      })
+    });
+    
+    if (!response.ok) {
+      console.error(`Alternative method failed for order ${orderId}: ${response.status}`);
+    } else {
+      console.log(`Alternative method succeeded for order ${orderId}`);
+    }
+  } catch (error) {
+    console.error(`Error in alternative method for order ${orderId}:`, error);
   }
 }
 
