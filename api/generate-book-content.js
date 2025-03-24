@@ -176,6 +176,8 @@ async function processNextBatch(
     let bookChapters = [...existingChapters];
     const startChapter = bookChapters.length + 1;
     
+    console.log(`Starting batch processing for order ${orderId}, current chapters: ${bookChapters.length}, starting from chapter ${startChapter}`);
+    
     // 如果已经生成了所有章节，触发PDF生成并返回
     if (startChapter > 20) {
       console.log(`All 20 chapters already generated for order ${orderId}, triggering PDF generation`);
@@ -189,12 +191,24 @@ async function processNextBatch(
     
     // 生成当前批次章节
     for (let i = startChapter; i <= batchEnd; i++) {
-      console.log(`Generating chapter ${i} content...`);
-      const chapter = await generateChapter(i, bookTitle, bookAuthor, selectedIdea, answers, chapters, apiKey, fetchFunc);
-      bookChapters.push(chapter);
+      console.log(`Starting generation of chapter ${i} content...`);
+      try {
+        const chapter = await generateChapter(i, bookTitle, bookAuthor, selectedIdea, answers, chapters, apiKey, fetchFunc);
+        console.log(`Successfully generated chapter ${i}`);
+        bookChapters.push(chapter);
+        
+        // 每生成一章就更新一次数据库，避免长时间运行导致的数据丢失
+        console.log(`Updating database after generating chapter ${i}`);
+        await updateDatabase(supabase, orderId, bookChapters);
+        console.log(`Database updated with ${bookChapters.length} chapters for order ${orderId}`);
+      } catch (chapterError) {
+        console.error(`Error generating chapter ${i}:`, chapterError);
+        // 继续处理下一章，不中断整个批次
+      }
     }
     
-    // 更新数据库
+    // 再次更新数据库，确保所有章节都被保存
+    console.log(`Final database update for this batch, total chapters: ${bookChapters.length}`);
     await updateDatabase(supabase, orderId, bookChapters);
     console.log(`Successfully updated database with ${bookChapters.length} chapters for order ${orderId}`);
     
@@ -202,21 +216,7 @@ async function processNextBatch(
     if (batchEnd < 20) {
       console.log(`Triggering next batch generation for order ${orderId}`);
       // 使用绝对URL调用API
-      let baseUrl;
-      if (process.env.VERCEL_URL) {
-        // Vercel 环境
-        baseUrl = `https://${process.env.VERCEL_URL}`;
-      } else if (process.env.VERCEL_ENV === 'production') {
-        // Vercel 生产环境但没有 VERCEL_URL
-        baseUrl = 'https://wishiyo.vercel.app'; // 替换为您的实际域名
-      } else if (process.env.VERCEL_ENV === 'preview') {
-        // Vercel 预览环境
-        baseUrl = `https://${process.env.VERCEL_URL}`;
-      } else {
-        // 本地开发环境
-        baseUrl = 'http://localhost:3000';
-      }
-      
+      const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
       console.log(`Using base URL: ${baseUrl} for next batch API call`);
       
       try {
@@ -228,22 +228,19 @@ async function processNextBatch(
           body: JSON.stringify({ 
             orderId,
             title: bookTitle,
-            author: bookAuthor,
-            format: 'Paperback' // 确保包含所有必要参数
+            author: bookAuthor
           })
         });
         
         if (!response.ok) {
           console.error(`Error triggering next batch for order ${orderId}: ${response.status} ${response.statusText}`);
-          // 尝试使用备用方法
-          await triggerNextBatchWithFetch(orderId, bookTitle, bookAuthor);
+          const responseText = await response.text();
+          console.error(`Response body: ${responseText}`);
         } else {
           console.log(`Successfully triggered next batch for order ${orderId}`);
         }
-      } catch (error) {
-        console.error(`Error calling next batch API for order ${orderId}:`, error);
-        // 尝试使用备用方法
-        await triggerNextBatchWithFetch(orderId, bookTitle, bookAuthor);
+      } catch (apiError) {
+        console.error(`Exception when calling next batch API for order ${orderId}:`, apiError);
       }
     } else {
       // 如果已经生成了所有章节，触发PDF生成
@@ -255,20 +252,8 @@ async function processNextBatch(
     // 尝试重新触发，以便下次继续
     setTimeout(async () => {
       try {
-        let baseUrl;
-        if (process.env.VERCEL_URL) {
-          baseUrl = `https://${process.env.VERCEL_URL}`;
-        } else if (process.env.VERCEL_ENV === 'production') {
-          baseUrl = 'https://wishiyo.vercel.app';
-        } else if (process.env.VERCEL_ENV === 'preview') {
-          baseUrl = `https://${process.env.VERCEL_URL}`;
-        } else {
-          baseUrl = 'http://localhost:3000';
-        }
-        
-        console.log(`Retry using base URL: ${baseUrl} for order ${orderId}`);
-        
-        const response = await fetchFunc(`${baseUrl}/api/generate-book-content`, {
+        const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+        await fetchFunc(`${baseUrl}/api/generate-book-content`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -276,61 +261,14 @@ async function processNextBatch(
           body: JSON.stringify({ 
             orderId,
             title: bookTitle,
-            author: bookAuthor,
-            format: 'Paperback'
+            author: bookAuthor
           })
         });
-        
-        if (!response.ok) {
-          console.error(`Retry failed for order ${orderId}: ${response.status}`);
-          // 最后尝试使用备用方法
-          await triggerNextBatchWithFetch(orderId, bookTitle, bookAuthor);
-        } else {
-          console.log(`Retry succeeded for order ${orderId}`);
-        }
+        console.log(`Retried batch processing for order ${orderId} after error`);
       } catch (retryError) {
         console.error(`Failed to retry batch for order ${orderId}:`, retryError);
       }
     }, 5000); // 5秒后重试
-  }
-}
-
-/**
- * 使用备用方法触发下一批生成
- * @param {string} orderId - 订单ID
- * @param {string} bookTitle - 书籍标题
- * @param {string} bookAuthor - 书籍作者
- * @returns {Promise<void>}
- */
-async function triggerNextBatchWithFetch(orderId, bookTitle, bookAuthor) {
-  console.log(`Attempting to trigger next batch with alternative method for order ${orderId}`);
-  try {
-    // 尝试使用 node-fetch 和绝对 URL
-    const nodeFetch = require('node-fetch');
-    const absoluteUrl = process.env.VERCEL_ENV === 'production' 
-      ? 'https://wishiyo.vercel.app/api/generate-book-content'
-      : 'https://wishiyo.vercel.app/api/generate-book-content'; // 使用固定的生产 URL
-    
-    const response = await nodeFetch(absoluteUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ 
-        orderId,
-        title: bookTitle,
-        author: bookAuthor,
-        format: 'Paperback'
-      })
-    });
-    
-    if (!response.ok) {
-      console.error(`Alternative method failed for order ${orderId}: ${response.status}`);
-    } else {
-      console.log(`Alternative method succeeded for order ${orderId}`);
-    }
-  } catch (error) {
-    console.error(`Error in alternative method for order ${orderId}:`, error);
   }
 }
 
@@ -426,6 +364,7 @@ Format your response as JSON with this structure:
   
   while (retries < maxRetries) {
     try {
+      console.log(`Sending OpenAI API request for chapter ${chapterNumber}...`);
       const response = await fetchFunc('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -445,16 +384,32 @@ Format your response as JSON with this structure:
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`OpenAI API error: ${JSON.stringify(errorData)}`);
+        const errorText = await response.text();
+        console.error(`OpenAI API error status: ${response.status}, response: ${errorText}`);
+        throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
       }
 
       const result = await response.json();
+      console.log(`Received OpenAI API response for chapter ${chapterNumber}`);
+      
+      if (!result.choices || !result.choices[0] || !result.choices[0].message || !result.choices[0].message.content) {
+        console.error(`Invalid OpenAI API response format for chapter ${chapterNumber}:`, JSON.stringify(result));
+        throw new Error(`Invalid OpenAI API response format: ${JSON.stringify(result)}`);
+      }
+      
       const chapterContent = result.choices[0].message.content;
+      console.log(`Successfully extracted content for chapter ${chapterNumber}`);
       
       // 解析JSON响应
-      const parsedChapter = JSON.parse(chapterContent);
-      return parsedChapter;
+      try {
+        const parsedChapter = JSON.parse(chapterContent);
+        console.log(`Successfully parsed JSON for chapter ${chapterNumber}`);
+        return parsedChapter;
+      } catch (parseError) {
+        console.error(`Error parsing JSON for chapter ${chapterNumber}:`, parseError);
+        console.error(`Raw content: ${chapterContent}`);
+        throw new Error(`JSON parse error: ${parseError.message}`);
+      }
       
     } catch (error) {
       retries++;
@@ -477,6 +432,7 @@ Format your response as JSON with this structure:
       }
       
       // 等待一段时间后重试
+      console.log(`Waiting ${2000 * retries}ms before retrying chapter ${chapterNumber}...`);
       await new Promise(resolve => setTimeout(resolve, 2000 * retries));
     }
   }
