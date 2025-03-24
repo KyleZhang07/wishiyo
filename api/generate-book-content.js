@@ -71,21 +71,28 @@ export default async function handler(req, res) {
 
     // 从数据库获取书籍数据
     console.log(`Fetching book data for order ${orderId} from database`);
-    const { data: bookData, error: fetchError } = await supabase
+    const { data, error: fetchError } = await supabase
       .from('funny_biography_books')
       .select('*')
-      .eq('order_id', orderId)
-      .single();
+      .eq('order_id', orderId);
 
     console.log('Book data fetch response:', {
-      success: !!bookData,
+      success: !!data,
       hasError: !!fetchError,
+      recordCount: data?.length || 0,
       errorMessage: fetchError?.message || 'none'
     });
 
-    if (fetchError || !bookData) {
-      throw new Error(`Failed to fetch book data: ${fetchError?.message || 'No data returned'}`);
+    if (fetchError) {
+      throw new Error(`Failed to fetch book data: ${fetchError.message}`);
     }
+
+    if (!data || data.length === 0) {
+      throw new Error(`No book data found for order ID: ${orderId}`);
+    }
+
+    // 使用第一条记录
+    const bookData = data[0];
 
     // 使用直接传递的title和author，如果没有则使用数据库值
     const bookTitle = title || bookData.title;
