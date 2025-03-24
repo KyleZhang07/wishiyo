@@ -6,16 +6,14 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-
-// 添加Deno类型声明，避免TypeScript错误
-declare const Deno: {
-  env: {
-    get(key: string): string | undefined;
-  };
+// 环境变量获取函数
+const env = {
+  get(key: string): string | undefined {
+    return Deno.env.get(key);
+  }
 };
 
-// Define book chapter structure
+// 定义书籍章节结构
 interface BookChapter {
   chapterNumber: number;
   title: string;
@@ -26,83 +24,89 @@ interface BookChapter {
   }[];
 }
 
+// 定义批次大小和总章节数
+const BATCH_SIZE = 3;
+const TOTAL_CHAPTERS = 20;
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000; // 1秒
+
 serve(async (req) => {
-  // Handle CORS preflight requests
+  // 处理CORS预检请求
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { orderId, title, author, format } = await req.json();
+    const { orderId, title, author, format, batchNumber = 1, retryCount = 0, existingContent = [] } = await req.json();
 
     if (!orderId) {
       throw new Error('Order ID is required');
     }
 
-    console.log(`Generating book content for order ${orderId}`);
+    // 计算当前批次的章节范围
+    const startChapter = (batchNumber - 1) * BATCH_SIZE + 1;
+    const endChapter = Math.min(batchNumber * BATCH_SIZE, TOTAL_CHAPTERS);
+
+    console.log(`Generating book content for order ${orderId}, batch ${batchNumber} (chapters ${startChapter}-${endChapter})`);
 
     // 获取Supabase连接信息
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+    const OPENAI_API_KEY = env.get('OPENAI_API_KEY');
+    const supabaseUrl = env.get('SUPABASE_URL') || '';
+    const supabaseServiceKey = env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
     
-    if (!supabaseUrl || !supabaseServiceKey) {
-      throw new Error('Missing Supabase credentials');
+    if (!supabaseUrl || !supabaseServiceKey || !OPENAI_API_KEY) {
+      throw new Error('Missing required environment variables');
     }
 
     // 初始化Supabase客户端
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // 从数据库直接获取图书数据
-    console.log(`Fetching book data for order ${orderId} from database`);
+    // 从数据库获取图书数据
     const { data: bookData, error: fetchError } = await supabase
       .from('funny_biography_books')
       .select('*')
       .eq('order_id', orderId)
       .single();
 
-    console.log('Book data fetch response:', { 
-      success: !!bookData, 
-      hasError: !!fetchError, 
-      errorMessage: fetchError?.message || 'none' 
-    });
-
     if (fetchError || !bookData) {
       throw new Error(`Failed to fetch book data: ${fetchError?.message || 'No data returned'}`);
     }
 
-    // 使用直接传递的title和author，如果没有则使用数据库值
+    // 使用传递的title和author，如果没有则使用数据库值
     const bookTitle = title || bookData.title;
     const bookAuthor = author || bookData.author;
     const { selected_idea, answers, chapters } = bookData;
+    
+    // 使用传入的现有内容或从数据库获取
+    let bookChapters: BookChapter[] = existingContent.length > 0 
+      ? [...existingContent] 
+      : (Array.isArray(bookData.book_content) ? [...bookData.book_content] : []);
     
     if (!bookTitle || !bookAuthor || !selected_idea || !chapters) {
       throw new Error('Incomplete book data for content generation');
     }
 
-    const bookChapters: BookChapter[] = [];
-
-    // Process chapters data from database to build outline
-    const outline = chapters.map((chapter: any, index: number) => {
-      return `Chapter ${index + 1}: ${chapter.title}\n${chapter.description || ''}`;
-    }).join('\n\n');
-
-    // Generate prompts for OpenAI
-    // Get the selected idea description to use as a basis for the book
+    // 生成提示词所需的上下文
     const ideaDescription = selected_idea.description || '';
-    
-    // Process answers to questions as additional context
     const answersContext = answers && Array.isArray(answers) 
       ? answers.map((answer: any) => `Q: ${answer.question}\nA: ${answer.answer}`).join('\n\n')
       : '';
 
-    // Generate content for 20 chapters with 4 sections each
-    for (let i = 1; i <= 2; i++) {  // 从20章减少到2章用于测试
+    // 生成当前批次的章节
+    for (let i = startChapter; i <= endChapter; i++) {
+      // 检查是否已存在该章节（错误恢复）
+      const existingChapterIndex = bookChapters.findIndex(ch => ch.chapterNumber === i);
+      if (existingChapterIndex !== -1) {
+        console.log(`Chapter ${i} already exists, skipping generation`);
+        continue;
+      }
+      
       console.log(`Generating chapter ${i} content...`);
       
       let chapterTitle = '';
       let chapterDescription = '';
       
-      // Try to find matching chapter in the existing chapter outlines
+      // 尝试从现有章节大纲中找到匹配的章节
       if (chapters && Array.isArray(chapters) && chapters.length >= i) {
         const existingChapter = chapters[i - 1];
         if (existingChapter) {
@@ -115,7 +119,13 @@ serve(async (req) => {
         chapterTitle = `Chapter ${i}`;
       }
 
-      const prompt = `
+      // 带重试机制的OpenAI API调用
+      let chapterContent = null;
+      let retries = 0;
+      
+      while (retries < MAX_RETRIES) {
+        try {
+          const prompt = `
 You are writing a humorous biography book titled "${bookTitle}" about ${bookAuthor}. 
 The book concept is: ${ideaDescription}
 
@@ -145,105 +155,168 @@ Format your response as JSON with this structure:
 }
 `;
 
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o',
-          messages: [
-            { role: 'system', content: 'You must respond with valid JSON only. Do not include any explanation outside the JSON structure.' },
-            { role: 'user', content: prompt }
-          ],
-          temperature: 0.5,
-          max_tokens: 3000,
-          response_format: { type: "json_object" }
-        }),
-      });
+          const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${OPENAI_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'gpt-4o',
+              messages: [
+                { role: 'system', content: 'You must respond with valid JSON only. Do not include any explanation outside the JSON structure.' },
+                { role: 'user', content: prompt }
+              ],
+              temperature: 0.5,
+              max_tokens: 3000,
+              response_format: { type: "json_object" }
+            }),
+          });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`OpenAI API error: ${JSON.stringify(errorData)}`);
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`OpenAI API error: ${JSON.stringify(errorData)}`);
+          }
+
+          const result = await response.json();
+          chapterContent = result.choices[0].message.content;
+          break; // 成功获取内容，跳出重试循环
+          
+        } catch (error) {
+          retries++;
+          console.error(`Error generating chapter ${i}, attempt ${retries}:`, error);
+          
+          if (retries >= MAX_RETRIES) {
+            console.error(`Failed to generate chapter ${i} after ${MAX_RETRIES} attempts`);
+            // 创建一个错误占位章节
+            chapterContent = JSON.stringify({
+              chapterNumber: i,
+              title: chapterTitle,
+              sections: [
+                {
+                  sectionNumber: 1,
+                  title: "Content Error",
+                  content: "There was an error processing this chapter's content. It will be regenerated later."
+                }
+              ]
+            });
+          } else {
+            // 等待一段时间后重试
+            await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * retries));
+          }
+        }
       }
-
-      const result = await response.json();
-      const chapterContent = result.choices[0].message.content;
       
       try {
-        // Parse the JSON response
-        const parsedChapter = JSON.parse(chapterContent);
+        // 解析JSON响应
+        const parsedChapter = JSON.parse(chapterContent!);
         bookChapters.push(parsedChapter);
+        
+        // 每生成一章就更新数据库，确保不丢失进度
+        if (i % 1 === 0 || i === endChapter) { // 每章或批次结束时更新
+          const { error: updateError } = await supabase
+            .from('funny_biography_books')
+            .update({ book_content: bookChapters })
+            .eq('order_id', orderId);
+            
+          if (updateError) {
+            console.error(`Warning: Failed to update book data after chapter ${i}:`, updateError);
+          }
+        }
       } catch (parseError) {
         console.error(`Error parsing chapter ${i} content:`, parseError);
-        // 记录原始内容的前300个字符用于调试
-        console.error(`Original content (first 300 chars): ${chapterContent.substring(0, 300)}...`);
+        console.error(`Original content (first 300 chars): ${chapterContent!.substring(0, 300)}...`);
         
-        // If parsing fails, create a structured chapter with the raw content
-        bookChapters.push({
+        // 如果解析失败，创建一个带有错误信息的章节
+        const errorChapter = {
           chapterNumber: i,
           title: chapterTitle,
           sections: [
             {
               sectionNumber: 1,
               title: "Content Error",
-              content: "There was an error processing this chapter's content."
+              content: "There was an error processing this chapter's content. It will be regenerated later."
             }
           ]
-        });
+        };
+        
+        bookChapters.push(errorChapter);
+        
+        // 更新数据库，保存进度
+        const { error: updateError } = await supabase
+          .from('funny_biography_books')
+          .update({ book_content: bookChapters })
+          .eq('order_id', orderId);
+          
+        if (updateError) {
+          console.error(`Warning: Failed to update book data after error in chapter ${i}:`, updateError);
+        }
       }
     }
 
-    // 直接更新数据库中的内容，而不是通过另一个函数调用
-    console.log('Updating database with the generated book content');
-    const { error: updateError } = await supabase
+    // 最终更新数据库
+    const { error: finalUpdateError } = await supabase
       .from('funny_biography_books')
-      .update({
-        book_content: bookChapters
-      })
+      .update({ book_content: bookChapters })
       .eq('order_id', orderId);
 
-    if (updateError) {
-      throw new Error(`Failed to update book data: ${updateError.message}`);
+    if (finalUpdateError) {
+      throw new Error(`Failed to update book data: ${finalUpdateError.message}`);
     }
 
-    // 立即触发内页PDF生成
-    console.log(`Immediately triggering interior PDF generation for order ${orderId}`);
-    try {
-      const interiorResponse = await fetch(`${supabaseUrl}/functions/v1/generate-interior-pdf`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseServiceKey}`
-        },
-        body: JSON.stringify({
-          orderId,
-          bookContent: bookChapters,
-          bookTitle: bookTitle,
-          authorName: bookAuthor
-        })
-      });
-
-      const interiorResult = await interiorResponse.json();
-      if (!interiorResponse.ok || !interiorResult.success) {
-        console.error(`Error generating interior PDF: ${JSON.stringify(interiorResult)}`);
-        // 即使PDF生成失败，我们也会返回内容生成成功的响应
-        console.log('Content generation was successful even though PDF generation failed');
-      } else {
-        console.log(`Interior PDF generated successfully with URL: ${interiorResult.interiorSourceUrl || 'No URL'}`);
+    // 如果还有更多批次要处理，触发下一批次
+    if (endChapter < TOTAL_CHAPTERS) {
+      console.log(`Triggering next batch (${batchNumber + 1}) for order ${orderId}`);
+      try {
+        // 异步触发下一批次，不等待响应
+        fetch(`${supabaseUrl}/functions/v1/generate-book-content`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseServiceKey}`
+          },
+          body: JSON.stringify({
+            orderId,
+            batchNumber: batchNumber + 1,
+            existingContent: bookChapters
+          })
+        }).catch(error => {
+          console.error(`Error triggering next batch: ${error.message}`);
+        });
+      } catch (error) {
+        console.error('Error triggering next batch:', error);
+        // 继续流程，不中断
       }
-    } catch (error) {
-      console.error('Error calling interior PDF generation:', error);
-      // 我们仍然继续流程，返回内容生成成功的响应
+    } else {
+      // 所有章节都已生成，触发内页PDF生成
+      console.log(`All chapters generated, triggering interior PDF generation for order ${orderId}`);
+      try {
+        fetch(`${supabaseUrl}/functions/v1/generate-interior-pdf`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseServiceKey}`
+          },
+          body: JSON.stringify({
+            orderId,
+            bookContent: bookChapters,
+            bookTitle: bookTitle,
+            authorName: bookAuthor
+          })
+        }).catch(error => {
+          console.error(`Error triggering PDF generation: ${error.message}`);
+        });
+      } catch (error) {
+        console.error('Error calling interior PDF generation:', error);
+        // 继续流程，不中断
+      }
     }
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: 'Book content generated successfully',
-        bookContent: bookChapters,
-        chaptersCount: bookChapters.length
+        message: `Book content batch ${batchNumber} generated successfully`,
+        isComplete: endChapter >= TOTAL_CHAPTERS
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -251,6 +324,40 @@ Format your response as JSON with this structure:
     );
   } catch (error) {
     console.error('Error generating book content:', error);
+    
+    // 如果是批次处理失败，尝试重试当前批次
+    try {
+      const { orderId, batchNumber, retryCount = 0, existingContent = [] } = await req.json();
+      
+      if (orderId && batchNumber && retryCount < MAX_RETRIES) {
+        console.log(`Retrying batch ${batchNumber} for order ${orderId}, attempt ${retryCount + 1}`);
+        
+        // 等待一段时间后重试
+        setTimeout(() => {
+          const supabaseUrl = env.get('SUPABASE_URL') || '';
+          const supabaseServiceKey = env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+          
+          if (supabaseUrl && supabaseServiceKey) {
+            fetch(`${supabaseUrl}/functions/v1/generate-book-content`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${supabaseServiceKey}`
+              },
+              body: JSON.stringify({
+                orderId,
+                batchNumber,
+                retryCount: retryCount + 1,
+                existingContent
+              })
+            }).catch(e => console.error('Error in retry attempt:', e));
+          }
+        }, RETRY_DELAY * (retryCount + 1));
+      }
+    } catch (retryError) {
+      console.error('Error setting up retry:', retryError);
+    }
+    
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
       {

@@ -528,14 +528,14 @@ export default async function handler(req, res) {
               // 启动图书生成过程
               console.log(`===== STARTING BOOK GENERATION FOR ORDER ${orderId} ASYNCHRONOUSLY =====`);
               try {
-                // 使用Vercel API端点替代Supabase函数
-                const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+                // 异步触发图书生成，但不等待其完成
                 fetch(
-                  `${baseUrl}/api/generate-book-content`,
+                  `${supabaseUrl}/functions/v1/generate-book-content`,
                   {
                     method: 'POST',
                     headers: {
-                      'Content-Type': 'application/json'
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${supabaseKey}`
                     },
                     body: JSON.stringify({ 
                       orderId,
