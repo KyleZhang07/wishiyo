@@ -529,8 +529,9 @@ export default async function handler(req, res) {
               console.log(`===== STARTING BOOK GENERATION FOR ORDER ${orderId} ASYNCHRONOUSLY =====`);
               try {
                 // 使用Vercel API端点替代Supabase函数
+                const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
                 fetch(
-                  `/api/generate-book-content`,
+                  `${baseUrl}/api/generate-book-content`,
                   {
                     method: 'POST',
                     headers: {
