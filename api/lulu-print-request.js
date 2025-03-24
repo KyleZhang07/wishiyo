@@ -333,7 +333,7 @@ export default async function handler(req, res) {
           lulu_print_status: 'SUBMITTED',
           status: 'print_submitted',
           lulu_print_job_id: printJobId,
-          print_submission_date: new Date().toISOString()
+          print_date: new Date().toISOString()
         })
         .eq('order_id', orderId);
         
