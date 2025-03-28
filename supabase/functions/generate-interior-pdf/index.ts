@@ -316,51 +316,6 @@ serve(async (req) => {
       console.log(`Database updated successfully with interior-pdf, interior_source_url, and marked as ready for printing with ${pageCount} pages`);
     }
     
-    // 获取封面图片信息，触发封面PDF生成
-    console.log(`Fetching cover images for order ${orderId} to trigger cover PDF generation...`);
-    const { data: bookData, error: bookError } = await supabase
-      .from('funny_biography_books')
-      .select('front_cover, spine, back_cover')
-      .eq('order_id', orderId)
-      .single();
-    
-    if (bookError) {
-      console.error(`Error fetching book cover images:`, bookError);
-    } else if (bookData && bookData.front_cover && bookData.spine && bookData.back_cover) {
-      console.log(`Cover images found, triggering cover PDF generation for order ${orderId}`);
-      
-      try {
-        const coverResponse = await fetch(
-          `${Deno.env.get('SUPABASE_URL')}/functions/v1/generate-cover-pdf`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
-            },
-            body: JSON.stringify({ 
-              frontCover: bookData.front_cover, 
-              spine: bookData.spine, 
-              backCover: bookData.back_cover,
-              orderId
-            })
-          }
-        );
-        
-        if (!coverResponse.ok) {
-          const errorText = await coverResponse.text();
-          console.error(`Error response from cover PDF generation:`, errorText);
-        } else {
-          const coverResult = await coverResponse.json();
-          console.log(`Cover PDF generation triggered successfully:`, coverResult);
-        }
-      } catch (coverError) {
-        console.error(`Error triggering cover PDF generation:`, coverError);
-      }
-    } else {
-      console.warn(`Missing cover images for order ${orderId}, cannot trigger cover PDF generation`);
-    }
-    
     return new Response(
       JSON.stringify({ 
         success: true, 
