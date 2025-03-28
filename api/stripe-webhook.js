@@ -528,24 +528,17 @@ export default async function handler(req, res) {
               // 启动图书生成过程
               console.log(`===== STARTING BOOK GENERATION FOR ORDER ${orderId} ASYNCHRONOUSLY =====`);
               try {
-                // 使用Vercel API端点替代Supabase函数
-                fetch(
-                  `/api/generate-book-content`,
-                  {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ 
-                      orderId,
-                      title: title || 'Personalized Biography',
-                      author: 'Wishiyo',
-                      format: format || 'Paperback'
+                // 完全异步触发图书生成过程，不等待其完成
+                // 使用setTimeout确保这是一个完全非阻塞的操作
+                setTimeout(() => {
+                  generateBookProcess(supabaseUrl, supabaseKey, orderId)
+                    .then(result => {
+                      console.log(`Book generation process completed for order ${orderId}:`, result);
                     })
-                  }
-                ).catch(error => {
-                  console.error(`Async error in book content generation process for ${orderId}:`, error);
-                });
+                    .catch(error => {
+                      console.error(`Error in book generation process for ${orderId}:`, error);
+                    });
+                }, 0);
                 
                 console.log(`Book generation process triggered asynchronously for order ${orderId}`);
               } catch (error) {
