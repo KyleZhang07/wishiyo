@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check } from 'lucide-react';
@@ -51,8 +52,9 @@ const LoveStoryStyleStep = () => {
       title="Text Tone Selection" 
       description="Choose a writing tone for your love story" 
       previousStep="/create/love/love-story/moments" 
+      nextStep="/create/love/love-story/ideas"
       currentStep={4} 
-      totalSteps={7} 
+      totalSteps={8} 
       onNextClick={handleContinue}
     >
       <div className="max-w-2xl mx-auto">
@@ -100,4 +102,4 @@ const LoveStoryStyleStep = () => {
   );
 };
 
-export default LoveStoryStyleStep; 
+export default LoveStoryStyleStep;

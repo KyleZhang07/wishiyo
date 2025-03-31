@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import QuestionDialog from '@/components/wizard/QuestionDialog';
@@ -102,7 +103,7 @@ const LoveStoryQuestionsStep = () => {
       description="Tell us about your journey together"
       previousStep="/create/love/love-story/character"
       currentStep={2}
-      totalSteps={6}
+      totalSteps={8}
       onNextClick={handleNext}
     >
       <div className="space-y-6">
