@@ -1,5 +1,4 @@
 
-import { CSSProperties } from 'react';
 import { TemplateType } from './types';
 
 interface CoverContentProps {
@@ -22,26 +21,13 @@ const CoverContent = ({
       <div className="space-y-2 text-center">
         <h1 
           className={`${selectedFont}`}
-          style={{
-            color: template.titleStyle.color,
-            fontSize: template.titleStyle.fontSize,
-            fontWeight: template.titleStyle.fontWeight,
-            textAlign: template.titleStyle.textAlign,
-            // Convert non-CSS standard properties to regular style object
-            ...(template.titleStyle.textTransform ? { textTransform: template.titleStyle.textTransform as 'uppercase' | 'lowercase' | 'capitalize' | 'none' } : {})
-          } as CSSProperties}
+          style={template.titleStyle}
         >
           {coverTitle}
         </h1>
         <p 
           className={`${selectedFont}`}
-          style={{
-            color: template.subtitleStyle.color,
-            fontSize: template.subtitleStyle.fontSize,
-            fontWeight: template.subtitleStyle.fontWeight,
-            ...(template.subtitleStyle.fontStyle ? { fontStyle: template.subtitleStyle.fontStyle } : {}),
-            ...(template.subtitleStyle.textTransform ? { textTransform: template.subtitleStyle.textTransform as 'uppercase' | 'lowercase' | 'capitalize' | 'none' } : {})
-          } as CSSProperties}
+          style={template.subtitleStyle}
         >
           {subtitle}
         </p>
@@ -49,13 +35,7 @@ const CoverContent = ({
       <div className="text-center">
         <p 
           className={`${selectedFont}`}
-          style={{
-            color: template.authorStyle.color,
-            fontSize: template.authorStyle.fontSize,
-            fontWeight: template.authorStyle.fontWeight,
-            ...(template.authorStyle.textTransform ? { textTransform: template.authorStyle.textTransform as 'uppercase' | 'lowercase' | 'capitalize' | 'none' } : {}),
-            ...(template.authorStyle.letterSpacing ? { letterSpacing: template.authorStyle.letterSpacing } : {})
-          } as CSSProperties}
+          style={template.authorStyle}
         >
           By {authorName}
         </p>

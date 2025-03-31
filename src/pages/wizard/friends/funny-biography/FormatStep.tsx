@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import WizardStep from '@/components/wizard/WizardStep';
@@ -353,8 +352,8 @@ const FormatStep = () => {
       title="Choose a format for your book"
       description="Make your gift even more special with our selection of cover options"
       previousStep="/create/friends/funny-biography/preview"
-      currentStep={7}
-      totalSteps={7}
+      currentStep={8}
+      totalSteps={8}
     >
       <div className="max-w-4xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -435,4 +434,4 @@ const FormatStep = () => {
   );
 };
 
-export default FormatStep;
+export default FormatStep; 
