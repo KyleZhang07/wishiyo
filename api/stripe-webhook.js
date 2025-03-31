@@ -49,15 +49,11 @@ async function updateBookStatus(supabaseUrl, supabaseKey, orderId, status) {
 // 添加一个触发打印请求检查的函数
 async function triggerPrintRequestCheck(orderId, type) {
   try {
-    // 获取基础URL - 在生产环境中使用域名或环境变量
-    let baseUrl = 'http://localhost:3000';
-    if (process.env.NEXT_PUBLIC_BASE_URL) {
-      // 确保 URL 包含协议
-      baseUrl = process.env.NEXT_PUBLIC_BASE_URL.startsWith('http') 
-        ? process.env.NEXT_PUBLIC_BASE_URL 
-        : `https://${process.env.NEXT_PUBLIC_BASE_URL}`;
-    } else if (process.env.VERCEL_URL) {
-      baseUrl = `https://${process.env.VERCEL_URL}`;
+    // 获取基础URL
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+    if (!baseUrl) {
+      console.error('[ERROR] NEXT_PUBLIC_BASE_URL 环境变量未设置，无法继续处理');
+      throw new Error('Missing NEXT_PUBLIC_BASE_URL environment variable');
     }
     
     // 详细记录环境变量信息
@@ -147,15 +143,11 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
       backCoverLength: book.images && book.images.backCover ? book.images.backCover.substring(0, 30) + '...' : 'N/A'
     });
 
-    // 构建完整的 API URL - 优先使用 NEXT_PUBLIC_BASE_URL
-    let baseUrl = 'http://localhost:3000';
-    if (process.env.NEXT_PUBLIC_BASE_URL) {
-      // 确保 URL 包含协议
-      baseUrl = process.env.NEXT_PUBLIC_BASE_URL.startsWith('http') 
-        ? process.env.NEXT_PUBLIC_BASE_URL 
-        : `https://${process.env.NEXT_PUBLIC_BASE_URL}`;
-    } else if (process.env.VERCEL_URL) {
-      baseUrl = `https://${process.env.VERCEL_URL}`;
+    // 构建完整的 API URL
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+    if (!baseUrl) {
+      console.error('[ERROR] NEXT_PUBLIC_BASE_URL 环境变量未设置，无法继续处理');
+      throw new Error('Missing NEXT_PUBLIC_BASE_URL environment variable');
     }
     
     // 详细记录环境变量信息
