@@ -182,9 +182,14 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
       backCoverLength: book.images && book.images.backCover ? book.images.backCover.substring(0, 30) + '...' : 'N/A'
     });
 
+    // 构建完整的 API URL
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
+                   (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+    const contentEndpoint = `${baseUrl}/api/generate-book-content`;
+    console.log(`[${orderId}] Content generation endpoint: ${contentEndpoint}`);
+    
     // 3. 开始内容生成并详细记录日志
     console.log(`[${orderId}] Starting content generation with API endpoint`);
-    console.log(`[${orderId}] Content generation endpoint: /api/generate-book-content`);
     
     // 记录图书数据（排除大型字段）
     const bookDataLog = { ...book };
@@ -194,7 +199,7 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     console.log(`[${orderId}] Book data for content generation:`, bookDataLog);
     
     const contentPromise = fetch(
-      `/api/generate-book-content`,
+      contentEndpoint,
       {
         method: 'POST',
         headers: {
@@ -266,8 +271,11 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
         });
       }
       
+      const coverEndpoint = `${baseUrl}/api/generate-cover-pdf`;
+      console.log(`[${orderId}] Cover PDF generation endpoint: ${coverEndpoint}`);
+      
       coverPromise = fetch(
-        `/api/generate-cover-pdf`,
+        coverEndpoint,
         {
           method: 'POST',
           headers: {
