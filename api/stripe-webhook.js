@@ -119,25 +119,14 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     const book = bookData[0];
     const images = book.images || {};
     
-    // 记录详细的图片数据用于调试
-    console.log(`[${orderId}] Images data check:`, {
-      hasImagesObject: !!book.images,
-      hasFrontCover: !!(book.images && book.images.frontCover),
-      frontCoverLength: book.images && book.images.frontCover ? book.images.frontCover.substring(0, 30) + '...' : 'N/A',
-      hasSpine: !!(book.images && book.images.spine),
-      spineLength: book.images && book.images.spine ? book.images.spine.substring(0, 30) + '...' : 'N/A',
-      hasBackCover: !!(book.images && book.images.backCover),
-      backCoverLength: book.images && book.images.backCover ? book.images.backCover.substring(0, 30) + '...' : 'N/A'
-    });
-
     // 构建完整的 API URL
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
                    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
     const contentEndpoint = `${baseUrl}/api/generate-book-content`;
-    console.log(`[${orderId}] Content generation endpoint: ${contentEndpoint}`);
     
     // 3. 开始内容生成并详细记录日志
     console.log(`[${orderId}] Starting content generation with API endpoint`);
+    console.log(`[${orderId}] Content generation endpoint: ${contentEndpoint}`);
     
     // 记录图书数据（排除大型字段）
     const bookDataLog = { ...book };
@@ -368,7 +357,10 @@ export default async function handler(req, res) {
           
           if (!productId) {
             console.warn('会话元数据中缺少productId');
-            return res.status(200).json({ received: true, warning: '元数据中缺少productId' });
+            return res.status(200).json({ 
+              received: true, 
+              warning: '元数据中缺少productId' 
+            });
           }
 
           // 提取运输地址信息
