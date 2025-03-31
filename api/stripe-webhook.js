@@ -183,8 +183,8 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     });
 
     // 3. 开始内容生成并详细记录日志
-    console.log(`[${orderId}] Starting content generation with Supabase function`);
-    console.log(`[${orderId}] Content generation endpoint: ${supabaseUrl}/functions/v1/generate-book-content`);
+    console.log(`[${orderId}] Starting content generation with API endpoint`);
+    console.log(`[${orderId}] Content generation endpoint: /api/generate-book-content`);
     
     // 记录图书数据（排除大型字段）
     const bookDataLog = { ...book };
@@ -194,7 +194,7 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     console.log(`[${orderId}] Book data for content generation:`, bookDataLog);
     
     const contentPromise = fetch(
-      `${supabaseUrl}/functions/v1/generate-book-content`,
+      `/api/generate-book-content`,
       {
         method: 'POST',
         headers: {
@@ -267,7 +267,7 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
       }
       
       coverPromise = fetch(
-        `${supabaseUrl}/functions/v1/generate-cover-pdf`,
+        `/api/generate-cover-pdf`,
         {
           method: 'POST',
           headers: {
