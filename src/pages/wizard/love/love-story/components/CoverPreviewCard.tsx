@@ -1,3 +1,4 @@
+
 import { Button } from '@/components/ui/button';
 import { Edit, RefreshCw } from 'lucide-react';
 import LoveStoryCoverPreview from '@/components/cover-generator/LoveStoryCoverPreview';
@@ -98,11 +99,19 @@ export const CoverPreviewCard = ({
     }
   }, []);
 
+  // Create title data object for LoveStoryCoverPreview
+  const titleData = {
+    mainTitle: coverTitle.split(' ').slice(0, 1).join(' '),
+    subTitle: coverTitle.split(' ').slice(1, 2).join(' '),
+    thirdLine: coverTitle.split(' ').slice(2).join(' '),
+    fullTitle: coverTitle
+  };
+
   return (
     <div className="relative">
       <div className="max-w-xl mx-auto">
         <LoveStoryCoverPreview
-          coverTitle={coverTitle}
+          titleData={titleData}
           subtitle={subtitle}
           authorName={authorName}
           recipientName={recipientName}
