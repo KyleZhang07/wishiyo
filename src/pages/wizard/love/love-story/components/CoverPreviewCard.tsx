@@ -1,4 +1,3 @@
-
 import { Button } from '@/components/ui/button';
 import { Edit, RefreshCw } from 'lucide-react';
 import LoveStoryCoverPreview from '@/components/cover-generator/LoveStoryCoverPreview';
@@ -81,7 +80,7 @@ export const CoverPreviewCard = ({
   coverImage,
   backCoverText,
   isGeneratingCover
-}: CoverPreviewCardProps) => {
+}) => {
   // Get recipient name from localStorage
   const recipientName = localStorage.getItem('loveStoryPersonName') || 'My Love';
   
@@ -103,11 +102,12 @@ export const CoverPreviewCard = ({
     <div className="relative">
       <div className="max-w-xl mx-auto">
         <LoveStoryCoverPreview
-          title={coverTitle}
+          coverTitle={coverTitle}
+          subtitle={subtitle}
           authorName={authorName}
-          recipient={recipientName}
+          recipientName={recipientName}
           coverImage={coverImage}
-          font={selectedStyle?.font || "playfair"}
+          selectedFont={selectedStyle?.font || "playfair"}
           style={selectedStyle}
         />
       </div>

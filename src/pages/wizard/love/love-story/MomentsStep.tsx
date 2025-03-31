@@ -13,11 +13,14 @@ const LoveStoryMomentsStep = () => {
   const imageRef = useRef<HTMLImageElement>(null);
   const { toast } = useToast();
 
+  // Load face-api models on component mount
   useEffect(() => {
     const loadModels = async () => {
       try {
+        // Models should be in the public folder
         const MODEL_URL = '/models';
         
+        // Load required models for face detection
         await Promise.all([
           faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
           faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL)
@@ -45,22 +48,25 @@ const LoveStoryMomentsStep = () => {
     }
   }, []);
 
+  // Function to detect faces in an image
   const detectFaces = async (imageElement: HTMLImageElement): Promise<boolean> => {
     if (!isModelLoaded) {
       console.warn('Face detection models not loaded yet');
-      return true;
+      return true; // Allow the upload if models aren't loaded
     }
 
     try {
+      // Detect faces using TinyFaceDetector (fast and efficient)
       const detections = await faceapi.detectAllFaces(
         imageElement,
         new faceapi.TinyFaceDetectorOptions({ scoreThreshold: 0.5 })
       ).withFaceLandmarks();
       
+      // Return true if at least one face is detected
       return detections.length > 0;
     } catch (error) {
       console.error('Error during face detection:', error);
-      return true;
+      return true; // Allow upload on error to avoid blocking users
     }
   };
 
@@ -83,14 +89,17 @@ const LoveStoryMomentsStep = () => {
     reader.onload = async (e) => {
       const dataUrl = e.target?.result as string;
       
+      // Create an image element for face detection
       const img = new Image();
       img.src = dataUrl;
       
       img.onload = async () => {
+        // Check if the image contains a face
         const hasFace = await detectFaces(img);
         
         if (!hasFace) {
           setIsLoading(false);
+          // 删除之前可能存在的照片数据
           localStorage.removeItem('loveStoryPartnerPhoto');
           setCharacterPhoto(null);
           toast({
@@ -101,6 +110,7 @@ const LoveStoryMomentsStep = () => {
           return;
         }
         
+        // Face detected, proceed with saving the image
         setCharacterPhoto(dataUrl);
         localStorage.setItem('loveStoryPartnerPhoto', dataUrl);
         setIsLoading(false);
@@ -139,7 +149,7 @@ const LoveStoryMomentsStep = () => {
       previousStep="/create/love/love-story/questions"
       nextStep="/create/love/love-story/style"
       currentStep={3}
-      totalSteps={8}
+      totalSteps={6}
     >
       <div className="space-y-6">
         <div className="max-w-md mx-auto">

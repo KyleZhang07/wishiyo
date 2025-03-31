@@ -1,5 +1,4 @@
 
-import { CSSProperties } from 'react';
 import { TemplateType } from './types';
 
 interface CoverContentProps {
@@ -22,25 +21,13 @@ const CoverContent = ({
       <div className="space-y-2 text-center">
         <h1 
           className={`${selectedFont}`}
-          style={{
-            color: template.titleStyle.color,
-            fontSize: template.titleStyle.fontSize,
-            fontWeight: template.titleStyle.fontWeight,
-            textAlign: template.titleStyle.textAlign,
-            textTransform: template.titleStyle.textTransform as CSSProperties['textTransform']
-          }}
+          style={template.titleStyle}
         >
           {coverTitle}
         </h1>
         <p 
           className={`${selectedFont}`}
-          style={{
-            color: template.subtitleStyle.color,
-            fontSize: template.subtitleStyle.fontSize,
-            fontWeight: template.subtitleStyle.fontWeight,
-            fontStyle: template.subtitleStyle.fontStyle,
-            textTransform: template.subtitleStyle.textTransform as CSSProperties['textTransform']
-          }}
+          style={template.subtitleStyle}
         >
           {subtitle}
         </p>
@@ -48,13 +35,7 @@ const CoverContent = ({
       <div className="text-center">
         <p 
           className={`${selectedFont}`}
-          style={{
-            color: template.authorStyle.color,
-            fontSize: template.authorStyle.fontSize,
-            fontWeight: template.authorStyle.fontWeight,
-            textTransform: template.authorStyle.textTransform as CSSProperties['textTransform'],
-            letterSpacing: template.authorStyle.letterSpacing
-          }}
+          style={template.authorStyle}
         >
           By {authorName}
         </p>

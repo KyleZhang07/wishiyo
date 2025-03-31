@@ -1,4 +1,3 @@
-
 import IdeaStep from '@/components/wizard/IdeaStep';
 
 const LoveStoryIdeasStep = () => {
@@ -7,8 +6,6 @@ const LoveStoryIdeasStep = () => {
       category="love"
       previousStep="/create/love/love-story/style"
       nextStep="/create/love/love-story/cover"
-      currentStep={5}
-      totalSteps={8}
     />
   );
 };

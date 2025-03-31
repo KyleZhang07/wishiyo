@@ -1,6 +1,3 @@
-
-import { CSSProperties } from 'react';
-
 export type TemplateType = {
   id: string;
   name: string;
@@ -11,20 +8,20 @@ export type TemplateType = {
     fontWeight: string;
     textAlign: 'left' | 'center' | 'right';
     offsetY: number;
-    textTransform?: CSSProperties['textTransform'];
+    textTransform?: string;
   };
   subtitleStyle: {
     color: string;
     fontSize: string;
     fontWeight: string;
-    fontStyle?: CSSProperties['fontStyle'];
-    textTransform?: CSSProperties['textTransform'];
+    fontStyle?: string;
+    textTransform?: string;
   };
   authorStyle: {
     color: string;
     fontSize: string;
     fontWeight: string;
-    textTransform?: CSSProperties['textTransform'];
+    textTransform?: string;
     letterSpacing?: string;
   };
   imageStyle: {
@@ -74,8 +71,7 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     },
     authorStyle: {
       color: '#9b87f5',
-      fontSize: '1rem',
-      fontWeight: 'normal'
+      fontSize: '1rem'
     },
     imageStyle: {
       filter: 'brightness(0.7)',
@@ -116,7 +112,7 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     },
     imageStyle: {
       filter: 'grayscale(100%)', 
-      opacity: '1',
+      opacity: 1,
       borderRadius: '0' 
     },
     spineStyle: {
@@ -148,8 +144,7 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     },
     authorStyle: {
       color: '#F2FCE2',
-      fontSize: '1rem',
-      fontWeight: 'normal'
+      fontSize: '1rem'
     },
     imageStyle: {
       filter: 'brightness(0.6) contrast(1.2)',
@@ -175,8 +170,6 @@ export const coverTemplates: { [key: string]: TemplateType } = {
       color: '#FFFFFF',
       fontSize: '3rem',
       fontWeight: 'bold',
-      textAlign: 'center',
-      offsetY: 0.3,
       textTransform: 'uppercase'
     },
     subtitleStyle: {
@@ -240,7 +233,7 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     },
     imageStyle: {
       filter: 'brightness(1.1)', 
-      opacity: '1',
+      opacity: 1,
       borderRadius: '50%' 
     },
     spineStyle: {
@@ -277,7 +270,7 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     },
     imageStyle: {
       filter: 'none',
-      opacity: '1',
+      opacity: 1,
       borderRadius: '0'
     },
     spineStyle: {
@@ -309,8 +302,7 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     },
     authorStyle: {
       color: '#ffffff',
-      fontSize: '1.8rem',
-      fontWeight: 'normal'
+      fontSize: '1.8rem'
     },
     imageStyle: {
       filter: 'none',
