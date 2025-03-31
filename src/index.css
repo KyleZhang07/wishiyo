@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
 
 @tailwind base;
@@ -128,24 +127,22 @@
   }
 }
 
-@layer components {
-  .glass-card {
-    @apply bg-white shadow-md border border-gray-100 rounded-lg;
-  }
+.glass-card {
+  @apply bg-white shadow-md border border-gray-100 rounded-lg;
+}
 
-  .page-transition {
-    @apply animate-fadeIn;
-  }
+.page-transition {
+  @apply animate-fadeIn;
+}
 
-  .slide-in {
-    @apply animate-slideIn;
-  }
+.slide-in {
+  @apply animate-slideIn;
+}
 
-  .clip-hexagon {
-    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
-  }
+.clip-hexagon {
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+}
 
-  .clip-gift {
-    clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
-  }
+.clip-gift {
+  clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
 }
