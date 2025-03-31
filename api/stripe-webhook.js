@@ -50,9 +50,8 @@ async function updateBookStatus(supabaseUrl, supabaseKey, orderId, status) {
 async function triggerPrintRequestCheck(orderId, type) {
   try {
     // 获取基础URL - 在生产环境中使用域名或环境变量
-    const baseUrl = process.env.VERCEL_ENV === 'production' 
-      ? `https://${process.env.VERCEL_URL || 'wishiyo.com'}`
-      : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8080';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
+                   (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
     
     console.log(`Triggering print request check for orderId: ${orderId}`, {
       baseUrl,
@@ -90,16 +89,6 @@ async function triggerPrintRequestCheck(orderId, type) {
 // 完整的图书生成过程，替代FormatStep.tsx中的startBookGeneration
 async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
   try {
-    // 添加详细的诊断日志
-    console.log(`[DIAGNOSTIC] generateBookProcess parameters:`, {
-      hasSupabaseUrl: !!supabaseUrl,
-      supabaseUrlPreview: supabaseUrl?.substring(0, 30) + '...',
-      hasSupabaseKey: !!supabaseKey,
-      supabaseKeyLength: supabaseKey?.length,
-      supabaseKeyPreview: supabaseKey?.substring(0, 10) + '...',
-      orderId
-    });
-    
     // 1. 将图书状态更新为"处理中"
     await updateBookStatus(supabaseUrl, supabaseKey, orderId, "processing");
     console.log(`[${orderId}] Book status set to processing`);
@@ -146,7 +135,7 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     const contentEndpoint = `${baseUrl}/api/generate-book-content`;
     console.log(`[${orderId}] Content generation endpoint: ${contentEndpoint}`);
     
-    // 3. 开始内容生成并详细记录日志
+    // 3. 开始内容生成
     console.log(`[${orderId}] Starting content generation with API endpoint`);
     
     // 记录图书数据（排除大型字段）
