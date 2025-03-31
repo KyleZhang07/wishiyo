@@ -335,7 +335,7 @@ const FunnyBiographyGenerateStep = () => {
         <div className="mx-auto flex flex-col items-center">
           {!frontCoverPdf || pdfGenerating ? (
             <div className="flex items-center justify-center h-64">
-              <div className="animate-spin h-8 w-8 border-4 border-[#F6C744] border-t-transparent rounded-full"></div>
+              <div className="animate-spin h-8 w-8 border-4 border-[#FF7F50] border-t-transparent rounded-full"></div>
               <span className="ml-3">Generating cover...</span>
             </div>
           ) : (
@@ -402,8 +402,8 @@ const FunnyBiographyGenerateStep = () => {
                   <div 
                     className={`w-[80px] h-[80px] rounded-full flex items-center justify-center cursor-pointer transition-all ${
                       selectedStyle === style.id 
-                        ? 'ring-4 ring-[#F6C744] ring-offset-2' 
-                        : 'hover:ring-2 hover:ring-[#F6C744]/50'
+                        ? 'ring-4 ring-[#FF7F50] ring-offset-2' 
+                        : 'hover:ring-2 hover:ring-[#FF7F50]/50'
                     }`}
                     style={{ 
                       backgroundColor: styleConfig.bg,
@@ -433,7 +433,7 @@ const FunnyBiographyGenerateStep = () => {
         
         <div className="mt-8">
           <Button 
-            className="w-full py-6 text-lg bg-[#F6C744] hover:bg-[#E5B73E] text-white"
+            className="w-full py-6 text-lg bg-[#FF7F50] hover:bg-[#FF7F50]/80 text-white"
             onClick={handleGenerateBook}
             disabled={pdfGenerating}
           >

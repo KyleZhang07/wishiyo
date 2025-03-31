@@ -446,7 +446,7 @@ const IdeaStep = ({
         <div className="flex justify-end -mt-8 mb-2">
           <Button 
             variant="outline" 
-            className="bg-[#F6C744] text-white hover:bg-[#E5B73E]"
+            className="bg-[#FF7F50] text-white hover:bg-[#FF7F50]/80"
             onClick={generateIdeas}
             disabled={isLoading}
           >
@@ -473,15 +473,13 @@ const IdeaStep = ({
                     className={`
                       flex items-center p-3 rounded-md cursor-pointer transition-all
                       ${selectedStyle === style 
-                        ? category === 'love'
-                          ? 'bg-[#FF7F50]/10 border border-[#FF7F50]'
-                          : 'bg-[#F6C744]/10 border border-[#F6C744]' 
+                        ? 'bg-[#FF7F50]/10 border border-[#FF7F50]'
                         : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'}
                     `}
                   >
                     <div className="flex-shrink-0 mr-3">
                       {selectedStyle === style ? (
-                        <div className={`w-5 h-5 rounded-full ${category === 'love' ? 'bg-[#FF7F50]' : 'bg-[#F6C744]'} flex items-center justify-center`}>
+                        <div className="w-5 h-5 rounded-full bg-[#FF7F50] flex items-center justify-center">
                           <Check className="w-3 h-3 text-white" />
                         </div>
                       ) : (
@@ -508,7 +506,7 @@ const IdeaStep = ({
               <div className="flex justify-end">
                 <Button 
                   variant="outline" 
-                  className={`${(category as string) === 'love' ? 'bg-[#FF7F50] text-white hover:bg-[#FF7F50]/80' : 'bg-[#F6C744] text-white hover:bg-[#E5B73E]'}`}
+                  className="bg-[#FF7F50] text-white hover:bg-[#FF7F50]/80"
                   onClick={generateIdeas}
                   disabled={isLoading || isGeneratingTexts}
                 >
@@ -522,13 +520,11 @@ const IdeaStep = ({
               {isLoading ? (
                 <div className="text-center py-20">
                   <div className="flex flex-col items-center justify-center">
-                    {/* 使用主题色的加载圆环 */}
                     <div className="relative w-16 h-16 mb-6">
-                      <div className={`absolute top-0 left-0 w-16 h-16 rounded-full border-4 border-t-transparent ${category === 'love' ? 'border-[#FF7F50]' : 'border-[#F6C744]'} animate-spin`}></div>
-                      <div className={`absolute top-0 left-0 w-16 h-16 rounded-full border-4 border-r-transparent border-b-transparent border-l-transparent ${category === 'love' ? 'border-[#FF7F50]/20' : 'border-[#F6C744]/20'}`}></div>
+                      <div className="absolute top-0 left-0 w-16 h-16 rounded-full border-4 border-t-transparent border-[#FF7F50] animate-spin"></div>
+                      <div className="absolute top-0 left-0 w-16 h-16 rounded-full border-4 border-r-transparent border-b-transparent border-l-transparent border-[#FF7F50]/20"></div>
                     </div>
-                    {/* 主题色的标题文字 */}
-                    <h3 className={`text-xl font-medium ${category === 'love' ? 'text-[#FF7F50]' : 'text-[#F6C744]'}`}>
+                    <h3 className="text-xl font-medium text-[#FF7F50]">
                       Creating book ideas
                     </h3>
                   </div>
@@ -540,9 +536,7 @@ const IdeaStep = ({
                       key={index} 
                       className={`${category === 'friends' ? 'bg-white rounded-lg p-5' : ''} cursor-pointer transition-all hover:shadow-md ${
                         selectedIdeaIndex === index 
-                          ? category === 'friends' 
-                            ? 'ring-2 ring-[#F6C744] shadow-lg scale-[1.02]' 
-                            : 'ring-2 ring-[#FF7F50] shadow-lg scale-[1.02]' 
+                          ? 'ring-2 ring-[#FF7F50] shadow-lg scale-[1.02]' 
                           : ''
                       }`}
                       onClick={() => handleIdeaSelect(index)}
