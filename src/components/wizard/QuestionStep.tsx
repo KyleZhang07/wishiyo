@@ -16,6 +16,8 @@ interface QuestionStepProps {
   category: 'friends' | 'love';
   previousStep: string;
   nextStep: string;
+  currentStep?: number;
+  totalSteps?: number;
 }
 
 const getDefaultQuestions = (category: 'friends' | 'love') => {
@@ -41,7 +43,13 @@ const getDefaultQuestions = (category: 'friends' | 'love') => {
   }
 };
 
-const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) => {
+const QuestionStep = ({ 
+  category, 
+  previousStep, 
+  nextStep,
+  currentStep = 2,
+  totalSteps = 7
+}: QuestionStepProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
   const [questionsAndAnswers, setQuestionsAndAnswers] = useState<QuestionAnswer[]>([]);
@@ -68,8 +76,8 @@ const QuestionStep = ({ category, previousStep, nextStep }: QuestionStepProps) =
       title="What's the Story?"
       description="Answer questions to create your personalized book."
       previousStep={previousStep}
-      currentStep={2}
-      totalSteps={4}
+      currentStep={currentStep}
+      totalSteps={totalSteps}
       onNextClick={() => {
         if (questionsAndAnswers.length === 0) {
           toast({

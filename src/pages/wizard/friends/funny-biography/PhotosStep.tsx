@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
@@ -129,7 +130,7 @@ const FunnyBiographyPhotosStep = () => {
       previousStep="/create/friends/funny-biography/ideas"
       nextStep="/create/friends/funny-biography/generate"
       currentStep={4}
-      totalSteps={6}
+      totalSteps={7}
       onNextClick={photo ? undefined : () => {}}
       nextDisabled={!photo}
     >

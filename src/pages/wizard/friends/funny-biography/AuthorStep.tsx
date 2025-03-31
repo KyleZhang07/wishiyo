@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Input } from '@/components/ui/input';
@@ -36,7 +37,7 @@ const FunnyBiographyAuthorStep = () => {
       description="It can be a friend, family member, or even your pet - anyone you want to create a story about!"
       previousStep="/friends"
       currentStep={1}
-      totalSteps={4}
+      totalSteps={7}
       onNextClick={handleContinue}
     >
       <div className="space-y-4">

@@ -3,6 +3,7 @@ import { ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import StepProgressIndicator from './StepProgressIndicator';
 
 interface WizardStepProps {
   title: string;
@@ -36,8 +37,8 @@ const WizardStep = ({
   return (
     <div className="min-h-screen bg-[#FFFAF5]">
       <div className="container mx-auto px-4 pt-8 pb-16 max-w-3xl">
-        <div className="text-center mb-8">
-          <p className="text-sm text-gray-600">Step {currentStep} of {totalSteps}</p>
+        <div className="mb-8">
+          <StepProgressIndicator currentStep={currentStep} totalSteps={totalSteps} />
         </div>
         
         <div className="relative mb-8">
@@ -66,7 +67,7 @@ const WizardStep = ({
               <Button 
                 variant="default"
                 size="lg"
-                className={`w-[95%] ${isLoveCategory ? 'bg-[#FF7F50] hover:bg-[#FF7F50]/80' : 'bg-[#FF7F50] hover:bg-[#FF7F50]/80'} text-white ${nextDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`w-[95%] bg-[#FF7F50] hover:bg-[#FF7F50]/80 text-white ${nextDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                 onClick={onNextClick ? onNextClick : () => nextStep && navigate(nextStep)}
                 disabled={nextDisabled}
               >

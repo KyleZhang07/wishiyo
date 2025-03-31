@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import WizardStep from '@/components/wizard/WizardStep';
 import QuestionDialog from '@/components/wizard/QuestionDialog';
-import { PlusCircle, X, Edit2 } from 'lucide-react';
+import { PlusCircle, X } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from 'react-router-dom';
 
@@ -99,7 +100,7 @@ const FunnyBiographyStoriesStep = () => {
       description="Time to spill the beans on all those funny moments!"
       previousStep="/create/friends/funny-biography/author"
       currentStep={2}
-      totalSteps={4}
+      totalSteps={7}
       onNextClick={handleNext}
     >
       <div className="flex justify-center w-full">
@@ -113,13 +114,13 @@ const FunnyBiographyStoriesStep = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute -right-2 -top-2 rounded-full bg-white border shadow-sm hover:bg-[#F6C744]/10 h-8 w-8 p-0"
+                className="absolute -right-2 -top-2 rounded-full bg-white border shadow-sm hover:bg-[#FF7F50]/10 h-8 w-8 p-0"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleRemoveQA(index);
                 }}
               >
-                <X className="h-4 w-4 text-[#F6C744]" />
+                <X className="h-4 w-4 text-[#FF7F50]" />
               </Button>
               <h3 className="font-medium mb-1.5 text-gray-700">{qa.question}</h3>
               <p className="text-base">{qa.answer}</p>
@@ -128,13 +129,13 @@ const FunnyBiographyStoriesStep = () => {
           
           <Button
             variant="outline"
-            className="w-full h-16 border-dashed text-lg bg-gradient-to-r from-[#F6C744]/10 to-[#F6C744]/20 hover:from-[#F6C744]/20 hover:to-[#F6C744]/30 text-gray-700"
+            className="w-full h-16 border-dashed text-lg bg-gradient-to-r from-[#FF7F50]/10 to-[#FF7F50]/20 hover:from-[#FF7F50]/20 hover:to-[#FF7F50]/30 text-gray-700"
             onClick={() => {
               setSelectedQuestion(null);
               setIsDialogOpen(true);
             }}
           >
-            <PlusCircle className="mr-2 h-5 w-5 text-[#F6C744]" />
+            <PlusCircle className="mr-2 h-5 w-5 text-[#FF7F50]" />
             {questionsAndAnswers.length === 0 
               ? "Select a Question and Share a Story" 
               : "Add Another Story"}
