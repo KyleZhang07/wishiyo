@@ -100,48 +100,6 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
       orderId
     });
     
-    // 测试REST API直接调用
-    console.log(`[DIAGNOSTIC] Testing Supabase REST API directly...`);
-    try {
-      const testResponse = await fetch(
-        `${supabaseUrl}/rest/v1/funny_biography_books?order_id=eq.${orderId}&select=id,title`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabaseKey}`,
-            'apikey': supabaseKey
-          }
-        }
-      );
-      console.log(`[DIAGNOSTIC] REST API Test Response Status: ${testResponse.status}`);
-      const testData = await testResponse.text();
-      console.log(`[DIAGNOSTIC] REST API Test Response: ${testData}`);
-    } catch (testError) {
-      console.error(`[DIAGNOSTIC] REST API Test Error:`, testError);
-    }
-    
-    // 测试Edge Function调用
-    console.log(`[DIAGNOSTIC] Testing Supabase Edge Function call...`);
-    try {
-      const testEdgeResponse = await fetch(
-        `${supabaseUrl}/functions/v1/update-book-data`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabaseKey}`
-          },
-          body: JSON.stringify({ orderId, status: "diagnostic_test" })
-        }
-      );
-      console.log(`[DIAGNOSTIC] Edge Function Test Response Status: ${testEdgeResponse.status}`);
-      const testEdgeData = await testEdgeResponse.text();
-      console.log(`[DIAGNOSTIC] Edge Function Test Response: ${testEdgeData}`);
-    } catch (testEdgeError) {
-      console.error(`[DIAGNOSTIC] Edge Function Test Error:`, testEdgeError);
-    }
-
     // 1. 将图书状态更新为"处理中"
     await updateBookStatus(supabaseUrl, supabaseKey, orderId, "processing");
     console.log(`[${orderId}] Book status set to processing`);
