@@ -134,9 +134,9 @@ const FunnyBiographyStoriesStep = () => {
               setIsDialogOpen(true);
             }}
           >
-            <PlusCircle className="mr-2 h-5 w-5" />
+            <PlusCircle className="mr-2 h-5 w-5 text-[#F6C744]" />
             {questionsAndAnswers.length === 0 
-              ? "Select a question and answer" 
+              ? "Select a Question and Share a Story" 
               : "Add Another Story"}
           </Button>
         </div>

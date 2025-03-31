@@ -1,4 +1,3 @@
-
 import { ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
@@ -29,6 +28,9 @@ const WizardStep = ({
 }: WizardStepProps) => {
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // 判断当前是否在love category
+  const isLoveCategory = location.pathname.includes('/love/');
   
   return (
     <div className="min-h-screen bg-[#FFFAF5]">
@@ -63,7 +65,7 @@ const WizardStep = ({
               <Button 
                 variant="default"
                 size="lg"
-                className={`w-[95%] bg-[#F97316] hover:bg-[#EA580C] text-white ${nextDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`w-[95%] ${isLoveCategory ? 'bg-[#FF7F50] hover:bg-[#FF7F50]/80' : 'bg-[#F6C744] hover:bg-[#E5B73E]'} text-white ${nextDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                 onClick={onNextClick ? onNextClick : () => nextStep && navigate(nextStep)}
                 disabled={nextDisabled}
               >
