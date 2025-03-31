@@ -1,9 +1,10 @@
+
 import { Button } from '@/components/ui/button';
 import { Edit, RefreshCw } from 'lucide-react';
 import LoveStoryCoverPreview from '@/components/cover-generator/LoveStoryCoverPreview';
 import { useEffect, useState } from 'react';
 
-// 样式接口定义
+// Style interface definition
 interface CoverStyle {
   id: string;
   name: string;
@@ -15,7 +16,7 @@ interface CoverStyle {
   borderColor?: string;
 }
 
-// 预定义的封面样式
+// Predefined cover styles
 const coverStyles: CoverStyle[] = [
   {
     id: 'classic',
@@ -80,15 +81,15 @@ export const CoverPreviewCard = ({
   coverImage,
   backCoverText,
   isGeneratingCover
-}) => {
+}: CoverPreviewCardProps) => {
   // Get recipient name from localStorage
   const recipientName = localStorage.getItem('loveStoryPersonName') || 'My Love';
   
-  // 获取用户选择的样式
+  // Get user selected style
   const [selectedStyle, setSelectedStyle] = useState<CoverStyle | undefined>(coverStyles[0]);
   
   useEffect(() => {
-    // 从 localStorage 读取用户选择的样式
+    // Read style from localStorage
     const savedStyleId = localStorage.getItem('loveStoryCoverStyle');
     if (savedStyleId) {
       const style = coverStyles.find(style => style.id === savedStyleId);
@@ -98,11 +99,19 @@ export const CoverPreviewCard = ({
     }
   }, []);
 
+  // Format data for LoveStoryCoverPreview
+  const titleData = {
+    mainTitle: coverTitle,
+    subTitle: subtitle,
+    thirdLine: '',
+    fullTitle: coverTitle
+  };
+
   return (
     <div className="relative">
       <div className="max-w-xl mx-auto">
         <LoveStoryCoverPreview
-          coverTitle={coverTitle}
+          titleData={titleData}
           subtitle={subtitle}
           authorName={authorName}
           recipientName={recipientName}

@@ -21,13 +21,26 @@ const CoverContent = ({
       <div className="space-y-2 text-center">
         <h1 
           className={`${selectedFont}`}
-          style={template.titleStyle}
+          style={{
+            color: template.titleStyle.color,
+            fontSize: template.titleStyle.fontSize,
+            fontWeight: template.titleStyle.fontWeight,
+            textAlign: template.titleStyle.textAlign,
+            textTransform: template.titleStyle.textTransform as any || 'none',
+            marginTop: `${template.titleStyle.offsetY}px`
+          }}
         >
           {coverTitle}
         </h1>
         <p 
           className={`${selectedFont}`}
-          style={template.subtitleStyle}
+          style={{
+            color: template.subtitleStyle.color,
+            fontSize: template.subtitleStyle.fontSize,
+            fontWeight: template.subtitleStyle.fontWeight,
+            fontStyle: template.subtitleStyle.fontStyle || 'normal',
+            textTransform: template.subtitleStyle.textTransform as any || 'none'
+          }}
         >
           {subtitle}
         </p>
@@ -35,7 +48,13 @@ const CoverContent = ({
       <div className="text-center">
         <p 
           className={`${selectedFont}`}
-          style={template.authorStyle}
+          style={{
+            color: template.authorStyle.color,
+            fontSize: template.authorStyle.fontSize,
+            fontWeight: template.authorStyle.fontWeight,
+            textTransform: template.authorStyle.textTransform as any || 'none',
+            letterSpacing: template.authorStyle.letterSpacing || 'normal'
+          }}
         >
           By {authorName}
         </p>

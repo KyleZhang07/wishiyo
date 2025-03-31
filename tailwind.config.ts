@@ -21,6 +21,8 @@ export default {
     extend: {
       fontFamily: {
         serif: ['Georgia', 'Cambria', 'Times New Roman', 'Times', 'serif'],
+        playfair: ['Playfair Display', 'serif'],
+        sans: ['Inter', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
