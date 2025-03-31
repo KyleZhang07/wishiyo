@@ -53,6 +53,14 @@ async function triggerPrintRequestCheck(orderId, type) {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
                    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
     
+    // 详细记录环境变量信息
+    console.log(`[DEBUG] Environment variables for URL construction:`, {
+      NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL || 'not set',
+      VERCEL_URL: process.env.VERCEL_URL || 'not set',
+      VERCEL_ENV: process.env.VERCEL_ENV || 'not set',
+      calculatedBaseUrl: baseUrl
+    });
+    
     console.log(`Triggering print request check for orderId: ${orderId}`, {
       baseUrl,
       environment: process.env.VERCEL_ENV || 'development'
@@ -132,8 +140,16 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     // 构建完整的 API URL
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
                    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
-    const contentEndpoint = `${baseUrl}/api/generate-book-content`;
-    console.log(`[${orderId}] Content generation endpoint: ${contentEndpoint}`);
+    
+    // 详细记录环境变量信息
+    console.log(`[DEBUG] Environment variables for URL construction:`, {
+      NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL || 'not set',
+      VERCEL_URL: process.env.VERCEL_URL || 'not set',
+      VERCEL_ENV: process.env.VERCEL_ENV || 'not set',
+      calculatedBaseUrl: baseUrl
+    });
+    
+    console.log(`[${orderId}] Content generation endpoint: ${baseUrl}/api/generate-book-content`);
     
     // 3. 开始内容生成
     console.log(`[${orderId}] Starting content generation with API endpoint`);
@@ -146,7 +162,7 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     console.log(`[${orderId}] Book data for content generation:`, bookDataLog);
     
     const contentPromise = fetch(
-      contentEndpoint,
+      `${baseUrl}/api/generate-book-content`,
       {
         method: 'POST',
         headers: {
@@ -170,7 +186,30 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
           headers[key] = value;
         });
         console.log(`[${orderId}] Content generation response headers:`, headers);
-        return response;
+        
+        // 尝试读取响应体并记录
+        return response.text().then(text => {
+          try {
+            // 尝试解析为JSON
+            const json = JSON.parse(text);
+            console.log(`[${orderId}] Content generation response body:`, json);
+            // 重新创建响应对象
+            return new Response(text, {
+              status: response.status,
+              statusText: response.statusText,
+              headers: response.headers
+            });
+          } catch (e) {
+            // 如果不是JSON，记录文本
+            console.log(`[${orderId}] Content generation response text:`, text.substring(0, 500) + (text.length > 500 ? '...' : ''));
+            // 重新创建响应对象
+            return new Response(text, {
+              status: response.status,
+              statusText: response.statusText,
+              headers: response.headers
+            });
+          }
+        });
       })
       .catch(error => {
         console.error(`[${orderId}] Error calling content generation function:`, error);
@@ -236,7 +275,44 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
             orderId
           })
         }
-      );
+      )
+        .then(response => {
+          console.log(`[${orderId}] Cover PDF generation response status:`, response.status);
+          // 记录响应头用于调试
+          const headers = {};
+          response.headers.forEach((value, key) => {
+            headers[key] = value;
+          });
+          console.log(`[${orderId}] Cover PDF generation response headers:`, headers);
+          
+          // 尝试读取响应体并记录
+          return response.text().then(text => {
+            try {
+              // 尝试解析为JSON
+              const json = JSON.parse(text);
+              console.log(`[${orderId}] Cover PDF generation response body:`, json);
+              // 重新创建响应对象
+              return new Response(text, {
+                status: response.status,
+                statusText: response.statusText,
+                headers: response.headers
+              });
+            } catch (e) {
+              // 如果不是JSON，记录文本
+              console.log(`[${orderId}] Cover PDF generation response text:`, text.substring(0, 500) + (text.length > 500 ? '...' : ''));
+              // 重新创建响应对象
+              return new Response(text, {
+                status: response.status,
+                statusText: response.statusText,
+                headers: response.headers
+              });
+            }
+          });
+        })
+        .catch(error => {
+          console.error(`[${orderId}] Error calling cover PDF generation function:`, error);
+          throw error;
+        });
     } else {
       console.warn(`[${orderId}] Missing cover images, skipping cover PDF generation`);
     }
@@ -348,13 +424,32 @@ export default async function handler(req, res) {
 
     // 处理支付成功事件
     console.log("===== EVENT TYPE:", event.type, "=====");
+    
+    // 记录完整的事件数据（排除敏感信息）
+    const eventLog = { ...event };
+    if (eventLog.data && eventLog.data.object) {
+      // 移除可能的敏感信息
+      if (eventLog.data.object.customer_details) {
+        eventLog.data.object.customer_details = '*** REDACTED ***';
+      }
+      if (eventLog.data.object.payment_method_details) {
+        eventLog.data.object.payment_method_details = '*** REDACTED ***';
+      }
+    }
+    console.log('[DEBUG] Full event data:', JSON.stringify(eventLog, null, 2).substring(0, 1000) + '...');
+
+    // 处理不同类型的事件
     if (event.type === 'checkout.session.completed') {
+      console.log('[DEBUG] Processing checkout.session.completed event');
       const session = event.data.object;
       
       // 确保支付成功
       console.log("Payment status:", session.payment_status);
       if (session.payment_status === 'paid') {
         try {
+          // 获取会话元数据
+          console.log(`[DEBUG] Session metadata:`, session.metadata);
+          console.log(`[DEBUG] Payment status:`, session.payment_status);
           // 获取完整的会话数据，包括客户和运输信息
           const expandedSession = await stripe.checkout.sessions.retrieve(
             session.id, {
@@ -423,24 +518,30 @@ export default async function handler(req, res) {
 
           // 如果图书类型是funny-biography，启动生成过程
           if (productId === 'funny-biography') {
+            console.log('[DEBUG] 产品类型检测: 滑稽传记 (funny-biography)');
             console.log('Starting funny biography book generation process');
             
             // 检查Supabase环境变量
-            if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
-              console.error('缺少必需的Supabase环境变量');
-              return res.status(200).json({ 
-                received: true, 
-                warning: '由于缺少配置，跳过图书生成' 
-              });
+            const supabaseUrl = process.env.SUPABASE_URL;
+            const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+            
+            // 记录环境变量状态（不记录实际值）
+            console.log(`[DEBUG] Supabase环境变量检查:`, {
+              SUPABASE_URL: supabaseUrl ? `已设置 (${supabaseUrl.substring(0, 10)}...)` : '未设置',
+              SUPABASE_SERVICE_ROLE_KEY: supabaseKey ? `已设置 (长度: ${supabaseKey.length})` : '未设置',
+              OPENAI_API_KEY: process.env.OPENAI_API_KEY ? '已设置' : '未设置',
+              NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL || '未设置',
+              VERCEL_URL: process.env.VERCEL_URL || '未设置'
+            });
+            
+            if (!supabaseUrl || !supabaseKey) {
+              console.error('[ERROR] 缺少Supabase环境变量，无法继续图书生成');
+              throw new Error('Missing Supabase environment variables');
             }
             
             // 在数据库中更新运输信息
             try {
               // 获取Supabase凭证
-              const supabaseUrl = process.env.SUPABASE_URL;
-              // 优先使用服务角色密钥，如果没有则使用匿名密钥
-              const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
-              
               console.log("===== CALLING SUPABASE FUNCTION =====", {
                 supabaseUrl: supabaseUrl,
                 hasKey: !!supabaseKey,
@@ -513,21 +614,26 @@ export default async function handler(req, res) {
             console.log('Starting love story book generation process');
             
             // 检查Supabase环境变量
-            if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
-              console.error('缺少必需的Supabase环境变量');
-              return res.status(200).json({ 
-                received: true, 
-                warning: '由于缺少配置，跳过图书生成' 
-              });
+            const supabaseUrl = process.env.SUPABASE_URL;
+            const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+            
+            // 记录环境变量状态（不记录实际值）
+            console.log(`[DEBUG] Supabase环境变量检查:`, {
+              SUPABASE_URL: supabaseUrl ? `已设置 (${supabaseUrl.substring(0, 10)}...)` : '未设置',
+              SUPABASE_SERVICE_ROLE_KEY: supabaseKey ? `已设置 (长度: ${supabaseKey.length})` : '未设置',
+              OPENAI_API_KEY: process.env.OPENAI_API_KEY ? '已设置' : '未设置',
+              NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL || '未设置',
+              VERCEL_URL: process.env.VERCEL_URL || '未设置'
+            });
+            
+            if (!supabaseUrl || !supabaseKey) {
+              console.error('[ERROR] 缺少Supabase环境变量，无法继续图书生成');
+              throw new Error('Missing Supabase environment variables');
             }
             
             // 在数据库中更新运输信息
             try {
               // 获取Supabase凭证
-              const supabaseUrl = process.env.SUPABASE_URL;
-              // 优先使用服务角色密钥，如果没有则使用匿名密钥
-              const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
-              
               console.log("===== CALLING SUPABASE FUNCTION FOR LOVE STORY =====", {
                 supabaseUrl: supabaseUrl,
                 hasKey: !!supabaseKey,
