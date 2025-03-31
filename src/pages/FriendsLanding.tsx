@@ -1,3 +1,4 @@
+
 import { Link } from 'react-router-dom';
 
 const FriendsLanding = () => {
@@ -5,19 +6,19 @@ const FriendsLanding = () => {
     <div className="page-transition">
       <div className="bg-white shadow-lg">
         <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-amber-400 to-amber-500" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#F97316] to-[#FDBA74]" />
           <div className="relative z-10 px-[60px] my-[64px] bg-[#FFFAF5] py-[100px]">
             <div className="max-w-6xl mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                 <div className="text-white space-y-6">
                   <h1 className="text-4xl font-display font-bold px-0 mx-0 md:text-4xl text-slate-800">Hilarious moment. Presented by you.</h1>
                   <p className="text-xl text-slate-800">Use Wishika to give your friends a special book just for them</p>
-                  <Link to="/create/friends/funny-biography/author" className="inline-flex items-center px-6 py-3 text-base font-medium text-white bg-amber-400 rounded-sm hover:bg-amber-500 transition-colors">
+                  <Link to="/create/friends/funny-biography/author" className="inline-flex items-center px-6 py-3 text-base font-medium text-white bg-[#F97316] rounded-sm hover:bg-[#EA580C] transition-colors">
                     Create My Book
                   </Link>
                 </div>
                 <div className="hidden md:block">
-                  <div className="w-56 h-56 mx-auto rounded-sm overflow-hidden border-4 border-amber-100">
+                  <div className="w-56 h-56 mx-auto rounded-sm overflow-hidden border-4 border-[#F97316]/20">
                     <img src="/placeholder.svg" alt="" className="w-full h-full object-cover" />
                   </div>
                 </div>
