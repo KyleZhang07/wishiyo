@@ -466,7 +466,7 @@ const IdeaStep = ({
             <>
               <h3 className="text-xl font-bold text-gray-900 mb-4">Select an Image Style</h3>
               <p className="text-gray-500 text-sm mb-6">
-                This determines the visual aesthetic of all the generated images in your love story.
+                
               </p>
               
               <div className="space-y-3">

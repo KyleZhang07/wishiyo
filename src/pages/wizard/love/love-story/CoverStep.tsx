@@ -401,35 +401,14 @@ const LoveStoryCoverStep = () => {
           setCurrentImageIndex(0);
         }
       } else {
-        // 没有上传图片，使用简单的背景颜色
-        const canvas = document.createElement('canvas');
-        canvas.width = 800;
-        canvas.height = 1000;
-        const ctx = canvas.getContext('2d');
-        
-        if (ctx) {
-          // 使用当前选定样式的背景色
-          const currentStyle = coverStyles.find(style => style.id === selectedStyle) || coverStyles[0];
-          ctx.fillStyle = currentStyle.background;
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-          
-          try {
-            const dataUrl = canvas.toDataURL('image/png');
-            setCoverImages([dataUrl]);
-            setCurrentImageIndex(0);
-            
-            // 上传到Supabase，但不存储到localStorage
-            const timestamp = Date.now();
-            await uploadImageToStorage(
-              dataUrl,
-              'images',
-              `love-story-cover-${timestamp}`
-            );
-          } catch (error) {
-            console.error('Error creating cover image:', error);
-            throw error;
-          }
-        }
+        // 显示错误提示，要求用户上传图片
+        toast({
+          title: "Image Required",
+          description: "Please upload a photo to generate covers",
+          variant: "destructive"
+        });
+        setIsGeneratingCover(false);
+        return;
       }
       
       // 重新加载Supabase上的图片以获取最新上传的图片
