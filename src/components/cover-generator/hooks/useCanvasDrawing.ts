@@ -1,4 +1,3 @@
-
 import { useEffect, RefObject } from 'react';
 import { DEFAULT_CANVAS_SIZE } from '../types/canvas';
 import { coverTemplates, coverLayouts } from '../types';
@@ -176,9 +175,8 @@ const drawCoverImage = (
   const x = clipX + (containerWidth - scaledWidth) / 2 - translateX;
   const y = clipY + (containerHeight - scaledHeight) / 2 - translateY;
 
-  // Fix filter and opacity to work with string values from the template
-  ctx.filter = template.imageStyle?.filter || 'none';
-  ctx.globalAlpha = parseFloat(template.imageStyle?.opacity || '1');
+  ctx.filter = template.imageStyle.filter;
+  ctx.globalAlpha = parseFloat(template.imageStyle.opacity);
   ctx.drawImage(image.element, x, y, scaledWidth, scaledHeight);
   ctx.restore();
 };

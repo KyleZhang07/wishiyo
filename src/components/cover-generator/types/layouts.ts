@@ -1,4 +1,3 @@
-
 export interface CoverLayout {
   id: string;
   name: string;
@@ -171,27 +170,6 @@ export const coverLayouts: { [key: string]: CoverLayout } = {
       height: '50%',
       position: 'top',
       borderRadius: '0%'
-    }
-  },
-  'centered-title': {
-    id: 'centered-title',
-    name: 'Centered Title',
-    titlePosition: {
-      offsetY: 0.7,
-      textAlign: 'center'
-    },
-    subtitlePosition: {
-      offsetY: 0.85,
-      textAlign: 'center'
-    },
-    authorPosition: {
-      offsetY: 0.1,
-      textAlign: 'left'
-    },
-    imageContainerStyle: {
-      width: '100%',
-      height: '60%',
-      position: 'top'
     }
   }
 };
