@@ -90,6 +90,58 @@ async function triggerPrintRequestCheck(orderId, type) {
 // 完整的图书生成过程，替代FormatStep.tsx中的startBookGeneration
 async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
   try {
+    // 添加详细的诊断日志
+    console.log(`[DIAGNOSTIC] generateBookProcess parameters:`, {
+      hasSupabaseUrl: !!supabaseUrl,
+      supabaseUrlPreview: supabaseUrl?.substring(0, 30) + '...',
+      hasSupabaseKey: !!supabaseKey,
+      supabaseKeyLength: supabaseKey?.length,
+      supabaseKeyPreview: supabaseKey?.substring(0, 10) + '...',
+      orderId
+    });
+    
+    // 测试REST API直接调用
+    console.log(`[DIAGNOSTIC] Testing Supabase REST API directly...`);
+    try {
+      const testResponse = await fetch(
+        `${supabaseUrl}/rest/v1/funny_biography_books?order_id=eq.${orderId}&select=id,title`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseKey}`,
+            'apikey': supabaseKey
+          }
+        }
+      );
+      console.log(`[DIAGNOSTIC] REST API Test Response Status: ${testResponse.status}`);
+      const testData = await testResponse.text();
+      console.log(`[DIAGNOSTIC] REST API Test Response: ${testData}`);
+    } catch (testError) {
+      console.error(`[DIAGNOSTIC] REST API Test Error:`, testError);
+    }
+    
+    // 测试Edge Function调用
+    console.log(`[DIAGNOSTIC] Testing Supabase Edge Function call...`);
+    try {
+      const testEdgeResponse = await fetch(
+        `${supabaseUrl}/functions/v1/update-book-data`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseKey}`
+          },
+          body: JSON.stringify({ orderId, status: "diagnostic_test" })
+        }
+      );
+      console.log(`[DIAGNOSTIC] Edge Function Test Response Status: ${testEdgeResponse.status}`);
+      const testEdgeData = await testEdgeResponse.text();
+      console.log(`[DIAGNOSTIC] Edge Function Test Response: ${testEdgeData}`);
+    } catch (testEdgeError) {
+      console.error(`[DIAGNOSTIC] Edge Function Test Error:`, testEdgeError);
+    }
+
     // 1. 将图书状态更新为"处理中"
     await updateBookStatus(supabaseUrl, supabaseKey, orderId, "processing");
     console.log(`[${orderId}] Book status set to processing`);
@@ -119,14 +171,20 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     const book = bookData[0];
     const images = book.images || {};
     
-    // 构建完整的 API URL
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
-                   (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
-    const contentEndpoint = `${baseUrl}/api/generate-book-content`;
-    
+    // 记录详细的图片数据用于调试
+    console.log(`[${orderId}] Images data check:`, {
+      hasImagesObject: !!book.images,
+      hasFrontCover: !!(book.images && book.images.frontCover),
+      frontCoverLength: book.images && book.images.frontCover ? book.images.frontCover.substring(0, 30) + '...' : 'N/A',
+      hasSpine: !!(book.images && book.images.spine),
+      spineLength: book.images && book.images.spine ? book.images.spine.substring(0, 30) + '...' : 'N/A',
+      hasBackCover: !!(book.images && book.images.backCover),
+      backCoverLength: book.images && book.images.backCover ? book.images.backCover.substring(0, 30) + '...' : 'N/A'
+    });
+
     // 3. 开始内容生成并详细记录日志
     console.log(`[${orderId}] Starting content generation with API endpoint`);
-    console.log(`[${orderId}] Content generation endpoint: ${contentEndpoint}`);
+    console.log(`[${orderId}] Content generation endpoint: /api/generate-book-content`);
     
     // 记录图书数据（排除大型字段）
     const bookDataLog = { ...book };
@@ -136,7 +194,7 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     console.log(`[${orderId}] Book data for content generation:`, bookDataLog);
     
     const contentPromise = fetch(
-      contentEndpoint,
+      `/api/generate-book-content`,
       {
         method: 'POST',
         headers: {
@@ -208,11 +266,8 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
         });
       }
       
-      const coverEndpoint = `${baseUrl}/api/generate-cover-pdf`;
-      console.log(`[${orderId}] Cover PDF generation endpoint: ${coverEndpoint}`);
-      
       coverPromise = fetch(
-        coverEndpoint,
+        `/api/generate-cover-pdf`,
         {
           method: 'POST',
           headers: {
@@ -357,10 +412,7 @@ export default async function handler(req, res) {
           
           if (!productId) {
             console.warn('会话元数据中缺少productId');
-            return res.status(200).json({ 
-              received: true, 
-              warning: '元数据中缺少productId' 
-            });
+            return res.status(200).json({ received: true, warning: '元数据中缺少productId' });
           }
 
           // 提取运输地址信息

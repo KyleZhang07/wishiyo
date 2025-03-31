@@ -16,7 +16,7 @@ import { createClient } from '@supabase/supabase-js';
  */
 
 // 定义批次大小和总章节数
-const BATCH_SIZE = 2;
+const BATCH_SIZE = 3;
 const TOTAL_CHAPTERS = 20;
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // 1秒
