@@ -177,7 +177,7 @@ const PreviewStep = () => {
       description=""
       previousStep="/create/friends/funny-biography/generate"
       currentStep={6}
-      totalSteps={6}
+      totalSteps={7}
       onNextClick={handleContinue}
     >
       <div className="w-full">

@@ -1317,7 +1317,7 @@ const GenerateStep = () => {
       previousStep="/create/love/love-story/debug-prompts"
       nextStep="/create/love/love-story/format"
       currentStep={7}
-      totalSteps={9}
+      totalSteps={8}
     >
       <div className="max-w-7xl mx-auto px-4">
         {/* 添加 Refresh Images 按钮 */}

@@ -166,8 +166,8 @@ const FormatStep = () => {
       title="Choose a format for your book"
       description="Make your gift even more glorious with our selection of cover options"
       previousStep="/create/love/love-story/generate"
-      currentStep={9}
-      totalSteps={9}
+      currentStep={8}
+      totalSteps={8}
     >
       <div className="max-w-4xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

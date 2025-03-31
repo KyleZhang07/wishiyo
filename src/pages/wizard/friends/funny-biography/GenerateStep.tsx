@@ -308,7 +308,7 @@ const FunnyBiographyGenerateStep = () => {
       description=""
       previousStep="/create/friends/funny-biography/photos"
       currentStep={5}
-      totalSteps={6}
+      totalSteps={7}
     >
       <div className="space-y-8">
         {/* Canvas container for generating PDF, not directly displayed */}
