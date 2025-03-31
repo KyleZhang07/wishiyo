@@ -52,7 +52,7 @@ const LoveStoryStyleStep = () => {
       description="Choose a writing tone for your love story" 
       previousStep="/create/love/love-story/moments" 
       currentStep={4} 
-      totalSteps={7} 
+      totalSteps={8} 
       onNextClick={handleContinue}
     >
       <div className="max-w-2xl mx-auto">
@@ -100,4 +100,4 @@ const LoveStoryStyleStep = () => {
   );
 };
 
-export default LoveStoryStyleStep; 
+export default LoveStoryStyleStep;
