@@ -688,10 +688,21 @@ export default async function handler(req, res) {
                       }
                     }
                   )
-                    .then(response => response.json())
+                    .then(response => {
+                      console.log(`[${orderId}] Book data fetch response status:`, response.status);
+                      return response.json();
+                    })
                     .then(data => {
+                      console.log(`[${orderId}] Book data fetch successful, found ${data ? data.length : 0} records`);
                       if (data && data.length > 0) {
                         const book = data[0];
+                        console.log(`[${orderId}] Book data:`, {
+                          id: book.id,
+                          title: book.title,
+                          hasImages: !!book.images,
+                          imageKeys: book.images ? Object.keys(book.images) : []
+                        });
+                        
                         const images = book.images || {};
                         
                         // 如果图片可用，调用封面生成函数
@@ -720,11 +731,24 @@ export default async function handler(req, res) {
                                 format: book.format
                               })
                             }
-                          ).catch(error => {
+                          )
+                          .then(response => {
+                            console.log(`[${orderId}] Cover PDF generation response status:`, response.status);
+                            return response.text();
+                          })
+                          .then(text => {
+                            try {
+                              const json = JSON.parse(text);
+                              console.log(`[${orderId}] Cover PDF generation response:`, json);
+                            } catch (e) {
+                              console.log(`[${orderId}] Cover PDF generation response (text):`, text.substring(0, 200));
+                            }
+                          })
+                          .catch(error => {
                             console.error(`[${orderId}] Error calling cover PDF generation function:`, error);
                           });
                         } else {
-                          console.log(`[${orderId}] Cover images not found yet, skipping cover PDF generation`);
+                          console.log(`[${orderId}] Cover images not found yet, skipping cover PDF generation. Available keys:`, Object.keys(images));
                         }
                       } else {
                         console.error(`[${orderId}] Book data not found`);
