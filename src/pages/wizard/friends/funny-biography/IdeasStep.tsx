@@ -5,8 +5,8 @@ const FunnyBiographyIdeasStep = () => {
   return (
     <IdeaStep
       category="friends"
-      previousStep="/create/friends/funny-biography/stories"
-      nextStep="/create/friends/funny-biography/photos"
+      previousStep="/create/friends/funny-biography/photos"
+      nextStep="/create/friends/funny-biography/generate"
       currentStep={3}
       totalSteps={7}
     />
