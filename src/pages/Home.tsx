@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -19,10 +18,10 @@ export default function Home() {
               a personalized book just for you.
             </p>
             <div className="flex flex-col sm:flex-row items-center gap-4 mt-6">
-              <Button asChild className="bg-[#F97316] hover:bg-[#EA580C] text-base rounded-full size-fit px-6">
+              <Button asChild className="text-base rounded-full size-fit px-6">
                 <Link to="/app">Get Started <ArrowRight className="ml-2 h-4 w-4" /></Link>
               </Button>
-              <Button variant="outline" asChild className="text-base rounded-full size-fit px-6 border-[#F97316] text-[#F97316]">
+              <Button variant="outline" asChild className="text-base rounded-full size-fit px-6">
                 <Link to="/examples">See Examples</Link>
               </Button>
             </div>
@@ -40,7 +39,7 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* Book 1 */}
             <div className="flex flex-col">
-              <div className="bg-[#FFF7ED] p-8 rounded-lg mb-4 h-[360px] flex items-center justify-center">
+              <div className="bg-[#FDF7ED] p-8 rounded-lg mb-4 h-[360px] flex items-center justify-center">
                 {/* Placeholder for book image */}
               </div>
               <h3 className="text-xl font-bold mb-2">First Mother's Day for Mommy and Me</h3>
@@ -49,7 +48,7 @@ export default function Home() {
 
             {/* Book 2 */}
             <div className="flex flex-col">
-              <div className="bg-[#FFF7ED] p-8 rounded-lg mb-4 h-[360px] flex items-center justify-center">
+              <div className="bg-[#FDF7ED] p-8 rounded-lg mb-4 h-[360px] flex items-center justify-center">
                 {/* Placeholder for book image */}
               </div>
               <h3 className="text-xl font-bold mb-2">I Love Grandma This Much</h3>
@@ -58,7 +57,7 @@ export default function Home() {
 
             {/* Book 3 */}
             <div className="flex flex-col">
-              <div className="bg-[#FFF7ED] p-8 rounded-lg mb-4 h-[360px] flex items-center justify-center">
+              <div className="bg-[#FDF7ED] p-8 rounded-lg mb-4 h-[360px] flex items-center justify-center">
                 {/* Placeholder for book image */}
               </div>
               <h3 className="text-xl font-bold mb-2">When You Were Born</h3>
@@ -67,7 +66,7 @@ export default function Home() {
 
             {/* Book 4 */}
             <div className="flex flex-col">
-              <div className="bg-[#FFF7ED] p-8 rounded-lg mb-4 h-[360px] flex items-center justify-center">
+              <div className="bg-[#FDF7ED] p-8 rounded-lg mb-4 h-[360px] flex items-center justify-center">
                 {/* Placeholder for book image */}
               </div>
               <h3 className="text-xl font-bold mb-2">I Spy You!</h3>
@@ -85,22 +84,22 @@ export default function Home() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="bg-white p-6 rounded-lg shadow-sm">
-              <div className="w-12 h-12 bg-[#F97316]/10 rounded-full flex items-center justify-center mb-4">
-                <span className="font-bold text-[#F97316]">1</span>
+              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                <span className="font-bold text-primary">1</span>
               </div>
               <h3 className="text-xl font-bold mb-2">Enter your idea</h3>
               <p className="text-gray-600">Tell us about your book concept, characters, and story direction.</p>
             </div>
             <div className="bg-white p-6 rounded-lg shadow-sm">
-              <div className="w-12 h-12 bg-[#F97316]/10 rounded-full flex items-center justify-center mb-4">
-                <span className="font-bold text-[#F97316]">2</span>
+              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                <span className="font-bold text-primary">2</span>
               </div>
               <h3 className="text-xl font-bold mb-2">Customize your book</h3>
               <p className="text-gray-600">Choose your style, pick illustrations, and personalize every detail.</p>
             </div>
             <div className="bg-white p-6 rounded-lg shadow-sm">
-              <div className="w-12 h-12 bg-[#F97316]/10 rounded-full flex items-center justify-center mb-4">
-                <span className="font-bold text-[#F97316]">3</span>
+              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                <span className="font-bold text-primary">3</span>
               </div>
               <h3 className="text-xl font-bold mb-2">Get your book</h3>
               <p className="text-gray-600">We'll print and ship your finished book directly to your doorstep.</p>
@@ -133,13 +132,13 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 bg-[#F97316]/5">
+      <section className="py-24 bg-primary/5">
         <div className="container px-4 md:px-6 mx-auto text-center">
           <h2 className="text-4xl font-serif font-bold tracking-tighter mb-4">Ready to create your story?</h2>
           <p className="text-lg text-gray-600 mb-8 max-w-[600px] mx-auto">
             Start crafting your personalized book today and create memories that will last a lifetime.
           </p>
-          <Button asChild size="lg" className="bg-[#F97316] hover:bg-[#EA580C] rounded-full px-8">
+          <Button asChild size="lg" className="rounded-full px-8">
             <Link to="/app">Create Your Book Now</Link>
           </Button>
         </div>

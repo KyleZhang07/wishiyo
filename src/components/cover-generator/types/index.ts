@@ -56,17 +56,6 @@ export interface TemplateType {
     sourceFontSize?: string;
     sourceSpacing?: number;
   };
-  badgeStyle?: {
-    backgroundColor: string;
-    textColor: string;
-  };
-  bottomAreaColor?: string;
-  bottomAreaHeight?: number;
-  descriptionStyle?: {
-    color: string;
-    fontSize: string;
-    fontWeight: string;
-  };
 }
 
 // Export all types
@@ -79,9 +68,9 @@ export const coverTemplates: Record<string, TemplateType> = {
   modern: {
     id: 'modern',
     name: 'Modern',
-    backgroundColor: '#FFEDD5',
+    backgroundColor: '#E8F4F8',
     titleStyle: {
-      color: '#F97316',
+      color: '#2C3E50',
       fontSize: '2.5rem',
       fontWeight: '700',
       textAlign: 'center',
@@ -89,13 +78,13 @@ export const coverTemplates: Record<string, TemplateType> = {
       textTransform: 'none'
     },
     subtitleStyle: {
-      color: '#EA580C',
+      color: '#16A085',
       fontSize: '1.2rem',
       fontWeight: '400',
       fontStyle: 'italic'
     },
     authorStyle: {
-      color: '#9A3412',
+      color: '#34495E',
       fontSize: '1rem',
       fontWeight: '500',
       letterSpacing: '0.05rem'
@@ -105,9 +94,9 @@ export const coverTemplates: Record<string, TemplateType> = {
       filter: 'contrast(1.1)'
     },
     spineStyle: {
-      backgroundColor: '#FFEDD5',
-      authorColor: '#9A3412',
-      titleColor: '#F97316',
+      backgroundColor: '#E8F4F8',
+      authorColor: '#34495E',
+      titleColor: '#2C3E50',
       authorFontSize: '24px',
       titleFontSize: '20px',
       topMargin: 60,
@@ -116,8 +105,8 @@ export const coverTemplates: Record<string, TemplateType> = {
       charSpacing: 0.8
     },
     backCoverStyle: {
-      backgroundColor: '#FFEDD5',
-      textColor: '#F97316',
+      backgroundColor: '#E8F4F8',
+      textColor: '#2C3E50',
       textAlign: 'left',
       marginLeft: 40,
       marginTop: 60,
@@ -135,19 +124,19 @@ export const coverTemplates: Record<string, TemplateType> = {
     name: 'Minimal',
     backgroundColor: '#FFFFFF',
     titleStyle: {
-      color: '#F97316',
+      color: '#333333',
       fontSize: '2rem',
       fontWeight: '700',
       textAlign: 'center',
       offsetY: 0
     },
     subtitleStyle: {
-      color: '#EA580C',
+      color: '#666666',
       fontSize: '1rem',
       fontWeight: '400'
     },
     authorStyle: {
-      color: '#9A3412',
+      color: '#999999',
       fontSize: '0.9rem',
       fontWeight: '400'
     },
@@ -156,8 +145,8 @@ export const coverTemplates: Record<string, TemplateType> = {
     },
     spineStyle: {
       backgroundColor: '#FFFFFF',
-      authorColor: '#9A3412',
-      titleColor: '#F97316',
+      authorColor: '#999999',
+      titleColor: '#333333',
       authorFontSize: '22px',
       titleFontSize: '18px',
       topMargin: 60,
@@ -167,7 +156,7 @@ export const coverTemplates: Record<string, TemplateType> = {
     },
     backCoverStyle: {
       backgroundColor: '#FFFFFF',
-      textColor: '#F97316',
+      textColor: '#333333',
       textAlign: 'left',
       marginLeft: 40,
       marginTop: 60,
@@ -183,9 +172,9 @@ export const coverTemplates: Record<string, TemplateType> = {
   vintage: {
     id: 'vintage',
     name: 'Vintage',
-    backgroundColor: '#FED7AA',
+    backgroundColor: '#F5E8D0',
     titleStyle: {
-      color: '#EA580C',
+      color: '#8B4513',
       fontSize: '2.2rem',
       fontWeight: '700',
       textAlign: 'center',
@@ -193,13 +182,13 @@ export const coverTemplates: Record<string, TemplateType> = {
       textTransform: 'uppercase'
     },
     subtitleStyle: {
-      color: '#9A3412',
+      color: '#A0522D',
       fontSize: '1.1rem',
       fontWeight: '500',
       fontStyle: 'italic'
     },
     authorStyle: {
-      color: '#7C2D12',
+      color: '#6B4226',
       fontSize: '0.9rem',
       fontWeight: '400',
       textTransform: 'capitalize'
@@ -209,9 +198,9 @@ export const coverTemplates: Record<string, TemplateType> = {
       filter: 'sepia(0.5)'
     },
     spineStyle: {
-      backgroundColor: '#FED7AA',
-      authorColor: '#7C2D12',
-      titleColor: '#EA580C',
+      backgroundColor: '#F5E8D0',
+      authorColor: '#6B4226',
+      titleColor: '#8B4513',
       authorFontSize: '22px',
       titleFontSize: '18px',
       topMargin: 60,
@@ -220,8 +209,8 @@ export const coverTemplates: Record<string, TemplateType> = {
       charSpacing: 0.75
     },
     backCoverStyle: {
-      backgroundColor: '#FED7AA',
-      textColor: '#EA580C',
+      backgroundColor: '#F5E8D0',
+      textColor: '#8B4513',
       textAlign: 'left',
       marginLeft: 40,
       marginTop: 60,
@@ -237,21 +226,21 @@ export const coverTemplates: Record<string, TemplateType> = {
   colorful: {
     id: 'colorful',
     name: 'Colorful',
-    backgroundColor: '#FFEDD5',
+    backgroundColor: '#FFA07A',
     titleStyle: {
-      color: '#F97316',
+      color: '#FFFFFF',
       fontSize: '2.4rem',
       fontWeight: '700',
       textAlign: 'center',
       offsetY: 0
     },
     subtitleStyle: {
-      color: '#EA580C',
+      color: '#F0F8FF',
       fontSize: '1.2rem',
       fontWeight: '400'
     },
     authorStyle: {
-      color: '#9A3412',
+      color: '#FFFAFA',
       fontSize: '1rem',
       fontWeight: '500'
     },
@@ -260,9 +249,9 @@ export const coverTemplates: Record<string, TemplateType> = {
       filter: 'brightness(1.1)'
     },
     spineStyle: {
-      backgroundColor: '#FFEDD5',
-      authorColor: '#9A3412',
-      titleColor: '#F97316',
+      backgroundColor: '#FFA07A',
+      authorColor: '#FFFAFA',
+      titleColor: '#FFFFFF',
       authorFontSize: '22px',
       titleFontSize: '18px',
       topMargin: 60,
@@ -271,8 +260,8 @@ export const coverTemplates: Record<string, TemplateType> = {
       charSpacing: 0.75
     },
     backCoverStyle: {
-      backgroundColor: '#FFEDD5',
-      textColor: '#F97316',
+      backgroundColor: '#FFA07A',
+      textColor: '#FFFFFF',
       textAlign: 'left',
       marginLeft: 40,
       marginTop: 60,
@@ -290,19 +279,19 @@ export const coverTemplates: Record<string, TemplateType> = {
     name: 'Dark',
     backgroundColor: '#2C3E50',
     titleStyle: {
-      color: '#F97316',
+      color: '#FFFFFF',
       fontSize: '2.5rem',
       fontWeight: '700',
       textAlign: 'center',
       offsetY: 0
     },
     subtitleStyle: {
-      color: '#FDBA74',
+      color: '#ECF0F1',
       fontSize: '1.2rem',
       fontWeight: '400'
     },
     authorStyle: {
-      color: '#FED7AA',
+      color: '#BDC3C7',
       fontSize: '1rem',
       fontWeight: '500'
     },
@@ -312,8 +301,8 @@ export const coverTemplates: Record<string, TemplateType> = {
     },
     spineStyle: {
       backgroundColor: '#2C3E50',
-      authorColor: '#FED7AA',
-      titleColor: '#F97316',
+      authorColor: '#BDC3C7',
+      titleColor: '#FFFFFF',
       authorFontSize: '22px',
       titleFontSize: '18px',
       topMargin: 60,
@@ -323,7 +312,7 @@ export const coverTemplates: Record<string, TemplateType> = {
     },
     backCoverStyle: {
       backgroundColor: '#2C3E50',
-      textColor: '#F97316',
+      textColor: '#FFFFFF',
       textAlign: 'left',
       marginLeft: 40,
       marginTop: 60,
@@ -339,22 +328,22 @@ export const coverTemplates: Record<string, TemplateType> = {
   // Additional templates for specific themes
   'pastel-beige': {
     id: 'pastel-beige',
-    name: 'Pastel Orange',
-    backgroundColor: '#FFEDD5', 
+    name: 'Pastel Beige',
+    backgroundColor: '#FFC0CB', // Pink background
     titleStyle: {
-      color: '#F97316', 
+      color: '#8A2BE2', // Purple title
       fontSize: '2.5rem',
       fontWeight: '700',
       textAlign: 'center',
       offsetY: 0
     },
     subtitleStyle: {
-      color: '#EA580C', 
+      color: '#9400D3', // Dark purple subtitle
       fontSize: '1.2rem',
       fontWeight: '400'
     },
     authorStyle: {
-      color: '#F97316', 
+      color: '#8A2BE2', // Purple author name
       fontSize: '1rem',
       fontWeight: '500'
     },
@@ -363,9 +352,9 @@ export const coverTemplates: Record<string, TemplateType> = {
       filter: 'none'
     },
     spineStyle: {
-      backgroundColor: '#FFEDD5',
-      authorColor: '#F97316',
-      titleColor: '#EA580C',
+      backgroundColor: '#FFC0CB',
+      authorColor: '#8A2BE2',
+      titleColor: '#9400D3',
       authorFontSize: '22px',
       titleFontSize: '18px',
       topMargin: 60,
@@ -374,8 +363,8 @@ export const coverTemplates: Record<string, TemplateType> = {
       charSpacing: 0.75
     },
     backCoverStyle: {
-      backgroundColor: '#FFEDD5',
-      textColor: '#F97316',
+      backgroundColor: '#FFC0CB',
+      textColor: '#8A2BE2',
       textAlign: 'left',
       marginLeft: 40,
       marginTop: 60,
@@ -390,22 +379,22 @@ export const coverTemplates: Record<string, TemplateType> = {
   },
   'vibrant-green': {
     id: 'vibrant-green',
-    name: 'Vibrant Orange',
-    backgroundColor: '#FED7AA', 
+    name: 'Vibrant Green',
+    backgroundColor: '#E6DEC9', // Cream background
     titleStyle: {
-      color: '#F97316', 
+      color: '#D4AF37', // Gold title
       fontSize: '2.5rem',
       fontWeight: '700',
       textAlign: 'center',
       offsetY: 0
     },
     subtitleStyle: {
-      color: '#FFFFFF', 
+      color: '#FFFFFF', // White subtitle
       fontSize: '1.2rem',
       fontWeight: '400'
     },
     authorStyle: {
-      color: '#FFFFFF', 
+      color: '#FFFFFF', // White author name
       fontSize: '1rem',
       fontWeight: '500'
     },
@@ -414,9 +403,9 @@ export const coverTemplates: Record<string, TemplateType> = {
       filter: 'none'
     },
     spineStyle: {
-      backgroundColor: '#FED7AA',
+      backgroundColor: '#E6DEC9',
       authorColor: '#FFFFFF',
-      titleColor: '#F97316',
+      titleColor: '#D4AF37',
       authorFontSize: '22px',
       titleFontSize: '18px',
       topMargin: 60,
@@ -425,8 +414,8 @@ export const coverTemplates: Record<string, TemplateType> = {
       charSpacing: 0.75
     },
     backCoverStyle: {
-      backgroundColor: '#FED7AA',
-      textColor: '#F97316',
+      backgroundColor: '#E6DEC9',
+      textColor: '#D4AF37',
       textAlign: 'left',
       marginLeft: 40,
       marginTop: 60,
@@ -442,21 +431,21 @@ export const coverTemplates: Record<string, TemplateType> = {
   'classic': {
     id: 'classic',
     name: 'Classic',
-    backgroundColor: '#000000', 
+    backgroundColor: '#000000', // Black background
     titleStyle: {
-      color: '#F97316', 
+      color: '#FFFFFF', // White title
       fontSize: '2.5rem',
       fontWeight: '700',
       textAlign: 'center',
       offsetY: 0
     },
     subtitleStyle: {
-      color: '#FFFFFF', 
+      color: '#FFFFFF', // White subtitle
       fontSize: '1.2rem',
       fontWeight: '400'
     },
     authorStyle: {
-      color: '#FFFFFF', 
+      color: '#FFFFFF', // White author name
       fontSize: '1rem',
       fontWeight: '500'
     },
@@ -467,7 +456,7 @@ export const coverTemplates: Record<string, TemplateType> = {
     spineStyle: {
       backgroundColor: '#000000',
       authorColor: '#FFFFFF',
-      titleColor: '#F97316',
+      titleColor: '#FFFFFF',
       authorFontSize: '22px',
       titleFontSize: '18px',
       topMargin: 60,
@@ -489,27 +478,27 @@ export const coverTemplates: Record<string, TemplateType> = {
       sourceFontSize: '24px',
       sourceSpacing: 60
     },
-    bottomAreaColor: '#F97316',
-    bottomAreaHeight: 0.15
+    bottomAreaHeight: 0.15,
+    bottomAreaColor: '#9B0000'
   },
   'bestseller': {
     id: 'bestseller',
     name: 'Bestseller',
-    backgroundColor: '#000000', 
+    backgroundColor: '#000000', // Black background
     titleStyle: {
-      color: '#F97316', 
+      color: '#FFC300', // Yellow title
       fontSize: '2.5rem',
       fontWeight: '700',
       textAlign: 'center',
       offsetY: 0
     },
     subtitleStyle: {
-      color: '#F97316', 
+      color: '#FFC300', // Yellow subtitle
       fontSize: '1.2rem',
       fontWeight: '400'
     },
     authorStyle: {
-      color: '#FFFFFF', 
+      color: '#FFFFFF', // White author name
       fontSize: '1rem',
       fontWeight: '500'
     },
@@ -520,7 +509,7 @@ export const coverTemplates: Record<string, TemplateType> = {
     spineStyle: {
       backgroundColor: '#000000',
       authorColor: '#FFFFFF',
-      titleColor: '#F97316',
+      titleColor: '#FFC300',
       authorFontSize: '22px',
       titleFontSize: '18px',
       topMargin: 60,
@@ -530,7 +519,7 @@ export const coverTemplates: Record<string, TemplateType> = {
     },
     backCoverStyle: {
       backgroundColor: '#000000',
-      textColor: '#F97316',
+      textColor: '#FFC300',
       textAlign: 'left',
       marginLeft: 40,
       marginTop: 60,
@@ -541,10 +530,6 @@ export const coverTemplates: Record<string, TemplateType> = {
       praiseSpacing: 20,
       sourceFontSize: '24px',
       sourceSpacing: 60
-    },
-    badgeStyle: {
-      backgroundColor: '#F97316',
-      textColor: '#000000'
     }
   }
 };
