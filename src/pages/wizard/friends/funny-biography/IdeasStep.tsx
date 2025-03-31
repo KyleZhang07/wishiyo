@@ -1,4 +1,3 @@
-
 import IdeaStep from '@/components/wizard/IdeaStep';
 
 const FunnyBiographyIdeasStep = () => {

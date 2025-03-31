@@ -1146,8 +1146,8 @@ const LoveStoryCoverStep = () => {
       title="Design Your Love Story Cover"
       description=""
       previousStep="/create/love/love-story/ideas" 
-      currentStep={5} 
-      totalSteps={7} 
+      currentStep={6} 
+      totalSteps={8} 
       onNextClick={handleContinue}
     >
       <div className="max-w-4xl mx-auto px-4">

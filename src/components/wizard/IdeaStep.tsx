@@ -50,12 +50,16 @@ interface IdeaStepProps {
   category: 'friends' | 'love';
   previousStep: string;
   nextStep: string;
+  currentStep: number;
+  totalSteps: number;
 }
 
 const IdeaStep = ({
   category,
   previousStep,
-  nextStep
+  nextStep,
+  currentStep,
+  totalSteps
 }: IdeaStepProps) => {
   const [ideas, setIdeas] = useState<BookIdea[]>([]);
   const [selectedIdeaIndex, setSelectedIdeaIndex] = useState<number | null>(null);
@@ -438,8 +442,8 @@ const IdeaStep = ({
         ? "Choose a visual style for your personalized love story."
         : ""}
       previousStep={previousStep}
-      currentStep={4}
-      totalSteps={category === 'love' ? 7 : 5}
+      currentStep={category === 'love' ? 5 : currentStep}
+      totalSteps={category === 'love' ? 8 : totalSteps}
       onNextClick={handleContinue}
     >
       {category !== 'love' && !isLoading && (
