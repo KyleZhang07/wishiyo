@@ -1,3 +1,4 @@
+
 export type TemplateType = {
   id: string;
   name: string;
@@ -58,20 +59,21 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     name: 'Modern',
     backgroundColor: '#ECE8D9',
     titleStyle: {
-      color: '#ffffff',
+      color: '#F97316',
       fontSize: '2.5rem',
       fontWeight: 'bold',
       textAlign: 'center',
       offsetY: 0.3
     },
     subtitleStyle: {
-      color: '#D6BCFA',
+      color: '#FDBA74',
       fontSize: '1.25rem',
       fontWeight: 'normal'
     },
     authorStyle: {
-      color: '#9b87f5',
-      fontSize: '1rem'
+      color: '#EA580C',
+      fontSize: '1rem',
+      fontWeight: 'normal'
     },
     imageStyle: {
       filter: 'brightness(0.7)',
@@ -80,12 +82,12 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     },
     spineStyle: {
       backgroundColor: '#1A1F2C',
-      titleColor: '#ffffff',
-      authorColor: '#9b87f5'
+      titleColor: '#F97316',
+      authorColor: '#FDBA74'
     },
     backCoverStyle: {
       backgroundColor: '#1A1F2C',
-      textColor: '#D6BCFA',
+      textColor: '#FDBA74',
       summaryFontSize: '1rem'
     }
   },
@@ -94,7 +96,7 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     name: 'Minimal Gray',
     backgroundColor: '#D9D9D9', 
     titleStyle: {
-      color: '#FFFFFF', 
+      color: '#F97316', 
       fontSize: '3.5rem', 
       fontWeight: 'bold',
       textAlign: 'center',
@@ -106,19 +108,19 @@ export const coverTemplates: { [key: string]: TemplateType } = {
       fontWeight: 'normal'
     },
     authorStyle: {
-      color: '#FFFFFF', 
+      color: '#EA580C', 
       fontSize: '2.5rem',
       fontWeight: 'bold'
     },
     imageStyle: {
       filter: 'grayscale(100%)', 
-      opacity: 1,
+      opacity: '1',
       borderRadius: '0' 
     },
     spineStyle: {
       backgroundColor: '#000000',
-      titleColor: '#FFFFFF',
-      authorColor: '#FFFFFF'
+      titleColor: '#F97316',
+      authorColor: '#EA580C'
     },
     backCoverStyle: {
       backgroundColor: '#D9D9D9',
@@ -129,22 +131,23 @@ export const coverTemplates: { [key: string]: TemplateType } = {
   vibrant: {
     id: 'vibrant',
     name: 'Vibrant',
-    backgroundColor: '#4361EE',
+    backgroundColor: '#FEC6A1',
     titleStyle: {
-      color: '#FFCA3A',
+      color: '#F97316',
       fontSize: '2.5rem',
       fontWeight: 'bold',
       textAlign: 'center',
       offsetY: 0.3
     },
     subtitleStyle: {
-      color: '#FDE1D3',
+      color: '#EA580C',
       fontSize: '1.25rem',
       fontWeight: 'normal'
     },
     authorStyle: {
-      color: '#F2FCE2',
-      fontSize: '1rem'
+      color: '#7C2D12',
+      fontSize: '1rem',
+      fontWeight: 'normal'
     },
     imageStyle: {
       filter: 'brightness(0.6) contrast(1.2)',
@@ -153,12 +156,12 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     },
     spineStyle: {
       backgroundColor: '#4361EE',
-      titleColor: '#FFCA3A',
-      authorColor: '#F2FCE2'
+      titleColor: '#F97316',
+      authorColor: '#7C2D12'
     },
     backCoverStyle: {
       backgroundColor: '#4361EE',
-      textColor: '#FDE1D3',
+      textColor: '#EA580C',
       summaryFontSize: '1rem'
     }
   },
@@ -167,9 +170,11 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     name: 'Classic',
     backgroundColor: '#000000',
     titleStyle: {
-      color: '#FFFFFF',
+      color: '#F97316',
       fontSize: '3rem',
       fontWeight: 'bold',
+      textAlign: 'center',
+      offsetY: 0.3,
       textTransform: 'uppercase'
     },
     subtitleStyle: {
@@ -186,7 +191,7 @@ export const coverTemplates: { [key: string]: TemplateType } = {
       textTransform: 'uppercase',
       letterSpacing: '0.1em'
     },
-    bottomAreaColor: '#9B0000',
+    bottomAreaColor: '#F97316',
     bottomAreaHeight: 0.15,
     descriptionStyle: {
       color: '#FFFFFF',
@@ -200,7 +205,7 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     },
     spineStyle: {
       backgroundColor: '#000000',
-      titleColor: '#FFFFFF',
+      titleColor: '#F97316',
       authorColor: '#FFFFFF'
     },
     backCoverStyle: {
@@ -211,39 +216,39 @@ export const coverTemplates: { [key: string]: TemplateType } = {
   },
   'pastel-beige': {
     id: 'pastel-beige',
-    name: 'Sweet Pink',
-    backgroundColor: '#FFC0CB', 
+    name: 'Sweet Orange',
+    backgroundColor: '#FFEDD5', 
     titleStyle: {
-      color: '#8A2BE2', 
+      color: '#F97316', 
       fontSize: '3rem',
       fontWeight: 'bold',
       textAlign: 'center',
       offsetY: 0.3 
     },
     subtitleStyle: {
-      color: '#9400D3', 
+      color: '#EA580C', 
       fontSize: '1.5rem',
       fontWeight: 'normal',
       fontStyle: 'normal'
     },
     authorStyle: {
-      color: '#8A2BE2', 
+      color: '#F97316', 
       fontSize: '1.6rem',
       fontWeight: 'bold'
     },
     imageStyle: {
       filter: 'brightness(1.1)', 
-      opacity: 1,
+      opacity: '1',
       borderRadius: '50%' 
     },
     spineStyle: {
-      backgroundColor: '#FFC0CB',
-      titleColor: '#8A2BE2',
-      authorColor: '#9400D3'
+      backgroundColor: '#FFEDD5',
+      titleColor: '#F97316',
+      authorColor: '#EA580C'
     },
     backCoverStyle: {
-      backgroundColor: '#FFC0CB',
-      textColor: '#8A2BE2',
+      backgroundColor: '#FFEDD5',
+      textColor: '#F97316',
       summaryFontSize: '1.1rem'
     }
   },
@@ -252,7 +257,7 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     name: 'Cream Portrait',
     backgroundColor: '#E6DEC9',
     titleStyle: {
-      color: '#D4AF37',
+      color: '#F97316',
       fontSize: '3.5rem',
       fontWeight: 'bold',
       textAlign: 'center',
@@ -270,12 +275,12 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     },
     imageStyle: {
       filter: 'none',
-      opacity: 1,
+      opacity: '1',
       borderRadius: '0'
     },
     spineStyle: {
       backgroundColor: '#E6DEC9',
-      titleColor: '#D4AF37',
+      titleColor: '#F97316',
       authorColor: '#FFFFFF'
     },
     backCoverStyle: {
@@ -289,7 +294,7 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     name: 'Bestseller',
     backgroundColor: '#000000',
     titleStyle: {
-      color: '#FFC300',
+      color: '#F97316',
       fontSize: '3rem',
       fontWeight: 'bold',
       textAlign: 'center',
@@ -302,7 +307,8 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     },
     authorStyle: {
       color: '#ffffff',
-      fontSize: '1.8rem'
+      fontSize: '1.8rem',
+      fontWeight: 'bold'
     },
     imageStyle: {
       filter: 'none',
@@ -311,7 +317,7 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     },
     spineStyle: {
       backgroundColor: '#4361EE',
-      titleColor: '#FFC300',
+      titleColor: '#F97316',
       authorColor: '#ffffff'
     },
     backCoverStyle: {
@@ -320,7 +326,7 @@ export const coverTemplates: { [key: string]: TemplateType } = {
       summaryFontSize: '16px'
     },
     badgeStyle: {
-      backgroundColor: '#FFC300',
+      backgroundColor: '#F97316',
       textColor: '#000000'
     }
   }
