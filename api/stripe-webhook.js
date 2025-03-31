@@ -49,35 +49,27 @@ async function updateBookStatus(supabaseUrl, supabaseKey, orderId, status) {
 // 添加一个触发打印请求检查的函数
 async function triggerPrintRequestCheck(orderId, type) {
   try {
-    // 获取基础URL
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-    if (!baseUrl) {
-      console.error('[ERROR] NEXT_PUBLIC_BASE_URL 环境变量未设置，无法继续处理');
-      throw new Error('Missing NEXT_PUBLIC_BASE_URL environment variable');
-    }
-    
     // 详细记录环境变量信息
-    console.log(`[DEBUG] Environment variables for URL construction:`, {
-      NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL || 'not set',
-      VERCEL_URL: process.env.VERCEL_URL || 'not set',
-      VERCEL_ENV: process.env.VERCEL_ENV || 'not set',
-      calculatedBaseUrl: baseUrl
+    console.log(`[${orderId}] 环境变量检查:`, {
+      supabaseUrl: process.env.SUPABASE_URL ? '已设置' : '未设置',
+      supabaseKey: process.env.SUPABASE_SERVICE_ROLE_KEY ? '已设置(长度:' + process.env.SUPABASE_SERVICE_ROLE_KEY.length + ')' : '未设置'
     });
     
-    console.log(`Triggering print request check for orderId: ${orderId}`, {
-      baseUrl,
-      environment: process.env.VERCEL_ENV || 'development'
-    });
-    
-    const response = await fetch(`${baseUrl}/api/order-status`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        autoSubmit: true
-      })
-    });
+    // 调用 Supabase 函数更新打印请求状态
+    const response = await fetch(
+      `${process.env.SUPABASE_URL}/functions/v1/update-print-request`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`
+        },
+        body: JSON.stringify({
+          orderId,
+          type
+        })
+      }
+    );
 
     if (response.ok) {
       const result = await response.json();
@@ -87,7 +79,7 @@ async function triggerPrintRequestCheck(orderId, type) {
       const errorText = await response.text();
       console.error(`Error triggering print request check: ${response.status} ${response.statusText}`, {
         errorText,
-        baseUrl
+        baseUrl: process.env.SUPABASE_URL
       });
       return false;
     }
@@ -172,9 +164,15 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
     console.log(`[${orderId}] Book data for content generation:`, bookDataLog);
     
     try {
-      console.log(`[${orderId}] [DEBUG] 执行 fetch 调用前，时间戳: ${new Date().toISOString()}`);
+      console.log(`[${orderId}] [DEBUG] 执行 Supabase 函数调用前，时间戳: ${new Date().toISOString()}`);
+      
+      // 使用 Supabase 函数 URL
+      const supabaseFunctionUrl = `${supabaseUrl}/functions/v1/generate-book-content`;
+      console.log(`[${orderId}] [DEBUG] 完整 Supabase 函数 URL: ${supabaseFunctionUrl}`);
+      console.log(`[${orderId}] [DEBUG] 请求头: Authorization=Bearer ${supabaseKey ? '已设置(长度:' + supabaseKey.length + ')' : '未设置'}`);
+      
       const contentPromise = fetch(
-        `${baseUrl}/api/generate-book-content`,
+        supabaseFunctionUrl,
         {
           method: 'POST',
           headers: {
@@ -269,22 +267,21 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
           });
         }
         
-        const coverEndpoint = `${baseUrl}/api/generate-cover-pdf`;
-        console.log(`[${orderId}] Cover PDF generation endpoint: ${coverEndpoint}`);
-        
+        console.log(`[${orderId}] Cover images validated, calling cover PDF generation`);
         coverPromise = fetch(
-          coverEndpoint,
+          `${supabaseUrl}/functions/v1/generate-cover-pdf`,
           {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${supabaseKey}`
             },
-            body: JSON.stringify({ 
-              frontCover: images.frontCover, 
-              spine: images.spine, 
-              backCover: images.backCover,
-              orderId
+            body: JSON.stringify({
+              orderId,
+              frontCoverUrl: images.frontCover,
+              spineUrl: images.spine,
+              backCoverUrl: images.backCover,
+              format: book.format
             })
           }
         )
@@ -340,14 +337,33 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
       console.log(`[${orderId}] Content generation completed`);
       
       // 书籍内容生成和数据库更新已在generate-book-content函数内完成
-      // 内页PDF生成也在generate-book-content函数中直接触发
-      console.log(`[${orderId}] Book content generated and interior PDF generation triggered automatically`);
+      // 需要手动触发内页PDF生成
+      console.log(`[${orderId}] Book content generated, now triggering interior PDF generation`);
       
-      // 获取生成的内容用于后续操作（如有需要）
-      const bookContent = contentResult.bookContent;
-      if (!bookContent) {
-        console.warn(`[${orderId}] No book content returned from generator, but interior PDF should already be in progress`);
+      // 调用内页PDF生成函数
+      console.log(`[${orderId}] Calling interior PDF generation function`);
+      const interiorResponse = await fetch(
+        `${supabaseUrl}/functions/v1/generate-interior-pdf`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseKey}`
+          },
+          body: JSON.stringify({
+            orderId,
+            format: book.format
+          })
+        }
+      );
+      
+      const interiorResult = await interiorResponse.json();
+      if (!interiorResponse.ok || !interiorResult.success) {
+        console.error(`[${orderId}] Interior PDF generation failed:`, interiorResult);
+        throw new Error(`内页PDF生成失败: ${JSON.stringify(interiorResult)}`);
       }
+      
+      console.log(`[${orderId}] Interior PDF generation completed successfully`);
       
       // 9. 等待封面PDF生成完成
       console.log(`[${orderId}] Waiting for cover PDF generation to complete`);
