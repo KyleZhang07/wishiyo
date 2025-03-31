@@ -278,9 +278,9 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
             },
             body: JSON.stringify({
               orderId,
-              frontCoverUrl: images.frontCover,
-              spineUrl: images.spine,
-              backCoverUrl: images.backCover,
+              frontCover: images.frontCover,
+              spine: images.spine,
+              backCover: images.backCover,
               format: book.format
             })
           }
@@ -714,9 +714,9 @@ export default async function handler(req, res) {
                               },
                               body: JSON.stringify({
                                 orderId,
-                                frontCoverUrl: images.frontCover,
-                                spineUrl: images.spine,
-                                backCoverUrl: images.backCover,
+                                frontCover: images.frontCover,
+                                spine: images.spine,
+                                backCover: images.backCover,
                                 format: book.format
                               })
                             }
