@@ -675,24 +675,64 @@ export default async function handler(req, res) {
                     console.error(`[${orderId}] Error calling content generation function:`, error);
                   });
                   
-                  // 2. 调用封面生成函数 - 可以并行执行
-                  console.log(`[${orderId}] Calling Supabase function to generate cover PDF`);
+                  // 2. 获取图书数据，然后调用封面生成函数
+                  console.log(`[${orderId}] Fetching book data to get cover images`);
                   fetch(
-                    `${supabaseUrl}/functions/v1/generate-cover-pdf`,
+                    `${supabaseUrl}/rest/v1/funny_biography_books?order_id=eq.${orderId}&select=*`,
                     {
-                      method: 'POST',
+                      method: 'GET',
                       headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${supabaseKey}`
-                      },
-                      body: JSON.stringify({ 
-                        orderId,
-                        format: format || 'Softcover'
-                      })
+                        'Authorization': `Bearer ${supabaseKey}`,
+                        'apikey': supabaseKey
+                      }
                     }
-                  ).catch(error => {
-                    console.error(`[${orderId}] Error calling cover PDF generation function:`, error);
-                  });
+                  )
+                    .then(response => response.json())
+                    .then(data => {
+                      if (data && data.length > 0) {
+                        const book = data[0];
+                        const images = book.images || {};
+                        
+                        // 如果图片可用，调用封面生成函数
+                        if (images.frontCover && images.spine && images.backCover) {
+                          console.log(`[${orderId}] Cover images found, calling cover PDF generation`);
+                          console.log(`[${orderId}] Cover images:`, {
+                            frontCover: images.frontCover.substring(0, 50) + '...',
+                            spine: images.spine.substring(0, 50) + '...',
+                            backCover: images.backCover.substring(0, 50) + '...'
+                          });
+                          
+                          // 调用封面生成函数
+                          fetch(
+                            `${supabaseUrl}/functions/v1/generate-cover-pdf`,
+                            {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${supabaseKey}`
+                              },
+                              body: JSON.stringify({
+                                orderId,
+                                frontCoverUrl: images.frontCover,
+                                spineUrl: images.spine,
+                                backCoverUrl: images.backCover,
+                                format: book.format
+                              })
+                            }
+                          ).catch(error => {
+                            console.error(`[${orderId}] Error calling cover PDF generation function:`, error);
+                          });
+                        } else {
+                          console.log(`[${orderId}] Cover images not found yet, skipping cover PDF generation`);
+                        }
+                      } else {
+                        console.error(`[${orderId}] Book data not found`);
+                      }
+                    })
+                    .catch(error => {
+                      console.error(`[${orderId}] Error fetching book data:`, error);
+                    });
                   
                   // 注意：不直接调用内页生成函数，它会由内容生成函数在完成后自动触发
                   console.log(`[${orderId}] Interior PDF generation will be triggered automatically after content generation completes`);
