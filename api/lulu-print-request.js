@@ -90,8 +90,8 @@ export default async function handler(req, res) {
     console.log(`[DEBUG] Full order data for ${orderId}:`, {
       order_id: order?.order_id,
       shipping_level: order?.shipping_level,
-      shipping_option: order?.shipping_option ? JSON.stringify(order?.shipping_option) : 'null',
-      shipping_address: order?.shipping_address ? 'exists' : 'missing',
+      shipping_option: order.shipping_option ? JSON.stringify(order.shipping_option) : 'null',
+      shipping_address: order.shipping_address ? 'exists' : 'missing',
       ready_for_printing: order?.ready_for_printing,
       lulu_print_status: order?.lulu_print_status,
       table_name: tableName
@@ -312,7 +312,9 @@ export default async function handler(req, res) {
     // =====================================================================
     // 7. 创建打印作业 (Create a Print-Job)
     // =====================================================================
-    // 提交打印作业到Lulu API
+    // 记录完整的请求数据
+    console.log(`[DEBUG] Final print job request data for order ${orderId}:`, JSON.stringify(printJobData, null, 2));
+    
     try {
       const printResponse = await fetchFunc(PRINT_JOBS_ENDPOINT, {
         method: 'POST',
