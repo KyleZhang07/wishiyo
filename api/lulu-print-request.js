@@ -86,6 +86,17 @@ export default async function handler(req, res) {
       .eq('order_id', orderId)
       .single();
       
+    // 添加详细的订单数据日志
+    console.log(`[DEBUG] Full order data for ${orderId}:`, {
+      order_id: order?.order_id,
+      shipping_level: order?.shipping_level,
+      shipping_option: order.shipping_option ? JSON.stringify(order.shipping_option) : 'null',
+      shipping_address: order.shipping_address ? 'exists' : 'missing',
+      ready_for_printing: order?.ready_for_printing,
+      lulu_print_status: order?.lulu_print_status,
+      table_name: tableName
+    });
+      
     if (orderError || !order) {
       console.error(`Error fetching order ${orderId}:`, orderError);
       return res.status(404).json({
@@ -151,15 +162,27 @@ export default async function handler(req, res) {
     // =====================================================================
     // 4. 认证请求准备 (Prepare authenticated requests)
     // =====================================================================
-    // 使用订单提供的shipping_level或默认值
-    let shippingLevel = order.shipping_level || 'MAIL';
+    // 定义 Lulu API 接受的 shipping_level 值
+    const validShippingLevels = ['MAIL', 'PRIORITY_MAIL', 'GROUND', 'EXPEDITED', 'EXPRESS'];
     
-    // 更宽松的shipping_level验证，只在明显错误时才使用默认值
-    // 不再限制为固定的几个值，而是只检查是否为非空字符串
-    if (!shippingLevel || typeof shippingLevel !== 'string' || shippingLevel.trim() === '') {
-      console.warn(`Invalid shipping_level: ${shippingLevel}, using default: MAIL`);
-      shippingLevel = 'MAIL';
+    // 详细记录订单的 shipping_level 信息
+    console.log(`[DEBUG] Order ${orderId} shipping_level details:`, {
+      original_value: order.shipping_level,
+      shipping_option: order.shipping_option ? JSON.stringify(order.shipping_option) : 'null',
+      has_shipping_level: !!order.shipping_level,
+      shipping_level_type: typeof order.shipping_level
+    });
+    
+    // 使用订单提供的shipping_level或默认值
+    let shippingLevel = order.shipping_level || 'GROUND';
+    
+    // 验证 shipping_level 是否为有效值
+    if (!validShippingLevels.includes(shippingLevel)) {
+      console.warn(`Invalid shipping_level: ${shippingLevel}, using default: GROUND`);
+      shippingLevel = 'GROUND';
     }
+    
+    console.log(`[DEBUG] Final shipping_level for order ${orderId}: ${shippingLevel}`);
     
     // =====================================================================
     // 5. 选择产品 (Select a Product)
@@ -184,7 +207,7 @@ export default async function handler(req, res) {
           quantity: order.print_quantity || 1
         }
       ],
-      production_delay: 48, // 添加生产延迟字段，单位为小时
+      production_delay: 120, // 添加 production_delay 参数
       shipping_level: shippingLevel,
       shipping_address: null // 将在验证文件后设置
     };
@@ -210,9 +233,9 @@ export default async function handler(req, res) {
       } else if (bookType === 'funny_biography_books') {
         // Funny Biography 书籍
         if (bindingType.toLowerCase() === 'hardcover') {
-          return '0600X0900BWSTDCW060CU444MXX'; // 精装
+          return '0600X0900BWSTDCW060UW444MXX'; // 精装
         } else {
-          return '0600X0900BWSTDPB060CU444MXX'; // 平装
+          return '0600X0900BWSTDPB060UW444MXX'; // 平装
         }
       }
       
@@ -290,7 +313,9 @@ export default async function handler(req, res) {
     // =====================================================================
     // 7. 创建打印作业 (Create a Print-Job)
     // =====================================================================
-    // 提交打印作业到Lulu API
+    // 记录完整的请求数据
+    console.log(`[DEBUG] Final print job request data for order ${orderId}:`, JSON.stringify(printJobData, null, 2));
+    
     try {
       const printResponse = await fetchFunc(PRINT_JOBS_ENDPOINT, {
         method: 'POST',
