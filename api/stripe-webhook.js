@@ -586,13 +586,6 @@ export default async function handler(req, res) {
             console.log('Shipping Address:', shippingAddress);
             console.log('Shipping Option:', shippingOption);
 
-            // 添加详细的 shipping_level 日志
-            console.log('[DEBUG] Shipping level details:', {
-              shipping_option_exists: !!shippingOption,
-              display_name: shippingOption?.display_name || 'null',
-              mapped_shipping_level: shippingOption?.display_name === 'Express Shipping' ? 'EXPRESS' : 'GROUND'
-            });
-
             // 如果图书类型是funny-biography，启动生成过程
             if (productId === 'funny-biography') {
               console.log('[DEBUG] 产品类型检测: 滑稽传记 (funny-biography)');
