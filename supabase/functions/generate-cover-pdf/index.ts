@@ -21,9 +21,12 @@ serve(async (req) => {
   }
 
   try {
-    const { frontCover, spine, backCover, orderId, binding_type = 'softcover' } = await req.json();
+    const { frontCover, spine, backCover, orderId, binding_type, format } = await req.json();
+    
+    // 支持两种参数名称，优先使用 binding_type，如果不存在则使用 format，都不存在则默认为 'softcover'
+    const bindingType = binding_type || format || 'softcover';
 
-    console.log('Received request for PDF generation with order ID:', orderId, 'binding type:', binding_type);
+    console.log('Received request for PDF generation with order ID:', orderId, 'binding type:', bindingType);
     
     if (!frontCover || !spine || !backCover) {
       throw new Error('Missing required cover image URLs');
@@ -173,7 +176,7 @@ serve(async (req) => {
     // 根据装订类型设置不同的尺寸
     let pdfWidth, pdfHeight, bookWidth, bookHeight;
     
-    if (binding_type === 'hardcover') {
+    if (bindingType === 'hardcover') {
       // 精装本尺寸 (基于图片中显示的尺寸)
       pdfWidth = 14.0;
       pdfHeight = 10.75;
@@ -201,7 +204,7 @@ serve(async (req) => {
     const bleed = 0.125; // Bleed area: 0.125"
     const safetyMargin = 0.5; // Safety margin: 0.5"
     const frontCoverWidth = bookWidth; // 使用根据装订类型设置的宽度
-    const spineWidth = binding_type === 'hardcover' 
+    const spineWidth = bindingType === 'hardcover' 
       ? Math.max(0.25, 32 * 0.0035) // 精装本最小书脊宽度为 0.25"
       : Math.max(0.1321, 32 * 0.0035); // 平装本最小书脊宽度为 0.1321"
     const backCoverWidth = frontCoverWidth; // Same as front cover
