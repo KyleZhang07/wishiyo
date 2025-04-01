@@ -126,30 +126,19 @@ serve(async (req) => {
       while (retries < MAX_RETRIES) {
         try {
           const prompt = `
-You are writing a humorous autobiography titled "${bookTitle}" where ${bookAuthor} is telling their own story in first person. 
+You are writing a humorous biography book titled "${bookTitle}" about ${bookAuthor}. 
 The book concept is: ${ideaDescription}
 
-Additional context about the subject (use these details naturally throughout the narrative):
+Additional context about the subject:
 ${answersContext}
 
 This is Chapter ${i}: ${chapterTitle}
 ${chapterDescription ? `Chapter description: ${chapterDescription}` : ''}
 
-Write this chapter with 2 distinct sections from the first-person perspective of ${bookAuthor}. The entire narrative should be ${bookAuthor} sharing their unique worldview, experiences, and insights.
-
-Guidelines:
-- Use "I" perspective throughout - this is ${bookAuthor} telling their own story
-- Focus on ${bookAuthor}'s personal experiences, methodology, and success principles
-- Each section should either:
-  * Share a meaningful personal experience that shaped ${bookAuthor}'s perspective
-  * Explain ${bookAuthor}'s unique methodology or approach to life/work
-  * Reveal ${bookAuthor}'s success principles and how they apply to different situations
-  * Teach readers valuable life lessons through ${bookAuthor}'s personal stories
-- Section titles should break down the chapter theme into specific modules that build a cohesive narrative
-- Naturally incorporate details from the context into the narrative, but don't structure the story around answering these questions
-- Make it entertaining, humorous and engaging while maintaining a positive, inspirational tone
-- For each section, provide a creative section title and approximately 300-400 words of content
-- Write in a conversational, entertaining style appropriate for a funny autobiography
+Write this chapter with 2 distinct sections. Make it entertaining, humorous and engaging.
+For each section, provide a creative section title and approximately 300-400 words of content.
+Write in a conversational, entertaining style appropriate for a funny biography.
+Include anecdotes, humorous observations, and witty commentary.
 
 Format your response as JSON with this structure:
 {

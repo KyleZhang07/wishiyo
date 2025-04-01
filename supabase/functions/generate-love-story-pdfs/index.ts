@@ -488,16 +488,14 @@ async function generateCoverPdf(backCoverFile: any, spineFile: any, frontCoverFi
   const bookTrimHeight = 8.5;      // 书籍裁切尺寸高度
   const safetyMarginWidth = 0.5;   // 安全边距宽度
   
-  // 修正计算：封面和封底宽度就是书籍封面宽度，不需要额外添加出血区域
-  const backCoverWidth = bookCoverWidth;  // 8.625"
-  const frontCoverWidth = bookCoverWidth;  // 8.625"
+  // 修正计算：封面和封底宽度应包括两侧的Wrap Area
+  const backCoverWidth = bookCoverWidth + (wrapAreaWidth * 2);  // 10.125"
+  const frontCoverWidth = backCoverWidth;  // 10.125"
   
-  // 修正各部分的位置布局，确保居中对齐
-  // 计算左侧边距，使整个设计在PDF中居中
-  const leftMargin = (totalDocWidth - (backCoverWidth + spineWidth + frontCoverWidth)) / 2;
-  const backCoverX = leftMargin;  // 封底从左边距开始
-  const spineX = backCoverX + backCoverWidth;  // 书脊位于封底右侧
-  const frontCoverX = spineX + spineWidth;  // 封面位于书脊右侧
+  // 修正各部分的位置布局
+  const backCoverX = 0;  // 封底从左侧开始
+  const spineX = backCoverX + backCoverWidth;  // 书脊位于封底右侧 (10.125")
+  const frontCoverX = spineX + spineWidth;  // 封面位于书脊右侧 (10.375")
   
   // Y轴位置（从顶部开始）
   const coverY = 0;  // 从PDF顶部开始
@@ -536,74 +534,74 @@ async function generateCoverPdf(backCoverFile: any, spineFile: any, frontCoverFi
   )
   
   // 如果需要，可以添加辅助线来标记安全边距、裁切线等（仅用于调试）
-  const debugLines = true; // 保持原有设置
+  const debugLines = true; // 设置为true以显示调试线
   if (debugLines) {
     pdf.setDrawColor(255, 0, 0); // 红色
     pdf.setLineWidth(0.01);
     
-    // 绘制安全边距线 - 封底
-    const backSafetyLeft = backCoverX + wrapAreaWidth + safetyMarginWidth;
-    const backSafetyRight = backCoverX + backCoverWidth - wrapAreaWidth - safetyMarginWidth;
-    const backSafetyTop = coverY + wrapAreaWidth + safetyMarginWidth;
-    const backSafetyBottom = totalDocHeight - wrapAreaWidth - safetyMarginWidth;
-    
-    // 封底安全区域矩形
+    // 封底安全边距 - 修正位置
     pdf.rect(
-      backSafetyLeft, 
-      backSafetyTop, 
-      backSafetyRight - backSafetyLeft, 
-      backSafetyBottom - backSafetyTop
+      backCoverX + wrapAreaWidth + safetyMarginWidth, 
+      (totalDocHeight - bookTrimHeight)/2 + safetyMarginWidth, 
+      bookTrimWidth - (2 * safetyMarginWidth), 
+      bookTrimHeight - (2 * safetyMarginWidth)
     );
     
-    // 绘制安全边距线 - 封面
-    const frontSafetyLeft = frontCoverX + wrapAreaWidth + safetyMarginWidth;
-    const frontSafetyRight = frontCoverX + frontCoverWidth - wrapAreaWidth - safetyMarginWidth;
-    
-    // 封面安全区域矩形
+    // 封面安全边距 - 修正位置
     pdf.rect(
-      frontSafetyLeft, 
-      backSafetyTop, 
-      frontSafetyRight - frontSafetyLeft, 
-      backSafetyBottom - backSafetyTop
+      frontCoverX + wrapAreaWidth + safetyMarginWidth, 
+      (totalDocHeight - bookTrimHeight)/2 + safetyMarginWidth, 
+      bookTrimWidth - (2 * safetyMarginWidth), 
+      bookTrimHeight - (2 * safetyMarginWidth)
     );
     
-    // 绘制裁切线 - 蓝色
-    pdf.setDrawColor(0, 0, 255);
+    // 标记出书脊区域
+    pdf.setDrawColor(0, 0, 255); // 蓝色
+    pdf.rect(spineX, 0, spineWidth, totalDocHeight);
+
+    // 标记出裁切线（Trim Lines）
+    pdf.setDrawColor(0, 162, 232); // 浅蓝色
     
     // 封底裁切线
     const backTrimLeft = backCoverX + wrapAreaWidth;
-    const backTrimRight = backCoverX + backCoverWidth - wrapAreaWidth;
-    const trimTop = coverY + wrapAreaWidth;
-    const trimBottom = totalDocHeight - wrapAreaWidth;
+    const backTrimRight = backTrimLeft + bookTrimWidth;
+    const trimTop = (totalDocHeight - bookTrimHeight) / 2;
+    const trimBottom = trimTop + bookTrimHeight;
     
-    pdf.rect(backTrimLeft, trimTop, backTrimRight - backTrimLeft, trimBottom - trimTop);
+    // 封底裁切线
+    pdf.rect(backTrimLeft, trimTop, bookTrimWidth, bookTrimHeight);
     
     // 封面裁切线
     const frontTrimLeft = frontCoverX + wrapAreaWidth;
-    const frontTrimRight = frontCoverX + frontCoverWidth - wrapAreaWidth;
+    pdf.rect(frontTrimLeft, trimTop, bookTrimWidth, bookTrimHeight);
     
-    pdf.rect(frontTrimLeft, trimTop, frontTrimRight - frontTrimLeft, trimBottom - trimTop);
+    // 标记出总文档尺寸（包括出血区域）
+    pdf.setDrawColor(128, 128, 128); // 灰色
+    pdf.rect(0, 0, totalDocWidth, totalDocHeight);
     
-    // 书脊裁切线
-    pdf.rect(spineX, trimTop, spineWidth, trimBottom - trimTop);
-    
-    // 添加标签文字 - 浅蓝色
+    // 添加标签文本
+    pdf.setFontSize(6);
     pdf.setTextColor(0, 162, 232);
-    pdf.setFontSize(8);
+    pdf.text('TRIM AREA', backTrimLeft + (bookTrimWidth/2), trimTop - 0.1, { align: 'center' });
+    pdf.text('TRIM AREA', frontTrimLeft + (bookTrimWidth/2), trimTop - 0.1, { align: 'center' });
     
-    // 底部标签
-    pdf.text('SPINE', spineX + (spineWidth/2), totalDocHeight - 0.1, { align: 'center' });
+    pdf.setTextColor(255, 0, 0);
+    pdf.text('SAFETY MARGIN', backTrimLeft + (bookTrimWidth/2), trimTop + 0.2, { align: 'center' });
+    pdf.text('SAFETY MARGIN', frontTrimLeft + (bookTrimWidth/2), trimTop + 0.2, { align: 'center' });
+    
+    // 添加部分标签
+    pdf.setTextColor(0, 0, 255);
+    pdf.text('SPINE', spineX + (spineWidth/2), totalDocHeight/2, { angle: 90, align: 'center' });
+    
     pdf.text('BACK COVER', backCoverX + (backCoverWidth/2), totalDocHeight - 0.1, { align: 'center' });
     pdf.text('FRONT COVER', frontCoverX + (frontCoverWidth/2), totalDocHeight - 0.1, { align: 'center' });
     
-    // 顶部尺寸标签
-    pdf.text(`Spine: ${spineWidth}"`, spineX + (spineWidth/2), 0.3, { align: 'center' });
+    // 添加尺寸标注
+    pdf.setTextColor(0, 0, 0);
+    pdf.text(`Total: ${totalDocWidth}" x ${totalDocHeight}"`, totalDocWidth/2, 0.2, { align: 'center' });
     pdf.text(`Back: ${backCoverWidth}"`, backCoverX + (backCoverWidth/2), 0.3, { align: 'center' });
+    pdf.text(`Spine: ${spineWidth}"`, spineX + (spineWidth/2), 0.3, { align: 'center' });
     pdf.text(`Front: ${frontCoverWidth}"`, frontCoverX + (frontCoverWidth/2), 0.3, { align: 'center' });
-    
-    // 添加总尺寸标签
-    pdf.text(`Total Document: ${totalDocWidth}" x ${totalDocHeight}"`, totalDocWidth - 1, 0.3, { align: 'right' });
-    pdf.text(`Left Margin: ${leftMargin.toFixed(3)}"`, 1, 0.3, { align: 'left' });
   }
   
   // 转换PDF为Uint8Array
