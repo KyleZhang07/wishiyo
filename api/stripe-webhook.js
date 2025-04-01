@@ -271,6 +271,36 @@ export default async function handler(req, res) {
                 await updateBookStatus(supabaseUrl, supabaseKey, orderId, "processing");
                 console.log(`[${orderId}] Book status set to processing`);
                 
+                // 1.1 更新书籍的 binding_type 和其他元数据
+                const updateMetadataResponse = await fetch(
+                  `${supabaseUrl}/functions/v1/update-book-data`,
+                  {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${supabaseKey}`
+                    },
+                    body: JSON.stringify({ 
+                      orderId,
+                      table_name: 'funny_biography_books',
+                      binding_type: binding_type || (format === 'Hardcover' ? 'hardcover' : 'softcover'),
+                      is_color: is_color === 'true' ? true : false,
+                      paper_type: paper_type || 'Standard',
+                      shipping_address: shippingAddress,
+                      shipping_option: shippingOption,
+                      customer_email: expandedSession.customer_details?.email,
+                      shipping_level: shippingOption?.display_name === 'Express Shipping' ? 'EXPRESS' : 'GROUND',
+                      recipient_phone: expandedSession.customer_details?.phone || ''
+                    })
+                  }
+                );
+                
+                if (!updateMetadataResponse.ok) {
+                  console.warn(`[${orderId}] Warning: Failed to update book metadata: ${updateMetadataResponse.status}`);
+                } else {
+                  console.log(`[${orderId}] Successfully updated book metadata including binding_type`);
+                }
+                
                 // 2. 从数据库获取图书数据以获取图片
                 const getBookResponse = await fetch(
                   `${supabaseUrl}/rest/v1/funny_biography_books?order_id=eq.${orderId}&select=*`,
