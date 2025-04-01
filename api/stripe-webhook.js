@@ -281,8 +281,7 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
               frontCover: images.frontCover,
               spine: images.spine,
               backCover: images.backCover,
-              binding_type: (book.binding_type || 'Softcover').toLowerCase(),
-              format: (book.binding_type || 'Softcover').toLowerCase() // 保留 format 参数以确保兼容性
+              format: book.binding_type || 'Softcover'
             })
           }
         )
@@ -736,8 +735,7 @@ export default async function handler(req, res) {
                                 frontCover: images.frontCover,
                                 spine: images.spine,
                                 backCover: images.backCover,
-                                binding_type: (book.binding_type || 'Softcover').toLowerCase(),
-                                format: (book.binding_type || 'Softcover').toLowerCase() // 保留 format 参数以确保兼容性
+                                format: book.binding_type || 'Softcover'
                               })
                             }
                           )
