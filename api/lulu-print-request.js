@@ -207,6 +207,7 @@ export default async function handler(req, res) {
           quantity: order.print_quantity || 1
         }
       ],
+      production_delay: 120, // 添加 production_delay 参数
       shipping_level: shippingLevel,
       shipping_address: null // 将在验证文件后设置
     };
