@@ -151,14 +151,16 @@ export default async function handler(req, res) {
     // =====================================================================
     // 4. 认证请求准备 (Prepare authenticated requests)
     // =====================================================================
-    // 使用订单提供的shipping_level或默认值
-    let shippingLevel = order.shipping_level || 'MAIL';
+    // 定义 Lulu API 接受的 shipping_level 值
+    const validShippingLevels = ['MAIL', 'PRIORITY_MAIL', 'GROUND', 'EXPEDITED', 'EXPRESS'];
     
-    // 更宽松的shipping_level验证，只在明显错误时才使用默认值
-    // 不再限制为固定的几个值，而是只检查是否为非空字符串
-    if (!shippingLevel || typeof shippingLevel !== 'string' || shippingLevel.trim() === '') {
-      console.warn(`Invalid shipping_level: ${shippingLevel}, using default: MAIL`);
-      shippingLevel = 'MAIL';
+    // 使用订单提供的shipping_level或默认值
+    let shippingLevel = order.shipping_level || 'GROUND';
+    
+    // 验证 shipping_level 是否为有效值
+    if (!validShippingLevels.includes(shippingLevel)) {
+      console.warn(`Invalid shipping_level: ${shippingLevel}, using default: GROUND`);
+      shippingLevel = 'GROUND';
     }
     
     // =====================================================================
@@ -184,7 +186,6 @@ export default async function handler(req, res) {
           quantity: order.print_quantity || 1
         }
       ],
-      production_delay: 48, // 添加生产延迟字段，单位为小时
       shipping_level: shippingLevel,
       shipping_address: null // 将在验证文件后设置
     };
