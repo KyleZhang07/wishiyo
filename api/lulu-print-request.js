@@ -86,6 +86,17 @@ export default async function handler(req, res) {
       .eq('order_id', orderId)
       .single();
       
+    // 添加详细的订单数据日志
+    console.log(`[DEBUG] Full order data for ${orderId}:`, {
+      order_id: order?.order_id,
+      shipping_level: order?.shipping_level,
+      shipping_option: order?.shipping_option ? JSON.stringify(order?.shipping_option) : 'null',
+      shipping_address: order?.shipping_address ? 'exists' : 'missing',
+      ready_for_printing: order?.ready_for_printing,
+      lulu_print_status: order?.lulu_print_status,
+      table_name: tableName
+    });
+      
     if (orderError || !order) {
       console.error(`Error fetching order ${orderId}:`, orderError);
       return res.status(404).json({
@@ -154,6 +165,14 @@ export default async function handler(req, res) {
     // 定义 Lulu API 接受的 shipping_level 值
     const validShippingLevels = ['MAIL', 'PRIORITY_MAIL', 'GROUND', 'EXPEDITED', 'EXPRESS'];
     
+    // 详细记录订单的 shipping_level 信息
+    console.log(`[DEBUG] Order ${orderId} shipping_level details:`, {
+      original_value: order.shipping_level,
+      shipping_option: order.shipping_option ? JSON.stringify(order.shipping_option) : 'null',
+      has_shipping_level: !!order.shipping_level,
+      shipping_level_type: typeof order.shipping_level
+    });
+    
     // 使用订单提供的shipping_level或默认值
     let shippingLevel = order.shipping_level || 'GROUND';
     
@@ -162,6 +181,8 @@ export default async function handler(req, res) {
       console.warn(`Invalid shipping_level: ${shippingLevel}, using default: GROUND`);
       shippingLevel = 'GROUND';
     }
+    
+    console.log(`[DEBUG] Final shipping_level for order ${orderId}: ${shippingLevel}`);
     
     // =====================================================================
     // 5. 选择产品 (Select a Product)
