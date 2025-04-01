@@ -210,9 +210,9 @@ export default async function handler(req, res) {
       } else if (bookType === 'funny_biography_books') {
         // Funny Biography 书籍
         if (bindingType.toLowerCase() === 'hardcover') {
-          return '0600X0900BWSTDCW060CU444MXX'; // 精装
+          return '0600X0900BWSTDCW060UW444MXX'; // 精装
         } else {
-          return '0600X0900BWSTDPB060CU444MXX'; // 平装
+          return '0600X0900BWSTDPB060UW444MXX'; // 平装
         }
       }
       
