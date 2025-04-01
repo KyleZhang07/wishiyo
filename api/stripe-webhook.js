@@ -281,7 +281,7 @@ async function generateBookProcess(supabaseUrl, supabaseKey, orderId) {
               frontCover: images.frontCover,
               spine: images.spine,
               backCover: images.backCover,
-              format: book.binding_type || 'Softcover'
+              binding_type: (book.binding_type || 'Softcover').toLowerCase()
             })
           }
         )
@@ -735,7 +735,7 @@ export default async function handler(req, res) {
                                 frontCover: images.frontCover,
                                 spine: images.spine,
                                 backCover: images.backCover,
-                                format: book.binding_type || 'Softcover'
+                                binding_type: (book.binding_type || 'Softcover').toLowerCase()
                               })
                             }
                           )

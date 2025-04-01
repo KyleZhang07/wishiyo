@@ -21,9 +21,9 @@ serve(async (req) => {
   }
 
   try {
-    const { frontCover, spine, backCover, orderId } = await req.json();
+    const { frontCover, spine, backCover, orderId, binding_type = 'softcover' } = await req.json();
 
-    console.log('Received request for PDF generation with order ID:', orderId);
+    console.log('Received request for PDF generation with order ID:', orderId, 'binding type:', binding_type);
     
     if (!frontCover || !spine || !backCover) {
       throw new Error('Missing required cover image URLs');
@@ -170,32 +170,45 @@ serve(async (req) => {
     
     console.log('All images downloaded and processed successfully');
 
+    // 根据装订类型设置不同的尺寸
+    let pdfWidth, pdfHeight, bookWidth, bookHeight;
+    
+    if (binding_type === 'hardcover') {
+      // 精装本尺寸 (基于图片中显示的尺寸)
+      pdfWidth = 14.0;
+      pdfHeight = 10.75;
+      bookWidth = 6.125;
+      bookHeight = 9.25;
+      console.log('Using hardcover dimensions: 14" x 10.75"');
+    } else {
+      // 平装本尺寸 (原始尺寸)
+      pdfWidth = 12.38;
+      pdfHeight = 9.25;
+      bookWidth = 6.0;
+      bookHeight = 9.0;
+      console.log('Using softcover dimensions: 12.38" x 9.25"');
+    }
+
     // Create a new PDF with appropriate dimensions
-    // Book cover dimensions with bleed based on Lulu requirements (6 x 9 inches plus bleed)
     console.log('Creating PDF document');
     const pdf = new jsPDF({
       orientation: 'landscape',
       unit: 'in',
-      format: [12.38, 9.25] // Width x Height with bleed areas as specified by Lulu
+      format: [pdfWidth, pdfHeight] // Width x Height with bleed areas
     });
 
     // Calculate positions and dimensions
     const bleed = 0.125; // Bleed area: 0.125"
     const safetyMargin = 0.5; // Safety margin: 0.5"
-    const frontCoverWidth = 6.0; // Book trim size width: 6"
-    const bookHeight = 9.0; // Book trim size height: 9"
-    
-    // Calculate spine width based on page count (minimum 32 pages = 0.1321")
-    // In a real implementation, this should come from the database or request
-    const pageCount = 32; // Minimum page count per Lulu
-    // Estimate spine width: 0.0035" per page for perfect binding (this is an approximation)
-    // Use at least the minimum width of 0.1321" for 32 pages
-    const spineWidth = Math.max(0.1321, pageCount * 0.0035);
-    const backCoverWidth = 6.0; // Same as front cover
+    const frontCoverWidth = bookWidth; // 使用根据装订类型设置的宽度
+    const spineWidth = binding_type === 'hardcover' 
+      ? Math.max(0.25, 32 * 0.0035) // 精装本最小书脊宽度为 0.25"
+      : Math.max(0.1321, 32 * 0.0035); // 平装本最小书脊宽度为 0.1321"
+    const backCoverWidth = frontCoverWidth; // Same as front cover
     
     // Total width check
     const totalWidth = frontCoverWidth + spineWidth + backCoverWidth + (bleed * 2);
-    console.log(`Total calculated width: ${totalWidth}", PDF width: 12.38"`);
+    console.log(`Total calculated width: ${totalWidth}", PDF width: ${pdfWidth}"`);
     
     // Debug lines flag - set to true to show safety margins and trim lines
     const debugLines = true;
@@ -239,7 +252,7 @@ serve(async (req) => {
       // Blue outer bleed area rectangle (total document size)
       pdf.setDrawColor(0, 162, 232); // Light blue for bleed area
       pdf.setLineWidth(0.01);
-      pdf.rect(0, 0, totalWidth, bookHeight + (bleed * 2));
+      pdf.rect(0, 0, pdfWidth, pdfHeight);
       
       // Dark blue trim rectangles (actual book size after cutting)
       pdf.setDrawColor(0, 0, 255); // Blue for trim lines
