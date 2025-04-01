@@ -228,20 +228,21 @@ serve(async (req) => {
             {
               role: 'system',
               content: `
-                1. In 3-7 words (exactly), create a concise, punchy biography title that reflects the MAIN CHARACTER'S personal life
-                2. Make the book about ONE PERSON ONLY - ignore any mentions of other people in the answers
-                3. Focus on humor that centers on the main character's personal quirks, life experiences, and unique journey
-                4. Make the ideas SPECIFIC and PERSONAL to the main character, not generic
-                5. Ensure the ideas are immediately accessible and entertaining to readers
-                6. The author field MUST always be exactly the provided authorName - do not modify it
+                1. In 3-7 words (exactly), create a concise, punchy autobiography title that reflects the MAIN CHARACTER'S personal life journey or philosophy
+                2. Make the book about ONE PERSON ONLY - the author sharing their own story in first person
+                3. Focus on positive, uplifting humor that centers on the author's personal growth, valuable life lessons, and unique methodology
+                4. The ideas must be POSITIVE and INSPIRATIONAL while maintaining humor - avoid any negative portrayals
+                5. Make the ideas SPECIFIC and PERSONAL to the author, focusing on their experiences, methods, and success principles
+                6. Each book should present the author as someone sharing valuable insights through their personal stories
+                7. The author field MUST always be exactly the provided authorName - do not modify it
                 
-                Biography title examples to follow:
-                - "The Last Laugh"
-                - "Life Against All Odds"
-                - "The Accidental Hero"
-                - "Falling Upward"
-                - "Perfectly Imperfect"
-                - "Kyle's Chaos and Glory"
+                Autobiography title examples to follow:
+                - "The Success Mindset"
+                - "Life Lessons Learned"
+                - "My Unconventional Path"
+                - "Rising Through Challenges"
+                - "Wisdom Through Experience"
+                - "My Winning Formula"
                 
                 Additionally, for each book idea, create 4 fictional praise quotes from imaginary publications, magazines, or critics.
                 These should sound like authentic book reviews or endorsements that would appear on a book's back cover.
@@ -250,8 +251,8 @@ serve(async (req) => {
             },
             {
               role: 'user',
-              content: `Generate 3 different funny book ideas based on these answers:\n\n${JSON.stringify(answers, null, 2)}\n\n
-                The biography is about ${authorName}, who is also the author.
+              content: `Generate 3 different positive and inspirational autobiography ideas based on these answers:\n\n${JSON.stringify(answers, null, 2)}\n\n
+                The autobiography is written by ${authorName} in first person, sharing their personal experiences, methods, and success principles.
                 
                 Respond with ONLY a JSON array of 3 objects, each with:
                 - 'title': The book title (SHORT, MEMORABLE, NEVER using parentheses or subtitle formats)
@@ -259,15 +260,19 @@ serve(async (req) => {
                 - 'description': A compelling book description (10-20 words) that sounds like a real book blurb. Make it engaging, specific, and capture the essence of the book.
                 - 'praises': An array of 4 fictional praise objects, each with 'source' (imaginary publication or critic name) and 'text' (the praise quote)
                 
-                Make the ideas FUNNY but also MEANINGFUL - they should sound like real biography books people would enjoy reading.
-                Each idea should be ABOUT ${authorName} ONLY, even if other people are mentioned in the answers.
+                Make the ideas POSITIVE, INSPIRATIONAL and MEANINGFUL - they should sound like real autobiography books people would enjoy reading and learn from.
+                Each idea should present ${authorName} sharing their unique life experiences, methodologies, and success principles in first person.
                 
-                The descriptions should be specific, narrative, and intriguing - like real book descriptions found on book covers.
+                The descriptions should highlight how ${authorName} shares valuable insights through personal stories, focusing on:
+                - Personal experiences that shaped their perspective
+                - Their unique methodology or approach to life/work
+                - Success principles and how they apply to different situations
+                - Valuable life lessons taught through personal stories
                 
                 Example descriptions:
-                - "An anthology of ${authorName}'s bizarre browser history that makes conspiracy theories look tame."
-                - "How ${authorName} found a virtual Nickname-Buddy and formed a one-sided bromance with algorithms."
-                - "A thrilling adventure of misspellings, autocorrect horrors, and the quest for elusive Google results."
+                - "My journey from novice to expert, revealing the unconventional methods that transformed my career."
+                - "How I discovered the principles of success through unexpected life challenges and turned them into opportunities."
+                - "The mindset shifts and practical strategies I developed to achieve balance and fulfillment in life."
                 
                 For the praises, follow these guidelines:
                 1. Each praise should be a substantial paragraph (2-4 sentences) that deeply analyzes some aspect of the book or author's style
@@ -276,23 +281,15 @@ serve(async (req) => {
                 4. Make them sound like genuine literary critiques from respected publications
                 5. Source names should be specific publications that match the subject matter (magazines, journals, newspapers, etc.)
                 
-                Example praises based on the provided image:
+                Example praises:
                 [
                   {
-                    "source": "Procrastinator's Digest",
-                    "text": "Kyle's witty take on procrastination through the lens of gaming is not only hilarious but also surprisingly enlightening. A must-read for anyone who considers themselves a master procrastinator."
+                    "source": "Success Quarterly",
+                    "text": "${authorName}'s candid approach to sharing personal triumphs and setbacks creates an immediately relatable narrative. Their ability to distill complex life lessons into actionable wisdom makes this not just an entertaining read, but a valuable resource for anyone seeking personal growth."
                   },
                   {
-                    "source": "Level Up Times",
-                    "text": "With humor and insight, Kyle's 'The Art of Procrastination: Press Start' captures the essence of how our favorite pastimes shape our approach to responsibilities—often for the worse, but always with amusement."
-                  },
-                  {
-                    "source": "Virtual World Weekly",
-                    "text": "Kyle taps into the gamer mind with surgical precision, humorously dissecting the ways we avoid the mundane by diving into digital worlds, making even the laziest among us feel understood and entertained."
-                  },
-                  {
-                    "source": "Gamer's Escape",
-                    "text": "'The Art of Procrastination: Press Start' masterfully blends humor with a sharp analysis of our modern-day penchant for delay tactics. Kyle's narrative is the perfect companion for when you should be doing anything else."
+                    "source": "Mindset Magazine",
+                    "text": "With refreshing honesty and insightful reflection, ${authorName} transforms personal anecdotes into universal principles. The book's blend of humor and wisdom creates a reading experience that both entertains and inspires meaningful change in the reader's own approach to challenges."
                   }
                 ]`
             }
