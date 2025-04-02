@@ -175,21 +175,23 @@ serve(async (req) => {
     console.log('All images downloaded and processed successfully');
 
     // 根据装订类型设置不同的尺寸
-    let pdfWidth, pdfHeight, bookWidth, bookHeight;
+    let pdfWidth, pdfHeight, bookWidth, bookHeight, spineWidth;
     
     if (bindingType === 'hardcover') {
-      // 精装本尺寸 (基于图片中显示的尺寸)
+      // 精装本尺寸 (基于Lulu模板)
       pdfWidth = 14.0;
       pdfHeight = 10.75;
       bookWidth = 6.125;
       bookHeight = 9.25;
+      spineWidth = 0.25; // 精装本最小书脊宽度为 0.25"
       console.log('Using hardcover dimensions: 14" x 10.75"');
     } else {
-      // 平装本尺寸 (原始尺寸)
+      // 平装本尺寸 (基于Lulu模板)
       pdfWidth = 12.38;
       pdfHeight = 9.25;
       bookWidth = 6.0;
       bookHeight = 9.0;
+      spineWidth = 0.1321; // 平装本最小书脊宽度为 0.1321"
       console.log('Using softcover dimensions: 12.38" x 9.25"');
     }
 
@@ -204,27 +206,34 @@ serve(async (req) => {
     // Calculate positions and dimensions
     const bleed = 0.125; // Bleed area: 0.125"
     const safetyMargin = 0.5; // Safety margin: 0.5"
-    const frontCoverWidth = bookWidth; // 使用根据装订类型设置的宽度
-    const spineWidth = bindingType === 'hardcover' 
-      ? Math.max(0.25, 32 * 0.0035) // 精装本最小书脊宽度为 0.25"
-      : Math.max(0.1321, 32 * 0.0035); // 平装本最小书脊宽度为 0.1321"
-    const backCoverWidth = frontCoverWidth; // Same as front cover
+    const backCoverWidth = bookWidth; // 使用根据装订类型设置的宽度
+    const frontCoverWidth = bookWidth; // Same as back cover
     
-    // Total width check
-    const totalWidth = frontCoverWidth + spineWidth + backCoverWidth + (bleed * 2);
-    console.log(`Total calculated width: ${totalWidth}", PDF width: ${pdfWidth}"`);
+    // 计算总宽度和居中偏移量
+    const totalWidth = backCoverWidth + spineWidth + frontCoverWidth;
+    const xOffset = (pdfWidth - totalWidth) / 2; // 水平居中偏移量
+    const yOffset = (pdfHeight - bookHeight) / 2; // 垂直居中偏移量
+    
+    console.log(`Layout calculations:
+      - PDF dimensions: ${pdfWidth}" x ${pdfHeight}"
+      - Book dimensions: ${bookWidth}" x ${bookHeight}"
+      - Spine width: ${spineWidth}"
+      - Total content width: ${totalWidth}"
+      - Horizontal offset (for centering): ${xOffset}"
+      - Vertical offset (for centering): ${yOffset}"
+    `);
     
     // Debug lines flag - set to true to show safety margins and trim lines
     const debugLines = true;
     
     // Add images to the PDF (coordinate system starts from top-left)
-    // Starting position accounts for bleed area
+    // Using calculated offsets for proper centering
     console.log('Adding back cover to PDF');
     pdf.addImage(
       backCoverData,
       'JPEG',
-      bleed, // x-position starts after left bleed
-      bleed, // y-position starts after top bleed
+      xOffset, // x-position with centering offset
+      yOffset, // y-position with centering offset
       backCoverWidth, // width
       bookHeight // height
     );
@@ -233,9 +242,9 @@ serve(async (req) => {
     pdf.addImage(
       spineData,
       'JPEG',
-      backCoverWidth + bleed, // x-position after back cover
-      bleed, // y-position
-      spineWidth, // width based on page count
+      xOffset + backCoverWidth, // x-position after back cover
+      yOffset, // y-position with centering offset
+      spineWidth, // width based on binding type
       bookHeight // height
     );
 
@@ -243,8 +252,8 @@ serve(async (req) => {
     pdf.addImage(
       frontCoverData,
       'JPEG',
-      backCoverWidth + spineWidth + bleed, // x-position after spine
-      bleed, // y-position
+      xOffset + backCoverWidth + spineWidth, // x-position after spine
+      yOffset, // y-position with centering offset
       frontCoverWidth, // width
       bookHeight // height
     );
@@ -262,29 +271,29 @@ serve(async (req) => {
       pdf.setDrawColor(0, 0, 255); // Blue for trim lines
       
       // Back cover trim
-      pdf.rect(bleed, bleed, backCoverWidth, bookHeight);
+      pdf.rect(xOffset, yOffset, backCoverWidth, bookHeight);
       
       // Spine trim
-      pdf.rect(backCoverWidth + bleed, bleed, spineWidth, bookHeight);
+      pdf.rect(xOffset + backCoverWidth, yOffset, spineWidth, bookHeight);
       
       // Front cover trim
-      pdf.rect(backCoverWidth + spineWidth + bleed, bleed, frontCoverWidth, bookHeight);
+      pdf.rect(xOffset + backCoverWidth + spineWidth, yOffset, frontCoverWidth, bookHeight);
       
       // Red safety margin rectangles
       pdf.setDrawColor(255, 0, 0); // Red for safety margin
       
       // Back cover safety margin
       pdf.rect(
-        bleed + safetyMargin, 
-        bleed + safetyMargin, 
+        xOffset + safetyMargin, 
+        yOffset + safetyMargin, 
         backCoverWidth - (safetyMargin * 2), 
         bookHeight - (safetyMargin * 2)
       );
       
       // Front cover safety margin
       pdf.rect(
-        backCoverWidth + spineWidth + bleed + safetyMargin,
-        bleed + safetyMargin,
+        xOffset + backCoverWidth + spineWidth + safetyMargin,
+        yOffset + safetyMargin,
         frontCoverWidth - (safetyMargin * 2),
         bookHeight - (safetyMargin * 2)
       );
@@ -294,21 +303,26 @@ serve(async (req) => {
       pdf.setTextColor(0, 162, 232);
       
       // Top and bottom trim/bleed labels
-      pdf.text('TRIM / BLEED AREA', totalWidth/2, 0.1, { align: 'center' });
-      pdf.text('TRIM / BLEED AREA', totalWidth/2, bookHeight + (bleed * 2) - 0.05, { align: 'center' });
+      pdf.text('TRIM / BLEED AREA', pdfWidth/2, 0.1, { align: 'center' });
+      pdf.text('TRIM / BLEED AREA', pdfWidth/2, pdfHeight - 0.1, { align: 'center' });
       
       // Safety margin labels
       pdf.setTextColor(100, 100, 100);
-      pdf.text('SAFETY MARGIN', totalWidth/2, 0.25 + bleed, { align: 'center' });
-      pdf.text('SAFETY MARGIN', totalWidth/2, bookHeight + bleed - 0.25, { align: 'center' });
+      pdf.text('SAFETY MARGIN', pdfWidth/2, yOffset + 0.2, { align: 'center' });
+      pdf.text('SAFETY MARGIN', pdfWidth/2, yOffset + bookHeight - 0.2, { align: 'center' });
       
       // Spine label
       pdf.setTextColor(0, 0, 255);
-      pdf.text('SPINE', backCoverWidth + bleed + (spineWidth/2), bookHeight/2, { angle: 90, align: 'center' });
+      pdf.text('SPINE', xOffset + backCoverWidth + (spineWidth/2), yOffset + (bookHeight/2), { angle: 90, align: 'center' });
       
       // Cover labels
-      pdf.text('BACK COVER', bleed + (backCoverWidth/2), bleed - 0.1, { align: 'center' });
-      pdf.text('FRONT COVER', backCoverWidth + spineWidth + bleed + (frontCoverWidth/2), bleed - 0.1, { align: 'center' });
+      pdf.text('BACK COVER', xOffset + (backCoverWidth/2), yOffset - 0.1, { align: 'center' });
+      pdf.text('FRONT COVER', xOffset + backCoverWidth + spineWidth + (frontCoverWidth/2), yOffset - 0.1, { align: 'center' });
+      
+      // Add binding type and dimensions text
+      pdf.setTextColor(0, 0, 0);
+      pdf.text(`Binding Type: ${bindingType}`, 0.5, pdfHeight - 0.5);
+      pdf.text(`PDF Size: ${pdfWidth}" x ${pdfHeight}"`, 0.5, pdfHeight - 0.3);
     }
 
     // Convert PDF to base64
