@@ -235,14 +235,23 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
                  5. Make the ideas SPECIFIC and METHODOLOGICAL, focusing on the subject's unique framework, using extended metaphors
                  6. Each book should present the subject as someone sharing practical wisdom through memorable metaphorical frameworks
                  7. The author field MUST always be exactly the provided authorName - do not modify it
+                 8. Descriptions must ALWAYS be a SINGLE SENTENCE with NO COMMAS
                  
-                 Biography title examples to follow:
-                 - "Navigating Success"
-                 - "The Mountain Method"
-                 - "Strategic Principles"
-                 - "Mastering the Game"
-                 - "Leadership Elevation"
-                 - "The Success Blueprint"
+                 Title examples to follow:
+                 - "The Ski Lodge Business Model"
+                 - "Hiking: Hustle Uphill"
+                 - "The Entrepreneur's Guide to Après Ski"
+                 - "Summit Strategy Blueprint"
+                 - "The Mountain Methodology"
+                 - "Powder Path Principles"
+                 
+                 Description examples to follow (ALWAYS ONE SENTENCE NO COMMAS):
+                 - "Turning slippery slopes into money slopes with overly enthusiastic tourists"
+                 - "A step-by-step guide to scaling mountains and business ventures simultaneously"
+                 - "Maximizing networking opportunities over overpriced hot chocolate"
+                 - "How I transformed winter sports passion into business principles for maximum growth"
+                 - "Guiding you through avalanche territory with proven risk management techniques"
+                 - "Essential frameworks for building resilient companies in challenging environments"
                  
                  Additionally, for each book idea, create 4 fictional praise quotes from imaginary publications, magazines, or critics.
                  These should sound like authentic book reviews or endorsements that would appear on a book's back cover.
@@ -257,7 +266,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
                  Respond with ONLY a JSON array of 3 objects, each with:
                  - 'title': The book title (3-7 words, using concrete nouns and metaphors related to the subject's field)
                  - 'author': "${authorName}" for all ideas
-                 - 'description': A compelling book description (10-20 words) that sounds like a real book blurb. Use analogies and metaphors to convey the subject's expertise and methodology.
+                 - 'description': A compelling book description (ONE SENTENCE NO COMMAS 10-20 words) that expands on the metaphor with a touch of wit while conveying expertise
                  - 'praises': An array of 4 fictional praise objects, each with 'source' (imaginary publication or critic name) and 'text' (the praise quote)
                  
                  Make the ideas INSTRUCTIONAL, METAPHOR-RICH and WITTY - they should sound like professional books that combine expertise with personality.
@@ -265,31 +274,35 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
                  
                  The descriptions should:
                  - Expand on the central metaphor established in the title
-                 - Include a touch of clever wordplay or wit
+                 - MIX UP THE STYLE: sometimes use "you" perspective, sometimes "I" perspective, sometimes no personal pronouns
+                 - ALWAYS BE ONE SENTENCE WITHOUT ANY COMMAS (use alternative sentence structures)
                  - Clearly communicate the professional value proposition
                  - Use parallel structure or rhythmic language for memorability
                  
                  Example title/description pairs:
-                 - "The Ski Lodge Business Model" / "Turning Slippery Slopes into Money Slopes with Overly Enthusiastic Tourists"
-                 - "Hiking: Hustle Uphill" / "A Step-by-Step Guide to Scaling Mountains and Business Ventures Simultaneously"
-                 - "The Entrepreneur's Guide to Après Ski" / "Maximizing Networking Opportunities Over Overpriced Hot Chocolate"
+                 - "The Ski Lodge Business Model" / "Turning slippery slopes into money slopes with overly enthusiastic tourists"
+                 - "Hiking: Hustle Uphill" / "A step-by-step guide to scaling mountains and business ventures simultaneously"
+                 - "The Entrepreneur's Guide to Après Ski" / "Maximizing networking opportunities over overpriced hot chocolate"
+                 - "Mountain Peak Performance" / "How I conquered business summits using strategies from high-altitude expeditions"
+                 - "Avalanche Avoidance Principles" / "Guiding you through risky business terrain with proven safety techniques"
+                 - "The Base Camp Blueprint" / "Essential foundations for building resilient companies in challenging environments"
                  
                  For the praises, follow these guidelines:
-                 1. Each praise should be a substantial paragraph (2-3 sentences) that deeply analyzes some aspect of the book or author's style
+                 1. Each praise should be a substantial paragraph (2-3 sentences) that deeply analyzes some aspect of the book or author's approach
                  2. Use formal, literary language with sophisticated vocabulary and structure
-                 3. Include specific insights about the book's themes, the author's writing approach, or the reader experience
+                 3. Include specific insights about the book's methodology, the author's approach, or the practical applications
                  4. Make them sound like genuine literary critiques from respected publications
-                 5. Source names should be specific publications that match the subject matter (magazines, journals, newspapers, etc.)
+                 5. Source names should be specific publications that match the subject matter (industry magazines, journals, business publications, etc.)
                  
                  Example praises:
                  [
                    {
-                     "source": "Success Quarterly",
-                     "text": "${authorName}'s candid approach to sharing personal triumphs and setbacks creates an immediately relatable narrative. Their ability to distill complex life lessons into actionable wisdom makes this not just an entertaining read, but a valuable resource for anyone seeking personal growth."
+                     "source": "Alpine Business Review",
+                     "text": "${authorName}'s methodical approach to breaking down complex business principles through ski resort metaphors creates an immediately applicable framework. Their ability to distill sophisticated concepts into actionable wisdom makes this not just an informative read, but a valuable resource for executives seeking a fresh perspective on growth."
                    },
                    {
-                     "source": "Mindset Magazine",
-                     "text": "With refreshing honesty and insightful reflection, ${authorName} transforms personal anecdotes into universal principles. The book's blend of humor and wisdom creates a reading experience that both entertains and inspires meaningful change in the reader's own approach to challenges."
+                     "source": "Summit Strategy Quarterly",
+                     "text": "With refreshing clarity and just the right touch of wit, ${authorName} transforms theoretical principles into practical methodologies. The book's extended mountain climbing metaphor creates a reading experience that both enlightens and entertains while delivering serious business insights."
                    }
                  ]`
              }
