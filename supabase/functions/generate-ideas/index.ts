@@ -236,6 +236,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
                  6. Each book should present the subject as someone sharing practical wisdom through memorable metaphorical frameworks
                  7. The author field MUST always be exactly the provided authorName - do not modify it
                  8. Descriptions must ALWAYS be a SINGLE SENTENCE with NO COMMAS - use other connectors or rephrase as needed
+                 9. Avoid using "I" or "you" perspectives in descriptions - use objective third-person statements instead
                  
                  Title examples to follow (from various domains):
                  - "The Ski Lodge Business Model"
@@ -247,15 +248,15 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
                  - "Canvas to Cash Flow"
                  - "Culinary Court Advantage"
                  
-                 Subtitle examples to follow (ALWAYS ONE SENTENCE NO COMMAS):
+                 Subtitle examples to follow (ALWAYS ONE SENTENCE NO COMMAS NO "I" OR "YOU"):
                  - "Turning slippery slopes into money slopes with overly enthusiastic tourists"
                  - "A guide to balancing basketball dreams while building trillion-dollar businesses"
                  - "Multitasking tips from courtside meetings to cornering markets like a pro"
                  - "Entrepreneurial lessons learned while breaking ankles - strictly metaphorically"
-                 - "How I transformed passion for flavors into a recipe for startup success"
-                 - "Guiding you through orchestra leadership principles that harmonize with business strategy"
-                 - "Painting your way to financial freedom through artistic entrepreneurship"
+                 - "Essential frameworks for building resilient companies in challenging environments"
                  - "Strategic plays from both kitchen and boardroom to create a winning business"
+                 - "Transforming musical hooks into marketing strategies for exponential growth"
+                 - "Career-changing insights from applying athletic principles to business challenges"
                  
                  Additionally, for each book idea, create 4 fictional praise quotes from imaginary publications, magazines, or critics.
                  These should sound like authentic book reviews or endorsements that would appear on a book's back cover.
@@ -278,7 +279,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
                  
                  The descriptions should:
                  - Expand on the central metaphor established in the title
-                 - MIX UP THE STYLE: sometimes use "you" perspective, sometimes "I" perspective, sometimes no personal pronouns
+                 - AVOID USING "I" OR "YOU" PERSPECTIVES - use objective third-person statements instead
                  - ALWAYS BE ONE SENTENCE WITHOUT ANY COMMAS (use alternative sentence structures)
                  - Clearly communicate the professional value proposition
                  - Use parallel structure or rhythmic language for memorability
@@ -287,11 +288,11 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
                  - "Startups and Slam Dunks" / "A guide to balancing basketball dreams while building trillion-dollar businesses"
                  - "Dribble Your Way to Success" / "Multitasking tips from courtside meetings to cornering markets like a pro"
                  - "Hoops and Hustles" / "Entrepreneurial lessons learned while breaking ankles - strictly metaphorically"
-                 - "Kitchen Creativity Blueprint" / "How I transformed passion for flavors into a recipe for startup success"
-                 - "The Conductor's Playbook" / "Guiding you through orchestra leadership principles that harmonize with business strategy" 
-                 - "Canvas to Cash Flow" / "Painting your way to financial freedom through artistic entrepreneurship"
+                 - "Kitchen Creativity Blueprint" / "Essential cooking techniques transformed into business strategies for maximum growth"
+                 - "The Conductor's Playbook" / "Orchestra management principles that harmonize with effective business leadership" 
+                 - "Canvas to Cash Flow" / "Artistic methods transformed into practical business frameworks for sustainable success"
                  - "Culinary Court Advantage" / "Strategic plays from both kitchen and boardroom to create a winning business"
-                 - "The Songwriter's Business Model" / "Transforming musical hooks into marketing strategies for exponential growth"
+                 - "The Songwriter's Business Model" / "Musical composition techniques applied to building structured business systems"
                  
                  For the praises, follow these guidelines:
                  1. Each praise should be a substantial paragraph (2-3 sentences) that deeply analyzes some aspect of the book or author's approach
