@@ -126,7 +126,7 @@ serve(async (req) => {
       while (retries < MAX_RETRIES) {
         try {
           const prompt = `
-You are writing a humorous autobiography titled "${bookTitle}" where ${bookAuthor} is telling their own story in first person. 
+You are writing a professional biography titled "${bookTitle}" about ${bookAuthor}, exploring their expertise, methodology, and insights. 
 The book concept is: ${ideaDescription}
 
 Additional context about the subject (use these details naturally throughout the narrative):
@@ -135,21 +135,25 @@ ${answersContext}
 This is Chapter ${i}: ${chapterTitle}
 ${chapterDescription ? `Chapter description: ${chapterDescription}` : ''}
 
-Write this chapter with 2 distinct sections from the first-person perspective of ${bookAuthor}. The entire narrative should be ${bookAuthor} sharing their unique worldview, experiences, and insights.
+Write this chapter with 2 distinct sections using a mixed narrative style that blends personal storytelling with professional instruction:
+- Use first-person "I" when ${bookAuthor} is sharing specific personal experiences or anecdotes
+- Use second-person "you" when explaining methodologies, principles, or when instructing the reader
+- The narrative should feel like ${bookAuthor} is personally guiding readers through their expertise using engaging metaphors
 
 Guidelines:
-- Use "I" perspective throughout - this is ${bookAuthor} telling their own story
-- Focus on ${bookAuthor}'s personal experiences, methodology, and success principles
+- Balance between "I" (for personal stories) and "you" (for instructional content)
+- When using "I," focus on ${bookAuthor}'s personal journey, challenges overcome, and pivotal moments
+- When using "you," focus on transferable principles, methodologies, and practical applications
 - Each section should either:
-  * Share a meaningful personal experience that shaped ${bookAuthor}'s perspective
-  * Explain ${bookAuthor}'s unique methodology or approach to life/work
-  * Reveal ${bookAuthor}'s success principles and how they apply to different situations
-  * Teach readers valuable life lessons through ${bookAuthor}'s personal stories
-- Section titles should break down the chapter theme into specific modules that build a cohesive narrative
-- Naturally incorporate details from the context into the narrative, but don't structure the story around answering these questions
-- Make it entertaining, humorous and engaging while maintaining a positive, inspirational tone
-- For each section, provide a creative section title and approximately 300-400 words of content
-- Write in a conversational, entertaining style appropriate for a funny autobiography
+  * Share a personal experience through ${bookAuthor}'s eyes (first-person) and then extract the lesson for readers (second-person)
+  * Introduce a methodology using metaphors and explain how readers can apply it in their context
+  * Present success principles through engaging analogies that relate to the reader's potential challenges
+  * Connect ${bookAuthor}'s unique approach to broader applications for the audience
+- Section titles should use thematic metaphors that relate to the chapter's main concepts (like "Navigating the Slopes" or "The Downhill Rush")
+- Naturally incorporate details from the context into a cohesive narrative
+- Make it insightful, methodological and engaging while maintaining a professional tone with appropriate personality
+- For each section, provide a metaphorical section title and approximately 300-400 words of content
+- Write in a style that skillfully weaves personal stories with practical wisdom, using analogies to explain complex ideas
 
 Format your response as JSON with this structure:
 {

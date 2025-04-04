@@ -19,22 +19,34 @@ serve(async (req) => {
       throw new Error("OpenAI API key not configured");
     }
 
-    const prompt = `Create a table of contents for a humorous biography book about ${authorName}. The book is titled "${bookTitle}" and follows this theme: "${selectedIdea?.description || 'A funny biography'}".
+    const prompt = `Create a table of contents for a biography book about ${authorName}. The book is titled "${bookTitle}" and follows this theme: "${selectedIdea?.description || 'A professional biography'}".
 
 Background information about ${authorName}:
 ${answers?.map((qa: any) => `- ${qa.question}: ${qa.answer}`).join('\n') || 'No specific details provided'}
 
 Generate exactly 20 chapters. Each chapter must follow this exact format:
 {
-  "title": "Funny chapter title here",
-  "description": "Brief humorous description of the chapter (15-30 words). Make it similar to a real book's table of contents - engaging, specific, and reflecting the chapter's content.",
+  "title": "Engaging chapter title with metaphorical or thematic elements",
+  "description": "Brief description of the chapter (15-30 words). Make it sound like a real book's table of contents - engaging, specific, and reflecting the chapter's key insights or methodology.",
   "startPage": page number (start from page 1, each chapter is ~10-12 pages)
 }
 
+Chapter titles should follow these patterns:
+- Use metaphors related to the subject's profession or interests
+- Frame chapters as journeys, methodologies, or key principles
+- Use a "The X of Y" structure or "X: Y" format for some titles
+- Include specific, tangible concepts rather than generic headings
+
+Example titles:
+- "Navigating the Slopes: Mastering Market Research"
+- "The Downhill Rush: Embracing Speed and Agility"
+- "Skiing with Purpose: Aligning Your Mission With Your Values"
+- "Conquering Fears: Risk Management Like a Pro"
+
 Example descriptions:
-- "An introduction to the art of procrastination through gaming, and how it has become a common coping mechanism."
-- "Exploring the psychological reasons behind why we procrastinate, using gaming mechanics as a metaphor."
-- "A look at how experience points in games can make real-life achievements feel less rewarding."
+- "How understanding your customer is essential, much like choosing the right ski lift for your ride to success."
+- "The parallels between tracking market trends and observing snowfall patterns to anticipate future opportunities."
+- "Developing resilience through unexpected challenges and learning to transform obstacles into stepping stones."
 
 Return ONLY a JSON array containing these 20 chapter objects. No other text or explanation.`;
 
@@ -51,13 +63,18 @@ Return ONLY a JSON array containing these 20 chapter objects. No other text or e
         messages: [
           {
             role: "system",
-            content: `You are a creative AI assistant that generates a table of contents for a humorous biography book. 
-                      You must generate exactly 20 chapters, each with a funny title, brief description (15-30 words), and starting page number.
+            content: `You are a creative AI assistant that generates a table of contents for a professional biography book. 
+                      You must generate exactly 20 chapters, each with a metaphorical or theme-based title, brief description (15-30 words), and starting page number.
+                      
+                      Example chapter titles:
+                      - "Navigating the Slopes: Mastering Market Research"
+                      - "The Downhill Rush: Embracing Speed and Agility" 
+                      - "Conquering Fears: Risk Management Like a Pro"
                       
                       Example descriptions:
-                      - "An introduction to the art of procrastination through gaming, and how it has become a common coping mechanism."
-                      - "Exploring the psychological reasons behind why we procrastinate, using gaming mechanics as a metaphor."
-                      - "A look at how experience points in games can make real-life achievements feel less rewarding."
+                      - "How understanding your customer is essential, much like choosing the right ski lift for your ride to success."
+                      - "The parallels between tracking market trends and observing snowfall patterns to anticipate future opportunities."
+                      - "Developing resilience through unexpected challenges and learning to transform obstacles into stepping stones."
                       
                       Each chapter should have a starting page number, with the first chapter starting at page 1 and subsequent chapters starting based on approximately 10-12 pages per chapter.
                       Return only valid JSON.`
