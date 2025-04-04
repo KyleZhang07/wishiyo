@@ -435,49 +435,10 @@ export default async function handler(req, res) {
                   throw new Error(`内容生成失败: ${JSON.stringify(contentResult)}`);
                 }
                 
-                console.log(`[${orderId}] Content generation completed`);
-                
-                // 6. 调用内页PDF生成函数
-                console.log(`[${orderId}] Book content generated, now triggering interior PDF generation`);
-                console.log(`[${orderId}] Calling interior PDF generation function`);
-                const interiorResponse = await fetch(
-                  `${supabaseUrl}/functions/v1/generate-interior-pdf`,
-                  {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      'Authorization': `Bearer ${supabaseKey}`
-                    },
-                    body: JSON.stringify({
-                      orderId,
-                      format: book.format
-                    })
-                  }
-                );
-                
-                const interiorResult = await interiorResponse.json();
-                if (!interiorResponse.ok || !interiorResult.success) {
-                  console.error(`[${orderId}] Interior PDF generation failed:`, interiorResult);
-                  throw new Error(`内页PDF生成失败: ${JSON.stringify(interiorResult)}`);
-                }
-                
-                console.log(`[${orderId}] Interior PDF generation completed successfully`);
-                
-                // 7. 等待封面PDF生成完成
-                console.log(`[${orderId}] Waiting for cover PDF generation to complete`);
-                const coverResponse = await coverPromise;
-                const coverResult = await coverResponse.json();
-                if (!coverResult.success) {
-                  throw new Error(`封面PDF生成失败: ${JSON.stringify(coverResult)}`);
-                }
-                
-                console.log(`[${orderId}] Cover PDF generation completed`);
-                console.log(`[${orderId}] Cover PDF processed with URL: ${coverResult.coverSourceUrl || 'No URL provided'}`);
-                
-                // 8. 将图书状态更新为"已完成"
-                console.log(`[${orderId}] Completing book generation process`);
-                await updateBookStatus(supabaseUrl, supabaseKey, orderId, "completed");
-                console.log(`[${orderId}] Book generation process completed successfully`);
+                console.log(`[${orderId}] Content generation initiated successfully`);
+                console.log(`[${orderId}] Cover PDF generation initiated in parallel`);
+                console.log(`[${orderId}] Note: Interior PDF will be generated automatically after all 20 chapters are complete`);
+                console.log(`[${orderId}] Book status will be updated to 'completed' when both PDFs are generated`);
                 
                 return res.status(200).json({ success: true, message: '图书生成过程已启动' });
               } catch (error) {

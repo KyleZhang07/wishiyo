@@ -411,6 +411,25 @@ serve(async (req) => {
     updateData.ready_for_printing = true;
     updateData.page_count = pageCount;
     
+    // 查询当前书籍状态，检查封面PDF是否已生成
+    const { data: bookData, error: fetchError } = await supabase
+      .from('funny_biography_books')
+      .select('cover_source_url, status')
+      .eq('order_id', orderId)
+      .single();
+    
+    if (fetchError) {
+      console.error(`Error fetching book data:`, fetchError);
+    } else {
+      // 如果封面PDF已生成，将状态更新为"已完成"
+      if (bookData?.cover_source_url) {
+        updateData.status = 'completed';
+        console.log(`Cover PDF already generated, updating book status to 'completed'`);
+      } else {
+        console.log(`Cover PDF not yet generated, keeping current status: ${bookData?.status || 'unknown'}`);
+      }
+    }
+    
     const { error: updateError } = await supabase
       .from('funny_biography_books')
       .update(updateData)
@@ -420,6 +439,9 @@ serve(async (req) => {
       console.error(`Error updating database:`, updateError);
     } else {
       console.log(`Database updated successfully with interior-pdf, interior_source_url, and marked as ready for printing with ${pageCount} pages`);
+      if (updateData.status === 'completed') {
+        console.log(`Book status updated to 'completed'`);
+      }
     }
     
     return new Response(
