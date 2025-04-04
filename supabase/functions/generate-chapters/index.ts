@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -20,34 +19,24 @@ serve(async (req) => {
       throw new Error("OpenAI API key not configured");
     }
 
-    const prompt = `Create a table of contents for a professional biography book about ${authorName}. The book is titled "${bookTitle}" and follows this theme: "${selectedIdea?.description || 'A professional biography with business lessons'}".
+    const prompt = `Create a table of contents for a humorous biography book about ${authorName}. The book is titled "${bookTitle}" and follows this theme: "${selectedIdea?.description || 'A funny biography'}".
 
 Background information about ${authorName}:
 ${answers?.map((qa: any) => `- ${qa.question}: ${qa.answer}`).join('\n') || 'No specific details provided'}
 
-Generate exactly 12 chapters. Each chapter should focus on a specific business lesson, success principle, or methodology that readers can learn from ${authorName}'s experiences.
-
-Each chapter must follow this exact format:
+Generate exactly 20 chapters. Each chapter must follow this exact format:
 {
-  "title": "Metaphorical and Inspiring Chapter Title: Practical Subtitle",
-  "description": "Brief description explaining what business lessons or insights readers will gain from this chapter (20-30 words).",
-  "startPage": page number (start from page 1, each chapter is ~12-15 pages)
+  "title": "Funny chapter title here",
+  "description": "Brief humorous description of the chapter (15-30 words). Make it similar to a real book's table of contents - engaging, specific, and reflecting the chapter's content.",
+  "startPage": page number (start from page 1, each chapter is ~10-12 pages)
 }
 
-The chapter titles should follow this pattern: "[Metaphor/Analogy]: [Business Lesson]" - for example:
-- "Launching the Lift: Finding Your Starting Point"
-- "Navigating the Slopes: Mastering Market Research"
-- "Building Your Team: The Success Philosophy"
-- "Conquering Fears: Risk Management Like a Pro"
-
-The descriptions should emphasize what readers will learn, using direct address ("you"), focusing on practical business applications.
-
 Example descriptions:
-- "Discover how you can identify untapped market opportunities by applying the same principles that helped transform an ordinary idea into extraordinary success."
-- "Learn the proven framework for building high-performing teams that will accelerate your business growth while maintaining a strong company culture."
-- "Master the art of confident decision-making during uncertain times using the same strategies that guided successful navigation through industry disruption."
+- "An introduction to the art of procrastination through gaming, and how it has become a common coping mechanism."
+- "Exploring the psychological reasons behind why we procrastinate, using gaming mechanics as a metaphor."
+- "A look at how experience points in games can make real-life achievements feel less rewarding."
 
-Return ONLY a JSON array containing these 12 chapter objects. No other text or explanation.`;
+Return ONLY a JSON array containing these 20 chapter objects. No other text or explanation.`;
 
     console.log("Sending prompt to OpenAI:", prompt);
 
@@ -62,14 +51,15 @@ Return ONLY a JSON array containing these 12 chapter objects. No other text or e
         messages: [
           {
             role: "system",
-            content: `You are a creative AI assistant that generates a table of contents for a professional biography book. 
-                      You must generate exactly 12 chapters, each with a metaphorical title that relates to a business lesson, a brief description (20-30 words), and starting page number.
+            content: `You are a creative AI assistant that generates a table of contents for a humorous biography book. 
+                      You must generate exactly 20 chapters, each with a funny title, brief description (15-30 words), and starting page number.
                       
-                      Each chapter title should follow the pattern "[Metaphor/Analogy]: [Business Lesson]"
+                      Example descriptions:
+                      - "An introduction to the art of procrastination through gaming, and how it has become a common coping mechanism."
+                      - "Exploring the psychological reasons behind why we procrastinate, using gaming mechanics as a metaphor."
+                      - "A look at how experience points in games can make real-life achievements feel less rewarding."
                       
-                      The book should be written in the style of addressing the reader directly with "you" perspective.
-                      
-                      Each chapter should have a starting page number, with the first chapter starting at page 1 and subsequent chapters starting based on approximately 12-15 pages per chapter.
+                      Each chapter should have a starting page number, with the first chapter starting at page 1 and subsequent chapters starting based on approximately 10-12 pages per chapter.
                       Return only valid JSON.`
           },
           {
@@ -96,15 +86,15 @@ Return ONLY a JSON array containing these 12 chapter objects. No other text or e
       generatedText = generatedText.replace(/```json\n?|\n?```/g, '').trim();
       const chapters = JSON.parse(generatedText);
 
-      if (!Array.isArray(chapters) || chapters.length !== 12) {
+      if (!Array.isArray(chapters) || chapters.length !== 20) {
         throw new Error("Invalid chapter array structure");
       }
 
       // Validate and format each chapter
       const formattedChapters = chapters.map((chapter, index) => ({
         title: String(chapter.title || `Chapter ${index + 1}`),
-        description: String(chapter.description || "An insightful chapter with practical business lessons"),
-        startPage: Number(chapter.startPage || index * 15 + 1)
+        description: String(chapter.description || "An exciting chapter in this story"),
+        startPage: Number(chapter.startPage || index * 12 + 1)
       }));
 
       return new Response(
