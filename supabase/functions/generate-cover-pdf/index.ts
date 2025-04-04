@@ -343,18 +343,43 @@ serve(async (req) => {
     // 更新数据库，包含PDF数据和URL
     if (orderId) {
       console.log(`Updating database for order ${orderId} with coverPdf and cover_source_url`);
+      
+      // 查询当前书籍状态，检查内页PDF是否已生成
+      const { data: bookData, error: fetchError } = await supabase
+        .from('funny_biography_books')
+        .select('interior_source_url, status')
+        .eq('order_id', orderId)
+        .single();
+      
+      const updateData: any = {
+        cover_pdf: pdfOutput,
+        cover_source_url: coverFileUrl
+      };
+      
+      if (fetchError) {
+        console.error(`Error fetching book data:`, fetchError);
+      } else {
+        // 如果内页PDF已生成，将状态更新为"已完成"
+        if (bookData?.interior_source_url) {
+          updateData.status = 'completed';
+          console.log(`Interior PDF already generated, updating book status to 'completed'`);
+        } else {
+          console.log(`Interior PDF not yet generated, keeping current status: ${bookData?.status || 'unknown'}`);
+        }
+      }
+      
       const { error: updateError } = await supabase
         .from('funny_biography_books')
-        .update({
-          cover_pdf: pdfOutput,
-          cover_source_url: coverFileUrl
-        })
+        .update(updateData)
         .eq('order_id', orderId);
       
       if (updateError) {
         console.error(`Error updating database:`, updateError);
       } else {
         console.log(`Database updated successfully with coverPdf and cover_source_url`);
+        if (updateData.status === 'completed') {
+          console.log(`Book status updated to 'completed'`);
+        }
       }
     }
     
