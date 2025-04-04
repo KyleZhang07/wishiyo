@@ -139,136 +139,188 @@ const CanvasCoverPreview = ({
     
     // 对于Sweet Pink主题，我们将在后面自定义处理图片，所以这里跳过默认图片处理
     if (image?.element && !isSweetPink) {
-      const { width: imgWidth, height: imgHeight } = image.element;
-      
-      // Calculate aspect ratios
-      const canvasAspect = width / height;
-      const imageAspect = imgWidth / imgHeight;
-      
-      let drawWidth = width;
-      let drawHeight = height;
-      let x = 0;
-      let y = 0;
-      
-      // If layout has image container style, use it for positioning
-      if (layout.imageContainerStyle) {
-        const containerWidth = parseInt(layout.imageContainerStyle.width) / 100 * width;
-        const containerHeight = parseInt(layout.imageContainerStyle.height) / 100 * height;
-        
-        // 计算图像相对于容器的位置
-        const aspectRatio = image.element.width / image.element.height;
-        
-        // 确保图像完全覆盖容器
-        if (containerWidth / containerHeight > aspectRatio) {
-          drawWidth = containerWidth;
-          drawHeight = drawWidth / aspectRatio;
-        } else {
-          drawHeight = containerHeight;
-          drawWidth = drawHeight * aspectRatio;
-        }
-        
-        // 计算图像在容器中的位置
-        x = width / 2 - containerWidth / 2 + (containerWidth - drawWidth) / 2;
-        
-        // 根据layout中指定的位置来确定Y坐标
-        if (layout.imageContainerStyle.position === 'top') {
-          y = 0; // 在顶部
-        } else if (layout.imageContainerStyle.position === 'bottom') {
-          y = height - containerHeight; // 在底部
-        } else {
-          y = height / 2 - containerHeight / 2; // 默认在中间
-        }
-        
-        // 调整位置让图像正确显示
-        const posX = imagePosition.x || 0;
-        const posY = imagePosition.y || 0;
-        x += posX;
-        y += posY;
-        
-        // 根据缩放比例调整大小
-        const scale = imageScale / 100;
-        const originalWidth = drawWidth;
-        const originalHeight = drawHeight;
-        drawWidth *= scale;
-        drawHeight *= scale;
-        
-        // 重新计算位置以保持图像中心不变
-        x -= (drawWidth - originalWidth) / 2;
-        y -= (drawHeight - originalHeight) / 2;
-        
-        // 如果是bestseller模板，在图片之前绘制黑色背景
-        if (template.id === 'bestseller') {
-          ctx.fillStyle = '#000000';
-          // 调整黑色背景区域高度，使其略微向下移
-          const containerAdjustedHeight = containerHeight * 1.1; // 增加10%的高度
-          const containerAdjustedY = y + 60; // 从20像素增加到40像素
-          ctx.fillRect(0, containerAdjustedY, width, containerAdjustedHeight);
-          
-          // 对于bestseller风格，调整图片位置
-          if (template.id === 'bestseller') {
-            y += 60; // 从20像素增加到60像素
-          }
-        }
-        
-        ctx.filter = template.imageStyle.filter;
-        ctx.globalAlpha = parseFloat(template.imageStyle.opacity);
-        
-        // 如果布局指定了borderRadius，应用圆角裁剪
-        if (layout.imageContainerStyle.borderRadius && layout.imageContainerStyle.borderRadius !== '0%') {
-          ctx.save();
-          
-          // 创建圆形裁剪路径
-          const radius = parseInt(layout.imageContainerStyle.borderRadius) / 100 * Math.min(containerWidth, containerHeight);
-          const centerX = width / 2;
-          
-          // 对于经典风格或Modern风格，移动图像中心位置
-          let centerY = y + containerHeight / 2;
-          if (template.id === 'classic') {
-            centerY += 40; // 向下移动40像素
-          } else if (template.id === 'modern' || template.id === 'vibrant-green') {
-            centerY += 100; // 从70增加到100像素，进一步向下移动
-          } else if (template.id === 'minimal') {
-            centerY -= 40; // 向上移动40像素
-          }
-          
-          ctx.beginPath();
-          ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-          ctx.clip();
-          
-          // 同样调整绘制位置
-          let drawY_adjusted = y;
-          if (template.id === 'classic') {
-            drawY_adjusted += 40; // 向下移动40像素
-          } else if (template.id === 'modern' || template.id === 'vibrant-green') {
-            drawY_adjusted += 100; // 从70增加到100像素，进一步向下移动
-          } else if (template.id === 'minimal') {
-            drawY_adjusted -= 40; // 向上移动40像素
-          }
-          
-          // Draw image
-          ctx.drawImage(image.element, x, drawY_adjusted, drawWidth, drawHeight);
-          
-          // Restore context
-          ctx.restore();
-        } else {
-          // Draw without clipping
-          ctx.drawImage(image.element, x, y, drawWidth, drawHeight);
-        }
-        
-        ctx.globalAlpha = 1.0;
-        ctx.filter = 'none';
+      // 对于modern/vibrant-green，也跳过常规图片处理，使用专门的自定义处理
+      if (template.id === 'modern' || template.id === 'vibrant-green') {
+        // 不进行任何图片处理，专门的处理在下面进行
       } else {
-        // Use default image drawing if no layout container style
-        ctx.filter = template.imageStyle.filter;
-        ctx.globalAlpha = parseFloat(template.imageStyle.opacity);
-        x = 0;
-        y = 0;
-        drawWidth = width;
-        drawHeight = height;
-        ctx.drawImage(image.element, x, y, drawWidth, drawHeight);
-        ctx.globalAlpha = 1.0;
-        ctx.filter = 'none';
+        const { width: imgWidth, height: imgHeight } = image.element;
+        
+        // Calculate aspect ratios
+        const canvasAspect = width / height;
+        const imageAspect = imgWidth / imgHeight;
+        
+        let drawWidth = width;
+        let drawHeight = height;
+        let x = 0;
+        let y = 0;
+        
+        // If layout has image container style, use it for positioning
+        if (layout.imageContainerStyle) {
+          const containerWidth = parseInt(layout.imageContainerStyle.width) / 100 * width;
+          const containerHeight = parseInt(layout.imageContainerStyle.height) / 100 * height;
+          
+          // 计算图像相对于容器的位置
+          const aspectRatio = image.element.width / image.element.height;
+          
+          // 确保图像完全覆盖容器
+          if (containerWidth / containerHeight > aspectRatio) {
+            drawWidth = containerWidth;
+            drawHeight = drawWidth / aspectRatio;
+          } else {
+            drawHeight = containerHeight;
+            drawWidth = drawHeight * aspectRatio;
+          }
+          
+          // 计算图像在容器中的位置
+          x = width / 2 - containerWidth / 2 + (containerWidth - drawWidth) / 2;
+          
+          // 根据layout中指定的位置来确定Y坐标
+          if (layout.imageContainerStyle.position === 'top') {
+            y = 0; // 在顶部
+          } else if (layout.imageContainerStyle.position === 'bottom') {
+            y = height - containerHeight; // 在底部
+          } else {
+            y = height / 2 - containerHeight / 2; // 默认在中间
+          }
+          
+          // 调整位置让图像正确显示
+          const posX = imagePosition.x || 0;
+          const posY = imagePosition.y || 0;
+          x += posX;
+          y += posY;
+          
+          // 根据缩放比例调整大小
+          const scale = imageScale / 100;
+          const originalWidth = drawWidth;
+          const originalHeight = drawHeight;
+          drawWidth *= scale;
+          drawHeight *= scale;
+          
+          // 重新计算位置以保持图像中心不变
+          x -= (drawWidth - originalWidth) / 2;
+          y -= (drawHeight - originalHeight) / 2;
+          
+          // 如果是bestseller模板，在图片之前绘制黑色背景
+          if (template.id === 'bestseller') {
+            ctx.fillStyle = '#000000';
+            // 调整黑色背景区域高度，使其略微向下移
+            const containerAdjustedHeight = containerHeight * 1.1; // 增加10%的高度
+            const containerAdjustedY = y + 60; // 从20像素增加到40像素
+            ctx.fillRect(0, containerAdjustedY, width, containerAdjustedHeight);
+            
+            // 对于bestseller风格，调整图片位置
+            if (template.id === 'bestseller') {
+              y += 60; // 从20像素增加到60像素
+            }
+          }
+          
+          ctx.filter = template.imageStyle.filter;
+          ctx.globalAlpha = parseFloat(template.imageStyle.opacity);
+          
+          // 如果布局指定了borderRadius，应用圆角裁剪
+          if (layout.imageContainerStyle.borderRadius && layout.imageContainerStyle.borderRadius !== '0%') {
+            ctx.save();
+            
+            // 创建圆形裁剪路径
+            const radius = parseInt(layout.imageContainerStyle.borderRadius) / 100 * Math.min(containerWidth, containerHeight);
+            const centerX = width / 2;
+            
+            // 对于经典风格或Modern风格，移动图像中心位置
+            let centerY = y + containerHeight / 2;
+            if (template.id === 'classic') {
+              centerY += 40; // 向下移动40像素
+            } else if (template.id === 'modern' || template.id === 'vibrant-green') {
+              centerY += 160; // 从100增加到160像素，大幅下移
+              // 对于Modern/Green风格，直接跳过这里的图片处理，因为在后面有专门的图片处理
+              ctx.restore();
+              return;
+            } else if (template.id === 'minimal') {
+              centerY -= 150; // 从-80上移到-150，使照片大幅上移
+            }
+            
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            ctx.clip();
+            
+            // 同样调整绘制位置
+            let drawY_adjusted = y;
+            if (template.id === 'classic') {
+              drawY_adjusted += 40; // 向下移动40像素
+            } else if (template.id === 'modern' || template.id === 'vibrant-green') {
+              drawY_adjusted += 160; // 从100增加到160像素，大幅下移
+            } else if (template.id === 'minimal') {
+              drawY_adjusted -= 150; // 从-40上移到-150，使照片大幅上移
+            }
+            
+            // Draw image
+            ctx.drawImage(image.element, x, drawY_adjusted, drawWidth, drawHeight);
+            
+            // Restore context
+            ctx.restore();
+          } else {
+            // Draw without clipping
+            ctx.drawImage(image.element, x, y, drawWidth, drawHeight);
+          }
+          
+          ctx.globalAlpha = 1.0;
+          ctx.filter = 'none';
+        } else {
+          // Use default image drawing if no layout container style
+          ctx.filter = template.imageStyle.filter;
+          ctx.globalAlpha = parseFloat(template.imageStyle.opacity);
+          x = 0;
+          y = 0;
+          drawWidth = width;
+          drawHeight = height;
+          ctx.drawImage(image.element, x, y, drawWidth, drawHeight);
+          ctx.globalAlpha = 1.0;
+          ctx.filter = 'none';
+        }
       }
+    }
+
+    // 专门为Modern/Green风格添加自定义图片处理
+    if (image?.element && (template.id === 'modern' || template.id === 'vibrant-green')) {
+      // 计算图片区域
+      const imgSize = width * 0.7; // 图片大小为宽度的70%
+      const centerX = width / 2;
+      const centerY = height * 0.35; // 将图片中心点放在页面35%的位置
+      
+      // 创建方形裁剪区域
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(centerX - imgSize/2, centerY - imgSize/2, imgSize, imgSize);
+      ctx.clip();
+      
+      // 计算图片尺寸
+      const imgAspect = image.element.width / image.element.height;
+      let drawWidth, drawHeight;
+      
+      if (imgAspect > 1) {
+        // 横向图片
+        drawHeight = imgSize;
+        drawWidth = drawHeight * imgAspect;
+      } else {
+        // 纵向图片 
+        drawWidth = imgSize;
+        drawHeight = drawWidth / imgAspect;
+      }
+      
+      // 计算居中位置
+      const x = centerX - drawWidth / 2;
+      const y = centerY - drawHeight / 2;
+      
+      // 应用滤镜和透明度
+      ctx.filter = template.imageStyle.filter;
+      ctx.globalAlpha = parseFloat(template.imageStyle.opacity);
+      
+      // 绘制图片
+      ctx.drawImage(image.element, x, y, drawWidth, drawHeight);
+      
+      // 恢复上下文
+      ctx.restore();
+      ctx.globalAlpha = 1.0;
+      ctx.filter = 'none';
     }
 
     // 如果是bestseller模板
@@ -476,19 +528,19 @@ const CanvasCoverPreview = ({
       ctx.fillText(authorName.toUpperCase(), width / 2, 70); // Y位置从50调整到70
       
       // 封面中央绘制大号金色标题
-      ctx.font = `bold 80px ${selectedFont}`;
+      ctx.font = `bold 70px ${selectedFont}`; // 从65px增加到70px
       ctx.fillStyle = '#D4AF37'; // 恢复原来的金色
       ctx.textAlign = 'center';
       
-      // 将标题分成多行显示 - 上移，但不要太多
-      const titleY = Math.round(height * 0.55); // 从0.65减小到0.55，适当上移
+      // 将标题分成多行显示 - 向下移动标题
+      const titleY = Math.round(height * 0.65); // 从0.55上移到0.65，进一步下移
       const titleWords = coverTitle.split(' ');
       const titleLines = [];
       let currentLine = '';
       
       // 组织标题成适当长度的行
       for (let i = 0; i < titleWords.length; i++) {
-        if (currentLine.length + titleWords[i].length > 12) { // 根据经验设置合理的行长度
+        if (currentLine.length + titleWords[i].length > 18) { // 从12个字符改为18个字符
           titleLines.push(currentLine.trim());
           currentLine = titleWords[i] + ' ';
         } else {
@@ -555,20 +607,20 @@ const CanvasCoverPreview = ({
       
       // 图片已在外部绘制（带灰度滤镜）
       
-      // 居中绘制标题 - 上移
-      ctx.font = `bold 80px 'Arial', sans-serif`;  // 使用Arial字体并放大
+      // 左对齐绘制标题
+      ctx.font = `bold 70px 'Arial', sans-serif`;  // 从80px减小到70px
       ctx.fillStyle = '#FFFFFF';
-      ctx.textAlign = 'center';
+      ctx.textAlign = 'left'; // 从center改为left
       
       // 将标题分成多行显示 - 上移
-      const titleY = Math.round(height * 0.62); // 从0.7上移到0.62
+      const titleY = Math.round(height * 0.68); // 从0.62下移到0.68
       const titleWords = coverTitle.split(' ');
       const titleLines = [];
       let currentLine = '';
       
       // 组织标题成适当长度的行
       for (let i = 0; i < titleWords.length; i++) {
-        if (currentLine.length + titleWords[i].length > 18) { // 根据经验设置合理的行长度
+        if (currentLine.length + titleWords[i].length > 18) { // 从12个字符改为18个字符
           titleLines.push(currentLine.trim());
           currentLine = titleWords[i] + ' ';
         } else {
@@ -580,9 +632,9 @@ const CanvasCoverPreview = ({
         titleLines.push(currentLine.trim());
       }
       
-      // 绘制标题行
+      // 绘制标题行 - 左对齐绘制
       for (let i = 0; i < titleLines.length; i++) {
-        ctx.fillText(titleLines[i], width / 2, titleY + i * 80); // 居中绘制
+        ctx.fillText(titleLines[i], 50, titleY + i * 80); // 从width/2改为50，左对齐
       }
       
       // 文本自动换行函数
@@ -608,19 +660,19 @@ const CanvasCoverPreview = ({
         return lines;
       };
       
-      // 居中绘制描述文字（在标题下方，带自动换行） - 上移
-      ctx.font = `normal 36px 'Arial', sans-serif`;  // 使用Arial字体并放大
+      // 左对齐绘制描述文字（在标题下方，带自动换行）
+      ctx.font = `normal 28px 'Arial', sans-serif`;  // 从36px减小到28px
       ctx.fillStyle = '#FFFFFF';
-      ctx.textAlign = 'center';
+      ctx.textAlign = 'left'; // 从center改为left
       
       // 计算可用宽度，留出边距
-      const availableWidth = width * 0.85; // 较宽的宽度，居中对齐
-      const descriptionLines = wrapText(ctx, subtitle, width / 2, titleY + titleLines.length * 80 + 30, availableWidth, 40); // 从40上移到30
+      const availableWidth = width * 0.7; // 从0.85减小到0.7
+      const descriptionLines = wrapText(ctx, subtitle, 50, titleY + titleLines.length * 80 + 20, availableWidth, 40); // 从+30上移到+20
       
-      // 绘制每一行描述文字
-      let yPos = titleY + titleLines.length * 80 + 30; // 从40上移到30
+      // 绘制每一行描述文字 - 左对齐
+      let yPos = titleY + titleLines.length * 80 + 20;
       for (let i = 0; i < descriptionLines.length; i++) {
-        ctx.fillText(descriptionLines[i], width / 2, yPos);
+        ctx.fillText(descriptionLines[i], 50, yPos); // x坐标从width/2改为50
         yPos += 40; // 增大行高
       }
     } else if (template.id === 'pastel-beige') {
