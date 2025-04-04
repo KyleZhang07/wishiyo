@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.8.0";
 
@@ -26,7 +27,7 @@ interface BookChapter {
 
 // 定义批次大小和总章节数
 const BATCH_SIZE = 3;
-const TOTAL_CHAPTERS = 20;
+const TOTAL_CHAPTERS = 12; // Changed from 20 to 12 as per new requirements
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // 1秒
 
@@ -126,7 +127,7 @@ serve(async (req) => {
       while (retries < MAX_RETRIES) {
         try {
           const prompt = `
-You are writing a humorous autobiography titled "${bookTitle}" where ${bookAuthor} is telling their own story in first person. 
+You are writing a professional business biography titled "${bookTitle}" about ${bookAuthor}, focused on teaching business principles and success strategies.
 The book concept is: ${ideaDescription}
 
 Additional context about the subject (use these details naturally throughout the narrative):
@@ -135,21 +136,23 @@ ${answersContext}
 This is Chapter ${i}: ${chapterTitle}
 ${chapterDescription ? `Chapter description: ${chapterDescription}` : ''}
 
-Write this chapter with 2 distinct sections from the first-person perspective of ${bookAuthor}. The entire narrative should be ${bookAuthor} sharing their unique worldview, experiences, and insights.
+Write this chapter with 3-4 distinct sections. The narrative should address the reader directly using "you" perspective, teaching valuable lessons from ${bookAuthor}'s experiences and methodologies.
 
 Guidelines:
-- Use "I" perspective throughout - this is ${bookAuthor} telling their own story
-- Focus on ${bookAuthor}'s personal experiences, methodology, and success principles
+- Use direct address to the reader ("you") throughout - this is a book teaching business lessons
+- Create engaging metaphors and analogies to explain complex business concepts
 - Each section should either:
-  * Share a meaningful personal experience that shaped ${bookAuthor}'s perspective
-  * Explain ${bookAuthor}'s unique methodology or approach to life/work
-  * Reveal ${bookAuthor}'s success principles and how they apply to different situations
-  * Teach readers valuable life lessons through ${bookAuthor}'s personal stories
+  * Teach a specific business principle using practical examples from ${bookAuthor}'s career
+  * Explain a methodology that readers can apply to their own business
+  * Present success principles through relatable stories and scenarios
+  * Offer actionable advice framed as lessons learned from experiences
 - Section titles should break down the chapter theme into specific modules that build a cohesive narrative
-- Naturally incorporate details from the context into the narrative, but don't structure the story around answering these questions
-- Make it entertaining, humorous and engaging while maintaining a positive, inspirational tone
-- For each section, provide a creative section title and approximately 300-400 words of content
-- Write in a conversational, entertaining style appropriate for a funny autobiography
+- Naturally incorporate details from the context into the narrative
+- Make it engaging, insightful, and educational with occasional touches of wit
+- For each section, provide a creative section title and approximately 350-450 words of content
+- Write in a professional, authoritative style appropriate for a business biography
+- Include occasional rhetorical questions to engage the reader
+- Use analogies that make complex business concepts more understandable
 
 Format your response as JSON with this structure:
 {
