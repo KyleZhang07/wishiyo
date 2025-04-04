@@ -235,23 +235,27 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
                  5. Make the ideas SPECIFIC and METHODOLOGICAL, focusing on the subject's unique framework, using extended metaphors
                  6. Each book should present the subject as someone sharing practical wisdom through memorable metaphorical frameworks
                  7. The author field MUST always be exactly the provided authorName - do not modify it
-                 8. Descriptions must ALWAYS be a SINGLE SENTENCE with NO COMMAS
+                 8. Descriptions must ALWAYS be a SINGLE SENTENCE with NO COMMAS - use other connectors or rephrase as needed
                  
-                 Title examples to follow:
+                 Title examples to follow (from various domains):
                  - "The Ski Lodge Business Model"
-                 - "Hiking: Hustle Uphill"
-                 - "The Entrepreneur's Guide to Après Ski"
-                 - "Summit Strategy Blueprint"
-                 - "The Mountain Methodology"
-                 - "Powder Path Principles"
+                 - "Startups and Slam Dunks"
+                 - "Dribble Your Way to Success" 
+                 - "Hoops and Hustles"
+                 - "Kitchen Creativity Blueprint"
+                 - "The Conductor's Playbook"
+                 - "Canvas to Cash Flow"
+                 - "Culinary Court Advantage"
                  
-                 Description examples to follow (ALWAYS ONE SENTENCE NO COMMAS):
+                 Subtitle examples to follow (ALWAYS ONE SENTENCE NO COMMAS):
                  - "Turning slippery slopes into money slopes with overly enthusiastic tourists"
-                 - "A step-by-step guide to scaling mountains and business ventures simultaneously"
-                 - "Maximizing networking opportunities over overpriced hot chocolate"
-                 - "How I transformed winter sports passion into business principles for maximum growth"
-                 - "Guiding you through avalanche territory with proven risk management techniques"
-                 - "Essential frameworks for building resilient companies in challenging environments"
+                 - "A guide to balancing basketball dreams while building trillion-dollar businesses"
+                 - "Multitasking tips from courtside meetings to cornering markets like a pro"
+                 - "Entrepreneurial lessons learned while breaking ankles - strictly metaphorically"
+                 - "How I transformed passion for flavors into a recipe for startup success"
+                 - "Guiding you through orchestra leadership principles that harmonize with business strategy"
+                 - "Painting your way to financial freedom through artistic entrepreneurship"
+                 - "Strategic plays from both kitchen and boardroom to create a winning business"
                  
                  Additionally, for each book idea, create 4 fictional praise quotes from imaginary publications, magazines, or critics.
                  These should sound like authentic book reviews or endorsements that would appear on a book's back cover.
@@ -264,9 +268,9 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
                  The biography is about ${authorName}, sharing their expertise, methods, and success principles with a perfect balance of professional insight and personality.
                  
                  Respond with ONLY a JSON array of 3 objects, each with:
-                 - 'title': The book title (3-7 words, using concrete nouns and metaphors related to the subject's field)
+                 - 'title': The book title (3-7 words, using concrete nouns and metaphors related to the subject's field or interests)
                  - 'author': "${authorName}" for all ideas
-                 - 'description': A compelling book description (ONE SENTENCE NO COMMAS 10-20 words) that expands on the metaphor with a touch of wit while conveying expertise
+                 - 'description': A compelling subtitle (ONE SENTENCE NO COMMAS 10-20 words) that expands on the metaphor with a touch of wit while conveying expertise
                  - 'praises': An array of 4 fictional praise objects, each with 'source' (imaginary publication or critic name) and 'text' (the praise quote)
                  
                  Make the ideas INSTRUCTIONAL, METAPHOR-RICH and WITTY - they should sound like professional books that combine expertise with personality.
@@ -279,30 +283,32 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
                  - Clearly communicate the professional value proposition
                  - Use parallel structure or rhythmic language for memorability
                  
-                 Example title/description pairs:
-                 - "The Ski Lodge Business Model" / "Turning slippery slopes into money slopes with overly enthusiastic tourists"
-                 - "Hiking: Hustle Uphill" / "A step-by-step guide to scaling mountains and business ventures simultaneously"
-                 - "The Entrepreneur's Guide to Après Ski" / "Maximizing networking opportunities over overpriced hot chocolate"
-                 - "Mountain Peak Performance" / "How I conquered business summits using strategies from high-altitude expeditions"
-                 - "Avalanche Avoidance Principles" / "Guiding you through risky business terrain with proven safety techniques"
-                 - "The Base Camp Blueprint" / "Essential foundations for building resilient companies in challenging environments"
+                 Example title/description pairs (from various domains):
+                 - "Startups and Slam Dunks" / "A guide to balancing basketball dreams while building trillion-dollar businesses"
+                 - "Dribble Your Way to Success" / "Multitasking tips from courtside meetings to cornering markets like a pro"
+                 - "Hoops and Hustles" / "Entrepreneurial lessons learned while breaking ankles - strictly metaphorically"
+                 - "Kitchen Creativity Blueprint" / "How I transformed passion for flavors into a recipe for startup success"
+                 - "The Conductor's Playbook" / "Guiding you through orchestra leadership principles that harmonize with business strategy" 
+                 - "Canvas to Cash Flow" / "Painting your way to financial freedom through artistic entrepreneurship"
+                 - "Culinary Court Advantage" / "Strategic plays from both kitchen and boardroom to create a winning business"
+                 - "The Songwriter's Business Model" / "Transforming musical hooks into marketing strategies for exponential growth"
                  
                  For the praises, follow these guidelines:
                  1. Each praise should be a substantial paragraph (2-3 sentences) that deeply analyzes some aspect of the book or author's approach
                  2. Use formal, literary language with sophisticated vocabulary and structure
                  3. Include specific insights about the book's methodology, the author's approach, or the practical applications
                  4. Make them sound like genuine literary critiques from respected publications
-                 5. Source names should be specific publications that match the subject matter (industry magazines, journals, business publications, etc.)
+                 5. Source names should be specific publications that match the subject matter (industry magazines, journals, specialized publications, etc.)
                  
                  Example praises:
                  [
                    {
-                     "source": "Alpine Business Review",
-                     "text": "${authorName}'s methodical approach to breaking down complex business principles through ski resort metaphors creates an immediately applicable framework. Their ability to distill sophisticated concepts into actionable wisdom makes this not just an informative read, but a valuable resource for executives seeking a fresh perspective on growth."
+                     "source": "Hoops & Business Quarterly",
+                     "text": "${authorName}'s masterful ability to distill complex business principles through basketball metaphors creates an immediately applicable framework for success. Their unique perspective bridges the gap between athletic discipline and entrepreneurial mindset in ways that both entertain and educate readers seeking fresh approaches to familiar challenges."
                    },
                    {
-                     "source": "Summit Strategy Quarterly",
-                     "text": "With refreshing clarity and just the right touch of wit, ${authorName} transforms theoretical principles into practical methodologies. The book's extended mountain climbing metaphor creates a reading experience that both enlightens and entertains while delivering serious business insights."
+                     "source": "Culinary Innovation Review",
+                     "text": "With remarkable clarity and an engaging narrative style, ${authorName} transforms cooking methodologies into business insights that readers can immediately implement. The book's extended culinary metaphors serve not merely as clever devices but as genuinely illuminating frameworks for understanding complex organizational principles."
                    }
                  ]`
              }
