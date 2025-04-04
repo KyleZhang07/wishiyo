@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { jsPDF } from "https://esm.sh/jspdf@2.5.1";
 import { autoTable } from "https://esm.sh/jspdf-autotable@3.8.1";
@@ -156,11 +157,13 @@ serve(async (req) => {
 
     // 添加字体
     function addFonts(pdf: any) {
-      // 添加标准字体
+      // 添加标准字体，包括Garamond
       pdf.addFont('helvetica', 'normal');
       pdf.addFont('helvetica', 'bold');
       pdf.addFont('times', 'normal');
       pdf.addFont('times', 'bold');
+      pdf.addFont('georgia', 'normal'); // 作为Garamond的替代，因为jsPDF标准版本没有直接支持Garamond
+      pdf.addFont('georgia', 'bold');
     }
 
     // 设置页面出血和尺寸
@@ -187,37 +190,52 @@ serve(async (req) => {
 
     const debugLines = true;
 
-    // 字体设置
+    // 更新字体设置为Garamond风格（用Georgia作为近似替代）
     const fonts = {
       title: {
-        family: 'helvetica',
+        family: 'georgia',
         style: 'bold',
         size: 24
       },
       subtitle: {
-        family: 'helvetica',
+        family: 'georgia',
         style: 'normal',
         size: 16
       },
       chapterTitle: {
-        family: 'helvetica',
+        family: 'georgia',
         style: 'bold',
         size: 18
       },
-      sectionTitle: {
-        family: 'helvetica',
+      contentsTitle: {
+        family: 'georgia',
         style: 'bold',
-        size: 14
+        size: 28 // 更大的目录标题，如图所示
+      },
+      sectionTitle: {
+        family: 'georgia',
+        style: 'bold',
+        size: 16
       },
       body: {
-        family: 'times',
+        family: 'georgia',
         style: 'normal',
         size: 12
       },
       copyright: {
-        family: 'times',
+        family: 'georgia',
         style: 'normal',
         size: 10
+      },
+      tocChapter: {
+        family: 'georgia',
+        style: 'normal', // 目录中的章节标题使用斜体，更符合图片中的样式
+        size: 12
+      },
+      tocPageNumber: {
+        family: 'georgia',
+        style: 'normal',
+        size: 12
       }
     };
 
@@ -273,18 +291,31 @@ serve(async (req) => {
     pdf.text('product of the author\'s imagination or are used fictitiously.', margin.left, margin.top + 2.3);
 
     addPage();
-    setFont('chapterTitle');
-    pdf.text('Table of Contents', pageWidth / 2, margin.top + 0.5, { align: 'center' });
+    // 使用更大的字号和Garamond样式的"Contents"标题
+    setFont('contentsTitle');
+    pdf.text('Contents', pageWidth / 2, margin.top + 0.8, { align: 'center' });
     
-    setFont('body');
-    let tocY = margin.top + 1.2;
+    // 设置目录内容样式
+    let tocY = margin.top + 2.0; // 增加目录标题和内容之间的间距
     
+    // 跟踪当前页码位置
     let currentPage = 4;
 
+    // 为目录设置特定的字体样式
     finalBookContent.forEach((chapter: BookChapter) => {
-      pdf.text(`Chapter ${chapter.chapterNumber}: ${chapter.title}`, margin.left, tocY);
+      // 设置章节编号字体
+      setFont('tocChapter');
+      pdf.text(`Chapter ${chapter.chapterNumber}`, margin.left + 0.1, tocY);
+      
+      // 设置章节标题字体
+      const chapterTitleX = margin.left + 1.2; // 调整标题的左边距以增加对齐
+      pdf.text(`${chapter.title}`, chapterTitleX, tocY);
+      
+      // 设置页码字体
+      setFont('tocPageNumber');
       pdf.text(`${currentPage}`, pageWidth - margin.right, tocY, { align: 'right' });
-      tocY += 0.3;
+      
+      tocY += 0.4; // 增加目录行间距，使其更宽松，符合图片
       
       // 更准确地估算页数
       const estimatedSectionPages = chapter.sections.reduce((total, section) => {
@@ -304,17 +335,20 @@ serve(async (req) => {
       currentPage++;
     }
 
-    // 添加章节内容
+    // 使用Garamond样式添加章节内容
     finalBookContent.forEach((chapter: BookChapter) => {
       addPage();
       
+      // 设置章节编号的样式（使用小型大写字母）
       setFont('chapterTitle');
-      pdf.text(`Chapter ${chapter.chapterNumber}`, pageWidth / 2, margin.top + 0.5, { align: 'center' });
+      // 将"CHAPTER X"样式的标题放在页面顶部中央
+      pdf.text(`CHAPTER ${chapter.chapterNumber}`, pageWidth / 2, margin.top + 0.5, { align: 'center' });
       
-      setFont('subtitle');
-      pdf.text(chapter.title, pageWidth / 2, margin.top + 1, { align: 'center' });
+      // 使用更大、更加突出的字体设置章节标题
+      pdf.setFontSize(24); // 增大标题字体
+      pdf.text(chapter.title, pageWidth / 2, margin.top + 1.5, { align: 'center' });
       
-      let contentY = margin.top + 1.5;
+      let contentY = margin.top + 2.5; // 增加标题和内容之间的间距
       
       chapter.sections.forEach((section) => {
         // 检查是否需要新页面
@@ -323,10 +357,12 @@ serve(async (req) => {
           contentY = margin.top;
         }
         
+        // 设置小节标题样式
         setFont('sectionTitle');
         pdf.text(section.title, margin.left, contentY);
-        contentY += fonts.sectionTitle.size / 72 * 1.5; // 增加标题后的间距
+        contentY += fonts.sectionTitle.size / 72 * 1.8; // 增加标题后的间距
         
+        // 设置正文内容样式为Garamond (georgia)
         setFont('body');
         
         const paragraphs = section.content.split('\n\n');
