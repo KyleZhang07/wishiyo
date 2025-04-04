@@ -249,18 +249,18 @@ export const coverTemplates: { [key: string]: TemplateType } = {
   },
   'vibrant-green': {
     id: 'vibrant-green',
-    name: 'Cream Portrait',
-    backgroundColor: '#E6DEC9',
+    name: 'Modern Green',
+    backgroundColor: '#E5DDCA',
     titleStyle: {
       color: '#D4AF37',
-      fontSize: '3.5rem',
+      fontSize: '2.5rem',
       fontWeight: 'bold',
       textAlign: 'center',
-      offsetY: 0.35
+      offsetY: 0.3
     },
     subtitleStyle: {
       color: '#FFFFFF',
-      fontSize: '1.5rem',
+      fontSize: '1.25rem',
       fontWeight: 'normal'
     },
     authorStyle: {
@@ -270,16 +270,16 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     },
     imageStyle: {
       filter: 'none',
-      opacity: 1,
+      opacity: '1',
       borderRadius: '0'
     },
     spineStyle: {
-      backgroundColor: '#E6DEC9',
+      backgroundColor: '#E5DDCA',
       titleColor: '#D4AF37',
       authorColor: '#FFFFFF'
     },
     backCoverStyle: {
-      backgroundColor: '#E6DEC9',
+      backgroundColor: '#E5DDCA',
       textColor: '#FFFFFF',
       summaryFontSize: '1rem'
     }

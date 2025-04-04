@@ -199,7 +199,15 @@ const CanvasCoverPreview = ({
         // 如果是bestseller模板，在图片之前绘制黑色背景
         if (template.id === 'bestseller') {
           ctx.fillStyle = '#000000';
-          ctx.fillRect(0, 0, width, containerHeight);
+          // 调整黑色背景区域高度，使其略微向下移
+          const containerAdjustedHeight = containerHeight * 1.1; // 增加10%的高度
+          const containerAdjustedY = y + 60; // 从20像素增加到40像素
+          ctx.fillRect(0, containerAdjustedY, width, containerAdjustedHeight);
+          
+          // 对于bestseller风格，调整图片位置
+          if (template.id === 'bestseller') {
+            y += 60; // 从20像素增加到60像素
+          }
         }
         
         ctx.filter = template.imageStyle.filter;
@@ -212,14 +220,33 @@ const CanvasCoverPreview = ({
           // 创建圆形裁剪路径
           const radius = parseInt(layout.imageContainerStyle.borderRadius) / 100 * Math.min(containerWidth, containerHeight);
           const centerX = width / 2;
-          const centerY = y + containerHeight / 2;
+          
+          // 对于经典风格或Modern风格，移动图像中心位置
+          let centerY = y + containerHeight / 2;
+          if (template.id === 'classic') {
+            centerY += 40; // 向下移动40像素
+          } else if (template.id === 'modern' || template.id === 'vibrant-green') {
+            centerY += 100; // 从70增加到100像素，进一步向下移动
+          } else if (template.id === 'minimal') {
+            centerY -= 40; // 向上移动40像素
+          }
           
           ctx.beginPath();
           ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
           ctx.clip();
           
+          // 同样调整绘制位置
+          let drawY_adjusted = y;
+          if (template.id === 'classic') {
+            drawY_adjusted += 40; // 向下移动40像素
+          } else if (template.id === 'modern' || template.id === 'vibrant-green') {
+            drawY_adjusted += 100; // 从70增加到100像素，进一步向下移动
+          } else if (template.id === 'minimal') {
+            drawY_adjusted -= 40; // 向上移动40像素
+          }
+          
           // Draw image
-          ctx.drawImage(image.element, x, y, drawWidth, drawHeight);
+          ctx.drawImage(image.element, x, drawY_adjusted, drawWidth, drawHeight);
           
           // Restore context
           ctx.restore();
@@ -250,16 +277,16 @@ const CanvasCoverPreview = ({
       ctx.fillStyle = '#FFC300';
       ctx.font = `bold 18px ${selectedFont}`;
       ctx.textAlign = 'center';
-      ctx.fillText('Sold Over 5 Million Copies Worldwide | "Changed My Life"', width / 2, 35);
+      ctx.fillText('Sold Over 5 Million Copies Worldwide | "Changed My Life"', width / 2, 45);
       
       // 添加作者名字在宣传语下方
-      ctx.font = `bold 30px ${selectedFont}`; // 放大作者名字
+      ctx.font = `bold 30px ${selectedFont}`;
       ctx.fillStyle = '#FFFFFF'; // 白色文字
       ctx.textAlign = 'center';
-      ctx.fillText(`${authorName}`, width / 2, 70); // 去掉"by"
+      ctx.fillText(`${authorName}`, width / 2, 85);
       
       // 在底部绘制蓝色描述区域 - 缩小蓝色区域高度
-      const blueHeight = height * 0.2; // 从0.25减小到0.2
+      const blueHeight = height * 0.2;
       ctx.fillStyle = '#4361EE';
       ctx.fillRect(0, height - blueHeight, width, blueHeight);
       
@@ -287,12 +314,12 @@ const CanvasCoverPreview = ({
       };
       
       // 绘制黄色标题在黑色背景区域 - 缩小标题字号
-      ctx.font = `bold 66px ${selectedFont}`; // 从76px减小到66px
+      ctx.font = `bold 66px ${selectedFont}`;
       ctx.fillStyle = '#FFC300';
       ctx.textAlign = 'center';
       
       // 计算标题位置 - 向下移动一些
-      const titleY = Math.round(height * 0.62); // 从0.58增加到0.62
+      const titleY = Math.round(height * 0.66);
       
       // 将标题分成适当的行
       const titleWords = coverTitle.split(' ');
@@ -301,7 +328,7 @@ const CanvasCoverPreview = ({
       
       // 组织标题成适当长度的行
       for (let i = 0; i < titleWords.length; i++) {
-        if (currentLine.length + titleWords[i].length > 18) { // 根据经验设置合理的行长度
+        if (currentLine.length + titleWords[i].length > 16) { // 从12个字符增加到16个字符
           titleLines.push(currentLine.trim());
           currentLine = titleWords[i] + ' ';
         } else {
@@ -315,7 +342,7 @@ const CanvasCoverPreview = ({
       
       // 绘制标题行
       for (let i = 0; i < titleLines.length; i++) {
-        ctx.fillText(titleLines[i].toUpperCase(), width / 2, titleY + i * 60); // 行间距从70调整到60
+        ctx.fillText(titleLines[i].toUpperCase(), width / 2, titleY + i * 60);
       }
       
       // 绘制描述性副标题在蓝色区域 - 再次增大描述文字字号
@@ -336,40 +363,71 @@ const CanvasCoverPreview = ({
     } else if (template.id === 'classic') {
       // 背景已在外部设置为黑色
       
-      // 在顶部绘制作者名字
-      ctx.font = `bold 30px ${selectedFont}`;
+      // 在顶部绘制作者名字 - 位置向下移动
+      ctx.font = `bold 34px ${selectedFont}`;
       ctx.fillStyle = '#FFFFFF';
       ctx.textAlign = 'center';
-      ctx.fillText(authorName, width / 2, 50);
+      ctx.fillText(authorName, width / 2, 80); // 从50向下移动到80
       
-      // 绘制白色标题，位于中央
-      ctx.font = `bold 60px ${selectedFont}`;
+      // 绘制白色标题，位于中央 - 向上移动
+      ctx.font = `bold 52px ${selectedFont}`; // 从60px缩小到52px
       ctx.fillStyle = '#FFFFFF';
       ctx.textAlign = 'center';
       
-      // 将标题分成多行显示
-      const titleLines = coverTitle.split(' ');
-      const upperLines = titleLines.slice(0, Math.ceil(titleLines.length / 2));
-      const lowerLines = titleLines.slice(Math.ceil(titleLines.length / 2));
+      // 改进标题分行逻辑 - 控制每行宽度
+      const titleWords = coverTitle.split(' ');
+      const maxLineWidth = width * 0.8; // 设置最大行宽为封面宽度的80%
       
-      // 计算标题位置
-      const titleY = Math.round(height * 0.45);
+      // 准备分行数组
+      const titleLines = [];
+      let currentLine = '';
       
-      // 绘制顶部标题行
-      ctx.fillText(upperLines.join(' ').toUpperCase(), width / 2, titleY);
+      // 测量字体宽度并确保每行不超过最大宽度
+      for (let i = 0; i < titleWords.length; i++) {
+        const word = titleWords[i];
+        const testLine = currentLine + (currentLine ? ' ' : '') + word;
+        const metrics = ctx.measureText(testLine);
+        
+        if (metrics.width > maxLineWidth && currentLine !== '') {
+          titleLines.push(currentLine);
+          currentLine = word;
+        } else {
+          currentLine = testLine;
+        }
+      }
       
-      // 绘制底部标题行（红色）
-      ctx.font = `bold 80px ${selectedFont}`;
-      ctx.fillStyle = '#9B0000';
-      ctx.fillText(lowerLines.join(' ').toUpperCase(), width / 2, titleY + 90); // 减小行间距
+      // 添加最后一行
+      if (currentLine) {
+        titleLines.push(currentLine);
+      }
+      
+      // 计算标题位置 - 向上移动
+      const titleY = Math.round(height * 0.17); // 从0.45减小到0.17，向上移动
+      const lineHeight = 90; // 行高从70增加到90
+      
+      // 绘制所有标题行
+      for (let i = 0; i < titleLines.length; i++) {
+        // 前半部分用白色
+        if (i < Math.ceil(titleLines.length / 2)) {
+          ctx.fillStyle = '#FFFFFF';
+          ctx.font = `bold 54px ${selectedFont}`; // 从52px增大到54px
+        } 
+        // 后半部分用红色，字体略大
+        else {
+          ctx.fillStyle = '#9B0000';
+          ctx.font = `bold 80px ${selectedFont}`; // 从70px增大到80px
+        }
+        
+        ctx.fillText(titleLines[i].toUpperCase(), width / 2, titleY + i * lineHeight);
+      }
       
       // 绘制红色底部区域
       const bottomHeight = height * (template.bottomAreaHeight || 0.15);
       ctx.fillStyle = template.bottomAreaColor || '#9B0000';
       ctx.fillRect(0, height - bottomHeight, width, bottomHeight);
       
-      // 在红色区域绘制白色描述文字
-      ctx.font = `normal 24px ${selectedFont}`;
+      // 在红色区域绘制白色描述文字 - 增大字号
+      ctx.font = `normal 28px ${selectedFont}`; // 从24px增大到28px
       ctx.fillStyle = '#FFFFFF';
       ctx.textAlign = 'center';
       
@@ -398,13 +456,13 @@ const CanvasCoverPreview = ({
       
       // 计算可用宽度，留出边距
       const availableWidth = width * 0.85;
-      const lines = wrapText(ctx, subtitle, width / 2, height - bottomHeight/2, availableWidth, 28);
+      const lines = wrapText(ctx, subtitle, width / 2, height - bottomHeight/2, availableWidth, 34); // 行高从28增加到34
       
       // 绘制每一行文字
-      let yPos = height - bottomHeight/2 - (lines.length - 1) * 28 / 2;
+      let yPos = height - bottomHeight/2 - (lines.length - 1) * 34 / 2; // 行高从28增加到34
       for (let i = 0; i < lines.length; i++) {
         ctx.fillText(lines[i], width / 2, yPos);
-        yPos += 28;
+        yPos += 34; // 行高从28增加到34
       }
     } else if (template.id === 'modern' || template.id === 'vibrant-green') {
       // 为奶油色肖像风格重写渲染逻辑
@@ -419,11 +477,11 @@ const CanvasCoverPreview = ({
       
       // 封面中央绘制大号金色标题
       ctx.font = `bold 80px ${selectedFont}`;
-      ctx.fillStyle = '#D4AF37'; // 金色
+      ctx.fillStyle = '#D4AF37'; // 恢复原来的金色
       ctx.textAlign = 'center';
       
-      // 将标题分成多行显示
-      const titleY = Math.round(height * 0.65);
+      // 将标题分成多行显示 - 上移，但不要太多
+      const titleY = Math.round(height * 0.55); // 从0.65减小到0.55，适当上移
       const titleWords = coverTitle.split(' ');
       const titleLines = [];
       let currentLine = '';
@@ -449,7 +507,7 @@ const CanvasCoverPreview = ({
       
       // 在底部绘制白色副标题（添加自动换行）
       ctx.font = `normal 32px ${selectedFont}`;
-      ctx.fillStyle = '#FFFFFF';
+      ctx.fillStyle = '#FFFFFF'; // 恢复原来的白色
       ctx.textAlign = 'center';
       
       // 文本自动换行
@@ -489,21 +547,21 @@ const CanvasCoverPreview = ({
       // 简约灰色风格的布局
       // 背景已在外部设置为灰色
       
-      // 左上角绘制作者名字（简短名字，如Kyle）
+      // 左上角绘制作者名字（简短名字，如Kyle） - 略微上移
       ctx.font = `bold 60px 'Arial', sans-serif`;  // 使用Arial字体
       ctx.fillStyle = '#FFFFFF';
       ctx.textAlign = 'left';
-      ctx.fillText(authorName, 50, 130); // 位于左上角
+      ctx.fillText(authorName, 50, 100); // 从130上移到100
       
       // 图片已在外部绘制（带灰度滤镜）
       
-      // 居中绘制标题
+      // 居中绘制标题 - 上移
       ctx.font = `bold 80px 'Arial', sans-serif`;  // 使用Arial字体并放大
       ctx.fillStyle = '#FFFFFF';
       ctx.textAlign = 'center';
       
-      // 将标题分成多行显示
-      const titleY = Math.round(height * 0.7); // 标题位于下方
+      // 将标题分成多行显示 - 上移
+      const titleY = Math.round(height * 0.62); // 从0.7上移到0.62
       const titleWords = coverTitle.split(' ');
       const titleLines = [];
       let currentLine = '';
@@ -550,17 +608,17 @@ const CanvasCoverPreview = ({
         return lines;
       };
       
-      // 居中绘制描述文字（在标题下方，带自动换行）
+      // 居中绘制描述文字（在标题下方，带自动换行） - 上移
       ctx.font = `normal 36px 'Arial', sans-serif`;  // 使用Arial字体并放大
       ctx.fillStyle = '#FFFFFF';
       ctx.textAlign = 'center';
       
       // 计算可用宽度，留出边距
       const availableWidth = width * 0.85; // 较宽的宽度，居中对齐
-      const descriptionLines = wrapText(ctx, subtitle, width / 2, titleY + titleLines.length * 80 + 40, availableWidth, 40);
+      const descriptionLines = wrapText(ctx, subtitle, width / 2, titleY + titleLines.length * 80 + 30, availableWidth, 40); // 从40上移到30
       
       // 绘制每一行描述文字
-      let yPos = titleY + titleLines.length * 80 + 40;
+      let yPos = titleY + titleLines.length * 80 + 30; // 从40上移到30
       for (let i = 0; i < descriptionLines.length; i++) {
         ctx.fillText(descriptionLines[i], width / 2, yPos);
         yPos += 40; // 增大行高
@@ -626,7 +684,7 @@ const CanvasCoverPreview = ({
       
       // 组织标题成适当长度的行
       for (let i = 0; i < titleWords.length; i++) {
-        if (currentLine.length + titleWords[i].length > 12) { // 根据经验设置合理的行长度
+        if (currentLine.length + titleWords[i].length > 16) { // 从12个字符增加到16个字符
           titleLines.push(currentLine.trim());
           currentLine = titleWords[i] + ' ';
         } else {
@@ -667,15 +725,15 @@ const CanvasCoverPreview = ({
       };
       
       // 标题下方描述 - 也向上移动
-      ctx.font = `normal 32px 'Comic Sans MS', cursive`;
+      ctx.font = `normal 28px 'Comic Sans MS', cursive`; // 从32px缩小到28px
       ctx.fillStyle = '#9400D3'; // 深紫色文字
       
       // 计算可用宽度，留出边距
       const availableWidth = width * 0.8;
-      const descriptionLines = wrapText(ctx, subtitle, width / 2, titleY + titleLines.length * 70 + 40, availableWidth, 35);
+      const descriptionLines = wrapText(ctx, subtitle, width / 2, titleY + titleLines.length * 70 + 30, availableWidth, 35); // 从+40上移到+30
       
       // 绘制每一行描述文字
-      let yPos = titleY + titleLines.length * 70 + 40;
+      let yPos = titleY + titleLines.length * 70 + 30; // 从+40上移到+30
       for (let i = 0; i < descriptionLines.length; i++) {
         ctx.fillText(descriptionLines[i], width / 2, yPos);
         yPos += 35;
@@ -684,7 +742,7 @@ const CanvasCoverPreview = ({
       // 判断是否有图片 - 将图片位置移至更下方
       if (image?.element) {
         // 计算图片位置并向下移动
-        const imgY = Math.round(height * 0.62); // 图片位置向下移动到62%
+        const imgY = Math.round(height * 0.65); // 从0.62下移到0.65
         
         // 不考虑用户的图片调整，直接计算显示位置
         const aspectRatio = image.element.width / image.element.height;
@@ -884,9 +942,9 @@ const CanvasCoverPreview = ({
     if (praises && praises.length > 0) {
       const availablePraises = praises.slice(0, 4); // 限制最多显示4条赞美语
       
-      // 使用模板中的边距配置，如果没有则使用默认值
+      // 使用模板中的边距配置，如果没有则使用默认值 - 向下移动
       const marginLeft = template.backCoverStyle.marginLeft || 40;
-      const marginTop = template.backCoverStyle.marginTop || 60;
+      const marginTop = template.backCoverStyle.marginTop || 80; // 从60向下移动到80
       
       // 设置标题
       ctx.textAlign = template.backCoverStyle.textAlign || 'left';
@@ -903,7 +961,7 @@ const CanvasCoverPreview = ({
       // 绘制每条赞美语
       availablePraises.forEach(praise => {
         // 赞美文本内容
-        ctx.font = `italic ${template.backCoverStyle.praiseFontSize || 28}px ${fontFamily}`;
+        ctx.font = `italic ${template.backCoverStyle.praiseFontSize || 26}px ${fontFamily}`; // 从28px轻微减小到26px
         
         // 使用文本换行函数
         const wrappedText = wrapTextWithHeight(
@@ -912,19 +970,19 @@ const CanvasCoverPreview = ({
           x, 
           Math.round(yPosition), 
           width - marginLeft * 2, 
-          template.backCoverStyle.lineHeight || 36
+          template.backCoverStyle.lineHeight || 33 // 从36轻微减小到33
         );
         
         // 使用模板中的赞美语间距配置，如果没有则使用默认值
-        const praiseSpacing = template.backCoverStyle.praiseSpacing || 24;
-        yPosition += wrappedText.height + Math.round(praiseSpacing * 1.5);
+        const praiseSpacing = template.backCoverStyle.praiseSpacing || 20; // 从24轻微减小到20
+        yPosition += wrappedText.height + Math.round(praiseSpacing * 1.4); // 从1.5轻微减小到1.4
         
         // 赞美来源，在作者名称前添加"-"符号
-        ctx.font = `bold ${template.backCoverStyle.sourceFontSize || 30}px ${fontFamily}`;
+        ctx.font = `bold ${template.backCoverStyle.sourceFontSize || 28}px ${fontFamily}`; // 从30px轻微减小到28px
         ctx.fillText(`- ${praise.source}`, x, Math.round(yPosition));
         
         // 使用模板中的来源间距配置，如果没有则使用默认值
-        yPosition += template.backCoverStyle.sourceSpacing || 60;
+        yPosition += template.backCoverStyle.sourceSpacing || 52; // 从60轻微减小到52
       });
     }
 

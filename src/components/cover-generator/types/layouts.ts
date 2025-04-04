@@ -38,8 +38,8 @@ export const coverLayouts: { [key: string]: CoverLayout } = {
       textAlign: 'center'
     },
     imageContainerStyle: {
-      width: '70%',
-      height: '45%',
+      width: '80%',
+      height: '55%',
       position: 'center',
       borderRadius: '50%'
     }
@@ -81,8 +81,8 @@ export const coverLayouts: { [key: string]: CoverLayout } = {
       textAlign: 'center'
     },
     imageContainerStyle: {
-      width: '70%',
-      height: '60%',
+      width: '100%',
+      height: '95%',
       borderRadius: '50%',
       position: 'center'
     }
