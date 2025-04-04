@@ -287,10 +287,10 @@ export const renderBlessingToCanvas = (
       // 根据不同的语调只调整文本颜色和字体，背景保持纯白
       if (textTone === 'Heartfelt') {
         textColor = '#333333';  // 深灰色文本
-        mainFont = 'Georgia, serif';
+        mainFont = 'Palatino, serif';
       } else if (textTone === 'Playful') {
         textColor = '#333333';  // 深灰色文本
-        mainFont = 'Arial, sans-serif';
+        mainFont = 'Palatino, serif';
       } else if (textTone === 'Inspirational') {
         textColor = '#333333';  // 深灰色文本
         mainFont = 'Palatino, serif';
@@ -338,8 +338,8 @@ export const renderBlessingToCanvas = (
       // 处理文本换行
       lines.forEach(line => {
         if (line.trim() === '') {
-          // 空行，增加一些距离
-          y += bodyFontSize * 1.2;
+          // 空行，增加更多距离
+          y += bodyFontSize * 2.5; // 增加空行间距从1.2到2.5
           return;
         }
         
@@ -366,7 +366,7 @@ export const renderBlessingToCanvas = (
         // 绘制最后一行
         if (currentLine) {
           ctx.fillText(currentLine, canvas.width / 2, y); // 居中绘制
-          y += bodyFontSize * 1.8; // 行距
+          y += bodyFontSize * 2.2; // 增加行距从1.8到2.2
         }
       });
       
