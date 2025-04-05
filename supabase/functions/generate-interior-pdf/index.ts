@@ -187,70 +187,7 @@ serve(async (req) => {
       left: 0.5 + bleed
     };
 
-    const debugLines = true; // Disable debug lines for final output
-
-    // Define inner (gutter) and outer margins
-    const innerMargin = margin.left + 0.2; // Add 0.2 inch for gutter
-    const outerMargin = margin.left - 0.2; // Reduce outer margin accordingly
-
-    // Helper to get margins for current page
-    const getCurrentMargins = (currentPageNum: number) => {
-      if (currentPageNum % 2 === 1) { // Odd page (Recto)
-        return { left: innerMargin, right: outerMargin };
-      } else { // Even page (Verso)
-        return { left: outerMargin, right: innerMargin };
-      }
-    };
-    
-    // Track current page number manually for more control
-    let currentPageNumber = 1;
-    
-    // Function to add page numbers (conditionally)
-    const addPageNumber = () => {
-      // Skip page numbers on first few pages (e.g., Title, Copyright, ToC)
-      if (currentPageNumber >= 4) { 
-        const pageNumStr = `${currentPageNumber}`;
-        const currentMargins = getCurrentMargins(currentPageNumber);
-        setFont('body'); // Use body font size for page number
-        pdf.setFontSize(10); // Slightly smaller page number
-        pdf.setTextColor(0, 0, 0);
-        // Place page number at bottom outer corner respecting safety margin
-        if (currentPageNumber % 2 === 1) { // Odd page (Right)
-          pdf.text(pageNumStr, pageWidth - currentMargins.right, pageHeight - (bleed + 0.25), { align: 'right' });
-        } else { // Even page (Left)
-          pdf.text(pageNumStr, currentMargins.left, pageHeight - (bleed + 0.25), { align: 'left' });
-        }
-      }
-    };
-
-    // 添加新页面的函数 (moved definition after helpers it calls)
-    const addPage = () => {
-      addPageNumber(); // Add page number to the *current* page before adding a new one
-      pdf.addPage([pageWidth, pageHeight]);
-      currentPageNumber++; // Increment page number
-      
-      if (debugLines) {
-        pdf.setDrawColor(0, 162, 232);
-        pdf.setLineWidth(0.01);
-        pdf.rect(0, 0, pageWidth, pageHeight);
-        
-        pdf.setDrawColor(0, 0, 255);
-        pdf.rect(bleed, bleed, 6, 9);
-        
-        pdf.setDrawColor(255, 0, 0);
-        const currentMargins = getCurrentMargins(currentPageNumber - 1); // Use previous page for debug margin rect
-        pdf.rect(currentMargins.left, bleed + 0.5, pageWidth - currentMargins.left - currentMargins.right, 8);
-        
-        pdf.setFontSize(6);
-        pdf.setTextColor(0, 162, 232);
-        pdf.text('TRIM / BLEED AREA', pageWidth/2, 0.1, { align: 'center' });
-        pdf.text('TRIM / BLEED AREA', pageWidth/2, pageHeight - 0.05, { align: 'center' });
-        
-        pdf.setTextColor(100, 100, 100);
-        pdf.text('SAFETY MARGIN', pageWidth/2, 0.25 + bleed, { align: 'center' });
-        pdf.text('SAFETY MARGIN', pageWidth/2, pageHeight - 0.25 - bleed, { align: 'center' });
-      }
-    };
+    const debugLines = true;
 
     // 更新字体设置为Garamond风格（用Georgia作为近似替代）
     const fonts = {
@@ -310,8 +247,33 @@ serve(async (req) => {
       return font.size / 72 * 1.2; // 1.2 是行间距因子
     }
 
+    // 添加新页面的函数
+    const addPage = () => {
+      pdf.addPage([pageWidth, pageHeight]);
+      
+      if (debugLines) {
+        pdf.setDrawColor(0, 162, 232);
+        pdf.setLineWidth(0.01);
+        pdf.rect(0, 0, pageWidth, pageHeight);
+        
+        pdf.setDrawColor(0, 0, 255);
+        pdf.rect(bleed, bleed, 6, 9);
+        
+        pdf.setDrawColor(255, 0, 0);
+        pdf.rect(bleed + 0.5, bleed + 0.5, 5, 8);
+        
+        pdf.setFontSize(6);
+        pdf.setTextColor(0, 162, 232);
+        pdf.text('TRIM / BLEED AREA', pageWidth/2, 0.1, { align: 'center' });
+        pdf.text('TRIM / BLEED AREA', pageWidth/2, pageHeight - 0.05, { align: 'center' });
+        
+        pdf.setTextColor(100, 100, 100);
+        pdf.text('SAFETY MARGIN', pageWidth/2, 0.25 + bleed, { align: 'center' });
+        pdf.text('SAFETY MARGIN', pageWidth/2, pageHeight - 0.25 - bleed, { align: 'center' });
+      }
+    };
+
     // 添加标题页
-    // Note: No page number on page 1
     setFont('title');
     pdf.setTextColor(0, 0, 0);
     pdf.text(title, pageWidth / 2, pageHeight / 3, { align: 'center' });
@@ -320,127 +282,108 @@ serve(async (req) => {
     pdf.text(`by ${author}`, pageWidth / 2, pageHeight / 3 + 0.5, { align: 'center' });
 
     addPage();
-    const copyrightMargins = getCurrentMargins(currentPageNumber);
     setFont('copyright');
     const year = new Date().getFullYear();
-    pdf.text(`Copyright ${year} by ${author}`, copyrightMargins.left, margin.top + 1);
-    pdf.text('All rights reserved.', copyrightMargins.left, margin.top + 1.3);
-    pdf.text('This is a work of fiction. Names, characters, places, and incidents either are the', copyrightMargins.left, margin.top + 2);
-    pdf.text('product of the author\'s imagination or are used fictitiously.', copyrightMargins.left, margin.top + 2.3);
+    pdf.text(`Copyright ${year} by ${author}`, margin.left, margin.top + 1);
+    pdf.text('All rights reserved.', margin.left, margin.top + 1.3);
+    pdf.text('This is a work of fiction. Names, characters, places, and incidents either are the', margin.left, margin.top + 2);
+    pdf.text('product of the author\'s imagination or are used fictitiously.', margin.left, margin.top + 2.3);
 
     addPage();
-    // Use larger font size and Garamond style for "Contents" title
+    // 使用更大的字号和Garamond样式的"Contents"标题
     setFont('contentsTitle');
     pdf.text('Contents', pageWidth / 2, margin.top + 0.8, { align: 'center' });
     
-    // Set styles for table of contents entries
-    let tocY = margin.top + 2.0; // Increase space between title and entries
+    // 设置目录内容样式
+    let tocY = margin.top + 2.0; // 增加目录标题和内容之间的间距
     
-    // Track current page number position
-    let tocPageCounter = 4; // Start counting pages from the first actual chapter page
+    // 跟踪当前页码位置
+    let currentPage = 4;
 
-    // Set specific font styles for ToC
+    // 为目录设置特定的字体样式
     finalBookContent.forEach((chapter: BookChapter) => {
-      const tocMargins = getCurrentMargins(3); // Assume ToC fits on one page (page 3) for margin calculation
-      // Set chapter number font
+      // 设置章节编号字体
       setFont('tocChapter');
-      pdf.text(`Chapter ${chapter.chapterNumber}`, tocMargins.left + 0.1, tocY);
+      pdf.text(`Chapter ${chapter.chapterNumber}`, margin.left + 0.1, tocY);
       
-      // Set chapter title font
-      const chapterTitleX = tocMargins.left + 1.2; // Adjust title left margin for alignment
+      // 设置章节标题字体
+      const chapterTitleX = margin.left + 1.2; // 调整标题的左边距以增加对齐
       pdf.text(`${chapter.title}`, chapterTitleX, tocY);
       
-      // Set page number font
+      // 设置页码字体
       setFont('tocPageNumber');
-      pdf.text(`${tocPageCounter}`, pageWidth - tocMargins.right, tocY, { align: 'right' });
+      pdf.text(`${currentPage}`, pageWidth - margin.right, tocY, { align: 'right' });
       
-      tocY += 0.3; // Reduce line spacing in ToC
+      tocY += 0.4; // 增加目录行间距，使其更宽松，符合图片
       
-      // More accurate page estimation
+      // 更准确地估算页数
       const estimatedSectionPages = chapter.sections.reduce((total, section) => {
         const wordCount = section.content.split(/\s+/).length;
-        // Consider font size and line height
+        // 考虑字体大小和行高
         const linesPerPage = Math.floor((pageHeight - margin.top - margin.bottom) / (fonts.body.size / 72 * 1.2));
         const wordsPerLine = Math.floor((pageWidth - margin.left - margin.right) * 72 / (fonts.body.size * 0.5));
         return total + Math.ceil(wordCount / (linesPerPage * wordsPerLine));
       }, 0);
       
-      tocPageCounter += Math.max(1, estimatedSectionPages);
+      currentPage += Math.max(1, estimatedSectionPages);
     });
 
-    // Ensure chapters start on an odd page
-    if (currentPageNumber % 2 === 0) {
+    // 确保章节从偶数页开始
+    if (currentPage % 2 !== 0) {
       addPage();
+      currentPage++;
     }
 
-    // Add chapter content using Garamond style
+    // 使用Garamond样式添加章节内容
     finalBookContent.forEach((chapter: BookChapter) => {
-      // Ensure chapter starts on an odd page
-      if (currentPageNumber % 2 === 0) {
-        addPage(); // Add a blank page if current page is even
-      }
-      addPage(); // Add the actual chapter starting page
-      const chapterStartPageNum = currentPageNumber; // Record the page number where chapter starts
+      addPage();
       
-      // Set chapter number style (small caps style)
+      // 设置章节编号的样式（使用小型大写字母）
       setFont('chapterTitle');
+      // 将"CHAPTER X"样式的标题放在页面顶部中央
       pdf.text(`CHAPTER ${chapter.chapterNumber}`, pageWidth / 2, margin.top + 0.5, { align: 'center' });
       
-      // Set chapter title style using larger, more prominent font
-      pdf.setFontSize(24); // Increase title font size
+      // 使用更大、更加突出的字体设置章节标题
+      pdf.setFontSize(24); // 增大标题字体
       pdf.text(chapter.title, pageWidth / 2, margin.top + 1.5, { align: 'center' });
       
-      let contentY = margin.top + 2.5; // Increase space between title and content
+      let contentY = margin.top + 2.5; // 增加标题和内容之间的间距
       
       chapter.sections.forEach((section) => {
-        const currentMargins = getCurrentMargins(currentPageNumber);
-        let availableWidth = pageWidth - currentMargins.left - currentMargins.right;
-
-        // Check if new page needed for section title
+        // 检查是否需要新页面
         if (contentY + (fonts.sectionTitle.size / 72 * 1.2) > pageHeight - margin.bottom) {
           addPage();
           contentY = margin.top;
-          // Update margins for the new page
-          Object.assign(currentMargins, getCurrentMargins(currentPageNumber)); 
-          availableWidth = pageWidth - currentMargins.left - currentMargins.right;
         }
         
-        // Set section title style
+        // 设置小节标题样式
         setFont('sectionTitle');
-        pdf.text(section.title, currentMargins.left, contentY);
-        contentY += fonts.sectionTitle.size / 72 * 1.8; // Increase space after title
+        pdf.text(section.title, margin.left, contentY);
+        contentY += fonts.sectionTitle.size / 72 * 1.8; // 增加标题后的间距
         
+        // 设置正文内容样式为Garamond (georgia) - 移动到段落循环内
         const paragraphs = section.content.split('\n\n');
         
         paragraphs.forEach((paragraph) => {
-          // Recalculate margins for the current page before splitting text
-          const paraMargins = getCurrentMargins(currentPageNumber);
-          let paraAvailableWidth = pageWidth - paraMargins.left - paraMargins.right;
-
-          const textLines = pdf.splitTextToSize(paragraph, paraAvailableWidth);
-          const paragraphHeight = textLines.length * (fonts.body.size / 72 * 1.2);
+          // 计算当前段落需要的空间
+          const textLines = pdf.splitTextToSize(paragraph, pageWidth - margin.left - margin.right);
+          const paragraphHeight = textLines.length * (fonts.body.size / 72 * 1.2) + 0.2;
           
-          // If current paragraph doesn't fit, add new page
+          // 如果当前段落无法完全放入当前页面，添加新页面
           if (contentY + paragraphHeight > pageHeight - margin.bottom) {
             addPage();
             contentY = margin.top;
-            // Update margins for the new page
-            Object.assign(paraMargins, getCurrentMargins(currentPageNumber)); 
-            paraAvailableWidth = pageWidth - paraMargins.left - paraMargins.right;
           }
           
-          // Ensure correct body font is set before drawing
+          // 在绘制每个段落前确保设置正确的正文字体
           setFont('body');
-          pdf.text(textLines, paraMargins.left, contentY);
+          pdf.text(textLines, margin.left, contentY);
           
-          // Add spacing after paragraph
-          contentY += paragraphHeight + (fonts.body.size / 72 * 0.5); 
+          // 更精确地计算段落后的垂直位置
+          contentY += paragraphHeight;
         });
       });
     });
-    
-    // Add final page number to the last page if it wasn't added by addPage
-    addPageNumber();
 
     // 生成 PDF 输出
     const pdfOutput = pdf.output('datauristring');
