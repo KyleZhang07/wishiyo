@@ -3,10 +3,6 @@ import { jsPDF } from "https://esm.sh/jspdf@2.5.1";
 import { autoTable } from "https://esm.sh/jspdf-autotable@3.8.1";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.8.0";
 
-// 导入字体文件
-// 注意：我们需要使用相对路径导入，这些字体文件已经上传到 /fonts 目录
-// 在 Deno 环境中使用 import 语句可能会遇到跨域问题，所以我们将在运行时动态加载字体文件
-
 // CORS 头设置
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,7 +13,6 @@ declare const Deno: {
   env: {
     get(key: string): string | undefined;
   };
-  readTextFile(url: URL | string): Promise<string>;
 };
 
 interface BookChapter {
@@ -161,61 +156,19 @@ serve(async (req) => {
 
     // 添加字体
     function addFonts(pdf: any) {
-      // 添加标准字体
+      // 添加标准字体，包括Garamond
       pdf.addFont('helvetica', 'normal');
       pdf.addFont('helvetica', 'bold');
       pdf.addFont('times', 'normal');
       pdf.addFont('times', 'bold');
-      
-      // 添加 EB Garamond 字体
-      try {
-        // 使用正确的字体名称，与字体文件中定义的名称一致
-        pdf.setFont('EBGaramond-Regular', 'normal');
-        pdf.setFont('EBGaramond-Bold', 'bold');
-        pdf.setFont('EBGaramond-Italic', 'italic');
-        pdf.setFont('EBGaramond-BoldItalic', 'bolditalic');
-        
-        console.log("EB Garamond 字体已成功设置");
-      } catch (error) {
-        // 如果设置失败，回退到 georgia
-        console.error("EB Garamond 字体设置失败，使用 georgia 替代:", error);
-        pdf.addFont('georgia', 'normal');
-        pdf.addFont('georgia', 'bold');
-      }
+      pdf.addFont('georgia', 'normal'); // 作为Garamond的替代，因为jsPDF标准版本没有直接支持Garamond
+      pdf.addFont('georgia', 'bold');
     }
 
     // 设置页面出血和尺寸
     const bleed = 0.125;
     const pageWidth = 6 + (bleed * 2);
     const pageHeight = 9 + (bleed * 2);
-
-    // 在创建 jsPDF 实例之前加载字体文件
-    try {
-      // 使用 Deno.readTextFile 读取字体文件
-      const fontFiles = [
-        "fonts/EBGaramond-Regular-normal.js",
-        "fonts/EBGaramond-Bold-bold.js",
-        "fonts/EBGaramond-Italic-italic.js",
-        "fonts/EBGaramond-BoldItalic-bolditalic.js"
-      ];
-      
-      console.log("开始加载 EB Garamond 字体文件");
-      
-      // 加载并执行每个字体文件的内容，这会在全局注册字体
-      for (const fontFile of fontFiles) {
-        try {
-          // 读取字体文件内容
-          const fontContent = await Deno.readTextFile(new URL(fontFile, import.meta.url));
-          // 执行字体文件内容，这会注册字体
-          eval(fontContent);
-          console.log(`成功加载字体: ${fontFile}`);
-        } catch (error) {
-          console.error(`加载字体文件 ${fontFile} 失败:`, error);
-        }
-      }
-    } catch (error) {
-      console.error("加载字体文件失败:", error);
-    }
 
     const pdf = new jsPDF({
       orientation: 'portrait',
@@ -236,62 +189,57 @@ serve(async (req) => {
 
     const debugLines = true;
 
-    // 更新字体设置为 EB Garamond
+    // 更新字体设置为Garamond风格（用Georgia作为近似替代）
     const fonts = {
       title: {
-        family: 'EBGaramond-Bold',
+        family: 'georgia',
         style: 'bold',
         size: 24
       },
       subtitle: {
-        family: 'EBGaramond-Regular',
+        family: 'georgia',
         style: 'normal',
         size: 16
       },
       chapterTitle: {
-        family: 'EBGaramond-Bold',
+        family: 'georgia',
         style: 'bold',
         size: 18
       },
       contentsTitle: {
-        family: 'EBGaramond-Bold',
+        family: 'georgia',
         style: 'bold',
         size: 28 // 更大的目录标题，如图所示
       },
       sectionTitle: {
-        family: 'EBGaramond-Bold',
+        family: 'georgia',
         style: 'bold',
-        size: 12
+        size: 14
       },
       body: {
-        family: 'EBGaramond-Regular',
+        family: 'georgia',
         style: 'normal',
         size: 12
       },
       copyright: {
-        family: 'EBGaramond-Regular',
+        family: 'georgia',
         style: 'normal',
         size: 10
       },
       tocChapter: {
-        family: 'EBGaramond-Regular',
-        style: 'normal', // 目录中的章节标题使用普通样式
+        family: 'georgia',
+        style: 'normal', // 目录中的章节标题使用斜体，更符合图片中的样式
         size: 12
       },
       tocPageNumber: {
-        family: 'EBGaramond-Regular',
+        family: 'georgia',
         style: 'normal',
         size: 12
       },
-      pageHeaderFooter: { // 页眉页脚
-        family: 'EBGaramond-Regular',
+      pageHeaderFooter: { // 新增样式用于页眉页脚
+        family: 'georgia',
         style: 'normal',
         size: 10
-      },
-      runningHeader: { // 居中的页眉章节标题
-        family: 'EBGaramond-Regular',
-        style: 'normal',
-        size: 11
       }
     };
 
@@ -347,7 +295,7 @@ serve(async (req) => {
     pdf.text('product of the author\'s imagination or are used fictitiously.', margin.left, margin.top + 2.3);
 
     addPage();
-    // 使用更大的字号和EB Garamond样式的"Contents"标题
+    // 使用更大的字号和Garamond样式的"Contents"标题
     setFont('contentsTitle');
     pdf.text('Contents', pageWidth / 2, margin.top + 0.8, { align: 'center' });
     
@@ -361,11 +309,21 @@ serve(async (req) => {
     for (let i = 0; i < finalBookContent.length; i++) {
       const chapter: BookChapter = finalBookContent[i];
 
-      // 检查目录内容是否会超出页面底部，如果会，则自然换页
-      if (tocY > pageHeight - margin.bottom - 0.3) {
-         addPage();
-         currentPage++;
-         tocY = margin.top + 1.0;
+      // 在第12个条目后且总条目数大于12时，添加新页并重置Y坐标
+      if (i === 12 && finalBookContent.length > 12) {
+        addPage();
+        currentPage++; // 目录现在占用两页
+        tocY = margin.top + 1.0; // 重置第二页目录的起始Y坐标
+      }
+
+      // 检查目录内容是否会超出页面底部，如果会，则换页 (以防单页目录也溢出)
+      // 增加检查条件，确保在分页点之后也检查溢出
+      if (tocY > pageHeight - margin.bottom - 0.3 && i !== 12 ) {
+         // 如果不是恰好在第12个元素后分页，且内容溢出，则正常添加新页
+         // (如果恰好是第12个元素后分页，上面的逻辑已经处理了分页)
+        addPage();
+        currentPage++;
+        tocY = margin.top + 1.0;
       }
 
       // 设置章节编号字体
@@ -385,60 +343,59 @@ serve(async (req) => {
       // 暂时移除页码，因为准确计算复杂
        pdf.text(`...`, pageWidth - margin.right, tocY, { align: 'right' });
 
-      // 增加目录行间距，使其更宽松，符合图片 - 从 0.6 调整回 0.55
-      tocY += 0.55; // 轻微缩小行距
+      // 增加目录行间距，使其更宽松，符合图片
+      tocY += 0.6; // 从 0.4 增加到 0.6
     }
 
     // !! 页码计算逻辑需要重新审视和实现 !!
     // 当前的 currentPage 计算逻辑在目录生成时是不准确的
     // 需要在所有章节内容实际渲染完成后再回来填充目录页码
 
-    // **添加两个空白页**
-    addPage();
-    addPage();
+    // 确保章节从偶数页开始
+    // 需要基于准确的目录页数调整起始章节页码
+    const tocPages = finalBookContent.length > 12 ? 2 : 1;
+    let startingContentPage = 2 + tocPages + 1; // 标题页(1), 版权页(1), 目录页数(tocPages) + 1
+    if (startingContentPage % 2 !== 0) {
+       addPage(); // 添加空白页以确保从偶数页开始
+       // currentPage++; // 更新当前页码计数器 - 需要更可靠的页码管理
+    }
 
-    // 重新计算第一个内容页的实际页码
-    const tocPages = finalBookContent.length > 12 ? 2 : 1; // 估算目录页数
-    const firstContentPageNumber = 1 + 1 + tocPages + 2; // 标题页(1) + 版权页(1) + 目录页数(tocPages) + 空白页(2)
-
-    // 使用EB Garamond样式添加章节内容
+    // 使用Garamond样式添加章节内容
     // 需要在渲染章节时记录每个章节开始的准确页码
     const chapterStartPages: { [key: number]: number } = {};
+    let currentContentPage = startingContentPage; // 使用调整后的起始页码
 
     finalBookContent.forEach((chapter: BookChapter) => {
-      let currentPageNum = pdf.internal.getNumberOfPages(); // 获取当前文档的总页数
-
-      // 对于任何章节，总是添加新页面，确保前一章内容不会与新章节在同一页
-      addPage();
-      currentPageNum++;
-
-      // 仅对第一章确保从奇数页（右侧）开始
-      if (chapter.chapterNumber === 1 && currentPageNum % 2 === 0) {
-        // 如果第一章当前页是偶数（左侧），添加一页空白页，确保从奇数页开始
-        addPage();
-        currentPageNum++;
+      // 如果不是第一章且当前页不是偶数页，则添加空白页 (确保章节从右侧页面开始)
+      // 注意：需要一个更健壮的页码跟踪系统
+      if (chapter.chapterNumber > 1 && currentContentPage % 2 !== 0) {
+         addPage();
+         currentContentPage++;
+      } else if (chapter.chapterNumber === 1 && currentContentPage % 2 === 0) {
+         // 如果第一章在左侧页（偶数页），则添加一个空白页移到右侧
+         addPage();
+         currentContentPage++;
       }
 
-      // 记录章节开始的 *实际* 物理页码
-      chapterStartPages[chapter.chapterNumber] = pdf.internal.getNumberOfPages(); // 记录当前页为章节起始页
+      addPage(); // 为章节内容添加新页
+      chapterStartPages[chapter.chapterNumber] = currentContentPage; // 记录章节起始页码
 
       // 1. 绘制 "CHAPTER X"
       setFont('chapterTitle'); // 使用 chapterTitle 样式 (size: 18)
       const chapterNumberText = `CHAPTER ${chapter.chapterNumber}`;
-      // 将章节编号的Y坐标从 margin.top + 0.8 向下移动到 margin.top + 1.3
-      const chapterNumberY = margin.top + 1.3; // 向下移动0.5英寸
+      const chapterNumberY = margin.top + 0.8; // 调整 Y 坐标，使其更靠上，类似图片
       pdf.text(chapterNumberText, pageWidth / 2, chapterNumberY, { align: 'center' });
 
       // 2. 绘制换行的章节标题
       // 设置章节主标题的字体和大小 (与 chapterTitle 不同)
-      pdf.setFont(fonts.title.family, fonts.title.style); // 使用 title 字体 (EBGaramond, bold)
-      pdf.setFontSize(28); // 从 24pt 增大到 28pt
+      pdf.setFont(fonts.title.family, fonts.title.style); // 使用 title 字体 (georgia, bold)
+      pdf.setFontSize(24); // 明确设置字体大小为 24pt
       const chapterTitleText = chapter.title;
       const chapterTitleMaxWidth = pageWidth - margin.left - margin.right - 1; // 减去一些额外边距以防万一
       const chapterTitleLines = pdf.splitTextToSize(chapterTitleText, chapterTitleMaxWidth);
       
-      const chapterTitleLineHeight = 28 / 72 * 1.4; // 基于 28pt 字体，行距因子增大到 1.4
-      let chapterTitleY = chapterNumberY + 1.0; // 保持与章节编号的相对距离
+      const chapterTitleLineHeight = 24 / 72 * 1.2; // 行高 (基于24pt字体)
+      let chapterTitleY = chapterNumberY + 0.7; // 在 "CHAPTER X" 下方开始绘制，增加间距
 
       // 绘制每一行章节标题
       chapterTitleLines.forEach((line: string) => {
@@ -448,105 +405,56 @@ serve(async (req) => {
 
       // 3. 设置后续内容的起始 Y 坐标
       // 确保内容从换行后的标题下方开始，并有足够间距
-      let contentY = chapterTitleY + 0.7; // 在最后一行标题下方增加 0.7 英寸间距 (从 0.5 增加)
+      let contentY = chapterTitleY + 0.5; // 在最后一行标题下方增加 0.5 英寸间距
 
       chapter.sections.forEach((section) => {
         // 检查是否需要新页面（为 section title 预留空间）
         const sectionTitleHeight = fonts.sectionTitle.size / 72 * 1.8; // 估算小节标题高度
         if (contentY + sectionTitleHeight > pageHeight - margin.bottom) {
           addPage();
-          currentPageNum++; // 章节内容分页时增加页码
-          // 在新页顶部添加居中的章节标题页眉
-          setFont('runningHeader'); // 使用新样式
-          // 恢复页眉原来的位置
-          pdf.text(chapter.title, pageWidth / 2, margin.top - 0.2, { align: 'center' }); // 恢复原始位置
-          contentY = margin.top + 0.3; // 增加顶部内容起始的安全距离，保证文本不超出上边界
+          currentContentPage++; // 章节内容分页时增加页码
+          // 在新页顶部添加章节标题页眉
+          setFont('pageHeaderFooter');
+          pdf.text(chapter.title, margin.left, margin.top - 0.2); // 页眉放左上角
+          contentY = margin.top; // 新页面从顶部开始
         }
         
         // 设置小节标题样式
-        // 增加小节标题前的间距，特别是非页面开头的情况
-        if (contentY > margin.top + 0.3) { // 如果不是在页面顶部，则增加额外间距
-          contentY += 0.3; // 在当前段落和新小节标题之间添加额外的 0.3 英寸间距
-        }
-        
         setFont('sectionTitle');
-        // 定义安全边距，与段落处理中相同
-        const safetyMarginRight = 0.15; // 额外添加的右侧安全边距
-        // 添加小标题自动换行功能
-        const sectionTitleLines = pdf.splitTextToSize(section.title, pageWidth - margin.left - margin.right - safetyMarginRight);
-        pdf.text(sectionTitleLines, margin.left, contentY);
+        pdf.text(section.title, margin.left, contentY);
+        contentY += fonts.sectionTitle.size / 72 * 1.8; // 增加标题后的间距
         
-        // 小标题与正文之间的间距，从 1.8 减小到 1.4
-        contentY += fonts.sectionTitle.size / 72 * 1.4 + (sectionTitleLines.length - 1) * (fonts.sectionTitle.size / 72 * 1.2);
-        
-        // 设置正文内容样式为EB Garamond (EBGaramond) - 移动到段落循环内
+        // 设置正文内容样式为Garamond (georgia) - 移动到段落循环内
         const paragraphs = section.content.split('\n\n');
         
         paragraphs.forEach((paragraph) => {
-          setFont('body'); // Ensure body font is set before calculations
-          // 增加正文行距，将行高因子从 1.2 增加到 1.4
-          const lineHeight = fonts.body.size / 72 * 1.4;
-          const paragraphSpacing = 0.2;
+          // 计算当前段落需要的空间
+          const textLines = pdf.splitTextToSize(paragraph, pageWidth - margin.left - margin.right);
+          const paragraphHeight = textLines.length * (fonts.body.size / 72 * 1.2) + 0.2;
           
-          // 使用缩小后的有效宽度分割文本
-          const textLines = pdf.splitTextToSize(paragraph, pageWidth - margin.left - margin.right - safetyMarginRight);
-          
-          let linesProcessed = 0;
-          while (linesProcessed < textLines.length) {
-            const availableHeight = pageHeight - margin.bottom - contentY;
-            const linesThatFitCount = Math.floor((availableHeight - (linesProcessed === 0 ? paragraphSpacing : 0)) / lineHeight);
-
-            if (linesThatFitCount <= 0 && contentY > margin.top) { // Not enough space even for one line, and not already at top
-              // Add new page
-              addPage();
-              currentPageNum++;
-              setFont('runningHeader');
-              pdf.text(chapter.title, pageWidth / 2, margin.top - 0.2, { align: 'center' }); // 恢复原始位置
-              contentY = margin.top + 0.3; // 修改为 margin.top + 0.3，确保内容不会超出上边界
-              // Re-calculate lines that fit on the new empty page
-              const newAvailableHeight = pageHeight - margin.bottom - contentY;
-              const linesOnNewPageCount = Math.floor((newAvailableHeight - (linesProcessed === 0 ? paragraphSpacing : 0)) / lineHeight);
-              const linesToDraw = textLines.slice(linesProcessed, linesProcessed + linesOnNewPageCount);
-              
-              if (linesToDraw.length > 0) {
-                 // Add paragraph spacing only if it's the start of the paragraph drawing
-                 const drawY = contentY + (linesProcessed === 0 ? paragraphSpacing : 0);
-                 
-                 // 设置两端对齐，但使用较小的有效宽度确保内容在安全框内
-                 pdf.text(linesToDraw, margin.left, drawY, { align: 'justify', maxWidth: pageWidth - margin.left - margin.right - safetyMarginRight });
-                 
-                 contentY = drawY + linesToDraw.length * lineHeight;
-                 linesProcessed += linesToDraw.length;
-              } else {
-                 // Should not happen if a full page is available, but break defensively
-                 console.warn("Could not fit any lines on a new page.");
-                 break; 
-              }
-            } else {
-              // Draw lines that fit on the current page
-              const linesToDrawCount = Math.min(linesThatFitCount, textLines.length - linesProcessed);
-              const linesToDraw = textLines.slice(linesProcessed, linesProcessed + linesToDrawCount);
-
-              if (linesToDraw.length > 0) {
-                 // Add paragraph spacing only if it's the start of the paragraph drawing on this page segment
-                 const drawY = contentY + (linesProcessed === 0 ? paragraphSpacing : 0);
-                 
-                 // 设置两端对齐，但使用较小的有效宽度确保内容在安全框内
-                 pdf.text(linesToDraw, margin.left, drawY, { align: 'justify', maxWidth: pageWidth - margin.left - margin.right - safetyMarginRight });
-                 
-                 contentY = drawY + linesToDraw.length * lineHeight;
-                 linesProcessed += linesToDraw.length;
-              } else {
-                  // No lines fit, break (should be handled by the case above, but for safety)
-                  if (contentY <= margin.top) { // If we are already at the top and still can't fit, paragraph is too big for page.
-                       console.error("Paragraph segment too large to fit on a single page.");
-                  }
-                  break;
-              }
-            }
+          // 如果当前段落无法完全放入当前页面，添加新页面
+          if (contentY + paragraphHeight > pageHeight - margin.bottom) {
+            addPage();
+            currentContentPage++; // 章节内容分页时增加页码
+            // 在新页顶部添加章节标题页眉
+            setFont('pageHeaderFooter');
+            pdf.text(chapter.title, margin.left, margin.top - 0.2); // 页眉放左上角
+            contentY = margin.top;
           }
+          
+          // 在绘制每个段落前确保设置正确的正文字体
+          setFont('body');
+          // 添加 align: 'justify' 来尝试实现两端对齐
+          pdf.text(textLines, margin.left, contentY, { align: 'justify' });
+          
+          // 更精确地计算段落后的垂直位置
+          contentY += paragraphHeight;
         });
       });
+
+      // 完成一个章节的渲染后，需要更新 currentContentPage
+      // 但 addPage() 内部没有直接返回页码，需要外部管理
+      currentContentPage = pdf.internal.getNumberOfPages(); // 获取当前总页数作为下一章的起始页码参考
     }); // end chapters loop
 
     // !! 回填目录页码 !!
@@ -554,22 +462,16 @@ serve(async (req) => {
     // 这需要重新访问目录页并绘制页码，实现起来比较复杂
     // 暂时保留 '...' 作为页码占位符
 
-    // **添加6页空白页到书的末尾**
-    for (let i = 0; i < 6; i++) {
-      addPage();
-    }
-
     // **添加页码和最终处理**
     const finalPageCount = pdf.internal.getNumberOfPages(); // 使用准确的页码
-    const lastContentPage = finalPageCount - 6; // 最后一个内容页（减去6页空白页）
+    const firstChapterPage = chapterStartPages[1] || startingContentPage; // Chapter 1 开始的物理页码
 
-    // 从第一个 *内容* 页面开始添加页码到最后一个*内容*页面（不含最后添加的6页空白页）
-    for (let i = firstContentPageNumber; i <= lastContentPage; i++) {
+    // 从第一章开始添加页码到最后一页
+    for (let i = firstChapterPage; i <= finalPageCount; i++) {
       pdf.setPage(i); // 切换到指定页面
-      const displayPageNum = String(i - firstContentPageNumber + 1); // 计算显示的页码 (1, 2, 3...)
+      const displayPageNum = String(i - firstChapterPage + 1); // 计算显示的页码 (1, 2, 3...)
       setFont('pageHeaderFooter');
-      // 恢复页码原来的位置
-      pdf.text(displayPageNum, pageWidth - margin.right, margin.top - 0.2, { align: 'right' }); // 恢复原始位置
+      pdf.text(displayPageNum, pageWidth - margin.right, margin.top - 0.2, { align: 'right' }); // 页码放右上角
     }
 
     // 生成 PDF 输出
