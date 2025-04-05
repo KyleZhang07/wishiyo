@@ -280,6 +280,8 @@ const FormatStep = () => {
                 answers: answers, // 添加answers字段
                 status: 'created',
                 timestamp: new Date().toISOString(),
+                // 保存封面样式
+                style: localStorage.getItem('funnyBiographySelectedStyle') || 'classic',
                 // 保存图片URL到数据库
                 images: {
                   frontCover: frontCoverUrl,
