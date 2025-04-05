@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { jsPDF } from "https://esm.sh/jspdf@2.5.1";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.8.0";
@@ -22,12 +21,14 @@ serve(async (req) => {
   }
 
   try {
-    const { frontCover, spine, backCover, orderId, binding_type, format } = await req.json();
+    const { frontCover, spine, backCover, orderId, binding_type, format, style } = await req.json();
     
     // 支持两种参数名称，优先使用 binding_type，如果不存在则使用 format，都不存在则默认为 'softcover'
     const bindingType = binding_type || format || 'softcover';
+    // 使用传入的封面样式，如果不存在则默认为 'classic'
+    const coverStyle = style || 'classic';
 
-    console.log('Received request for PDF generation with order ID:', orderId, 'binding type:', bindingType);
+    console.log('Received request for PDF generation with order ID:', orderId, 'binding type:', bindingType, 'cover style:', coverStyle);
     
     if (!frontCover || !spine || !backCover) {
       throw new Error('Missing required cover image URLs');
@@ -223,6 +224,98 @@ serve(async (req) => {
       - Vertical offset (for centering): ${yOffset}"
     `);
     
+    // 定义样式到背景色的映射
+    const styleBackgroundColors: Record<string, { r: number, g: number, b: number }> = {
+      'classic': { r: 0, g: 0, b: 0 }, // 黑色 - 对应 classic-red 样式
+      'modern': { r: 236, g: 232, b: 217 }, // #ECE8D9
+      'minimal': { r: 217, g: 217, b: 217 }, // #D9D9D9 - 对应 minimal-gray 样式
+      'vibrant': { r: 67, g: 97, b: 238 }, // #4361EE
+      'pastel-beige': { r: 255, g: 192, b: 203 }, // #FFC0CB - 粉色
+      'vibrant-green': { r: 229, g: 221, b: 202 }, // #E5DDCA - 对应 modern-green 样式
+      'bestseller': { r: 0, g: 0, b: 0 } // 黑色 - 对应 bestseller-style 样式
+    };
+    
+    // 样式 ID 到模板名称的映射
+    const styleIdToTemplate: Record<string, string> = {
+      'classic-red': 'classic',
+      'bestseller-style': 'bestseller',
+      'modern-green': 'vibrant-green',
+      'minimal-gray': 'minimal',
+      'pastel-beige': 'pastel-beige'
+    };
+    
+    // 获取实际的模板名称
+    const templateName = styleIdToTemplate[coverStyle] || coverStyle;
+    
+    // 简化版的图片颜色分析函数 - 我们不再需要实际分析图片颜色
+    // 因为我们将使用样式背景色来填充出血区域
+    async function analyzeImageColors(imageData: string): Promise<{r: number, g: number, b: number}> {
+      // 返回样式对应的背景色，如果没有匹配的样式则返回白色
+      return styleBackgroundColors[templateName] || { r: 255, g: 255, b: 255 };
+    }
+    
+    // 获取样式对应的背景色
+    const styleColor = styleBackgroundColors[templateName] || { r: 255, g: 255, b: 255 }; // 默认白色
+    
+    console.log('Using style color for bleed areas:', 
+      `Style ID: ${coverStyle}`,
+      `Template: ${templateName}`,
+      `Color: rgb(${styleColor.r},${styleColor.g},${styleColor.b})`
+    );
+    
+    // 由于我们不再需要分析图片颜色，这些变量现在都会使用样式背景色
+    const frontCoverColor = styleColor;
+    const backCoverColor = styleColor;
+    const spineColor = styleColor;
+    
+    console.log('Using style colors for all elements:',
+      `Front: rgb(${frontCoverColor.r},${frontCoverColor.g},${frontCoverColor.b})`,
+      `Spine: rgb(${spineColor.r},${spineColor.g},${spineColor.b})`,
+      `Back: rgb(${backCoverColor.r},${backCoverColor.g},${backCoverColor.b})`
+    );
+    
+    // 先填充整个背景以确保没有空白区域
+    console.log('Filling background for entire PDF');
+    
+    // 填充整个PDF背景为白色（作为底层）
+    pdf.setFillColor(255, 255, 255);
+    pdf.rect(0, 0, pdfWidth, pdfHeight, 'F');
+    
+    // 填充扩展的出血区域背景
+    
+    // 1. 绘制背面封面背景颜色（包括出血区域）
+    console.log('Filling back cover background with bleed extension');
+    pdf.setFillColor(styleColor.r, styleColor.g, styleColor.b); // 使用样式背景色
+    pdf.rect(
+      0, // 左侧扩展到PDF边缘
+      0, // 顶部扩展到PDF边缘
+      xOffset + backCoverWidth, // 宽度包括左侧出血区和封底
+      pdfHeight, // 高度扩展到整个PDF高度
+      'F'
+    );
+    
+    // 2. 绘制书脊背景颜色（包括出血区域）
+    console.log('Filling spine background with bleed extension');
+    pdf.setFillColor(styleColor.r, styleColor.g, styleColor.b); // 使用样式背景色
+    pdf.rect(
+      xOffset + backCoverWidth,
+      0, // 顶部扩展到PDF边缘
+      spineWidth,
+      pdfHeight, // 高度扩展到整个PDF高度
+      'F'
+    );
+    
+    // 3. 绘制正面封面背景颜色（包括出血区域）
+    console.log('Filling front cover background with bleed extension');
+    pdf.setFillColor(styleColor.r, styleColor.g, styleColor.b); // 使用样式背景色
+    pdf.rect(
+      xOffset + backCoverWidth + spineWidth,
+      0, // 顶部扩展到PDF边缘
+      pdfWidth - (xOffset + backCoverWidth + spineWidth), // 宽度扩展到PDF右边缘
+      pdfHeight, // 高度扩展到整个PDF高度
+      'F'
+    );
+    
     // Debug lines flag - set to true to show safety margins and trim lines
     const debugLines = true;
     
@@ -340,6 +433,29 @@ serve(async (req) => {
     
     console.log(`Cover PDF uploaded successfully to storage with URL: ${coverFileUrl}`);
     
+    // 查询数据库获取书籍信息
+    const { data: bookData, error: bookError } = await supabase
+      .from('funny_biography_books')
+      .select('*')
+      .eq('order_id', orderId)
+      .single();
+
+    if (bookError) {
+      console.error('Error fetching book data:', bookError);
+      throw new Error('Failed to fetch book data');
+    }
+
+    if (!bookData) {
+      console.error('No book data found for order ID:', orderId);
+      throw new Error('Book data not found');
+    }
+
+    console.log('Retrieved book data for PDF generation');
+
+    // 如果数据库中没有封面样式信息，则使用传入的参数
+    const finalCoverStyle = bookData.style || coverStyle;
+    console.log('Using cover style:', finalCoverStyle);
+
     // 更新数据库，包含PDF数据和URL
     if (orderId) {
       console.log(`Updating database for order ${orderId} with coverPdf and cover_source_url`);

@@ -41,6 +41,7 @@ serve(async (req) => {
       lulu_tracking_url,
       print_date,
       print_attempts,
+      style, 
     } = await req.json();
 
     // Debug logging for shipping address
@@ -203,6 +204,11 @@ serve(async (req) => {
     
     if (print_attempts !== undefined) {
       updateData.print_attempts = print_attempts;
+    }
+
+    // 添加封面样式参数处理
+    if (style) {
+      updateData.style = style;
     }
 
     // Update the database

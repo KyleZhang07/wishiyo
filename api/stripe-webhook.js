@@ -381,7 +381,7 @@ export default async function handler(req, res) {
                   // 重新从数据库获取最新的 binding_type
                   console.log(`[${orderId}] Fetching latest book data for binding_type`);
                   const getUpdatedBookResponse = await fetch(
-                    `${supabaseUrl}/rest/v1/funny_biography_books?order_id=eq.${orderId}&select=binding_type`,
+                    `${supabaseUrl}/rest/v1/funny_biography_books?order_id=eq.${orderId}&select=binding_type,style`,
                     {
                       method: 'GET',
                       headers: {
@@ -393,16 +393,27 @@ export default async function handler(req, res) {
                   );
                   
                   let bindingType = 'softcover'; // 默认值
+                  let coverStyle = 'classic'; // 默认封面样式
+                  
                   if (getUpdatedBookResponse.ok) {
                     const updatedBookData = await getUpdatedBookResponse.json();
-                    if (updatedBookData && updatedBookData.length > 0 && updatedBookData[0].binding_type) {
-                      bindingType = updatedBookData[0].binding_type.toLowerCase();
-                      console.log(`[${orderId}] Retrieved binding_type from database: ${bindingType}`);
-                    } else {
-                      console.log(`[${orderId}] Could not retrieve binding_type from database, using default: ${bindingType}`);
+                    if (updatedBookData && updatedBookData.length > 0) {
+                      if (updatedBookData[0].binding_type) {
+                        bindingType = updatedBookData[0].binding_type.toLowerCase();
+                        console.log(`[${orderId}] Retrieved binding_type from database: ${bindingType}`);
+                      } else {
+                        console.log(`[${orderId}] Could not retrieve binding_type from database, using default: ${bindingType}`);
+                      }
+                      
+                      if (updatedBookData[0].style) {
+                        coverStyle = updatedBookData[0].style;
+                        console.log(`[${orderId}] Retrieved style from database: ${coverStyle}`);
+                      } else {
+                        console.log(`[${orderId}] Could not retrieve style from database, using default: ${coverStyle}`);
+                      }
                     }
                   } else {
-                    console.warn(`[${orderId}] Failed to fetch updated book data, using default binding_type: ${bindingType}`);
+                    console.warn(`[${orderId}] Failed to fetch updated book data, using default values: binding_type=${bindingType}, style=${coverStyle}`);
                   }
                   
                   console.log(`[${orderId}] Cover images validated, calling cover PDF generation`);
@@ -420,7 +431,8 @@ export default async function handler(req, res) {
                         spine: images.spine,
                         backCover: images.backCover,
                         binding_type: bindingType,
-                        format: bindingType // 保留 format 参数以确保兼容性
+                        format: bindingType, // 保留 format 参数以确保兼容性
+                        style: coverStyle // 使用 style 字段而不是 cover_template
                       })
                     }
                   );

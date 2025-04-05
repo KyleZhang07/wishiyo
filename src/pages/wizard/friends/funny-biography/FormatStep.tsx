@@ -329,9 +329,16 @@ const FormatStep = () => {
   
   // 辅助函数：更新书籍状态
   const updateBookStatus = async (orderId: string, status: string) => {
+    // 从 localStorage 获取用户选择的封面样式
+    const coverStyle = localStorage.getItem('funnyBiographySelectedStyle') || 'classic';
+    
     return fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/update-book-data`, {
       method: 'POST',
-      body: JSON.stringify({ orderId, status }),
+      body: JSON.stringify({ 
+        orderId, 
+        status,
+        style: coverStyle // 使用 style 字段保存封面样式
+      }),
       headers: { 
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
