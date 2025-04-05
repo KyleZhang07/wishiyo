@@ -123,6 +123,48 @@ const CanvasCoverPreview = ({
     }
   }, [coverTitle, subtitle, authorName, image, selectedFont, selectedTemplate, selectedLayout, category, imagePosition, imageScale, previewMode, scaleFactor, praises]);
 
+  // Helper function to draw text centered vertically within a defined area
+  function drawTextInArea(
+    ctx: CanvasRenderingContext2D,
+    lines: string[],
+    area: { x: number; y: number; width: number; height: number },
+    font: string,
+    color: string,
+    lineHeight: number,
+    textAlign: 'left' | 'center' | 'right' = 'center'
+  ) {
+    if (!lines || lines.length === 0) return;
+
+    ctx.font = font;
+    ctx.fillStyle = color;
+    ctx.textAlign = textAlign;
+    ctx.textBaseline = 'top'; // Align text from the top for predictable positioning
+
+    // Estimate text block height using line count * lineHeight for simpler centering
+    const textBlockHeight = lines.length * lineHeight; 
+    let startY = area.y + (area.height - textBlockHeight) / 2; // Calculate centered start Y
+
+    // Ensure text doesn't start above the area
+    startY = Math.max(area.y, startY);
+
+    let drawX: number;
+    if (textAlign === 'center') {
+      drawX = area.x + area.width / 2;
+    } else if (textAlign === 'right') {
+      drawX = area.x + area.width;
+    } else {
+      drawX = area.x;
+    }
+
+    for (let i = 0; i < lines.length; i++) {
+      const currentY = startY + i * lineHeight;
+      // Only draw if the line starts within or just below the area
+      if (currentY < area.y + area.height) {
+          ctx.fillText(lines[i], drawX, currentY);
+      }
+    }
+  }
+
   const drawFrontCover = (
     ctx: CanvasRenderingContext2D, 
     width: number, 
@@ -133,6 +175,31 @@ const CanvasCoverPreview = ({
     // Draw background
     ctx.fillStyle = template.backgroundColor;
     ctx.fillRect(0, 0, width, height);
+
+    // Define wrapText function here to be available for all styles
+    const wrapText = (context: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) => {
+      const words = text.split(' ');
+      let line = '';
+      const lines: string[] = [];
+      
+      for (let n = 0; n < words.length; n++) {
+        const testLine = line + words[n] + ' ';
+        const metrics = context.measureText(testLine);
+        const testWidth = metrics.width;
+        
+        if (testWidth > maxWidth && n > 0) {
+          lines.push(line.trim());
+          line = words[n] + ' ';
+        } else {
+          line = testLine;
+        }
+      }
+      
+      if (line.trim() !== '') {
+          lines.push(line.trim());
+      }
+      return lines;
+    };
 
     // 检查是否为Sweet Pink主题
     const isSweetPink = template.id === 'pastel-beige';
@@ -337,48 +404,22 @@ const CanvasCoverPreview = ({
       ctx.textAlign = 'center';
       ctx.fillText(`${authorName}`, width / 2, 85);
       
-      // 在底部绘制蓝色描述区域 - 缩小蓝色区域高度
-      const blueHeight = height * 0.2;
+      // 在底部绘制蓝色描述区域 - 再次缩小蓝色区域高度
+      const blueHeight = height * 0.15; // 从0.2缩小到0.15
       ctx.fillStyle = '#4361EE';
       ctx.fillRect(0, height - blueHeight, width, blueHeight);
       
-      // 辅助函数：文本自动换行
-      const wrapText = (context: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) => {
-        const words = text.split(' ');
-        let line = '';
-        const lines: string[] = [];
-        
-        for (let n = 0; n < words.length; n++) {
-          const testLine = line + words[n] + ' ';
-          const metrics = context.measureText(testLine);
-          const testWidth = metrics.width;
-          
-          if (testWidth > maxWidth && n > 0) {
-            lines.push(line);
-            line = words[n] + ' ';
-          } else {
-            line = testLine;
-          }
-        }
-        
-        lines.push(line);
-        return lines;
-      };
-      
-      // 绘制黄色标题在黑色背景区域 - 缩小标题字号
-      ctx.font = `bold 66px ${selectedFont}`;
-      ctx.fillStyle = '#FFC300';
-      ctx.textAlign = 'center';
-      
-      // 计算标题位置 - 向下移动一些
-      const titleY = Math.round(height * 0.66);
-      
-      // 将标题分成适当的行
+      // 文本自动换行函数
+      const titleFont = `bold 66px ${selectedFont}`;
+      const titleColor = '#FFC300';
+      const titleLineHeight = 60;
+      const titleArea = { x: width * 0.1, y: height * 0.55, width: width * 0.8, height: height * 0.3 }; // Define title area
+
+      // Split title into lines (existing logic)
       const titleWords = coverTitle.split(' ');
       const titleLines = [];
       let currentLine = '';
-      
-      // 组织标题成适当长度的行
+      ctx.font = titleFont; // Set font for measurement
       for (let i = 0; i < titleWords.length; i++) {
         if (currentLine.length + titleWords[i].length > 16) { // 从12个字符增加到16个字符
           titleLines.push(currentLine.trim());
@@ -387,59 +428,51 @@ const CanvasCoverPreview = ({
           currentLine += titleWords[i] + ' ';
         }
       }
-      
       if (currentLine.trim() !== '') {
         titleLines.push(currentLine.trim());
       }
-      
-      // 绘制标题行
-      for (let i = 0; i < titleLines.length; i++) {
-        ctx.fillText(titleLines[i].toUpperCase(), width / 2, titleY + i * 60);
-      }
-      
-      // 绘制描述性副标题在蓝色区域 - 再次增大描述文字字号
-      ctx.font = `bold 28px ${selectedFont}`; // 从24px增大到28px
-      ctx.fillStyle = '#FFC300';
-      ctx.textAlign = 'center';
-      
-      // 计算可用宽度，留出边距
-      const availableWidth = width * 0.85;
-      const lines = wrapText(ctx, subtitle, width / 2, height - blueHeight/2, availableWidth, 34);
-      
-      // 绘制每一行文字
-      let yPos = height - blueHeight/2 - (lines.length - 1) * 34 / 2;
-      for (let i = 0; i < lines.length; i++) {
-        ctx.fillText(lines[i], width / 2, yPos);
-        yPos += 34; // 行高
-      }
+
+      // Draw title using helper function
+      drawTextInArea(ctx, titleLines.map(l => l.toUpperCase()), titleArea, titleFont, titleColor, titleLineHeight, 'center');
+
+      // 绘制描述性副标题在蓝色区域
+      const subtitleFont = `bold 28px ${selectedFont}`;
+      const subtitleColor = '#FFC300';
+      const subtitleLineHeight = 34;
+      // Ensure subtitleArea uses the updated blueHeight
+      const subtitleArea = { x: width * 0.075, y: height - blueHeight, width: width * 0.85, height: blueHeight };
+
+      // Wrap subtitle text (existing logic)
+      ctx.font = subtitleFont; // Set font for measurement
+      const availableWidth = subtitleArea.width;
+      const lines = wrapText(ctx, subtitle, 0, 0, availableWidth, subtitleLineHeight);
+
+      // Draw subtitle using helper function
+      drawTextInArea(ctx, lines, subtitleArea, subtitleFont, subtitleColor, subtitleLineHeight, 'center');
     } else if (template.id === 'classic') {
       // 背景已在外部设置为黑色
       
-      // 在顶部绘制作者名字 - 位置向下移动
-      ctx.font = `bold 34px ${selectedFont}`;
-      ctx.fillStyle = '#FFFFFF';
-      ctx.textAlign = 'center';
-      ctx.fillText(authorName, width / 2, 80); // 从50向下移动到80
-      
       // 绘制白色标题，位于中央 - 向上移动
-      ctx.font = `bold 52px ${selectedFont}`; // 从60px缩小到52px
-      ctx.fillStyle = '#FFFFFF';
-      ctx.textAlign = 'center';
-      
-      // 改进标题分行逻辑 - 控制每行宽度
+      const titleFont = `bold 52px ${selectedFont}`; // Base font for measurement
+      const titleColor = '#FFFFFF';
+      const normalLineHeight = 70; // 缩小白色部分的行距
+      const largeLineHeight = 90; // 保持与红色部分的行距
+      const titleArea = { x: width * 0.1, y: height * 0.02, width: width * 0.8, height: height * 0.4 }; // 再次上移标题区域
+
+      // Split title into lines (existing logic)
       const titleWords = coverTitle.split(' ');
-      const maxLineWidth = width * 0.8; // 设置最大行宽为封面宽度的80%
-      
-      // 准备分行数组
+      const maxLineWidth = titleArea.width;
       const titleLines = [];
       let currentLine = '';
-      
-      // 测量字体宽度并确保每行不超过最大宽度
+      ctx.font = titleFont; // Use base font for initial measurement
       for (let i = 0; i < titleWords.length; i++) {
         const word = titleWords[i];
         const testLine = currentLine + (currentLine ? ' ' : '') + word;
-        const metrics = ctx.measureText(testLine);
-        
+        // Use the potentially larger font for measurement here if needed, or adjust logic
+        ctx.font = `bold 80px ${selectedFont}`; // Use largest possible font for width check
+        const metrics = ctx.measureText(testLine.toUpperCase());
+        ctx.font = titleFont; // Reset to base font for next check
+
         if (metrics.width > maxLineWidth && currentLine !== '') {
           titleLines.push(currentLine);
           currentLine = word;
@@ -447,79 +480,70 @@ const CanvasCoverPreview = ({
           currentLine = testLine;
         }
       }
-      
-      // 添加最后一行
       if (currentLine) {
         titleLines.push(currentLine);
       }
+
+      // Draw title using a custom loop because font/color/lineHeight changes per line
+      const midpoint = Math.ceil(titleLines.length / 2);
+      const whiteLinesHeight = (midpoint > 0 ? (midpoint - 1) * normalLineHeight : 0);
+      const redLinesHeight = (titleLines.length - midpoint > 0 ? (titleLines.length - midpoint) * largeLineHeight : 0);
+      // Adjust total height calculation for mixed line heights
+      const textBlockHeight = whiteLinesHeight + redLinesHeight + (midpoint > 0 && titleLines.length - midpoint > 0 ? largeLineHeight : 0); // Add transition gap
       
-      // 计算标题位置 - 向上移动
-      const titleY = Math.round(height * 0.17); // 从0.45减小到0.17，向上移动
-      const lineHeight = 90; // 行高从70增加到90
-      
-      // 绘制所有标题行
+      let startY = titleArea.y + (titleArea.height - textBlockHeight) / 2;
+      startY = Math.max(titleArea.y, startY);
+      ctx.textAlign = 'center';
+      let currentY = startY;
       for (let i = 0; i < titleLines.length; i++) {
-        // 前半部分用白色
-        if (i < Math.ceil(titleLines.length / 2)) {
-          ctx.fillStyle = '#FFFFFF';
-          ctx.font = `bold 54px ${selectedFont}`; // 从52px增大到54px
-        } 
-        // 后半部分用红色，字体略大
-        else {
-          ctx.fillStyle = '#9B0000';
-          ctx.font = `bold 80px ${selectedFont}`; // 从70px增大到80px
-        }
-        
-        ctx.fillText(titleLines[i].toUpperCase(), width / 2, titleY + i * lineHeight);
+          const lineText = titleLines[i].toUpperCase();
+          let effectiveLineHeight = largeLineHeight; // Default to large
+
+          if (i < midpoint) {
+              ctx.fillStyle = '#FFFFFF';
+              ctx.font = `bold 54px ${selectedFont}`;
+              if (i < midpoint - 1) { // Use smaller lineHeight for lines before the last white one
+                effectiveLineHeight = normalLineHeight;
+              }
+              // The transition from white to red uses largeLineHeight
+          } else {
+              ctx.fillStyle = '#9B0000';
+              ctx.font = `bold 80px ${selectedFont}`;
+              // All red lines use largeLineHeight
+          }
+          
+          if (currentY < titleArea.y + titleArea.height) {
+            ctx.fillText(lineText, titleArea.x + titleArea.width / 2, currentY);
+          }
+          // Increment Y based on the line height used *before* this line
+          if (i < titleLines.length - 1) {
+            currentY += (i < midpoint -1) ? normalLineHeight : largeLineHeight;
+          }
       }
-      
+
       // 绘制红色底部区域
       const bottomHeight = height * (template.bottomAreaHeight || 0.15);
       ctx.fillStyle = template.bottomAreaColor || '#9B0000';
       ctx.fillRect(0, height - bottomHeight, width, bottomHeight);
+
+      // 在红色区域绘制白色描述文字
+      const subtitleFont = `normal 28px ${selectedFont}`;
+      const subtitleColor = '#FFFFFF';
+      const subtitleLineHeight = 34;
+      const subtitleArea = { x: width * 0.075, y: height - bottomHeight, width: width * 0.85, height: bottomHeight };
+      ctx.font = subtitleFont;
+      const availableWidth = subtitleArea.width;
+      const lines = wrapText(ctx, subtitle, 0, 0, availableWidth, subtitleLineHeight);
+      drawTextInArea(ctx, lines, subtitleArea, subtitleFont, subtitleColor, subtitleLineHeight, 'center');
       
-      // 在红色区域绘制白色描述文字 - 增大字号
-      ctx.font = `normal 28px ${selectedFont}`; // 从24px增大到28px
-      ctx.fillStyle = '#FFFFFF';
-      ctx.textAlign = 'center';
-      
-      // 文本自动换行
-      const wrapText = (context: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) => {
-        const words = text.split(' ');
-        let line = '';
-        const lines: string[] = [];
-        
-        for (let n = 0; n < words.length; n++) {
-          const testLine = line + words[n] + ' ';
-          const metrics = context.measureText(testLine);
-          const testWidth = metrics.width;
-          
-          if (testWidth > maxWidth && n > 0) {
-            lines.push(line);
-            line = words[n] + ' ';
-          } else {
-            line = testLine;
-          }
-        }
-        
-        lines.push(line);
-        return lines;
-      };
-      
-      // 计算可用宽度，留出边距
-      const availableWidth = width * 0.85;
-      const lines = wrapText(ctx, subtitle, width / 2, height - bottomHeight/2, availableWidth, 34); // 行高从28增加到34
-      
-      // 绘制每一行文字
-      let yPos = height - bottomHeight/2 - (lines.length - 1) * 34 / 2; // 行高从28增加到34
-      for (let i = 0; i < lines.length; i++) {
-        ctx.fillText(lines[i], width / 2, yPos);
-        yPos += 34; // 行高从28增加到34
-      }
+      // 在右下角红色区域上方绘制作者名
+      ctx.font = `bold 30px ${selectedFont}`; // Smaller font for author
+      ctx.fillStyle = '#FFFFFF'; // White color
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'bottom'; // Align to the bottom
+      ctx.fillText(authorName, width - (width * 0.075), height - bottomHeight - 10); // Position right-aligned, 10px above red area
     } else if (template.id === 'modern' || template.id === 'vibrant-green') {
       // 为奶油色肖像风格重写渲染逻辑
-      
-      // 图片已在外部绘制，整页背景为奶油色
       
       // 顶部绘制作者名字
       ctx.font = `normal 42px ${selectedFont}`; // 从24px放大到42px
@@ -528,170 +552,103 @@ const CanvasCoverPreview = ({
       ctx.fillText(authorName.toUpperCase(), width / 2, 70); // Y位置从50调整到70
       
       // 封面中央绘制大号金色标题
-      ctx.font = `bold 70px ${selectedFont}`; // 从65px增加到70px
-      ctx.fillStyle = '#D4AF37'; // 恢复原来的金色
-      ctx.textAlign = 'center';
-      
-      // 将标题分成多行显示 - 向下移动标题
-      const titleY = Math.round(height * 0.65); // 从0.55上移到0.65，进一步下移
+      const titleFont = `bold 70px ${selectedFont}`;
+      const titleColor = '#D4AF37';
+      const titleLineHeight = 90;
+      const titleArea = { x: width * 0.1, y: height * 0.6, width: width * 0.8, height: height * 0.25 }; // 下移标题区域 (y from 0.5 to 0.6, height adjusted)
+
+      // Wrap title text
+      ctx.font = titleFont; // Set font for measurement
       const titleWords = coverTitle.split(' ');
       const titleLines = [];
       let currentLine = '';
-      
-      // 组织标题成适当长度的行
       for (let i = 0; i < titleWords.length; i++) {
-        if (currentLine.length + titleWords[i].length > 18) { // 从12个字符改为18个字符
+        if (currentLine.length + titleWords[i].length > 18) { // 18 char limit
           titleLines.push(currentLine.trim());
           currentLine = titleWords[i] + ' ';
         } else {
           currentLine += titleWords[i] + ' ';
         }
       }
-      
       if (currentLine.trim() !== '') {
         titleLines.push(currentLine.trim());
       }
-      
-      // 绘制标题行
-      for (let i = 0; i < titleLines.length; i++) {
-        ctx.fillText(titleLines[i].toUpperCase(), width / 2, titleY + i * 90);
-      }
-      
-      // 在底部绘制白色副标题（添加自动换行）
-      ctx.font = `normal 32px ${selectedFont}`;
-      ctx.fillStyle = '#FFFFFF'; // 恢复原来的白色
-      ctx.textAlign = 'center';
-      
-      // 文本自动换行
-      const wrapText = (context: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) => {
-        const words = text.split(' ');
-        let line = '';
-        const lines: string[] = [];
-        
-        for (let n = 0; n < words.length; n++) {
-          const testLine = line + words[n] + ' ';
-          const metrics = context.measureText(testLine);
-          const testWidth = metrics.width;
-          
-          if (testWidth > maxWidth && n > 0) {
-            lines.push(line);
-            line = words[n] + ' ';
-          } else {
-            line = testLine;
-          }
-        }
-        
-        lines.push(line);
-        return lines;
-      };
-      
-      // 计算可用宽度，留出边距
-      const availableWidth = width * 0.85;
-      const lines = wrapText(ctx, subtitle, width / 2, height - 120, availableWidth, 38);
-      
-      // 绘制每一行文字
-      let yPos = height - 120 - (lines.length - 1) * 38 / 2;
-      for (let i = 0; i < lines.length; i++) {
-        ctx.fillText(lines[i], width / 2, yPos);
-        yPos += 38; // 行高
-      }
+
+      // Draw title using helper function
+      drawTextInArea(ctx, titleLines.map(l => l.toUpperCase()), titleArea, titleFont, titleColor, titleLineHeight, 'center');
+
+      // 在底部绘制白色副标题
+      const subtitleFont = `normal 28px ${selectedFont}`;
+      const subtitleColor = '#FFFFFF';
+      const subtitleLineHeight = 38;
+      const subtitleArea = { x: width * 0.075, y: height * 0.8, width: width * 0.85, height: height * 0.15 }; // Define subtitle area near bottom
+
+      // Wrap subtitle text
+      ctx.font = subtitleFont; // Set font for measurement
+      const availableWidth = subtitleArea.width;
+      const lines = wrapText(ctx, subtitle, 0, 0, availableWidth, subtitleLineHeight);
+
+      // Draw subtitle using helper function
+      drawTextInArea(ctx, lines, subtitleArea, subtitleFont, subtitleColor, subtitleLineHeight, 'center');
     } else if (template.id === 'minimal') {
       // 简约灰色风格的布局
       // 背景已在外部设置为灰色
       
-      // 左上角绘制作者名字（简短名字，如Kyle） - 略微上移
-      ctx.font = `bold 60px 'Arial', sans-serif`;  // 使用Arial字体
+      // 左上角绘制作者名字
+      ctx.font = `bold 60px 'Arial', sans-serif`;
       ctx.fillStyle = '#FFFFFF';
       ctx.textAlign = 'left';
-      ctx.fillText(authorName, 50, 100); // 从130上移到100
-      
-      // 图片已在外部绘制（带灰度滤镜）
-      
+      ctx.fillText(authorName, 50, 100);
+
       // 左对齐绘制标题
-      ctx.font = `bold 70px 'Arial', sans-serif`;  // 从80px减小到70px
-      ctx.fillStyle = '#FFFFFF';
-      ctx.textAlign = 'left'; // 从center改为left
-      
-      // 将标题分成多行显示 - 上移
-      const titleY = Math.round(height * 0.68); // 从0.62下移到0.68
+      const titleFont = `bold 70px 'Arial', sans-serif`;
+      const titleColor = '#FFFFFF';
+      const titleLineHeight = 80;
+      const titleArea = { x: 50, y: height * 0.62, width: width - 100, height: height * 0.25 }; // 标题区域再下移一点 (y from 0.6 to 0.62)
+
+      // Wrap title text
+      ctx.font = titleFont; // Set font for measurement
       const titleWords = coverTitle.split(' ');
+      const maxLineWidth = titleArea.width;
       const titleLines = [];
       let currentLine = '';
-      
-      // 组织标题成适当长度的行
       for (let i = 0; i < titleWords.length; i++) {
-        if (currentLine.length + titleWords[i].length > 18) { // 从12个字符改为18个字符
+        if (currentLine.length + titleWords[i].length > 18) { // 18 char limit
           titleLines.push(currentLine.trim());
           currentLine = titleWords[i] + ' ';
         } else {
           currentLine += titleWords[i] + ' ';
         }
       }
-      
       if (currentLine.trim() !== '') {
         titleLines.push(currentLine.trim());
       }
-      
-      // 绘制标题行 - 左对齐绘制
-      for (let i = 0; i < titleLines.length; i++) {
-        ctx.fillText(titleLines[i], 50, titleY + i * 80); // 从width/2改为50，左对齐
-      }
-      
-      // 文本自动换行函数
-      const wrapText = (context: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) => {
-        const words = text.split(' ');
-        let line = '';
-        const lines: string[] = [];
-        
-        for (let n = 0; n < words.length; n++) {
-          const testLine = line + words[n] + ' ';
-          const metrics = context.measureText(testLine);
-          const testWidth = metrics.width;
-          
-          if (testWidth > maxWidth && n > 0) {
-            lines.push(line);
-            line = words[n] + ' ';
-          } else {
-            line = testLine;
-          }
-        }
-        
-        lines.push(line);
-        return lines;
-      };
-      
-      // 左对齐绘制描述文字（在标题下方，带自动换行）
-      ctx.font = `normal 28px 'Arial', sans-serif`;  // 从36px减小到28px
-      ctx.fillStyle = '#FFFFFF';
-      ctx.textAlign = 'left'; // 从center改为left
-      
-      // 计算可用宽度，留出边距
-      const availableWidth = width * 0.7; // 从0.85减小到0.7
-      const descriptionLines = wrapText(ctx, subtitle, 50, titleY + titleLines.length * 80 + 20, availableWidth, 40); // 从+30上移到+20
-      
-      // 绘制每一行描述文字 - 左对齐
-      let yPos = titleY + titleLines.length * 80 + 20;
-      for (let i = 0; i < descriptionLines.length; i++) {
-        ctx.fillText(descriptionLines[i], 50, yPos); // x坐标从width/2改为50
-        yPos += 40; // 增大行高
-      }
+
+      // Draw title using helper function, left-aligned
+      drawTextInArea(ctx, titleLines, titleArea, titleFont, titleColor, titleLineHeight, 'left');
+
+      // 左对齐绘制描述文字
+      const subtitleFont = `normal 28px 'Arial', sans-serif`;
+      const subtitleColor = '#FFFFFF';
+      const subtitleLineHeight = 40;
+      const subtitleArea = { x: 50, y: height * 0.85, width: width - 100, height: height * 0.1 }; // Define subtitle area near bottom, left-aligned
+
+      // Wrap subtitle text
+      ctx.font = subtitleFont; // Set font for measurement
+      const availableWidth = subtitleArea.width;
+      const lines = wrapText(ctx, subtitle, 0, 0, availableWidth, subtitleLineHeight);
+
+      // Draw subtitle using helper function, left-aligned
+      drawTextInArea(ctx, lines, subtitleArea, subtitleFont, subtitleColor, subtitleLineHeight, 'left');
     } else if (template.id === 'pastel-beige') {
       // 可爱粉色风格布局
-      // 背景已在外部设置为粉色
-      
-      // 绘制装饰性云朵或星星
-      ctx.fillStyle = '#FFDBEE'; // 浅粉色装饰
-      
-      // 顶部左侧小云朵
-      drawCloud(ctx, 100, 100, 50);
-      
-      // 顶部右侧小云朵
-      drawCloud(ctx, width - 100, 120, 40);
-      
-      // 底部小星星
-      drawStar(ctx, 150, height - 150, 20);
+
+      // Draw decorative elements
+      ctx.fillStyle = '#FFDBEE'; // Light pink for decorations
+      drawCloud(ctx, 100, 100, 50); // Top-left small cloud
+      drawCloud(ctx, width - 100, 120, 40); // Top-right small cloud
+      drawStar(ctx, 150, height - 150, 20); // Bottom small stars
       drawStar(ctx, width - 150, height - 200, 25);
-      
       function drawCloud(ctx: CanvasRenderingContext2D, x: number, y: number, size: number) {
         ctx.beginPath();
         ctx.arc(x, y, size, 0, Math.PI * 2);
@@ -699,124 +656,81 @@ const CanvasCoverPreview = ({
         ctx.arc(x + size * 1.1, y, size * 0.8, 0, Math.PI * 2);
         ctx.fill();
       }
-      
       function drawStar(ctx: CanvasRenderingContext2D, x: number, y: number, size: number) {
         ctx.beginPath();
         for (let i = 0; i < 5; i++) {
           const angle = (i * 2 * Math.PI) / 5 - Math.PI / 2;
           const outerX = x + size * Math.cos(angle);
           const outerY = y + size * Math.sin(angle);
-          
           if (i === 0) {
             ctx.moveTo(outerX, outerY);
           } else {
             ctx.lineTo(outerX, outerY);
           }
-          
           const innerAngle = angle + Math.PI / 5;
           const innerX = x + size * 0.4 * Math.cos(innerAngle);
           const innerY = y + size * 0.4 * Math.sin(innerAngle);
-          
           ctx.lineTo(innerX, innerY);
         }
         ctx.closePath();
         ctx.fill();
       }
-      
-      // 上部绘制标题 - 位置向上移动
-      ctx.font = `bold 65px 'Comic Sans MS', cursive`; // 使用更可爱的字体
-      ctx.fillStyle = '#8A2BE2'; // 紫色标题
-      ctx.textAlign = 'center';
-      
-      // 将标题分成多行显示 - 位置调整为更上方
-      const titleY = Math.round(height * 0.15); // 标题位置再上移一点
+
+      // 上部绘制标题
+      const titleFont = `bold 65px 'Comic Sans MS', cursive`;
+      const titleColor = '#8A2BE2'; // Purple title
+      const titleLineHeight = 70;
+      const titleArea = { x: width * 0.1, y: height * 0.05, width: width * 0.8, height: height * 0.25 }; // 上移标题区域 (y from 0.1 to 0.05, height adjusted)
+
+      // Wrap title text
+      ctx.font = titleFont; // Set font for measurement
       const titleWords = coverTitle.split(' ');
       const titleLines = [];
       let currentLine = '';
-      
-      // 组织标题成适当长度的行
       for (let i = 0; i < titleWords.length; i++) {
-        if (currentLine.length + titleWords[i].length > 16) { // 从12个字符增加到16个字符
+        if (currentLine.length + titleWords[i].length > 16) { // 16 char limit
           titleLines.push(currentLine.trim());
           currentLine = titleWords[i] + ' ';
         } else {
           currentLine += titleWords[i] + ' ';
         }
       }
-      
       if (currentLine.trim() !== '') {
         titleLines.push(currentLine.trim());
       }
-      
-      // 绘制标题行
-      for (let i = 0; i < titleLines.length; i++) {
-        ctx.fillText(titleLines[i], width / 2, titleY + i * 70);
-      }
-      
-      // 文本自动换行函数
-      const wrapText = (context: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) => {
-        const words = text.split(' ');
-        let line = '';
-        const lines: string[] = [];
-        
-        for (let n = 0; n < words.length; n++) {
-          const testLine = line + words[n] + ' ';
-          const metrics = context.measureText(testLine);
-          const testWidth = metrics.width;
-          
-          if (testWidth > maxWidth && n > 0) {
-            lines.push(line);
-            line = words[n] + ' ';
-          } else {
-            line = testLine;
-          }
-        }
-        
-        lines.push(line);
-        return lines;
-      };
-      
-      // 标题下方描述 - 也向上移动
-      ctx.font = `normal 28px 'Comic Sans MS', cursive`; // 从32px缩小到28px
-      ctx.fillStyle = '#9400D3'; // 深紫色文字
-      
-      // 计算可用宽度，留出边距
-      const availableWidth = width * 0.8;
-      const descriptionLines = wrapText(ctx, subtitle, width / 2, titleY + titleLines.length * 70 + 30, availableWidth, 35); // 从+40上移到+30
-      
-      // 绘制每一行描述文字
-      let yPos = titleY + titleLines.length * 70 + 30; // 从+40上移到+30
-      for (let i = 0; i < descriptionLines.length; i++) {
-        ctx.fillText(descriptionLines[i], width / 2, yPos);
-        yPos += 35;
-      }
-      
-      // 判断是否有图片 - 将图片位置移至更下方
+
+      // Draw title using helper function
+      drawTextInArea(ctx, titleLines, titleArea, titleFont, titleColor, titleLineHeight, 'center');
+
+      // 标题下方描述
+      const subtitleFont = `normal 28px 'Comic Sans MS', cursive`;
+      const subtitleColor = '#9400D3'; // Dark purple text
+      const subtitleLineHeight = 35;
+      const subtitleArea = { x: width * 0.1, y: height * 0.28, width: width * 0.8, height: height * 0.15 }; // 副标题区域再上移一点 (y from 0.3 to 0.28)
+
+      // Wrap subtitle text
+      ctx.font = subtitleFont; // Set font for measurement
+      const availableWidth = subtitleArea.width;
+      const lines = wrapText(ctx, subtitle, 0, 0, availableWidth, subtitleLineHeight);
+
+      // Draw subtitle using helper function
+      drawTextInArea(ctx, lines, subtitleArea, subtitleFont, subtitleColor, subtitleLineHeight, 'center');
+
+      // Draw image (existing logic)
       if (image?.element) {
-        // 计算图片位置并向下移动
-        const imgY = Math.round(height * 0.65); // 从0.62下移到0.65
-        
-        // 不考虑用户的图片调整，直接计算显示位置
+        const imgY = Math.round(height * 0.65);
         const aspectRatio = image.element.width / image.element.height;
-        const imgWidth = Math.min(width * 0.65, height * 0.45 * aspectRatio); // 放大图片尺寸
+        const imgWidth = Math.min(width * 0.65, height * 0.45 * aspectRatio);
         const imgHeight = imgWidth / aspectRatio;
-        
-        const drawX = (width - imgWidth) / 2; // 水平居中
-        const drawY = imgY - imgHeight / 2; // 垂直居中在imgY位置
-        
-        // 只绘制一次图像
-        ctx.drawImage(
-          image.element,
-          0, 0, image.element.width, image.element.height, // 源图像的完整区域
-          drawX, drawY, imgWidth, imgHeight // 目标区域
-        );
+        const drawX = (width - imgWidth) / 2;
+        const drawY = imgY - imgHeight / 2;
+        ctx.drawImage(image.element, 0, 0, image.element.width, image.element.height, drawX, drawY, imgWidth, imgHeight);
       }
-      
-      // 底部作者名
+      // Draw author name (slightly move up)
       ctx.font = `bold 35px 'Comic Sans MS', cursive`;
-      ctx.fillStyle = '#8A2BE2'; // 紫色文字
+      ctx.fillStyle = '#8A2BE2'; // Purple text
       ctx.textAlign = 'center';
-      ctx.fillText(authorName, width / 2, height - 70);
+      ctx.fillText(authorName, width / 2, height - 90); // 略微上移 (from height - 70 to height - 80)
     } else {
       // 原有的标准封面绘制逻辑
       // Add a semi-transparent overlay
