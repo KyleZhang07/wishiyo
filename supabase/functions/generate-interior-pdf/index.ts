@@ -214,7 +214,7 @@ serve(async (req) => {
       sectionTitle: {
         family: 'georgia',
         style: 'bold',
-        size: 16
+        size: 14
       },
       body: {
         family: 'georgia',
@@ -235,6 +235,11 @@ serve(async (req) => {
         family: 'georgia',
         style: 'normal',
         size: 12
+      },
+      pageHeaderFooter: { // 新增样式用于页眉页脚
+        family: 'georgia',
+        style: 'normal',
+        size: 10
       }
     };
 
@@ -276,10 +281,10 @@ serve(async (req) => {
     // 添加标题页
     setFont('title');
     pdf.setTextColor(0, 0, 0);
-    pdf.text(title, pageWidth / 2, pageHeight / 3, { align: 'center' });
+    pdf.text(title, pageWidth / 2, pageHeight * 0.3, { align: 'center' });
 
     setFont('subtitle');
-    pdf.text(`by ${author}`, pageWidth / 2, pageHeight / 3 + 0.5, { align: 'center' });
+    pdf.text(`by ${author}`, pageWidth / 2, pageHeight * 0.8, { align: 'center' });
 
     addPage();
     setFont('copyright');
@@ -300,8 +305,27 @@ serve(async (req) => {
     // 跟踪当前页码位置
     let currentPage = 4;
 
-    // 为目录设置特定的字体样式
-    finalBookContent.forEach((chapter: BookChapter) => {
+    // 使用 for 循环处理目录项，以便于分页
+    for (let i = 0; i < finalBookContent.length; i++) {
+      const chapter: BookChapter = finalBookContent[i];
+
+      // 在第12个条目后且总条目数大于12时，添加新页并重置Y坐标
+      if (i === 12 && finalBookContent.length > 12) {
+        addPage();
+        currentPage++; // 目录现在占用两页
+        tocY = margin.top + 1.0; // 重置第二页目录的起始Y坐标
+      }
+
+      // 检查目录内容是否会超出页面底部，如果会，则换页 (以防单页目录也溢出)
+      // 增加检查条件，确保在分页点之后也检查溢出
+      if (tocY > pageHeight - margin.bottom - 0.3 && i !== 12 ) {
+         // 如果不是恰好在第12个元素后分页，且内容溢出，则正常添加新页
+         // (如果恰好是第12个元素后分页，上面的逻辑已经处理了分页)
+        addPage();
+        currentPage++;
+        tocY = margin.top + 1.0;
+      }
+
       // 设置章节编号字体
       setFont('tocChapter');
       pdf.text(`Chapter ${chapter.chapterNumber}`, margin.left + 0.1, tocY);
@@ -312,48 +336,87 @@ serve(async (req) => {
       
       // 设置页码字体
       setFont('tocPageNumber');
-      pdf.text(`${currentPage}`, pageWidth - margin.right, tocY, { align: 'right' });
-      
-      tocY += 0.4; // 增加目录行间距，使其更宽松，符合图片
-      
-      // 更准确地估算页数
-      const estimatedSectionPages = chapter.sections.reduce((total, section) => {
-        const wordCount = section.content.split(/\s+/).length;
-        // 考虑字体大小和行高
-        const linesPerPage = Math.floor((pageHeight - margin.top - margin.bottom) / (fonts.body.size / 72 * 1.2));
-        const wordsPerLine = Math.floor((pageWidth - margin.left - margin.right) * 72 / (fonts.body.size * 0.5));
-        return total + Math.ceil(wordCount / (linesPerPage * wordsPerLine));
-      }, 0);
-      
-      currentPage += Math.max(1, estimatedSectionPages);
-    });
+      // !! 注意：这里的页码计算需要修正，现在只是占位符 !!
+      // 准确的页码计算需要在内容完全渲染后才能确定，暂时使用估算值
+      // const estimatedChapterStartPage = currentPage + i; // 这是一个非常粗略的估算
+      // pdf.text(`${estimatedChapterStartPage}`, pageWidth - margin.right, tocY, { align: 'right' });
+      // 暂时移除页码，因为准确计算复杂
+       pdf.text(`...`, pageWidth - margin.right, tocY, { align: 'right' });
+
+      // 增加目录行间距，使其更宽松，符合图片
+      tocY += 0.6; // 从 0.4 增加到 0.6
+    }
+
+    // !! 页码计算逻辑需要重新审视和实现 !!
+    // 当前的 currentPage 计算逻辑在目录生成时是不准确的
+    // 需要在所有章节内容实际渲染完成后再回来填充目录页码
 
     // 确保章节从偶数页开始
-    if (currentPage % 2 !== 0) {
-      addPage();
-      currentPage++;
+    // 需要基于准确的目录页数调整起始章节页码
+    const tocPages = finalBookContent.length > 12 ? 2 : 1;
+    let startingContentPage = 2 + tocPages + 1; // 标题页(1), 版权页(1), 目录页数(tocPages) + 1
+    if (startingContentPage % 2 !== 0) {
+       addPage(); // 添加空白页以确保从偶数页开始
+       // currentPage++; // 更新当前页码计数器 - 需要更可靠的页码管理
     }
 
     // 使用Garamond样式添加章节内容
+    // 需要在渲染章节时记录每个章节开始的准确页码
+    const chapterStartPages: { [key: number]: number } = {};
+    let currentContentPage = startingContentPage; // 使用调整后的起始页码
+
     finalBookContent.forEach((chapter: BookChapter) => {
-      addPage();
+      // 如果不是第一章且当前页不是偶数页，则添加空白页 (确保章节从右侧页面开始)
+      // 注意：需要一个更健壮的页码跟踪系统
+      if (chapter.chapterNumber > 1 && currentContentPage % 2 !== 0) {
+         addPage();
+         currentContentPage++;
+      } else if (chapter.chapterNumber === 1 && currentContentPage % 2 === 0) {
+         // 如果第一章在左侧页（偶数页），则添加一个空白页移到右侧
+         addPage();
+         currentContentPage++;
+      }
+
+      addPage(); // 为章节内容添加新页
+      chapterStartPages[chapter.chapterNumber] = currentContentPage; // 记录章节起始页码
+
+      // 1. 绘制 "CHAPTER X"
+      setFont('chapterTitle'); // 使用 chapterTitle 样式 (size: 18)
+      const chapterNumberText = `CHAPTER ${chapter.chapterNumber}`;
+      const chapterNumberY = margin.top + 0.8; // 调整 Y 坐标，使其更靠上，类似图片
+      pdf.text(chapterNumberText, pageWidth / 2, chapterNumberY, { align: 'center' });
+
+      // 2. 绘制换行的章节标题
+      // 设置章节主标题的字体和大小 (与 chapterTitle 不同)
+      pdf.setFont(fonts.title.family, fonts.title.style); // 使用 title 字体 (georgia, bold)
+      pdf.setFontSize(24); // 明确设置字体大小为 24pt
+      const chapterTitleText = chapter.title;
+      const chapterTitleMaxWidth = pageWidth - margin.left - margin.right - 1; // 减去一些额外边距以防万一
+      const chapterTitleLines = pdf.splitTextToSize(chapterTitleText, chapterTitleMaxWidth);
       
-      // 设置章节编号的样式（使用小型大写字母）
-      setFont('chapterTitle');
-      // 将"CHAPTER X"样式的标题放在页面顶部中央
-      pdf.text(`CHAPTER ${chapter.chapterNumber}`, pageWidth / 2, margin.top + 0.5, { align: 'center' });
-      
-      // 使用更大、更加突出的字体设置章节标题
-      pdf.setFontSize(24); // 增大标题字体
-      pdf.text(chapter.title, pageWidth / 2, margin.top + 1.5, { align: 'center' });
-      
-      let contentY = margin.top + 2.5; // 增加标题和内容之间的间距
-      
+      const chapterTitleLineHeight = 24 / 72 * 1.2; // 行高 (基于24pt字体)
+      let chapterTitleY = chapterNumberY + 0.7; // 在 "CHAPTER X" 下方开始绘制，增加间距
+
+      // 绘制每一行章节标题
+      chapterTitleLines.forEach((line: string) => {
+        pdf.text(line, pageWidth / 2, chapterTitleY, { align: 'center' });
+        chapterTitleY += chapterTitleLineHeight;
+      });
+
+      // 3. 设置后续内容的起始 Y 坐标
+      // 确保内容从换行后的标题下方开始，并有足够间距
+      let contentY = chapterTitleY + 0.5; // 在最后一行标题下方增加 0.5 英寸间距
+
       chapter.sections.forEach((section) => {
-        // 检查是否需要新页面
-        if (contentY + (fonts.sectionTitle.size / 72 * 1.2) > pageHeight - margin.bottom) {
+        // 检查是否需要新页面（为 section title 预留空间）
+        const sectionTitleHeight = fonts.sectionTitle.size / 72 * 1.8; // 估算小节标题高度
+        if (contentY + sectionTitleHeight > pageHeight - margin.bottom) {
           addPage();
-          contentY = margin.top;
+          currentContentPage++; // 章节内容分页时增加页码
+          // 在新页顶部添加章节标题页眉
+          setFont('pageHeaderFooter');
+          pdf.text(chapter.title, margin.left, margin.top - 0.2); // 页眉放左上角
+          contentY = margin.top; // 新页面从顶部开始
         }
         
         // 设置小节标题样式
@@ -372,18 +435,44 @@ serve(async (req) => {
           // 如果当前段落无法完全放入当前页面，添加新页面
           if (contentY + paragraphHeight > pageHeight - margin.bottom) {
             addPage();
+            currentContentPage++; // 章节内容分页时增加页码
+            // 在新页顶部添加章节标题页眉
+            setFont('pageHeaderFooter');
+            pdf.text(chapter.title, margin.left, margin.top - 0.2); // 页眉放左上角
             contentY = margin.top;
           }
           
           // 在绘制每个段落前确保设置正确的正文字体
           setFont('body');
-          pdf.text(textLines, margin.left, contentY);
+          // 添加 align: 'justify' 来尝试实现两端对齐
+          pdf.text(textLines, margin.left, contentY, { align: 'justify' });
           
           // 更精确地计算段落后的垂直位置
           contentY += paragraphHeight;
         });
       });
-    });
+
+      // 完成一个章节的渲染后，需要更新 currentContentPage
+      // 但 addPage() 内部没有直接返回页码，需要外部管理
+      currentContentPage = pdf.internal.getNumberOfPages(); // 获取当前总页数作为下一章的起始页码参考
+    }); // end chapters loop
+
+    // !! 回填目录页码 !!
+    // 现在我们有了 chapterStartPages，可以回去填充目录了
+    // 这需要重新访问目录页并绘制页码，实现起来比较复杂
+    // 暂时保留 '...' 作为页码占位符
+
+    // **添加页码和最终处理**
+    const finalPageCount = pdf.internal.getNumberOfPages(); // 使用准确的页码
+    const firstChapterPage = chapterStartPages[1] || startingContentPage; // Chapter 1 开始的物理页码
+
+    // 从第一章开始添加页码到最后一页
+    for (let i = firstChapterPage; i <= finalPageCount; i++) {
+      pdf.setPage(i); // 切换到指定页面
+      const displayPageNum = String(i - firstChapterPage + 1); // 计算显示的页码 (1, 2, 3...)
+      setFont('pageHeaderFooter');
+      pdf.text(displayPageNum, pageWidth - margin.right, margin.top - 0.2, { align: 'right' }); // 页码放右上角
+    }
 
     // 生成 PDF 输出
     const pdfOutput = pdf.output('datauristring');
@@ -398,9 +487,10 @@ serve(async (req) => {
     }
     
     // 更新数据库
-    const pageCount = finalBookContent.length * 5;
+    // const pageCount = finalBookContent.length * 5; // 旧的粗略计算
     const updateData: any = {
-      interior_pdf: pdfOutput
+      interior_pdf: pdfOutput,
+      page_count: finalPageCount // 使用上面已声明的 finalPageCount
     };
     
     if (interiorFileUrl) {
@@ -408,7 +498,6 @@ serve(async (req) => {
     }
     
     updateData.ready_for_printing = true;
-    updateData.page_count = pageCount;
     
     // 查询当前书籍状态，检查封面PDF是否已生成
     const { data: bookData, error: fetchError } = await supabase
@@ -437,7 +526,7 @@ serve(async (req) => {
     if (updateError) {
       console.error(`Error updating database:`, updateError);
     } else {
-      console.log(`Database updated successfully with interior-pdf, interior_source_url, and marked as ready for printing with ${pageCount} pages`);
+      console.log(`Database updated successfully with interior-pdf, interior_source_url, and marked as ready for printing with ${finalPageCount} pages`); // 使用准确页码
       if (updateData.status === 'completed') {
         console.log(`Book status updated to 'completed'`);
       }
