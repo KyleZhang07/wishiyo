@@ -187,7 +187,7 @@ serve(async (req) => {
       left: 0.5 + bleed
     };
 
-    const debugLines = true;
+    const debugLines = false;
 
     // 更新字体设置为Garamond风格（用Georgia作为近似替代）
     const fonts = {

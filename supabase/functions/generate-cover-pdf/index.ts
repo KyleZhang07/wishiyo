@@ -316,8 +316,8 @@ serve(async (req) => {
       'F'
     );
     
-    // Debug lines flag - set to true to show safety margins and trim lines
-    const debugLines = true;
+    // Debug lines flag - set to false to hide safety margins and trim lines
+    const debugLines = false;
     
     // Add images to the PDF (coordinate system starts from top-left)
     // Using calculated offsets for proper centering
