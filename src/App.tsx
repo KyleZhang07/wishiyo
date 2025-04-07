@@ -12,6 +12,7 @@ import NotFound from "./pages/NotFound";
 import FriendsLanding from "./pages/FriendsLanding";
 import LoveLanding from "./pages/LoveLanding";
 import OrdersPage from "./pages/OrdersPage";
+import MyOrdersPage from "./pages/MyOrdersPage";
 
 // Friends Book Creation Routes - Funny Biography
 import FunnyBiographyAuthorStep from "./pages/wizard/friends/funny-biography/AuthorStep";
@@ -115,6 +116,7 @@ const AppLayout = () => {
           {/* Order Success Route */}
           <Route path="/order-success" element={<OrderSuccess />} />
           <Route path="/orders" element={<OrdersPage />} />
+          <Route path="/my-orders" element={<MyOrdersPage />} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>
