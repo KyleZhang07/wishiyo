@@ -20,8 +20,8 @@ const VerifyOrder = () => {
     
     if (!email || !email.match(/^\S+@\S+\.\S+$/)) {
       toast({
-        title: "Invalid Email Format",
-        description: "Please enter a valid email address",
+        title: "邮箱格式错误",
+        description: "请输入有效的邮箱地址",
         variant: "destructive"
       });
       return;
@@ -36,16 +36,16 @@ const VerifyOrder = () => {
       
       if (response.data.success) {
         toast({
-          description: "Verification code sent, please check your email",
+          description: "验证码已发送，请查收邮件",
         });
         setStep('code');
       } else {
-        throw new Error(response.data.error || 'Failed to send verification code');
+        throw new Error(response.data.error || '发送验证码失败');
       }
     } catch (error: any) {
       toast({
-        title: "Send Failed",
-        description: error.message || "Please try again later",
+        title: "发送失败",
+        description: error.message || "请稍后重试",
         variant: "destructive"
       });
     } finally {
@@ -58,8 +58,8 @@ const VerifyOrder = () => {
     
     if (!verificationCode || verificationCode.length !== 6) {
       toast({
-        title: "Invalid Code",
-        description: "Please enter the 6-digit verification code",
+        title: "验证码错误",
+        description: "请输入6位验证码",
         variant: "destructive"
       });
       return;
@@ -74,23 +74,23 @@ const VerifyOrder = () => {
       
       if (response.data.success) {
         toast({
-          description: "Verification successful",
+          description: "验证成功",
         });
         
-        // Save verification token and order data to localStorage
+        // 保存验证令牌和订单数据到localStorage
         localStorage.setItem('order_verification_token', response.data.token);
         localStorage.setItem('user_orders', JSON.stringify(response.data.orders || []));
         localStorage.setItem('verified_email', email);
         
-        // Navigate to order history page
+        // 导航到订单历史页面
         navigate('/orders/history');
       } else {
-        throw new Error(response.data.error || 'Verification code invalid');
+        throw new Error(response.data.error || '验证码验证失败');
       }
     } catch (error: any) {
       toast({
-        title: "Verification Failed",
-        description: error.message || "Please check your verification code",
+        title: "验证失败",
+        description: error.message || "请检查验证码是否正确",
         variant: "destructive"
       });
     } finally {
@@ -106,7 +106,7 @@ const VerifyOrder = () => {
           className="flex items-center text-gray-600 hover:text-gray-900"
         >
           <ArrowLeft className="h-5 w-5 mr-1" />
-          Back to Home
+          返回首页
         </button>
       </div>
       
@@ -115,18 +115,18 @@ const VerifyOrder = () => {
           <div className="flex items-center justify-center mb-6">
             <Package className="h-10 w-10 text-[#FF7F50]" />
           </div>
-          <h1 className="text-2xl font-semibold text-center mb-6">Check My Order</h1>
+          <h1 className="text-2xl font-semibold text-center mb-6">查询我的订单</h1>
           
           {step === 'email' ? (
             <form onSubmit={handleSendVerification}>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email Address
+                    邮箱地址
                   </label>
                   <Input
                     type="email"
-                    placeholder="Enter the email used for your order"
+                    placeholder="请输入订购时使用的邮箱"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -137,7 +137,7 @@ const VerifyOrder = () => {
                   className="w-full bg-[#FF7F50] hover:bg-[#FF7F50]/90"
                   disabled={loading}
                 >
-                  {loading ? 'Sending...' : 'Send Verification Code'}
+                  {loading ? '发送中...' : '发送验证码'}
                   {!loading && <Send className="ml-2 h-4 w-4" />}
                 </Button>
               </div>
@@ -148,18 +148,18 @@ const VerifyOrder = () => {
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <label className="block text-sm font-medium text-gray-700">
-                      Verification Code
+                      验证码
                     </label>
                     <button
                       type="button"
                       className="text-sm text-[#FF7F50] hover:underline"
                       onClick={() => setStep('email')}
                     >
-                      Change Email
+                      更换邮箱
                     </button>
                   </div>
                   <p className="text-sm text-gray-500 mb-4">
-                    We've sent a 6-digit code to {email}
+                    我们已向 {email} 发送了一个6位数验证码
                   </p>
                   <div className="flex justify-center mb-4">
                     <InputOTP
@@ -183,7 +183,7 @@ const VerifyOrder = () => {
                   className="w-full bg-[#FF7F50] hover:bg-[#FF7F50]/90"
                   disabled={loading}
                 >
-                  {loading ? 'Verifying...' : 'Verify and View Orders'}
+                  {loading ? '验证中...' : '验证并查看订单'}
                   {!loading && <ArrowRight className="ml-2 h-4 w-4" />}
                 </Button>
                 <Button
@@ -193,7 +193,7 @@ const VerifyOrder = () => {
                   onClick={handleSendVerification}
                   disabled={loading}
                 >
-                  Resend Verification Code
+                  重新发送验证码
                 </Button>
               </div>
             </form>
