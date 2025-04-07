@@ -99,6 +99,14 @@ const IdeaStep = ({
       'love-story': 'loveStoryImageTexts',
     };
 
+    const lastQuestionsHashStorageKeyMap: { [key: string]: string } = {
+      'love-story': 'loveStoryLastQuestionsHash',
+    };
+
+    const lastToneStorageKeyMap: { [key: string]: string } = {
+      'love-story': 'loveStoryLastTone',
+    };
+
     return {
       ideasKey: ideaStorageKeyMap[bookType] || '',
       selectedIdeaKey: selectedIdeaStorageKeyMap[bookType] || '',
@@ -106,11 +114,28 @@ const IdeaStep = ({
       toneKey: toneStorageKeyMap[bookType] || '',
       styleKey: styleStorageKeyMap[bookType] || '',
       textsKey: textsStorageKeyMap[bookType] || '',
+      lastQuestionsHashKey: lastQuestionsHashStorageKeyMap[bookType] || '',
+      lastToneKey: lastToneStorageKeyMap[bookType] || '',
     };
   };
 
+  // 计算问题答案的哈希值，用于检测变化
+  const calculateQuestionsHash = (answers: any): string => {
+    try {
+      // 简单地将答案转换为字符串并返回，用于比较
+      return JSON.stringify(answers);
+    } catch (error) {
+      console.error('Error calculating questions hash:', error);
+      return '';
+    }
+  };
+
   const generateIdeas = async () => {
-    setIsLoading(true);
+    // 如果是 love 类别，我们不设置 isLoading，因为这是异步的，不应阻止用户继续
+    if (category !== 'love') {
+      setIsLoading(true);
+    }
+    
     try {
       const path = window.location.pathname;
       const bookType = path.split('/')[3];
@@ -142,7 +167,7 @@ const IdeaStep = ({
       const personNameKey = personNameKeyMap[bookType];
       const personGenderKey = personGenderKeyMap[bookType];
       const personAgeKey = personAgeKeyMap[bookType];
-      const { ideasKey, promptsKey } = getStorageKeys(bookType);
+      const { ideasKey, promptsKey, toneKey, lastQuestionsHashKey, lastToneKey } = getStorageKeys(bookType);
 
       if (!storageKey || !authorNameKey) {
         throw new Error('Invalid book type');
@@ -160,21 +185,25 @@ const IdeaStep = ({
         personAge = localStorage.getItem(personAgeKey);
         
         if (!personName || !personGender || !personAge) {
-          toast({
-            title: "Missing recipient information",
-            description: "Please complete the author step with recipient information first.",
-            variant: "destructive",
-          });
+          if (category !== 'love') {
+            toast({
+              title: "Missing recipient information",
+              description: "Please complete the author step with recipient information first.",
+              variant: "destructive",
+            });
+          }
           return;
         }
       }
       
       if (!authorName || !savedAnswers) {
-        toast({
-          title: "Missing information",
-          description: "Please complete the previous steps first.",
-          variant: "destructive",
-        });
+        if (category !== 'love') {
+          toast({
+            title: "Missing information",
+            description: "Please complete the previous steps first.",
+            variant: "destructive",
+          });
+        }
         return;
       }
 
@@ -183,12 +212,45 @@ const IdeaStep = ({
         answers = JSON.parse(savedAnswers);
       } catch (error) {
         console.error('Error parsing saved answers:', error);
-        toast({
-          title: "Error",
-          description: "Invalid saved answers format. Please try again.",
-          variant: "destructive",
-        });
+        if (category !== 'love') {
+          toast({
+            title: "Error",
+            description: "Invalid saved answers format. Please try again.",
+            variant: "destructive",
+          });
+        }
         return;
+      }
+
+      // 检查问题答案是否有变化
+      const currentQuestionsHash = calculateQuestionsHash(answers);
+      
+      // 检查文本风格是否有变化
+      const currentTone = localStorage.getItem(toneKey) || 'Heartfelt';
+      
+      // 如果问题或风格没有变化，且不是第一次生成（已有哈希值），则不重新生成
+      if (category === 'love' && 
+          currentQuestionsHash === localStorage.getItem(lastQuestionsHashKey) && 
+          currentTone === localStorage.getItem(lastToneKey) && 
+          localStorage.getItem(lastQuestionsHashKey) !== '' && 
+          localStorage.getItem(lastToneKey) !== '') {
+        console.log('No changes detected in questions or tone, skipping generation');
+        if (category !== 'love') {
+          setIsLoading(false);
+        }
+        return;
+      }
+      
+      // 更新最后一次生成时的问题哈希和风格
+      localStorage.setItem(lastQuestionsHashKey, currentQuestionsHash);
+      localStorage.setItem(lastToneKey, currentTone);
+
+      // 对于 love 类别，我们显示一个 toast 通知用户生成已在后台开始
+      if (category === 'love') {
+        toast({
+          title: "Generating story",
+          description: "Your story is being generated in the background. You can continue to the next step.",
+        });
       }
 
       const { data, error } = await supabase.functions.invoke('generate-ideas', {
@@ -260,13 +322,17 @@ const IdeaStep = ({
 
     } catch (error) {
       console.error('Error generating ideas:', error);
-      toast({
-        title: "Error generating ideas",
-        description: "Please try again later.",
-        variant: "destructive",
-      });
+      if (category !== 'love') {
+        toast({
+          title: "Error generating ideas",
+          description: "Please try again later.",
+          variant: "destructive",
+        });
+      }
     } finally {
-      setIsLoading(false);
+      if (category !== 'love') {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -396,6 +462,10 @@ const IdeaStep = ({
         });
         return;
       }
+      
+      // 对于 love 类别，在导航到下一步之前启动异步生成
+      // 这样用户可以继续浏览应用，而生成过程在后台进行
+      generateIdeas();
     } else {
       if (selectedIdeaIndex === null) {
         toast({
@@ -413,7 +483,7 @@ const IdeaStep = ({
   useEffect(() => {
     const path = window.location.pathname;
     const bookType = path.split('/')[3];
-    const { ideasKey, selectedIdeaKey, promptsKey, toneKey, styleKey, textsKey } = getStorageKeys(bookType);
+    const { ideasKey, selectedIdeaKey, promptsKey, toneKey, styleKey, textsKey, lastQuestionsHashKey, lastToneKey } = getStorageKeys(bookType);
     
     if (!ideasKey) {
       console.error('Invalid book type, no storage key found');
@@ -552,19 +622,7 @@ const IdeaStep = ({
             </>
           )}
           {category === 'love' ? (
-            <>
-              <div className="flex justify-end">
-                <Button 
-                  variant="outline" 
-                  className="bg-[#FF7F50] text-white hover:bg-[#FF7F50]/80"
-                  onClick={generateIdeas}
-                  disabled={isLoading || isGeneratingTexts}
-                >
-                  <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-                  {isLoading ? 'Generating...' : 'Regenerate Story'}
-                </Button>
-              </div>
-            </>
+            <></>
           ) : (
             <>
               {isLoading ? (
