@@ -14,7 +14,7 @@ import { ArrowLeft, Package, CheckCircle, XCircle, Clock, Truck } from 'lucide-r
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
-// 订单状态标签组件
+// Order status badge component
 const StatusBadge = ({ status }: { status: string }) => {
   const getStatusProps = () => {
     switch (status) {
@@ -43,7 +43,7 @@ const StatusBadge = ({ status }: { status: string }) => {
   );
 };
 
-// 订单类型接口
+// Order type interface
 interface Order {
   order_id: string;
   title: string;
@@ -62,13 +62,13 @@ const OrderHistory = () => {
   const [email, setEmail] = useState('');
   
   useEffect(() => {
-    // 从localStorage获取JWT
+    // Get JWT from localStorage
     const token = localStorage.getItem('order_verification_token');
     const storedOrders = localStorage.getItem('user_orders');
     const storedEmail = localStorage.getItem('verified_email');
     
     if (!token) {
-      // 如果没有验证令牌，重定向到订单验证页面
+      // If no verification token, redirect to order verification page
       navigate('/verify-order');
       return;
     }
@@ -81,31 +81,31 @@ const OrderHistory = () => {
       try {
         setOrders(JSON.parse(storedOrders));
       } catch (error) {
-        console.error('解析保存的订单数据失败:', error);
+        console.error('Failed to parse saved order data:', error);
         toast({
-          title: "加载订单失败",
-          description: "无法加载保存的订单数据",
+          title: "Failed to load orders",
+          description: "Could not load saved order data",
           variant: "destructive"
         });
-        // 验证令牌存在但订单数据有问题，清除数据并重定向
+        // Token exists but order data has issues, clear data and redirect
         localStorage.removeItem('user_orders');
         navigate('/verify-order');
       }
     } else {
       setLoading(true);
       toast({
-        title: "没有找到订单数据",
-        description: "请重新验证您的邮箱",
+        title: "No order data found",
+        description: "Please verify your email again",
         variant: "destructive"
       });
-      // 验证令牌存在但没有订单数据，重定向
+      // Token exists but no order data, redirect
       navigate('/verify-order');
     }
   }, [navigate]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('zh-CN', {
+    return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
@@ -117,7 +117,7 @@ const OrderHistory = () => {
       window.open(url, '_blank');
     } else {
       toast({
-        description: "暂无追踪信息",
+        description: "No tracking information available",
         variant: "destructive"
       });
     }
@@ -131,7 +131,7 @@ const OrderHistory = () => {
   };
 
   const getOrderTypeName = (type: string) => {
-    return type === 'love_story' ? '爱情物语' : '传记书籍';
+    return type === 'love_story' ? 'Love Story' : 'Biography Book';
   };
 
   return (
@@ -142,21 +142,21 @@ const OrderHistory = () => {
           className="flex items-center text-gray-600 hover:text-gray-900"
         >
           <ArrowLeft className="h-5 w-5 mr-1" />
-          返回首页
+          Back to Home
         </button>
-        <Button variant="outline" size="sm" onClick={handleLogout}>退出</Button>
+        <Button variant="outline" size="sm" onClick={handleLogout}>Sign Out</Button>
       </div>
 
       <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-        <h1 className="text-2xl font-semibold mb-2">我的订单</h1>
-        {email && <p className="text-gray-600 mb-4">邮箱: {email}</p>}
+        <h1 className="text-2xl font-semibold mb-2">My Orders</h1>
+        {email && <p className="text-gray-600 mb-4">Email: {email}</p>}
         
         {orders.length === 0 ? (
           <div className="text-center py-12">
             <Package className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-xl font-medium text-gray-700">没有找到订单</h3>
+            <h3 className="text-xl font-medium text-gray-700">No Orders Found</h3>
             <p className="text-gray-500 mt-2">
-              您还没有购买任何商品，或者使用的邮箱与订单不匹配。
+              You haven't purchased any items yet, or the email you used doesn't match any orders.
             </p>
           </div>
         ) : (
@@ -164,19 +164,19 @@ const OrderHistory = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>订单编号</TableHead>
-                  <TableHead>图书名称</TableHead>
-                  <TableHead>图书类型</TableHead>
-                  <TableHead>订购日期</TableHead>
-                  <TableHead>状态</TableHead>
-                  <TableHead className="text-right">操作</TableHead>
+                  <TableHead>Order ID</TableHead>
+                  <TableHead>Book Title</TableHead>
+                  <TableHead>Book Type</TableHead>
+                  <TableHead>Order Date</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {orders.map((order) => (
                   <TableRow key={order.order_id}>
                     <TableCell className="font-medium">{order.order_id}</TableCell>
-                    <TableCell>{order.title || '未命名书籍'}</TableCell>
+                    <TableCell>{order.title || 'Untitled Book'}</TableCell>
                     <TableCell>{getOrderTypeName(order.type)}</TableCell>
                     <TableCell>{formatDate(order.timestamp)}</TableCell>
                     <TableCell>
@@ -189,7 +189,7 @@ const OrderHistory = () => {
                           size="sm"
                           onClick={() => handleViewTracking(order.lulu_tracking_url || '')}
                         >
-                          查看物流
+                          View Tracking
                         </Button>
                       )}
                     </TableCell>

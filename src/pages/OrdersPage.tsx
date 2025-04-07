@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { 
   Card, 
@@ -13,13 +14,13 @@ const OrdersPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<{success: boolean; message: string} | null>(null);
   
-  // 发送所有准备好打印的订单到Lulu Press
+  // Send all ready-to-print orders to Lulu Press
   const sendReadyOrdersToPrint = async () => {
     try {
       setIsSubmitting(true);
       setResult(null);
       
-      // 调用API发送打印请求
+      // Call API to send print request
       const response = await fetch('/api/order-status', {
         method: 'POST',
         headers: {
@@ -35,18 +36,18 @@ const OrdersPage = () => {
       if (response.ok) {
         setResult({
           success: true,
-          message: `成功发送 ${data.submittedCount || 0} 个订单到打印服务`
+          message: `Successfully sent ${data.submittedCount || 0} orders to print service`
         });
       } else {
         setResult({
           success: false,
-          message: data.error || '发送打印请求失败'
+          message: data.error || 'Failed to send print request'
         });
       }
     } catch (error: any) {
       setResult({
         success: false,
-        message: error.message || '发送打印请求时出错'
+        message: error.message || 'Error while sending print request'
       });
     } finally {
       setIsSubmitting(false);
@@ -55,11 +56,11 @@ const OrdersPage = () => {
   
   return (
     <div className="container mx-auto px-4 py-24">
-      <h1 className="text-3xl font-bold mb-8 text-center">订单打印管理</h1>
+      <h1 className="text-3xl font-bold mb-8 text-center">Order Print Management</h1>
       
       <Card className="mb-8">
         <CardHeader>
-          <CardTitle>发送准备好的订单到打印服务</CardTitle>
+          <CardTitle>Send Ready Orders to Print Service</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center space-y-4">
@@ -70,7 +71,7 @@ const OrdersPage = () => {
               size="lg"
             >
               <Printer className="mr-2 h-5 w-5" />
-              {isSubmitting ? '正在发送...' : '发送所有准备好的订单到Lulu Press'}
+              {isSubmitting ? 'Sending...' : 'Send All Ready Orders to Lulu Press'}
             </Button>
             
             {isSubmitting && (

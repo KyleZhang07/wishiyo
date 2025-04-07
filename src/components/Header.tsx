@@ -46,9 +46,9 @@ const Header = () => {
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>查询我的订单</DialogTitle>
+                  <DialogTitle>Check My Orders</DialogTitle>
                   <DialogDescription>
-                    点击下方按钮通过邮箱验证查询您的订单信息
+                    Click the button below to verify your email and check your order information
                   </DialogDescription>
                 </DialogHeader>
                 <div className="flex justify-center mt-4">
@@ -57,7 +57,7 @@ const Header = () => {
                     className="w-full bg-[#FF7F50] hover:bg-[#FF7F50]/80"
                   >
                     <Search className="mr-2 h-4 w-4" />
-                    查询订单
+                    Check Orders
                   </Button>
                 </div>
               </DialogContent>
