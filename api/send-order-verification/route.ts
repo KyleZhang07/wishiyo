@@ -1,42 +1,36 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.8.0";
+import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 
 // CORS headers
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-declare const Deno: {
-  env: {
-    get(key: string): string | undefined;
-  };
-};
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders });
+}
 
-serve(async (req) => {
-  // Handle OPTIONS request
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
-
+export async function POST(request: Request) {
   try {
     // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    const supabaseUrl = process.env.SUPABASE_URL || '';
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Get request body
-    const { email } = await req.json();
+    const { email } = await request.json();
 
     if (!email || typeof email !== 'string' || !email.includes('@')) {
-      return new Response(
-        JSON.stringify({
+      return NextResponse.json(
+        {
           success: false,
           error: 'Invalid email address',
-        }),
+        },
         {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 400,
+          headers: corsHeaders,
         }
       );
     }
@@ -60,29 +54,29 @@ serve(async (req) => {
 
     if (insertError) {
       console.error('Error storing verification code:', insertError);
-      return new Response(
-        JSON.stringify({
+      return NextResponse.json(
+        {
           success: false,
           error: 'Failed to store verification code',
-        }),
+        },
         {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 500,
+          headers: corsHeaders,
         }
       );
     }
 
     // Send email with verification code
-    const resendApiKey = Deno.env.get('RESEND_API_KEY');
+    const resendApiKey = process.env.RESEND_API_KEY;
     if (!resendApiKey) {
-      return new Response(
-        JSON.stringify({
+      return NextResponse.json(
+        {
           success: false,
           error: 'Email service configuration error',
-        }),
+        },
         {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 500,
+          headers: corsHeaders,
         }
       );
     }
@@ -116,39 +110,39 @@ serve(async (req) => {
 
     if (!emailResponse.ok) {
       console.error('Error sending email:', emailData);
-      return new Response(
-        JSON.stringify({
+      return NextResponse.json(
+        {
           success: false,
           error: 'Failed to send verification email',
-        }),
+        },
         {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 500,
+          headers: corsHeaders,
         }
       );
     }
 
-    return new Response(
-      JSON.stringify({
+    return NextResponse.json(
+      {
         success: true,
         message: 'Verification code sent',
-      }),
+      },
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
+        headers: corsHeaders,
       }
     );
   } catch (error) {
     console.error('Error processing request:', error);
-    return new Response(
-      JSON.stringify({
+    return NextResponse.json(
+      {
         success: false,
         error: 'Internal server error',
-      }),
+      },
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
+        headers: corsHeaders,
       }
     );
   }
-});
+}
