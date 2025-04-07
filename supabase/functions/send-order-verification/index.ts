@@ -95,7 +95,7 @@ serve(async (req) => {
         'Authorization': `Bearer ${resendApiKey}`
       },
       body: JSON.stringify({
-        from: 'Wishiyo <orders@wishiyo.com>',
+        from: 'hi@wishiyo.com',
         to: email,
         subject: 'Your Wishiyo Order Verification Code',
         html: `
