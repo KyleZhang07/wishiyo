@@ -111,14 +111,10 @@ serve(async (req) => {
         }
       }
 
-      // 为 love 类别创建一个基本的 idea 对象
-      const ideas = [{
-        title: `${recipientName}'s Love Story`,
-        description: `A beautiful love story featuring ${recipientName}.`
-      }];
+      // 不再需要为 love 类别创建 ideas 字段，前端已经修改为可以处理没有 ideas 的情况
 
       return new Response(
-        JSON.stringify({ ideas, imagePrompts }),
+        JSON.stringify({ imagePrompts }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
 

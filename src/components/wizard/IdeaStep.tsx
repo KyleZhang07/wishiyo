@@ -209,26 +209,45 @@ const IdeaStep = ({
         throw new Error('No data received from the server');
       }
 
-      if (!Array.isArray(data.ideas)) {
-        throw new Error('Invalid response format: ideas should be an array');
-      }
-
       if (category === 'love') {
-        const processedIdea = {
-          ...data.ideas[0],
-          author: authorName,
-        };
-        setIdeas([processedIdea]);
-        setSelectedIdeaIndex(0);
-        localStorage.setItem(ideasKey, JSON.stringify([processedIdea]));
-        localStorage.setItem(getStorageKeys(bookType).selectedIdeaKey, "0");
-        
-        if (data.imagePrompts && promptsKey) {
+        // 检查是否有图像提示
+        if (data.imagePrompts && Array.isArray(data.imagePrompts)) {
+          // 如果没有 ideas 字段，创建一个默认的
+          if (!data.ideas || !Array.isArray(data.ideas)) {
+            const defaultIdea = {
+              title: `${personName}'s Love Story`,
+              description: `A beautiful love story featuring ${personName}.`,
+              author: authorName
+            };
+            
+            setIdeas([defaultIdea]);
+            setSelectedIdeaIndex(0);
+            localStorage.setItem(ideasKey, JSON.stringify([defaultIdea]));
+            localStorage.setItem(getStorageKeys(bookType).selectedIdeaKey, "0");
+          } else {
+            // 如果有 ideas 字段，使用它
+            const processedIdea = {
+              ...data.ideas[0],
+              author: authorName,
+            };
+            setIdeas([processedIdea]);
+            setSelectedIdeaIndex(0);
+            localStorage.setItem(ideasKey, JSON.stringify([processedIdea]));
+            localStorage.setItem(getStorageKeys(bookType).selectedIdeaKey, "0");
+          }
+          
+          // 处理图像提示
           setImagePrompts(data.imagePrompts);
           localStorage.setItem(promptsKey, JSON.stringify(data.imagePrompts));
           generateImageTexts(data.imagePrompts, selectedTone);
+        } else {
+          throw new Error('Invalid response format: imagePrompts should be an array');
         }
       } else {
+        if (!Array.isArray(data.ideas)) {
+          throw new Error('Invalid response format: ideas should be an array');
+        }
+        
         const processedIdeas = data.ideas.map(idea => ({
           ...idea,
           author: authorName,
