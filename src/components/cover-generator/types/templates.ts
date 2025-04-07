@@ -1,240 +1,327 @@
+export type TemplateType = {
+  id: string;
+  name: string;
+  backgroundColor: string;
+  titleStyle: {
+    color: string;
+    fontSize: string;
+    fontWeight: string;
+    textAlign: 'left' | 'center' | 'right';
+    offsetY: number;
+    textTransform?: string;
+  };
+  subtitleStyle: {
+    color: string;
+    fontSize: string;
+    fontWeight: string;
+    fontStyle?: string;
+    textTransform?: string;
+  };
+  authorStyle: {
+    color: string;
+    fontSize: string;
+    fontWeight: string;
+    textTransform?: string;
+    letterSpacing?: string;
+  };
+  imageStyle: {
+    filter: string;
+    opacity: string;
+    borderRadius: string;
+  };
+  spineStyle: {
+    backgroundColor: string;
+    titleColor: string;
+    authorColor: string;
+  };
+  backCoverStyle: {
+    backgroundColor: string;
+    textColor: string;
+    summaryFontSize: string;
+  };
+  badgeStyle?: {
+    backgroundColor: string;
+    textColor: string;
+  };
+  bottomAreaColor?: string;
+  bottomAreaHeight?: number;
+  descriptionStyle?: {
+    color: string;
+    fontSize: string;
+    fontWeight: string;
+  };
+};
 
-import { TemplateType } from '.';
-
-type TextTransformType = 'none' | 'capitalize' | 'uppercase' | 'lowercase';
-
-interface TitleStyleType {
-  color: string;
-  fontSize: string;
-  fontWeight: string;
-  textAlign: 'center' | 'right' | 'left';
-  offsetY: number;
-  textTransform?: TextTransformType;
-}
-
-interface SubtitleStyleType {
-  color: string;
-  fontSize: string;
-  fontWeight: string;
-  fontStyle?: string;
-  textTransform?: TextTransformType;
-}
-
-interface AuthorStyleType {
-  color: string;
-  fontSize: string;
-  fontWeight: string;
-  textTransform?: TextTransformType;
-  letterSpacing?: string;
-}
-
-export const coverTemplates: Record<string, TemplateType> = {
-  'modern': {
+export const coverTemplates: { [key: string]: TemplateType } = {
+  modern: {
     id: 'modern',
     name: 'Modern',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#ECE8D9',
     titleStyle: {
-      color: '#333333',
-      fontSize: '28px',
-      fontWeight: '700',
+      color: '#ffffff',
+      fontSize: '2.5rem',
+      fontWeight: 'bold',
       textAlign: 'center',
-      offsetY: 0
+      offsetY: 0.3
     },
     subtitleStyle: {
-      color: '#666666',
-      fontSize: '18px',
-      fontWeight: '400'
+      color: '#D6BCFA',
+      fontSize: '1.25rem',
+      fontWeight: 'normal'
     },
     authorStyle: {
-      color: '#555555',
-      fontSize: '16px',
-      fontWeight: '500'
+      color: '#9b87f5',
+      fontSize: '1rem'
     },
     imageStyle: {
-      opacity: '1'
+      filter: 'brightness(0.7)',
+      opacity: '0.9',
+      borderRadius: '0'
+    },
+    spineStyle: {
+      backgroundColor: '#1A1F2C',
+      titleColor: '#ffffff',
+      authorColor: '#9b87f5'
+    },
+    backCoverStyle: {
+      backgroundColor: '#1A1F2C',
+      textColor: '#D6BCFA',
+      summaryFontSize: '1rem'
     }
   },
-  'classic': {
+  'minimal': {
+    id: 'minimal',
+    name: 'Minimal Gray',
+    backgroundColor: '#D9D9D9', 
+    titleStyle: {
+      color: '#FFFFFF', 
+      fontSize: '3.5rem', 
+      fontWeight: 'bold',
+      textAlign: 'center',
+      offsetY: 0.75 
+    },
+    subtitleStyle: {
+      color: '#FFFFFF', 
+      fontSize: '1.6rem', 
+      fontWeight: 'normal'
+    },
+    authorStyle: {
+      color: '#FFFFFF', 
+      fontSize: '2.5rem',
+      fontWeight: 'bold'
+    },
+    imageStyle: {
+      filter: 'grayscale(100%)', 
+      opacity: 1,
+      borderRadius: '0' 
+    },
+    spineStyle: {
+      backgroundColor: '#000000',
+      titleColor: '#FFFFFF',
+      authorColor: '#FFFFFF'
+    },
+    backCoverStyle: {
+      backgroundColor: '#D9D9D9',
+      textColor: '#000000',
+      summaryFontSize: '1rem'
+    }
+  },
+  vibrant: {
+    id: 'vibrant',
+    name: 'Vibrant',
+    backgroundColor: '#4361EE',
+    titleStyle: {
+      color: '#FFCA3A',
+      fontSize: '2.5rem',
+      fontWeight: 'bold',
+      textAlign: 'center',
+      offsetY: 0.3
+    },
+    subtitleStyle: {
+      color: '#FDE1D3',
+      fontSize: '1.25rem',
+      fontWeight: 'normal'
+    },
+    authorStyle: {
+      color: '#F2FCE2',
+      fontSize: '1rem'
+    },
+    imageStyle: {
+      filter: 'brightness(0.6) contrast(1.2)',
+      opacity: '0.85',
+      borderRadius: '0'
+    },
+    spineStyle: {
+      backgroundColor: '#4361EE',
+      titleColor: '#FFCA3A',
+      authorColor: '#F2FCE2'
+    },
+    backCoverStyle: {
+      backgroundColor: '#4361EE',
+      textColor: '#FDE1D3',
+      summaryFontSize: '1rem'
+    }
+  },
+  classic: {
     id: 'classic',
     name: 'Classic',
-    backgroundColor: '#f5f5f0',
-    titleStyle: {
-      color: '#2c3e50',
-      fontSize: '32px',
-      fontWeight: '700',
-      textAlign: 'center',
-      offsetY: 0,
-      textTransform: 'uppercase' as TextTransformType
-    },
-    subtitleStyle: {
-      color: '#7f8c8d',
-      fontSize: '18px',
-      fontWeight: '400',
-      fontStyle: 'italic'
-    },
-    authorStyle: {
-      color: '#34495e',
-      fontSize: '14px',
-      fontWeight: '500',
-      letterSpacing: '1px'
-    },
-    imageStyle: {
-      opacity: '0.9'
-    }
-  },
-  'minimalist': {
-    id: 'minimalist',
-    name: 'Minimalist',
-    backgroundColor: '#ffffff',
-    titleStyle: {
-      color: '#000000',
-      fontSize: '24px',
-      fontWeight: '400',
-      textAlign: 'center',
-      offsetY: 0
-    },
-    subtitleStyle: {
-      color: '#777777',
-      fontSize: '16px',
-      fontWeight: '300'
-    },
-    authorStyle: {
-      color: '#999999',
-      fontSize: '14px',
-      fontWeight: '300'
-    },
-    imageStyle: {
-      opacity: '0.7'
-    }
-  },
-  'bold': {
-    id: 'bold',
-    name: 'Bold',
-    titleStyle: {
-      color: '#ffffff',
-      fontSize: '36px',
-      fontWeight: '800',
-      textAlign: 'center',
-      offsetY: 0,
-      textTransform: 'uppercase' as TextTransformType
-    },
-    subtitleStyle: {
-      color: '#f1c40f',
-      fontSize: '20px',
-      fontWeight: '600'
-    },
-    authorStyle: {
-      color: '#ffffff',
-      fontSize: '16px',
-      fontWeight: '400'
-    },
-    backgroundColor: '#2c3e50',
-    imageStyle: {
-      opacity: '0.8'
-    }
-  },
-  'romantic': {
-    id: 'romantic',
-    name: 'Romantic',
-    backgroundColor: '#fdf2f2',
-    titleStyle: {
-      color: '#e74c3c',
-      fontSize: '32px',
-      fontWeight: '600',
-      textAlign: 'center',
-      offsetY: 0
-    },
-    subtitleStyle: {
-      color: '#c0392b',
-      fontSize: '18px',
-      fontWeight: '400',
-      fontStyle: 'italic'
-    },
-    authorStyle: {
-      color: '#7f8c8d',
-      fontSize: '16px',
-      fontWeight: '400'
-    },
-    imageStyle: {
-      opacity: '0.85'
-    }
-  },
-  'dramatic': {
-    id: 'dramatic',
-    name: 'Dramatic',
     backgroundColor: '#000000',
     titleStyle: {
+      color: '#FFFFFF',
+      fontSize: '3rem',
+      fontWeight: 'bold',
+      textTransform: 'uppercase'
+    },
+    subtitleStyle: {
+      color: '#FFFFFF',
+      fontSize: '1.25rem',
+      fontWeight: 'normal',
+      fontStyle: 'italic',
+      textTransform: 'lowercase'
+    },
+    authorStyle: {
+      color: '#FFFFFF',
+      fontSize: '1.2rem',
+      fontWeight: 'normal',
+      textTransform: 'uppercase',
+      letterSpacing: '0.1em'
+    },
+    bottomAreaColor: '#9B0000',
+    bottomAreaHeight: 0.15,
+    descriptionStyle: {
+      color: '#FFFFFF',
+      fontSize: '1rem',
+      fontWeight: 'normal'
+    },
+    imageStyle: {
+      filter: 'none',
+      opacity: '1.0',
+      borderRadius: '50%'
+    },
+    spineStyle: {
+      backgroundColor: '#000000',
+      titleColor: '#FFFFFF',
+      authorColor: '#FFFFFF'
+    },
+    backCoverStyle: {
+      backgroundColor: '#000000',
+      textColor: '#FFFFFF',
+      summaryFontSize: '1rem'
+    }
+  },
+  'pastel-beige': {
+    id: 'pastel-beige',
+    name: 'Sweet Pink',
+    backgroundColor: '#FFC0CB', 
+    titleStyle: {
+      color: '#8A2BE2', 
+      fontSize: '3rem',
+      fontWeight: 'bold',
+      textAlign: 'center',
+      offsetY: 0.3 
+    },
+    subtitleStyle: {
+      color: '#9400D3', 
+      fontSize: '1.5rem',
+      fontWeight: 'normal',
+      fontStyle: 'normal'
+    },
+    authorStyle: {
+      color: '#8A2BE2', 
+      fontSize: '1.6rem',
+      fontWeight: 'bold'
+    },
+    imageStyle: {
+      filter: 'brightness(1.1)', 
+      opacity: 1,
+      borderRadius: '50%' 
+    },
+    spineStyle: {
+      backgroundColor: '#FFC0CB',
+      titleColor: '#8A2BE2',
+      authorColor: '#9400D3'
+    },
+    backCoverStyle: {
+      backgroundColor: '#FFC0CB',
+      textColor: '#8A2BE2',
+      summaryFontSize: '1.1rem'
+    }
+  },
+  'vibrant-green': {
+    id: 'vibrant-green',
+    name: 'Modern Green',
+    backgroundColor: '#E5DDCA',
+    titleStyle: {
+      color: '#D4AF37',
+      fontSize: '2.5rem',
+      fontWeight: 'bold',
+      textAlign: 'center',
+      offsetY: 0.3
+    },
+    subtitleStyle: {
+      color: '#FFFFFF',
+      fontSize: '1.25rem',
+      fontWeight: 'normal'
+    },
+    authorStyle: {
+      color: '#FFFFFF',
+      fontSize: '1.8rem',
+      fontWeight: 'normal'
+    },
+    imageStyle: {
+      filter: 'none',
+      opacity: '1',
+      borderRadius: '0'
+    },
+    spineStyle: {
+      backgroundColor: '#E5DDCA',
+      titleColor: '#D4AF37',
+      authorColor: '#FFFFFF'
+    },
+    backCoverStyle: {
+      backgroundColor: '#E5DDCA',
+      textColor: '#FFFFFF',
+      summaryFontSize: '1rem'
+    }
+  },
+  bestseller: {
+    id: 'bestseller',
+    name: 'Bestseller',
+    backgroundColor: '#000000',
+    titleStyle: {
+      color: '#FFC300',
+      fontSize: '3rem',
+      fontWeight: 'bold',
+      textAlign: 'center',
+      offsetY: 0.3
+    },
+    subtitleStyle: {
       color: '#ffffff',
-      fontSize: '34px',
-      fontWeight: '700',
-      textAlign: 'center',
-      offsetY: 0
-    },
-    subtitleStyle: {
-      color: '#e74c3c',
-      fontSize: '20px',
-      fontWeight: '500'
+      fontSize: '1rem',
+      fontWeight: 'normal'
     },
     authorStyle: {
-      color: '#bdc3c7',
-      fontSize: '16px',
-      fontWeight: '300'
+      color: '#ffffff',
+      fontSize: '1.8rem'
     },
     imageStyle: {
-      opacity: '0.75'
-    }
-  },
-  'whimsical': {
-    id: 'whimsical',
-    name: 'Whimsical',
-    backgroundColor: '#e8f4f8',
-    titleStyle: {
-      color: '#16a085',
-      fontSize: '28px',
-      fontWeight: '600',
-      textAlign: 'center',
-      offsetY: 0
+      filter: 'none',
+      opacity: '1',
+      borderRadius: '0px'
     },
-    subtitleStyle: {
-      color: '#2980b9',
-      fontSize: '18px',
-      fontWeight: '400',
-      fontStyle: 'italic'
+    spineStyle: {
+      backgroundColor: '#4361EE',
+      titleColor: '#FFC300',
+      authorColor: '#ffffff'
     },
-    authorStyle: {
-      color: '#8e44ad',
-      fontSize: '16px',
-      fontWeight: '400'
+    backCoverStyle: {
+      backgroundColor: '#000000',
+      textColor: '#ffffff',
+      summaryFontSize: '16px'
     },
-    imageStyle: {
-      opacity: '0.9'
-    }
-  },
-  'elegant': {
-    id: 'elegant',
-    name: 'Elegant',
-    backgroundColor: '#f9f3f0',
-    titleStyle: {
-      color: '#8e44ad',
-      fontSize: '30px',
-      fontWeight: '600',
-      textAlign: 'center',
-      offsetY: 0,
-      textTransform: 'capitalize' as TextTransformType
-    },
-    subtitleStyle: {
-      color: '#d35400',
-      fontSize: '18px',
-      fontWeight: '400'
-    },
-    authorStyle: {
-      color: '#7f8c8d',
-      fontSize: '16px',
-      fontWeight: '400',
-      letterSpacing: '1px'
-    },
-    imageStyle: {
-      opacity: '0.85'
+    badgeStyle: {
+      backgroundColor: '#FFC300',
+      textColor: '#000000'
     }
   }
 };
