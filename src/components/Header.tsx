@@ -1,16 +1,13 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, Package, ShoppingBag } from 'lucide-react';
+import { Menu, X, Package } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import OrderVerificationModal from './orders/OrderVerificationModal';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const navigate = useNavigate();
 
-  return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-200">
+  return <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-200">
       <div className="container mx-auto px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-8">
@@ -26,15 +23,6 @@ const Header = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6 pr-4">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="flex items-center space-x-1" 
-              onClick={() => setIsOrderModalOpen(true)}
-            >
-              <ShoppingBag className="h-4 w-4" />
-              <span>My Orders</span>
-            </Button>
             <Link to="/orders" className="relative">
               <Button variant="ghost" size="icon">
                 <Package className="h-5 w-5" />
@@ -55,41 +43,19 @@ const Header = () => {
           </div>
         </div>
 
-        {/* Mobile menu */}
-        {isMenuOpen && (
-          <div className="md:hidden px-4 py-4 space-y-4 border-t border-gray-200">
-            <Link to="/" className="block text-gray-600 hover:text-primary transition-colors">
+        {/* Mobile Navigation */}
+        {isMenuOpen && <nav className="md:hidden py-4 space-y-4">
+            <Link to="/" className="block px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors" onClick={() => setIsMenuOpen(false)}>
               Home
             </Link>
-            <Link to="/friends" className="block text-gray-600 hover:text-primary transition-colors">
+            <Link to="/friends" className="block px-4 py-2 text-amber-600 hover:text-amber-700 transition-colors" onClick={() => setIsMenuOpen(false)}>
               Personalized Book
             </Link>
-            <Link to="/love" className="block text-gray-600 hover:text-primary transition-colors">
+            <Link to="/love" className="block px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors" onClick={() => setIsMenuOpen(false)}>
               Illustrated Book
             </Link>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="flex items-center space-x-1 w-full justify-start" 
-              onClick={() => {
-                setIsMenuOpen(false);
-                setIsOrderModalOpen(true);
-              }}
-            >
-              <ShoppingBag className="h-4 w-4" />
-              <span>My Orders</span>
-            </Button>
-          </div>
-        )}
-
-        {/* 订单验证模态框 */}
-        <OrderVerificationModal 
-          isOpen={isOrderModalOpen} 
-          onClose={() => setIsOrderModalOpen(false)} 
-        />
+          </nav>}
       </div>
-    </header>
-  );
+    </header>;
 };
-
 export default Header;
