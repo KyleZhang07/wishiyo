@@ -1,5 +1,4 @@
-
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -30,17 +29,41 @@ const WizardStep = ({
 }: WizardStepProps) => {
   const navigate = useNavigate();
   const location = useLocation();
-  
-  // 判断当前是否在love category
-  const isLoveCategory = location.pathname.includes('/love/');
-  
+  const [recipientName, setRecipientName] = useState<string>('');
+
+  useEffect(() => {
+    // 检查是否是 love-story 路径
+    if (location.pathname.includes('/love/love-story')) {
+      const savedName = localStorage.getItem('loveStoryPersonName');
+      if (savedName) {
+        setRecipientName(savedName);
+      }
+    }
+  }, [location.pathname]);
+
+  const getCustomTitle = () => {
+    if (location.pathname.includes('/love/love-story') && recipientName) {
+      return `Share ${recipientName}'s Story`;
+    }
+    return title;
+  };
+
+  const getCustomDescription = () => {
+    if (location.pathname.includes('/love/love-story')) {
+      if (recipientName) {
+        return `The more you answer, the richer and more personal the book will be.`;
+      }
+    }
+    return description;
+  };
+
   return (
     <div className="min-h-screen bg-[#FFFAF5]">
       <div className="container mx-auto px-4 pt-8 pb-16 max-w-3xl">
         <div className="mb-8">
           <StepProgressIndicator currentStep={currentStep} totalSteps={totalSteps} />
         </div>
-        
+
         <div className="relative mb-8">
           {previousStep && (
             <button 
@@ -51,12 +74,12 @@ const WizardStep = ({
             </button>
           )}
           <h1 className="text-3xl font-display font-bold text-center px-12">
-            {title}
+            {getCustomTitle()}
           </h1>
         </div>
-        
-        {description && (
-          <p className="text-gray-600 text-center mb-14">{description}</p>
+
+        {getCustomDescription() && (
+          <p className="text-gray-600 text-center mb-14">{getCustomDescription()}</p>
         )}
 
         <div className="space-y-8">

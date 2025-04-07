@@ -127,6 +127,7 @@ const LoveStoryCharacterStep = () => {
             onChange={e => setAge(e.target.value)}
             min="1"
             max="120"
+            className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />
         </div>
 
