@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import WizardStep from '@/components/wizard/WizardStep';
@@ -97,7 +96,7 @@ const FunnyBiographyStoriesStep = () => {
   return (
     <WizardStep
       title={`What's ${authorName}'s Story?`}
-      description="Time to spill the beans on all those funny moments!"
+      description="Answer more questions to create a richer, more personal book!"
       previousStep="/create/friends/funny-biography/author"
       currentStep={2}
       totalSteps={7}
@@ -129,7 +128,7 @@ const FunnyBiographyStoriesStep = () => {
           
           <Button
             variant="outline"
-            className="w-full h-16 border-dashed text-lg bg-gradient-to-r from-[#FF7F50]/10 to-[#FF7F50]/20 hover:from-[#FF7F50]/20 hover:to-[#FF7F50]/30 text-gray-700"
+            className="w-full h-16 border-dashed text-lg text-gray-700"
             onClick={() => {
               setSelectedQuestion(null);
               setIsDialogOpen(true);

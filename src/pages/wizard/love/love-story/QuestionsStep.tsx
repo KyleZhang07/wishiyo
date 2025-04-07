@@ -131,7 +131,7 @@ const LoveStoryQuestionsStep = () => {
             setIsDialogOpen(true);
           }}
         >
-          <PlusCircle className="mr-2 h-5 w-5" />
+          <PlusCircle className="mr-2 h-5 w-5 text-[#FF7F50]" />
           {questionsAndAnswers.length === 0 
             ? "Share Your First Memory" 
             : "Add Another Memory"}

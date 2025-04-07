@@ -538,10 +538,10 @@ const IdeaStep = ({
                   {ideas.map((idea, index) => (
                     <div 
                       key={index} 
-                      className={`${category === 'friends' ? 'bg-white rounded-lg p-5' : ''} cursor-pointer transition-all hover:shadow-md ${
+                      className={`${category === 'friends' ? 'bg-white rounded-lg p-5' : ''} cursor-pointer transition-all hover:shadow-md border ${
                         selectedIdeaIndex === index 
                           ? 'ring-2 ring-[#FF7F50] shadow-lg scale-[1.02]' 
-                          : ''
+                          : 'border-gray-200'
                       }`}
                       onClick={() => handleIdeaSelect(index)}
                     >

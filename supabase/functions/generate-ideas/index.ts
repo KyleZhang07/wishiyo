@@ -131,22 +131,25 @@ serve(async (req) => {
               content: `
                 1. Create a concise, punchy title (3-5 words) that can range from clever metaphors to unexpected concepts
                 2. Make the book about ONE PERSON ONLY - sharing their expertise, unique perspectives, or interesting life approaches
-                3. The tone can vary from witty professional insights to more unusual or surprising life observations
+                3. The tone should vary across the three ideas: one professional, one satirical (gently poking fun at quirks mentioned in answers), and one unexpected
                 4. The ideas should balance PROFESSIONAL WISDOM with ENTERTAINING ELEMENTS while maintaining an engaging tone
                 5. Make the ideas SPECIFIC and MEMORABLE, focusing on unique frameworks, unusual talents, or interesting perspectives
-                6. Each book should present the subject as someone sharing valuable insights through memorable frameworks that might be conventional or unexpected
+                6. Each book should present the subject as someone sharing valuable insights through memorable frameworks that might be conventional, satirical, or unexpected
                 7. The author field MUST always be exactly the provided authorName - do not modify it
                 8. Descriptions must ALWAYS be a SINGLE SENTENCE with NO COMMAS - use other connectors or rephrase as needed
                 9. Avoid using "I" or "you" perspectives in descriptions - use objective third-person statements instead
+                10. For satirical ideas, playfully exaggerate elements from the user's answers but keep it good-natured
 
-                Title examples to follow (ranging from professional to unexpected):
+                Title examples to follow (ranging from professional to satirical to unexpected):
                 - "The Kitchen Creativity Blueprint"
                 - "Startups and Slam Dunks"
                 - "The Art of Perfect Timing"
                 - "Professional Napping Techniques"
                 - "Conversations with Algorithms"
                 - "The Sock Matching Manifesto"
-                - "Mindful Meeting Mastery"
+                - "Accidental Leadership Genius"
+                - "The Overthinking Olympics"
+                - "Chaos Whisperer"
                 - "How I Befriended Gravity"
 
                 Subtitle examples to follow (ALWAYS ONE SENTENCE NO COMMAS NO "I" OR "YOU"):
@@ -175,7 +178,11 @@ serve(async (req) => {
                 - 'description': A compelling subtitle (ONE SENTENCE NO COMMAS 10-15 words) that expands on the central concept with personality
                 - 'praises': An array of 4 fictional praise objects, each with 'source' (imaginary publication or critic name) and 'text' (the praise quote)
 
-                Make the ideas VARIED IN TONE - one can be more professional and metaphor-rich, another more unexpected or quirky, and the third somewhere in between.
+                Make the ideas VARIED IN TONE:
+                - One should be professional and metaphor-rich
+                - One should be satirical and playfully exaggerate elements from the user's answers (gently poking fun at quirks or habits mentioned)
+                - One should be unexpected or quirky
+
                 Each idea should present ${authorName}'s unique methodology or perspective through a single extended framework.
 
                 The descriptions should:
@@ -185,15 +192,18 @@ serve(async (req) => {
                 - Clearly communicate the value proposition whether serious or lighthearted
                 - Use language that engages readers and makes the concept memorable
 
-                Example title/description pairs (ranging from professional to unexpected):
+                For the satirical idea, look for amusing contradictions or exaggerations in the user's answers that could be playfully highlighted.
+
+                Example title/description pairs (ranging from professional to satirical to unexpected):
                 - "The Kitchen Creativity Blueprint" / "Essential cooking techniques transformed into business strategies for maximum growth"
                 - "Startups and Slam Dunks" / "A guide to balancing basketball dreams while building successful ventures"
                 - "The Art of Perfect Timing" / "Discovering the hidden patterns that connect daily decisions to major life outcomes"
                 - "Professional Napping Techniques" / "Mastering the science of midday rest for enhanced productivity and creative thinking"
                 - "Conversations with Algorithms" / "Exploring the relationship between human intuition and computational thinking"
                 - "The Sock Matching Manifesto" / "Revolutionary methods for organizing chaos in both wardrobes and life situations"
-                - "Mindful Meeting Mastery" / "Transforming mundane workplace interactions into opportunities for meaningful connection"
-                - "How I Befriended Gravity" / "Learning to work with natural forces instead of constantly fighting against them"
+                - "Accidental Leadership Genius" / "How consistently making the wrong decisions somehow led to extraordinary success"
+                - "The Overthinking Olympics" / "Mental gymnastics and philosophical contortions that turned simple problems into lifetime quests"
+                - "Chaos Whisperer" / "Transforming spectacular disasters into opportunities through sheer stubbornness and luck"
 
                 For the praises, follow these guidelines:
                 1. Each praise should be a substantial paragraph (2-3 sentences) that analyzes some aspect of the book or author's style
