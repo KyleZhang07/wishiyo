@@ -85,8 +85,17 @@ serve(async (req) => {
       let imagePrompts = [];
       try {
         if (promptData.choices && promptData.choices[0] && promptData.choices[0].message) {
-          const content = promptData.choices[0].message.content;
+          let content = promptData.choices[0].message.content;
           console.log('Raw content:', content);
+          
+          // 清理可能存在的 Markdown 代码块标记
+          if (content.startsWith('```json\n') && content.endsWith('\n```')) {
+            content = content.slice(7, -4);
+          } else if (content.startsWith('```') && content.endsWith('```')) {
+            content = content.slice(3, -3);
+          }
+          
+          // 现在尝试解析清理后的内容
           imagePrompts = JSON.parse(content);
         } else {
           throw new Error('Invalid response format from OpenAI');
@@ -102,8 +111,14 @@ serve(async (req) => {
         }
       }
 
+      // 为 love 类别创建一个基本的 idea 对象
+      const ideas = [{
+        title: `${recipientName}'s Love Story`,
+        description: `A beautiful love story featuring ${recipientName}.`
+      }];
+
       return new Response(
-        JSON.stringify({ imagePrompts }),
+        JSON.stringify({ ideas, imagePrompts }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
 
