@@ -12,10 +12,10 @@
     "api/merge-pdf.js": {
       "maxDuration": 60
     },
-    "api/send-order-verification": {
+    "api/send-order-verification/route.ts": {
       "maxDuration": 30
     },
-    "api/verify-order-code": {
+    "api/verify-order-code/route.ts": {
       "maxDuration": 30
     }
   }
