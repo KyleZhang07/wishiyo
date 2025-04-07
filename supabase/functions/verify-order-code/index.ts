@@ -3,7 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 import * as jose from "https://deno.land/x/jose@v4.14.4/index.ts";
 
-// CORS 头设置
+// CORS headers
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -11,30 +11,30 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // 处理 CORS 预检请求
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // 获取环境变量
+    // Get environment variables
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const jwtSecret = Deno.env.get("JWT_SECRET");
 
     if (!supabaseUrl || !supabaseServiceKey || !jwtSecret) {
-      throw new Error("必要的环境变量未设置");
+      throw new Error("Required environment variables not set");
     }
 
-    // 初始化Supabase客户端
+    // Initialize Supabase client
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // 解析请求数据
+    // Parse request data
     const { email, code } = await req.json();
 
     if (!email || !code) {
       return new Response(
-        JSON.stringify({ success: false, error: "邮箱和验证码都是必填项" }),
+        JSON.stringify({ success: false, error: "Email and verification code are required" }),
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -42,7 +42,7 @@ serve(async (req) => {
       );
     }
 
-    // 查找匹配的有效验证码
+    // Find matching valid verification code
     const { data: verifications, error: queryError } = await supabase
       .from('order_verifications')
       .select()
@@ -54,12 +54,12 @@ serve(async (req) => {
       .limit(1);
 
     if (queryError) {
-      throw new Error(`验证码查询失败: ${queryError.message}`);
+      throw new Error(`Verification code query failed: ${queryError.message}`);
     }
 
     if (!verifications || verifications.length === 0) {
       return new Response(
-        JSON.stringify({ success: false, error: "验证码无效或已过期" }),
+        JSON.stringify({ success: false, error: "Invalid or expired verification code" }),
         {
           status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -67,13 +67,13 @@ serve(async (req) => {
       );
     }
 
-    // 标记验证码为已使用
+    // Mark verification code as used
     await supabase
       .from('order_verifications')
       .update({ is_used: true })
       .eq('id', verifications[0].id);
 
-    // 生成JWT令牌，有效期24小时
+    // Generate JWT token, valid for 24 hours
     const secret = new TextEncoder().encode(jwtSecret);
     const jwt = await new jose.SignJWT({ email })
       .setProtectedHeader({ alg: 'HS256' })
@@ -81,7 +81,7 @@ serve(async (req) => {
       .setExpirationTime('24h')
       .sign(secret);
 
-    // 查询用户的订单
+    // Query user's orders
     const { data: loveStoryOrders } = await supabase
       .from('love_story_books')
       .select('*')
@@ -94,7 +94,7 @@ serve(async (req) => {
       .eq('customer_email', email)
       .order('timestamp', { ascending: false });
 
-    // 合并订单列表
+    // Merge order lists
     const allOrders = [
       ...(loveStoryOrders || []).map(order => ({
         ...order,
@@ -113,7 +113,7 @@ serve(async (req) => {
         success: true, 
         token: jwt,
         orders: allOrders,
-        message: "验证成功" 
+        message: "Verification successful" 
       }),
       {
         status: 200,
@@ -121,7 +121,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error("验证码验证失败:", error);
+    console.error("Verification code verification failed:", error);
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
       {

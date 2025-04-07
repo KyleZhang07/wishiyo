@@ -3,7 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 import { Resend } from "npm:resend@2.0.0";
 
-// CORS 头设置
+// CORS headers
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -11,31 +11,31 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // 处理 CORS 预检请求
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // 获取环境变量
+    // Get environment variables
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
 
     if (!supabaseUrl || !supabaseServiceKey || !resendApiKey) {
-      throw new Error("必要的环境变量未设置");
+      throw new Error("Required environment variables not set");
     }
 
-    // 初始化Supabase和Resend客户端
+    // Initialize Supabase and Resend clients
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const resend = new Resend(resendApiKey);
 
-    // 解析请求数据
+    // Parse request data
     const { email } = await req.json();
 
     if (!email || !email.match(/^\S+@\S+\.\S+$/)) {
       return new Response(
-        JSON.stringify({ success: false, error: "邮箱格式无效" }),
+        JSON.stringify({ success: false, error: "Invalid email format" }),
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -43,13 +43,13 @@ serve(async (req) => {
       );
     }
 
-    // 生成6位随机验证码
+    // Generate 6-digit random verification code
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     
-    // 设置验证码有效期 (15分钟)
+    // Set verification code expiration time (15 minutes)
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
-    // 检查是否有之前未过期的验证码，如果有则更新它
+    // Check if there are previous unused verification codes, if so update them
     const { data: existingCodes } = await supabase
       .from('order_verifications')
       .select()
@@ -57,7 +57,7 @@ serve(async (req) => {
       .eq('is_used', false)
       .gt('expires_at', new Date().toISOString());
 
-    // 删除所有该邮箱的未使用验证码
+    // Delete all unused verification codes for this email
     if (existingCodes && existingCodes.length > 0) {
       await supabase
         .from('order_verifications')
@@ -66,7 +66,7 @@ serve(async (req) => {
         .eq('is_used', false);
     }
 
-    // 创建新的验证码记录
+    // Create new verification code record
     const { error: insertError } = await supabase
       .from('order_verifications')
       .insert({
@@ -76,41 +76,41 @@ serve(async (req) => {
       });
 
     if (insertError) {
-      throw new Error(`验证码保存失败: ${insertError.message}`);
+      throw new Error(`Failed to save verification code: ${insertError.message}`);
     }
 
-    // 发送邮件
+    // Send email
     const emailResponse = await resend.emails.send({
       from: "WISHIYO <verify@wishiyo.com>",
       to: [email],
-      subject: "订单查询验证码",
+      subject: "Order Verification Code",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h2 style="color: #FF7F50;">WISHIYO 订单查询验证码</h2>
-          <p>您好，</p>
-          <p>您正在尝试查询WISHIYO订单信息。请使用以下验证码进行验证：</p>
+          <h2 style="color: #FF7F50;">WISHIYO Order Verification Code</h2>
+          <p>Hello,</p>
+          <p>You are attempting to access your WISHIYO order information. Please use the verification code below:</p>
           <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; text-align: center; font-size: 24px; letter-spacing: 5px; margin: 20px 0;">
             <strong>${code}</strong>
           </div>
-          <p>此验证码将在15分钟后失效。如果您没有请求此验证码，请忽略此邮件。</p>
-          <p>感谢您使用WISHIYO的服务！</p>
+          <p>This verification code will expire in 15 minutes. If you did not request this code, please ignore this email.</p>
+          <p>Thank you for using WISHIYO's services!</p>
           <hr style="border: 1px solid #eee; margin: 20px 0;">
-          <p style="font-size: 12px; color: #777;">本邮件由系统自动发送，请勿回复。</p>
+          <p style="font-size: 12px; color: #777;">This email was sent automatically, please do not reply.</p>
         </div>
       `,
     });
 
-    console.log("邮件发送响应:", emailResponse);
+    console.log("Email response:", emailResponse);
 
     return new Response(
-      JSON.stringify({ success: true, message: "验证码已发送至您的邮箱" }),
+      JSON.stringify({ success: true, message: "Verification code sent to your email" }),
       {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
   } catch (error) {
-    console.error("发送验证码失败:", error);
+    console.error("Failed to send verification code:", error);
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
       {
