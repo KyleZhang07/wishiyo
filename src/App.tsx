@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,6 +13,8 @@ import NotFound from "./pages/NotFound";
 import FriendsLanding from "./pages/FriendsLanding";
 import LoveLanding from "./pages/LoveLanding";
 import OrdersPage from "./pages/OrdersPage";
+import OrderHistory from "./pages/OrderHistory";
+import VerifyOrder from "./pages/VerifyOrder";
 
 // Friends Book Creation Routes - Funny Biography
 import FunnyBiographyAuthorStep from "./pages/wizard/friends/funny-biography/AuthorStep";
@@ -112,9 +115,11 @@ const AppLayout = () => {
           <Route path="/create/love/love-story/generate" element={<LoveStoryGenerateStep />} />
           <Route path="/create/love/love-story/format" element={<LoveStoryFormatStep />} />
           
-          {/* Order Success Route */}
+          {/* Order Routes */}
           <Route path="/order-success" element={<OrderSuccess />} />
           <Route path="/orders" element={<OrdersPage />} />
+          <Route path="/verify-order" element={<VerifyOrder />} />
+          <Route path="/orders/history" element={<OrderHistory />} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>

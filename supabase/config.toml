@@ -1,20 +1,32 @@
 
 project_id = "hbkgbggctzvqffqfrmhl"
-[functions.generate-ideas]
-verify_jwt = false
-[functions.remove-background]
-verify_jwt = false
-[functions.generate-image-texts]
-verify_jwt = false
-[functions.generate-cover-pdf]
-verify_jwt = false
-[functions.generate-book-content]
-verify_jwt = false
-[functions.generate-interior-pdf]
-verify_jwt = false
-[functions.update-book-data]
-verify_jwt = false
-[functions.get-book-data]
-verify_jwt = false
-[functions.generate-love-story-pdfs]
-verify_jwt = false
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage"]
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[storage]
+enabled = true
+
+[auth]
+enabled = true
+
+[studio]
+enabled = true
+port = 54323
+
+[inbucket]
+enabled = true
+
+[realtime]
+enabled = true
+
+[functions]
+[functions.send-order-verification]
+[functions.verify-order-code]
