@@ -30,11 +30,11 @@ const OrderVerificationModal: React.FC<OrderVerificationModalProps> = ({ isOpen,
 
     setIsLoading(true);
     try {
-      const response = await fetch(`${import.meta.env.SUPABASE_URL}/functions/v1/send-order-verification`, {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-order-verification`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.SUPABASE_ANON_KEY}`
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
         },
         body: JSON.stringify({ email })
       });
@@ -74,11 +74,11 @@ const OrderVerificationModal: React.FC<OrderVerificationModalProps> = ({ isOpen,
 
     setIsLoading(true);
     try {
-      const response = await fetch(`${import.meta.env.SUPABASE_URL}/functions/v1/verify-order-code`, {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-order-code`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.SUPABASE_ANON_KEY}`
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
         },
         body: JSON.stringify({ email, code: verificationCode })
       });
