@@ -161,6 +161,77 @@ const FunnyBiographyGenerateStep = () => {
     }
   }, [selectedStyle, lastUsedStyle]);
   
+  // 检测用户是否在 IdeaStep 中选择了不同的想法
+  useEffect(() => {
+    const checkIdeaChanged = () => {
+      // 检查所有可能的键名
+      const ideaChangedTimestamp = 
+        localStorage.getItem('funnyBiographyIdeaChanged') || 
+        localStorage.getItem('funny-biographyIdeaChanged') || 
+        localStorage.getItem('friendsIdeaChanged') ||
+        localStorage.getItem('funnyBiography');
+      
+      if (ideaChangedTimestamp) {
+        // 清除所有可能的标记，以免重复触发
+        localStorage.removeItem('funnyBiographyIdeaChanged');
+        localStorage.removeItem('funny-biographyIdeaChanged');
+        localStorage.removeItem('friendsIdeaChanged');
+        localStorage.removeItem('funnyBiography');
+        
+        console.log('GenerateStep: 检测到想法变更标记，准备重新生成封面');
+        
+        // 设置一个新标记，告诉 PreviewStep 需要重新生成章节
+        localStorage.setItem('funnyBiographyNeedsChapterRegeneration', Date.now().toString());
+        
+        // 清除已有的PDF
+        setFrontCoverPdf(null);
+        setBackCoverPdf(null);
+        setSpinePdf(null);
+        
+        // 重置生成状态
+        setGenerationStarted(true);
+        setGenerationComplete(false);
+        localStorage.removeItem('funnyBiographyGenerationComplete');
+        
+        // 重新加载选择的想法数据
+        const savedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
+        const savedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
+        
+        if (savedIdeas && savedIdeaIndex) {
+          const ideas = JSON.parse(savedIdeas);
+          const selectedIdea = ideas[parseInt(savedIdeaIndex)];
+          if (selectedIdea) {
+            setCoverTitle(selectedIdea.title || '');
+            setSubtitle(selectedIdea.description || '');
+            
+            // 获取赞美语
+            if (selectedIdea.praises && Array.isArray(selectedIdea.praises)) {
+              setPraises(selectedIdea.praises);
+            }
+          }
+        }
+        
+        // 延迟生成新的图像，确保数据已更新
+        setTimeout(() => {
+          generateImagesFromCanvas();
+        }, 500);
+        
+        console.log('检测到想法变更，重新生成封面');
+      }
+    };
+    
+    // 组件挂载时检查一次
+    checkIdeaChanged();
+    
+    // 设置一个定时器，定期检查是否有想法变更的标记
+    // 这是为了处理用户可能从其他页面直接导航到这个页面的情况
+    const intervalId = setInterval(checkIdeaChanged, 1000);
+    
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, []);
+  
   // 监听图片变化，只有当图片变化时才触发重新生成
   useEffect(() => {
     if (coverImage && lastUsedImage !== coverImage && !generationComplete) {

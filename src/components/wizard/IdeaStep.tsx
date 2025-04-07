@@ -309,6 +309,33 @@ const IdeaStep = ({
   };
 
   const handleIdeaSelect = (index: number) => {
+    // 如果选择了不同的想法，设置标记
+    if (selectedIdeaIndex !== index) {
+      const path = window.location.pathname;
+      // 更准确地确定书籍类型
+      let bookType = '';
+      
+      if (path.includes('/friends/funny-biography/')) {
+        bookType = 'funnyBiography';
+      } else if (path.includes('/love/love-story/')) {
+        bookType = 'loveStory';
+      } else {
+        // 提取路径中的最后一个有意义的部分作为书籍类型
+        const pathParts = path.split('/').filter(part => part);
+        if (pathParts.length >= 2) {
+          bookType = pathParts[pathParts.length - 2];
+        }
+      }
+      
+      if (bookType) {
+        // 设置一个明确的标记，表示想法选择已更改
+        localStorage.setItem(`${bookType}IdeaChanged`, Date.now().toString());
+        
+        // 为了调试，添加控制台日志
+        console.log(`Idea changed for ${bookType}. Set localStorage key: ${bookType}IdeaChanged`);
+      }
+    }
+    
     setSelectedIdeaIndex(index);
     const path = window.location.pathname;
     const bookType = path.split('/')[3];
