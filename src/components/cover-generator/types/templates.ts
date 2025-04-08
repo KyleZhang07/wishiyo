@@ -92,7 +92,7 @@ export const coverTemplates: { [key: string]: TemplateType } = {
   'minimal': {
     id: 'minimal',
     name: 'Minimal Gray',
-    backgroundColor: '#D9D9D9', 
+    backgroundColor: '#C2C2C2', 
     titleStyle: {
       color: '#FFFFFF', 
       fontSize: '3.5rem', 
@@ -121,7 +121,7 @@ export const coverTemplates: { [key: string]: TemplateType } = {
       authorColor: '#FFFFFF'
     },
     backCoverStyle: {
-      backgroundColor: '#D9D9D9',
+      backgroundColor: '#C2C2C2',
       textColor: '#000000',
       summaryFontSize: '1rem'
     }
@@ -170,7 +170,9 @@ export const coverTemplates: { [key: string]: TemplateType } = {
       color: '#FFFFFF',
       fontSize: '3rem',
       fontWeight: 'bold',
-      textTransform: 'uppercase'
+      textTransform: 'uppercase',
+      textAlign: 'center',
+      offsetY: 0
     },
     subtitleStyle: {
       color: '#FFFFFF',
