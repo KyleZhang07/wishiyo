@@ -150,6 +150,8 @@ serve(async (req) => {
                 8. Descriptions must ALWAYS be a SINGLE SENTENCE with NO COMMAS - use other connectors or rephrase as needed
                 9. Avoid using "I" or "you" perspectives in descriptions - use objective third-person statements instead
                 10. For satirical ideas, playfully exaggerate elements from the user's answers but keep it good-natured
+                11. Use straightforward, simple, and easy to understand language - avoid academic jargon, complex concepts, or specialized terminology that average readers wouldn't immediately grasp
+                12. Emphasize HUMOR throughout all ideas - include witty observations, playful exaggerations, and amusing perspectives even in the more professional ideas
 
                 Title examples to follow (ranging from professional to satirical to unexpected):
                 - "The Kitchen Creativity Blueprint"
@@ -202,6 +204,8 @@ serve(async (req) => {
                 - ALWAYS BE ONE SENTENCE WITHOUT ANY COMMAS (use alternative sentence structures)
                 - Clearly communicate the value proposition whether serious or lighthearted
                 - Use language that engages readers and makes the concept memorable
+                - USE STRAIGHTFORWARD, SIMPLE, AND EASY TO UNDERSTAND LANGUAGE that average readers can easily grasp without academic jargon or complex terminology
+                - INFUSE HUMOR THROUGHOUT ALL IDEAS including witty observations, playful exaggerations, and amusing perspectives even in the more professional concepts
 
                 For the satirical idea, look for amusing contradictions or exaggerations in the user's answers that could be playfully highlighted.
 
