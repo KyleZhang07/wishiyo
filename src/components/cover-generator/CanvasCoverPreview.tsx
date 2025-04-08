@@ -39,7 +39,13 @@ const CanvasCoverPreview = ({
   const frontCoverRef = useRef<HTMLCanvasElement>(null);
   const spineRef = useRef<HTMLCanvasElement>(null);
   const backCoverRef = useRef<HTMLCanvasElement>(null);
+  
+  // 使用 useImageLoader hook 加载封面图片
   const image = useImageLoader(coverImage);
+  // 加载书脊 logo
+  const spineLogo = useImageLoader('/assets/logos/spine-logo.png');
+  // 加载条形码图像 - 更新路径
+  const barcode = useImageLoader('/assets/logos/bar-code.png');
 
   useEffect(() => {
     // Get all canvas elements
@@ -355,6 +361,8 @@ const CanvasCoverPreview = ({
       
       // 创建方形裁剪区域
       ctx.save();
+      
+      // 创建圆形裁剪路径
       ctx.beginPath();
       ctx.rect(centerX - imgSize/2, centerY - imgSize/2, imgSize, imgSize);
       ctx.clip();
@@ -408,7 +416,7 @@ const CanvasCoverPreview = ({
       const blueHeight = height * 0.15; // 从0.2缩小到0.15
       ctx.fillStyle = '#4361EE';
       ctx.fillRect(0, height - blueHeight, width, blueHeight);
-      
+
       // 文本自动换行函数
       const titleFont = `bold 66px ${selectedFont}`;
       const titleColor = '#FFC300';
@@ -866,8 +874,11 @@ const CanvasCoverPreview = ({
     // 使用模板中的字符间距配置，如果没有则使用默认值
     const charSpacing = Math.round((template.spineStyle.titleFontSize || 28) * (template.spineStyle.charSpacing || 0.75));
     
-    // 使用模板中的底部边距配置，如果没有则使用默认值
-    const bottomMargin = template.spineStyle.bottomMargin || 60;
+    // 为 logo 预留空间 - 增加底部边距
+    const logoHeight = 50; // logo 高度从 40 增加到 50
+    const logoMargin = 15; // logo 上下边距从 10 增加到 15
+    const bottomMargin = (template.spineStyle.bottomMargin || 60) + logoHeight + (logoMargin * 2);
+    
     const availableHeight = height - currentY - bottomMargin;
     const estimatedTitleHeight = titleChars.length * charSpacing;
     
@@ -889,6 +900,31 @@ const CanvasCoverPreview = ({
       
       currentY += charSpacing;
     });
+    
+    // 在底部绘制 logo
+    if (spineLogo?.element) {
+      // 计算 logo 位置
+      const logoY = height - logoHeight - logoMargin; // 距离底部 15 像素
+      const logoWidth = Math.min(width - 4, 60); // 限制 logo 宽度，从 50 增加到 60，边距从 6 减少到 4
+      const logoAspectRatio = spineLogo.element.width / spineLogo.element.height;
+      const calculatedLogoHeight = logoWidth / logoAspectRatio;
+      
+      // 居中绘制 logo
+      const logoX = (width - logoWidth) / 2;
+      
+      // 绘制 logo
+      ctx.drawImage(
+        spineLogo.element, 
+        0, 
+        0, 
+        spineLogo.element.width, 
+        spineLogo.element.height, 
+        logoX, 
+        logoY, 
+        logoWidth, 
+        calculatedLogoHeight
+      );
+    }
   };
 
   const drawBackCover = (
@@ -956,15 +992,40 @@ const CanvasCoverPreview = ({
     ctx.textAlign = 'left';
     ctx.fillStyle = '#FFFFFF'; // White text
     ctx.font = `14px ${fontFamily}`;
-    ctx.fillText("Visit bookbyanyone.com", Math.round(40), Math.round(height - 80));
+    ctx.fillText("Visit wishiyo.com", Math.round(40), Math.round(height - 80));
     
-    ctx.font = `bold 18px ${fontFamily}`;
-    ctx.fillStyle = '#FF6B35'; // Orange for BOOK BY ANYONE
-    ctx.fillText("BOOK BY ANYONE", Math.round(40), Math.round(height - 50));
+    // 使用 Futura 字体
+    ctx.font = `bold 18px "Futura", sans-serif`;
+    ctx.fillStyle = '#FF6B35'; // Orange for WISHIYO
+    ctx.fillText("WISHIYO", Math.round(40), Math.round(height - 50));
 
-    // Draw barcode at the bottom right
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(Math.round(width - 180), Math.round(height - 100), 140, 60);
+    // 绘制条形码在右下角 - 向左上移动
+    if (barcode?.element) {
+      // 设置条形码尺寸 - 增大到 200x100
+      const barcodeWidth = 200;
+      const barcodeHeight = 100;
+      
+      // 调整位置，向左上移动
+      const barcodeX = Math.round(width - barcodeWidth - 40); // 距离右边缘 40 像素
+      const barcodeY = Math.round(height - barcodeHeight - 40); // 距离底部边缘 40 像素
+      
+      // 绘制条形码图像，使用其原始比例
+      ctx.drawImage(
+        barcode.element,
+        0,
+        0,
+        barcode.element.width,
+        barcode.element.height,
+        barcodeX,
+        barcodeY,
+        barcodeWidth,
+        barcodeHeight
+      );
+    } else {
+      // 如果条形码图像未加载，绘制一个占位区域
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(Math.round(width - 240), Math.round(height - 140), 200, 100);
+    }
   };
 
   // 添加文本换行并计算高度的辅助函数
