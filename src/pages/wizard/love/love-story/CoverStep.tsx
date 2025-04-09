@@ -375,16 +375,17 @@ const LoveStoryCoverStep = () => {
       const uploadedImage = localStorage.getItem('loveStoryPartnerPhoto');
       const savedTone = localStorage.getItem('loveStoryTone') || textTone;
       const personAge = localStorage.getItem('loveStoryPersonAge') || '0';
+      const personGender = localStorage.getItem('loveStoryPersonGender') || 'unknown'; // 获取性别信息
       const ageNumber = parseInt(personAge);
       
-      // 根据年龄选择不同的 prompt
+      // 根据年龄和性别选择不同的 prompt
       let textPrompt = '';
       if (ageNumber <= 12) {
         // 儿童风格 prompt
-        textPrompt = `the person as an adorable cartoon character in Pixar/Disney style, oversized head and smaller body proportions, clear and focused eyes looking gently forward with warm and friendly expression, natural highlights and reflections in the eyes, joyful and innocent facial expression, simplified clothing, pastel and warm toned palette`;
+        textPrompt = `the person as an adorable ${personGender === 'male' ? 'boy' : 'girl'} cartoon character, oversized head and smaller body proportions, clear and focused eyes looking gently forward with warm and friendly expression, natural highlights and reflections in the eyes, joyful and innocent facial expression, simplified clothing, pastel and warm toned palette`;
       } else {
         // 更成熟的风格 prompt
-        textPrompt = `the person depicted in a gentle and romantic semi-realistic style, soft rounded facial features, warm and tender facial expression, smooth and detailed shading with subtle gradients, modern casual and minimalistic clothing, pastel and warm toned palette, soft dreamy lighting, blurred romantic background`;
+        textPrompt = `the person depicted as a ${personGender === 'male' ? 'young man' : 'young woman'} in a gentle and romantic semi-realistic style, soft rounded facial features, warm and tender facial expression, smooth and detailed shading with subtle gradients, modern casual and minimalistic clothing, pastel and warm toned palette, soft dreamy lighting, blurred romantic background`;
       }
       
       if (uploadedImage) {
