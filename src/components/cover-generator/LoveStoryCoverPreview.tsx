@@ -325,8 +325,6 @@ const LoveStoryCoverPreview = ({
             ctx.font = `bold ${subTitleFontSize}px 'Freckle Face', cursive`;
           } else if (style?.id === 'playful') {
             ctx.font = `bold ${subTitleFontSize}px 'Caveat', cursive`;
-          } else if (style?.id === 'elegant') {
-            ctx.font = `bold ${subTitleFontSize}px 'Luckiest Guy', cursive`;
           }
           ctx.fillText(subTitle, width / 2, height * 0.30);
           ctx.fillText(thirdLine, width / 2, height * 0.40);
@@ -351,8 +349,6 @@ const LoveStoryCoverPreview = ({
             ctx.font = `bold ${subTitleFontSize}px 'Freckle Face', cursive`;
           } else if (style?.id === 'playful') {
             ctx.font = `bold ${subTitleFontSize}px 'Caveat', cursive`;
-          } else if (style?.id === 'elegant') {
-            ctx.font = `bold ${subTitleFontSize}px 'Luckiest Guy', cursive`;
           }
           ctx.fillText(subTitle, width / 2, height * 0.35);
           ctx.fillText(thirdLine, width / 2, height * 0.45);
@@ -377,8 +373,6 @@ const LoveStoryCoverPreview = ({
             ctx.font = `bold ${subTitleFontSize}px 'Freckle Face', cursive`;
           } else if (style?.id === 'playful') {
             ctx.font = `bold ${subTitleFontSize}px 'Caveat', cursive`;
-          } else if (style?.id === 'elegant') {
-            ctx.font = `bold ${subTitleFontSize}px 'Luckiest Guy', cursive`;
           }
           ctx.fillText(subTitle, width / 2, height * 0.35); // 第二行位置不变
         }
