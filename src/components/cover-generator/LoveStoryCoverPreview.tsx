@@ -291,40 +291,40 @@ const LoveStoryCoverPreview = ({
         if (thirdLine && mainTitle.includes("'s") && subTitle === 'wonderful') {
           // 三行标题位置，增加间距，整体下移0.015
           // Modern样式特殊处理位置
-          const yPosition = style?.id === 'modern' ? height * 0.15 : height * (0.16 + 0.015);
+          const yPosition = style?.id === 'modern' ? height * 0.25 : height * (0.16 + 0.015);
           ctx.fillText(mainTitle, width / 2, yPosition);
           
           const subTitleFontSize = titleFontSize * (style?.id === 'modern' ? 1.8 : 1.1); // Modern样式副标题也放大
           ctx.font = `bold ${subTitleFontSize}px ${style?.id === 'playful' ? 'cursive' : style?.id === 'modern' ? "'Amatic SC', cursive" : "'Comic Sans MS', cursive"}`;
           // Modern样式特殊处理位置
-          const subYPosition = style?.id === 'modern' ? height * 0.25 : height * (0.26 + 0.015);
-          const thirdYPosition = style?.id === 'modern' ? height * 0.35 : height * (0.36 + 0.015);
+          const subYPosition = style?.id === 'modern' ? height * 0.35 : height * (0.26 + 0.015);
+          const thirdYPosition = style?.id === 'modern' ? height * 0.45 : height * (0.36 + 0.015);
           ctx.fillText(subTitle, width / 2, subYPosition);
           ctx.fillText(thirdLine, width / 2, thirdYPosition);
         } else if (thirdLine) {
           // 其他三行标题情况，增加间距，整体下移0.015
           // Modern样式特殊处理位置
-          const yPosition = style?.id === 'modern' ? height * 0.15 : height * (0.16 + 0.015);
+          const yPosition = style?.id === 'modern' ? height * 0.25 : height * (0.16 + 0.015);
           ctx.fillText(mainTitle, width / 2, yPosition);
           
           const subTitleFontSize = titleFontSize * (style?.id === 'modern' ? 1.8 : 1.1); // Modern样式副标题也放大
           ctx.font = `bold ${subTitleFontSize}px ${style?.id === 'playful' ? 'cursive' : style?.id === 'modern' ? "'Amatic SC', cursive" : "'Comic Sans MS', cursive"}`;
           // Modern样式特殊处理位置
-          const subYPosition = style?.id === 'modern' ? height * 0.25 : height * (0.26 + 0.015);
-          const thirdYPosition = style?.id === 'modern' ? height * 0.35 : height * (0.36 + 0.015);
+          const subYPosition = style?.id === 'modern' ? height * 0.35 : height * (0.26 + 0.015);
+          const thirdYPosition = style?.id === 'modern' ? height * 0.45 : height * (0.36 + 0.015);
           ctx.fillText(subTitle, width / 2, subYPosition);
           ctx.fillText(thirdLine, width / 2, thirdYPosition);
         } else {
           // 两行标题的情况位置，增加间距，整体下移0.01
           // Modern样式特殊处理位置
-          const yPosition = style?.id === 'modern' ? height * 0.18 : height * (0.215 + 0.01);
+          const yPosition = style?.id === 'modern' ? height * 0.25 : height * (0.215 + 0.01);
           ctx.fillText(mainTitle, width / 2, yPosition);
           
           // 绘制副标题，增加间距
           const subTitleFontSize = titleFontSize * (style?.id === 'modern' ? 1.8 : 1.1);
           ctx.font = `bold ${subTitleFontSize}px ${style?.id === 'playful' ? 'cursive' : style?.id === 'modern' ? "'Amatic SC', cursive" : "'Comic Sans MS', cursive"}`;
           // Modern样式特殊处理位置
-          const subYPosition = style?.id === 'modern' ? height * 0.28 : height * (0.315 + 0.01);
+          const subYPosition = style?.id === 'modern' ? height * 0.35 : height * (0.315 + 0.01);
           ctx.fillText(subTitle, width / 2, subYPosition); 
         }
       }
@@ -394,8 +394,8 @@ const LoveStoryCoverPreview = ({
         ctx.fillStyle = '#FFFFFF';
         const modernTitleFontSize = titleFontSize * 2.0; // 将字体放大2倍
         ctx.font = `bold ${modernTitleFontSize}px 'Amatic SC', cursive`;
-        // 将标题位置上移，使其占据上方1/3区域的大部分
-        ctx.fillText(fullTitle, width / 2, height * 0.2);
+        // 将标题位置略微降低，与图中位置一致
+        ctx.fillText(fullTitle, width / 2, height * 0.25);
       } else if (style?.id === 'elegant') {
         // 使用白色字体和手写风格的字体
         ctx.fillStyle = '#FFFFFF';
