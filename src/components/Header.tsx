@@ -3,24 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, Package, Search } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
-  const [orderDialogOpen, setOrderDialogOpen] = useState(false);
-
-  const handleOrderClick = () => {
-    navigate('/verify-order');
-    setOrderDialogOpen(false);
-  };
 
   return <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-200">
       <div className="container mx-auto px-8">
@@ -38,30 +24,11 @@ const Header = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6 pr-4">
-            <Dialog open={orderDialogOpen} onOpenChange={setOrderDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative">
-                  <Package className="h-5 w-5" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Check My Orders</DialogTitle>
-                  <DialogDescription>
-                    Click the button below to verify your email and check your order information
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="flex justify-center mt-4">
-                  <Button
-                    onClick={handleOrderClick}
-                    className="w-full bg-[#FF7F50] hover:bg-[#FF7F50]/80"
-                  >
-                    <Package className="mr-2 h-4 w-4" />
-                    Check Orders
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <Link to="/verify-order" className="relative">
+              <Button variant="ghost" size="icon">
+                <Package className="h-5 w-5" />
+              </Button>
+            </Link>
             <Link to="/orders" className="relative">
               <Button variant="ghost" size="icon">
                 <Search className="h-5 w-5" />
