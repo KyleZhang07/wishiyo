@@ -41,7 +41,7 @@ const Header = () => {
             <Dialog open={orderDialogOpen} onOpenChange={setOrderDialogOpen}>
               <DialogTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative">
-                  <Search className="h-5 w-5" />
+                  <Package className="h-5 w-5" />
                 </Button>
               </DialogTrigger>
               <DialogContent>
@@ -52,11 +52,11 @@ const Header = () => {
                   </DialogDescription>
                 </DialogHeader>
                 <div className="flex justify-center mt-4">
-                  <Button 
+                  <Button
                     onClick={handleOrderClick}
                     className="w-full bg-[#FF7F50] hover:bg-[#FF7F50]/80"
                   >
-                    <Search className="mr-2 h-4 w-4" />
+                    <Package className="mr-2 h-4 w-4" />
                     Check Orders
                   </Button>
                 </div>
@@ -64,7 +64,7 @@ const Header = () => {
             </Dialog>
             <Link to="/orders" className="relative">
               <Button variant="ghost" size="icon">
-                <Package className="h-5 w-5" />
+                <Search className="h-5 w-5" />
               </Button>
             </Link>
           </div>
@@ -73,12 +73,12 @@ const Header = () => {
           <div className="md:hidden flex items-center">
             <Link to="/verify-order" className="relative mr-2">
               <Button variant="ghost" size="icon">
-                <Search className="h-5 w-5" />
+                <Package className="h-5 w-5" />
               </Button>
             </Link>
             <Link to="/orders" className="relative mr-2">
               <Button variant="ghost" size="icon">
-                <Package className="h-5 w-5" />
+                <Search className="h-5 w-5" />
               </Button>
             </Link>
             <button className="p-2" onClick={() => setIsMenuOpen(!isMenuOpen)}>
