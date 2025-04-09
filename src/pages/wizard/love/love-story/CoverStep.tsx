@@ -381,10 +381,10 @@ const LoveStoryCoverStep = () => {
       let textPrompt = '';
       if (ageNumber <= 12) {
         // 儿童风格 prompt
-        textPrompt = `the person as a cute cartoon character with big expressive eyes, simplified facial features, colorful background, cheerful expression, wearing bright colored clothes, ${savedTone} mood, centered composition`;
+        textPrompt = `the person as an adorable cartoon character in Pixar/Disney style, oversized head and smaller body proportions, clear and focused eyes looking gently forward with warm and friendly expression, natural highlights and reflections in the eyes, joyful and innocent facial expression, simplified clothing, pastel and warm toned palette`;
       } else {
         // 更成熟的风格 prompt
-        textPrompt = `the person as a stylized character with semi-realistic features, detailed facial expression, dynamic lighting, modern outfit, ${savedTone} atmosphere, artistic composition, vibrant color palette`;
+        textPrompt = `the person depicted in a gentle and romantic semi-realistic style, soft rounded facial features, warm and tender facial expression, smooth and detailed shading with subtle gradients, modern casual and minimalistic clothing, pastel and warm toned palette, soft dreamy lighting, blurred romantic background`;
       }
       
       if (uploadedImage) {
