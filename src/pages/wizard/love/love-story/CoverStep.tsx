@@ -130,7 +130,12 @@ const LoveStoryCoverStep = () => {
     } else if (savedRecipientName) {
       // 如果没有保存的标题但有收件人姓名，使用第一个标题选项
       const firstTitleOption = `${savedRecipientName}'s amazing adventure`;
-      handleTitleSelect(firstTitleOption);
+      // 调用 parseTitleString 处理默认标题
+      const parsedDefaultTitle = parseTitleString(firstTitleOption);
+      // 直接更新状态，避免触发 handleTitleSelect 中的 toast 和关闭对话框
+      setTitleData(parsedDefaultTitle);
+      // 同时保存默认标题到 localStorage，以便后续使用
+      localStorage.setItem('loveStoryCoverTitle', firstTitleOption);
     } else if (savedIdeas && savedIdeaIndex) {
       try {
         const ideas = JSON.parse(savedIdeas);
@@ -149,6 +154,30 @@ const LoveStoryCoverStep = () => {
       }
     }
   }, []);
+
+  // 监听 recipientName 变化，更新标题
+  useEffect(() => {
+    // 只有当 recipientName 有值且不是初始渲染时才执行
+    if (recipientName && titleData.mainTitle) {
+      // 获取当前保存的标题
+      const savedCoverTitle = localStorage.getItem('loveStoryCoverTitle');
+      
+      // 如果当前标题包含名字（例如 "XXX's amazing adventure"）
+      if (savedCoverTitle && savedCoverTitle.includes("'s")) {
+        // 创建新标题，替换名字部分
+        const newTitle = `${recipientName}'s amazing adventure`;
+        
+        // 解析新标题
+        const parsedNewTitle = parseTitleString(newTitle);
+        
+        // 更新标题数据
+        setTitleData(parsedNewTitle);
+        
+        // 更新 localStorage
+        localStorage.setItem('loveStoryCoverTitle', newTitle);
+      }
+    }
+  }, [recipientName]); // 只在 recipientName 变化时执行
 
   // 从Supabase加载封面图片
   const loadCoverImagesFromSupabase = async () => {
@@ -217,39 +246,33 @@ const LoveStoryCoverStep = () => {
     setIsEditTitleDialogOpen(true);
   };
 
-  // 修改处理标题选择的函数
-  const handleTitleSelect = (title: string) => {
-    // 解析标题，分为三部分
+  // 辅助函数：解析标题字符串为三部分
+  const parseTitleString = (title: string): { mainTitle: string; subTitle: string; thirdLine: string; fullTitle: string } => {
     let mainPart = '';
     let subPart = '';
     let thirdPart = '';
-    
+
     // 检查标题模式而不是精确匹配
     if (title.endsWith('amazing adventure') && title.includes("'s")) {
-      // 模式: "{name}'s amazing adventure"
       const nameWithApostrophe = title.split('amazing adventure')[0].trim();
       mainPart = nameWithApostrophe;
       subPart = 'amazing adventure';
       thirdPart = '';
     } else if (title.includes("'s wonderful") && title.split("'s wonderful").length > 1) {
-      // 模式: "{name1}'s wonderful {name2}"
       const parts = title.split("'s wonderful");
       mainPart = parts[0] + "'s";
       subPart = 'wonderful';
       thirdPart = parts[1].trim();
     } else if (title.startsWith('THE MAGIC IN') && title.length > 12) {
-      // 模式: "THE MAGIC IN {name}"
       mainPart = 'THE MAGIC IN';
       subPart = title.substring(12).trim();
       thirdPart = '';
     } else if (title.includes('I love you') && !title.startsWith('I love you')) {
-      // 模式: "{name} I love you"
       const name = title.split('I love you')[0].trim();
       mainPart = name;
       subPart = 'I love you';
       thirdPart = '';
     } else if (title.startsWith('The little book of') && title.length > 18) {
-      // 模式: "The little book of {name}"
       mainPart = 'The little book of';
       subPart = title.substring(18).trim();
       thirdPart = '';
@@ -274,16 +297,24 @@ const LoveStoryCoverStep = () => {
         thirdPart = '';
       }
     }
-    
+
     console.log('标题已分割为:', { mainPart, subPart, thirdPart });
-    
-    // 更新标题状态
-    setTitleData({
+
+    return {
       mainTitle: mainPart,
       subTitle: subPart,
-      thirdLine: thirdPart, 
+      thirdLine: thirdPart,
       fullTitle: title
-    });
+    };
+  };
+
+  // 修改处理标题选择的函数
+  const handleTitleSelect = (title: string) => {
+    // 调用辅助函数解析标题
+    const parsedTitle = parseTitleString(title);
+
+    // 更新标题状态
+    setTitleData(parsedTitle);
     
     // 仍然保存完整标题到localStorage（其他地方可能需要用到）
     localStorage.setItem('loveStoryCoverTitle', title);
@@ -1136,6 +1167,8 @@ const LoveStoryCoverStep = () => {
 
   // 当前显示的封面图片
   const currentCoverImage = coverImages.length > 0 ? coverImages[currentImageIndex] : undefined;
+
+  console.log('Rendering LoveStoryCoverStep with titleData:', titleData);
 
   return (
     <WizardStep 

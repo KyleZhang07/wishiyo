@@ -19,12 +19,13 @@ interface CoverStyle {
 }
 
 interface LoveStoryCoverPreviewProps {
-  titleData: {
+  titleData?: {
     mainTitle: string;
     subTitle: string;
     thirdLine: string;
     fullTitle: string;
   };
+  coverTitle?: string;
   subtitle?: string;
   authorName: string;
   recipientName?: string;
@@ -35,6 +36,7 @@ interface LoveStoryCoverPreviewProps {
 
 const LoveStoryCoverPreview = ({
   titleData,
+  coverTitle = '',
   subtitle = '',
   authorName,
   recipientName = '',
@@ -73,11 +75,55 @@ const LoveStoryCoverPreview = ({
         // 清除画布
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
+        // 构建有效的标题数据对象
+        let effectiveTitleData = titleData;
+        
+        // 如果没有传入 titleData 但有 coverTitle 和/或 subtitle，则构建一个标题数据对象
+        if (!effectiveTitleData && (coverTitle || subtitle)) {
+          // 检查 coverTitle 是否包含 "'s amazing adventure" 格式
+          if (coverTitle && coverTitle.includes("'s amazing adventure")) {
+            // 将 coverTitle 拆分为两行
+            const namePart = coverTitle.split("'s amazing adventure")[0] + "'s";
+            effectiveTitleData = {
+              mainTitle: namePart,
+              subTitle: "amazing adventure",
+              thirdLine: '',
+              fullTitle: coverTitle
+            };
+          } else if (coverTitle && coverTitle.includes("'s") && subtitle) {
+            // 处理其他包含 's 的格式
+            effectiveTitleData = {
+              mainTitle: coverTitle,
+              subTitle: subtitle,
+              thirdLine: '',
+              fullTitle: coverTitle + (subtitle ? ' ' + subtitle : '')
+            };
+          } else {
+            // 其他情况
+            effectiveTitleData = {
+              mainTitle: coverTitle,
+              subTitle: subtitle,
+              thirdLine: '',
+              fullTitle: coverTitle + (subtitle ? ' ' + subtitle : '')
+            };
+          }
+        }
+        
+        // 如果没有任何标题数据，使用空对象
+        if (!effectiveTitleData) {
+          effectiveTitleData = {
+            mainTitle: '',
+            subTitle: '',
+            thirdLine: '',
+            fullTitle: ''
+          };
+        }
+        
         // 所有图片加载完成后再绘制
         drawLoveStoryCover(
           ctx, 
           canvas,
-          titleData, 
+          effectiveTitleData, 
           subtitle, 
           authorName, 
           recipientName, 
@@ -105,7 +151,7 @@ const LoveStoryCoverPreview = ({
     };
 
     preloadImages();
-  }, [titleData, subtitle, authorName, recipientName, image, selectedFont, style]);
+  }, [titleData, coverTitle, subtitle, authorName, recipientName, image, selectedFont, style]);
 
   const drawLoveStoryCover = (
     ctx: CanvasRenderingContext2D, 

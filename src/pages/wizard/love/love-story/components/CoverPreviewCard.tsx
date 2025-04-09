@@ -102,12 +102,7 @@ export const CoverPreviewCard = ({
     <div className="relative">
       <div className="max-w-xl mx-auto">
         <LoveStoryCoverPreview
-          titleData={{
-            mainTitle: coverTitle,
-            subTitle: '',
-            thirdLine: '',
-            fullTitle: coverTitle
-          }}
+          coverTitle={coverTitle}
           subtitle={subtitle}
           authorName={authorName}
           recipientName={recipientName}
