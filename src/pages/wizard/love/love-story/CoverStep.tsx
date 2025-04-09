@@ -67,9 +67,9 @@ const coverStyles: CoverStyle[] = [
     id: 'elegant',
     name: 'Elegant',
     background: '#FFFFFF',
-    titleColor: '#000000',
-    subtitleColor: '#333333',
-    authorColor: '#000000',
+    titleColor: '#FFFFFF',
+    subtitleColor: '#FFFFFF',
+    authorColor: '#FFFFFF',
     font: 'didot'
   }
 ];
@@ -107,6 +107,7 @@ const LoveStoryCoverStep = () => {
     const savedTone = localStorage.getItem('loveStoryTone');
     const savedRecipientName = localStorage.getItem('loveStoryPersonName');
     const savedImageIndex = localStorage.getItem('loveStorySelectedCoverIndex');
+    const savedCoverTitle = localStorage.getItem('loveStoryCoverTitle');
     
     // 从Supabase获取已保存的封面图片
     loadCoverImagesFromSupabase();
@@ -122,7 +123,15 @@ const LoveStoryCoverStep = () => {
     const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
     const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
     
-    if (savedIdeas && savedIdeaIndex) {
+    // 处理标题选择
+    if (savedCoverTitle) {
+      // 如果用户之前已经选择了标题，使用该标题
+      handleTitleSelect(savedCoverTitle);
+    } else if (savedRecipientName) {
+      // 如果没有保存的标题但有收件人姓名，使用第一个标题选项
+      const firstTitleOption = `${savedRecipientName}'s amazing adventure`;
+      handleTitleSelect(firstTitleOption);
+    } else if (savedIdeas && savedIdeaIndex) {
       try {
         const ideas = JSON.parse(savedIdeas);
         const selectedIdea = ideas[parseInt(savedIdeaIndex)];
@@ -215,26 +224,34 @@ const LoveStoryCoverStep = () => {
     let subPart = '';
     let thirdPart = '';
     
-    // 根据具体标题模板进行精确拆分
-    if (title === `${recipientName}'s amazing adventure`) {
-      mainPart = `${recipientName}'s`;
+    // 检查标题模式而不是精确匹配
+    if (title.endsWith('amazing adventure') && title.includes("'s")) {
+      // 模式: "{name}'s amazing adventure"
+      const nameWithApostrophe = title.split('amazing adventure')[0].trim();
+      mainPart = nameWithApostrophe;
       subPart = 'amazing adventure';
       thirdPart = '';
-    } else if (title === `${authorName}'s wonderful ${recipientName}`) {
-      mainPart = `${authorName}'s`;
+    } else if (title.includes("'s wonderful") && title.split("'s wonderful").length > 1) {
+      // 模式: "{name1}'s wonderful {name2}"
+      const parts = title.split("'s wonderful");
+      mainPart = parts[0] + "'s";
       subPart = 'wonderful';
-      thirdPart = recipientName;
-    } else if (title === `THE MAGIC IN ${recipientName}`) {
+      thirdPart = parts[1].trim();
+    } else if (title.startsWith('THE MAGIC IN') && title.length > 12) {
+      // 模式: "THE MAGIC IN {name}"
       mainPart = 'THE MAGIC IN';
-      subPart = recipientName;
+      subPart = title.substring(12).trim();
       thirdPart = '';
-    } else if (title === `${recipientName} I love you`) {
-      mainPart = recipientName;
+    } else if (title.includes('I love you') && !title.startsWith('I love you')) {
+      // 模式: "{name} I love you"
+      const name = title.split('I love you')[0].trim();
+      mainPart = name;
       subPart = 'I love you';
       thirdPart = '';
-    } else if (title === `The little book of ${recipientName}`) {
+    } else if (title.startsWith('The little book of') && title.length > 18) {
+      // 模式: "The little book of {name}"
       mainPart = 'The little book of';
-      subPart = recipientName;
+      subPart = title.substring(18).trim();
       thirdPart = '';
     } else {
       // 默认处理
@@ -558,7 +575,7 @@ const LoveStoryCoverStep = () => {
             
             // 计算居中位置 - 图片上移到与LoveStoryCoverPreview一致的位置
             const x = (canvas.width - drawWidth) / 2;
-            const y = canvas.height * 0.35;  // 图片位置上移
+            const y = canvas.height * 0.4;  // 修改为0.4，与LoveStoryCoverPreview一致
             
             // 绘制人物图像
             ctx.drawImage(personImgLoaded, x, y, drawWidth, drawHeight);
