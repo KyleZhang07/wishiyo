@@ -675,8 +675,8 @@ const LoveStoryCoverStep = () => {
                   } else if (currentStyle.id === 'vintage') {
                     ctx.font = `bold ${subTitleFontSize}px 'Freckle Face', cursive`;
                   }
-                  ctx.fillText(subTitle, canvas.width / 2, canvas.height * 0.35);
-                  ctx.fillText(thirdLine, canvas.width / 2, canvas.height * 0.45);
+                  ctx.fillText(subTitle, canvas.width / 2, canvas.height * 0.30);
+                  ctx.fillText(thirdLine, canvas.width / 2, canvas.height * 0.40);
                 }
               } else if (thirdLine) {
                 // 其他三行标题情况，保持原位置不变
