@@ -272,7 +272,7 @@ const LoveStoryCoverPreview = ({
     
     // 主标题
     ctx.fillStyle = titleColor;
-    const titleFontSize = width * 0.05; // 将基础字体大小从0.06减小到0.05
+    const titleFontSize = width * 0.06;
     
     // 从titleData获取标题信息
     const { mainTitle, subTitle, thirdLine, fullTitle } = titleData;
@@ -284,21 +284,21 @@ const LoveStoryCoverPreview = ({
       // 根据样式选择不同的字体
       if (style?.id === 'playful') {
         ctx.fillStyle = '#2A4C08'; // Playful样式使用折中的深绿色字体
-        const playfulTitleFontSize = titleFontSize * 1.8; // 从2.0减小到1.8
+        const playfulTitleFontSize = titleFontSize * 2.0; // 将字体放大2倍，与Modern一致
         ctx.font = `bold ${playfulTitleFontSize}px 'Caveat', cursive`;
       } else if (style?.id === 'modern') {
         ctx.fillStyle = '#FFFFFF'; // Modern样式使用白色字体
-        const modernTitleFontSize = titleFontSize * 1.8; // 从2.0减小到1.8
+        const modernTitleFontSize = titleFontSize * 2.0; // 将字体放大2倍
         ctx.font = `bold ${modernTitleFontSize}px 'Amatic SC', cursive`;
       } else if (style?.id === 'elegant') {
         ctx.fillStyle = '#FDF0F3'; // Elegant样式使用更接近白色的淡粉色字体
-        const elegantTitleFontSize = titleFontSize * 1.4; // 从1.6减小到1.4
+        const elegantTitleFontSize = titleFontSize * 1.6; // 将字体放大1.6倍，比之前的2.0小
         ctx.font = `bold ${elegantTitleFontSize}px 'Luckiest Guy', cursive`;
       } else if (style?.id === 'classic') {
-        const classicTitleFontSize = titleFontSize * 1.8; // 从2.0减小到1.8
+        const classicTitleFontSize = titleFontSize * 2.0; // 将字体放大2倍，与Modern一致
         ctx.font = `bold ${classicTitleFontSize}px 'Patrick Hand', cursive`;
       } else if (style?.id === 'vintage') {
-        const vintageTitleFontSize = titleFontSize * 1.6; // 从1.8减小到1.6
+        const vintageTitleFontSize = titleFontSize * 1.8; // 将字体放大1.8倍，与Modern一致
         ctx.font = `bold ${vintageTitleFontSize}px 'Freckle Face', cursive`;
       } else {
         ctx.font = `bold ${titleFontSize}px ${getFontFamily(style?.font || selectedFont)}`;
@@ -311,14 +311,14 @@ const LoveStoryCoverPreview = ({
           // Modern样式特殊处理位置
           ctx.fillText(mainTitle, width / 2, height * 0.20);
           
-          const subTitleFontSize = titleFontSize * 1.6; // 从1.8减小到1.6
+          const subTitleFontSize = titleFontSize * 1.8; // Modern样式副标题也放大
           ctx.font = `bold ${subTitleFontSize}px 'Amatic SC', cursive`;
           ctx.fillText(subTitle, width / 2, height * 0.30);
           ctx.fillText(thirdLine, width / 2, height * 0.40);
         } else {
           ctx.fillText(mainTitle, width / 2, height * 0.20);
           
-          const subTitleFontSize = titleFontSize * 1.6;
+          const subTitleFontSize = titleFontSize * 1.8;
           if (style?.id === 'classic') {
             ctx.font = `bold ${subTitleFontSize}px 'Patrick Hand', cursive`;
           } else if (style?.id === 'vintage') {
@@ -335,14 +335,14 @@ const LoveStoryCoverPreview = ({
           // Modern样式特殊处理位置
           ctx.fillText(mainTitle, width / 2, height * 0.25);
           
-          const subTitleFontSize = titleFontSize * 1.6; // 从1.8减小到1.6
+          const subTitleFontSize = titleFontSize * 1.8; // Modern样式副标题也放大
           ctx.font = `bold ${subTitleFontSize}px 'Amatic SC', cursive`;
           ctx.fillText(subTitle, width / 2, height * 0.35);
           ctx.fillText(thirdLine, width / 2, height * 0.45);
         } else {
           ctx.fillText(mainTitle, width / 2, height * 0.25);
           
-          const subTitleFontSize = titleFontSize * 1.6;
+          const subTitleFontSize = titleFontSize * 1.8;
           if (style?.id === 'classic') {
             ctx.font = `bold ${subTitleFontSize}px 'Patrick Hand', cursive`;
           } else if (style?.id === 'vintage') {
@@ -359,14 +359,14 @@ const LoveStoryCoverPreview = ({
           // Modern样式特殊处理位置
           ctx.fillText(mainTitle, width / 2, height * 0.23); // 第一行适度上移
           
-          const subTitleFontSize = titleFontSize * 1.6; // 从1.8减小到1.6
+          const subTitleFontSize = titleFontSize * 1.8; // Modern样式副标题也放大
           ctx.font = `bold ${subTitleFontSize}px 'Amatic SC', cursive`;
           ctx.fillText(subTitle, width / 2, height * 0.35); // 第二行位置不变
         } else {
           ctx.fillText(mainTitle, width / 2, height * 0.23); // 第一行适度上移
           
           // 绘制副标题，增加间距
-          const subTitleFontSize = titleFontSize * 1.6;
+          const subTitleFontSize = titleFontSize * 1.8;
           if (style?.id === 'classic') {
             ctx.font = `bold ${subTitleFontSize}px 'Patrick Hand', cursive`;
           } else if (style?.id === 'vintage') {
@@ -382,26 +382,26 @@ const LoveStoryCoverPreview = ({
       if (style?.id === 'modern') {
         // 使用白色字体和更手写风格的字体
         ctx.fillStyle = '#FFFFFF';
-        const modernTitleFontSize = titleFontSize * 1.8; // 从2.0减小到1.8
+        const modernTitleFontSize = titleFontSize * 2.0; // 将字体放大2倍
         ctx.font = `bold ${modernTitleFontSize}px 'Amatic SC', cursive`;
         ctx.fillText(fullTitle, width / 2, height * 0.25); // 将标题位置调整为与 CoverStep 一致
       } else if (style?.id === 'elegant') {
         // 使用极淡粉色字体和手写风格的字体
         ctx.fillStyle = '#FDF0F3'; // Elegant样式使用更接近白色的淡粉色字体
-        const elegantTitleFontSize = titleFontSize * 1.4; // 从1.6减小到1.4
+        const elegantTitleFontSize = titleFontSize * 1.6; // 将字体放大1.6倍
         ctx.font = `bold ${elegantTitleFontSize}px 'Luckiest Guy', cursive`;
         ctx.fillText(fullTitle, width / 2, height * 0.25);
       } else if (style?.id === 'playful') {
         ctx.fillStyle = '#2A4C08';
-        const playfulTitleFontSize = titleFontSize * 1.8; // 从2.0减小到1.8
+        const playfulTitleFontSize = titleFontSize * 2.0;
         ctx.font = `bold ${playfulTitleFontSize}px 'Caveat', cursive`;
         ctx.fillText(fullTitle, width / 2, height * 0.25);
       } else if (style?.id === 'classic') {
-        const classicTitleFontSize = titleFontSize * 1.8; // 从2.0减小到1.8
+        const classicTitleFontSize = titleFontSize * 2.0;
         ctx.font = `bold ${classicTitleFontSize}px 'Patrick Hand', cursive`;
         ctx.fillText(fullTitle, width / 2, height * 0.25);
       } else if (style?.id === 'vintage') {
-        const vintageTitleFontSize = titleFontSize * 1.6; // 从1.8减小到1.6
+        const vintageTitleFontSize = titleFontSize * 1.8; // 将字体放大1.8倍
         ctx.font = `bold ${vintageTitleFontSize}px 'Freckle Face', cursive`;
         ctx.fillText(fullTitle, width / 2, height * 0.25);
       } else {
