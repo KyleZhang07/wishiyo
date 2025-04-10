@@ -12,7 +12,7 @@ const Header = () => {
       <div className="container mx-auto px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-8">
-            <Link to="/" className="text-xl font-display font-semibold pl-4">WISHIYO</Link>
+            <Link to="/" className="text-xl pl-4 brand-logo">WISHIYO</Link>
             <nav className="hidden md:flex items-center space-x-8">
               <Link to="/" className="text-gray-600 hover:text-primary transition-colors">
                 Home

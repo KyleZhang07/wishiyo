@@ -27,31 +27,43 @@ const FriendsLanding = () => {
           </div>
         </div>
 
-        <div className="max-w-6xl mx-auto px-4 py-16">
-          <h2 className="text-3xl font-display font-bold text-slate-800 mb-8 text-center">Your Favorite</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="group">
-              <div className="relative aspect-square bg-white rounded-sm shadow-lg overflow-hidden mb-4">
-                <img src="/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png" alt="Funny Biography" className="w-full h-full object-cover" />
+        <div className="container px-4 md:px-6 mx-auto py-24">
+          <h2 className="text-4xl font-serif font-bold tracking-tighter text-left mb-12">Personalized Book Collection</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Book 1 */}
+            <div className="flex flex-col">
+              <div className="bg-[#FDF7ED] p-8 rounded-lg mb-4 h-[360px] flex items-center justify-center">
+                {/* Placeholder for book image */}
               </div>
               <h3 className="text-xl font-bold mb-2">Funny Biography</h3>
-              <p className="text-gray-600 mb-2">Create a hilarious book full of funny moments and stories</p>
+              <p className="text-gray-700">Create a hilarious book full of funny moments and stories</p>
             </div>
 
-            <div className="group">
-              <div className="relative aspect-square bg-white rounded-sm shadow-lg overflow-hidden mb-4">
-                <img src="/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png" alt="Wild Fantasy" className="w-full h-full object-cover" />
+            {/* Book 2 */}
+            <div className="flex flex-col">
+              <div className="bg-[#FDF7ED] p-8 rounded-lg mb-4 h-[360px] flex items-center justify-center">
+                {/* Placeholder for book image */}
               </div>
               <h3 className="text-xl font-bold mb-2">Wild Fantasy</h3>
-              <p className="text-gray-600 mb-2">A whimsical collection of funny stories</p>
+              <p className="text-gray-700">A whimsical collection of funny stories</p>
             </div>
 
-            <div className="group">
-              <div className="relative aspect-square bg-white rounded-sm shadow-lg overflow-hidden mb-4">
-                <img src="/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png" alt="Prank Book" className="w-full h-full object-cover" />
+            {/* Book 3 */}
+            <div className="flex flex-col">
+              <div className="bg-[#FDF7ED] p-8 rounded-lg mb-4 h-[360px] flex items-center justify-center">
+                {/* Placeholder for book image */}
               </div>
               <h3 className="text-xl font-bold mb-2">Prank Book</h3>
-              <p className="text-gray-600 mb-2">Fun stories and pranks to remember</p>
+              <p className="text-gray-700">Fun stories and pranks to remember</p>
+            </div>
+
+            {/* Book 4 */}
+            <div className="flex flex-col">
+              <div className="bg-[#FDF7ED] p-8 rounded-lg mb-4 h-[360px] flex items-center justify-center">
+                {/* Placeholder for book image */}
+              </div>
+              <h3 className="text-xl font-bold mb-2">Memory Book</h3>
+              <p className="text-gray-700">Preserve special memories in a personalized book</p>
             </div>
           </div>
         </div>

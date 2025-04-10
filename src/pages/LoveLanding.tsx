@@ -25,31 +25,43 @@ const LoveLanding = () => {
           </div>
         </div>
 
-        <div className="max-w-6xl mx-auto px-4 py-16">
-          <h2 className="text-3xl font-display font-bold text-slate-800 mb-8 text-center">Your Favorite</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="group">
-              <div className="relative aspect-square bg-white rounded-sm shadow-lg overflow-hidden mb-4">
-                <img src="/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png" alt="Fantasy Autobiography" className="w-full h-full object-cover" />
+        <div className="container px-4 md:px-6 mx-auto py-24">
+          <h2 className="text-4xl font-serif font-bold tracking-tighter text-left mb-12">Illustrated Book Collection</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Book 1 */}
+            <div className="flex flex-col">
+              <div className="bg-[#F0F7FF] p-8 rounded-lg mb-4 h-[360px] flex items-center justify-center">
+                {/* Placeholder for book image */}
               </div>
               <h3 className="text-xl font-bold mb-2">Fantasy Autobiography</h3>
-              <p className="text-gray-600 mb-2">A personalized journey through your dream life</p>
+              <p className="text-gray-700">A personalized journey through your dream life</p>
             </div>
 
-            <div className="group">
-              <div className="relative aspect-square bg-white rounded-sm shadow-lg overflow-hidden mb-4">
-                <img src="/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png" alt="Love Poems" className="w-full h-full object-cover" />
+            {/* Book 2 */}
+            <div className="flex flex-col">
+              <div className="bg-[#F0F7FF] p-8 rounded-lg mb-4 h-[360px] flex items-center justify-center">
+                {/* Placeholder for book image */}
               </div>
               <h3 className="text-xl font-bold mb-2">Love Poems</h3>
-              <p className="text-gray-600 mb-2">Express your love through poetry</p>
+              <p className="text-gray-700">Express your love through poetry</p>
             </div>
 
-            <div className="group">
-              <div className="relative aspect-square bg-white rounded-sm shadow-lg overflow-hidden mb-4">
-                <img src="/lovable-uploads/d7889756-42bc-4117-8fdb-9746ee840bfd.png" alt="Picture Album" className="w-full h-full object-cover" />
+            {/* Book 3 */}
+            <div className="flex flex-col">
+              <div className="bg-[#F0F7FF] p-8 rounded-lg mb-4 h-[360px] flex items-center justify-center">
+                {/* Placeholder for book image */}
               </div>
               <h3 className="text-xl font-bold mb-2">Picture Album</h3>
-              <p className="text-gray-600 mb-2">Capture your special moments</p>
+              <p className="text-gray-700">Capture your special moments</p>
+            </div>
+
+            {/* Book 4 */}
+            <div className="flex flex-col">
+              <div className="bg-[#F0F7FF] p-8 rounded-lg mb-4 h-[360px] flex items-center justify-center">
+                {/* Placeholder for book image */}
+              </div>
+              <h3 className="text-xl font-bold mb-2">Our Love Story</h3>
+              <p className="text-gray-700">A beautiful illustrated journey of your love</p>
             </div>
           </div>
         </div>
