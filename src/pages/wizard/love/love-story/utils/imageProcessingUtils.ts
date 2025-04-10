@@ -6,17 +6,17 @@ export const expandImage = async (imageUrl: string): Promise<string> => {
   try {
     console.log('Starting image expansion for:', imageUrl);
     const { data, error } = await supabase.functions.invoke('expand-image', {
-      body: { 
+      body: {
         imageUrl,
         textPrompt: "CRITICAL: Expanded area MUST BE 100% EMPTY. Absolutely NO people, NO objects, NO animals, NO text, NO shapes. Repeat: ZERO features allowed. Generate ONLY a clean, simple background (solid color or smooth gradient) matching original edge colors. Seamless transition. Suitable for text overlay. COMPLETELY PLAIN AND EMPTY background required."
       }
     });
-    
+
     if (error) throw error;
     if (!data?.imageData) {
       throw new Error("No imageData returned from expand-image");
     }
-    
+
     return data.imageData;
   } catch (err) {
     console.error("Error expanding image:", err);
@@ -34,20 +34,21 @@ export const handleGenericContentRegeneration = async (
   selectedStyle: string,
   setSelectedStyle: (style: string) => void,
   toast: any,
-  refreshImages: () => void
+  refreshImages: () => void,
+  autoRenderImage?: (imageData: string, index: number) => Promise<void>
 ) => {
   const setContentFn = stateSetters[index];
   const setIsGenerating = loadingSetters[index];
   if (!setContentFn || !setIsGenerating) return;
 
   const lsKey = `loveStoryContentImage${index}`;
-  
+
   // Clear existing localStorage entry
   localStorage.removeItem(lsKey);
 
   // 获取当前图片的URL，用于后续删除
   const currentImageUrl = localStorage.getItem(`${lsKey}_url`);
-  
+
   // 查找当前图片在Supabase中的路径
   let currentImagePath = '';
   if (currentImageUrl) {
@@ -82,10 +83,10 @@ export const handleGenericContentRegeneration = async (
     if (!prompts[promptIndex]) {
       throw new Error(`No prompt found for content index ${promptIndex}`);
     }
-    
+
     // Use the provided style or fall back to the stored/default style
     const imageStyle = style || selectedStyle;
-    
+
     // Update the stored style if a new one is provided
     if (style) {
       setSelectedStyle(style);
@@ -107,7 +108,7 @@ export const handleGenericContentRegeneration = async (
     const { data, error } = await supabase.functions.invoke('generate-love-cover', {
       body: requestBody
     });
-    
+
     if (error) throw error;
 
     console.log(`Content ${index} generation response:`, data);
@@ -127,8 +128,8 @@ export const handleGenericContentRegeneration = async (
     // 3) Upload to Supabase Storage instead of localStorage - 修复文件名问题
     // 使用明确的数字标识符和时间戳
     const storageUrl = await uploadImageToStorage(
-      expandedBase64, 
-      'images', 
+      expandedBase64,
+      'images',
       `love-story-content-${index}-${timestamp}`
     );
 
@@ -149,7 +150,27 @@ export const handleGenericContentRegeneration = async (
       }
     }
 
-    // 7) 延迟刷新图片列表，确保上传完成
+    // 7) 如果提供了自动渲染函数，则调用它
+    if (autoRenderImage) {
+      try {
+        toast({
+          title: "Auto-rendering image",
+          description: `Rendering content ${index} with text...`,
+        });
+
+        await autoRenderImage(expandedBase64, index);
+
+        toast({
+          title: "Image rendered",
+          description: `Content ${index} successfully rendered with text`,
+        });
+      } catch (renderError) {
+        console.error(`Error auto-rendering content image ${index}:`, renderError);
+        // 继续处理，即使渲染失败
+      }
+    }
+
+    // 8) 延迟刷新图片列表，确保上传完成
     setTimeout(() => {
       refreshImages();
     }, 1000);
@@ -168,4 +189,4 @@ export const handleGenericContentRegeneration = async (
   } finally {
     setIsGenerating(false);
   }
-}; 
+};
