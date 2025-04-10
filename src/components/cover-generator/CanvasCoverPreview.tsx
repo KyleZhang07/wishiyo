@@ -992,8 +992,8 @@ const CanvasCoverPreview = ({
     const authorCharSpacing = authorFontSize * (template.spineStyle.charSpacing || 0.75);
     const authorHeight = authorChars.length * authorCharSpacing;
 
-    // 将作者名称放在顶部，但留出更大边距
-    const topMargin = 130; // 顶部边距调整为130
+    // 将作者名称放在顶部，大幅减小边距使其更靠近顶部
+    const topMargin = 80; // 从130减小到80，使作者名称大幅上移
     let authorStartY = topMargin;
 
     // Draw each character of the author name vertically with rotation
@@ -1035,8 +1035,8 @@ const CanvasCoverPreview = ({
     // Draw title vertically, with each character rotated 90 degrees
     ctx.fillStyle = template.spineStyle.titleColor || '#7CFC00';
 
-    // 计算 logo 位置 - logo 应该在底部
-    const logoY = height - logoHeight - logoMargin - 100; // 距离底部留出更大边距，从20增加到100
+    // 计算 logo 位置 - logo 应该在底部，但略微下移
+    const logoY = height - logoHeight - logoMargin - 80; // 从100减小到80，使logo略微下移
 
     // 计算可用空间 (从作者名称结束到 logo 位置)
     const availableSpaceForTitle = logoY - authorEndY - 20; // 在 logo 上方留出 20px 的空间

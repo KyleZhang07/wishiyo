@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Amatic+SC:wght@400;700&family=Coiny&family=Patrick+Hand&family=Caveat:wght@400;700&family=Luckiest+Guy&family=Freckle+Face&display=swap');
+/* 字体已在 index.html 中预加载和加载 */
 
 @tailwind base;
 @tailwind components;
