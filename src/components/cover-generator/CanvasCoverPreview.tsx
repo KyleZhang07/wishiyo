@@ -55,18 +55,18 @@ const CanvasCoverPreview = ({
   const barcode = useImageLoader('/assets/logos/bar-code.png');
 
   useEffect(() => {
-    // 如果字体尚未加载完成，延迟渲染
+    // If font is not yet loaded, delay rendering
     if (fontStatus === 'loading' && renderAttempts < 5) {
-      console.log(`等待字体 ${selectedFont} 加载...尝试 ${renderAttempts + 1}/5`);
+      console.log(`Waiting for font ${selectedFont} to load... Attempt ${renderAttempts + 1}/5`);
       const timer = setTimeout(() => {
         setRenderAttempts(prev => prev + 1);
       }, 500);
       return () => clearTimeout(timer);
     }
     
-    // 字体已加载或达到最大尝试次数，继续渲染
+    // Font is loaded or max attempts reached, continue rendering
     if (fontStatus === 'loading') {
-      console.warn(`字体 ${selectedFont} 未能加载，使用后备字体继续渲染`);
+      console.warn(`Font ${selectedFont} failed to load, continuing with fallback font`);
     }
     
     // Get all canvas elements
@@ -166,6 +166,10 @@ const CanvasCoverPreview = ({
         return 'Helvetica, sans-serif';
       case 'times':
         return 'serif';
+      case 'anton':
+        return 'Impact, "Arial Black", sans-serif';
+      case 'oswald':
+        return '"Arial Narrow", Arial, sans-serif';
       default:
         return 'sans-serif';
     }
@@ -537,22 +541,27 @@ const CanvasCoverPreview = ({
 
     // 如果是bestseller模板
     if (template.id === 'bestseller') {
+      // 确保bestseller风格始终使用Anton字体，而不是使用selectedFont
+      // 文本自动换行函数
+      const antonFont = (fontStatus === 'loaded') 
+        ? 'Anton, sans-serif' // 使用加载好的Anton字体
+        : 'Impact, "Arial Black", sans-serif'; // 使用后备字体
+        
+      const titleFont = `bold 80px ${antonFont}`; // 使用Anton字体并放大字体大小
+      const titleColor = '#FFC300';
+      const titleLineHeight = 100; // 大幅增加行高，从75增加到100
+      const titleArea = { x: width * 0.1, y: height * 0.55, width: width * 0.8, height: height * 0.3 }; // Define title area
+      
       // 直接添加作者名字
-      ctx.font = `bold 36px ${resolvedFont}`; // 从30px放大到36px
+      ctx.font = `bold 36px ${antonFont}`; // 从30px放大到36px
       ctx.fillStyle = '#FFFFFF'; // 白色文字
       ctx.textAlign = 'center';
-      ctx.fillText(`${authorName}`, width / 2, 60); // 位置从85上移到60
+      ctx.fillText(authorName, width / 2, 60); // 位置从85上移到60
 
       // 在底部绘制蓝色描述区域 - 再次缩小蓝色区域高度
       const blueHeight = height * 0.15; // 从0.2缩小到0.15
       ctx.fillStyle = '#4361EE';
       ctx.fillRect(0, height - blueHeight, width, blueHeight);
-
-      // 文本自动换行函数
-      const titleFont = `bold 80px 'Anton', sans-serif`; // 使用Anton字体并放大字体大小
-      const titleColor = '#FFC300';
-      const titleLineHeight = 100; // 大幅增加行高，从75增加到100
-      const titleArea = { x: width * 0.1, y: height * 0.55, width: width * 0.8, height: height * 0.3 }; // Define title area
 
       // Split title into lines (existing logic)
       const titleWords = coverTitle.split(' ');
@@ -581,7 +590,11 @@ const CanvasCoverPreview = ({
       drawTextInArea(ctx, titleLines.map(l => l.toUpperCase()), titleArea, titleFont, titleColor, titleLineHeight, 'center');
 
       // 绘制描述性副标题在蓝色区域
-      const subtitleFont = `500 26px 'Oswald', sans-serif`; // 恢复bestseller样式的原始字体
+      const oswaldFont = (fontStatus === 'loaded') 
+        ? 'Oswald, sans-serif'
+        : '"Arial Narrow", Arial, sans-serif';
+        
+      const subtitleFont = `500 26px ${oswaldFont}`; // 恢复bestseller样式的原始字体
       const subtitleColor = '#FFC300';
       const subtitleLineHeight = 34; // 从32增加到34，略微增加行距
       const subtitleArea = { x: width * 0.075, y: height - blueHeight, width: width * 0.85, height: blueHeight };

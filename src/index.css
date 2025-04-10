@@ -118,6 +118,14 @@
   font-family: 'Times', 'Times New Roman', serif;
 }
 
+.font-anton {
+  font-family: 'Anton', Impact, 'Arial Black', sans-serif;
+}
+
+.font-oswald {
+  font-family: 'Oswald', 'Arial Narrow', Arial, sans-serif;
+}
+
 @layer base {
   :root {
     --background: 16 30% 98%;

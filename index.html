@@ -6,12 +6,14 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     
-    <!-- 预加载关键字体文件 -->
+    <!-- Preload critical font files -->
     <link rel="preload" href="/fonts/merriweather-400.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/fonts/montserrat-400.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/anton-400.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/oswald-500.woff2" as="font" type="font/woff2" crossorigin>
     
-    <!-- 保留远程字体作为备份 -->
+    <!-- Keep remote fonts as backup -->
     <link href="https://fonts.googleapis.com/css2?family=Anton&family=Georgia:wght@400;700&family=Impact&family=Montserrat:wght@400;500;700&family=Merriweather:wght@400;700&family=Open+Sans:wght@300;400;700&family=Oswald:wght@400;500;700&family=Raleway:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Fira+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -20,39 +22,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Book Creator</title>
     
-    <!-- 内联字体加载检测脚本 -->
+    <!-- Inline font loading detection script -->
     <script>
-      // 检测字体是否加载完成
+      // Check if fonts are loaded
       function checkFontsLoaded() {
         if (document.fonts && document.fonts.ready) {
           document.fonts.ready.then(function() {
             document.documentElement.classList.add('fonts-loaded');
-            console.log('所有字体已加载完成');
+            console.log('All fonts loaded successfully');
           }).catch(function(err) {
-            console.error('字体加载失败:', err);
-            // 添加失败类以便使用后备字体
+            console.error('Font loading failed:', err);
+            // Add failure class to use fallback fonts
             document.documentElement.classList.add('fonts-failed');
           });
         } else {
-          // 老浏览器不支持 document.fonts
-          console.log('浏览器不支持字体加载API，使用后备字体');
+          // Older browsers don't support document.fonts
+          console.log('Browser does not support font loading API, using fallback fonts');
           document.documentElement.classList.add('fonts-loaded');
         }
       }
       
-      // 页面加载时执行
+      // Execute on page load
       window.addEventListener('DOMContentLoaded', checkFontsLoaded);
     </script>
     
-    <!-- 确保在CSS中使用内联字体 -->
+    <!-- Ensure inline fonts are used in CSS -->
     <style>
       .fonts-failed body {
-        /* 在字体加载失败时使用系统字体 */
+        /* Use system fonts when font loading fails */
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
           Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
       }
       
-      /* 页面在字体加载前隐藏重要文本 (可选) */
+      /* Hide important text before fonts are loaded (optional) */
       html:not(.fonts-loaded):not(.fonts-failed) .require-fonts {
         visibility: hidden;
       }

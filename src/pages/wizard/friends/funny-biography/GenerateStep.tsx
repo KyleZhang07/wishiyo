@@ -420,15 +420,15 @@ const FunnyBiographyGenerateStep = () => {
 
   return (
     <WizardStep
-      title="生成封面"
-      description="我们根据您提供的想法创建了一个封面设计"
+      title="Create Your Cover"
+      description="We've created a cover design based on your ideas"
       previousStep="/create/friends/funny-biography/photos"
       currentStep={5}
       totalSteps={7}
     >
       {fontStatus === 'loading' && (
         <div className="text-center p-4 mb-4 bg-amber-50 text-amber-800 rounded-md">
-          正在加载字体资源，请稍候...
+          Loading fonts, please wait...
         </div>
       )}
       
@@ -568,13 +568,6 @@ const FunnyBiographyGenerateStep = () => {
           </div>
         </div>
       </div>
-      
-      {/* Debug - font status indicator */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="font-status">
-          字体: {currentStyle.font} ({fontStatus})
-        </div>
-      )}
     </WizardStep>
   );
 };
