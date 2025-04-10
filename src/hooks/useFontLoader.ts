@@ -15,6 +15,7 @@ export const fontMapping = {
   raleway: 'Raleway, sans-serif',
   'fira-mono': 'Fira Mono, monospace',
   jost: 'Jost, sans-serif',
+  'comic-sans': 'Comic Sans MS, cursive',
 };
 
 type FontStatus = 'loading' | 'loaded' | 'error';

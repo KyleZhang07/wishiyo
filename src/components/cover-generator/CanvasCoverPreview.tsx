@@ -541,19 +541,19 @@ const CanvasCoverPreview = ({
 
     // 如果是bestseller模板
     if (template.id === 'bestseller') {
-      // 确保bestseller风格始终使用Anton字体，而不是使用selectedFont
+      // 确保bestseller风格始终使用Oswald字体，而不是Anton（因为Anton加载不成功）
       // 文本自动换行函数
-      const antonFont = (fontStatus === 'loaded') 
-        ? 'Anton, sans-serif' // 使用加载好的Anton字体
-        : 'Impact, "Arial Black", sans-serif'; // 使用后备字体
+      const oswaldFont = (fontStatus === 'loaded') 
+        ? 'Oswald, sans-serif'
+        : '"Arial Narrow", Arial, sans-serif';
         
-      const titleFont = `bold 80px ${antonFont}`; // 使用Anton字体并放大字体大小
+      const titleFont = `bold 80px ${oswaldFont}`; // 使用Oswald字体替代Anton字体
       const titleColor = '#FFC300';
       const titleLineHeight = 100; // 大幅增加行高，从75增加到100
       const titleArea = { x: width * 0.1, y: height * 0.55, width: width * 0.8, height: height * 0.3 }; // Define title area
       
       // 直接添加作者名字
-      ctx.font = `bold 36px ${antonFont}`; // 从30px放大到36px
+      ctx.font = `bold 36px ${oswaldFont}`; // 从30px放大到36px
       ctx.fillStyle = '#FFFFFF'; // 白色文字
       ctx.textAlign = 'center';
       ctx.fillText(authorName, width / 2, 60); // 位置从85上移到60
@@ -590,10 +590,6 @@ const CanvasCoverPreview = ({
       drawTextInArea(ctx, titleLines.map(l => l.toUpperCase()), titleArea, titleFont, titleColor, titleLineHeight, 'center');
 
       // 绘制描述性副标题在蓝色区域
-      const oswaldFont = (fontStatus === 'loaded') 
-        ? 'Oswald, sans-serif'
-        : '"Arial Narrow", Arial, sans-serif';
-        
       const subtitleFont = `500 26px ${oswaldFont}`; // 恢复bestseller样式的原始字体
       const subtitleColor = '#FFC300';
       const subtitleLineHeight = 34; // 从32增加到34，略微增加行距
@@ -750,14 +746,14 @@ const CanvasCoverPreview = ({
       // Draw subtitle using helper function
       drawTextInArea(ctx, lines, subtitleArea, subtitleFont, subtitleColor, subtitleLineHeight, 'center');
     } else if (template.id === 'minimal') {
-      // 简约灰色风格的布局
-      // 背景已在外部设置为灰色
-
+      // 使用安全的字体代替可能加载失败的Montserrat
+      const montserratFont = (fontStatus === 'loaded') 
+        ? 'Montserrat, sans-serif'
+        : 'Arial, Helvetica, sans-serif';
+      
       // 左上角绘制作者名字
-      ctx.font = `bold 60px 'Montserrat', sans-serif`;
-      ctx.fillStyle = '#FFFFFF';
-      ctx.textAlign = 'left';
-
+      ctx.font = `bold 60px ${montserratFont}`;
+      
       // 为minimal样式的作者名添加阴影
       ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
       ctx.shadowBlur = 5;
@@ -773,7 +769,7 @@ const CanvasCoverPreview = ({
       ctx.shadowOffsetY = 0;
 
       // 左对齐绘制标题
-      const titleFont = `bold 70px 'Montserrat', sans-serif`; // 从75px缩小到70px
+      const titleFont = `bold 70px ${montserratFont}`; // 从75px缩小到70px
       const titleColor = '#FFFFFF';
       const titleLineHeight = 80; // 从85减小到80，以匹配更小的字体
       const titleArea = { x: 60, y: height * 0.62, width: width - 120, height: height * 0.25 }; // 从x:50增加到x:60，width从width-100减小到width-120
@@ -812,7 +808,7 @@ const CanvasCoverPreview = ({
       ctx.shadowOffsetY = 0;
 
       // 左对齐绘制描述文字
-      const subtitleFont = `300 26px 'Open Sans', sans-serif`; // 从28px减小到26px (折中方案)
+      const subtitleFont = `300 26px ${montserratFont}`; // 从28px减小到26px (折中方案)
       const subtitleColor = '#FFFFFF';
       const subtitleLineHeight = 36; // 保持36
       const subtitleArea = { x: 60, y: height * 0.85, width: width - 120, height: height * 0.1 }; // 从x:50增加到x:60，width从width-100减小到width-120
@@ -837,8 +833,13 @@ const CanvasCoverPreview = ({
       ctx.shadowOffsetX = 0;
       ctx.shadowOffsetY = 0;
     } else if (template.id === 'pastel-beige') {
+      // 使用安全的字体代替可能加载失败的Comic Sans MS
+      const comicFont = (fontStatus === 'loaded')
+        ? "'Comic Sans MS', cursive"
+        : "'Arial Rounded MT Bold', 'Arial', sans-serif";
+      
       // 可爱粉色风格布局
-
+      
       // Draw decorative elements
       ctx.fillStyle = '#FFDBEE'; // Light pink for decorations
       drawCloud(ctx, 100, 100, 50); // Top-left small cloud
@@ -873,7 +874,7 @@ const CanvasCoverPreview = ({
       }
 
       // 上部绘制标题
-      const titleFont = `bold 65px 'Comic Sans MS', cursive`;
+      const titleFont = `bold 65px ${comicFont}`;
       const titleColor = '#8A2BE2'; // Purple title
       const titleLineHeight = 70;
       const titleArea = { x: width * 0.1, y: height * 0.05, width: width * 0.8, height: height * 0.25 }; // 上移标题区域 (y from 0.1 to 0.05, height adjusted)
@@ -899,7 +900,7 @@ const CanvasCoverPreview = ({
       drawTextInArea(ctx, titleLines.map(line => line.toUpperCase()), titleArea, titleFont, titleColor, titleLineHeight, 'center');
 
       // 标题下方描述
-      const subtitleFont = `normal 26px 'Comic Sans MS', cursive`; // 从28px减小到26px (折中方案)
+      const subtitleFont = `normal 26px ${comicFont}`; // 从28px减小到26px (折中方案)
       const subtitleColor = '#9400D3'; // Dark purple text
       const subtitleLineHeight = 33; // 从35减小到33 (折中方案)
       const subtitleArea = { x: width * 0.1, y: height * 0.25, width: width * 0.8, height: height * 0.15 }; // 副标题区域上移 (y from 0.28 to 0.25)
@@ -923,7 +924,7 @@ const CanvasCoverPreview = ({
         ctx.drawImage(image.element, 0, 0, image.element.width, image.element.height, drawX, drawY, imgWidth, imgHeight);
       }
       // Draw author name (slightly move up)
-      ctx.font = `bold 35px 'Comic Sans MS', cursive`;
+      ctx.font = `bold 35px ${comicFont}`;
       ctx.fillStyle = '#8A2BE2'; // Purple text
       ctx.textAlign = 'center';
       ctx.fillText(authorName, width / 2, height - 90); // 略微上移 (from height - 70 to height - 80)
