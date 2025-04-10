@@ -68,13 +68,13 @@ const FunnyBiographyGenerateStep = () => {
   const [imageScale, setImageScale] = useState(100);
   const [praises, setPraises] = useState<Praise[]>([]);
   const { toast } = useToast();
-  
+
   // PDF状态
   const [frontCoverPdf, setFrontCoverPdf] = useState<string | null>(null);
   const [backCoverPdf, setBackCoverPdf] = useState<string | null>(null);
   const [spinePdf, setSpinePdf] = useState<string | null>(null);
   const [pdfGenerating, setPdfGenerating] = useState(false);
-  
+
   // Canvas引用，用于生成PDF
   const canvasPdfContainerRef = useRef<HTMLDivElement>(null);
 
@@ -86,9 +86,9 @@ const FunnyBiographyGenerateStep = () => {
   const [lastUsedStyle, setLastUsedStyle] = useState<string | null>(null);
 
   // 使用模版字符串定义尺寸
-  const standardPreviewWidth = 180;
-  const standardPreviewHeight = 270;
-  const standardSpineWidth = 21; // 书脊宽度的比例保持一致
+  const standardPreviewWidth = 320; // 从280增加到320
+  const standardPreviewHeight = 480; // 从420增加到480
+  const standardSpineWidth = 38; // 从33增加到38，保持书脊宽度的比例一致
 
   // Get the current style preset
   const getCurrentStyle = () => {
@@ -102,12 +102,12 @@ const FunnyBiographyGenerateStep = () => {
     const savedPhotos = localStorage.getItem('funnyBiographyPhoto');
     const savedStyle = localStorage.getItem('funnyBiographySelectedStyle');
     const savedGenerationComplete = localStorage.getItem('funnyBiographyGenerationComplete');
-    
+
     // 尝试加载已保存的PDF
     const savedFrontCoverPdf = localStorage.getItem('funnyBiographyFrontCoverImage');
     const savedBackCoverPdf = localStorage.getItem('funnyBiographyBackCoverImage');
     const savedSpinePdf = localStorage.getItem('funnyBiographySpineImage');
-    
+
     if (savedFrontCoverPdf) {
       setFrontCoverPdf(savedFrontCoverPdf);
       setGenerationComplete(true);
@@ -134,7 +134,7 @@ const FunnyBiographyGenerateStep = () => {
         if (savedAuthor) {
           setAuthorName(savedAuthor);
         }
-        
+
         // 获取赞美语
         if (selectedIdea.praises && Array.isArray(selectedIdea.praises)) {
           setPraises(selectedIdea.praises);
@@ -146,12 +146,12 @@ const FunnyBiographyGenerateStep = () => {
       handleImageProcessing(savedPhotos);
       setLastUsedImage(savedPhotos);
     }
-    
+
     if (savedGenerationComplete === 'true') {
       setGenerationComplete(true);
     }
   }, []);
-  
+
   // 监听样式变化，只有当样式变化时才触发重新生成
   useEffect(() => {
     if (lastUsedStyle && selectedStyle !== lastUsedStyle) {
@@ -160,78 +160,78 @@ const FunnyBiographyGenerateStep = () => {
       localStorage.setItem('funnyBiographySelectedStyle', selectedStyle);
     }
   }, [selectedStyle, lastUsedStyle]);
-  
+
   // 检测用户是否在 IdeaStep 中选择了不同的想法
   useEffect(() => {
     const checkIdeaChanged = () => {
       // 检查所有可能的键名
-      const ideaChangedTimestamp = 
-        localStorage.getItem('funnyBiographyIdeaChanged') || 
-        localStorage.getItem('funny-biographyIdeaChanged') || 
+      const ideaChangedTimestamp =
+        localStorage.getItem('funnyBiographyIdeaChanged') ||
+        localStorage.getItem('funny-biographyIdeaChanged') ||
         localStorage.getItem('friendsIdeaChanged') ||
         localStorage.getItem('funnyBiography');
-      
+
       if (ideaChangedTimestamp) {
         // 清除所有可能的标记，以免重复触发
         localStorage.removeItem('funnyBiographyIdeaChanged');
         localStorage.removeItem('funny-biographyIdeaChanged');
         localStorage.removeItem('friendsIdeaChanged');
         localStorage.removeItem('funnyBiography');
-        
+
         console.log('GenerateStep: 检测到想法变更标记，准备重新生成封面');
-        
+
         // 设置一个新标记，告诉 PreviewStep 需要重新生成章节
         localStorage.setItem('funnyBiographyNeedsChapterRegeneration', Date.now().toString());
-        
+
         // 清除已有的PDF
         setFrontCoverPdf(null);
         setBackCoverPdf(null);
         setSpinePdf(null);
-        
+
         // 重置生成状态
         setGenerationStarted(true);
         setGenerationComplete(false);
         localStorage.removeItem('funnyBiographyGenerationComplete');
-        
+
         // 重新加载选择的想法数据
         const savedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
         const savedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
-        
+
         if (savedIdeas && savedIdeaIndex) {
           const ideas = JSON.parse(savedIdeas);
           const selectedIdea = ideas[parseInt(savedIdeaIndex)];
           if (selectedIdea) {
             setCoverTitle(selectedIdea.title || '');
             setSubtitle(selectedIdea.description || '');
-            
+
             // 获取赞美语
             if (selectedIdea.praises && Array.isArray(selectedIdea.praises)) {
               setPraises(selectedIdea.praises);
             }
           }
         }
-        
+
         // 延迟生成新的图像，确保数据已更新
         setTimeout(() => {
           generateImagesFromCanvas();
         }, 500);
-        
+
         console.log('检测到想法变更，重新生成封面');
       }
     };
-    
+
     // 组件挂载时检查一次
     checkIdeaChanged();
-    
+
     // 设置一个定时器，定期检查是否有想法变更的标记
     // 这是为了处理用户可能从其他页面直接导航到这个页面的情况
     const intervalId = setInterval(checkIdeaChanged, 1000);
-    
+
     return () => {
       clearInterval(intervalId);
     };
   }, []);
-  
+
   // 监听图片变化，只有当图片变化时才触发重新生成
   useEffect(() => {
     if (coverImage && lastUsedImage !== coverImage && !generationComplete) {
@@ -242,7 +242,7 @@ const FunnyBiographyGenerateStep = () => {
       setLastUsedImage(coverImage);
     }
   }, [coverImage, lastUsedImage, generationComplete]);
-  
+
   // 只在需要重新生成时执行生成操作
   useEffect(() => {
     if (shouldRegenerate && coverImage && authorName && coverTitle) {
@@ -250,12 +250,12 @@ const FunnyBiographyGenerateStep = () => {
       setFrontCoverPdf(null);
       setBackCoverPdf(null);
       setSpinePdf(null);
-      
+
       // 重置生成状态
       setGenerationStarted(true);
       setGenerationComplete(false);
       localStorage.removeItem('funnyBiographyGenerationComplete');
-      
+
       // 生成新的图像
       setTimeout(() => {
         generateImagesFromCanvas();
@@ -304,13 +304,13 @@ const FunnyBiographyGenerateStep = () => {
     // 更新样式，触发样式变化监听器
     setSelectedStyle(styleId);
   };
-  
+
   // 生成图像的函数
   const generateImagesFromCanvas = async () => {
     if (!canvasPdfContainerRef.current || pdfGenerating) return;
-    
+
     setPdfGenerating(true);
-    
+
     // Ensure Canvas is rendered
     setTimeout(() => {
       try {
@@ -319,7 +319,7 @@ const FunnyBiographyGenerateStep = () => {
           setPdfGenerating(false);
           return;
         }
-        
+
         // Get all Canvas elements
         const canvases = canvasPdfContainerRef.current.querySelectorAll('canvas');
         if (canvases.length < 3) {
@@ -327,29 +327,29 @@ const FunnyBiographyGenerateStep = () => {
           setPdfGenerating(false);
           return;
         }
-        
+
         // Front cover - 直接保存为图像
         const frontCoverCanvas = canvases[0];
         const frontImgData = frontCoverCanvas.toDataURL('image/jpeg', 0.9);
         setFrontCoverPdf(frontImgData);
         localStorage.setItem('funnyBiographyFrontCoverImage', frontImgData);
-        
+
         // Spine - 直接保存为图像
         const spineCanvas = canvases[1];
         const spineImgData = spineCanvas.toDataURL('image/jpeg', 0.9);
         setSpinePdf(spineImgData);
         localStorage.setItem('funnyBiographySpineImage', spineImgData);
-        
+
         // Back cover - 直接保存为图像
         const backCoverCanvas = canvases[2];
         const backImgData = backCoverCanvas.toDataURL('image/jpeg', 0.9);
         setBackCoverPdf(backImgData);
         localStorage.setItem('funnyBiographyBackCoverImage', backImgData);
-        
+
         // 设置生成完成状态
         setPdfGenerating(false);
         setGenerationComplete(true);
-        
+
         console.log('All cover images generated successfully');
       } catch (error) {
         console.error('Error generating cover images:', error);
@@ -363,10 +363,10 @@ const FunnyBiographyGenerateStep = () => {
     if (!frontCoverPdf || !backCoverPdf || !spinePdf) {
       generateImagesFromCanvas();
     }
-    
+
     // Save current style selection to localStorage
     localStorage.setItem('funnyBiographySelectedStyle', selectedStyle);
-    
+
     // Navigate to the preview page
     navigate('/create/friends/funny-biography/preview');
   };
@@ -396,57 +396,60 @@ const FunnyBiographyGenerateStep = () => {
             imagePosition={imagePosition}
             imageScale={imageScale}
             onImageAdjust={handleImageAdjust}
-            scaleFactor={0.45}
+            scaleFactor={0.7}
             praises={praises}
             previewMode={false}
           />
         </div>
-        
+
         {/* PDF预览区域 - 简化版本 */}
-        <div className="mx-auto flex flex-col items-center">
+        <div className="mx-auto flex flex-col items-center my-8">
           {!frontCoverPdf || pdfGenerating ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="animate-spin h-8 w-8 border-4 border-[#FF7F50] border-t-transparent rounded-full"></div>
-              <span className="ml-3">Generating cover...</span>
+            <div className="flex items-center justify-center h-[480px]">
+              <div className="animate-spin h-12 w-12 border-4 border-[#FF7F50] border-t-transparent rounded-full"></div>
+              <span className="ml-3 text-xl">Generating cover...</span>
             </div>
           ) : (
-            <div className="flex items-start space-x-2 justify-center">
+            <div className="flex items-start space-x-4 justify-center">
               {/* 前封面 */}
               <div className="flex flex-col items-center">
                 <img
-                  src={frontCoverPdf} 
-                  className={`w-[${standardPreviewWidth}px] h-[${standardPreviewHeight}px] border shadow-md object-cover bg-gray-50`}
+                  src={frontCoverPdf}
+                  style={{ width: `${standardPreviewWidth}px`, height: `${standardPreviewHeight}px` }}
+                  className="border shadow-md object-cover bg-gray-50"
                   alt="Front Cover"
                 />
               </div>
-              
+
               {/* 书脊 */}
               <div className="flex flex-col items-center">
-                <img 
-                  src={spinePdf || ''} 
-                  className={`w-[${standardSpineWidth}px] h-[${standardPreviewHeight}px] border shadow-md object-cover bg-gray-50`}
+                <img
+                  src={spinePdf || ''}
+                  style={{ width: `${standardSpineWidth}px`, height: `${standardPreviewHeight}px` }}
+                  className="border shadow-md object-cover bg-gray-50"
                   alt="Spine"
                 />
               </div>
-              
+
               {/* 后封面 */}
               <div className="flex flex-col items-center">
-                <img 
-                  src={backCoverPdf || ''} 
-                  className={`w-[${standardPreviewWidth}px] h-[${standardPreviewHeight}px] border shadow-md object-cover bg-gray-50`}
+                <img
+                  src={backCoverPdf || ''}
+                  style={{ width: `${standardPreviewWidth}px`, height: `${standardPreviewHeight}px` }}
+                  className="border shadow-md object-cover bg-gray-50"
                   alt="Back Cover"
                 />
               </div>
             </div>
           )}
         </div>
-        
+
         <div className="space-y-4 mt-4">
           <div className="flex flex-wrap justify-center gap-6">
             {[...stylePresets].map((style, index) => {
               // Get template and layout data based on style configuration
               const template = style.template;
-              
+
               // Define style colors to match the image
               let styleConfig;
               if (style.id === 'classic-red') {
@@ -460,31 +463,31 @@ const FunnyBiographyGenerateStep = () => {
               } else if (style.id === 'pastel-beige') {
                 styleConfig = { bg: '#FFC0CB', text: '#8A2BE2', border: 'none' }; // 粉色背景，紫色文字
               }
-              
+
               return (
-                <div 
+                <div
                   key={style.id}
                   onClick={() => handleStyleChange(style.id)}
                   className="flex flex-col items-center"
                 >
-                  <div 
+                  <div
                     className={`w-[80px] h-[80px] rounded-full flex items-center justify-center cursor-pointer transition-all ${
-                      selectedStyle === style.id 
-                        ? 'ring-4 ring-[#FF7F50] ring-offset-2' 
+                      selectedStyle === style.id
+                        ? 'ring-4 ring-[#FF7F50] ring-offset-2'
                         : 'hover:ring-2 hover:ring-[#FF7F50]/50'
                     }`}
-                    style={{ 
+                    style={{
                       backgroundColor: styleConfig.bg,
                       border: styleConfig.border
                     }}
                   >
-                    <span 
+                    <span
                       className="text-3xl font-bold"
-                      style={{ 
+                      style={{
                         color: styleConfig.text,
-                        fontFamily: style.font === 'playfair' ? 'serif' 
-                                 : style.font === 'merriweather' ? 'serif' 
-                                 : style.font === 'montserrat' ? 'sans-serif' 
+                        fontFamily: style.font === 'playfair' ? 'serif'
+                                 : style.font === 'merriweather' ? 'serif'
+                                 : style.font === 'montserrat' ? 'sans-serif'
                                  : style.font === 'roboto' ? 'sans-serif'
                                  : 'sans-serif',
                         fontWeight: style.font === 'montserrat' || style.font === 'roboto' ? '700' : '800',
@@ -498,9 +501,9 @@ const FunnyBiographyGenerateStep = () => {
             })}
           </div>
         </div>
-        
+
         <div className="mt-8">
-          <Button 
+          <Button
             className="w-full py-6 text-lg bg-[#FF7F50] hover:bg-[#FF7F50]/80 text-white"
             onClick={handleGenerateBook}
             disabled={pdfGenerating}
