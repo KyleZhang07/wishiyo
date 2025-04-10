@@ -86,9 +86,9 @@ const FunnyBiographyGenerateStep = () => {
   const [lastUsedStyle, setLastUsedStyle] = useState<string | null>(null);
 
   // 使用模版字符串定义尺寸
-  const standardPreviewWidth = 320; // 从280增加到320
-  const standardPreviewHeight = 480; // 从420增加到480
-  const standardSpineWidth = 38; // 从33增加到38，保持书脊宽度的比例一致
+  const standardPreviewWidth = 360; // 从320增加到360
+  const standardPreviewHeight = 540; // 从480增加到540
+  const standardSpineWidth = 43; // 从38增加到43，保持书脊宽度的比例一致
 
   // Get the current style preset
   const getCurrentStyle = () => {
@@ -396,7 +396,7 @@ const FunnyBiographyGenerateStep = () => {
             imagePosition={imagePosition}
             imageScale={imageScale}
             onImageAdjust={handleImageAdjust}
-            scaleFactor={0.7}
+            scaleFactor={0.8} // 从0.7增加到0.8，使生成的PDF尺寸更大
             praises={praises}
             previewMode={false}
           />
@@ -405,7 +405,7 @@ const FunnyBiographyGenerateStep = () => {
         {/* PDF预览区域 - 简化版本 */}
         <div className="mx-auto flex flex-col items-center my-8">
           {!frontCoverPdf || pdfGenerating ? (
-            <div className="flex items-center justify-center h-[480px]">
+            <div className="flex items-center justify-center h-[540px]">
               <div className="animate-spin h-12 w-12 border-4 border-[#FF7F50] border-t-transparent rounded-full"></div>
               <span className="ml-3 text-xl">Generating cover...</span>
             </div>
