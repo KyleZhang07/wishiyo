@@ -196,25 +196,27 @@ const GenerateStep = () => {
 
   // 自动渲染内容图片的通用函数
   const autoRenderContentImage = async (imageData: string, index: number) => {
+    // 定义加载状态设置函数的映射
+    const loadingSetters: {[key: number]: (loading: boolean) => void} = {
+      1: setIsGeneratingContent1,
+      2: setIsGeneratingContent2,
+      3: setIsGeneratingContent3,
+      4: setIsGeneratingContent4,
+      5: setIsGeneratingContent5,
+      6: setIsGeneratingContent6,
+      7: setIsGeneratingContent7,
+      8: setIsGeneratingContent8,
+      9: setIsGeneratingContent9,
+      10: setIsGeneratingContent10
+    };
+
     try {
       // 获取对应的文本
       const textIndex = index + 1; // 图像索引对应文本索引
       const text = imageTexts && imageTexts.length > textIndex ? imageTexts[textIndex].text : "";
 
       // 设置加载状态
-      const setLoadingFn = {
-        1: setIsGeneratingContent1,
-        2: setIsGeneratingContent2,
-        3: setIsGeneratingContent3,
-        4: setIsGeneratingContent4,
-        5: setIsGeneratingContent5,
-        6: setIsGeneratingContent6,
-        7: setIsGeneratingContent7,
-        8: setIsGeneratingContent8,
-        9: setIsGeneratingContent9,
-        10: setIsGeneratingContent10
-      }[index];
-
+      const setLoadingFn = loadingSetters[index];
       if (setLoadingFn) setLoadingFn(true);
 
       toast({
@@ -280,7 +282,7 @@ const GenerateStep = () => {
         title: "Content image rendered",
         description: `Content ${index} successfully rendered with text and split into two parts`,
       });
-    } catch (renderError) {
+    } catch (renderError: any) {
       console.error(`Error auto-rendering content image ${index}:`, renderError);
       toast({
         title: "Error rendering image",
@@ -289,19 +291,7 @@ const GenerateStep = () => {
       });
     } finally {
       // 重置加载状态
-      const setLoadingFn = {
-        1: setIsGeneratingContent1,
-        2: setIsGeneratingContent2,
-        3: setIsGeneratingContent3,
-        4: setIsGeneratingContent4,
-        5: setIsGeneratingContent5,
-        6: setIsGeneratingContent6,
-        7: setIsGeneratingContent7,
-        8: setIsGeneratingContent8,
-        9: setIsGeneratingContent9,
-        10: setIsGeneratingContent10
-      }[index];
-
+      const setLoadingFn = loadingSetters[index];
       if (setLoadingFn) setLoadingFn(false);
     }
   };
@@ -991,31 +981,23 @@ const GenerateStep = () => {
   };
 
 
-
-
-        7: setIsGeneratingContent7,
-        8: setIsGeneratingContent8,
-        9: setIsGeneratingContent9,
-        10: setIsGeneratingContent10,
-      }[index];
-
-      if (setLoadingFn) {
-        setLoadingFn(false);
-      }
-    }
+  // 使用状态变量直接创建映射
+  const imageStateMap: {[key: number]: string} = {};
+  const loadingStateMap: {[key: number]: boolean} = {};
+  const handleRegenerateMap: {[key: number]: (style?: string) => void} = {
+    1: handleRegenerateContent1,
+    2: handleRegenerateContent2,
+    3: handleRegenerateContent3,
+    4: handleRegenerateContent4,
+    5: handleRegenerateContent5,
+    6: handleRegenerateContent6,
+    7: handleRegenerateContent7,
+    8: handleRegenerateContent8,
+    9: handleRegenerateContent9,
+    10: handleRegenerateContent10
   };
 
-  // 创建图像状态映射
-  const { imageStateMap, loadingStateMap, handleRegenerateMap } = createImageStateMaps(
-    introImage, contentImage1, contentImage2, contentImage3, contentImage4,
-    contentImage5, contentImage6, contentImage7, contentImage8, contentImage9, contentImage10,
-    isGeneratingIntro, isGeneratingContent1, isGeneratingContent2, isGeneratingContent3, isGeneratingContent4,
-    isGeneratingContent5, isGeneratingContent6, isGeneratingContent7, isGeneratingContent8,
-    isGeneratingContent9, isGeneratingContent10,
-    handleRegenerateIntro, handleRegenerateContent1, handleRegenerateContent2, handleRegenerateContent3,
-    handleRegenerateContent4, handleRegenerateContent5, handleRegenerateContent6, handleRegenerateContent7,
-    handleRegenerateContent8, handleRegenerateContent9, handleRegenerateContent10
-  );
+  // 在需要时直接使用状态变量
 
 
 
