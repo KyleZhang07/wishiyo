@@ -6,6 +6,7 @@ import CanvasCoverPreview from '@/components/cover-generator/CanvasCoverPreview'
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { jsPDF } from 'jspdf';
+import { useFontLoader, preloadFonts } from '@/hooks/useFontLoader';
 
 // 定义赞美语接口
 interface Praise {
@@ -68,6 +69,11 @@ const FunnyBiographyGenerateStep = () => {
   const [imageScale, setImageScale] = useState(100);
   const [praises, setPraises] = useState<Praise[]>([]);
   const { toast } = useToast();
+
+  // 字体加载状态
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+  const currentStyle = stylePresets.find(style => style.id === selectedStyle) || stylePresets[0];
+  const fontStatus = useFontLoader(currentStyle.font);
 
   // PDF状态
   const [frontCoverPdf, setFrontCoverPdf] = useState<string | null>(null);
@@ -271,6 +277,29 @@ const FunnyBiographyGenerateStep = () => {
     }
   }, [generationComplete]);
 
+  // 监听字体加载状态
+  useEffect(() => {
+    if (fontStatus === 'loaded') {
+      setFontsLoaded(true);
+    } else if (fontStatus === 'error') {
+      console.error(`无法加载字体 ${currentStyle.font}，使用后备字体`);
+      // 继续使用备用字体
+      setFontsLoaded(true);
+      toast({
+        title: "字体加载提示",
+        description: "部分字体无法加载，已使用系统字体替代",
+        variant: "default"
+      });
+    }
+  }, [fontStatus, currentStyle.font, toast]);
+
+  // 预加载所有字体
+  useEffect(() => {
+    preloadFonts().then(() => {
+      console.log('所有字体预加载完成');
+    });
+  }, []);
+
   const handleImageProcessing = async (imageUrl: string) => {
     try {
       const { data, error } = await supabase.functions.invoke('remove-background', {
@@ -293,6 +322,16 @@ const FunnyBiographyGenerateStep = () => {
       });
       setCoverImage(imageUrl);
     }
+    
+    // 确保字体已加载后再尝试生成
+    if (!fontsLoaded) {
+      console.log('等待字体加载完成...');
+      toast({
+        title: "正在准备资源",
+        description: "正在加载字体资源，稍等片刻...",
+        variant: "default"
+      });
+    }
   };
 
   const handleImageAdjust = (position: { x: number; y: number }, scale: number) => {
@@ -307,6 +346,14 @@ const FunnyBiographyGenerateStep = () => {
 
   // 生成图像的函数
   const generateImagesFromCanvas = async () => {
+    if (!fontsLoaded) {
+      console.log('字体尚未加载完成，延迟生成...');
+      setTimeout(() => {
+        generateImagesFromCanvas();
+      }, 500);
+      return;
+    }
+
     if (!canvasPdfContainerRef.current || pdfGenerating) return;
 
     setPdfGenerating(true);
@@ -371,147 +418,163 @@ const FunnyBiographyGenerateStep = () => {
     navigate('/create/friends/funny-biography/preview');
   };
 
-  const currentStyle = getCurrentStyle();
-
   return (
     <WizardStep
-      title="Create Your Book Cover"
-      description=""
+      title="生成封面"
+      description="我们根据您提供的想法创建了一个封面设计"
       previousStep="/create/friends/funny-biography/photos"
       currentStep={5}
       totalSteps={7}
     >
-      <div className="space-y-8">
-        {/* Canvas container for generating PDF, not directly displayed */}
-        <div className="mx-auto flex justify-center" ref={canvasPdfContainerRef} style={{ position: 'absolute', left: '-9999px', visibility: 'hidden' }}>
-          <CanvasCoverPreview
-            coverTitle={coverTitle}
-            subtitle={subtitle}
-            authorName={authorName}
-            coverImage={coverImage}
-            selectedFont={currentStyle.font}
-            selectedTemplate={currentStyle.template}
-            selectedLayout={currentStyle.layout}
-            category="friends"
-            imagePosition={imagePosition}
-            imageScale={imageScale}
-            onImageAdjust={handleImageAdjust}
-            scaleFactor={0.8} // 从0.7增加到0.8，使生成的PDF尺寸更大
-            praises={praises}
-            previewMode={false}
-          />
+      {fontStatus === 'loading' && (
+        <div className="text-center p-4 mb-4 bg-amber-50 text-amber-800 rounded-md">
+          正在加载字体资源，请稍候...
         </div>
-
-        {/* PDF预览区域 - 简化版本 */}
-        <div className="mx-auto flex flex-col items-center my-8">
-          {!frontCoverPdf || pdfGenerating ? (
-            <div className="flex items-center justify-center h-[540px]">
-              <div className="animate-spin h-12 w-12 border-4 border-[#FF7F50] border-t-transparent rounded-full"></div>
-              <span className="ml-3 text-xl">Generating cover...</span>
+      )}
+      
+      <div className={`transition-opacity duration-300 ${fontStatus === 'loading' ? 'opacity-50' : 'opacity-100'}`}>
+        {/* 包含require-fonts类以便在字体加载前隐藏 */}
+        <div className="require-fonts">
+          <div className="space-y-8">
+            {/* Canvas container for generating PDF, not directly displayed */}
+            <div className="mx-auto flex justify-center" ref={canvasPdfContainerRef} style={{ position: 'absolute', left: '-9999px', visibility: 'hidden' }}>
+              <CanvasCoverPreview
+                coverTitle={coverTitle}
+                subtitle={subtitle}
+                authorName={authorName}
+                coverImage={coverImage}
+                selectedFont={currentStyle.font}
+                selectedTemplate={currentStyle.template}
+                selectedLayout={currentStyle.layout}
+                category="friends"
+                imagePosition={imagePosition}
+                imageScale={imageScale}
+                onImageAdjust={handleImageAdjust}
+                scaleFactor={0.8} // 从0.7增加到0.8，使生成的PDF尺寸更大
+                praises={praises}
+                previewMode={false}
+              />
             </div>
-          ) : (
-            <div className="flex items-start space-x-4 justify-center">
-              {/* 前封面 */}
-              <div className="flex flex-col items-center">
-                <img
-                  src={frontCoverPdf}
-                  style={{ width: `${standardPreviewWidth}px`, height: `${standardPreviewHeight}px` }}
-                  className="border shadow-md object-cover bg-gray-50"
-                  alt="Front Cover"
-                />
-              </div>
 
-              {/* 书脊 */}
-              <div className="flex flex-col items-center">
-                <img
-                  src={spinePdf || ''}
-                  style={{ width: `${standardSpineWidth}px`, height: `${standardPreviewHeight}px` }}
-                  className="border shadow-md object-cover bg-gray-50"
-                  alt="Spine"
-                />
-              </div>
+            {/* PDF预览区域 - 简化版本 */}
+            <div className="mx-auto flex flex-col items-center my-8">
+              {!frontCoverPdf || pdfGenerating ? (
+                <div className="flex items-center justify-center h-[540px]">
+                  <div className="animate-spin h-12 w-12 border-4 border-[#FF7F50] border-t-transparent rounded-full"></div>
+                  <span className="ml-3 text-xl">Generating cover...</span>
+                </div>
+              ) : (
+                <div className="flex items-start space-x-4 justify-center">
+                  {/* 前封面 */}
+                  <div className="flex flex-col items-center">
+                    <img
+                      src={frontCoverPdf}
+                      style={{ width: `${standardPreviewWidth}px`, height: `${standardPreviewHeight}px` }}
+                      className="border shadow-md object-cover bg-gray-50"
+                      alt="Front Cover"
+                    />
+                  </div>
 
-              {/* 后封面 */}
-              <div className="flex flex-col items-center">
-                <img
-                  src={backCoverPdf || ''}
-                  style={{ width: `${standardPreviewWidth}px`, height: `${standardPreviewHeight}px` }}
-                  className="border shadow-md object-cover bg-gray-50"
-                  alt="Back Cover"
-                />
-              </div>
-            </div>
-          )}
-        </div>
+                  {/* 书脊 */}
+                  <div className="flex flex-col items-center">
+                    <img
+                      src={spinePdf || ''}
+                      style={{ width: `${standardSpineWidth}px`, height: `${standardPreviewHeight}px` }}
+                      className="border shadow-md object-cover bg-gray-50"
+                      alt="Spine"
+                    />
+                  </div>
 
-        <div className="space-y-4 mt-4">
-          <div className="flex flex-wrap justify-center gap-6">
-            {[...stylePresets].map((style, index) => {
-              // Get template and layout data based on style configuration
-              const template = style.template;
-
-              // Define style colors to match the image
-              let styleConfig;
-              if (style.id === 'classic-red') {
-                styleConfig = { bg: '#C41E3A', text: '#FFFFFF', border: 'none' }; // Red with white text (first circle)
-              } else if (style.id === 'bestseller-style') {
-                styleConfig = { bg: '#4361EE', text: '#F7DC6F', border: 'none' }; // Blue with yellow text
-              } else if (style.id === 'modern-green') {
-                styleConfig = { bg: '#E6DEC9', text: '#D4AF37', border: 'none' }; // 折中的奶油色底金字
-              } else if (style.id === 'minimal-gray') {
-                styleConfig = { bg: '#D9D9D9', text: '#FFFFFF', border: 'none' }; // 浅灰色背景，白色文字
-              } else if (style.id === 'pastel-beige') {
-                styleConfig = { bg: '#FFC0CB', text: '#8A2BE2', border: 'none' }; // 粉色背景，紫色文字
-              }
-
-              return (
-                <div
-                  key={style.id}
-                  onClick={() => handleStyleChange(style.id)}
-                  className="flex flex-col items-center"
-                >
-                  <div
-                    className={`w-[80px] h-[80px] rounded-full flex items-center justify-center cursor-pointer transition-all ${
-                      selectedStyle === style.id
-                        ? 'ring-4 ring-[#FF7F50] ring-offset-2'
-                        : 'hover:ring-2 hover:ring-[#FF7F50]/50'
-                    }`}
-                    style={{
-                      backgroundColor: styleConfig.bg,
-                      border: styleConfig.border
-                    }}
-                  >
-                    <span
-                      className="text-3xl font-bold"
-                      style={{
-                        color: styleConfig.text,
-                        fontFamily: style.font === 'playfair' ? 'serif'
-                                 : style.font === 'merriweather' ? 'serif'
-                                 : style.font === 'montserrat' ? 'sans-serif'
-                                 : style.font === 'roboto' ? 'sans-serif'
-                                 : 'sans-serif',
-                        fontWeight: style.font === 'montserrat' || style.font === 'roboto' ? '700' : '800',
-                      }}
-                    >
-                      Aa
-                    </span>
+                  {/* 后封面 */}
+                  <div className="flex flex-col items-center">
+                    <img
+                      src={backCoverPdf || ''}
+                      style={{ width: `${standardPreviewWidth}px`, height: `${standardPreviewHeight}px` }}
+                      className="border shadow-md object-cover bg-gray-50"
+                      alt="Back Cover"
+                    />
                   </div>
                 </div>
-              );
-            })}
+              )}
+            </div>
+
+            <div className="space-y-4 mt-4">
+              <div className="flex flex-wrap justify-center gap-6">
+                {[...stylePresets].map((style, index) => {
+                  // Get template and layout data based on style configuration
+                  const template = style.template;
+
+                  // Define style colors to match the image
+                  let styleConfig;
+                  if (style.id === 'classic-red') {
+                    styleConfig = { bg: '#C41E3A', text: '#FFFFFF', border: 'none' }; // Red with white text (first circle)
+                  } else if (style.id === 'bestseller-style') {
+                    styleConfig = { bg: '#4361EE', text: '#F7DC6F', border: 'none' }; // Blue with yellow text
+                  } else if (style.id === 'modern-green') {
+                    styleConfig = { bg: '#E6DEC9', text: '#D4AF37', border: 'none' }; // 折中的奶油色底金字
+                  } else if (style.id === 'minimal-gray') {
+                    styleConfig = { bg: '#D9D9D9', text: '#FFFFFF', border: 'none' }; // 浅灰色背景，白色文字
+                  } else if (style.id === 'pastel-beige') {
+                    styleConfig = { bg: '#FFC0CB', text: '#8A2BE2', border: 'none' }; // 粉色背景，紫色文字
+                  }
+
+                  return (
+                    <div
+                      key={style.id}
+                      onClick={() => handleStyleChange(style.id)}
+                      className="flex flex-col items-center"
+                    >
+                      <div
+                        className={`w-[80px] h-[80px] rounded-full flex items-center justify-center cursor-pointer transition-all ${
+                          selectedStyle === style.id
+                            ? 'ring-4 ring-[#FF7F50] ring-offset-2'
+                            : 'hover:ring-2 hover:ring-[#FF7F50]/50'
+                        }`}
+                        style={{
+                          backgroundColor: styleConfig.bg,
+                          border: styleConfig.border
+                        }}
+                      >
+                        <span
+                          className="text-3xl font-bold"
+                          style={{
+                            color: styleConfig.text,
+                            fontFamily: style.font === 'playfair' ? 'serif'
+                                     : style.font === 'merriweather' ? 'serif'
+                                     : style.font === 'montserrat' ? 'sans-serif'
+                                     : style.font === 'roboto' ? 'sans-serif'
+                                     : 'sans-serif',
+                            fontWeight: style.font === 'montserrat' || style.font === 'roboto' ? '700' : '800',
+                          }}
+                        >
+                          Aa
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="mt-8">
+              <Button
+                className="w-full py-6 text-lg bg-[#FF7F50] hover:bg-[#FF7F50]/80 text-white"
+                onClick={handleGenerateBook}
+                disabled={pdfGenerating}
+              >
+                Continue
+              </Button>
+            </div>
           </div>
         </div>
-
-        <div className="mt-8">
-          <Button
-            className="w-full py-6 text-lg bg-[#FF7F50] hover:bg-[#FF7F50]/80 text-white"
-            onClick={handleGenerateBook}
-            disabled={pdfGenerating}
-          >
-            Continue
-          </Button>
-        </div>
       </div>
+      
+      {/* Debug - font status indicator */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="font-status">
+          字体: {currentStyle.font} ({fontStatus})
+        </div>
+      )}
     </WizardStep>
   );
 };

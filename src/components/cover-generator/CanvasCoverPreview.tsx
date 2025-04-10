@@ -1,7 +1,8 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { useImageLoader } from './hooks/useImageLoader';
 import CoverImageControls from './components/CoverImageControls';
 import { coverTemplates, coverLayouts } from './types';
+import { useFontLoader, fontMapping } from '@/hooks/useFontLoader';
 
 interface CanvasCoverPreviewProps {
   coverTitle: string;
@@ -39,6 +40,12 @@ const CanvasCoverPreview = ({
   const frontCoverRef = useRef<HTMLCanvasElement>(null);
   const spineRef = useRef<HTMLCanvasElement>(null);
   const backCoverRef = useRef<HTMLCanvasElement>(null);
+  
+  // 跟踪渲染尝试次数
+  const [renderAttempts, setRenderAttempts] = useState(0);
+  
+  // 使用字体加载检测
+  const fontStatus = useFontLoader(selectedFont);
 
   // 使用 useImageLoader hook 加载封面图片
   const image = useImageLoader(coverImage);
@@ -48,6 +55,20 @@ const CanvasCoverPreview = ({
   const barcode = useImageLoader('/assets/logos/bar-code.png');
 
   useEffect(() => {
+    // 如果字体尚未加载完成，延迟渲染
+    if (fontStatus === 'loading' && renderAttempts < 5) {
+      console.log(`等待字体 ${selectedFont} 加载...尝试 ${renderAttempts + 1}/5`);
+      const timer = setTimeout(() => {
+        setRenderAttempts(prev => prev + 1);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+    
+    // 字体已加载或达到最大尝试次数，继续渲染
+    if (fontStatus === 'loading') {
+      console.warn(`字体 ${selectedFont} 未能加载，使用后备字体继续渲染`);
+    }
+    
     // Get all canvas elements
     const frontCanvas = frontCoverRef.current;
     const spineCanvas = spineRef.current;
@@ -82,6 +103,11 @@ const CanvasCoverPreview = ({
 
     // Clear and draw front canvas (at base size, context scaling will handle the rest)
     frontCtx.clearRect(0, 0, baseWidth, baseHeight);
+
+    // 根据字体加载状态选择正确的字体
+    const resolvedFont = (fontStatus === 'loaded') 
+      ? fontMapping[selectedFont as keyof typeof fontMapping] || selectedFont
+      : getFallbackFont(selectedFont);
 
     // 确保模板是从我们的模板库中正确获取的
     let template;
@@ -127,7 +153,23 @@ const CanvasCoverPreview = ({
         drawBackCover(backCtx, baseWidth, baseHeight, template);
       }
     }
-  }, [coverTitle, subtitle, authorName, image, selectedFont, selectedTemplate, selectedLayout, category, imagePosition, imageScale, previewMode, scaleFactor, praises]);
+  }, [coverTitle, subtitle, authorName, image, selectedFont, selectedTemplate, selectedLayout, category, imagePosition, imageScale, previewMode, scaleFactor, praises, fontStatus, renderAttempts]);
+
+  // 获取后备字体
+  const getFallbackFont = (font: string): string => {
+    switch(font) {
+      case 'merriweather':
+        return 'Georgia, serif';
+      case 'montserrat':
+        return 'Arial, sans-serif';
+      case 'inter':
+        return 'Helvetica, sans-serif';
+      case 'times':
+        return 'serif';
+      default:
+        return 'sans-serif';
+    }
+  };
 
   // Helper function to draw text centered vertically within a defined area
   function drawTextInArea(
@@ -178,6 +220,11 @@ const CanvasCoverPreview = ({
     template: any,
     layout: any
   ) => {
+    // 获取正确的字体
+    const resolvedFont = (fontStatus === 'loaded') 
+      ? fontMapping[selectedFont as keyof typeof fontMapping] || selectedFont
+      : getFallbackFont(selectedFont);
+
     // Draw background
     ctx.fillStyle = template.backgroundColor;
     ctx.fillRect(0, 0, width, height);
@@ -491,7 +538,7 @@ const CanvasCoverPreview = ({
     // 如果是bestseller模板
     if (template.id === 'bestseller') {
       // 直接添加作者名字
-      ctx.font = `bold 36px ${selectedFont}`; // 从30px放大到36px
+      ctx.font = `bold 36px ${resolvedFont}`; // 从30px放大到36px
       ctx.fillStyle = '#FFFFFF'; // 白色文字
       ctx.textAlign = 'center';
       ctx.fillText(`${authorName}`, width / 2, 60); // 位置从85上移到60
@@ -550,7 +597,7 @@ const CanvasCoverPreview = ({
       // 背景已在外部设置为黑色
 
       // 绘制白色标题，位于中央 - 向上移动
-      const titleFont = `bold 52px ${selectedFont}`; // Base font for measurement
+      const titleFont = `bold 52px ${resolvedFont}`; // Base font for measurement
       const titleColor = '#FFFFFF';
       const normalLineHeight = 70; // 缩小白色部分的行距
       const largeLineHeight = 90; // 保持与红色部分的行距
@@ -565,7 +612,7 @@ const CanvasCoverPreview = ({
       for (let i = 0; i < titleWords.length; i++) {
         const word = titleWords[i];
         const testLine = currentLine + (currentLine ? ' ' : '') + word;
-        ctx.font = `bold 80px ${selectedFont}`; // Use largest possible font for width check
+        ctx.font = `bold 80px ${resolvedFont}`; // Use largest possible font for width check
         const metrics = ctx.measureText(testLine.toUpperCase());
         ctx.font = titleFont; // Reset to base font for next check
 
@@ -598,14 +645,14 @@ const CanvasCoverPreview = ({
 
           if (i < midpoint) {
               ctx.fillStyle = '#FFFFFF';
-              ctx.font = `bold 54px ${selectedFont}`;
+              ctx.font = `bold 54px ${resolvedFont}`;
               if (i < midpoint - 1) { // Use smaller lineHeight for lines before the last white one
                 effectiveLineHeight = normalLineHeight;
               }
               // The transition from white to red uses largeLineHeight
           } else {
               ctx.fillStyle = '#9B0000';
-              ctx.font = `bold 80px ${selectedFont}`;
+              ctx.font = `bold 80px ${resolvedFont}`;
               // All red lines use largeLineHeight
           }
 
@@ -625,8 +672,8 @@ const CanvasCoverPreview = ({
 
       // 在红色区域绘制白色描述文字
       const subtitleFont = template.id === 'classic'
-        ? `italic 26px ${selectedFont}` // 只有classic样式使用斜体字体
-        : `normal 26px ${selectedFont}`;
+        ? `italic 26px ${resolvedFont}` // 只有classic样式使用斜体字体
+        : `normal 26px ${resolvedFont}`;
       const subtitleColor = '#FFFFFF';
       const subtitleLineHeight = 34; // 从32增加到34，略微增加行距
       const subtitleArea = { x: width * 0.075, y: height - bottomHeight, width: width * 0.85, height: bottomHeight };
@@ -636,7 +683,7 @@ const CanvasCoverPreview = ({
       drawTextInArea(ctx, lines, subtitleArea, subtitleFont, subtitleColor, subtitleLineHeight, 'center');
 
       // 在右下角红色区域上方绘制作者名
-      ctx.font = `bold 30px ${selectedFont}`; // Smaller font for author
+      ctx.font = `bold 30px ${resolvedFont}`; // Smaller font for author
       ctx.fillStyle = '#FFFFFF'; // White color
       ctx.textAlign = 'right';
       ctx.textBaseline = 'bottom'; // Align to the bottom
@@ -645,13 +692,13 @@ const CanvasCoverPreview = ({
       // 为奶油色肖像风格重写渲染逻辑
 
       // 顶部绘制作者名字
-      ctx.font = `bold 42px ${selectedFont}`; // 添加粗体
+      ctx.font = `bold 42px ${resolvedFont}`; // 添加粗体
       ctx.fillStyle = '#FFFFFF';
       ctx.textAlign = 'center';
       ctx.fillText(authorName.toUpperCase(), width / 2, 90); // Y位置从70下移到90
 
       // 封面中央绘制大号金色标题
-      const titleFont = `bold 70px ${selectedFont}`;
+      const titleFont = `bold 70px ${resolvedFont}`;
       const titleColor = '#D4AF37';
       const titleLineHeight = 90;
       const titleArea = { x: width * 0.1, y: height * 0.6, width: width * 0.8, height: height * 0.25 }; // 下移标题区域 (y from 0.5 to 0.6, height adjusted)
@@ -677,7 +724,7 @@ const CanvasCoverPreview = ({
       drawTextInArea(ctx, titleLines.map(l => l.toUpperCase()), titleArea, titleFont, titleColor, titleLineHeight, 'center');
 
       // 在底部绘制白色副标题
-      const subtitleFont = `normal 26px ${selectedFont}`; // 从28px减小到26px (折中方案)
+      const subtitleFont = `normal 26px ${resolvedFont}`; // 从28px减小到26px (折中方案)
       const subtitleColor = '#FFFFFF';
       const subtitleLineHeight = 34; // 从36减小到34
       const subtitleArea = { x: width * 0.075, y: height * 0.8, width: width * 0.85, height: height * 0.15 }; // Define subtitle area near bottom
@@ -874,7 +921,7 @@ const CanvasCoverPreview = ({
       ctx.fillRect(0, 0, width, height);
 
       // Draw author name using layout configuration
-      ctx.font = `bold 48px ${selectedFont}`;
+      ctx.font = `bold 48px ${resolvedFont}`;
       ctx.fillStyle = template.authorStyle?.color || '#FFFFFF'; // Use template color if available
 
       // Use layout for author text alignment
@@ -895,7 +942,7 @@ const CanvasCoverPreview = ({
       ctx.fillText(authorName.toUpperCase(), authorX, authorY);
 
       // Draw title using layout configuration
-      ctx.font = `bold 48px ${selectedFont}`;
+      ctx.font = `bold 48px ${resolvedFont}`;
       ctx.fillStyle = template.titleStyle?.color || '#7CFC00'; // Use template color if available
 
       // Use layout for title text alignment
@@ -928,7 +975,7 @@ const CanvasCoverPreview = ({
       }
 
       // Draw subtitle using layout configuration
-      ctx.font = `18px ${selectedFont}`;
+      ctx.font = `18px ${resolvedFont}`;
       ctx.fillStyle = template.subtitleStyle?.color || '#FFFFFF'; // Use template color if available
 
       // Use layout for subtitle text alignment
@@ -956,8 +1003,13 @@ const CanvasCoverPreview = ({
     height: number,
     template: any
   ) => {
-    // 绘制背景
-    ctx.fillStyle = template.spineStyle?.backgroundColor || template.backgroundColor;
+    // 获取正确的字体
+    const resolvedFont = (fontStatus === 'loaded') 
+      ? fontMapping[selectedFont as keyof typeof fontMapping] || selectedFont
+      : getFallbackFont(selectedFont);
+
+    // 设置背景色
+    ctx.fillStyle = template.backgroundColor;
     ctx.fillRect(0, 0, width, height);
 
     // 设置文本属性
@@ -1090,24 +1142,14 @@ const CanvasCoverPreview = ({
     height: number,
     template: any
   ) => {
-    // Draw background
-    if (template.id === 'minimal') {
-      // 为minimal样式设置略微更白的背景色
-      ctx.fillStyle = '#F5F5F5'; // 从默认的灰色调整为更白的浅灰色
-    } else {
-      ctx.fillStyle = template.backCoverStyle.backgroundColor;
-    }
-    ctx.fillRect(0, 0, width, height);
+    // 获取正确的字体
+    const resolvedFont = (fontStatus === 'loaded') 
+      ? fontMapping[selectedFont as keyof typeof fontMapping] || selectedFont
+      : getFallbackFont(selectedFont);
 
-    // 根据模板ID选择字体
-    let fontFamily;
-    if (template.id === 'pastel-beige') {
-      fontFamily = "'Comic Sans MS', cursive";
-    } else if (template.id === 'minimal') {
-      fontFamily = "'Raleway', sans-serif"; // 正文/引用使用Raleway
-    } else {
-      fontFamily = selectedFont;
-    }
+    // 设置背景色
+    ctx.fillStyle = template.backgroundColor;
+    ctx.fillRect(0, 0, width, height);
 
     // 绘制赞美语，如果有的话
     if (praises && praises.length > 0) {
@@ -1135,7 +1177,7 @@ const CanvasCoverPreview = ({
       if (template.id === 'minimal' || template.id === 'classic') {
         yPosition += 40; // 向下移动40像素
       } else {
-        ctx.font = `bold ${template.backCoverStyle.titleFontSize || 34}px ${fontFamily}`;
+        ctx.font = `bold ${template.backCoverStyle.titleFontSize || 34}px ${resolvedFont}`;
         ctx.fillText(`Praises for ${coverTitle}`, x, yPosition);
 
         // 使用模板中的行间距配置，如果没有则使用默认值
@@ -1165,9 +1207,9 @@ const CanvasCoverPreview = ({
         } else {
           // 放大classic样式的正文字体
           if (template.id === 'classic') {
-            ctx.font = `italic ${template.backCoverStyle.praiseFontSize || 26}px ${fontFamily}`; // 从22px增加到26px
+            ctx.font = `italic ${template.backCoverStyle.praiseFontSize || 26}px ${resolvedFont}`; // 从22px增加到26px
           } else {
-            ctx.font = `italic ${template.backCoverStyle.praiseFontSize || 22}px ${fontFamily}`;
+            ctx.font = `italic ${template.backCoverStyle.praiseFontSize || 22}px ${resolvedFont}`;
           }
 
           // 使用文本换行函数
@@ -1190,9 +1232,9 @@ const CanvasCoverPreview = ({
         if (template.id === 'minimal') {
           ctx.font = `bold ${template.backCoverStyle.sourceFontSize || 24}px 'Montserrat', sans-serif`; // 从28px减小到24px
         } else if (template.id === 'classic') {
-          ctx.font = `bold ${template.backCoverStyle.sourceFontSize || 26}px ${fontFamily}`; // 从28px增加到26px
+          ctx.font = `bold ${template.backCoverStyle.sourceFontSize || 26}px ${resolvedFont}`; // 从28px增加到26px
         } else {
-          ctx.font = `bold ${template.backCoverStyle.sourceFontSize || 24}px ${fontFamily}`; // 从28px减小到24px
+          ctx.font = `bold ${template.backCoverStyle.sourceFontSize || 24}px ${resolvedFont}`; // 从28px减小到24px
         }
 
         // 只有classic和minimal样式的作者名称右对齐，其他样式使用左对齐
@@ -1228,7 +1270,7 @@ const CanvasCoverPreview = ({
     if (template.id === 'minimal') {
       ctx.font = `normal 20px 'Open Sans', sans-serif`;
     } else {
-      ctx.font = `20px ${fontFamily}`;
+      ctx.font = `20px ${resolvedFont}`;
     }
 
     // 将品牌标识向右上移动

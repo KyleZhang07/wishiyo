@@ -1,4 +1,8 @@
-/* 字体已在 index.html 中预加载和加载 */
+/* 加载内联字体 */
+@import './fonts.css';
+
+/* 保留远程字体作为备份 */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Amatic+SC:wght@400;700&family=Coiny&family=Patrick+Hand&family=Caveat:wght@400;700&family=Luckiest+Guy&family=Freckle+Face&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -82,6 +86,36 @@
 @keyframes bookInitAnimation {
   0% { transform: rotateY(0deg); }
   100% { transform: rotateY(-30deg); }
+}
+
+/* 字体加载指示器 - 用于调试 */
+.font-status {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  padding: 5px 10px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  font-size: 12px;
+  border-radius: 4px;
+  z-index: 9999;
+}
+
+/* 字体后备样式 */
+.font-merriweather {
+  font-family: 'Merriweather', Georgia, serif;
+}
+
+.font-montserrat {
+  font-family: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
+}
+
+.font-inter {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.font-times {
+  font-family: 'Times', 'Times New Roman', serif;
 }
 
 @layer base {
