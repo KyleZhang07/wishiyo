@@ -92,28 +92,28 @@ export const coverTemplates: { [key: string]: TemplateType } = {
   'minimal': {
     id: 'minimal',
     name: 'Minimal Gray',
-    backgroundColor: '#C2C2C2', 
+    backgroundColor: '#C2C2C2',
     titleStyle: {
-      color: '#FFFFFF', 
-      fontSize: '3.5rem', 
+      color: '#FFFFFF',
+      fontSize: '3.5rem',
       fontWeight: 'bold',
       textAlign: 'center',
-      offsetY: 0.75 
+      offsetY: 0.75
     },
     subtitleStyle: {
-      color: '#FFFFFF', 
-      fontSize: '1.6rem', 
+      color: '#FFFFFF',
+      fontSize: '1.6rem',
       fontWeight: 'normal'
     },
     authorStyle: {
-      color: '#FFFFFF', 
+      color: '#FFFFFF',
       fontSize: '2.5rem',
       fontWeight: 'bold'
     },
     imageStyle: {
-      filter: 'grayscale(100%)', 
+      filter: 'grayscale(100%)',
       opacity: 1,
-      borderRadius: '0' 
+      borderRadius: '0'
     },
     spineStyle: {
       backgroundColor: '#000000',
@@ -121,7 +121,7 @@ export const coverTemplates: { [key: string]: TemplateType } = {
       authorColor: '#FFFFFF'
     },
     backCoverStyle: {
-      backgroundColor: '#C2C2C2',
+      backgroundColor: '#ECECEC',
       textColor: '#000000',
       summaryFontSize: '1rem'
     }
@@ -214,29 +214,29 @@ export const coverTemplates: { [key: string]: TemplateType } = {
   'pastel-beige': {
     id: 'pastel-beige',
     name: 'Sweet Pink',
-    backgroundColor: '#FFC0CB', 
+    backgroundColor: '#FFC0CB',
     titleStyle: {
-      color: '#8A2BE2', 
+      color: '#8A2BE2',
       fontSize: '3rem',
       fontWeight: 'bold',
       textAlign: 'center',
-      offsetY: 0.3 
+      offsetY: 0.3
     },
     subtitleStyle: {
-      color: '#9400D3', 
+      color: '#9400D3',
       fontSize: '1.5rem',
       fontWeight: 'normal',
       fontStyle: 'normal'
     },
     authorStyle: {
-      color: '#8A2BE2', 
+      color: '#8A2BE2',
       fontSize: '1.6rem',
       fontWeight: 'bold'
     },
     imageStyle: {
-      filter: 'brightness(1.1)', 
+      filter: 'brightness(1.1)',
       opacity: 1,
-      borderRadius: '50%' 
+      borderRadius: '50%'
     },
     spineStyle: {
       backgroundColor: '#FFC0CB',

@@ -40,10 +40,10 @@ const CanvasCoverPreview = ({
   const frontCoverRef = useRef<HTMLCanvasElement>(null);
   const spineRef = useRef<HTMLCanvasElement>(null);
   const backCoverRef = useRef<HTMLCanvasElement>(null);
-  
+
   // 跟踪渲染尝试次数
   const [renderAttempts, setRenderAttempts] = useState(0);
-  
+
   // 使用字体加载检测
   const fontStatus = useFontLoader(selectedFont);
 
@@ -63,12 +63,12 @@ const CanvasCoverPreview = ({
       }, 500);
       return () => clearTimeout(timer);
     }
-    
+
     // Font is loaded or max attempts reached, continue rendering
     if (fontStatus === 'loading') {
       console.warn(`Font ${selectedFont} failed to load, continuing with fallback font`);
     }
-    
+
     // Get all canvas elements
     const frontCanvas = frontCoverRef.current;
     const spineCanvas = spineRef.current;
@@ -105,7 +105,7 @@ const CanvasCoverPreview = ({
     frontCtx.clearRect(0, 0, baseWidth, baseHeight);
 
     // 根据字体加载状态选择正确的字体
-    const resolvedFont = (fontStatus === 'loaded') 
+    const resolvedFont = (fontStatus === 'loaded')
       ? fontMapping[selectedFont as keyof typeof fontMapping] || selectedFont
       : getFallbackFont(selectedFont);
 
@@ -225,7 +225,7 @@ const CanvasCoverPreview = ({
     layout: any
   ) => {
     // 获取正确的字体
-    const resolvedFont = (fontStatus === 'loaded') 
+    const resolvedFont = (fontStatus === 'loaded')
       ? fontMapping[selectedFont as keyof typeof fontMapping] || selectedFont
       : getFallbackFont(selectedFont);
 
@@ -543,15 +543,15 @@ const CanvasCoverPreview = ({
     if (template.id === 'bestseller') {
       // 确保bestseller风格始终使用Oswald字体，而不是Anton（因为Anton加载不成功）
       // 文本自动换行函数
-      const oswaldFont = (fontStatus === 'loaded') 
+      const oswaldFont = (fontStatus === 'loaded')
         ? 'Oswald, sans-serif'
         : '"Arial Narrow", Arial, sans-serif';
-        
+
       const titleFont = `bold 80px ${oswaldFont}`; // 使用Oswald字体替代Anton字体
       const titleColor = '#FFC300';
       const titleLineHeight = 100; // 大幅增加行高，从75增加到100
       const titleArea = { x: width * 0.1, y: height * 0.55, width: width * 0.8, height: height * 0.3 }; // Define title area
-      
+
       // 直接添加作者名字
       ctx.font = `bold 36px ${oswaldFont}`; // 从30px放大到36px
       ctx.fillStyle = '#FFFFFF'; // 白色文字
@@ -747,13 +747,14 @@ const CanvasCoverPreview = ({
       drawTextInArea(ctx, lines, subtitleArea, subtitleFont, subtitleColor, subtitleLineHeight, 'center');
     } else if (template.id === 'minimal') {
       // 使用安全的字体代替可能加载失败的Montserrat
-      const montserratFont = (fontStatus === 'loaded') 
+      const montserratFont = (fontStatus === 'loaded')
         ? 'Montserrat, sans-serif'
         : 'Arial, Helvetica, sans-serif';
-      
+
       // 左上角绘制作者名字
       ctx.font = `bold 60px ${montserratFont}`;
-      
+      ctx.fillStyle = '#FFFFFF'; // 设置作者名称为白色
+
       // 为minimal样式的作者名添加阴影
       ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
       ctx.shadowBlur = 5;
@@ -837,9 +838,9 @@ const CanvasCoverPreview = ({
       const comicFont = (fontStatus === 'loaded')
         ? "'Comic Sans MS', cursive"
         : "'Arial Rounded MT Bold', 'Arial', sans-serif";
-      
+
       // 可爱粉色风格布局
-      
+
       // Draw decorative elements
       ctx.fillStyle = '#FFDBEE'; // Light pink for decorations
       drawCloud(ctx, 100, 100, 50); // Top-left small cloud
@@ -1018,12 +1019,17 @@ const CanvasCoverPreview = ({
     template: any
   ) => {
     // 获取正确的字体
-    const resolvedFont = (fontStatus === 'loaded') 
+    const resolvedFont = (fontStatus === 'loaded')
       ? fontMapping[selectedFont as keyof typeof fontMapping] || selectedFont
       : getFallbackFont(selectedFont);
 
     // 设置背景色
-    ctx.fillStyle = template.backgroundColor;
+    if (template.id === 'minimal') {
+      // 对于 minimal 样式，使用纯黑色作为 spine 背景
+      ctx.fillStyle = '#000000';
+    } else {
+      ctx.fillStyle = template.backgroundColor;
+    }
     ctx.fillRect(0, 0, width, height);
 
     // 设置文本属性
@@ -1157,12 +1163,17 @@ const CanvasCoverPreview = ({
     template: any
   ) => {
     // 获取正确的字体
-    const resolvedFont = (fontStatus === 'loaded') 
+    const resolvedFont = (fontStatus === 'loaded')
       ? fontMapping[selectedFont as keyof typeof fontMapping] || selectedFont
       : getFallbackFont(selectedFont);
 
     // 设置背景色
-    ctx.fillStyle = template.backgroundColor;
+    if (template.id === 'minimal') {
+      // 对于 minimal 样式，使用灰色作为 back cover 背景
+      ctx.fillStyle = '#ECECEC';
+    } else {
+      ctx.fillStyle = template.backgroundColor;
+    }
     ctx.fillRect(0, 0, width, height);
 
     // 绘制赞美语，如果有的话
@@ -1191,7 +1202,15 @@ const CanvasCoverPreview = ({
       if (template.id === 'minimal' || template.id === 'classic') {
         yPosition += 40; // 向下移动40像素
       } else {
-        ctx.font = `bold ${template.backCoverStyle.titleFontSize || 34}px ${resolvedFont}`;
+        // 为 pastel-beige 样式使用特殊字体
+        if (template.id === 'pastel-beige') {
+          const comicFont = (fontStatus === 'loaded')
+            ? "'Comic Sans MS', cursive"
+            : "'Arial Rounded MT Bold', 'Arial', sans-serif";
+          ctx.font = `bold ${template.backCoverStyle.titleFontSize || 34}px ${comicFont}`;
+        } else {
+          ctx.font = `bold ${template.backCoverStyle.titleFontSize || 34}px ${resolvedFont}`;
+        }
         ctx.fillText(`Praises for ${coverTitle}`, x, yPosition);
 
         // 使用模板中的行间距配置，如果没有则使用默认值
@@ -1222,6 +1241,12 @@ const CanvasCoverPreview = ({
           // 放大classic样式的正文字体
           if (template.id === 'classic') {
             ctx.font = `italic ${template.backCoverStyle.praiseFontSize || 26}px ${resolvedFont}`; // 从22px增加到26px
+          } else if (template.id === 'pastel-beige') {
+            // 为 pastel-beige 样式使用特殊字体
+            const comicFont = (fontStatus === 'loaded')
+              ? "'Comic Sans MS', cursive"
+              : "'Arial Rounded MT Bold', 'Arial', sans-serif";
+            ctx.font = `italic ${template.backCoverStyle.praiseFontSize || 22}px ${comicFont}`;
           } else {
             ctx.font = `italic ${template.backCoverStyle.praiseFontSize || 22}px ${resolvedFont}`;
           }
@@ -1247,6 +1272,12 @@ const CanvasCoverPreview = ({
           ctx.font = `bold ${template.backCoverStyle.sourceFontSize || 24}px 'Montserrat', sans-serif`; // 从28px减小到24px
         } else if (template.id === 'classic') {
           ctx.font = `bold ${template.backCoverStyle.sourceFontSize || 26}px ${resolvedFont}`; // 从28px增加到26px
+        } else if (template.id === 'pastel-beige') {
+          // 为 pastel-beige 样式使用特殊字体
+          const comicFont = (fontStatus === 'loaded')
+            ? "'Comic Sans MS', cursive"
+            : "'Arial Rounded MT Bold', 'Arial', sans-serif";
+          ctx.font = `bold ${template.backCoverStyle.sourceFontSize || 24}px ${comicFont}`; // 从28px减小到24px
         } else {
           ctx.font = `bold ${template.backCoverStyle.sourceFontSize || 24}px ${resolvedFont}`; // 从28px减小到24px
         }

@@ -228,7 +228,7 @@ serve(async (req) => {
     const styleBackgroundColors: Record<string, { r: number, g: number, b: number }> = {
       'classic': { r: 0, g: 0, b: 0 }, // 黑色 - 对应 classic-red 样式
       'modern': { r: 236, g: 232, b: 217 }, // #ECE8D9
-      'minimal': { r: 194, g: 194, b: 194 }, // #C2C2C2 - 对应 minimal-gray 样式，更灰的颜色
+      'minimal': { r: 236, g: 236, b: 236 }, // #ECECEC - 对应 minimal-gray 样式，非常浅的灰色
       'vibrant': { r: 67, g: 97, b: 238 }, // #4361EE
       'pastel-beige': { r: 255, g: 192, b: 203 }, // #FFC0CB - 粉色
       'vibrant-green': { r: 229, g: 221, b: 202 }, // #E5DDCA - 对应 modern-green 样式
