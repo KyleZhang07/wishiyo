@@ -39,7 +39,7 @@ const CanvasCoverPreview = ({
   const frontCoverRef = useRef<HTMLCanvasElement>(null);
   const spineRef = useRef<HTMLCanvasElement>(null);
   const backCoverRef = useRef<HTMLCanvasElement>(null);
-  
+
   // 使用 useImageLoader hook 加载封面图片
   const image = useImageLoader(coverImage);
   // 加载书脊 logo
@@ -52,19 +52,19 @@ const CanvasCoverPreview = ({
     const frontCanvas = frontCoverRef.current;
     const spineCanvas = spineRef.current;
     const backCanvas = backCoverRef.current;
-    
+
     if (!frontCanvas) return;
-    
+
     const frontCtx = frontCanvas.getContext('2d');
     if (!frontCtx) return;
 
     // Base dimensions
     const baseWidth = 800;
     const baseHeight = 1200;
-    
+
     // 获取设备像素比，用于高清屏幕渲染
     const pixelRatio = window.devicePixelRatio || 1;
-    
+
     // Apply scale factor to dimensions
     const scaledWidth = Math.floor(baseWidth * scaleFactor);
     const scaledHeight = Math.floor(baseHeight * scaleFactor);
@@ -72,17 +72,17 @@ const CanvasCoverPreview = ({
     // 设置Canvas的物理像素大小
     frontCanvas.width = scaledWidth * pixelRatio;
     frontCanvas.height = scaledHeight * pixelRatio;
-    
+
     // 设置Canvas的CSS显示大小
     frontCanvas.style.width = `${scaledWidth}px`;
     frontCanvas.style.height = `${scaledHeight}px`;
-    
+
     // 根据设备像素比缩放绘图上下文
     frontCtx.scale(scaleFactor * pixelRatio, scaleFactor * pixelRatio);
-    
+
     // Clear and draw front canvas (at base size, context scaling will handle the rest)
     frontCtx.clearRect(0, 0, baseWidth, baseHeight);
-    
+
     // 确保模板是从我们的模板库中正确获取的
     let template;
     if (selectedTemplate === 'pastel-beige') {
@@ -90,39 +90,39 @@ const CanvasCoverPreview = ({
     } else {
       template = coverTemplates[selectedTemplate] || coverTemplates.modern;
     }
-    
+
     const layout = coverLayouts[selectedLayout] || coverLayouts['classic-centered'];
-    
+
     drawFrontCover(frontCtx, baseWidth, baseHeight, template, layout);
-    
+
     // Only draw spine and back cover if not in preview mode and if the refs exist
     if (!previewMode && spineCanvas && backCanvas) {
       const spineCtx = spineCanvas.getContext('2d');
       const backCtx = backCanvas.getContext('2d');
-      
+
       if (spineCtx && backCtx) {
         // Base spine width
         const baseSpineWidth = 80;
-        
+
         // 同样应用高清屏幕渲染
         spineCanvas.width = Math.floor(baseSpineWidth * scaleFactor) * pixelRatio;
         spineCanvas.height = scaledHeight * pixelRatio;
         spineCanvas.style.width = `${Math.floor(baseSpineWidth * scaleFactor)}px`;
         spineCanvas.style.height = `${scaledHeight}px`;
-        
+
         backCanvas.width = scaledWidth * pixelRatio;
         backCanvas.height = scaledHeight * pixelRatio;
         backCanvas.style.width = `${scaledWidth}px`;
         backCanvas.style.height = `${scaledHeight}px`;
-        
+
         // 缩放上下文
         spineCtx.scale(scaleFactor * pixelRatio, scaleFactor * pixelRatio);
         backCtx.scale(scaleFactor * pixelRatio, scaleFactor * pixelRatio);
-        
+
         // Clear and draw spine and back canvases
         spineCtx.clearRect(0, 0, baseSpineWidth, baseHeight);
         backCtx.clearRect(0, 0, baseWidth, baseHeight);
-        
+
         drawSpine(spineCtx, baseSpineWidth, baseHeight, template);
         drawBackCover(backCtx, baseWidth, baseHeight, template);
       }
@@ -147,7 +147,7 @@ const CanvasCoverPreview = ({
     ctx.textBaseline = 'top'; // Align text from the top for predictable positioning
 
     // Estimate text block height using line count * lineHeight for simpler centering
-    const textBlockHeight = lines.length * lineHeight; 
+    const textBlockHeight = lines.length * lineHeight;
     let startY = area.y + (area.height - textBlockHeight) / 2; // Calculate centered start Y
 
     // Ensure text doesn't start above the area
@@ -172,9 +172,9 @@ const CanvasCoverPreview = ({
   }
 
   const drawFrontCover = (
-    ctx: CanvasRenderingContext2D, 
-    width: number, 
-    height: number, 
+    ctx: CanvasRenderingContext2D,
+    width: number,
+    height: number,
     template: any,
     layout: any
   ) => {
@@ -187,12 +187,12 @@ const CanvasCoverPreview = ({
       const words = text.split(' ');
       let line = '';
       const lines: string[] = [];
-      
+
       for (let n = 0; n < words.length; n++) {
         const testLine = line + words[n] + ' ';
         const metrics = context.measureText(testLine);
         const testWidth = metrics.width;
-        
+
         if (testWidth > maxWidth && n > 0) {
           lines.push(line.trim());
           line = words[n] + ' ';
@@ -200,7 +200,7 @@ const CanvasCoverPreview = ({
           line = testLine;
         }
       }
-      
+
       if (line.trim() !== '') {
           lines.push(line.trim());
       }
@@ -209,7 +209,7 @@ const CanvasCoverPreview = ({
 
     // 检查是否为Sweet Pink主题
     const isSweetPink = template.id === 'pastel-beige';
-    
+
     // 对于Sweet Pink主题，我们将在后面自定义处理图片，所以这里跳过默认图片处理
     if (image?.element && !isSweetPink) {
       // 对于modern/vibrant-green，也跳过常规图片处理，使用专门的自定义处理
@@ -217,24 +217,24 @@ const CanvasCoverPreview = ({
         // 不进行任何图片处理，专门的处理在下面进行
       } else {
         const { width: imgWidth, height: imgHeight } = image.element;
-        
+
         // Calculate aspect ratios
         const canvasAspect = width / height;
         const imageAspect = imgWidth / imgHeight;
-        
+
         let drawWidth = width;
         let drawHeight = height;
         let x = 0;
         let y = 0;
-        
+
         // If layout has image container style, use it for positioning
         if (layout.imageContainerStyle) {
           const containerWidth = parseInt(layout.imageContainerStyle.width) / 100 * width;
           const containerHeight = parseInt(layout.imageContainerStyle.height) / 100 * height;
-          
+
           // 计算图像相对于容器的位置
           const aspectRatio = image.element.width / image.element.height;
-          
+
           // 确保图像完全覆盖容器
           if (containerWidth / containerHeight > aspectRatio) {
             drawWidth = containerWidth;
@@ -243,10 +243,10 @@ const CanvasCoverPreview = ({
             drawHeight = containerHeight;
             drawWidth = drawHeight * aspectRatio;
           }
-          
+
           // 计算图像在容器中的位置
           x = width / 2 - containerWidth / 2 + (containerWidth - drawWidth) / 2;
-          
+
           // 根据layout中指定的位置来确定Y坐标
           if (layout.imageContainerStyle.position === 'top') {
             y = 0; // 在顶部
@@ -255,24 +255,24 @@ const CanvasCoverPreview = ({
           } else {
             y = height / 2 - containerHeight / 2; // 默认在中间
           }
-          
+
           // 调整位置让图像正确显示
           const posX = imagePosition.x || 0;
           const posY = imagePosition.y || 0;
           x += posX;
           y += posY;
-          
+
           // 根据缩放比例调整大小
           const scale = imageScale / 100;
           const originalWidth = drawWidth;
           const originalHeight = drawHeight;
           drawWidth *= scale;
           drawHeight *= scale;
-          
+
           // 重新计算位置以保持图像中心不变
           x -= (drawWidth - originalWidth) / 2;
           y -= (drawHeight - originalHeight) / 2;
-          
+
           // 如果是bestseller模板，在图片之前绘制黑色背景
           if (template.id === 'bestseller') {
             ctx.fillStyle = '#000000';
@@ -280,24 +280,24 @@ const CanvasCoverPreview = ({
             const containerAdjustedHeight = containerHeight * 1.1; // 增加10%的高度
             const containerAdjustedY = y + 60; // 从20像素增加到40像素
             ctx.fillRect(0, containerAdjustedY, width, containerAdjustedHeight);
-            
+
             // 对于bestseller风格，调整图片位置
             if (template.id === 'bestseller') {
               y += 70; // 从100像素减少到70像素，减少下移量
             }
           }
-          
+
           ctx.filter = template.imageStyle.filter;
           ctx.globalAlpha = parseFloat(template.imageStyle.opacity);
-          
+
           // 如果布局指定了borderRadius，应用圆角裁剪
           if (layout.imageContainerStyle.borderRadius && layout.imageContainerStyle.borderRadius !== '0%') {
             ctx.save();
-            
+
             // 创建圆形裁剪路径
             const radius = parseInt(layout.imageContainerStyle.borderRadius) / 100 * Math.min(containerWidth, containerHeight);
             const centerX = width / 2;
-            
+
             // 对于经典风格或Modern风格，移动图像中心位置
             let centerY = y + containerHeight / 2;
             if (template.id === 'classic') {
@@ -310,11 +310,11 @@ const CanvasCoverPreview = ({
             } else if (template.id === 'minimal') {
               centerY -= 150; // 从-80上移到-150，使照片大幅上移
             }
-            
+
             ctx.beginPath();
             ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
             ctx.clip();
-            
+
             // 同样调整绘制位置
             let drawY_adjusted = y;
             if (template.id === 'classic') {
@@ -324,7 +324,7 @@ const CanvasCoverPreview = ({
             } else if (template.id === 'minimal') {
               drawY_adjusted -= 150; // 从-40上移到-150，使照片大幅上移
             }
-            
+
             // Draw image
             if (template.id === 'minimal') {
               // --- 实现真正的图片灰度化 ---
@@ -344,13 +344,13 @@ const CanvasCoverPreview = ({
                   const b = data[i + 2];
                   // 计算原始灰度值
                   let grayscale = 0.299 * r + 0.587 * g + 0.114 * b;
-                  
+
                   // 应用对比度调整
                   grayscale = contrastFactor * (grayscale - threshold) + threshold;
-                  
+
                   // 确保值在 [0, 255] 范围内
                   grayscale = Math.max(0, Math.min(255, grayscale));
-                  
+
                   data[i] = grayscale;     // Red
                   data[i + 1] = grayscale; // Green
                   data[i + 2] = grayscale; // Blue
@@ -365,7 +365,7 @@ const CanvasCoverPreview = ({
             } else {
               ctx.drawImage(image.element, x, drawY_adjusted, drawWidth, drawHeight);
             }
-            
+
             // Restore context
             ctx.restore();
           } else {
@@ -380,7 +380,7 @@ const CanvasCoverPreview = ({
                 offscreenCtx.drawImage(image.element, 0, 0);
                 const imageData = offscreenCtx.getImageData(0, 0, offscreenCanvas.width, offscreenCanvas.height);
                 const data = imageData.data;
-                const contrastFactor = 1.2; 
+                const contrastFactor = 1.2;
                 const threshold = 128;
                 for (let i = 0; i < data.length; i += 4) {
                   let grayscale = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
@@ -398,7 +398,7 @@ const CanvasCoverPreview = ({
               ctx.drawImage(image.element, x, y, drawWidth, drawHeight);
             }
           }
-          
+
           ctx.globalAlpha = 1.0;
           ctx.filter = 'none';
         } else {
@@ -419,7 +419,7 @@ const CanvasCoverPreview = ({
               offscreenCtx.drawImage(image.element, 0, 0);
               const imageData = offscreenCtx.getImageData(0, 0, offscreenCanvas.width, offscreenCanvas.height);
               const data = imageData.data;
-              const contrastFactor = 1.2; 
+              const contrastFactor = 1.2;
               const threshold = 128;
               for (let i = 0; i < data.length; i += 4) {
                 let grayscale = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
@@ -448,40 +448,40 @@ const CanvasCoverPreview = ({
       const imgSize = width * 0.7; // 图片大小为宽度的70%
       const centerX = width / 2;
       const centerY = height * 0.35; // 将图片中心点放在页面35%的位置
-      
+
       // 创建方形裁剪区域
       ctx.save();
-      
+
       // 创建圆形裁剪路径
       ctx.beginPath();
       ctx.rect(centerX - imgSize/2, centerY - imgSize/2, imgSize, imgSize);
       ctx.clip();
-      
+
       // 计算图片尺寸
       const imgAspect = image.element.width / image.element.height;
       let drawWidth, drawHeight;
-      
+
       if (imgAspect > 1) {
         // 横向图片
         drawHeight = imgSize;
         drawWidth = drawHeight * imgAspect;
       } else {
-        // 纵向图片 
+        // 纵向图片
         drawWidth = imgSize;
         drawHeight = drawWidth / imgAspect;
       }
-      
+
       // 计算居中位置
       const x = centerX - drawWidth / 2;
       const y = centerY - drawHeight / 2;
-      
+
       // 应用滤镜和透明度
       ctx.filter = template.imageStyle.filter;
       ctx.globalAlpha = parseFloat(template.imageStyle.opacity);
-      
+
       // 绘制图片
       ctx.drawImage(image.element, x, y, drawWidth, drawHeight);
-      
+
       // 恢复上下文
       ctx.restore();
       ctx.globalAlpha = 1.0;
@@ -495,7 +495,7 @@ const CanvasCoverPreview = ({
       ctx.fillStyle = '#FFFFFF'; // 白色文字
       ctx.textAlign = 'center';
       ctx.fillText(`${authorName}`, width / 2, 60); // 位置从85上移到60
-      
+
       // 在底部绘制蓝色描述区域 - 再次缩小蓝色区域高度
       const blueHeight = height * 0.15; // 从0.2缩小到0.15
       ctx.fillStyle = '#4361EE';
@@ -548,7 +548,7 @@ const CanvasCoverPreview = ({
       drawTextInArea(ctx, lines, subtitleArea, subtitleFont, subtitleColor, subtitleLineHeight, 'center');
     } else if (template.id === 'classic') {
       // 背景已在外部设置为黑色
-      
+
       // 绘制白色标题，位于中央 - 向上移动
       const titleFont = `bold 52px ${selectedFont}`; // Base font for measurement
       const titleColor = '#FFFFFF';
@@ -582,12 +582,12 @@ const CanvasCoverPreview = ({
 
       // Draw title using a custom loop because font/color/lineHeight changes per line
       const midpoint = Math.ceil(titleLines.length / 2);
-      
+
       const whiteLinesHeight = (midpoint > 0 ? (midpoint - 1) * normalLineHeight : 0);
       const redLinesHeight = (titleLines.length - midpoint > 0 ? (titleLines.length - midpoint) * largeLineHeight : 0);
       // Adjust total height calculation for mixed line heights
       const textBlockHeight = whiteLinesHeight + redLinesHeight + (midpoint > 0 && titleLines.length - midpoint > 0 ? largeLineHeight : 0); // Add transition gap
-      
+
       let startY = titleArea.y + (titleArea.height - textBlockHeight) / 2;
       startY = Math.max(titleArea.y, startY);
       ctx.textAlign = 'center';
@@ -608,7 +608,7 @@ const CanvasCoverPreview = ({
               ctx.font = `bold 80px ${selectedFont}`;
               // All red lines use largeLineHeight
           }
-          
+
           if (currentY < titleArea.y + titleArea.height) {
             ctx.fillText(lineText, titleArea.x + titleArea.width / 2, currentY);
           }
@@ -624,7 +624,7 @@ const CanvasCoverPreview = ({
       ctx.fillRect(0, height - bottomHeight, width, bottomHeight);
 
       // 在红色区域绘制白色描述文字
-      const subtitleFont = template.id === 'classic' 
+      const subtitleFont = template.id === 'classic'
         ? `italic 26px ${selectedFont}` // 只有classic样式使用斜体字体
         : `normal 26px ${selectedFont}`;
       const subtitleColor = '#FFFFFF';
@@ -634,7 +634,7 @@ const CanvasCoverPreview = ({
       const availableWidth = subtitleArea.width;
       const lines = wrapText(ctx, subtitle, 0, 0, availableWidth, subtitleLineHeight);
       drawTextInArea(ctx, lines, subtitleArea, subtitleFont, subtitleColor, subtitleLineHeight, 'center');
-      
+
       // 在右下角红色区域上方绘制作者名
       ctx.font = `bold 30px ${selectedFont}`; // Smaller font for author
       ctx.fillStyle = '#FFFFFF'; // White color
@@ -643,13 +643,13 @@ const CanvasCoverPreview = ({
       ctx.fillText(authorName, width - (width * 0.075), height - bottomHeight - 10); // Position right-aligned, 10px above red area
     } else if (template.id === 'modern' || template.id === 'vibrant-green') {
       // 为奶油色肖像风格重写渲染逻辑
-      
+
       // 顶部绘制作者名字
       ctx.font = `bold 42px ${selectedFont}`; // 添加粗体
       ctx.fillStyle = '#FFFFFF';
       ctx.textAlign = 'center';
       ctx.fillText(authorName.toUpperCase(), width / 2, 90); // Y位置从70下移到90
-      
+
       // 封面中央绘制大号金色标题
       const titleFont = `bold 70px ${selectedFont}`;
       const titleColor = '#D4AF37';
@@ -692,18 +692,18 @@ const CanvasCoverPreview = ({
     } else if (template.id === 'minimal') {
       // 简约灰色风格的布局
       // 背景已在外部设置为灰色
-      
+
       // 左上角绘制作者名字
       ctx.font = `bold 60px 'Montserrat', sans-serif`;
       ctx.fillStyle = '#FFFFFF';
       ctx.textAlign = 'left';
-      
+
       // 为minimal样式的作者名添加阴影
       ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
       ctx.shadowBlur = 5;
       ctx.shadowOffsetX = 2;
       ctx.shadowOffsetY = 2;
-      
+
       ctx.fillText(authorName, 60, 100); // 从50增加到60，增加左边距
 
       // 重置阴影
@@ -741,10 +741,10 @@ const CanvasCoverPreview = ({
       ctx.shadowBlur = 5;
       ctx.shadowOffsetX = 2;
       ctx.shadowOffsetY = 2;
-      
+
       // Draw title using helper function, left-aligned
       drawTextInArea(ctx, titleLines.map(line => line.toUpperCase()), titleArea, titleFont, titleColor, titleLineHeight, 'left');
-      
+
       // 重置阴影
       ctx.shadowColor = 'transparent';
       ctx.shadowBlur = 0;
@@ -767,10 +767,10 @@ const CanvasCoverPreview = ({
       ctx.shadowBlur = 5;
       ctx.shadowOffsetX = 2;
       ctx.shadowOffsetY = 2;
-      
+
       // Draw subtitle using helper function, left-aligned
       drawTextInArea(ctx, lines, subtitleArea, subtitleFont, subtitleColor, subtitleLineHeight, 'left');
-      
+
       // 重置阴影
       ctx.shadowColor = 'transparent';
       ctx.shadowBlur = 0;
@@ -872,14 +872,14 @@ const CanvasCoverPreview = ({
       // Add a semi-transparent overlay
       ctx.fillStyle = `${template.backgroundColor}33`; // 20% opacity
       ctx.fillRect(0, 0, width, height);
-  
+
       // Draw author name using layout configuration
       ctx.font = `bold 48px ${selectedFont}`;
       ctx.fillStyle = template.authorStyle?.color || '#FFFFFF'; // Use template color if available
-      
+
       // Use layout for author text alignment
       ctx.textAlign = layout.authorPosition.textAlign;
-      
+
       // Calculate author position based on layout
       let authorX = 40; // Default left margin
       if (layout.authorPosition.textAlign === 'center') {
@@ -887,20 +887,20 @@ const CanvasCoverPreview = ({
       } else if (layout.authorPosition.textAlign === 'right') {
         authorX = width - 40;
       }
-      
+
       // Calculate Y position based on layout offsetY
       const authorY = Math.round(height * layout.authorPosition.offsetY);
-      
+
       // Draw author text
       ctx.fillText(authorName.toUpperCase(), authorX, authorY);
-  
+
       // Draw title using layout configuration
       ctx.font = `bold 48px ${selectedFont}`;
       ctx.fillStyle = template.titleStyle?.color || '#7CFC00'; // Use template color if available
-      
+
       // Use layout for title text alignment
       ctx.textAlign = layout.titlePosition.textAlign;
-      
+
       // Calculate title position based on layout
       let titleX = 40; // Default left margin
       if (layout.titlePosition.textAlign === 'center') {
@@ -908,32 +908,32 @@ const CanvasCoverPreview = ({
       } else if (layout.titlePosition.textAlign === 'right') {
         titleX = width - 40;
       }
-      
+
       // Calculate Y position based on layout offsetY
       const titleY = Math.round(height * layout.titlePosition.offsetY);
-      
+
       // Split title into lines if needed
       const titleLines = coverTitle.toUpperCase().split(' ');
       const midPoint = Math.ceil(titleLines.length / 2);
-      
+
       const firstLine = titleLines.slice(0, midPoint).join(' ');
       const secondLine = titleLines.slice(midPoint).join(' ');
-      
+
       // Draw first line of title
       ctx.fillText(firstLine, titleX, titleY);
-      
+
       // Draw second line of title if exists
       if (secondLine) {
         ctx.fillText(secondLine, titleX, titleY + 60);
       }
-  
+
       // Draw subtitle using layout configuration
       ctx.font = `18px ${selectedFont}`;
       ctx.fillStyle = template.subtitleStyle?.color || '#FFFFFF'; // Use template color if available
-      
+
       // Use layout for subtitle text alignment
       ctx.textAlign = layout.subtitlePosition.textAlign;
-      
+
       // Calculate subtitle position based on layout
       let subtitleX = 40; // Default left margin
       if (layout.subtitlePosition.textAlign === 'center') {
@@ -941,42 +941,43 @@ const CanvasCoverPreview = ({
       } else if (layout.subtitlePosition.textAlign === 'right') {
         subtitleX = width - 40;
       }
-      
+
       // Calculate Y position based on layout offsetY
       const subtitleY = Math.round(height * layout.subtitlePosition.offsetY);
-      
+
       // Draw subtitle
       ctx.fillText(subtitle, subtitleX, subtitleY);
     }
   };
 
   const drawSpine = (
-    ctx: CanvasRenderingContext2D, 
-    width: number, 
-    height: number, 
+    ctx: CanvasRenderingContext2D,
+    width: number,
+    height: number,
     template: any
   ) => {
     // 绘制背景
     ctx.fillStyle = template.spineStyle?.backgroundColor || template.backgroundColor;
     ctx.fillRect(0, 0, width, height);
-    
+
     // 设置文本属性
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    
+
     // Position for vertical text (centered horizontally, starting from top)
     const centerX = width / 2;
-    
-    // 使用模板中的顶部边距配置，如果没有则使用默认值
-    let currentY = template.spineStyle.topMargin || 60;
-    
+
     // --- 强制使用等宽字体以获得均匀间距 ---
     const spineFontFamily = template.id === 'classic' ? "'Fira Mono', monospace" : 'monospace'; // Classic样式使用Fira Mono
     const spineFontSize = template.spineStyle.titleFontSize || 40; // 可以调整字体大小
     const spineFontWeight = (template.id === 'minimal') ? '500' : 'bold';
     ctx.font = `${spineFontWeight} ${spineFontSize}px ${spineFontFamily}`;
     // --- 结束强制字体 ---
-    
+
+    // 为 logo 预留空间
+    const logoHeight = 50;
+    const logoMargin = 15;
+
     // 处理作者名称：首字母大写，其余小写
     const authorWords = authorName.split(' ');
     const formattedAuthorWords = authorWords.map(word => {
@@ -985,63 +986,69 @@ const CanvasCoverPreview = ({
     });
     const formattedAuthorName = formattedAuthorWords.join(' ');
     const authorChars = formattedAuthorName.split('');
-    
+
+    // 计算作者名称的总高度
+    const authorFontSize = template.spineStyle.authorFontSize || 24;
+    const authorCharSpacing = authorFontSize * (template.spineStyle.charSpacing || 0.75);
+    const authorHeight = authorChars.length * authorCharSpacing;
+
+    // 将作者名称放在顶部，但留出更大边距
+    const topMargin = 130; // 顶部边距调整为130
+    let authorStartY = topMargin;
+
     // Draw each character of the author name vertically with rotation
     ctx.fillStyle = template.spineStyle.authorColor || '#FFFFFF';
-    
+
     authorChars.forEach(char => {
       ctx.save();
-      ctx.translate(centerX, currentY);
+      ctx.translate(centerX, authorStartY);
       ctx.rotate(Math.PI / 2); // Rotate 90 degrees clockwise
       ctx.fillText(char, 0, 0);
       ctx.restore();
-      
-      // 使用模板中的字符间距配置，如果没有则使用默认值
-      currentY += Math.round((template.spineStyle.authorFontSize || 24) * (template.spineStyle.charSpacing || 0.75)); 
+
+      // 使用模板中的字符间距配置
+      authorStartY += Math.round(authorCharSpacing);
     });
-    
-    // 使用模板中的作者与标题间距配置，如果没有则使用默认值
-    currentY += template.spineStyle.authorTitleSpacing || 20;
-    
-    // 计算脊柱中心位置，用于居中标题
-    const spineCenter = height / 2;
-    
-    // 为所有样式将标题下移至居中位置
+
     // 计算标题字符数和预计高度
     const titleChars = coverTitle.toUpperCase().split('');
     // 使用非常小的字符间距，使字体密集排列
-    const charSpacingMultiplier = 0.7; // 为等宽字体调整间距因子 (从0.6增加到0.7)
+    const charSpacingMultiplier = 0.7; // 为等宽字体调整间距因子
     const charSpacing = Math.round(spineFontSize * charSpacingMultiplier);
-    
+
     // 计算标题总高度
     const titleHeight = titleChars.length * charSpacing;
-    
-    // 为 logo 预留空间
-    const logoHeight = 50; 
-    const logoMargin = 15;
-    const bottomMargin = (template.spineStyle.bottomMargin || 60) + logoHeight + (logoMargin * 2);
-    
+
+    // 计算脊柱中心位置
+    const spineCenter = height / 2;
+
     // 计算标题起始位置，使其在可用空间内居中
-    const availableSpaceForTitle = height - currentY - bottomMargin;
-    const titleStartY = Math.max(currentY, spineCenter - (titleHeight / 2));
-    
-    // 更新当前Y坐标
-    currentY = titleStartY;
-    
+    // 标题位于脊柱中心位置
+    let currentY = spineCenter - (titleHeight / 2);
+
+    // 确保标题不会与作者名重叠
+    const authorEndY = authorStartY + 20; // 作者名结束位置加一些间距
+    if (currentY < authorEndY) {
+      currentY = authorEndY;
+    }
+
     // Draw title vertically, with each character rotated 90 degrees
     ctx.fillStyle = template.spineStyle.titleColor || '#7CFC00';
-    
-    // 计算可以显示的字符数
-    const estimatedTitleHeight = titleChars.length * charSpacing;
-    
+
+    // 计算 logo 位置 - logo 应该在底部
+    const logoY = height - logoHeight - logoMargin - 100; // 距离底部留出更大边距，从20增加到100
+
+    // 计算可用空间 (从作者名称结束到 logo 位置)
+    const availableSpaceForTitle = logoY - authorEndY - 20; // 在 logo 上方留出 20px 的空间
+
     // If title is too long, we need to truncate it
     let charsToShow = titleChars;
-    if (estimatedTitleHeight > availableSpaceForTitle) {
+    if (titleHeight > availableSpaceForTitle) {
       // Calculate how many characters can fit
       const maxChars = Math.floor(availableSpaceForTitle / charSpacing);
       charsToShow = titleChars.slice(0, maxChars);
     }
-    
+
     // Draw each character of the title vertically with rotation
     charsToShow.forEach(char => {
       ctx.save();
@@ -1049,40 +1056,38 @@ const CanvasCoverPreview = ({
       ctx.rotate(Math.PI / 2); // Rotate 90 degrees clockwise
       ctx.fillText(char, 0, 0);
       ctx.restore();
-      
+
       currentY += charSpacing;
     });
-    
+
     // 在底部绘制 logo
     if (spineLogo?.element) {
-      // 计算 logo 位置
-      const logoY = height - logoHeight - logoMargin; // 距离底部 15 像素
-      const logoWidth = Math.min(width - 4, 60); // 限制 logo 宽度，从 50 增加到 60，边距从 6 减少到 4
+      const logoWidth = Math.min(width - 4, 60); // 限制 logo 宽度
       const logoAspectRatio = spineLogo.element.width / spineLogo.element.height;
       const calculatedLogoHeight = logoWidth / logoAspectRatio;
-      
+
       // 居中绘制 logo
       const logoX = (width - logoWidth) / 2;
-      
+
       // 绘制 logo
       ctx.drawImage(
-        spineLogo.element, 
-        0, 
-        0, 
-        spineLogo.element.width, 
-        spineLogo.element.height, 
-        logoX, 
-        logoY, 
-        logoWidth, 
+        spineLogo.element,
+        0,
+        0,
+        spineLogo.element.width,
+        spineLogo.element.height,
+        logoX,
+        logoY,
+        logoWidth,
         calculatedLogoHeight
       );
     }
   };
 
   const drawBackCover = (
-    ctx: CanvasRenderingContext2D, 
-    width: number, 
-    height: number, 
+    ctx: CanvasRenderingContext2D,
+    width: number,
+    height: number,
     template: any
   ) => {
     // Draw background
@@ -1107,53 +1112,53 @@ const CanvasCoverPreview = ({
     // 绘制赞美语，如果有的话
     if (praises && praises.length > 0) {
       const availablePraises = praises.slice(0, 4); // 限制最多显示4条赞美语
-      
+
       // 使用模板中的边距配置，如果没有则使用默认值 - 向下移动
       const marginLeft = template.backCoverStyle.marginLeft || 50; // 从60减小到50，减少左边距
       let marginTop;
-      
+
       // 为minimal和classic样式设置更小的顶部边距
       if (template.id === 'minimal' || template.id === 'classic') {
         marginTop = template.backCoverStyle.marginTop || 50; // 从80减小到50，向上移动
       } else {
         marginTop = template.backCoverStyle.marginTop || 80; // 其他样式保持不变
       }
-      
+
       // 设置标题
       ctx.textAlign = template.backCoverStyle.textAlign || 'left';
       ctx.fillStyle = template.backCoverStyle.textColor || '#FFFFFF';
-      
+
       const x = Math.round(marginLeft);
       let yPosition = marginTop;
-      
+
       // 为minimal和classic样式不显示"Praises for ..."标题
       if (template.id === 'minimal' || template.id === 'classic') {
         yPosition += 40; // 向下移动40像素
       } else {
         ctx.font = `bold ${template.backCoverStyle.titleFontSize || 34}px ${fontFamily}`;
         ctx.fillText(`Praises for ${coverTitle}`, x, yPosition);
-        
+
         // 使用模板中的行间距配置，如果没有则使用默认值
         yPosition += template.backCoverStyle.titleSpacing || 40;
       }
-      
+
       // 绘制每条赞美语
       availablePraises.forEach(praise => {
         // 赞美文本内容 - 为minimal样式使用Raleway
         if (template.id === 'minimal') {
           ctx.font = `normal 20px 'Raleway', sans-serif`; // 从300 14px改为normal 16px
-          
+
           // 使用文本换行函数 - 对minimal样式的文本进行大写转换
           const wrappedText = wrapTextWithHeight(
-            ctx, 
+            ctx,
             `"${praise.text.toUpperCase()}"`, // 将文本转换为大写
-            x, 
-            Math.round(yPosition), 
+            x,
+            Math.round(yPosition),
             width - marginLeft * 2.3, // 从marginLeft * 2.2调整为marginLeft * 2.3
             template.backCoverStyle.lineHeight || 28, // 从33减小到28
             'justify' // 添加左右对齐参数
           );
-          
+
           // 使用模板中的赞美语间距配置，如果没有则使用默认值
           const praiseSpacing = template.backCoverStyle.praiseSpacing || 20; // 从24轻微减小到20
           yPosition += wrappedText.height + Math.round(praiseSpacing * 1.4); // 从1.5轻微减小到1.4
@@ -1164,23 +1169,23 @@ const CanvasCoverPreview = ({
           } else {
             ctx.font = `italic ${template.backCoverStyle.praiseFontSize || 22}px ${fontFamily}`;
           }
-          
+
           // 使用文本换行函数
           const wrappedText = wrapTextWithHeight(
-            ctx, 
-            `"${praise.text}"`, 
-            x, 
-            Math.round(yPosition), 
+            ctx,
+            `"${praise.text}"`,
+            x,
+            Math.round(yPosition),
             width - marginLeft * 2.3, // 从marginLeft * 2.2调整为marginLeft * 2.3
             template.backCoverStyle.lineHeight || 28, // 从33减小到28
             'justify' // 添加左右对齐参数
           );
-          
+
           // 使用模板中的赞美语间距配置，如果没有则使用默认值
           const praiseSpacing = template.backCoverStyle.praiseSpacing || 20; // 从24轻微减小到20
           yPosition += wrappedText.height + Math.round(praiseSpacing * 1.4); // 从1.5轻微减小到1.4
         }
-        
+
         // 赞美来源，在作者名称前添加"-"符号
         if (template.id === 'minimal') {
           ctx.font = `bold ${template.backCoverStyle.sourceFontSize || 24}px 'Montserrat', sans-serif`; // 从28px减小到24px
@@ -1189,7 +1194,7 @@ const CanvasCoverPreview = ({
         } else {
           ctx.font = `bold ${template.backCoverStyle.sourceFontSize || 24}px ${fontFamily}`; // 从28px减小到24px
         }
-        
+
         // 只有classic和minimal样式的作者名称右对齐，其他样式使用左对齐
         if (template.id === 'classic' || template.id === 'minimal') {
           // 将作者名称右对齐
@@ -1201,10 +1206,10 @@ const CanvasCoverPreview = ({
           ctx.textAlign = 'left';
           ctx.fillText(`- ${praise.source}`, x, Math.round(yPosition));
         }
-        
+
         // 恢复左对齐设置，以免影响后续文本
         ctx.textAlign = template.backCoverStyle.textAlign || 'left';
-        
+
         // 使用模板中的来源间距配置，如果没有则使用默认值
         yPosition += template.backCoverStyle.sourceSpacing || 52; // 从60轻微减小到52
       });
@@ -1218,21 +1223,21 @@ const CanvasCoverPreview = ({
     } else {
       ctx.fillStyle = '#FFFFFF'; // 白色文本
     }
-    
+
     // 为minimal样式使用Open Sans Light
     if (template.id === 'minimal') {
       ctx.font = `normal 20px 'Open Sans', sans-serif`;
     } else {
       ctx.font = `20px ${fontFamily}`;
     }
-    
+
     // 将品牌标识向右上移动
     const brandX = Math.round(60); // 从40增加到60，向右移动
     const brandY1 = Math.round(height - 100); // 从80增加到100，再向上移动10像素
     const brandY2 = Math.round(height - 70); // 从50增加到70，再向上移动10像素
-    
+
     ctx.fillText("Visit wishiyo.com", brandX, brandY1);
-    
+
     // 使用 Futura 字体
     ctx.font = `bold 20px "Futura", sans-serif`;
     ctx.fillStyle = '#FF6B35'; // Orange for WISHIYO
@@ -1243,11 +1248,11 @@ const CanvasCoverPreview = ({
       // 设置条形码尺寸 - 增大到 200x100
       const barcodeWidth = 200;
       const barcodeHeight = 100;
-      
+
       // 调整位置，向左上移动
       const barcodeX = Math.round(width - barcodeWidth - 60); // 从40增加到60，向左移动
       const barcodeY = Math.round(height - barcodeHeight - 60); // 从40增加到60，向上移动
-      
+
       // 绘制条形码图像，使用其原始比例
       ctx.drawImage(
         barcode.element,
@@ -1282,19 +1287,19 @@ const CanvasCoverPreview = ({
     let testLine = '';
     let lineCount = 0;
     const lines: { text: string, width: number }[] = []; // 存储每行文本及其宽度
-    
+
     // 设置文本渲染属性 - 保证清晰度
     ctx.textBaseline = 'middle'; // 使文本垂直居中，增加清晰度
-    
+
     // 应用适当的字符间距，增加可读性
     ctx.letterSpacing = '0.5px';
-    
+
     // 第一步：计算行分割
     for (let n = 0; n < words.length; n++) {
       testLine = line + words[n] + ' ';
       const metrics = ctx.measureText(testLine);
       const testWidth = metrics.width;
-      
+
       if (testWidth > maxWidth && n > 0) {
         // 保存当前行及其宽度
         lines.push({ text: line.trim(), width: ctx.measureText(line.trim()).width });
@@ -1304,19 +1309,19 @@ const CanvasCoverPreview = ({
         line = testLine;
       }
     }
-    
+
     // 添加最后一行
     if (line.trim() !== '') {
       lines.push({ text: line.trim(), width: ctx.measureText(line.trim()).width });
       lineCount++;
     }
-    
+
     // 第二步：根据对齐方式绘制文本
     for (let i = 0; i < lines.length; i++) {
       const lineText = lines[i].text;
       const lineWidth = lines[i].width;
       const yPos = y + (i * lineHeight) + lineHeight/2;
-      
+
       if (align === 'justify' && i < lines.length - 1) { // 最后一行不进行两端对齐
         // 实现左右对齐
         const words = lineText.split(' ');
@@ -1324,7 +1329,7 @@ const CanvasCoverPreview = ({
           const totalSpacing = maxWidth - lineWidth;
           const spaceBetweenWords = totalSpacing / (words.length - 1);
           let currentX = x;
-          
+
           // 绘制每个单词，并添加计算好的间距
           for (let j = 0; j < words.length; j++) {
             ctx.fillText(words[j], currentX, yPos);
@@ -1349,7 +1354,7 @@ const CanvasCoverPreview = ({
         ctx.fillText(lineText, drawX, yPos);
       }
     }
-    
+
     // 返回文本块的总高度
     return {
       height: lineCount * lineHeight // 总高度
@@ -1377,11 +1382,11 @@ const CanvasCoverPreview = ({
           </div>
         </div>
       )}
-      
+
       {/* 调整图片按钮 */}
       {image && !previewMode && (
         <div className="absolute bottom-[-40px] left-1/2 transform -translate-x-1/2">
-          <CoverImageControls 
+          <CoverImageControls
             coverImage={coverImage}
             imagePosition={imagePosition}
             imageScale={imageScale}
