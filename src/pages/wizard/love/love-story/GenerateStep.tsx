@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { uploadImageToStorage, getAllImagesFromStorage, deleteImageFromStorage } from '@/integrations/supabase/storage';
 import { CoverPreviewCard } from './components/CoverPreviewCard';
 import { ContentImageCard } from './components/ContentImageCard';
-import { Edit, Wand2, MessageSquareText } from 'lucide-react';
+import { Wand2, MessageSquareText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -852,12 +852,7 @@ const GenerateStep = () => {
     navigate('/create/love/love-story/cover');
   };
 
-  const handleEditText = () => {
-    toast({
-      title: "Edit Text",
-      description: "Opening text editor..."
-    });
-  };
+
 
   const handleRegenerateIntro = async (style?: string) => {
     localStorage.removeItem('loveStoryIntroImage');
@@ -971,19 +966,41 @@ const GenerateStep = () => {
   };
 
   // 处理函数定义
-  const refreshImages = async () => {
+  const refreshImages = () => {
     toast({
       title: "Refreshing images",
       description: "Loading latest images from Supabase Storage",
     });
 
-    await refreshImagesCallback();
+    refreshImagesCallback();
   };
 
 
   // 使用状态变量直接创建映射
-  const imageStateMap: {[key: number]: string} = {};
-  const loadingStateMap: {[key: number]: boolean} = {};
+  const imageStateMap: {[key: number]: string} = {
+    1: contentImage1 || '',
+    2: contentImage2 || '',
+    3: contentImage3 || '',
+    4: contentImage4 || '',
+    5: contentImage5 || '',
+    6: contentImage6 || '',
+    7: contentImage7 || '',
+    8: contentImage8 || '',
+    9: contentImage9 || '',
+    10: contentImage10 || ''
+  };
+  const loadingStateMap: {[key: number]: boolean} = {
+    1: isGeneratingContent1,
+    2: isGeneratingContent2,
+    3: isGeneratingContent3,
+    4: isGeneratingContent4,
+    5: isGeneratingContent5,
+    6: isGeneratingContent6,
+    7: isGeneratingContent7,
+    8: isGeneratingContent8,
+    9: isGeneratingContent9,
+    10: isGeneratingContent10
+  };
   const handleRegenerateMap: {[key: number]: (style?: string) => void} = {
     1: handleRegenerateContent1,
     2: handleRegenerateContent2,
@@ -1001,12 +1018,7 @@ const GenerateStep = () => {
 
 
 
-  // 处理祝福语文本变更
-  const handleBlessingTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newText = e.target.value;
-    setBlessingText(newText);
-    localStorage.setItem('loveStoryBlessingText', newText);
-  };
+
 
   // 渲染祝福语图片
   const handleRenderBlessingImage = async () => {
@@ -1169,7 +1181,7 @@ const GenerateStep = () => {
               isGenerating={isGeneratingIntro}
               onRegenerate={handleRegenerateIntro}
               index={0}
-              onEditText={() => {}}
+
               text={imageTexts && imageTexts.length > 1 ? imageTexts[1]?.text : undefined}
               title=""
             />
@@ -1197,7 +1209,7 @@ const GenerateStep = () => {
                     leftImageUrl={localStorage.getItem(`loveStoryContentImage${index}_left_url`) || undefined}
                     rightImageUrl={localStorage.getItem(`loveStoryContentImage${index}_right_url`) || undefined}
                     isGenerating={isLoading || false}
-                    onEditText={() => {}}
+
                     onRegenerate={onRegenerate}
                     index={index}
                     text={text}

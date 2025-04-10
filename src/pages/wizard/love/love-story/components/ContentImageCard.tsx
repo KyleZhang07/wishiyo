@@ -16,7 +16,7 @@ interface ContentImageCardProps {
   leftImageUrl?: string;
   rightImageUrl?: string;
   isGenerating: boolean;
-  onEditText: () => void;
+  onEditText?: () => void;
   onRegenerate: (style?: string) => void;
   index: number;
   authorName?: string;
@@ -66,11 +66,11 @@ export const ContentImageCard = ({
         'Photographic': 'Photographic (Default)',
         'Disney Character': 'Disney Charactor'
       };
-      
+
       // Use the mapping or the original value
       const normalizedStyle = styleMapping[savedStyle] || savedStyle;
       setSelectedStyle(normalizedStyle);
-      
+
       // Update localStorage with the normalized style if it changed
       if (normalizedStyle !== savedStyle) {
         localStorage.setItem('loveStoryStyle', normalizedStyle);
@@ -85,10 +85,10 @@ export const ContentImageCard = ({
   const handleRegenerateWithStyle = () => {
     // Save the selected style to localStorage
     localStorage.setItem('loveStoryStyle', selectedStyle);
-    
+
     // Close the dialog
     setIsDialogOpen(false);
-    
+
     // Call the onRegenerate function with the selected style
     onRegenerate(selectedStyle);
   };
@@ -116,8 +116,8 @@ export const ContentImageCard = ({
                 <div className="w-full h-full flex items-center justify-center">
                   <div className="flex w-full h-full relative shadow-lg">
                     <div className="w-1/2 h-full relative overflow-hidden">
-                      <img 
-                        src={leftImageUrl} 
+                      <img
+                        src={leftImageUrl}
                         alt={`${title || `Content ${index}`} (left page)`}
                         className="w-full h-full object-cover"
                         onLoad={handleLeftImageLoad}
@@ -125,10 +125,10 @@ export const ContentImageCard = ({
                       />
                       <div className="absolute top-0 right-0 w-16 h-full bg-gradient-to-l from-black/30 to-transparent"></div>
                     </div>
-                    
+
                     <div className="w-1/2 h-full relative overflow-hidden">
-                      <img 
-                        src={rightImageUrl} 
+                      <img
+                        src={rightImageUrl}
                         alt={`${title || `Content ${index}`} (right page)`}
                         className="w-full h-full object-cover"
                         onLoad={handleRightImageLoad}
@@ -136,13 +136,13 @@ export const ContentImageCard = ({
                       />
                       <div className="absolute top-0 left-0 w-16 h-full bg-gradient-to-r from-black/25 to-transparent"></div>
                     </div>
-                    
+
                     <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[1px] h-full z-10 bg-transparent shadow-[0_0_8px_2px_rgba(0,0,0,0.4)]"></div>
                   </div>
                 </div>
               ) : image ? (
-                <img 
-                  src={image} 
+                <img
+                  src={image}
                   alt={title || `Content ${index}`}
                   className="w-full h-full object-cover"
                 />
@@ -156,42 +156,33 @@ export const ContentImageCard = ({
           )}
         </div>
         <div className="absolute bottom-4 right-4 flex gap-2">
-          <Button
-            variant="secondary"
-            onClick={onEditText}
-          >
-            <Edit className="w-4 h-4 mr-2" />
-            Edit text
-          </Button>
-          
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button
-                variant="secondary"
+                className="bg-[#FF7F50] hover:bg-[#FF7F50]/90 text-white"
                 disabled={isGenerating}
               >
-                <ImageIcon className="w-4 h-4 mr-2" />
-                Edit image
+                Regenerate image
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>Edit Image Style</DialogTitle>
+                <DialogTitle>Regenerate Image</DialogTitle>
                 <DialogDescription>
                   Select a style for your image and click regenerate to apply it.
                 </DialogDescription>
               </DialogHeader>
-              
+
               <div className="space-y-4 py-4">
                 <div className="grid grid-cols-1 gap-4">
                   {STYLE_OPTIONS.map((style) => (
-                    <div 
+                    <div
                       key={style}
                       onClick={() => handleStyleSelect(style)}
                       className={`
                         flex items-center p-3 rounded-md cursor-pointer transition-all
-                        ${selectedStyle === style 
-                          ? 'bg-primary/10 border border-primary' 
+                        ${selectedStyle === style
+                          ? 'bg-primary/10 border border-primary'
                           : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'}
                       `}
                     >
@@ -218,18 +209,17 @@ export const ContentImageCard = ({
                   ))}
                 </div>
               </div>
-              
+
               <div className="flex justify-between">
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                   <X className="w-4 h-4 mr-2" />
                   Cancel
                 </Button>
-                <Button 
+                <Button
                   onClick={handleRegenerateWithStyle}
-                  className="bg-black text-white hover:bg-black/90"
+                  className="bg-[#FF7F50] text-white hover:bg-[#FF7F50]/90"
                   disabled={isGenerating}
                 >
-                  <RefreshCw className={`w-4 h-4 mr-2 ${isGenerating ? 'animate-spin' : ''}`} />
                   Regenerate with {selectedStyle}
                 </Button>
               </div>
