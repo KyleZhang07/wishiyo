@@ -5,6 +5,7 @@ import drawSnowNightBackground from './SnowNightBackground';
 import blueTextureBackground from '../../assets/Generated Image March 15, 2025 - 3_12PM_LE_upscale_balanced_x4.jpg';
 import greenLeafBackground from '../../assets/leaves.jpg';
 import rainbowBackground from '../../assets/rainbow2.jpg';
+import heartCoverBackground from '../../assets/heart_cover_8.5in_highres.png';
 
 // 样式接口定义
 interface CoverStyle {
@@ -49,6 +50,7 @@ const LoveStoryCoverPreview = ({
   const blueTexture = useImageLoader(blueTextureBackground);
   const greenLeaf = useImageLoader(greenLeafBackground);
   const rainbow = useImageLoader(rainbowBackground);
+  const heartCover = useImageLoader(heartCoverBackground);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -243,29 +245,29 @@ const LoveStoryCoverPreview = ({
         gradient.addColorStop(0.4, '#f8e9d6');  // 浅色过渡区域，扩大范围到0.4
         gradient.addColorStop(0.6, '#f8e9d6');  // 浅色过渡区域，缩小范围到0.6
         gradient.addColorStop(1, '#e7c9a9');   // 右下角较深棕色
-        
+
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, width, height);
-        
+
         // 添加轻微的纹理效果
         for (let i = 0; i < 20; i++) {
           const x = Math.random() * width;
           const y = Math.random() * height;
           const radius = 80 + Math.random() * 150;
-          
+
           const spotGradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
           spotGradient.addColorStop(0, 'rgba(255, 255, 255, 0.1)');
           spotGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-          
+
           ctx.fillStyle = spotGradient;
           ctx.beginPath();
           ctx.arc(x, y, radius, 0, Math.PI * 2);
           ctx.fill();
         }
-        
+
         // 强化左上角和右下角的深色效果
         const cornerRadius = width * 0.7; // 增加半径使渐变更接近中心
-        
+
         // 左上角深色渐变 - 增强深度
         const topLeftGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, cornerRadius);
         topLeftGradient.addColorStop(0, 'rgba(193, 156, 125, 0.6)');  // 更深的颜色，更高不透明度
@@ -273,7 +275,7 @@ const LoveStoryCoverPreview = ({
         topLeftGradient.addColorStop(1, 'rgba(203, 176, 145, 0)');
         ctx.fillStyle = topLeftGradient;
         ctx.fillRect(0, 0, width, height);
-        
+
         // 右下角深色渐变 - 减轻深度
         const bottomRightGradient = ctx.createRadialGradient(width, height, 0, width, height, cornerRadius);
         bottomRightGradient.addColorStop(0, 'rgba(203, 176, 145, 0.25)');  // 降低不透明度使其较浅
@@ -281,10 +283,20 @@ const LoveStoryCoverPreview = ({
         bottomRightGradient.addColorStop(1, 'rgba(203, 176, 145, 0)');
         ctx.fillStyle = bottomRightGradient;
         ctx.fillRect(0, 0, width, height);
-      } else {
-        // classic 样式仍使用纯色背景
-        ctx.fillStyle = style.background;
-        ctx.fillRect(0, 0, width, height);
+      } else if (style?.id === 'classic') {
+        // classic 样式使用心形背景图片
+        if (heartCover && heartCover.element) {
+          // 使用加载的图片作为背景
+          ctx.drawImage(heartCover.element, 0, 0, width, height);
+
+          // 添加米色半透明叠加层，使图片更柔和
+          ctx.fillStyle = 'rgba(245, 235, 220, 0.3)';
+          ctx.fillRect(0, 0, width, height);
+        } else {
+          // 如果无法加载背景图片，使用纯色背景
+          ctx.fillStyle = style.background;
+          ctx.fillRect(0, 0, width, height);
+        }
       }
     }
     // 默认白色背景
