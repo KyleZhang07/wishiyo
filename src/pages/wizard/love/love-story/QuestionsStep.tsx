@@ -23,7 +23,7 @@ const LoveStoryQuestionsStep = () => {
   useEffect(() => {
     const savedName = localStorage.getItem('loveStoryPersonName') || '';
     setPersonName(savedName);
-    
+
     const savedAnswers = localStorage.getItem(storageKey);
     if (savedAnswers) {
       setQuestionsAndAnswers(JSON.parse(savedAnswers));
@@ -69,16 +69,16 @@ const LoveStoryQuestionsStep = () => {
 
   const handleSubmitAnswer = (question: string, answer: string) => {
     const existingIndex = questionsAndAnswers.findIndex(qa => qa.question === question);
-    
+
     let newAnswers: QuestionAnswer[];
-    
+
     if (existingIndex >= 0) {
       newAnswers = [...questionsAndAnswers];
       newAnswers[existingIndex] = { question, answer };
     } else {
       newAnswers = [...questionsAndAnswers, { question, answer }];
     }
-    
+
     setQuestionsAndAnswers(newAnswers);
     localStorage.setItem(storageKey, JSON.stringify(newAnswers));
   };
@@ -98,8 +98,8 @@ const LoveStoryQuestionsStep = () => {
 
   return (
     <WizardStep
-      title="Share Your Story"
-      description="Tell us about your journey together"
+      title="Share the Story"
+      description="The more you answer, the richer and better the book will be."
       previousStep="/create/love/love-story/character"
       currentStep={2}
       totalSteps={6}
@@ -132,8 +132,8 @@ const LoveStoryQuestionsStep = () => {
           }}
         >
           <PlusCircle className="mr-2 h-5 w-5 text-[#FF7F50]" />
-          {questionsAndAnswers.length === 0 
-            ? "Share Your First Memory" 
+          {questionsAndAnswers.length === 0
+            ? "Share Your First Memory"
             : "Add Another Memory"}
         </Button>
       </div>

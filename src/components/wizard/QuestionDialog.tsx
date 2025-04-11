@@ -127,8 +127,8 @@ const QuestionDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-xl md:max-w-2xl lg:max-w-3xl bg-white/95 backdrop-blur-sm border-gray-200 shadow-xl">
-        <DialogHeader className="relative border-b pb-4">
+      <DialogContent className="sm:max-w-xl md:max-w-2xl lg:max-w-3xl bg-white/95 backdrop-blur-sm border-gray-200 shadow-xl p-4">
+        <DialogHeader className="relative border-b pb-3">
           <DialogTitle className="text-2xl font-bold text-gray-800 flex items-center justify-center">
             {selectedQuestion ? (
               <>
@@ -139,12 +139,10 @@ const QuestionDialog = ({
                 >
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
-                <MessageSquare className="mr-2 h-6 w-6 text-[#FF7F50]" />
                 Share a Story
               </>
             ) : (
               <>
-                <MessageSquare className="mr-2 h-6 w-6 text-[#FF7F50]" />
                 Pick a Question
               </>
             )}
@@ -206,19 +204,19 @@ const QuestionDialog = ({
               </div>
 
               <Textarea
-                placeholder="Write your answer here..."
+                placeholder="Add specific and funny details..."
                 value={answer}
                 onChange={e => setAnswer(e.target.value)}
-                className="min-h-[280px] text-lg border-gray-200 focus:border-[#FF7F50] focus:ring-[#FF7F50]"
+                className="min-h-[180px] text-lg border-gray-200 focus:border-[#FF7F50] resize-none"
               />
 
               <div className="flex justify-end pt-2">
                 <Button
                   onClick={handleSubmit}
                   disabled={!answer.trim()}
-                  className="bg-[#FF7F50] hover:bg-[#FF7F50]/80 px-6 py-5 text-base"
+                  className="bg-[#FF7F50] hover:bg-[#FF7F50]/80 px-10 py-5 text-base font-medium w-32"
                 >
-                  Save Story
+                  Save
                 </Button>
               </div>
             </div>

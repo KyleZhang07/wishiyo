@@ -19,13 +19,13 @@ const LoveStoryMomentsStep = () => {
       try {
         // Models should be in the public folder
         const MODEL_URL = '/models';
-        
+
         // Load required models for face detection
         await Promise.all([
           faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
           faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL)
         ]);
-        
+
         setIsModelLoaded(true);
         console.log('Face detection models loaded successfully');
       } catch (error) {
@@ -61,7 +61,7 @@ const LoveStoryMomentsStep = () => {
         imageElement,
         new faceapi.TinyFaceDetectorOptions({ scoreThreshold: 0.5 })
       ).withFaceLandmarks();
-      
+
       // Return true if at least one face is detected
       return detections.length > 0;
     } catch (error) {
@@ -88,15 +88,15 @@ const LoveStoryMomentsStep = () => {
     const reader = new FileReader();
     reader.onload = async (e) => {
       const dataUrl = e.target?.result as string;
-      
+
       // Create an image element for face detection
       const img = new Image();
       img.src = dataUrl;
-      
+
       img.onload = async () => {
         // Check if the image contains a face
         const hasFace = await detectFaces(img);
-        
+
         if (!hasFace) {
           setIsLoading(false);
           // 删除之前可能存在的照片数据
@@ -109,13 +109,13 @@ const LoveStoryMomentsStep = () => {
           });
           return;
         }
-        
+
         // Face detected, proceed with saving the image
         setCharacterPhoto(dataUrl);
         localStorage.setItem('loveStoryPartnerPhoto', dataUrl);
         setIsLoading(false);
       };
-      
+
       img.onerror = () => {
         setIsLoading(false);
         toast({
@@ -125,7 +125,7 @@ const LoveStoryMomentsStep = () => {
         });
       };
     };
-    
+
     reader.onerror = () => {
       setIsLoading(false);
       toast({
@@ -134,7 +134,7 @@ const LoveStoryMomentsStep = () => {
         description: "Failed to read the file. Please try again."
       });
     };
-    
+
     reader.readAsDataURL(file);
   };
 
@@ -144,8 +144,8 @@ const LoveStoryMomentsStep = () => {
 
   return (
     <WizardStep
-      title="Upload your character's photo"
-      description="We'll use it on the cover"
+      title="Upload the character's photo"
+      description="Bring your fantasy to real life"
       previousStep="/create/love/love-story/questions"
       nextStep="/create/love/love-story/style"
       currentStep={3}
@@ -153,7 +153,7 @@ const LoveStoryMomentsStep = () => {
     >
       <div className="space-y-6">
         <div className="max-w-md mx-auto">
-          <input 
+          <input
             type="file"
             ref={characterFileInputRef}
             className="hidden"
@@ -161,7 +161,7 @@ const LoveStoryMomentsStep = () => {
             onChange={handleFileSelect}
           />
           {!characterPhoto ? (
-            <div 
+            <div
               className="aspect-square w-full max-w-sm mx-auto border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center hover:scale-[1.02] transition-all duration-300"
               onClick={handleUploadClick}
             >
@@ -169,14 +169,14 @@ const LoveStoryMomentsStep = () => {
               <span className="text-gray-500 text-sm mt-2">Click to upload</span>
             </div>
           ) : (
-            <div 
+            <div
               className="aspect-square w-full max-w-sm mx-auto rounded-lg overflow-hidden border border-gray-200 hover:scale-[1.02] transition-all duration-300"
               onClick={handleUploadClick}
             >
-              <img 
-                src={characterPhoto} 
-                alt="" 
-                className="w-full h-full object-cover" 
+              <img
+                src={characterPhoto}
+                alt=""
+                className="w-full h-full object-cover"
                 ref={imageRef}
               />
             </div>

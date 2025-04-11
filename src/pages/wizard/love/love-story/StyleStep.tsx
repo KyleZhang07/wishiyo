@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check } from 'lucide-react';
+import { Check, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import WizardStep from '@/components/wizard/WizardStep';
+import FourPointStar from '@/components/icons/FourPointStar';
 
 // Text tone options for love story
 const TONE_OPTIONS = [
@@ -41,50 +42,53 @@ const LoveStoryStyleStep = () => {
 
     // 保存tone到localStorage
     localStorage.setItem('loveStoryTone', selectedTone);
-    
+
     // 导航到下一步
     navigate('/create/love/love-story/ideas');
   };
 
   return (
-    <WizardStep 
-      title="Text Tone Selection" 
-      description="Choose a writing tone for your love story" 
-      previousStep="/create/love/love-story/moments" 
-      currentStep={4} 
-      totalSteps={7} 
+    <WizardStep
+      title="Tone Selection"
+      description="Choose a writing tone for your book"
+      previousStep="/create/love/love-story/moments"
+      currentStep={4}
+      totalSteps={7}
       onNextClick={handleContinue}
     >
       <div className="max-w-2xl mx-auto">
         <div className="space-y-5 mt-6">
           {TONE_OPTIONS.map((tone) => (
-            <div 
+            <div
               key={tone}
               onClick={() => handleToneSelect(tone)}
               className={`
                 overflow-hidden rounded-lg cursor-pointer transition-all duration-300
-                ${selectedTone === tone 
-                  ? 'ring-2 ring-[#FF7F50] shadow-lg' 
+                ${selectedTone === tone
+                  ? 'ring-2 ring-[#FF7F50] shadow-lg'
                   : 'border border-gray-200 hover:shadow-md'}
               `}
             >
-              <div className={`
-                px-5 py-4 flex justify-between items-center
-                ${selectedTone === tone ? 'bg-[#FF7F50]/10' : 'bg-gray-50'}
-              `}>
-                <h4 className="font-medium text-lg">{tone}</h4>
-                {selectedTone === tone && (
-                  <div className="w-6 h-6 rounded-full bg-[#FF7F50] flex items-center justify-center">
-                    <Check className="w-4 h-4 text-white" />
+              <div className={`p-5 ${selectedTone === tone ? 'bg-[#FF7F50]/10' : ''}`}>
+                <div className="flex justify-between items-center mb-3">
+                  <div className="flex items-center">
+                    <div className="mr-3 text-[#FF7F50]">
+                      {tone === 'Heartfelt' && <Heart className="w-6 h-6" fill="currentColor" />}
+                      {tone === 'Playful' && <div className="w-6 h-6">🎈</div>}
+                      {tone === 'Inspirational' && <FourPointStar className="w-6 h-6" fill="#F7DC6F" />}
+                    </div>
+                    <h4 className="font-medium text-lg md:text-[1.15rem]">{tone}</h4>
                   </div>
-                )}
-              </div>
-              
-              <div className="p-5 bg-white">
-                <p className="text-sm text-gray-700 italic mb-2">
-                  {tone === 'Playful' && '"Every moment with you feels like a delightful adventure..."'}
-                  {tone === 'Heartfelt' && '"Your love has touched the deepest corners of my soul..."'}
-                  {tone === 'Inspirational' && '"Together we\'ve risen above challenges to build something beautiful..."'}
+                  {selectedTone === tone && (
+                    <div className="w-6 h-6 rounded-full bg-[#FF7F50] flex items-center justify-center">
+                      <Check className="w-4 h-4 text-white" />
+                    </div>
+                  )}
+                </div>
+                <p className="text-sm md:text-base text-gray-700 italic mb-2">
+                  {tone === 'Playful' && '"Your daily adventures are like a fun roller coaster ride..."'}
+                  {tone === 'Heartfelt' && '"You are so special and loved more than words can say..."'}
+                  {tone === 'Inspirational' && '"Each challenge overcome reveals new strength and beauty..."'}
                 </p>
                 <p className="text-xs text-gray-500">
                   {tone === 'Playful' && 'Light-hearted and fun expression'}
@@ -100,4 +104,4 @@ const LoveStoryStyleStep = () => {
   );
 };
 
-export default LoveStoryStyleStep; 
+export default LoveStoryStyleStep;

@@ -28,11 +28,36 @@ interface ContentImageCardProps {
 
 // Image style options for love story
 const STYLE_OPTIONS = [
-  'Comic book',
-  'Line art',
-  'Fantasy art',
-  'Photographic (Default)',
-  'Disney Character'
+  {
+    id: 'Comic book',
+    name: 'Comic Book',
+    description: 'Bold outlines and vibrant colors',
+    image: '/images/art-styles/comic-book.png'
+  },
+  {
+    id: 'Line art',
+    name: 'Line Art',
+    description: 'Elegant, minimalist and black and white illustration',
+    image: '/images/art-styles/line-art.png'
+  },
+  {
+    id: 'Fantasy art',
+    name: 'Fantasy Art',
+    description: 'Dreamlike and magical aesthetic',
+    image: '/images/art-styles/fantasy-art.png'
+  },
+  {
+    id: 'Photographic (Default)',
+    name: 'Photographic',
+    description: 'Realistic, photography-like images',
+    image: '/images/art-styles/photographic.png'
+  },
+  {
+    id: 'Disney Charactor',
+    name: 'Disney Character',
+    description: 'Cartoon-like characters with Disney animation style',
+    image: '/images/art-styles/disney-character.png'
+  }
 ];
 
 export const ContentImageCard = ({
@@ -174,36 +199,33 @@ export const ContentImageCard = ({
               </DialogHeader>
 
               <div className="space-y-4 py-4">
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {STYLE_OPTIONS.map((style) => (
                     <div
-                      key={style}
-                      onClick={() => handleStyleSelect(style)}
+                      key={style.id}
+                      onClick={() => handleStyleSelect(style.id)}
                       className={`
-                        flex items-center p-3 rounded-md cursor-pointer transition-all
-                        ${selectedStyle === style
-                          ? 'bg-primary/10 border border-primary'
-                          : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'}
+                        border rounded-lg cursor-pointer transition-all p-4
+                        ${selectedStyle === style.id
+                          ? 'border-2 border-[#FF7F50]'
+                          : 'border border-gray-200 hover:border-gray-300'}
                       `}
                     >
-                      <div className="flex-shrink-0 mr-3">
-                        {selectedStyle === style ? (
-                          <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                            <Check className="w-3 h-3 text-white" />
+                      <div className="text-center mb-4 relative">
+                        <img
+                          src={style.image}
+                          alt={style.name}
+                          className="w-16 h-16 object-cover mx-auto"
+                        />
+                        {selectedStyle === style.id && (
+                          <div className="absolute top-0 right-0 w-6 h-6 rounded-full bg-[#FF7F50] flex items-center justify-center">
+                            <Check className="w-4 h-4 text-white" />
                           </div>
-                        ) : (
-                          <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
                         )}
                       </div>
-                      <div>
-                        <h4 className="font-medium text-gray-900">{style}</h4>
-                        <p className="text-sm text-gray-500">
-                          {style === 'Comic book' && 'Bold outlines and vibrant colors'}
-                          {style === 'Line art' && 'Elegant, minimalist black and white illustration'}
-                          {style === 'Fantasy art' && 'Dreamlike and magical aesthetic'}
-                          {style === 'Photographic (Default)' && 'Realistic, photography-like images'}
-                          {style === 'Disney Charactor' && 'Cartoon-like characters with Disney animation style'}
-                        </p>
+                      <div className="text-center">
+                        <h4 className="font-medium text-gray-900">{style.name}</h4>
+                        <p className="text-sm text-gray-500">{style.description}</p>
                       </div>
                     </div>
                   ))}
@@ -220,7 +242,7 @@ export const ContentImageCard = ({
                   className="bg-[#FF7F50] text-white hover:bg-[#FF7F50]/90"
                   disabled={isGenerating}
                 >
-                  Regenerate with {selectedStyle}
+                  Regenerate with {STYLE_OPTIONS.find(s => s.id === selectedStyle)?.name || selectedStyle}
                 </Button>
               </div>
             </DialogContent>

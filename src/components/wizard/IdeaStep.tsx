@@ -39,11 +39,36 @@ const TONE_OPTIONS = [
 
 // Image style options for love story
 const STYLE_OPTIONS = [
-  'Comic Book',
-  'Line Art',
-  'Fantasy Art',
-  'Photographic',
-  'Disney Character'
+  {
+    id: 'Comic Book',
+    name: 'Comic Book',
+    description: 'Bold outlines and vibrant colors',
+    image: '/images/art-styles/comic-book.png'
+  },
+  {
+    id: 'Line Art',
+    name: 'Line Art',
+    description: 'Elegant, minimalist and black and white illustration',
+    image: '/images/art-styles/line-art.png'
+  },
+  {
+    id: 'Fantasy Art',
+    name: 'Fantasy Art',
+    description: 'Dreamlike and magical aesthetic',
+    image: '/images/art-styles/fantasy-art.png'
+  },
+  {
+    id: 'Photographic',
+    name: 'Photographic',
+    description: 'Realistic, photography-like images',
+    image: '/images/art-styles/photographic.png'
+  },
+  {
+    id: 'Disney Character',
+    name: 'Disney Character',
+    description: 'Cartoon-like characters with Disney animation style',
+    image: '/images/art-styles/disney-character.png'
+  }
 ];
 
 interface IdeaStepProps {
@@ -135,11 +160,11 @@ const IdeaStep = ({
     if (category !== 'love') {
       setIsLoading(true);
     }
-    
+
     try {
       const path = window.location.pathname;
       const bookType = path.split('/')[3];
-      
+
       const storageKeyMap: { [key: string]: string } = {
         'funny-biography': 'funnyBiographyAnswers',
         'love-story': 'loveStoryAnswers',
@@ -175,7 +200,7 @@ const IdeaStep = ({
 
       const authorName = localStorage.getItem(authorNameKey);
       const savedAnswers = localStorage.getItem(storageKey);
-      
+
       let personName = null;
       let personGender = null;
       let personAge = null;
@@ -183,7 +208,7 @@ const IdeaStep = ({
         personName = localStorage.getItem(personNameKey);
         personGender = localStorage.getItem(personGenderKey);
         personAge = localStorage.getItem(personAgeKey);
-        
+
         if (!personName || !personGender || !personAge) {
           if (category !== 'love') {
             toast({
@@ -195,7 +220,7 @@ const IdeaStep = ({
           return;
         }
       }
-      
+
       if (!authorName || !savedAnswers) {
         if (category !== 'love') {
           toast({
@@ -224,15 +249,15 @@ const IdeaStep = ({
 
       // 检查问题答案是否有变化
       const currentQuestionsHash = calculateQuestionsHash(answers);
-      
+
       // 检查文本风格是否有变化
       const currentTone = localStorage.getItem(toneKey) || 'Heartfelt';
-      
+
       // 如果问题或风格没有变化，且不是第一次生成（已有哈希值），则不重新生成
-      if (category === 'love' && 
-          currentQuestionsHash === localStorage.getItem(lastQuestionsHashKey) && 
-          currentTone === localStorage.getItem(lastToneKey) && 
-          localStorage.getItem(lastQuestionsHashKey) !== '' && 
+      if (category === 'love' &&
+          currentQuestionsHash === localStorage.getItem(lastQuestionsHashKey) &&
+          currentTone === localStorage.getItem(lastToneKey) &&
+          localStorage.getItem(lastQuestionsHashKey) !== '' &&
           localStorage.getItem(lastToneKey) !== '') {
         console.log('No changes detected in questions or tone, skipping generation');
         if (category !== 'love') {
@@ -240,7 +265,7 @@ const IdeaStep = ({
         }
         return;
       }
-      
+
       // 更新最后一次生成时的问题哈希和风格
       localStorage.setItem(lastQuestionsHashKey, currentQuestionsHash);
       localStorage.setItem(lastToneKey, currentTone);
@@ -254,7 +279,7 @@ const IdeaStep = ({
       }
 
       const { data, error } = await supabase.functions.invoke('generate-ideas', {
-        body: { 
+        body: {
           authorName,
           answers,
           bookType,
@@ -281,7 +306,7 @@ const IdeaStep = ({
               description: `A beautiful love story featuring ${personName}.`,
               author: authorName
             };
-            
+
             setIdeas([defaultIdea]);
             setSelectedIdeaIndex(0);
             localStorage.setItem(ideasKey, JSON.stringify([defaultIdea]));
@@ -297,7 +322,7 @@ const IdeaStep = ({
             localStorage.setItem(ideasKey, JSON.stringify([processedIdea]));
             localStorage.setItem(getStorageKeys(bookType).selectedIdeaKey, "0");
           }
-          
+
           // 处理图像提示
           setImagePrompts(data.imagePrompts);
           localStorage.setItem(promptsKey, JSON.stringify(data.imagePrompts));
@@ -309,7 +334,7 @@ const IdeaStep = ({
         if (!Array.isArray(data.ideas)) {
           throw new Error('Invalid response format: ideas should be an array');
         }
-        
+
         const processedIdeas = data.ideas.map(idea => ({
           ...idea,
           author: authorName,
@@ -345,17 +370,17 @@ const IdeaStep = ({
 
       const personName = localStorage.getItem('loveStoryPersonName');
       const personAge = localStorage.getItem('loveStoryPersonAge');
-      
+
       // Get the answers to questions about the person
       const savedAnswers = localStorage.getItem('loveStoryAnswers');
       const questionsAndAnswers = savedAnswers ? JSON.parse(savedAnswers) : [];
-      
+
       if (!personName) {
         throw new Error('Missing person name');
       }
 
       const { data, error } = await supabase.functions.invoke('generate-image-texts', {
-        body: { 
+        body: {
           prompts,
           tone,
           personName,
@@ -380,12 +405,12 @@ const IdeaStep = ({
         description: "Using default text instead.",
         variant: "destructive",
       });
-      
+
       const defaultTexts = prompts.map(prompt => ({
         text: "A special moment captured in time.",
         tone: tone
       }));
-      
+
       setImageTexts(defaultTexts);
       localStorage.setItem(getStorageKeys('love-story').textsKey, JSON.stringify(defaultTexts));
     } finally {
@@ -399,7 +424,7 @@ const IdeaStep = ({
       const path = window.location.pathname;
       // 更准确地确定书籍类型
       let bookType = '';
-      
+
       if (path.includes('/friends/funny-biography/')) {
         bookType = 'funnyBiography';
       } else if (path.includes('/love/love-story/')) {
@@ -411,16 +436,16 @@ const IdeaStep = ({
           bookType = pathParts[pathParts.length - 2];
         }
       }
-      
+
       if (bookType) {
         // 设置一个明确的标记，表示想法选择已更改
         localStorage.setItem(`${bookType}IdeaChanged`, Date.now().toString());
-        
+
         // 为了调试，添加控制台日志
         console.log(`Idea changed for ${bookType}. Set localStorage key: ${bookType}IdeaChanged`);
       }
     }
-    
+
     setSelectedIdeaIndex(index);
     const path = window.location.pathname;
     const bookType = path.split('/')[3];
@@ -435,21 +460,21 @@ const IdeaStep = ({
     const path = window.location.pathname;
     const bookType = path.split('/')[3];
     const { toneKey } = getStorageKeys(bookType);
-    
+
     localStorage.setItem(toneKey, tone);
-    
+
     if (imagePrompts.length > 0) {
       generateImageTexts(imagePrompts, tone);
     }
   };
 
-  const handleStyleSelect = (style: string) => {
-    setSelectedStyle(style);
+  const handleStyleSelect = (styleId: string) => {
+    setSelectedStyle(styleId);
     const path = window.location.pathname;
     const bookType = path.split('/')[3];
     const { styleKey } = getStorageKeys(bookType);
-    
-    localStorage.setItem(styleKey, style);
+
+    localStorage.setItem(styleKey, styleId);
   };
 
   const handleContinue = () => {
@@ -462,7 +487,7 @@ const IdeaStep = ({
         });
         return;
       }
-      
+
       // 对于 love 类别，在导航到下一步之前启动异步生成
       // 这样用户可以继续浏览应用，而生成过程在后台进行
       generateIdeas();
@@ -484,7 +509,7 @@ const IdeaStep = ({
     const path = window.location.pathname;
     const bookType = path.split('/')[3];
     const { ideasKey, selectedIdeaKey, promptsKey, toneKey, styleKey, textsKey, lastQuestionsHashKey, lastToneKey } = getStorageKeys(bookType);
-    
+
     if (!ideasKey) {
       console.error('Invalid book type, no storage key found');
       return;
@@ -493,16 +518,16 @@ const IdeaStep = ({
     if (category === 'love') {
       const savedTone = localStorage.getItem(toneKey);
       const savedStyle = localStorage.getItem(styleKey);
-      
+
       if (savedTone) {
         setSelectedTone(savedTone);
       }
-      
+
       if (savedStyle) {
         console.log('Loading saved style:', savedStyle);
         setSelectedStyle(savedStyle);
       }
-      
+
       const savedTexts = localStorage.getItem(textsKey);
       if (savedTexts) {
         try {
@@ -553,9 +578,9 @@ const IdeaStep = ({
 
   return (
     <WizardStep
-      title={category === 'love' ? "Customize Your Love Story" : "Let's pick your book idea"}
-      description={category === 'love' 
-        ? "Choose a visual style for your personalized love story."
+      title={category === 'love' ? "Style Selection" : "Let's pick your book idea"}
+      description={category === 'love'
+        ? "Choose a visual style for your book"
         : ""}
       previousStep={previousStep}
       currentStep={category === 'love' ? 5 : currentStep}
@@ -564,8 +589,8 @@ const IdeaStep = ({
     >
       {category !== 'love' && !isLoading && (
         <div className="flex justify-end -mt-8 mb-2">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             className="bg-[#FF7F50] text-white hover:bg-[#FF7F50]/80"
             onClick={generateIdeas}
             disabled={isLoading}
@@ -575,46 +600,47 @@ const IdeaStep = ({
           </Button>
         </div>
       )}
-      
+
       <div className="flex justify-center w-full">
         <div className="space-y-6 w-[95%]">
           {category === 'love' && (
             <>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Select an Image Style</h3>
-              <p className="text-gray-500 text-sm mb-6">
-                
-              </p>
-              
-              <div className="space-y-3">
+
+
+              <div className="flex flex-col space-y-4">
+
                 {STYLE_OPTIONS.map((style) => (
-                  <div 
-                    key={style}
-                    onClick={() => handleStyleSelect(style)}
+                  <div
+                    key={style.id}
+                    onClick={() => handleStyleSelect(style.id)}
                     className={`
-                      flex items-center p-3 rounded-md cursor-pointer transition-all
-                      ${selectedStyle === style 
-                        ? 'bg-[#FF7F50]/10 border border-[#FF7F50]'
-                        : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'}
+                      border rounded-xl cursor-pointer transition-all py-[0.8rem] px-4 flex items-center
+                      ${selectedStyle === style.id
+                        ? 'border-2 border-[#FF7F50] bg-[#FF7F50]/10'
+                        : 'border border-gray-200 hover:border-gray-300'}
                     `}
                   >
-                    <div className="flex-shrink-0 mr-3">
-                      {selectedStyle === style ? (
-                        <div className="w-5 h-5 rounded-full bg-[#FF7F50] flex items-center justify-center">
-                          <Check className="w-3 h-3 text-white" />
+                    <div className="flex-shrink-0 mr-4">
+                      <div className="relative rounded-lg overflow-hidden w-[4.25rem] h-[4.25rem] border border-gray-100">
+                        <img
+                          src={style.image}
+                          alt={style.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex-grow">
+                      <h4 className={`font-medium leading-tight ${selectedStyle === style.id ? 'text-[#FF7F50]' : 'text-gray-900'}`}>{style.name}</h4>
+                      <p className={`text-sm leading-snug ${selectedStyle === style.id ? 'text-[#FF7F50]/80' : 'text-gray-500'}`}>{style.description}</p>
+                    </div>
+                    <div className="flex-shrink-0 ml-4">
+                      {selectedStyle === style.id ? (
+                        <div className="w-8 h-8 rounded-full bg-[#FF7F50] flex items-center justify-center">
+                          <Check className="w-5 h-5 text-white" />
                         </div>
                       ) : (
-                        <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
+                        <div className="w-8 h-8 rounded-full border-2 border-gray-200"></div>
                       )}
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-gray-900">{style}</h4>
-                      <p className="text-sm text-gray-500">
-                        {style === 'Comic Book' && 'Bold outlines and vibrant colors'}
-                        {style === 'Line Art' && 'Elegant, minimalist black and white illustration'}
-                        {style === 'Fantasy Art' && 'Dreamlike and magical aesthetic'}
-                        {style === 'Photographic' && 'Realistic, photography-like images'}
-                        {style === 'Disney Character' && 'Cartoon-like characters with Disney animation style'}
-                      </p>
                     </div>
                   </div>
                 ))}
@@ -640,11 +666,11 @@ const IdeaStep = ({
               ) : (
                 <div className="space-y-4">
                   {ideas.map((idea, index) => (
-                    <div 
-                      key={index} 
+                    <div
+                      key={index}
                       className={`${category === 'friends' ? 'bg-white rounded-lg p-5' : ''} cursor-pointer transition-all hover:shadow-md border ${
-                        selectedIdeaIndex === index 
-                          ? 'ring-2 ring-[#FF7F50] shadow-lg scale-[1.02]' 
+                        selectedIdeaIndex === index
+                          ? 'ring-2 ring-[#FF7F50] shadow-lg scale-[1.02]'
                           : 'border-gray-200'
                       }`}
                       onClick={() => handleIdeaSelect(index)}

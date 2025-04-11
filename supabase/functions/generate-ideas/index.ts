@@ -46,7 +46,7 @@ serve(async (req) => {
           messages: [
             {
               role: 'system',
-              content: `You are a creative assistant that generates imaginative image prompts for a fantasy autobiography book. 
+              content: `You are a creative assistant that generates imaginative image prompts for a fantasy autobiography book.
                 Create 13 unique and creative scenes focusing solely on one person - the recipient.
                 Each prompt should imagine the person in different fantasy scenarios that represent their ideal dream life.
                 Consider the person's gender (${recipientGender}) and age (${recipientAge}) when creating prompts.
@@ -57,7 +57,7 @@ serve(async (req) => {
             {
               role: 'user',
               content: `Generate 13 creative image prompts based on these answers:\n\n${JSON.stringify(answers, null, 2)}\n\n
-                Create: 
+                Create:
                 1. One cover image prompt that captures ${recipientName}'s essence (${recipientGender}, ${recipientAge} years old) in an aspirational setting
                 2. Twelve fantasy autobiography image prompts showing ${recipientName} in various dream life scenarios
                 Each prompt should be detailed and photo-realistic.
@@ -87,14 +87,14 @@ serve(async (req) => {
         if (promptData.choices && promptData.choices[0] && promptData.choices[0].message) {
           let content = promptData.choices[0].message.content;
           console.log('Raw content:', content);
-          
+
           // 清理可能存在的 Markdown 代码块标记
           if (content.startsWith('```json\n') && content.endsWith('\n```')) {
             content = content.slice(7, -4);
           } else if (content.startsWith('```') && content.endsWith('```')) {
             content = content.slice(3, -3);
           }
-          
+
           // 现在尝试解析清理后的内容
           imagePrompts = JSON.parse(content);
         } else {
@@ -150,7 +150,7 @@ serve(async (req) => {
                 8. Descriptions must ALWAYS be a SINGLE SENTENCE with NO COMMAS - use other connectors or rephrase as needed
                 9. Avoid using "I" or "you" perspectives in descriptions - use objective third-person statements instead
                 10. For satirical ideas, playfully exaggerate elements from the user's answers but keep it good-natured
-                11. Use straightforward, simple, and easy to understand language - avoid academic jargon, complex concepts, or specialized terminology that average readers wouldn't immediately grasp
+                11. Use common words and easy to understand language - avoid rare characters, uncommon words, and complex expressions that average readers might not know
                 12. Emphasize HUMOR throughout all ideas - include witty observations, playful exaggerations, and amusing perspectives even in the more professional ideas
 
                 Title examples to follow (ranging from professional to satirical to unexpected):
@@ -204,7 +204,7 @@ serve(async (req) => {
                 - ALWAYS BE ONE SENTENCE WITHOUT ANY COMMAS (use alternative sentence structures)
                 - Clearly communicate the value proposition whether serious or lighthearted
                 - Use language that engages readers and makes the concept memorable
-                - USE STRAIGHTFORWARD, SIMPLE, AND EASY TO UNDERSTAND LANGUAGE that average readers can easily grasp without academic jargon or complex terminology
+                - USE COMMON WORDS AND EASY TO UNDERSTAND LANGUAGE - avoid rare characters, uncommon words, and complex expressions that average readers might not know
                 - INFUSE HUMOR THROUGHOUT ALL IDEAS including witty observations, playful exaggerations, and amusing perspectives even in the more professional concepts
 
                 For the satirical idea, look for amusing contradictions or exaggerations in the user's answers that could be playfully highlighted.
@@ -286,11 +286,11 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in generate-ideas function:', error);
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         error: error.message,
-        stack: error.stack 
+        stack: error.stack
       }),
-      { 
+      {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }

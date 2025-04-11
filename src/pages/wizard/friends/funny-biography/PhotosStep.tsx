@@ -29,11 +29,11 @@ const FunnyBiographyPhotosStep = () => {
       const img = new Image();
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      
+
       img.onload = () => {
         let width = img.width;
         let height = img.height;
-        
+
         // Calculate new dimensions while maintaining aspect ratio
         if (width > height) {
           if (width > MAX_IMAGE_DIMENSION) {
@@ -46,19 +46,19 @@ const FunnyBiographyPhotosStep = () => {
             height = MAX_IMAGE_DIMENSION;
           }
         }
-        
+
         canvas.width = width;
         canvas.height = height;
-        
+
         ctx?.drawImage(img, 0, 0, width, height);
-        
+
         // Compress as JPG with 0.7 quality
         const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
         resolve(compressedDataUrl);
       };
-      
+
       img.onerror = reject;
-      
+
       const reader = new FileReader();
       reader.onload = (e) => {
         img.src = e.target?.result as string;
@@ -92,7 +92,7 @@ const FunnyBiographyPhotosStep = () => {
     try {
       const compressedDataUrl = await compressImage(file);
       setPhoto(compressedDataUrl);
-      
+
       try {
         localStorage.setItem('funnyBiographyPhoto', compressedDataUrl);
         // 重置生成状态，确保GenerateStep会重新生成
@@ -135,7 +135,7 @@ const FunnyBiographyPhotosStep = () => {
       nextDisabled={!photo}
     >
       <div className="space-y-6">
-        <input 
+        <input
           type="file"
           ref={fileInputRef}
           className="hidden"
@@ -143,7 +143,7 @@ const FunnyBiographyPhotosStep = () => {
           onChange={handleFileSelect}
         />
         {!photo ? (
-          <div 
+          <div
             className="aspect-square w-full max-w-sm mx-auto border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center hover:scale-[1.02] transition-all duration-300"
             onClick={handleUploadClick}
           >
@@ -151,14 +151,14 @@ const FunnyBiographyPhotosStep = () => {
             <span className="text-gray-500 text-sm mt-2">Click to upload</span>
           </div>
         ) : (
-          <div 
+          <div
             className="aspect-square w-full max-w-sm mx-auto rounded-lg overflow-hidden border border-gray-200 hover:scale-[1.02] transition-all duration-300"
             onClick={handleUploadClick}
           >
-            <img 
-              src={photo} 
-              alt="" 
-              className="w-full h-full object-cover" 
+            <img
+              src={photo}
+              alt=""
+              className="w-full h-full object-cover"
             />
           </div>
         )}
