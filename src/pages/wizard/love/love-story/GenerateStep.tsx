@@ -101,7 +101,7 @@ const GenerateStep = () => {
       const { data, error } = await supabase.functions.invoke('expand-image', {
         body: {
           imageUrl,
-          textPrompt: "The expanded area MUST be: absolutely 100% empty with ZERO people, ZERO objects, ZERO shapes, ZERO text, and ZERO animals; create ONLY a perfectly clean, solid or simple gradient background; ensure the background is suitable for text placement; create a smooth color gradient matching the edge colors of the original image; ensure seamless and invisible transition from original image; the expanded region MUST be completely plain, uniform, and uncluttered with NO DETAILS whatsoever; treat this expansion like creating empty space around the original image"
+          textPrompt: "CRITICAL: Expanded area MUST have absolutely NO PEOPLE and NO ANIMALS. 100% no human figures or animals allowed in the expanded region. Create a natural extension of the existing image that maintains the style, mood, and context of the original. Ensure seamless transition from the original image edges. The expanded area should complement the original image while providing suitable space for text overlay if needed."
         }
       });
 
@@ -117,41 +117,6 @@ const GenerateStep = () => {
     }
   };
 
-  // 刷新 Supabase 图片
-  const refreshSupabaseImages = async () => {
-    try {
-      await fetchImagesFromSupabase(
-        setIsLoadingImages,
-        setSupabaseImages,
-        setImageStorageMap,
-        setCoverImage,
-        setIntroImage,
-        setContentImage1,
-        setContentImage2,
-        setContentImage3,
-        setContentImage4,
-        setContentImage5,
-        setContentImage6,
-        setContentImage7,
-        setContentImage8,
-        setContentImage9,
-        setContentImage10,
-        toast
-      );
-    } catch (error) {
-      console.error('Error refreshing images:', error);
-      toast({
-        title: "Error refreshing images",
-        description: "Failed to load images from storage",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // 创建一个无参数的回调函数，用于传递给其他函数
-  const refreshImagesCallback = () => {
-    refreshSupabaseImages();
-  };
 
   // 内容重新生成函数封装
   const handleGenericContentRegeneration = async (index: number, style?: string) => {
@@ -178,7 +143,7 @@ const GenerateStep = () => {
       selectedStyle,
       setSelectedStyle,
       toast,
-      refreshImagesCallback,  // 使用无参数的回调函数
+      () => {}, // 移除refreshImagesCallback
       autoRenderContentImage  // 传入自动渲染函数
     );
   };
@@ -543,7 +508,7 @@ const GenerateStep = () => {
 
       // 刷新图片列表
       setTimeout(() => {
-        refreshImagesCallback();
+        loadImagesFromSupabase();
       }, 1000);
     } catch (err: any) {
       console.error("Error generating images:", err);
@@ -778,7 +743,7 @@ const GenerateStep = () => {
     const savedBlessingImage = localStorage.getItem('loveStoryBlessingImage_url');
 
     // 直接从Supabase加载所有图片
-    refreshImagesCallback();
+    loadImagesFromSupabase();
 
     if (savedAuthor) {
       setAuthorName(savedAuthor);
@@ -941,7 +906,7 @@ const GenerateStep = () => {
 
             // 延迟刷新图片列表，确保上传完成
             setTimeout(() => {
-              refreshImagesCallback();
+              loadImagesFromSupabase();
             }, 1000);
 
             toast({
@@ -963,16 +928,6 @@ const GenerateStep = () => {
         }
       }
     }
-  };
-
-  // 处理函数定义
-  const refreshImages = () => {
-    toast({
-      title: "Refreshing images",
-      description: "Loading latest images from Supabase Storage",
-    });
-
-    refreshImagesCallback();
   };
 
 
@@ -1071,7 +1026,7 @@ const GenerateStep = () => {
 
       // 刷新图片列表
       setTimeout(() => {
-        refreshImagesCallback();
+        loadImagesFromSupabase();
       }, 1000);
     } catch (error: any) {
       console.error('Error rendering blessing image:', error);
@@ -1087,26 +1042,15 @@ const GenerateStep = () => {
 
   return (
     <WizardStep
-      title="Your Love Story Images"
-      description="Here are your personalized love story images with accompanying text."
+      title="Create Your Story"
+      description="Here's your special illustrated book."
       previousStep="/create/love/love-story/debug-prompts"
       nextStep="/create/love/love-story/format"
       currentStep={7}
       totalSteps={8}
     >
       <div className="max-w-7xl mx-auto px-4">
-        {/* 添加 Refresh Images 按钮 */}
-        <div className="mb-8 flex justify-end gap-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={refreshImages}
-            disabled={isLoadingImages}
-            className="bg-[#FF7F50]/10 text-[#FF7F50] hover:bg-[#FF7F50]/20 border-[#FF7F50]/30"
-          >
-            {isLoadingImages ? 'Loading...' : 'Refresh Images'}
-          </Button>
-        </div>
+
 
         {/* Cover section */}
         <div className="mb-12">
@@ -1127,9 +1071,8 @@ const GenerateStep = () => {
           </div>
         </div>
 
-        {/* 祝福语部分 - 在Cover和Intro之间 */}
-        <div className="mb-16 border-t-2 border-gray-200 pt-10">
-          <h2 className="text-2xl font-bold mb-8">Special Blessing</h2>
+        {/* 祝福语部分 - 在Cover和Content之间 */}
+        <div className="mb-16">
 
           <div className="max-w-xl mx-auto">
             {/* 祝福语预览 */}
@@ -1170,9 +1113,9 @@ const GenerateStep = () => {
           </div>
         </div>
 
-        {/* 介绍部分 - 将Intro与其他Content分开 */}
+        {/* 内容部分 */}
         <div className="mb-16 border-t-2 border-gray-200 pt-10">
-          <h2 className="text-2xl font-bold mb-8">Introduction</h2>
+          <h2 className="text-2xl font-bold mb-8">Content</h2>
           <div className="mb-8">
             <ContentImageCard
               image={introImage}
@@ -1188,12 +1131,7 @@ const GenerateStep = () => {
 
 
           </div>
-        </div>
-
-        {/* 内容部分 */}
-        <div className="border-t-2 border-gray-200 pt-10">
-          <h2 className="text-2xl font-bold mb-8">Story Content</h2>
-          <div className="space-y-12">
+          <div className="space-y-12 mt-12">
             {/* 渲染内容图片 - 修改为传递左右图片URL */}
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((index) => {
               const image = imageStateMap[index];
@@ -1225,8 +1163,7 @@ const GenerateStep = () => {
 
         {/* 添加封底预览部分 */}
         <div className="mb-16 border-t-2 border-gray-200 pt-10">
-          <h2 className="text-2xl font-bold mb-4">Back Cover Preview</h2>
-          <p className="text-gray-500 mb-8">This is how your back cover will appear in the final book.</p>
+          <h2 className="text-2xl font-bold mb-8">Back Cover</h2>
 
           <BackCoverPreviewCard
             authorName={authorName}
