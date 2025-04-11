@@ -42,12 +42,12 @@ const OrderSuccess = () => {
   const loveStoryOrderId = localStorage.getItem('loveStoryOrderId');
   const funnyBiographyOrderId = localStorage.getItem('funnyBiographyOrderId');
   const orderId = loveStoryOrderId || funnyBiographyOrderId || 'WY-UNKNOWN';
-  
+
   // Get book title from localStorage (either love story or funny biography)
   const loveStoryBookTitle = localStorage.getItem('loveStoryBookTitle');
   const funnyBiographyBookTitle = localStorage.getItem('funnyBiographyBookTitle');
   const bookTitle = loveStoryBookTitle || funnyBiographyBookTitle || 'Your Custom Book';
-  
+
   return (
     <div className="min-h-screen bg-[#FFFAF5] flex items-center justify-center">
       <div className="text-center p-8 max-w-md w-full">
@@ -59,15 +59,15 @@ const OrderSuccess = () => {
         <h1 className="text-4xl font-bold mb-2">Order Successful!</h1>
         <p className="text-xl text-gray-600 mb-2">Thank you for your purchase</p>
         <p className="text-gray-500 mb-6">Order ID: {orderId}</p>
-        
+
         <div className="bg-white p-6 rounded-lg shadow-md mb-8">
           <p className="text-gray-600">We have received your order for:</p>
           <p className="font-bold text-lg my-2">{bookTitle}</p>
           <p className="text-gray-600 text-sm">Your book will be printed and shipped within 3-5 business days.</p>
         </div>
-        
-        <button 
-          onClick={() => window.location.href = '/'} 
+
+        <button
+          onClick={() => window.location.href = '/'}
           className="px-6 py-3 bg-[#FF7F50] text-white rounded-md hover:bg-[#FF7F50]/80 transition-colors w-full"
         >
           Return Home
@@ -80,21 +80,21 @@ const OrderSuccess = () => {
 // Layout wrapper component that conditionally renders the header
 const AppLayout = () => {
   const location = useLocation();
-  
+
   // Check if the current path is a book creation path
   const isCreationPath = location.pathname.includes('/create/');
-  
+
   return (
     <div className="min-h-screen flex flex-col">
       {!isCreationPath && <Header />}
       <main className={`flex-grow ${isCreationPath ? 'pt-0' : 'pt-0'}`}>
         <Routes>
           <Route path="/" element={<Home />} />
-          
+
           {/* Category Landing Pages */}
           <Route path="/friends" element={<FriendsLanding />} />
           <Route path="/love" element={<LoveLanding />} />
-          
+
           {/* Funny Biography Routes */}
           <Route path="/create/friends/funny-biography/author" element={<FunnyBiographyAuthorStep />} />
           <Route path="/create/friends/funny-biography/stories" element={<FunnyBiographyStoriesStep />} />
@@ -114,13 +114,13 @@ const AppLayout = () => {
           <Route path="/create/love/love-story/debug-prompts" element={<DebugPromptsStep />} />
           <Route path="/create/love/love-story/generate" element={<LoveStoryGenerateStep />} />
           <Route path="/create/love/love-story/format" element={<LoveStoryFormatStep />} />
-          
+
           {/* Order Routes */}
           <Route path="/order-success" element={<OrderSuccess />} />
           <Route path="/orders" element={<OrdersPage />} />
           <Route path="/verify-order" element={<VerifyOrder />} />
           <Route path="/orders/history" element={<OrderHistory />} />
-          
+
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
@@ -131,6 +131,7 @@ const AppLayout = () => {
 
 const App = () => {
   const [queryClient] = useState(() => new QueryClient());
+
 
   return (
     <QueryClientProvider client={queryClient}>

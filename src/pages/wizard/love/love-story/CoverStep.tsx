@@ -243,8 +243,8 @@ const LoveStoryCoverStep = () => {
     localStorage.setItem('loveStoryCoverStyle', styleId);
   };
 
-  // 编辑封面功能
-  const handleEditCover = () => {
+  // 编辑标题功能
+  const handleEditTitle = () => {
     setIsEditTitleDialogOpen(true);
   };
 
@@ -1399,7 +1399,7 @@ const LoveStoryCoverStep = () => {
 
   return (
     <WizardStep
-      title="Design Your Love Story Cover"
+      title="Design your book cover"
       description=""
       previousStep="/create/love/love-story/ideas"
       currentStep={6}
@@ -1477,18 +1477,16 @@ const LoveStoryCoverStep = () => {
           <div className="flex justify-center gap-2">
             <Button
               variant="secondary"
-              onClick={handleEditCover}
+              onClick={handleEditTitle}
               disabled={isGeneratingCover}
             >
-              <Edit className="w-4 h-4 mr-2" />
-              Edit cover
+              Edit title
             </Button>
             <Button
               variant="secondary"
               onClick={handleRegenerateCover}
               disabled={isGeneratingCover}
             >
-              <RefreshCw className={`w-4 h-4 mr-2 ${isGeneratingCover ? 'animate-spin' : ''}`} />
               {isGeneratingCover ? 'Generating...' : 'Regenerate'}
             </Button>
           </div>
@@ -1518,70 +1516,62 @@ const LoveStoryCoverStep = () => {
 
         {/* 添加标题选择对话框 */}
         <Dialog open={isEditTitleDialogOpen} onOpenChange={setIsEditTitleDialogOpen}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-lg">
             <DialogHeader>
-              <DialogTitle>Choose a Book Title</DialogTitle>
-              <DialogDescription>
-                Select a title for your love story book
-              </DialogDescription>
+              <DialogTitle className="text-2xl font-bold">Choose a Book Title</DialogTitle>
             </DialogHeader>
 
-            <div className="space-y-4 py-4">
-              <div className="grid grid-cols-1 gap-3">
+            <div className="space-y-5 py-5">
+              <div className="grid grid-cols-1 gap-4">
                 <div
                   onClick={() => handleTitleSelect(`${recipientName}'s amazing adventure`)}
-                  className="flex items-center p-3 rounded-md cursor-pointer transition-all bg-gray-50 hover:bg-gray-100 border border-gray-200"
+                  className="flex items-center p-4 rounded-md cursor-pointer transition-all bg-gray-50 hover:bg-gray-100 border border-gray-200"
                 >
                   <div className="flex-1">
-                    <h4 className="font-medium text-gray-900">{recipientName}'s amazing adventure</h4>
-                    <p className="text-sm text-gray-500 mt-1">{recipientName}'s 在第一行, amazing adventure 在第二行</p>
+                    <h4 className="font-medium text-gray-900 text-lg">{recipientName}'s amazing adventure</h4>
                   </div>
                 </div>
 
                 <div
                   onClick={() => handleTitleSelect(`${authorName}'s wonderful ${recipientName}`)}
-                  className="flex items-center p-3 rounded-md cursor-pointer transition-all bg-gray-50 hover:bg-gray-100 border border-gray-200"
+                  className="flex items-center p-4 rounded-md cursor-pointer transition-all bg-gray-50 hover:bg-gray-100 border border-gray-200"
                 >
                   <div className="flex-1">
-                    <h4 className="font-medium text-gray-900">{authorName}'s wonderful {recipientName}</h4>
-                    <p className="text-sm text-gray-500 mt-1">{authorName}'s 在第一行, wonderful 在第二行, {recipientName} 在第三行</p>
+                    <h4 className="font-medium text-gray-900 text-lg">{authorName}'s wonderful {recipientName}</h4>
                   </div>
                 </div>
 
                 <div
                   onClick={() => handleTitleSelect(`THE MAGIC IN ${recipientName}`)}
-                  className="flex items-center p-3 rounded-md cursor-pointer transition-all bg-gray-50 hover:bg-gray-100 border border-gray-200"
+                  className="flex items-center p-4 rounded-md cursor-pointer transition-all bg-gray-50 hover:bg-gray-100 border border-gray-200"
                 >
                   <div className="flex-1">
-                    <h4 className="font-medium text-gray-900">THE MAGIC IN {recipientName}</h4>
-                    <p className="text-sm text-gray-500 mt-1">THE MAGIC IN 在第一行, {recipientName} 在第二行</p>
+                    <h4 className="font-medium text-gray-900 text-lg">THE MAGIC IN {recipientName}</h4>
                   </div>
                 </div>
 
                 <div
                   onClick={() => handleTitleSelect(`${recipientName} I love you`)}
-                  className="flex items-center p-3 rounded-md cursor-pointer transition-all bg-gray-50 hover:bg-gray-100 border border-gray-200"
+                  className="flex items-center p-4 rounded-md cursor-pointer transition-all bg-gray-50 hover:bg-gray-100 border border-gray-200"
                 >
                   <div className="flex-1">
-                    <h4 className="font-medium text-gray-900">{recipientName} I love you</h4>
-                    <p className="text-sm text-gray-500 mt-1">{recipientName} 在第一行, I love you 在第二行</p>
+                    <h4 className="font-medium text-gray-900 text-lg">{recipientName} I love you</h4>
                   </div>
                 </div>
 
                 <div
                   onClick={() => handleTitleSelect(`The little book of ${recipientName}`)}
-                  className="flex items-center p-3 rounded-md cursor-pointer transition-all bg-gray-50 hover:bg-gray-100 border border-gray-200"
+                  className="flex items-center p-4 rounded-md cursor-pointer transition-all bg-gray-50 hover:bg-gray-100 border border-gray-200"
                 >
                   <div className="flex-1">
-                    <h4 className="font-medium text-gray-900">The little book of {recipientName}</h4>
-                    <p className="text-sm text-gray-500 mt-1">The little book of 在第一行, {recipientName} 在第二行</p>
+                    <h4 className="font-medium text-gray-900 text-lg">The little book of {recipientName}</h4>
                   </div>
                 </div>
               </div>
             </div>
 
             <div className="flex justify-end">
-              <Button variant="outline" onClick={() => setIsEditTitleDialogOpen(false)}>
+              <Button variant="outline" className="text-base px-6 py-2 bg-[#FF7F50] text-white hover:bg-[#FF6B35] hover:text-white border-[#FF7F50] hover:border-[#FF6B35]" onClick={() => setIsEditTitleDialogOpen(false)}>
                 Cancel
               </Button>
             </div>

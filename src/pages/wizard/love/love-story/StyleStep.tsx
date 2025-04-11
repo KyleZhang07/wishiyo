@@ -24,6 +24,8 @@ const LoveStoryStyleStep = () => {
     if (savedTone) {
       setSelectedTone(savedTone);
     }
+
+
   }, []);
 
   const handleToneSelect = (tone: string) => {
