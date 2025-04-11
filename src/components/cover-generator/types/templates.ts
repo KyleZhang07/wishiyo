@@ -254,19 +254,19 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     name: 'Modern Green',
     backgroundColor: '#E5DDCA',
     titleStyle: {
-      color: '#D4AF37',
+      color: '#D7B33E',
       fontSize: '2.5rem',
       fontWeight: 'bold',
       textAlign: 'center',
       offsetY: 0.3
     },
     subtitleStyle: {
-      color: '#FFFFFF',
+      color: '#A3896B',
       fontSize: '1.25rem',
       fontWeight: 'normal'
     },
     authorStyle: {
-      color: '#FFFFFF',
+      color: '#A3896B',
       fontSize: '1.8rem',
       fontWeight: 'normal'
     },
@@ -277,12 +277,12 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     },
     spineStyle: {
       backgroundColor: '#E5DDCA',
-      titleColor: '#D4AF37',
-      authorColor: '#FFFFFF'
+      titleColor: '#D7B33E',
+      authorColor: '#A3896B'
     },
     backCoverStyle: {
       backgroundColor: '#E5DDCA',
-      textColor: '#FFFFFF',
+      textColor: '#A3896B',
       summaryFontSize: '1rem'
     }
   },
@@ -324,6 +324,8 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     badgeStyle: {
       backgroundColor: '#FFC300',
       textColor: '#000000'
-    }
+    },
+    bottomAreaColor: '#4361EE',
+    bottomAreaHeight: 0.15
   }
 };

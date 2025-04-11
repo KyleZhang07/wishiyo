@@ -556,7 +556,7 @@ const CanvasCoverPreview = ({
       ctx.font = `bold 36px ${oswaldFont}`; // 从30px放大到36px
       ctx.fillStyle = '#FFFFFF'; // 白色文字
       ctx.textAlign = 'center';
-      ctx.fillText(authorName, width / 2, 60); // 位置从85上移到60
+      ctx.fillText(authorName, width / 2, 80); // 位置从60下移到80
 
       // 在底部绘制蓝色描述区域 - 再次缩小蓝色区域高度
       const blueHeight = height * 0.15; // 从0.2缩小到0.15
@@ -702,13 +702,13 @@ const CanvasCoverPreview = ({
 
       // 顶部绘制作者名字
       ctx.font = `bold 42px ${resolvedFont}`; // 添加粗体
-      ctx.fillStyle = '#FFFFFF';
+      ctx.fillStyle = '#A3896B'; // 将白色改为棕褐色
       ctx.textAlign = 'center';
       ctx.fillText(authorName.toUpperCase(), width / 2, 90); // Y位置从70下移到90
 
       // 封面中央绘制大号金色标题
       const titleFont = `bold 70px ${resolvedFont}`;
-      const titleColor = '#D4AF37';
+      const titleColor = '#D7B33E'; // 使用更柔和的金铜色调
       const titleLineHeight = 90;
       const titleArea = { x: width * 0.1, y: height * 0.6, width: width * 0.8, height: height * 0.25 }; // 下移标题区域 (y from 0.5 to 0.6, height adjusted)
 
@@ -732,11 +732,11 @@ const CanvasCoverPreview = ({
       // Draw title using helper function
       drawTextInArea(ctx, titleLines.map(l => l.toUpperCase()), titleArea, titleFont, titleColor, titleLineHeight, 'center');
 
-      // 在底部绘制白色副标题
+      // 在底部绘制副标题
       const subtitleFont = `normal 26px ${resolvedFont}`; // 从28px减小到26px (折中方案)
-      const subtitleColor = '#FFFFFF';
+      const subtitleColor = '#A3896B'; // 将白色改为棕褐色
       const subtitleLineHeight = 34; // 从36减小到34
-      const subtitleArea = { x: width * 0.075, y: height * 0.8, width: width * 0.85, height: height * 0.15 }; // Define subtitle area near bottom
+      const subtitleArea = { x: width * 0.075, y: height * 0.81, width: width * 0.85, height: height * 0.15 }; // 位置从0.82调整到0.81
 
       // Wrap subtitle text
       ctx.font = subtitleFont; // Set font for measurement
@@ -1027,6 +1027,9 @@ const CanvasCoverPreview = ({
     if (template.id === 'minimal') {
       // 对于 minimal 样式，使用纯黑色作为 spine 背景
       ctx.fillStyle = '#000000';
+    } else if (template.id === 'bestseller') {
+      // 对于 bestseller 样式，使用蓝色作为 spine 背景，与封面下方描述部分的蓝色一致
+      ctx.fillStyle = '#4361EE';
     } else {
       ctx.fillStyle = template.backgroundColor;
     }
@@ -1069,7 +1072,12 @@ const CanvasCoverPreview = ({
     let authorStartY = topMargin;
 
     // Draw each character of the author name vertically with rotation
-    ctx.fillStyle = template.spineStyle.authorColor || '#FFFFFF';
+    // 如果是vibrant-green样式，使用棕褐色
+    if (template.id === 'vibrant-green') {
+      ctx.fillStyle = '#A3896B';
+    } else {
+      ctx.fillStyle = template.spineStyle.authorColor || '#FFFFFF';
+    }
 
     authorChars.forEach(char => {
       ctx.save();
@@ -1193,7 +1201,12 @@ const CanvasCoverPreview = ({
 
       // 设置标题
       ctx.textAlign = template.backCoverStyle.textAlign || 'left';
-      ctx.fillStyle = template.backCoverStyle.textColor || '#FFFFFF';
+      // 如果是vibrant-green样式，使用棕褐色
+      if (template.id === 'vibrant-green') {
+        ctx.fillStyle = '#A3896B';
+      } else {
+        ctx.fillStyle = template.backCoverStyle.textColor || '#FFFFFF';
+      }
 
       const x = Math.round(marginLeft);
       let yPosition = marginTop;
@@ -1211,7 +1224,48 @@ const CanvasCoverPreview = ({
         } else {
           ctx.font = `bold ${template.backCoverStyle.titleFontSize || 34}px ${resolvedFont}`;
         }
-        ctx.fillText(`Praises for ${coverTitle}`, x, yPosition);
+
+        // 对于第一、三、五种样式，使用文本换行处理标题
+        if (template.id === 'classic' || template.id === 'vibrant-green' || template.id === 'pastel-beige') {
+          const titleText = `Praises for ${coverTitle}`;
+          const availableTitleWidth = width - marginLeft * 2.3; // 与正文相同的宽度
+
+          // 测量标题宽度
+          const titleWidth = ctx.measureText(titleText).width;
+
+          if (titleWidth > availableTitleWidth) {
+            // 需要换行
+            const words = titleText.split(' ');
+            let line = '';
+            let firstLine = true;
+
+            for (let i = 0; i < words.length; i++) {
+              const testLine = line + words[i] + ' ';
+              const testWidth = ctx.measureText(testLine).width;
+
+              if (testWidth > availableTitleWidth && i > 0) {
+                // 绘制当前行
+                ctx.fillText(line.trim(), x, yPosition);
+                line = words[i] + ' ';
+                yPosition += template.backCoverStyle.titleSpacing || 40;
+                firstLine = false;
+              } else {
+                line = testLine;
+              }
+            }
+
+            // 绘制最后一行
+            if (line.trim() !== '') {
+              ctx.fillText(line.trim(), x, yPosition);
+            }
+          } else {
+            // 不需要换行，直接绘制
+            ctx.fillText(titleText, x, yPosition);
+          }
+        } else {
+          // 其他样式保持原样
+          ctx.fillText(`Praises for ${coverTitle}`, x, yPosition);
+        }
 
         // 使用模板中的行间距配置，如果没有则使用默认值
         yPosition += template.backCoverStyle.titleSpacing || 40;
@@ -1304,11 +1358,13 @@ const CanvasCoverPreview = ({
 
     // Draw book info at the bottom - 确保使用整数坐标
     ctx.textAlign = 'left';
-    // 只有minimal样式使用黑色文本，其他样式使用白色
+    // 根据样式设置文本颜色
     if (template.id === 'minimal') {
       ctx.fillStyle = '#000000'; // 黑色文本
+    } else if (template.id === 'vibrant-green') {
+      ctx.fillStyle = '#000000'; // 第三种样式使用黑色文本
     } else {
-      ctx.fillStyle = '#FFFFFF'; // 白色文本
+      ctx.fillStyle = '#FFFFFF'; // 其他样式使用白色文本
     }
 
     // 为minimal样式使用Open Sans Light
