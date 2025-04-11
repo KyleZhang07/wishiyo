@@ -230,8 +230,45 @@ const CanvasCoverPreview = ({
       : getFallbackFont(selectedFont);
 
     // Draw background
-    ctx.fillStyle = template.backgroundColor;
-    ctx.fillRect(0, 0, width, height);
+    if (template.id === 'classic') {
+      // 先填充纯黑色背景
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, width, height);
+
+      // 只在底部三分之一区域添加黑红渐变
+      const gradientHeight = height * 0.33; // 只占页面的三分之一
+      const gradient = ctx.createLinearGradient(0, height - gradientHeight, 0, height);
+      gradient.addColorStop(0, '#000000'); // 上部黑色
+      gradient.addColorStop(1, '#9B0000'); // 底部深红色
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, height - gradientHeight, width, gradientHeight);
+
+      // 在顶部添加金红色的细微星点效果
+      const topParticleArea = height * 0.2; // 顶部区域高度
+      const particleCount = 150; // 粒子数量
+
+      // 创建从上到下的透明度渐变
+      const particleGradient = ctx.createLinearGradient(0, 0, 0, topParticleArea);
+      particleGradient.addColorStop(0, 'rgba(255, 100, 50, 0.4)'); // 顶部金红色，较高透明度
+      particleGradient.addColorStop(1, 'rgba(255, 100, 50, 0)'); // 底部完全透明
+
+      for (let i = 0; i < particleCount; i++) {
+        const x = Math.random() * width;
+        const y = Math.random() * topParticleArea;
+        const radius = Math.random() * 1.2 + 0.3; // 粒子半径在 0.3-1.5 之间
+
+        // 根据粒子位置计算透明度
+        const opacity = 0.4 * (1 - y / topParticleArea); // 越靠近顶部越不透明
+
+        ctx.fillStyle = `rgba(255, ${100 + Math.random() * 50}, ${20 + Math.random() * 30}, ${opacity})`;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else {
+      ctx.fillStyle = template.backgroundColor;
+      ctx.fillRect(0, 0, width, height);
+    }
 
     // Define wrapText function here to be available for all styles
     const wrapText = (context: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) => {
@@ -495,9 +532,9 @@ const CanvasCoverPreview = ({
 
     // 专门为Modern/Green风格添加自定义图片处理
     if (image?.element && (template.id === 'modern' || template.id === 'vibrant-green')) {
-      // 计算图片区域 - 略微放大第三种样式的照片
-      const imgSizeMultiplier = template.id === 'vibrant-green' ? 0.8 : 0.7; // 对于 vibrant-green 样式使用更大的尺寸
-      const imgSize = width * imgSizeMultiplier; // 图片大小为宽度的70%成80%
+      // 计算图片区域 - 缩小第三种样式的照片
+      const imgSizeMultiplier = 0.75; // 对所有样式使用相同的尺寸
+      const imgSize = width * imgSizeMultiplier; // 图片大小为宽度的75%
       const centerX = width / 2;
       const centerY = height * 0.35; // 将图片中心点放在页面35%的位置
 
@@ -677,10 +714,10 @@ const CanvasCoverPreview = ({
       if (image?.element) {
         ctx.save();
 
-        // 计算图片尺寸 - 略微缩小图片
+        // 计算图片尺寸 - 进一步缩小图片
         const imgAspect = image.element.width / image.element.height;
         let drawWidth, drawHeight;
-        const scaleFactor = 0.85; // 缩小图片至原始大小的85%
+        const scaleFactor = 0.75; // 缩小图片至原始大小的75%
 
         // 让图片覆盖封面上部
         if (imgAspect > 1) {
@@ -920,6 +957,25 @@ const CanvasCoverPreview = ({
         ? 'Montserrat, sans-serif'
         : 'Arial, Helvetica, sans-serif';
 
+      // 添加顶部逐渐变灰的渐变，比原来更灰一些
+      const topGrayGradient = ctx.createLinearGradient(0, 0, 0, height * 0.33);
+      topGrayGradient.addColorStop(0, '#E3E3E3'); // 在白色和灰色之间的折中颜色
+      topGrayGradient.addColorStop(1, 'rgba(227, 227, 227, 0)'); // 逐渐透明
+
+      ctx.fillStyle = topGrayGradient;
+      ctx.fillRect(0, 0, width, height * 0.33); // 顶部1/3区域
+
+      // 添加像素颜粒纹理
+      ctx.globalAlpha = 0.05; // 非常淡的颜粒
+      for (let i = 0; i < width * height * 0.01; i++) {
+        const x = Math.random() * width;
+        const y = Math.random() * height;
+        const size = Math.random() * 1.5;
+        ctx.fillStyle = Math.random() > 0.5 ? '#FFFFFF' : '#000000';
+        ctx.fillRect(x, y, size, size);
+      }
+      ctx.globalAlpha = 1.0;
+
       // 左上角绘制作者名字
       ctx.font = `bold 60px ${montserratFont}`;
       ctx.fillStyle = '#FFFFFF'; // 设置作者名称为白色
@@ -1010,23 +1066,30 @@ const CanvasCoverPreview = ({
 
       // 可爱粉色风格布局
 
-      // Draw decorative elements
-      ctx.fillStyle = '#FFDBEE'; // Light pink for decorations
-      drawCloud(ctx, 100, 100, 50); // Top-left small cloud
-      drawCloud(ctx, width - 100, 120, 40); // Top-right small cloud
-      drawStar(ctx, 150, height - 150, 20); // Bottom small stars
-      drawStar(ctx, width - 150, height - 200, 25);
-      function drawCloud(ctx: CanvasRenderingContext2D, x: number, y: number, size: number) {
-        ctx.beginPath();
-        ctx.arc(x, y, size, 0, Math.PI * 2);
-        ctx.arc(x + size * 0.6, y - size * 0.3, size * 0.7, 0, Math.PI * 2);
-        ctx.arc(x + size * 1.1, y, size * 0.8, 0, Math.PI * 2);
-        ctx.fill();
-      }
+      // 添加顶部渐变：淡紫 → 粉色（天空感 + 层次感）
+      const topGradient = ctx.createLinearGradient(0, 0, 0, height * 0.33);
+      topGradient.addColorStop(0, '#EBD8FF'); // 淡紫色
+      topGradient.addColorStop(1, '#FFC0CB'); // 原始的粉色 #FFC0CB
+
+      ctx.fillStyle = topGradient;
+      ctx.fillRect(0, 0, width, height * 0.33);
+
+      // 添加底部渐变：粉 → 樱花白 - 从1/3处开始而不是2/3
+      const bottomGradient = ctx.createLinearGradient(0, height * 0.33, 0, height);
+      bottomGradient.addColorStop(0, '#FFC0CB'); // 原始的粉色 #FFC0CB
+      bottomGradient.addColorStop(1, '#FFEFF4'); // 樱花白
+
+      ctx.fillStyle = bottomGradient;
+      ctx.fillRect(0, height * 0.33, width, height * 0.67);
+
+      // 添加更多星星装饰
+      ctx.fillStyle = '#FFF2B3'; // 更浅的黄色星星
+
+      // 绘制四角星函数 - 旋转45度
       function drawStar(ctx: CanvasRenderingContext2D, x: number, y: number, size: number) {
         ctx.beginPath();
-        for (let i = 0; i < 5; i++) {
-          const angle = (i * 2 * Math.PI) / 5 - Math.PI / 2;
+        for (let i = 0; i < 4; i++) {
+          const angle = (i * 2 * Math.PI) / 4; // 四角星角度 - 旋转45度
           const outerX = x + size * Math.cos(angle);
           const outerY = y + size * Math.sin(angle);
           if (i === 0) {
@@ -1034,7 +1097,7 @@ const CanvasCoverPreview = ({
           } else {
             ctx.lineTo(outerX, outerY);
           }
-          const innerAngle = angle + Math.PI / 5;
+          const innerAngle = angle + Math.PI / 4; // 四角星内角度
           const innerX = x + size * 0.4 * Math.cos(innerAngle);
           const innerY = y + size * 0.4 * Math.sin(innerAngle);
           ctx.lineTo(innerX, innerY);
@@ -1043,11 +1106,32 @@ const CanvasCoverPreview = ({
         ctx.fill();
       }
 
-      // 上部绘制标题
+      // 添加多个星星 - 减小星星大小
+      drawStar(ctx, 80, 60, 12); // 左上角
+      drawStar(ctx, width - 100, 80, 10); // 右上角
+      drawStar(ctx, 150, height - 150, 12); // 左下角
+      drawStar(ctx, width - 150, height - 200, 12); // 右下角
+      drawStar(ctx, width / 2 - 100, 120, 8); // 上方中间
+      drawStar(ctx, width / 2 + 150, 200, 8); // 上方中间 - 放大到 8
+
+      // 绘制云朵
+      ctx.fillStyle = '#FFFFFF'; // 白色云朵
+      function drawCloud(ctx: CanvasRenderingContext2D, x: number, y: number, size: number) {
+        ctx.beginPath();
+        ctx.arc(x, y, size, 0, Math.PI * 2);
+        ctx.arc(x + size * 0.6, y - size * 0.3, size * 0.7, 0, Math.PI * 2);
+        ctx.arc(x + size * 1.1, y, size * 0.8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      drawCloud(ctx, 100, 100, 50); // 左上角云朵
+      drawCloud(ctx, width - 100, 120, 40); // 右上角云朵
+
+      // 上部绘制标题 - 调整到height*0.1
       const titleFont = `bold 65px ${comicFont}`;
       const titleColor = '#8A2BE2'; // Purple title
       const titleLineHeight = 70;
-      const titleArea = { x: width * 0.1, y: height * 0.05, width: width * 0.8, height: height * 0.25 }; // 上移标题区域 (y from 0.1 to 0.05, height adjusted)
+      const titleArea = { x: width * 0.1, y: height * 0.1, width: width * 0.8, height: height * 0.25 }; // 调整到height*0.1
 
       // Wrap title text
       ctx.font = titleFont; // Set font for measurement
@@ -1069,11 +1153,11 @@ const CanvasCoverPreview = ({
       // Draw title using helper function
       drawTextInArea(ctx, titleLines.map(line => line.toUpperCase()), titleArea, titleFont, titleColor, titleLineHeight, 'center');
 
-      // 标题下方描述
+      // 标题下方描述 - 调整到height*0.3
       const subtitleFont = `normal 26px ${comicFont}`; // 从28px减小到26px (折中方案)
       const subtitleColor = '#9400D3'; // Dark purple text
       const subtitleLineHeight = 33; // 从35减小到33 (折中方案)
-      const subtitleArea = { x: width * 0.1, y: height * 0.25, width: width * 0.8, height: height * 0.15 }; // 副标题区域上移 (y from 0.28 to 0.25)
+      const subtitleArea = { x: width * 0.1, y: height * 0.3, width: width * 0.8, height: height * 0.15 }; // 调整到height*0.3
 
       // Wrap subtitle text
       ctx.font = subtitleFont; // Set font for measurement
@@ -1083,21 +1167,22 @@ const CanvasCoverPreview = ({
       // Draw subtitle using helper function
       drawTextInArea(ctx, lines, subtitleArea, subtitleFont, subtitleColor, subtitleLineHeight, 'center');
 
-      // Draw image (existing logic)
+      // Draw image - 将图片下移，与底边贴合
       if (image?.element) {
-        const imgY = Math.round(height * 0.65);
         const aspectRatio = image.element.width / image.element.height;
-        const imgWidth = Math.min(width * 0.65, height * 0.45 * aspectRatio);
+        const imgWidth = Math.min(width * 0.75, height * 0.55 * aspectRatio); // 进一步放大图片
         const imgHeight = imgWidth / aspectRatio;
         const drawX = (width - imgWidth) / 2;
-        const drawY = imgY - imgHeight / 2;
+        // 将图片再上移一些
+        const drawY = height - imgHeight - 80; // 上移80像素
         ctx.drawImage(image.element, 0, 0, image.element.width, image.element.height, drawX, drawY, imgWidth, imgHeight);
       }
-      // Draw author name (slightly move up)
+
+      // Draw author name - 再向上移动一点
       ctx.font = `bold 35px ${comicFont}`;
       ctx.fillStyle = '#8A2BE2'; // Purple text
-      ctx.textAlign = 'center';
-      ctx.fillText(authorName, width / 2, height - 90); // 略微上移 (from height - 70 to height - 80)
+      ctx.textAlign = 'right'; // 右对齐
+      ctx.fillText(authorName, width - 80, height - 120); // 再向上移动一点
     } else {
       // 原有的标准封面绘制逻辑
       // Add a semi-transparent overlay
@@ -1193,7 +1278,37 @@ const CanvasCoverPreview = ({
       : getFallbackFont(selectedFont);
 
     // 设置背景色
-    if (template.id === 'minimal') {
+    if (template.id === 'classic') {
+      // 对于 classic 样式，先填充纯黑色背景
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, width, height);
+
+      // 只在底部三分之一区域添加黑红渐变
+      const gradientHeight = height * 0.33; // 只占页面的三分之一
+      const spineGradient = ctx.createLinearGradient(0, height - gradientHeight, 0, height);
+      spineGradient.addColorStop(0, '#000000'); // 上部黑色
+      spineGradient.addColorStop(1, '#9B0000'); // 底部深红色
+      ctx.fillStyle = spineGradient;
+      ctx.fillRect(0, height - gradientHeight, width, gradientHeight);
+
+      // 在顶部添加金红色的细微星点效果
+      const topParticleArea = height * 0.2; // 顶部区域高度
+      const particleCount = 80; // 粒子数量 - 书脉宽度小，所以减少粒子数量
+
+      for (let i = 0; i < particleCount; i++) {
+        const x = Math.random() * width;
+        const y = Math.random() * topParticleArea;
+        const radius = Math.random() * 0.8 + 0.2; // 粒子半径在 0.2-1.0 之间，比封面的粒子小
+
+        // 根据粒子位置计算透明度
+        const opacity = 0.4 * (1 - y / topParticleArea); // 越靠近顶部越不透明
+
+        ctx.fillStyle = `rgba(255, ${100 + Math.random() * 50}, ${20 + Math.random() * 30}, ${opacity})`;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (template.id === 'minimal') {
       // 对于 minimal 样式，使用纯黑色作为 spine 背景
       ctx.fillStyle = '#000000';
     } else if (template.id === 'bestseller') {
@@ -1277,6 +1392,18 @@ const CanvasCoverPreview = ({
 
       // 恢复透明度
       ctx.globalAlpha = 1.0;
+    } else if (template.id === 'pastel-beige') {
+      // 为第五种样式的书脉添加柔亮竖向渐变 - 降低紫色程度，更接近粉色
+      const spineGradient = ctx.createLinearGradient(0, 0, width, 0);
+      spineGradient.addColorStop(0, '#E78FC1'); // 更接近粉色的淡紫色
+      spineGradient.addColorStop(1, '#FFC0CB'); // 原始粉色
+
+      ctx.fillStyle = spineGradient;
+      ctx.fillRect(0, 0, width, height);
+
+      // 添加星星装饰
+      ctx.fillStyle = '#FFFFFF';
+      // 移除spine上的星星装饰
     } else {
       ctx.fillStyle = template.backgroundColor;
       ctx.fillRect(0, 0, width, height);
@@ -1423,10 +1550,48 @@ const CanvasCoverPreview = ({
       : getFallbackFont(selectedFont);
 
     // 设置背景色
-    if (template.id === 'minimal') {
+    if (template.id === 'classic') {
+      // 对于 classic 样式，先填充纯黑色背景
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, width, height);
+
+      // 只在底部三分之一区域添加黑红渐变
+      const gradientHeight = height * 0.33; // 只占页面的三分之一
+      const backGradient = ctx.createLinearGradient(0, height - gradientHeight, 0, height);
+      backGradient.addColorStop(0, '#000000'); // 上部黑色
+      backGradient.addColorStop(1, '#9B0000'); // 底部深红色
+      ctx.fillStyle = backGradient;
+      ctx.fillRect(0, height - gradientHeight, width, gradientHeight);
+
+      // 在顶部添加金红色的细微星点效果
+      const topParticleArea = height * 0.2; // 顶部区域高度
+      const particleCount = 150; // 粒子数量
+
+      for (let i = 0; i < particleCount; i++) {
+        const x = Math.random() * width;
+        const y = Math.random() * topParticleArea;
+        const radius = Math.random() * 1.2 + 0.3; // 粒子半径在 0.3-1.5 之间
+
+        // 根据粒子位置计算透明度
+        const opacity = 0.4 * (1 - y / topParticleArea); // 越靠近顶部越不透明
+
+        ctx.fillStyle = `rgba(255, ${100 + Math.random() * 50}, ${20 + Math.random() * 30}, ${opacity})`;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (template.id === 'minimal') {
       // 对于 minimal 样式，使用灰色作为 back cover 背景
       ctx.fillStyle = '#ECECEC';
       ctx.fillRect(0, 0, width, height);
+
+      // 添加底部渐变：深灰 → 当前灰色（与封面保持一致）
+      const backBottomGradient = ctx.createLinearGradient(0, height * 0.67, 0, height);
+      backBottomGradient.addColorStop(0, '#ECECEC'); // 当前灰色
+      backBottomGradient.addColorStop(1, '#999999'); // 深灰色
+
+      ctx.fillStyle = backBottomGradient;
+      ctx.fillRect(0, height * 0.67, width, height * 0.33); // 底部向上1/3
     } else if (template.id === 'bestseller') {
       // 对于 bestseller 样式，使用更黑的星空背景
       const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
@@ -1506,6 +1671,69 @@ const CanvasCoverPreview = ({
 
       // 恢复透明度
       ctx.globalAlpha = 1.0;
+    } else if (template.id === 'pastel-beige') {
+      // 为 back cover 添加与封面相同的渐变效果
+
+      // 添加顶部渐变：淡紫 → 粉色（天空感 + 层次感）
+      const topGradient = ctx.createLinearGradient(0, 0, 0, height * 0.33);
+      topGradient.addColorStop(0, '#EBD8FF'); // 淡紫色
+      topGradient.addColorStop(1, '#FFC0CB'); // 原始的粉色 #FFC0CB
+
+      ctx.fillStyle = topGradient;
+      ctx.fillRect(0, 0, width, height * 0.33);
+
+      // 添加底部渐变：粉 → 樱花白 - 从1/3处开始而不是2/3
+      const bottomGradient = ctx.createLinearGradient(0, height * 0.33, 0, height);
+      bottomGradient.addColorStop(0, '#FFC0CB'); // 原始的粉色 #FFC0CB
+      bottomGradient.addColorStop(1, '#FFEFF4'); // 樱花白
+
+      ctx.fillStyle = bottomGradient;
+      ctx.fillRect(0, height * 0.33, width, height * 0.67);
+
+      // 添加星星装饰
+      ctx.fillStyle = '#FFF2B3'; // 更浅的黄色星星
+
+      // 绘制四角星函数 - 旋转45度
+      function drawStar(ctx: CanvasRenderingContext2D, x: number, y: number, size: number) {
+        ctx.beginPath();
+        for (let i = 0; i < 4; i++) {
+          const angle = (i * 2 * Math.PI) / 4; // 四角星角度 - 旋转45度
+          const outerX = x + size * Math.cos(angle);
+          const outerY = y + size * Math.sin(angle);
+          if (i === 0) {
+            ctx.moveTo(outerX, outerY);
+          } else {
+            ctx.lineTo(outerX, outerY);
+          }
+          const innerAngle = angle + Math.PI / 4; // 四角星内角度
+          const innerX = x + size * 0.4 * Math.cos(innerAngle);
+          const innerY = y + size * 0.4 * Math.sin(innerAngle);
+          ctx.lineTo(innerX, innerY);
+        }
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // 添加多个星星 - 减小星星大小
+      drawStar(ctx, 80, 60, 12); // 左上角
+      drawStar(ctx, width - 100, 80, 10); // 右上角
+      drawStar(ctx, 150, height - 150, 12); // 左下角
+      drawStar(ctx, width - 150, height - 200, 12); // 右下角
+      drawStar(ctx, width / 2 - 100, 120, 8); // 上方中间
+      drawStar(ctx, width / 2 + 150, 200, 8); // 上方中间 - 放大到 8
+
+      // 绘制云朵
+      ctx.fillStyle = '#FFFFFF'; // 白色云朵
+      function drawCloud(ctx: CanvasRenderingContext2D, x: number, y: number, size: number) {
+        ctx.beginPath();
+        ctx.arc(x, y, size, 0, Math.PI * 2);
+        ctx.arc(x + size * 0.6, y - size * 0.3, size * 0.7, 0, Math.PI * 2);
+        ctx.arc(x + size * 1.1, y, size * 0.8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      drawCloud(ctx, 100, 100, 50); // 左上角云朵
+      drawCloud(ctx, width - 100, 120, 40); // 右上角云朵
     } else {
       ctx.fillStyle = template.backgroundColor;
       ctx.fillRect(0, 0, width, height);
@@ -1555,8 +1783,8 @@ const CanvasCoverPreview = ({
           ctx.font = `bold ${template.backCoverStyle.titleFontSize || 34}px ${resolvedFont}`;
         }
 
-        // 对于第一、三、五种样式，使用文本换行处理标题
-        if (template.id === 'classic' || template.id === 'vibrant-green' || template.id === 'pastel-beige') {
+        // 对于第一、二、三、五种样式，使用文本换行处理标题
+        if (template.id === 'classic' || template.id === 'bestseller' || template.id === 'vibrant-green' || template.id === 'pastel-beige') {
           const titleText = `Praises for ${coverTitle}`;
           const availableTitleWidth = width - marginLeft * 2.3; // 与正文相同的宽度
 
