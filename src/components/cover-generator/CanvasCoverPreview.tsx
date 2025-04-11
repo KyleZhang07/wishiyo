@@ -495,8 +495,9 @@ const CanvasCoverPreview = ({
 
     // 专门为Modern/Green风格添加自定义图片处理
     if (image?.element && (template.id === 'modern' || template.id === 'vibrant-green')) {
-      // 计算图片区域
-      const imgSize = width * 0.7; // 图片大小为宽度的70%
+      // 计算图片区域 - 略微放大第三种样式的照片
+      const imgSizeMultiplier = template.id === 'vibrant-green' ? 0.8 : 0.7; // 对于 vibrant-green 样式使用更大的尺寸
+      const imgSize = width * imgSizeMultiplier; // 图片大小为宽度的70%成80%
       const centerX = width / 2;
       const centerY = height * 0.35; // 将图片中心点放在页面35%的位置
 
@@ -539,6 +540,8 @@ const CanvasCoverPreview = ({
       ctx.filter = 'none';
     }
 
+
+
     // 如果是bestseller模板
     if (template.id === 'bestseller') {
       // 确保bestseller风格始终使用Oswald字体，而不是Anton（因为Anton加载不成功）
@@ -546,6 +549,66 @@ const CanvasCoverPreview = ({
       const oswaldFont = (fontStatus === 'loaded')
         ? 'Oswald, sans-serif'
         : '"Arial Narrow", Arial, sans-serif';
+
+      // 绘制科技星空背景
+      // 将背景改为更黑的蓝黑色
+      const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
+      bgGradient.addColorStop(0, '#050A14'); // 顶部更黑的蓝黑色
+      bgGradient.addColorStop(1, '#0A1428'); // 底部稍浅的深蓝色
+      ctx.fillStyle = bgGradient;
+      ctx.fillRect(0, 0, width, height);
+
+      // 在上半部添加蓝色高光效果 - 扩大范围以避免截断
+      const topGlow = ctx.createRadialGradient(
+        width * 0.5, height * 0.3, 10,
+        width * 0.5, height * 0.3, width * 1.2
+      );
+      topGlow.addColorStop(0, 'rgba(0, 120, 255, 0.3)');
+      topGlow.addColorStop(0.5, 'rgba(0, 80, 200, 0.1)');
+      topGlow.addColorStop(1, 'rgba(0, 0, 100, 0)');
+
+      ctx.globalAlpha = 0.7;
+      ctx.fillStyle = topGlow;
+      ctx.fillRect(0, 0, width, height * 0.7); // 扩大覆盖区域到 70% 的高度
+
+      // 恢复透明度
+      ctx.globalAlpha = 1.0;
+
+      // 添加金色星点效果
+      ctx.fillStyle = '#FFC300'; // 改为金色
+      const starCount = 100; // 星星数量
+      for (let i = 0; i < starCount; i++) {
+        const x = Math.random() * width;
+        const y = Math.random() * height;
+        const radius = Math.random() * 1.5; // 随机星星大小
+        const opacity = Math.random() * 0.8 + 0.2; // 随机透明度
+
+        ctx.globalAlpha = opacity;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 恢复透明度
+      ctx.globalAlpha = 1.0;
+
+      // 在顶部添加轻柔的金色粒子散射
+      const particleCount = 30;
+      for (let i = 0; i < particleCount; i++) {
+        const x = Math.random() * width;
+        const y = Math.random() * height * 0.3; // 只在顶部30%区域
+        const radius = Math.random() * 1.2;
+        const opacity = Math.random() * 0.4; // 非常轻柔的透明度
+
+        ctx.globalAlpha = opacity;
+        ctx.fillStyle = '#FFD700'; // 金色
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 恢复透明度
+      ctx.globalAlpha = 1.0;
 
       const titleFont = `bold 80px ${oswaldFont}`; // 使用Oswald字体替代Anton字体
       const titleColor = '#FFC300';
@@ -558,10 +621,34 @@ const CanvasCoverPreview = ({
       ctx.textAlign = 'center';
       ctx.fillText(authorName, width / 2, 80); // 位置从60下移到80
 
-      // 在底部绘制蓝色描述区域 - 再次缩小蓝色区域高度
+      // 在底部绘制蓝色渐变描述区域 - 增强科技感
       const blueHeight = height * 0.15; // 从0.2缩小到0.15
-      ctx.fillStyle = '#4361EE';
+
+      // 创建下深上浅的蓝色渐变
+      const blueGradient = ctx.createLinearGradient(0, height - blueHeight, 0, height);
+      blueGradient.addColorStop(0, '#1A2A8F'); // 上方较浅的蓝色
+      blueGradient.addColorStop(1, '#0A1428'); // 下方较深的蓝色
+
+      ctx.fillStyle = blueGradient;
       ctx.fillRect(0, height - blueHeight, width, blueHeight);
+
+      // 在底部蓝色区域添加金色星点
+      ctx.fillStyle = '#FFC300'; // 改为金色
+      const bottomStarCount = 15; // 底部星星数量
+      for (let i = 0; i < bottomStarCount; i++) {
+        const x = Math.random() * width;
+        const y = (height - blueHeight) + (Math.random() * blueHeight);
+        const radius = Math.random() * 1.2; // 随机星星大小
+        const opacity = Math.random() * 0.7 + 0.2; // 随机透明度
+
+        ctx.globalAlpha = opacity;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 恢复透明度
+      ctx.globalAlpha = 1.0;
 
       // Split title into lines (existing logic)
       const titleWords = coverTitle.split(' ');
@@ -586,8 +673,53 @@ const CanvasCoverPreview = ({
         titleLines.push(currentLine);
       }
 
-      // Draw title using helper function
-      drawTextInArea(ctx, titleLines.map(l => l.toUpperCase()), titleArea, titleFont, titleColor, titleLineHeight, 'center');
+      // 如果有图片，在背景效果之后绘制图片
+      if (image?.element) {
+        ctx.save();
+
+        // 计算图片尺寸 - 略微缩小图片
+        const imgAspect = image.element.width / image.element.height;
+        let drawWidth, drawHeight;
+        const scaleFactor = 0.85; // 缩小图片至原始大小的85%
+
+        // 让图片覆盖封面上部
+        if (imgAspect > 1) {
+          // 横向图片
+          drawHeight = height * 0.5 * scaleFactor; // 高度设置为封面高度的50%
+          drawWidth = drawHeight * imgAspect;
+        } else {
+          // 纵向图片
+          drawWidth = width * scaleFactor;
+          drawHeight = drawWidth / imgAspect;
+        }
+
+        // 计算位置 - 将图片下移至指定位置
+        const x = (width - drawWidth) / 2;
+        const y = height * 0.30 - drawHeight / 2; // 将图片中心点放在封面高度的30%处
+
+        // 应用滤镜和透明度
+        ctx.filter = template.imageStyle.filter;
+        ctx.globalAlpha = parseFloat(template.imageStyle.opacity) * 0.9; // 透明度调整为0.9
+
+        // 绘制图片
+        ctx.drawImage(image.element, x, y, drawWidth, drawHeight);
+
+        // 恢复上下文
+        ctx.restore();
+      }
+
+      // 直接绘制标题文本，不添加背景或光晕效果
+      ctx.font = titleFont;
+      ctx.fillStyle = titleColor;
+      ctx.textAlign = 'center';
+
+      const totalTitleHeight = titleLines.length * titleLineHeight;
+      let currentY = titleArea.y + (titleArea.height - totalTitleHeight) / 2 + titleLineHeight * 0.8;
+
+      for (let i = 0; i < titleLines.length; i++) {
+        ctx.fillText(titleLines[i].toUpperCase(), titleArea.x + titleArea.width / 2, currentY);
+        currentY += titleLineHeight;
+      }
 
       // 绘制描述性副标题在蓝色区域
       const subtitleFont = `500 26px ${oswaldFont}`; // 恢复bestseller样式的原始字体
@@ -700,6 +832,33 @@ const CanvasCoverPreview = ({
     } else if (template.id === 'modern' || template.id === 'vibrant-green') {
       // 为奶油色肖像风格重写渲染逻辑
 
+      // 添加顶部淡金渐变光晕和粒子效果
+      const topGradient = ctx.createLinearGradient(0, 0, 0, height * 0.4);
+      topGradient.addColorStop(0, 'rgba(255, 215, 150, 0.3)');
+      topGradient.addColorStop(0.5, 'rgba(255, 200, 120, 0.15)');
+      topGradient.addColorStop(1, 'rgba(255, 180, 100, 0)');
+
+      ctx.fillStyle = topGradient;
+      ctx.fillRect(0, 0, width, height * 0.4);
+
+      // 添加粒子效果（模拟粉尘或书页反光）
+      ctx.fillStyle = 'rgba(255, 230, 180, 0.6)';
+      const particleCount = 40;
+      for (let i = 0; i < particleCount; i++) {
+        const x = Math.random() * width;
+        const y = Math.random() * height * 0.4; // 只在顶部区域
+        const radius = Math.random() * 1.5 + 0.5; // 粒子大小
+        const opacity = Math.random() * 0.4 + 0.1; // 透明度
+
+        ctx.globalAlpha = opacity;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 恢复透明度
+      ctx.globalAlpha = 1.0;
+
       // 顶部绘制作者名字
       ctx.font = `bold 42px ${resolvedFont}`; // 添加粗体
       ctx.fillStyle = '#A3896B'; // 将白色改为棕褐色
@@ -731,6 +890,16 @@ const CanvasCoverPreview = ({
 
       // Draw title using helper function
       drawTextInArea(ctx, titleLines.map(l => l.toUpperCase()), titleArea, titleFont, titleColor, titleLineHeight, 'center');
+
+      // 在底部添加奶茶渐变区域
+      const bottomHeight = height * 0.2;
+      const milkTeaGradient = ctx.createLinearGradient(0, height - bottomHeight, 0, height);
+      milkTeaGradient.addColorStop(0, 'rgba(163, 137, 107, 0)');
+      milkTeaGradient.addColorStop(0.3, 'rgba(163, 137, 107, 0.1)');
+      milkTeaGradient.addColorStop(1, 'rgba(163, 137, 107, 0.25)');
+
+      ctx.fillStyle = milkTeaGradient;
+      ctx.fillRect(0, height - bottomHeight, width, bottomHeight);
 
       // 在底部绘制副标题
       const subtitleFont = `normal 26px ${resolvedFont}`; // 从28px减小到26px (折中方案)
@@ -1028,12 +1197,90 @@ const CanvasCoverPreview = ({
       // 对于 minimal 样式，使用纯黑色作为 spine 背景
       ctx.fillStyle = '#000000';
     } else if (template.id === 'bestseller') {
-      // 对于 bestseller 样式，使用蓝色作为 spine 背景，与封面下方描述部分的蓝色一致
-      ctx.fillStyle = '#4361EE';
+      // 对于 bestseller 样式，使用更黑的星空渐变作为 spine 背景
+      const spineGradient = ctx.createLinearGradient(0, 0, 0, height);
+      spineGradient.addColorStop(0, '#050A14'); // 上方更黑的蓝黑色
+      spineGradient.addColorStop(1, '#0A1428'); // 下方稍浅的深蓝色
+      ctx.fillStyle = spineGradient;
+
+      // 绘制背景
+      ctx.fillRect(0, 0, width, height);
+
+      // 在spine中部添加蓝色高光效果
+      const spineGlow = ctx.createRadialGradient(
+        width * 0.5, height * 0.5, 5,
+        width * 0.5, height * 0.5, width * 1.2
+      );
+      spineGlow.addColorStop(0, 'rgba(0, 120, 255, 0.3)');
+      spineGlow.addColorStop(0.5, 'rgba(0, 80, 200, 0.1)');
+      spineGlow.addColorStop(1, 'rgba(0, 0, 100, 0)');
+
+      ctx.globalAlpha = 0.6;
+      ctx.fillStyle = spineGlow;
+      ctx.fillRect(0, 0, width, height);
+
+      // 添加金色星点效果
+      ctx.fillStyle = '#FFC300'; // 改为金色
+      const starCount = 30; // 星星数量，在spine上减少数量
+      for (let i = 0; i < starCount; i++) {
+        const x = Math.random() * width;
+        const y = Math.random() * height;
+        const radius = Math.random() * 1.2; // 随机星星大小
+        const opacity = Math.random() * 0.7 + 0.2; // 随机透明度
+
+        ctx.globalAlpha = opacity;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 恢复透明度
+      ctx.globalAlpha = 1.0;
+    } else if (template.id === 'modern' || template.id === 'vibrant-green') {
+      // 对于 vibrant-green 样式，添加淡金渐变和奶茶渐变
+      ctx.fillStyle = template.backgroundColor;
+      ctx.fillRect(0, 0, width, height);
+
+      // 添加顶部淡金渐变光晕
+      const topGradient = ctx.createLinearGradient(0, 0, 0, height * 0.4);
+      topGradient.addColorStop(0, 'rgba(255, 215, 150, 0.3)');
+      topGradient.addColorStop(0.5, 'rgba(255, 200, 120, 0.15)');
+      topGradient.addColorStop(1, 'rgba(255, 180, 100, 0)');
+
+      ctx.fillStyle = topGradient;
+      ctx.fillRect(0, 0, width, height * 0.4);
+
+      // 添加粒子效果（模拟粉尘或书页反光）
+      ctx.fillStyle = 'rgba(255, 230, 180, 0.6)';
+      const particleCount = 20;
+      for (let i = 0; i < particleCount; i++) {
+        const x = Math.random() * width;
+        const y = Math.random() * height * 0.4; // 只在顶部区域
+        const radius = Math.random() * 1.5 + 0.5; // 粒子大小
+        const opacity = Math.random() * 0.4 + 0.1; // 透明度
+
+        ctx.globalAlpha = opacity;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 在底部添加奶茶渐变区域
+      const bottomHeight = height * 0.2;
+      const milkTeaGradient = ctx.createLinearGradient(0, height - bottomHeight, 0, height);
+      milkTeaGradient.addColorStop(0, 'rgba(163, 137, 107, 0)');
+      milkTeaGradient.addColorStop(0.3, 'rgba(163, 137, 107, 0.1)');
+      milkTeaGradient.addColorStop(1, 'rgba(163, 137, 107, 0.25)');
+
+      ctx.fillStyle = milkTeaGradient;
+      ctx.fillRect(0, height - bottomHeight, width, bottomHeight);
+
+      // 恢复透明度
+      ctx.globalAlpha = 1.0;
     } else {
       ctx.fillStyle = template.backgroundColor;
+      ctx.fillRect(0, 0, width, height);
     }
-    ctx.fillRect(0, 0, width, height);
 
     // 设置文本属性
     ctx.textAlign = 'center';
@@ -1179,10 +1426,90 @@ const CanvasCoverPreview = ({
     if (template.id === 'minimal') {
       // 对于 minimal 样式，使用灰色作为 back cover 背景
       ctx.fillStyle = '#ECECEC';
+      ctx.fillRect(0, 0, width, height);
+    } else if (template.id === 'bestseller') {
+      // 对于 bestseller 样式，使用更黑的星空背景
+      const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
+      bgGradient.addColorStop(0, '#050A14'); // 顶部更黑的蓝黑色
+      bgGradient.addColorStop(1, '#0A1428'); // 底部稍浅的深蓝色
+      ctx.fillStyle = bgGradient;
+      ctx.fillRect(0, 0, width, height);
+
+      // 在下半部添加蓝色高光效果
+      const bottomGlow = ctx.createRadialGradient(
+        width * 0.5, height * 0.8, 10,
+        width * 0.5, height * 0.8, width * 0.8
+      );
+      bottomGlow.addColorStop(0, 'rgba(0, 120, 255, 0.3)');
+      bottomGlow.addColorStop(0.5, 'rgba(0, 80, 200, 0.1)');
+      bottomGlow.addColorStop(1, 'rgba(0, 0, 100, 0)');
+
+      ctx.globalAlpha = 0.7;
+      ctx.fillStyle = bottomGlow;
+      ctx.fillRect(0, height * 0.5, width, height * 0.5);
+
+      // 添加金色星点效果
+      ctx.fillStyle = '#FFC300'; // 金色星点
+      const starCount = 100; // 星星数量
+      for (let i = 0; i < starCount; i++) {
+        const x = Math.random() * width;
+        const y = Math.random() * height;
+        const radius = Math.random() * 1.5; // 随机星星大小
+        const opacity = Math.random() * 0.8 + 0.2; // 随机透明度
+
+        ctx.globalAlpha = opacity;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 恢复透明度
+      ctx.globalAlpha = 1.0;
+    } else if (template.id === 'modern' || template.id === 'vibrant-green') {
+      // 对于 vibrant-green 样式，添加淡金渐变和奶茶渐变
+      ctx.fillStyle = template.backgroundColor;
+      ctx.fillRect(0, 0, width, height);
+
+      // 添加顶部淡金渐变光晕
+      const topGradient = ctx.createLinearGradient(0, 0, 0, height * 0.4);
+      topGradient.addColorStop(0, 'rgba(255, 215, 150, 0.3)');
+      topGradient.addColorStop(0.5, 'rgba(255, 200, 120, 0.15)');
+      topGradient.addColorStop(1, 'rgba(255, 180, 100, 0)');
+
+      ctx.fillStyle = topGradient;
+      ctx.fillRect(0, 0, width, height * 0.4);
+
+      // 添加粒子效果（模拟粉尘或书页反光）
+      ctx.fillStyle = 'rgba(255, 230, 180, 0.6)';
+      const particleCount = 30;
+      for (let i = 0; i < particleCount; i++) {
+        const x = Math.random() * width;
+        const y = Math.random() * height * 0.4; // 只在顶部区域
+        const radius = Math.random() * 1.5 + 0.5; // 粒子大小
+        const opacity = Math.random() * 0.4 + 0.1; // 透明度
+
+        ctx.globalAlpha = opacity;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 在底部添加奶茶渐变区域
+      const bottomHeight = height * 0.2;
+      const milkTeaGradient = ctx.createLinearGradient(0, height - bottomHeight, 0, height);
+      milkTeaGradient.addColorStop(0, 'rgba(163, 137, 107, 0)');
+      milkTeaGradient.addColorStop(0.3, 'rgba(163, 137, 107, 0.1)');
+      milkTeaGradient.addColorStop(1, 'rgba(163, 137, 107, 0.25)');
+
+      ctx.fillStyle = milkTeaGradient;
+      ctx.fillRect(0, height - bottomHeight, width, bottomHeight);
+
+      // 恢复透明度
+      ctx.globalAlpha = 1.0;
     } else {
       ctx.fillStyle = template.backgroundColor;
+      ctx.fillRect(0, 0, width, height);
     }
-    ctx.fillRect(0, 0, width, height);
 
     // 绘制赞美语，如果有的话
     if (praises && praises.length > 0) {
@@ -1204,6 +1531,9 @@ const CanvasCoverPreview = ({
       // 如果是vibrant-green样式，使用棕褐色
       if (template.id === 'vibrant-green') {
         ctx.fillStyle = '#A3896B';
+      } else if (template.id === 'bestseller') {
+        // 对于 bestseller 样式，使用金色文字
+        ctx.fillStyle = '#FFC300';
       } else {
         ctx.fillStyle = template.backCoverStyle.textColor || '#FFFFFF';
       }
@@ -1273,6 +1603,11 @@ const CanvasCoverPreview = ({
 
       // 绘制每条赞美语
       availablePraises.forEach(praise => {
+        // 对于 bestseller 样式，赞美语正文使用白色
+        if (template.id === 'bestseller') {
+          ctx.fillStyle = '#FFFFFF';
+        }
+
         // 赞美文本内容 - 为minimal样式使用Raleway
         if (template.id === 'minimal') {
           ctx.font = `normal 20px 'Raleway', sans-serif`; // 从300 14px改为normal 16px
@@ -1322,6 +1657,11 @@ const CanvasCoverPreview = ({
         }
 
         // 赞美来源，在作者名称前添加"-"符号
+        // 对于 bestseller 样式，赞美语来源使用金色
+        if (template.id === 'bestseller') {
+          ctx.fillStyle = '#FFC300';
+        }
+
         if (template.id === 'minimal') {
           ctx.font = `bold ${template.backCoverStyle.sourceFontSize || 24}px 'Montserrat', sans-serif`; // 从28px减小到24px
         } else if (template.id === 'classic') {
