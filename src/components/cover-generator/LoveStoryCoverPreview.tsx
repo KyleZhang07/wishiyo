@@ -49,7 +49,7 @@ const LoveStoryCoverPreview = ({
   const blueTexture = useImageLoader(blueTextureBackground);
   const greenLeaf = useImageLoader(greenLeafBackground);
   const rainbow = useImageLoader(rainbowBackground);
-  
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -71,13 +71,13 @@ const LoveStoryCoverPreview = ({
           rainbow?.loaded,
           image?.loaded
         ].filter(Boolean));
-        
+
         // 清除画布
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
+
         // 构建有效的标题数据对象
         let effectiveTitleData = titleData;
-        
+
         // 如果没有传入 titleData 但有 coverTitle 和/或 subtitle，则构建一个标题数据对象
         if (!effectiveTitleData && (coverTitle || subtitle)) {
           // 检查 coverTitle 是否包含 "'s amazing adventure" 格式
@@ -108,7 +108,7 @@ const LoveStoryCoverPreview = ({
             };
           }
         }
-        
+
         // 如果没有任何标题数据，使用空对象
         if (!effectiveTitleData) {
           effectiveTitleData = {
@@ -118,32 +118,32 @@ const LoveStoryCoverPreview = ({
             fullTitle: ''
           };
         }
-        
+
         // 所有图片加载完成后再绘制
         drawLoveStoryCover(
-          ctx, 
+          ctx,
           canvas,
-          effectiveTitleData, 
-          subtitle, 
-          authorName, 
-          recipientName, 
-          image, 
+          effectiveTitleData,
+          subtitle,
+          authorName,
+          recipientName,
+          image,
           selectedFont,
           style
         );
       } catch (error) {
         console.error('Error loading images:', error);
-        
+
         // 如果图片加载失败，仍然尝试绘制
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         drawLoveStoryCover(
-          ctx, 
+          ctx,
           canvas,
-          titleData, 
-          subtitle, 
-          authorName, 
-          recipientName, 
-          image, 
+          titleData,
+          subtitle,
+          authorName,
+          recipientName,
+          image,
           selectedFont,
           style
         );
@@ -154,7 +154,7 @@ const LoveStoryCoverPreview = ({
   }, [titleData, coverTitle, subtitle, authorName, recipientName, image, selectedFont, style]);
 
   const drawLoveStoryCover = (
-    ctx: CanvasRenderingContext2D, 
+    ctx: CanvasRenderingContext2D,
     canvas: HTMLCanvasElement,
     titleData: { mainTitle: string; subTitle: string; thirdLine: string; fullTitle: string },
     subtitle: string,
@@ -171,11 +171,11 @@ const LoveStoryCoverPreview = ({
     const backgroundColor = style?.background || '#f5f5f0';
     const titleColor = style?.titleColor || '#5a5a5a';
     const authorColor = style?.authorColor || '#333333';
-    
+
     // Draw background first
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, width, height);
-    
+
     // 根据样式设置字体家族
     let fontFamily = getFontFamily(style?.font || font);
 
@@ -185,36 +185,35 @@ const LoveStoryCoverPreview = ({
       if (blueTexture && blueTexture.element) {
         // 使用加载的图片作为背景
         ctx.drawImage(blueTexture.element, 0, 0, width, height);
-        
+
         // 添加深蓝色半透明叠加层，使图片更暗
         ctx.fillStyle = 'rgba(10, 26, 63, 0.3)';
         ctx.fillRect(0, 0, width, height);
-        
-        // 添加雪花效果
-        const snowflakeCount = 100;
-        ctx.fillStyle = '#FFFFFF';
-        
-        for (let i = 0; i < snowflakeCount; i++) {
-          const x = Math.random() * width;
-          const y = Math.random() * height;
-          const size = Math.random() * 5 + 1;
-          
-          ctx.beginPath();
-          ctx.arc(x, y, size, 0, Math.PI * 2);
-          ctx.fill();
-        }
+
+        // 使用雪夜背景函数来绘制更多雪花，只绘制雪花而不绘制背景
+        drawSnowNightBackground({
+          ctx,
+          width,
+          height,
+          baseColor: 'transparent', // 使用透明背景，因为我们已经有背景图片
+          snowOpacity: 0.9 // 高不透明度使雪花更明显
+        });
       } else {
-        // 如果无法加载modern背景图片，使用深蓝色
-        ctx.fillStyle = '#0a1a3f';
-        ctx.fillRect(0, 0, width, height);
+        // 如果无法加载modern背景图片，使用雪夜背景函数绘制完整背景
+        drawSnowNightBackground({
+          ctx,
+          width,
+          height,
+          snowOpacity: 0.9 // 高不透明度使雪花更明显
+        });
       }
-    } 
+    }
     // 为 playful 样式添加绿叶背景
     else if (style?.id === 'playful') {
       if (greenLeaf && greenLeaf.element) {
         // 使用加载的图片作为背景
         ctx.drawImage(greenLeaf.element, 0, 0, width, height);
-        
+
         // 添加蓝色半透明叠加层
         ctx.fillStyle = 'rgba(74, 137, 220, 0.2)';
         ctx.fillRect(0, 0, width, height);
@@ -223,7 +222,7 @@ const LoveStoryCoverPreview = ({
         ctx.fillStyle = '#4A89DC';
         ctx.fillRect(0, 0, width, height);
       }
-    } 
+    }
     // 为 elegant 样式添加彩虹背景
     else if (style?.id === 'elegant') {
       if (rainbow && rainbow.element) {
@@ -237,8 +236,56 @@ const LoveStoryCoverPreview = ({
     }
     // classic 和 vintage 样式使用纯色背景
     else if (style?.id === 'classic' || style?.id === 'vintage') {
-      ctx.fillStyle = style.background;
-      ctx.fillRect(0, 0, width, height);
+      if (style?.id === 'vintage') {
+        // 为 vintage 样式创建对角线渐变背景（左上角到右下角）
+        const gradient = ctx.createLinearGradient(0, 0, width, height);
+        gradient.addColorStop(0, '#e7c9a9');   // 左上角较深棕色
+        gradient.addColorStop(0.4, '#f8e9d6');  // 浅色过渡区域，扩大范围到0.4
+        gradient.addColorStop(0.6, '#f8e9d6');  // 浅色过渡区域，缩小范围到0.6
+        gradient.addColorStop(1, '#e7c9a9');   // 右下角较深棕色
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, width, height);
+        
+        // 添加轻微的纹理效果
+        for (let i = 0; i < 20; i++) {
+          const x = Math.random() * width;
+          const y = Math.random() * height;
+          const radius = 80 + Math.random() * 150;
+          
+          const spotGradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+          spotGradient.addColorStop(0, 'rgba(255, 255, 255, 0.1)');
+          spotGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+          
+          ctx.fillStyle = spotGradient;
+          ctx.beginPath();
+          ctx.arc(x, y, radius, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        
+        // 强化左上角和右下角的深色效果
+        const cornerRadius = width * 0.7; // 增加半径使渐变更接近中心
+        
+        // 左上角深色渐变 - 增强深度
+        const topLeftGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, cornerRadius);
+        topLeftGradient.addColorStop(0, 'rgba(193, 156, 125, 0.6)');  // 更深的颜色，更高不透明度
+        topLeftGradient.addColorStop(0.6, 'rgba(203, 176, 145, 0.15)'); // 延伸过渡区域
+        topLeftGradient.addColorStop(1, 'rgba(203, 176, 145, 0)');
+        ctx.fillStyle = topLeftGradient;
+        ctx.fillRect(0, 0, width, height);
+        
+        // 右下角深色渐变 - 减轻深度
+        const bottomRightGradient = ctx.createRadialGradient(width, height, 0, width, height, cornerRadius);
+        bottomRightGradient.addColorStop(0, 'rgba(203, 176, 145, 0.25)');  // 降低不透明度使其较浅
+        bottomRightGradient.addColorStop(0.6, 'rgba(203, 176, 145, 0.1)'); // 延伸过渡区域
+        bottomRightGradient.addColorStop(1, 'rgba(203, 176, 145, 0)');
+        ctx.fillStyle = bottomRightGradient;
+        ctx.fillRect(0, 0, width, height);
+      } else {
+        // classic 样式仍使用纯色背景
+        ctx.fillStyle = style.background;
+        ctx.fillRect(0, 0, width, height);
+      }
     }
     // 默认白色背景
     else {
@@ -252,33 +299,33 @@ const LoveStoryCoverPreview = ({
       const imgRatio = image.element.width / image.element.height;
       let drawWidth = width * 0.7;  // 图片占70%的宽度
       let drawHeight = drawWidth / imgRatio;
-      
+
       // 如果高度太大，按高度计算
       if (drawHeight > height * 0.6) {
         drawHeight = height * 0.6;
         drawWidth = drawHeight * imgRatio;
       }
-      
+
       // 计算居中位置
       const x = (width - drawWidth) / 2;
       const y = height * 0.4;  // 图片位置上移
-      
+
       // 绘制人物图像
       ctx.drawImage(image.element, x, y, drawWidth, drawHeight);
     }
 
     // 绘制标题文本
     ctx.textAlign = 'center';
-    
+
     // 主标题
     ctx.fillStyle = titleColor;
     const titleFontSize = width * 0.06;
-    
+
     // 从titleData获取标题信息
     const { mainTitle, subTitle, thirdLine, fullTitle } = titleData;
-    
+
     console.log('绘制标题:', { mainTitle, subTitle, thirdLine, fullTitle });
-    
+
     // 如果有主副标题，则绘制多行
     if (mainTitle) {
       // 根据样式选择不同的字体
@@ -303,21 +350,21 @@ const LoveStoryCoverPreview = ({
       } else {
         ctx.font = `bold ${titleFontSize}px ${getFontFamily(style?.font || selectedFont)}`;
       }
-      
+
       // 只处理特定的三行标题模式：${authorName}'s wonderful ${recipientName}
       if (thirdLine && mainTitle.includes("'s") && subTitle === 'wonderful') {
         // 三行标题位置，上移以避免与图片重合
         if (style?.id === 'modern') {
           // Modern样式特殊处理位置
           ctx.fillText(mainTitle, width / 2, height * 0.20);
-          
+
           const subTitleFontSize = titleFontSize * 1.8; // Modern样式副标题也放大
           ctx.font = `bold ${subTitleFontSize}px 'Amatic SC', cursive`;
           ctx.fillText(subTitle, width / 2, height * 0.30);
           ctx.fillText(thirdLine, width / 2, height * 0.40);
         } else {
           ctx.fillText(mainTitle, width / 2, height * 0.20);
-          
+
           const subTitleFontSize = titleFontSize * 1.8;
           if (style?.id === 'classic') {
             ctx.font = `bold ${subTitleFontSize}px 'Patrick Hand', cursive`;
@@ -334,14 +381,14 @@ const LoveStoryCoverPreview = ({
         if (style?.id === 'modern') {
           // Modern样式特殊处理位置
           ctx.fillText(mainTitle, width / 2, height * 0.25);
-          
+
           const subTitleFontSize = titleFontSize * 1.8; // Modern样式副标题也放大
           ctx.font = `bold ${subTitleFontSize}px 'Amatic SC', cursive`;
           ctx.fillText(subTitle, width / 2, height * 0.35);
           ctx.fillText(thirdLine, width / 2, height * 0.45);
         } else {
           ctx.fillText(mainTitle, width / 2, height * 0.25);
-          
+
           const subTitleFontSize = titleFontSize * 1.8;
           if (style?.id === 'classic') {
             ctx.font = `bold ${subTitleFontSize}px 'Patrick Hand', cursive`;
@@ -358,13 +405,13 @@ const LoveStoryCoverPreview = ({
         if (style?.id === 'modern') {
           // Modern样式特殊处理位置
           ctx.fillText(mainTitle, width / 2, height * 0.23); // 第一行适度上移
-          
+
           const subTitleFontSize = titleFontSize * 1.8; // Modern样式副标题也放大
           ctx.font = `bold ${subTitleFontSize}px 'Amatic SC', cursive`;
           ctx.fillText(subTitle, width / 2, height * 0.35); // 第二行位置不变
         } else {
           ctx.fillText(mainTitle, width / 2, height * 0.23); // 第一行适度上移
-          
+
           // 绘制副标题，增加间距
           const subTitleFontSize = titleFontSize * 1.8;
           if (style?.id === 'classic') {
@@ -410,7 +457,7 @@ const LoveStoryCoverPreview = ({
         ctx.fillText(fullTitle, width / 2, height * 0.25);
       }
     }
-    
+
     // 作者名
     // 如果是modern样式，使用白色字体，但位置与playful保持一致
     if (style?.id === 'modern') {
@@ -418,7 +465,7 @@ const LoveStoryCoverPreview = ({
       const authorFontSize = width * 0.035;
       ctx.font = `italic ${authorFontSize}px 'Amatic SC', cursive`;
       ctx.fillText(`Written by ${author}`, width * 0.85, height * 0.95); // 与playful位置一致
-    } 
+    }
     // 如果是elegant样式，使用极淡粉色字体，但位置与playful保持一致
     else if (style?.id === 'elegant') {
       ctx.fillStyle = '#FDF0F3'; // 使用极淡粉色
@@ -493,7 +540,7 @@ const LoveStoryCoverPreview = ({
     color: string = '#1e7e7e'
   ) => {
     ctx.fillStyle = color;
-    
+
     // Draw a simple crown-like shape
     ctx.beginPath();
     ctx.moveTo(x - size/2, y);
@@ -514,7 +561,7 @@ const LoveStoryCoverPreview = ({
     for (let i = 1; i < words.length; i++) {
       const word = words[i];
       const width = ctx.measureText(currentLine + ' ' + word).width;
-      
+
       if (width < maxWidth) {
         currentLine += ' ' + word;
       } else {
@@ -522,7 +569,7 @@ const LoveStoryCoverPreview = ({
         currentLine = word;
       }
     }
-    
+
     lines.push(currentLine);
     return lines;
   };
@@ -539,4 +586,4 @@ const LoveStoryCoverPreview = ({
   );
 };
 
-export default LoveStoryCoverPreview; 
+export default LoveStoryCoverPreview;
