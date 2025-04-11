@@ -202,12 +202,12 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     },
     spineStyle: {
       backgroundColor: '#000000',
-      titleColor: '#C75B7D',
-      authorColor: '#C75B7D'
+      titleColor: '#FFFFFF',
+      authorColor: '#FFFFFF'
     },
     backCoverStyle: {
       backgroundColor: '#000000',
-      textColor: '#C75B7D',
+      textColor: '#FFFFFF',
       summaryFontSize: '1rem'
     }
   },
