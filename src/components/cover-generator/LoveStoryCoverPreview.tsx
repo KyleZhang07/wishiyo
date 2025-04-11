@@ -487,7 +487,7 @@ const LoveStoryCoverPreview = ({
     }
     // Classic和Vintage样式，使用与playful相同的位置
     else if (style?.id === 'classic') {
-      ctx.fillStyle = style.titleColor; // 使用标题颜色
+      ctx.fillStyle = '#C75B7D'; // 使用深粉红色/玫瑰色
       const authorFontSize = width * 0.035;
       ctx.font = `italic ${authorFontSize}px 'Patrick Hand', cursive`;
       ctx.fillText(`Written by ${author}`, width * 0.85, height * 0.95); // 与playful位置一致

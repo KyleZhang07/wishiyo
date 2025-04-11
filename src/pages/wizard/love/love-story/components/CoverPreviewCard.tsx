@@ -21,9 +21,9 @@ const coverStyles: CoverStyle[] = [
     id: 'classic',
     name: '经典',
     background: '#f5f5f0',
-    titleColor: '#5a5a5a',
-    subtitleColor: '#633d63',
-    authorColor: '#333333',
+    titleColor: '#C75B7D',
+    subtitleColor: '#C75B7D',
+    authorColor: '#C75B7D',
     font: 'playfair'
   },
   {
@@ -83,10 +83,10 @@ export const CoverPreviewCard = ({
 }) => {
   // Get recipient name from localStorage
   const recipientName = localStorage.getItem('loveStoryPersonName') || 'My Love';
-  
+
   // 获取用户选择的样式
   const [selectedStyle, setSelectedStyle] = useState<CoverStyle | undefined>(coverStyles[0]);
-  
+
   useEffect(() => {
     // 从 localStorage 读取用户选择的样式
     const savedStyleId = localStorage.getItem('loveStoryCoverStyle');

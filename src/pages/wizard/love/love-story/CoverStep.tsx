@@ -33,9 +33,9 @@ const coverStyles: CoverStyle[] = [
     id: 'classic',
     name: 'Classic',
     background: '#f5f5f0',
-    titleColor: '#5a5a5a',
-    subtitleColor: '#5a5a5a',
-    authorColor: '#333333',
+    titleColor: '#C75B7D',
+    subtitleColor: '#C75B7D',
+    authorColor: '#C75B7D',
     font: 'patrick-hand'
   },
   {
@@ -702,6 +702,7 @@ const LoveStoryCoverStep = () => {
                 const elegantTitleFontSize = titleFontSize * 1.6; // 将字体放大1.6倍
                 ctx.font = `bold ${elegantTitleFontSize}px 'Luckiest Guy', cursive`;
               } else if (currentStyle.id === 'classic') {
+                ctx.fillStyle = '#C75B7D'; // 使用深粉红色/玫瑰色
                 const classicTitleFontSize = titleFontSize * 2.0; // 将字体放大2倍，与Modern一致
                 ctx.font = `bold ${classicTitleFontSize}px 'Patrick Hand', cursive`;
               } else if (currentStyle.id === 'vintage') {
@@ -797,6 +798,7 @@ const LoveStoryCoverStep = () => {
                   ctx.font = `bold ${playfulTitleFontSize}px 'Caveat', cursive`;
                   ctx.fillText(fullTitle, canvas.width / 2, canvas.height * 0.25);
                 } else if (currentStyle.id === 'classic') {
+                  ctx.fillStyle = '#FFF5F5'; // 使用柔和的白色
                   const classicTitleFontSize = titleFontSize * 2.0; // 将字体放大2倍，与Modern一致
                   ctx.font = `bold ${classicTitleFontSize}px 'Patrick Hand', cursive`;
                   ctx.fillText(fullTitle, canvas.width / 2, canvas.height * 0.25);
@@ -830,6 +832,7 @@ const LoveStoryCoverStep = () => {
                 ctx.font = `bold ${playfulTitleFontSize}px 'Caveat', cursive`;
                 ctx.fillText(fullTitle, canvas.width / 2, canvas.height * 0.25);
               } else if (currentStyle.id === 'classic') {
+                ctx.fillStyle = '#C75B7D'; // 使用深粉红色/玫瑰色
                 const classicTitleFontSize = titleFontSize * 2.0; // 将字体放大2倍，与Modern一致
                 ctx.font = `bold ${classicTitleFontSize}px 'Patrick Hand', cursive`;
                 ctx.fillText(fullTitle, canvas.width / 2, canvas.height * 0.25);
@@ -859,7 +862,7 @@ const LoveStoryCoverStep = () => {
               ctx.fillText(`Written by ${authorName}`, canvas.width * 0.85, canvas.height * 0.95);
             } else if (currentStyle.id === 'classic') {
               // Classic样式
-              ctx.fillStyle = currentStyle.titleColor; // 使用标题颜色
+              ctx.fillStyle = '#C75B7D'; // 使用深粉红色/玫瑰色
               const authorFontSize = canvas.width * 0.035;
               ctx.font = `italic ${authorFontSize}px 'Patrick Hand', cursive`;
               ctx.fillText(`Written by ${authorName}`, canvas.width * 0.85, canvas.height * 0.95);

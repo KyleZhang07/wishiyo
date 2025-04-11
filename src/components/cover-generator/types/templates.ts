@@ -167,7 +167,7 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     name: 'Classic',
     backgroundColor: '#000000',
     titleStyle: {
-      color: '#FFFFFF',
+      color: '#C75B7D',
       fontSize: '3rem',
       fontWeight: 'bold',
       textTransform: 'uppercase',
@@ -175,14 +175,14 @@ export const coverTemplates: { [key: string]: TemplateType } = {
       offsetY: 0
     },
     subtitleStyle: {
-      color: '#FFFFFF',
+      color: '#C75B7D',
       fontSize: '1.25rem',
       fontWeight: 'normal',
       fontStyle: 'italic',
       textTransform: 'lowercase'
     },
     authorStyle: {
-      color: '#FFFFFF',
+      color: '#C75B7D',
       fontSize: '1.2rem',
       fontWeight: 'normal',
       textTransform: 'uppercase',
@@ -202,12 +202,12 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     },
     spineStyle: {
       backgroundColor: '#000000',
-      titleColor: '#FFFFFF',
-      authorColor: '#FFFFFF'
+      titleColor: '#C75B7D',
+      authorColor: '#C75B7D'
     },
     backCoverStyle: {
       backgroundColor: '#000000',
-      textColor: '#FFFFFF',
+      textColor: '#C75B7D',
       summaryFontSize: '1rem'
     }
   },
