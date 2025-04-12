@@ -183,12 +183,12 @@ const FormatStep = () => {
 
 
               {/* 封面图片 */}
-              <div className="h-72 bg-gray-100 relative">
+              <div className="h-72 bg-gray-100 relative flex items-end">
                 {format.imageSrc ? (
                   <img
                     src={format.imageSrc}
                     alt={`${format.name} book`}
-                    className="w-full h-full object-cover"
+                    className="w-full object-contain"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-500">

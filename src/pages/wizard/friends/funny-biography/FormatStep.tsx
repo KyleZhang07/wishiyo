@@ -378,12 +378,12 @@ const FormatStep = () => {
 
 
               {/* 封面图片 */}
-              <div className="aspect-[4/3] h-72 bg-gray-50 relative">
+              <div className="aspect-[4/3] h-72 bg-gray-50 relative flex items-end">
                 {format.imageSrc && (
                   <img
                     src={format.imageSrc}
                     alt={format.name}
-                    className="w-full h-full object-cover"
+                    className="w-full object-contain"
                   />
                 )}
               </div>
