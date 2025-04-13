@@ -609,9 +609,9 @@ const CanvasCoverPreview = ({
     // 强制处理 Sweet Pink 风格图片，无论 isSweetPink 变量是否正确
     if (image?.element && template.id === 'pastel-beige') {
       console.log('开始处理 Sweet Pink 风格图片');
-      // 计算图片区域 - 使用小一点的尺寸
-      const imgSizeMultiplier = 0.65; // 对 Sweet Pink 样式使用更小的尺寸
-      const imgSize = width * imgSizeMultiplier; // 图片大小为宽度的65%
+      // 计算图片区域 - 使用更大的尺寸
+      const imgSizeMultiplier = 0.85; // 对 Sweet Pink 样式使用更大的尺寸
+      const imgSize = width * imgSizeMultiplier; // 图片大小为宽度的85%
       const centerX = width / 2;
       const centerY = height * 0.6; // 将图片中心点放在页面60%的位置，即下移到页面中部偏下
 
@@ -1290,9 +1290,9 @@ const CanvasCoverPreview = ({
         // 检查是否已经在前面绘制了图片
         console.log('备用图片绘制代码执行中...');
 
-        // 计算图片区域 - 使用小一点的尺寸
-        const imgSizeMultiplier = 0.65; // 对 Sweet Pink 样式使用更小的尺寸
-        const imgSize = width * imgSizeMultiplier; // 图片大小为宽度的65%
+        // 计算图片区域 - 使用更大的尺寸
+        const imgSizeMultiplier = 0.85; // 对 Sweet Pink 样式使用更大的尺寸
+        const imgSize = width * imgSizeMultiplier; // 图片大小为宽度的85%
         const centerX = width / 2;
         const centerY = height * 0.6; // 将图片中心点放在页面60%的位置，即下移到页面中部偏下
 
