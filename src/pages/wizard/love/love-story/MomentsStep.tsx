@@ -6,7 +6,10 @@ import { useToast } from '@/hooks/use-toast';
 import * as faceapi from 'face-api.js';
 
 const LoveStoryMomentsStep = () => {
-  const [characterPhoto, setCharacterPhoto] = useState<string | null>(null);
+  // 直接在状态初始化时从 localStorage 加载数据，避免闪烁
+  const [characterPhoto, setCharacterPhoto] = useState<string | null>(() => {
+    return localStorage.getItem('loveStoryPartnerPhoto') || null;
+  });
   const [isModelLoaded, setIsModelLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const characterFileInputRef = useRef<HTMLInputElement>(null);
@@ -40,13 +43,6 @@ const LoveStoryMomentsStep = () => {
 
     loadModels();
   }, [toast]);
-
-  useEffect(() => {
-    const savedCharacterPhoto = localStorage.getItem('loveStoryPartnerPhoto');
-    if (savedCharacterPhoto) {
-      setCharacterPhoto(savedCharacterPhoto);
-    }
-  }, []);
 
   // Function to detect faces in an image
   const detectFaces = async (imageElement: HTMLImageElement): Promise<boolean> => {

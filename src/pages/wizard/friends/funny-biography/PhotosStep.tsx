@@ -9,20 +9,18 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const MAX_IMAGE_DIMENSION = 1200;
 
 const FunnyBiographyPhotosStep = () => {
-  const [photo, setPhoto] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const { toast } = useToast();
-
-  useEffect(() => {
+  // 直接在状态初始化时从 localStorage 加载数据，避免闪烁
+  const [photo, setPhoto] = useState<string | null>(() => {
     try {
       const savedPhoto = localStorage.getItem('funnyBiographyPhoto');
-      if (savedPhoto) {
-        setPhoto(savedPhoto);
-      }
+      return savedPhoto || null;
     } catch (error) {
       console.error('Error loading photo from localStorage:', error);
+      return null;
     }
-  }, []);
+  });
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
   const compressImage = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {

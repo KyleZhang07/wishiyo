@@ -6,24 +6,22 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
 const LoveStoryCharacterStep = () => {
-  const [firstName, setFirstName] = useState('');
-  const [gender, setGender] = useState<'male' | 'female' | ''>('');
-  const [age, setAge] = useState<string>('');
-  const [authorName, setAuthorName] = useState('');
+  // 直接在状态初始化时从 localStorage 加载数据，避免闪烁
+  const [firstName, setFirstName] = useState<string>(() => {
+    return localStorage.getItem('loveStoryPersonName') || '';
+  });
+  const [gender, setGender] = useState<'male' | 'female' | ''>(() => {
+    const savedGender = localStorage.getItem('loveStoryPersonGender');
+    return (savedGender as 'male' | 'female') || '';
+  });
+  const [age, setAge] = useState<string>(() => {
+    return localStorage.getItem('loveStoryPersonAge') || '';
+  });
+  const [authorName, setAuthorName] = useState<string>(() => {
+    return localStorage.getItem('loveStoryAuthorName') || '';
+  });
   const { toast } = useToast();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const savedFirstName = localStorage.getItem('loveStoryPersonName');
-    const savedGender = localStorage.getItem('loveStoryPersonGender');
-    const savedAge = localStorage.getItem('loveStoryPersonAge');
-    const savedAuthorName = localStorage.getItem('loveStoryAuthorName');
-    
-    if (savedFirstName) setFirstName(savedFirstName);
-    if (savedGender) setGender(savedGender as 'male' | 'female');
-    if (savedAge) setAge(savedAge);
-    if (savedAuthorName) setAuthorName(savedAuthorName);
-  }, []);
 
   const handleContinue = () => {
     if (!firstName.trim()) {
@@ -77,17 +75,17 @@ const LoveStoryCharacterStep = () => {
     localStorage.setItem('loveStoryPersonGender', gender);
     localStorage.setItem('loveStoryPersonAge', age);
     localStorage.setItem('loveStoryAuthorName', authorName.trim());
-    
+
     navigate('/create/love/love-story/questions');
   };
 
   return (
-    <WizardStep 
-      title="Character Information" 
-      description="Tell us about you and the main character of the story" 
-      previousStep="/love" 
-      currentStep={1} 
-      totalSteps={6} 
+    <WizardStep
+      title="Character Information"
+      description="Tell us about you and the main character of the story"
+      previousStep="/love"
+      currentStep={1}
+      totalSteps={6}
       onNextClick={handleContinue}
     >
       <div className="space-y-8">
@@ -99,17 +97,17 @@ const LoveStoryCharacterStep = () => {
         <div>
           <label className="block text-sm font-medium mb-2">Their gender</label>
           <div className="grid grid-cols-2 gap-4">
-            <Button 
-              type="button" 
-              variant={gender === 'male' ? 'default' : 'outline'} 
+            <Button
+              type="button"
+              variant={gender === 'male' ? 'default' : 'outline'}
               className={`w-[90%] mx-auto py-6 text-lg ${gender === 'male' ? 'bg-[#FF7F50] hover:bg-[#FF7F50]/80' : ''}`}
               onClick={() => setGender('male')}
             >
               Male
             </Button>
-            <Button 
-              type="button" 
-              variant={gender === 'female' ? 'default' : 'outline'} 
+            <Button
+              type="button"
+              variant={gender === 'female' ? 'default' : 'outline'}
               className={`w-[90%] mx-auto py-6 text-lg ${gender === 'female' ? 'bg-[#FF7F50] hover:bg-[#FF7F50]/80' : ''}`}
               onClick={() => setGender('female')}
             >
@@ -120,10 +118,10 @@ const LoveStoryCharacterStep = () => {
 
         <div>
           <label className="block text-sm font-medium mb-2">Their age</label>
-          <Input 
-            type="number" 
-            placeholder="" 
-            value={age} 
+          <Input
+            type="number"
+            placeholder=""
+            value={age}
             onChange={e => setAge(e.target.value)}
             min="1"
             max="120"
