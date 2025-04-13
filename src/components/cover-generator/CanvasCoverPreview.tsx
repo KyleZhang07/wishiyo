@@ -595,10 +595,10 @@ const CanvasCoverPreview = ({
       ctx.fillStyle = bgGradient;
       ctx.fillRect(0, 0, width, height);
 
-      // 在上半部添加蓝色高光效果 - 扩大范围覆盖整个封面
+      // 在上半部添加蓝色高光效果 - 略微降低散射范围，使光源衰减更快
       const topGlow = ctx.createRadialGradient(
         width * 0.5, height * 0.3, 10,
-        width * 0.5, height * 0.3, width * 2.0
+        width * 0.5, height * 0.3, width * 1.6
       );
       topGlow.addColorStop(0, 'rgba(0, 120, 255, 0.3)');
       topGlow.addColorStop(0.5, 'rgba(0, 80, 200, 0.1)');
@@ -1614,10 +1614,10 @@ const CanvasCoverPreview = ({
       ctx.fillStyle = bgGradient;
       ctx.fillRect(0, 0, width, height);
 
-      // 在下半部添加蓝色高光效果 - 扩大范围覆盖整个封面
+      // 在下半部添加蓝色高光效果 - 略微降低散射范围，使光源衰减更快
       const bottomGlow = ctx.createRadialGradient(
         width * 0.5, height * 0.8, 10,
-        width * 0.5, height * 0.8, width * 2.0
+        width * 0.5, height * 0.8, width * 1.6
       );
       bottomGlow.addColorStop(0, 'rgba(0, 120, 255, 0.3)');
       bottomGlow.addColorStop(0.5, 'rgba(0, 80, 200, 0.1)');
