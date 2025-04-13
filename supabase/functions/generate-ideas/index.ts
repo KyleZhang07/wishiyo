@@ -142,7 +142,7 @@ serve(async (req) => {
             {
               role: 'system',
               content: `
-                1. Create a concise, punchy title (3-4 words) that can range from clever metaphors to unexpected concepts
+                1. Create a concise, punchy title (3-5 words, not exceeding 30 characters) where each individual word MUST NOT exceed 14 characters.
                 2. Make the book about ONE PERSON ONLY - sharing their expertise, unique perspectives, or interesting life approaches
                 3. The tone should vary across the three ideas: one professional, one satirical (gently poking fun at quirks mentioned in answers), and one unexpected
                 4. IMPORTANT: emphasize HUMOR throughout all ideas - include WITTY observations, PLAYFUL exaggerations, and AMUSING perspectives even in the more professional ideas
@@ -184,7 +184,7 @@ serve(async (req) => {
                 The autobiography is about ${authorName}, sharing their unique perspectives, methods, and life principles with a balance of insight and personality.
 
                 Respond with ONLY a JSON array of 3 objects, each with:
-                - 'title': The book title (3-4 words, using concrete nouns that could be metaphorical or unexpected)
+                - 'title': The book title (3-5 words, not exceeding 30 characters, where each individual word MUST NOT exceed 14 characters)
                 - 'author': "${authorName}" for all ideas
                 - 'description': A compelling subtitle (ONE SENTENCE NO COMMAS 10-14 words) that expands on the central concept with personality
                 - 'praises': An array of 4 fictional praise objects, each with 'source' (imaginary publication or critic name) and 'text' (the praise quote)
