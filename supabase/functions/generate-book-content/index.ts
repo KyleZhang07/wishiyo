@@ -182,7 +182,7 @@ Format your response as JSON with this structure:
                 { role: 'system', content: 'You must respond with valid JSON only. Do not include any explanation outside the JSON structure.' },
                 { role: 'user', content: prompt }
               ],
-              temperature: 1.0,
+              temperature: 1.0, // 增加创造性，从 0.5 调整为 1.0
               max_tokens: 3000,
               response_format: { type: "json_object" }
             }),
