@@ -43,6 +43,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           model: 'gpt-4o-mini',
+          temperature: 1.2,
           messages: [
             {
               role: 'system',
@@ -136,6 +137,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           model: 'gpt-4o-mini',
+          temperature: 1.2,
           messages: [
             {
               role: 'system',

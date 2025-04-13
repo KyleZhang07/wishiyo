@@ -53,7 +53,7 @@ serve(async (req) => {
     const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
-    
+
     if (!supabaseUrl || !supabaseServiceKey || !OPENAI_API_KEY) {
       throw new Error('Missing required environment variables');
     }
@@ -76,19 +76,19 @@ serve(async (req) => {
     const bookTitle = title || bookData.title;
     const bookAuthor = author || bookData.author;
     const { selected_idea, answers, chapters } = bookData;
-    
+
     // 使用传入的现有内容或从数据库获取
-    let bookChapters: BookChapter[] = existingContent.length > 0 
-      ? [...existingContent] 
+    let bookChapters: BookChapter[] = existingContent.length > 0
+      ? [...existingContent]
       : (Array.isArray(bookData.book_content) ? [...bookData.book_content] : []);
-    
+
     if (!bookTitle || !bookAuthor || !selected_idea || !chapters) {
       throw new Error('Incomplete book data for content generation');
     }
 
     // 生成提示词所需的上下文
     const ideaDescription = selected_idea.description || '';
-    const answersContext = answers && Array.isArray(answers) 
+    const answersContext = answers && Array.isArray(answers)
       ? answers.map((answer: any) => `Q: ${answer.question}\nA: ${answer.answer}`).join('\n\n')
       : '';
 
@@ -100,12 +100,12 @@ serve(async (req) => {
         console.log(`Chapter ${i} already exists, skipping generation`);
         continue;
       }
-      
+
       console.log(`Generating chapter ${i} content...`);
-      
+
       let chapterTitle = '';
       let chapterDescription = '';
-      
+
       // 尝试从现有章节大纲中找到匹配的章节
       if (chapters && Array.isArray(chapters) && chapters.length >= i) {
         const existingChapter = chapters[i - 1];
@@ -114,7 +114,7 @@ serve(async (req) => {
           chapterDescription = existingChapter.description || '';
         }
       }
-      
+
       if (!chapterTitle) {
         chapterTitle = `Chapter ${i}`;
       }
@@ -122,11 +122,11 @@ serve(async (req) => {
       // 带重试机制的OpenAI API调用
       let chapterContent: string | null = null;
       let retries = 0;
-      
+
       while (retries < MAX_RETRIES) {
         try {
           const prompt = `
-You are writing a professional biography titled "${bookTitle}" about ${bookAuthor}, exploring their expertise, methodology, and insights. 
+You are writing a professional biography titled "${bookTitle}" about ${bookAuthor}, exploring their expertise, methodology, and insights.
 The book concept is: ${ideaDescription}
 
 Additional context about the subject (use these details naturally throughout the narrative):
@@ -182,7 +182,7 @@ Format your response as JSON with this structure:
                 { role: 'system', content: 'You must respond with valid JSON only. Do not include any explanation outside the JSON structure.' },
                 { role: 'user', content: prompt }
               ],
-              temperature: 0.5,
+              temperature: 1.0,
               max_tokens: 3000,
               response_format: { type: "json_object" }
             }),
@@ -196,11 +196,11 @@ Format your response as JSON with this structure:
           const result = await response.json();
           chapterContent = result.choices[0].message.content;
           break; // 成功获取内容，跳出重试循环
-          
+
         } catch (error) {
           retries++;
           console.error(`Error generating chapter ${i}, attempt ${retries}:`, error);
-          
+
           if (retries >= MAX_RETRIES) {
             console.error(`Failed to generate chapter ${i} after ${MAX_RETRIES} attempts`);
             // 创建一个错误占位章节
@@ -221,19 +221,19 @@ Format your response as JSON with this structure:
           }
         }
       }
-      
+
       try {
         // 解析JSON响应
         const parsedChapter = JSON.parse(chapterContent!);
         bookChapters.push(parsedChapter);
-        
+
         // 每生成一章就更新数据库，确保不丢失进度
         if (i % 1 === 0 || i === endChapter) { // 每章或批次结束时更新
           const { error: updateError } = await supabase
             .from('funny_biography_books')
             .update({ book_content: bookChapters })
             .eq('order_id', orderId);
-            
+
           if (updateError) {
             console.error(`Warning: Failed to update book data after chapter ${i}:`, updateError);
           }
@@ -241,7 +241,7 @@ Format your response as JSON with this structure:
       } catch (parseError) {
         console.error(`Error parsing chapter ${i} content:`, parseError);
         console.error(`Original content (first 300 chars): ${chapterContent!.substring(0, 300)}...`);
-        
+
         // 如果解析失败，创建一个带有错误信息的章节
         const errorChapter = {
           chapterNumber: i,
@@ -254,15 +254,15 @@ Format your response as JSON with this structure:
             }
           ]
         };
-        
+
         bookChapters.push(errorChapter);
-        
+
         // 更新数据库，保存进度
         const { error: updateError } = await supabase
           .from('funny_biography_books')
           .update({ book_content: bookChapters })
           .eq('order_id', orderId);
-          
+
         if (updateError) {
           console.error(`Warning: Failed to update book data after error in chapter ${i}:`, updateError);
         }
@@ -328,8 +328,8 @@ Format your response as JSON with this structure:
     }
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         message: `Book content batch ${batchNumber} generated successfully`,
         isComplete: endChapter >= TOTAL_CHAPTERS
       }),
@@ -339,19 +339,19 @@ Format your response as JSON with this structure:
     );
   } catch (error) {
     console.error('Error generating book content:', error);
-    
+
     // 如果是批次处理失败，尝试重试当前批次
     try {
       const { orderId, batchNumber, retryCount = 0, existingContent = [] } = await req.json();
-      
+
       if (orderId && batchNumber && retryCount < MAX_RETRIES) {
         console.log(`Retrying batch ${batchNumber} for order ${orderId}, attempt ${retryCount + 1}`);
-        
+
         // 等待一段时间后重试
         setTimeout(() => {
           const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
           const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
-          
+
           if (supabaseUrl && supabaseServiceKey) {
             fetch(`${supabaseUrl}/functions/v1/generate-book-content`, {
               method: 'POST',
@@ -372,7 +372,7 @@ Format your response as JSON with this structure:
     } catch (retryError) {
       console.error('Error setting up retry:', retryError);
     }
-    
+
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
       {
