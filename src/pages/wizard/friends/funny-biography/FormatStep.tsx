@@ -398,7 +398,7 @@ const FormatStep = () => {
               <div className="p-7">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-2xl font-bold">{format.name}</h3>
-                  <p className="text-2xl font-bold">${format.price.toFixed(2)}</p>
+                  <p className="text-xl font-bold">${format.price.toFixed(2)}</p>
                 </div>
                 <p className="text-gray-600 mb-6">{format.description}</p>
 
