@@ -595,10 +595,10 @@ const CanvasCoverPreview = ({
       ctx.fillStyle = bgGradient;
       ctx.fillRect(0, 0, width, height);
 
-      // 在上半部添加蓝色高光效果 - 扩大范围以避免截断
+      // 在上半部添加蓝色高光效果 - 扩大范围至整个封面
       const topGlow = ctx.createRadialGradient(
         width * 0.5, height * 0.3, 10,
-        width * 0.5, height * 0.3, width * 1.2
+        width * 0.5, height * 0.3, width * 1.5
       );
       topGlow.addColorStop(0, 'rgba(0, 120, 255, 0.3)');
       topGlow.addColorStop(0.5, 'rgba(0, 80, 200, 0.1)');
@@ -606,7 +606,7 @@ const CanvasCoverPreview = ({
 
       ctx.globalAlpha = 0.7;
       ctx.fillStyle = topGlow;
-      ctx.fillRect(0, 0, width, height * 0.7); // 扩大覆盖区域到 70% 的高度
+      ctx.fillRect(0, 0, width, height); // 扩大覆盖区域到整个封面高度
 
       // 恢复透明度
       ctx.globalAlpha = 1.0;
@@ -902,11 +902,11 @@ const CanvasCoverPreview = ({
       ctx.textAlign = 'center';
       ctx.fillText(authorName.toUpperCase(), width / 2, 90); // Y位置从70下移到90
 
-      // 封面中央绘制大号金色标题
+      // 封面中央绘制大号金色标题 - 增加左右边距
       const titleFont = `bold 70px ${resolvedFont}`;
       const titleColor = '#D7B33E'; // 使用更柔和的金铜色调
       const titleLineHeight = 90;
-      const titleArea = { x: width * 0.1, y: height * 0.6, width: width * 0.8, height: height * 0.25 }; // 下移标题区域 (y from 0.5 to 0.6, height adjusted)
+      const titleArea = { x: width * 0.15, y: height * 0.6, width: width * 0.7, height: height * 0.25 }; // 缩小标题区域宽度，增加左右边距
 
       // Wrap title text
       ctx.font = titleFont; // Set font for measurement
@@ -938,11 +938,11 @@ const CanvasCoverPreview = ({
       ctx.fillStyle = milkTeaGradient;
       ctx.fillRect(0, height - bottomHeight, width, bottomHeight);
 
-      // 在底部绘制副标题
+      // 在底部绘制副标题 - 增加左右边距
       const subtitleFont = `normal 26px ${resolvedFont}`; // 从28px减小到26px (折中方案)
       const subtitleColor = '#A3896B'; // 将白色改为棕褐色
       const subtitleLineHeight = 34; // 从36减小到34
-      const subtitleArea = { x: width * 0.075, y: height * 0.81, width: width * 0.85, height: height * 0.15 }; // 位置从0.82调整到0.81
+      const subtitleArea = { x: width * 0.15, y: height * 0.81, width: width * 0.7, height: height * 0.15 }; // 缩小副标题区域宽度，增加左右边距
 
       // Wrap subtitle text
       ctx.font = subtitleFont; // Set font for measurement
@@ -994,11 +994,11 @@ const CanvasCoverPreview = ({
       ctx.shadowOffsetX = 0;
       ctx.shadowOffsetY = 0;
 
-      // 左对齐绘制标题
+      // 左对齐绘制标题 - 减少右侧边距
       const titleFont = `bold 70px ${montserratFont}`; // 从75px缩小到70px
       const titleColor = '#FFFFFF';
       const titleLineHeight = 80; // 从85减小到80，以匹配更小的字体
-      const titleArea = { x: 60, y: height * 0.62, width: width - 120, height: height * 0.25 }; // 从x:50增加到x:60，width从width-100减小到width-120
+      const titleArea = { x: 60, y: height * 0.62, width: width - 80, height: height * 0.25 }; // 减少右侧边距，从width-120增加到width-80
 
       // Wrap title text
       ctx.font = titleFont; // Set font for measurement
