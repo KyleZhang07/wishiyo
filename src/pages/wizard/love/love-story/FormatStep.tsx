@@ -30,22 +30,22 @@ const FormatStep = () => {
   const coverFormats: CoverFormat[] = [
     {
       id: 'hardcover',
-      name: 'Hardcover',
-      price: 59.99,
-      description: 'A luxurious hardcover made to last for generations.',
+      name: 'Classic Glossy Edition',
+      price: 35.99,
+      description: 'Bright & Vivid – Glossy finish with vibrant colors for maximum visual impact',
       imageSrc: hardcoverImage
     },
     {
-      id: 'softcover',
-      name: 'Softcover',
+      id: 'hardcover_matte',
+      name: 'Elegant Matte Edition',
       price: 39.99,
-      description: 'Lightweight and beautiful – perfect for everyday reading.',
+      description: 'Soft & Timeless – Elegant matte finish with a premium feel, perfect for gifts and keepsakes',
       imageSrc: softcoverImage
     }
   ];
 
-  // 默认选择软封面
-  const [selectedFormat, setSelectedFormat] = useState<string>('softcover');
+  // 默认选择精装高光版
+  const [selectedFormat, setSelectedFormat] = useState<string>('hardcover');
   const [isProcessing, setIsProcessing] = useState(false);
 
   // 处理格式选择
