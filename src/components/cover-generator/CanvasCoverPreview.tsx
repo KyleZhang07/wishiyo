@@ -595,10 +595,10 @@ const CanvasCoverPreview = ({
       ctx.fillStyle = bgGradient;
       ctx.fillRect(0, 0, width, height);
 
-      // 在上半部添加蓝色高光效果 - 扩大范围至整个封面
+      // 在上半部添加蓝色高光效果 - 扩大范围以避免截断
       const topGlow = ctx.createRadialGradient(
         width * 0.5, height * 0.3, 10,
-        width * 0.5, height * 0.3, width * 1.5
+        width * 0.5, height * 0.3, width * 1.2
       );
       topGlow.addColorStop(0, 'rgba(0, 120, 255, 0.3)');
       topGlow.addColorStop(0.5, 'rgba(0, 80, 200, 0.1)');
@@ -606,7 +606,7 @@ const CanvasCoverPreview = ({
 
       ctx.globalAlpha = 0.7;
       ctx.fillStyle = topGlow;
-      ctx.fillRect(0, 0, width, height); // 扩大覆盖区域到整个封面高度
+      ctx.fillRect(0, 0, width, height * 0.7); // 扩大覆盖区域到 70% 的高度
 
       // 恢复透明度
       ctx.globalAlpha = 1.0;
@@ -906,7 +906,7 @@ const CanvasCoverPreview = ({
       const titleFont = `bold 70px ${resolvedFont}`;
       const titleColor = '#D7B33E'; // 使用更柔和的金铜色调
       const titleLineHeight = 90;
-      const titleArea = { x: width * 0.075, y: height * 0.6, width: width * 0.85, height: height * 0.25 }; // 与副标题对齐
+      const titleArea = { x: width * 0.1, y: height * 0.6, width: width * 0.8, height: height * 0.25 }; // 下移标题区域 (y from 0.5 to 0.6, height adjusted)
 
       // Wrap title text
       ctx.font = titleFont; // Set font for measurement
