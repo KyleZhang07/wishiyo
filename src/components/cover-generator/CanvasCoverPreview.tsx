@@ -902,11 +902,11 @@ const CanvasCoverPreview = ({
       ctx.textAlign = 'center';
       ctx.fillText(authorName.toUpperCase(), width / 2, 90); // Y位置从70下移到90
 
-      // 封面中央绘制大号金色标题 - 增加左右边距
+      // 封面中央绘制大号金色标题 - 进一步缩小宽度以防止超出边界
       const titleFont = `bold 70px ${resolvedFont}`;
       const titleColor = '#D7B33E'; // 使用更柔和的金铜色调
       const titleLineHeight = 90;
-      const titleArea = { x: width * 0.15, y: height * 0.6, width: width * 0.7, height: height * 0.25 }; // 缩小标题区域宽度，增加左右边距
+      const titleArea = { x: width * 0.2, y: height * 0.6, width: width * 0.6, height: height * 0.25 }; // 进一步缩小宽度，增加左右边距
 
       // Wrap title text
       ctx.font = titleFont; // Set font for measurement
@@ -938,11 +938,11 @@ const CanvasCoverPreview = ({
       ctx.fillStyle = milkTeaGradient;
       ctx.fillRect(0, height - bottomHeight, width, bottomHeight);
 
-      // 在底部绘制副标题 - 增加左右边距
+      // 在底部绘制副标题
       const subtitleFont = `normal 26px ${resolvedFont}`; // 从28px减小到26px (折中方案)
       const subtitleColor = '#A3896B'; // 将白色改为棕褐色
       const subtitleLineHeight = 34; // 从36减小到34
-      const subtitleArea = { x: width * 0.15, y: height * 0.81, width: width * 0.7, height: height * 0.15 }; // 缩小副标题区域宽度，增加左右边距
+      const subtitleArea = { x: width * 0.075, y: height * 0.81, width: width * 0.85, height: height * 0.15 }; // 位置从0.82调整到0.81
 
       // Wrap subtitle text
       ctx.font = subtitleFont; // Set font for measurement
@@ -994,11 +994,11 @@ const CanvasCoverPreview = ({
       ctx.shadowOffsetX = 0;
       ctx.shadowOffsetY = 0;
 
-      // 左对齐绘制标题 - 减少右侧边距
+      // 左对齐绘制标题
       const titleFont = `bold 70px ${montserratFont}`; // 从75px缩小到70px
       const titleColor = '#FFFFFF';
       const titleLineHeight = 80; // 从85减小到80，以匹配更小的字体
-      const titleArea = { x: 60, y: height * 0.62, width: width - 80, height: height * 0.25 }; // 减少右侧边距，从width-120增加到width-80
+      const titleArea = { x: 60, y: height * 0.62, width: width - 120, height: height * 0.25 }; // 从x:50增加到x:60，width从width-100减小到width-120
 
       // Wrap title text
       ctx.font = titleFont; // Set font for measurement
