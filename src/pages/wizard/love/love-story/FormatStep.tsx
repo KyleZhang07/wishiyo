@@ -30,16 +30,16 @@ const FormatStep = () => {
   const coverFormats: CoverFormat[] = [
     {
       id: 'hardcover',
-      name: 'Classic Glossy Edition',
+      name: 'Glossy',
       price: 35.99,
-      description: 'Bright & Vivid – Glossy finish with vibrant colors for maximum visual impact',
+      description: 'Bright finish with vibrant colors.',
       imageSrc: hardcoverImage
     },
     {
       id: 'hardcover_matte',
-      name: 'Elegant Matte Edition',
+      name: 'Matte',
       price: 39.99,
-      description: 'Soft & Timeless – Elegant matte finish with a premium feel, perfect for gifts and keepsakes',
+      description: 'Premium feel, perfect for gifts.',
       imageSrc: softcoverImage
     }
   ];
@@ -201,7 +201,7 @@ const FormatStep = () => {
               <div className="p-7">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-2xl font-bold">{format.name}</h3>
-                  <p className="text-xl font-bold">${format.price.toFixed(2)} USD</p>
+                  <p className="text-2xl font-bold">${format.price.toFixed(2)}</p>
                 </div>
                 <p className="text-gray-600 mb-6">{format.description}</p>
 
