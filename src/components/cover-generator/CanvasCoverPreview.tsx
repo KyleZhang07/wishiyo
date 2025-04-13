@@ -914,7 +914,7 @@ const CanvasCoverPreview = ({
       const titleLines = [];
       let currentLine = '';
       for (let i = 0; i < titleWords.length; i++) {
-        if (currentLine.length + titleWords[i].length > 18) { // 18 char limit
+        if (currentLine.length + titleWords[i].length > 15) { // 15 char limit
           titleLines.push(currentLine.trim());
           currentLine = titleWords[i] + ' ';
         } else {
@@ -1007,7 +1007,7 @@ const CanvasCoverPreview = ({
       const titleLines = [];
       let currentLine = '';
       for (let i = 0; i < titleWords.length; i++) {
-        if (currentLine.length + titleWords[i].length > 18) { // 18 char limit
+        if (currentLine.length + titleWords[i].length > 15) { // 15 char limit
           titleLines.push(currentLine.trim());
           currentLine = titleWords[i] + ' ';
         } else {
