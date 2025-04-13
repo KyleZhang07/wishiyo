@@ -32,14 +32,14 @@ const FormatStep = () => {
       id: 'hardcover',
       name: 'Glossy',
       price: 35.99,
-      description: 'Bright finish with vibrant colors.',
+      description: 'A vibrant glossy finish with bright, eye-catching colors.',
       imageSrc: hardcoverImage
     },
     {
       id: 'hardcover_matte',
       name: 'Matte',
       price: 39.99,
-      description: 'Premium feel, perfect for gifts.',
+      description: 'An elegant matte finish – perfect for timeless gifts.',
       imageSrc: softcoverImage
     }
   ];
@@ -201,7 +201,7 @@ const FormatStep = () => {
               <div className="p-7">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-2xl font-bold">{format.name}</h3>
-                  <p className="text-2xl font-bold">${format.price.toFixed(2)}</p>
+                  <p className="text-xl font-bold">${format.price.toFixed(2)}</p>
                 </div>
                 <p className="text-gray-600 mb-6">{format.description}</p>
 
