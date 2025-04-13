@@ -140,29 +140,25 @@ serve(async (req) => {
             {
               role: 'system',
               content: `
-                1. Create a concise, punchy title (3-5 words) that can range from clever metaphors to unexpected concepts
+                1. Create a concise, punchy title (3-5 words, not exceeding 30 characters) that can range from clever metaphors to unexpected concepts
                 2. Make the book about ONE PERSON ONLY - sharing their expertise, unique perspectives, or interesting life approaches
                 3. The tone should vary across the three ideas: one professional, one satirical (gently poking fun at quirks mentioned in answers), and one unexpected
-                4. The ideas should balance PROFESSIONAL WISDOM with ENTERTAINING ELEMENTS while maintaining an engaging tone
-                5. Make the ideas SPECIFIC and MEMORABLE, focusing on unique frameworks, unusual talents, or interesting perspectives
+                4. IMPORTANT: emphasize HUMOR throughout all ideas - include WITTY observations, PLAYFUL exaggerations, and AMUSING perspectives even in the more professional ideas
+                5. The ideas should balance PROFESSIONAL WISDOM with ENTERTAINING ELEMENTS while maintaining an engaging tone
                 6. Each book should present the subject as someone sharing valuable insights through memorable frameworks that might be conventional, satirical, or unexpected
                 7. The author field MUST always be exactly the provided authorName - do not modify it
-                8. Descriptions must ALWAYS be a SINGLE SENTENCE with NO COMMAS - use other connectors or rephrase as needed
+                8. Descriptions must ALWAYS be a SINGLE SENTENCE - use other connectors or rephrase as needed
                 9. Avoid using "I" or "you" perspectives in descriptions - use objective third-person statements instead
                 10. For satirical ideas, playfully exaggerate elements from the user's answers but keep it good-natured
-                11. Use common words and easy to understand language - avoid rare characters, uncommon words, and complex expressions that average readers might not know
-                12. Emphasize HUMOR throughout all ideas - include witty observations, playful exaggerations, and amusing perspectives even in the more professional ideas
+                11. AVOID UNCOMMON words and use EASY to understand language, and avoid complex expressions that average readers might not know
 
                 Title examples to follow (ranging from professional to satirical to unexpected):
-                - "The Kitchen Creativity Blueprint"
+                - "The Kitchen Creativity"
                 - "Startups and Slam Dunks"
-                - "The Art of Perfect Timing"
-                - "Professional Napping Techniques"
-                - "Conversations with Algorithms"
-                - "The Sock Matching Manifesto"
+                - "Mission: Impossible"
+                - "Poop like a pro"
                 - "Accidental Leadership Genius"
-                - "The Overthinking Olympics"
-                - "Chaos Whisperer"
+                - "Skiing, Strategy, and space"
                 - "How I Befriended Gravity"
 
                 Subtitle examples to follow (ALWAYS ONE SENTENCE NO COMMAS NO "I" OR "YOU"):
@@ -186,9 +182,9 @@ serve(async (req) => {
                 The autobiography is about ${authorName}, sharing their unique perspectives, methods, and life principles with a balance of insight and personality.
 
                 Respond with ONLY a JSON array of 3 objects, each with:
-                - 'title': The book title (3-5 words, using concrete nouns that could be metaphorical or unexpected)
+                - 'title': The book title (3-5 words, not exceeding 30 characters, using concrete nouns that could be metaphorical or unexpected)
                 - 'author': "${authorName}" for all ideas
-                - 'description': A compelling subtitle (ONE SENTENCE NO COMMAS 10-15 words) that expands on the central concept with personality
+                - 'description': A compelling subtitle (ONE SENTENCE NO COMMAS 10-14 words) that expands on the central concept with personality
                 - 'praises': An array of 4 fictional praise objects, each with 'source' (imaginary publication or critic name) and 'text' (the praise quote)
 
                 Make the ideas VARIED IN TONE:
@@ -203,7 +199,6 @@ serve(async (req) => {
                 - AVOID USING "I" OR "YOU" PERSPECTIVES - use objective third-person statements instead
                 - ALWAYS BE ONE SENTENCE WITHOUT ANY COMMAS (use alternative sentence structures)
                 - Clearly communicate the value proposition whether serious or lighthearted
-                - Use language that engages readers and makes the concept memorable
                 - USE COMMON WORDS AND EASY TO UNDERSTAND LANGUAGE - avoid rare characters, uncommon words, and complex expressions that average readers might not know
                 - INFUSE HUMOR THROUGHOUT ALL IDEAS including witty observations, playful exaggerations, and amusing perspectives even in the more professional concepts
 
@@ -211,12 +206,12 @@ serve(async (req) => {
 
                 Example title/description pairs (ranging from professional to satirical to unexpected):
                 - "The Kitchen Creativity Blueprint" / "Essential cooking techniques transformed into business strategies for maximum growth"
-                - "Startups and Slam Dunks" / "A guide to balancing basketball dreams while building successful ventures"
+                - "Skiing, Strategy, and space" / "A guide to balancing basketball dreams while building successful ventures"
                 - "The Art of Perfect Timing" / "Discovering the hidden patterns that connect daily decisions to major life outcomes"
-                - "Professional Napping Techniques" / "Mastering the science of midday rest for enhanced productivity and creative thinking"
+                - "Poop like a pro" / "Mastering the science of midday rest for enhanced productivity and creative thinking"
                 - "Conversations with Algorithms" / "Exploring the relationship between human intuition and computational thinking"
                 - "The Sock Matching Manifesto" / "Revolutionary methods for organizing chaos in both wardrobes and life situations"
-                - "Accidental Leadership Genius" / "How consistently making the wrong decisions somehow led to extraordinary success"
+                - "Mission: Impossible" / "How consistently making the wrong decisions somehow led to extraordinary success"
                 - "The Overthinking Olympics" / "Mental gymnastics and philosophical contortions that turned simple problems into lifetime quests"
                 - "Chaos Whisperer" / "Transforming spectacular disasters into opportunities through sheer stubbornness and luck"
 
