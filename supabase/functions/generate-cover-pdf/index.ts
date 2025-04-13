@@ -180,20 +180,24 @@ serve(async (req) => {
 
     if (bindingType === 'hardcover') {
       // 精装本尺寸 (基于Lulu模板)
-      pdfWidth = 14.0;
-      pdfHeight = 10.75;
       bookWidth = 6.125;
       bookHeight = 9.25;
-      spineWidth = 0.25; // 精装本最小书脊宽度为 0.25"
-      console.log('Using hardcover dimensions: 14" x 10.75"');
+      spineWidth = 0.813; // 精装本书脊宽度更新为 0.813"
+      // 计算新的PDF总宽度 = 两个封面宽度 + 书脊宽度 + 两侧出血区域
+      pdfWidth = (bookWidth * 2) + spineWidth + 0.25; // 0.25" 是两侧各 0.125" 的出血区域
+      pdfHeight = 10.75;
+      console.log(`Using hardcover dimensions: ${pdfWidth}" x ${pdfHeight}" with spine width ${spineWidth}"`);
+      console.log(`Total content width: ${(bookWidth * 2) + spineWidth}"`);
     } else {
       // 平装本尺寸 (基于Lulu模板)
-      pdfWidth = 12.38;
-      pdfHeight = 9.25;
       bookWidth = 6.0;
       bookHeight = 9.0;
-      spineWidth = 0.1321; // 平装本最小书脊宽度为 0.1321"
-      console.log('Using softcover dimensions: 12.38" x 9.25"');
+      spineWidth = 0.6; // 平装本书脊宽度更新为 0.6"
+      // 计算新的PDF总宽度 = 两个封面宽度 + 书脊宽度 + 两侧出血区域
+      pdfWidth = (bookWidth * 2) + spineWidth + 0.25; // 0.25" 是两侧各 0.125" 的出血区域
+      pdfHeight = 9.25;
+      console.log(`Using softcover dimensions: ${pdfWidth}" x ${pdfHeight}" with spine width ${spineWidth}"`);
+      console.log(`Total content width: ${(bookWidth * 2) + spineWidth}"`);
     }
 
     // Create a new PDF with appropriate dimensions
