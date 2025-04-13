@@ -91,7 +91,7 @@ const IdeaStep = ({
   const [isLoading, setIsLoading] = useState(false);
   const [imagePrompts, setImagePrompts] = useState<ImagePrompt[]>([]);
   const [selectedTone, setSelectedTone] = useState<string>('Heartfelt');
-  const [selectedStyle, setSelectedStyle] = useState<string>('Photographic');
+  const [selectedStyle, setSelectedStyle] = useState<string>('Comic Book');
   const [isGeneratingTexts, setIsGeneratingTexts] = useState(false);
   const [imageTexts, setImageTexts] = useState<ImageText[]>([]);
   const { toast } = useToast();
@@ -526,6 +526,10 @@ const IdeaStep = ({
       if (savedStyle) {
         console.log('Loading saved style:', savedStyle);
         setSelectedStyle(savedStyle);
+      } else {
+        // 如果没有保存的风格，默认选择 Comic Book
+        console.log('No saved style found, defaulting to Comic Book');
+        localStorage.setItem(styleKey, 'Comic Book');
       }
 
       const savedTexts = localStorage.getItem(textsKey);
