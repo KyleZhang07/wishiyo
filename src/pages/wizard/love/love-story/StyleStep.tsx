@@ -14,18 +14,22 @@ const TONE_OPTIONS = [
 ];
 
 const LoveStoryStyleStep = () => {
-  const [selectedTone, setSelectedTone] = useState<string>('Heartfelt');
+  // 从 localStorage 读取语调或使用默认值，避免闪烁
+  const [selectedTone, setSelectedTone] = useState<string>(() => {
+    const savedTone = localStorage.getItem('loveStoryTone');
+    return savedTone || 'Heartfelt';
+  });
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
-    // 从localStorage加载已保存的tone
+    // 不需要在这里设置 selectedTone，因为我们已经在初始化时设置了
+    // 只需要确保如果没有保存的语调，将默认值保存到 localStorage
     const savedTone = localStorage.getItem('loveStoryTone');
-    if (savedTone) {
-      setSelectedTone(savedTone);
+    if (!savedTone) {
+      console.log('No saved tone found, saving default Heartfelt to localStorage');
+      localStorage.setItem('loveStoryTone', 'Heartfelt');
     }
-
-
   }, []);
 
   const handleToneSelect = (tone: string) => {

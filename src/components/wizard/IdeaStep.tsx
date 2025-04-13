@@ -90,8 +90,22 @@ const IdeaStep = ({
   const [selectedIdeaIndex, setSelectedIdeaIndex] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [imagePrompts, setImagePrompts] = useState<ImagePrompt[]>([]);
-  const [selectedTone, setSelectedTone] = useState<string>('Heartfelt');
-  const [selectedStyle, setSelectedStyle] = useState<string>('Comic Book');
+  // 从 localStorage 读取语调或使用默认值，避免闪烁
+  const [selectedTone, setSelectedTone] = useState<string>(() => {
+    const path = window.location.pathname;
+    const bookType = path.split('/')[3];
+    const toneKey = bookType === 'love-story' ? 'loveStoryTone' : '';
+    const savedTone = toneKey ? localStorage.getItem(toneKey) : null;
+    return savedTone || 'Heartfelt';
+  });
+  // 从 localStorage 读取风格或使用默认值，避免闪烁
+  const [selectedStyle, setSelectedStyle] = useState<string>(() => {
+    const path = window.location.pathname;
+    const bookType = path.split('/')[3];
+    const styleKey = bookType === 'love-story' ? 'loveStoryStyle' : '';
+    const savedStyle = styleKey ? localStorage.getItem(styleKey) : null;
+    return savedStyle || 'Comic Book';
+  });
   const [isGeneratingTexts, setIsGeneratingTexts] = useState(false);
   const [imageTexts, setImageTexts] = useState<ImageText[]>([]);
   const { toast } = useToast();
@@ -519,17 +533,22 @@ const IdeaStep = ({
       const savedTone = localStorage.getItem(toneKey);
       const savedStyle = localStorage.getItem(styleKey);
 
-      if (savedTone) {
-        setSelectedTone(savedTone);
+      // 不需要在这里设置 selectedTone，因为我们已经在初始化时设置了
+      if (!savedTone) {
+        // 如果没有保存的语调，默认选择 Heartfelt 并保存到 localStorage
+        console.log('No saved tone found, saving default Heartfelt to localStorage');
+        localStorage.setItem(toneKey, 'Heartfelt');
+      } else {
+        console.log('Found saved tone:', savedTone);
       }
 
-      if (savedStyle) {
-        console.log('Loading saved style:', savedStyle);
-        setSelectedStyle(savedStyle);
-      } else {
-        // 如果没有保存的风格，默认选择 Comic Book
-        console.log('No saved style found, defaulting to Comic Book');
+      // 不需要在这里设置 selectedStyle，因为我们已经在初始化时设置了
+      if (!savedStyle) {
+        // 如果没有保存的风格，默认选择 Comic Book 并保存到 localStorage
+        console.log('No saved style found, saving default Comic Book to localStorage');
         localStorage.setItem(styleKey, 'Comic Book');
+      } else {
+        console.log('Found saved style:', savedStyle);
       }
 
       const savedTexts = localStorage.getItem(textsKey);
