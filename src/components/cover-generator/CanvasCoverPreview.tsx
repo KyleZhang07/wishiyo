@@ -595,18 +595,18 @@ const CanvasCoverPreview = ({
       ctx.fillStyle = bgGradient;
       ctx.fillRect(0, 0, width, height);
 
-      // 在上半部添加蓝色高光效果 - 降低散射范围使光照对远处衰减更快
+      // 在上半部添加蓝色高光效果 - 扩大范围覆盖整个封面
       const topGlow = ctx.createRadialGradient(
         width * 0.5, height * 0.3, 10,
-        width * 0.5, height * 0.3, width * 0.8
+        width * 0.5, height * 0.3, width * 2.0
       );
       topGlow.addColorStop(0, 'rgba(0, 120, 255, 0.3)');
-      topGlow.addColorStop(0.3, 'rgba(0, 80, 200, 0.1)');
+      topGlow.addColorStop(0.5, 'rgba(0, 80, 200, 0.1)');
       topGlow.addColorStop(1, 'rgba(0, 0, 100, 0)');
 
       ctx.globalAlpha = 0.7;
       ctx.fillStyle = topGlow;
-      ctx.fillRect(0, 0, width, height * 0.7); // 扩大覆盖区域到 70% 的高度
+      ctx.fillRect(0, 0, width, height); // 扩大覆盖区域到整个封面
 
       // 恢复透明度
       ctx.globalAlpha = 1.0;
@@ -781,16 +781,30 @@ const CanvasCoverPreview = ({
       const largeLineHeight = 90; // 保持与红色部分的行距
       const titleArea = { x: width * 0.1, y: height * 0.02, width: width * 0.8, height: height * 0.4 }; // 再次上移标题区域 (y from 0.1 to 0.02, height adjusted)
 
-      // Split title into lines (existing logic)
+      // Split title into lines with adaptive font size for measurement
       const titleWords = coverTitle.split(' ');
       const maxLineWidth = titleArea.width;
       const titleLines = [];
       let currentLine = '';
+
+      // 估计前半部分的行数（用于放宽前半部分的换行要求）
+      const estimatedTotalLines = Math.ceil(coverTitle.length / 15); // 粗略估计总行数
+      const estimatedMidpoint = Math.ceil(estimatedTotalLines / 2);
+
       ctx.font = titleFont; // Use base font for initial measurement
       for (let i = 0; i < titleWords.length; i++) {
         const word = titleWords[i];
         const testLine = currentLine + (currentLine ? ' ' : '') + word;
-        ctx.font = `bold 80px ${resolvedFont}`; // Use largest possible font for width check
+
+        // 根据当前行数决定使用哪种字体进行测量
+        // 如果当前行数小于估计的中点，使用较小字体进行测量
+        // 否则使用最大字体进行测量
+        if (titleLines.length < estimatedMidpoint) {
+          ctx.font = `bold 54px ${resolvedFont}`; // 使用前半部分的较小字体进行测量
+        } else {
+          ctx.font = `bold 80px ${resolvedFont}`; // 使用后半部分的较大字体进行测量
+        }
+
         const metrics = ctx.measureText(testLine.toUpperCase());
         ctx.font = titleFont; // Reset to base font for next check
 
@@ -1600,18 +1614,18 @@ const CanvasCoverPreview = ({
       ctx.fillStyle = bgGradient;
       ctx.fillRect(0, 0, width, height);
 
-      // 在下半部添加蓝色高光效果 - 降低散射范围使光照对远处衰减更快
+      // 在下半部添加蓝色高光效果 - 扩大范围覆盖整个封面
       const bottomGlow = ctx.createRadialGradient(
         width * 0.5, height * 0.8, 10,
-        width * 0.5, height * 0.8, width * 0.6
+        width * 0.5, height * 0.8, width * 2.0
       );
       bottomGlow.addColorStop(0, 'rgba(0, 120, 255, 0.3)');
-      bottomGlow.addColorStop(0.3, 'rgba(0, 80, 200, 0.1)');
+      bottomGlow.addColorStop(0.5, 'rgba(0, 80, 200, 0.1)');
       bottomGlow.addColorStop(1, 'rgba(0, 0, 100, 0)');
 
       ctx.globalAlpha = 0.7;
       ctx.fillStyle = bottomGlow;
-      ctx.fillRect(0, height * 0.5, width, height * 0.5);
+      ctx.fillRect(0, 0, width, height); // 扩大覆盖区域到整个封面
 
       // 添加金色星点效果
       ctx.fillStyle = '#FFC300'; // 金色星点
