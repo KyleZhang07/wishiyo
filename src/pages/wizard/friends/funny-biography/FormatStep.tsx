@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Check } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { getClientId } from '@/utils/clientId';
 
 // 导入图片
 import hardcoverImage from '@/assets/format-images/funny-biography/hardcover.jpg';
@@ -266,6 +267,9 @@ const FormatStep = () => {
               chapters = JSON.parse(savedChapters);
             }
 
+            // 获取客户端ID
+            const clientId = getClientId();
+
             // 添加记录到数据库
             const { data, error } = await supabase
               .from('funny_biography_books')
@@ -286,7 +290,9 @@ const FormatStep = () => {
                   frontCover: frontCoverUrl,
                   spine: spineUrl,
                   backCover: backCoverUrl
-                }
+                },
+                // 设置客户端ID用于行级安全性
+                client_id: clientId
               })
               .select();
 
