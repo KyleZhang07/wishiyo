@@ -86,8 +86,45 @@ const IdeaStep = ({
   currentStep,
   totalSteps
 }: IdeaStepProps) => {
-  const [ideas, setIdeas] = useState<BookIdea[]>([]);
-  const [selectedIdeaIndex, setSelectedIdeaIndex] = useState<number | null>(null);
+  // 直接在状态初始化时从 localStorage 加载数据，避免闪烁
+  const [ideas, setIdeas] = useState<BookIdea[]>(() => {
+    const path = window.location.pathname;
+    const bookType = path.split('/')[3];
+    const ideaStorageKeyMap: { [key: string]: string } = {
+      'funny-biography': 'funnyBiographyGeneratedIdeas',
+      'love-story': 'loveStoryGeneratedIdeas',
+    };
+    const ideasKey = ideaStorageKeyMap[bookType] || '';
+    const savedIdeasString = localStorage.getItem(ideasKey);
+    if (savedIdeasString) {
+      try {
+        const parsedIdeas = JSON.parse(savedIdeasString);
+        if (Array.isArray(parsedIdeas)) {
+          return parsedIdeas;
+        }
+      } catch (error) {
+        console.error('Error parsing saved ideas:', error);
+      }
+    }
+    return [];
+  });
+  const [selectedIdeaIndex, setSelectedIdeaIndex] = useState<number | null>(() => {
+    const path = window.location.pathname;
+    const bookType = path.split('/')[3];
+    const selectedIdeaStorageKeyMap: { [key: string]: string } = {
+      'funny-biography': 'funnyBiographySelectedIdea',
+      'love-story': 'loveStorySelectedIdea',
+    };
+    const selectedIdeaKey = selectedIdeaStorageKeyMap[bookType] || '';
+    const savedIdeaIndexString = localStorage.getItem(selectedIdeaKey);
+    if (savedIdeaIndexString) {
+      const index = parseInt(savedIdeaIndexString);
+      if (!isNaN(index)) {
+        return index;
+      }
+    }
+    return null;
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [imagePrompts, setImagePrompts] = useState<ImagePrompt[]>([]);
   // 从 localStorage 读取语调或使用默认值，避免闪烁
@@ -575,26 +612,10 @@ const IdeaStep = ({
       }
     }
 
-    const savedIdeasString = localStorage.getItem(ideasKey);
-    const savedIdeaIndexString = localStorage.getItem(selectedIdeaKey);
-
-    if (savedIdeasString) {
-      try {
-        const parsedIdeas = JSON.parse(savedIdeasString);
-        if (Array.isArray(parsedIdeas)) {
-          setIdeas(parsedIdeas);
-          if (savedIdeaIndexString) {
-            const index = parseInt(savedIdeaIndexString);
-            if (!isNaN(index)) {
-              setSelectedIdeaIndex(index);
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error parsing saved ideas:', error);
-        generateIdeas();
-      }
-    } else {
+    // 检查是否需要生成创意
+    // 如果没有保存的创意或创意数组为空，则生成新的创意
+    if (ideas.length === 0) {
+      console.log('No saved ideas found, generating new ideas');
       generateIdeas();
     }
   }, [category]);

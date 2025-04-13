@@ -14,21 +14,20 @@ interface QuestionAnswer {
 const LoveStoryQuestionsStep = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
-  const [questionsAndAnswers, setQuestionsAndAnswers] = useState<QuestionAnswer[]>([]);
-  const [personName, setPersonName] = useState('');
-  const { toast } = useToast();
-  const navigate = useNavigate();
   const storageKey = 'loveStoryAnswers';
 
-  useEffect(() => {
-    const savedName = localStorage.getItem('loveStoryPersonName') || '';
-    setPersonName(savedName);
+  // 直接在状态初始化时从 localStorage 加载数据，避免闪烁
+  const [personName, setPersonName] = useState<string>(() => {
+    return localStorage.getItem('loveStoryPersonName') || '';
+  });
 
+  const [questionsAndAnswers, setQuestionsAndAnswers] = useState<QuestionAnswer[]>(() => {
     const savedAnswers = localStorage.getItem(storageKey);
-    if (savedAnswers) {
-      setQuestionsAndAnswers(JSON.parse(savedAnswers));
-    }
-  }, []);
+    return savedAnswers ? JSON.parse(savedAnswers) : [];
+  });
+
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
   const getQuestions = (name: string) => [
     `What's a hobby or activity that ${name} is passionate about?`,

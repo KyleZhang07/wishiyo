@@ -30,24 +30,21 @@ const getQuestions = (authorName: string) => [
 const FunnyBiographyStoriesStep = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
-  const [questionsAndAnswers, setQuestionsAndAnswers] = useState<QuestionAnswer[]>([]);
-  const [questions, setQuestions] = useState<string[]>([]);
-  const [authorName, setAuthorName] = useState<string>('');
+  // 直接在状态初始化时从 localStorage 加载数据，避免闪烁
+  const storageKey = 'funnyBiographyAnswers';
+  const [authorName, setAuthorName] = useState<string>(() => {
+    return localStorage.getItem('funnyBiographyAuthorName') || '';
+  });
+  const [questions, setQuestions] = useState<string[]>(() => {
+    const savedName = localStorage.getItem('funnyBiographyAuthorName') || '';
+    return getQuestions(savedName);
+  });
+  const [questionsAndAnswers, setQuestionsAndAnswers] = useState<QuestionAnswer[]>(() => {
+    const savedAnswers = localStorage.getItem(storageKey);
+    return savedAnswers ? JSON.parse(savedAnswers) : [];
+  });
   const { toast } = useToast();
   const navigate = useNavigate();
-  const storageKey = 'funnyBiographyAnswers';
-
-  useEffect(() => {
-    const savedName = localStorage.getItem('funnyBiographyAuthorName') || '';
-    setAuthorName(savedName);
-    setQuestions(getQuestions(savedName));
-    
-    // Load saved answers
-    const savedAnswers = localStorage.getItem(storageKey);
-    if (savedAnswers) {
-      setQuestionsAndAnswers(JSON.parse(savedAnswers));
-    }
-  }, []);
 
   const handleNext = () => {
     if (questionsAndAnswers.length === 0) {
@@ -64,9 +61,9 @@ const FunnyBiographyStoriesStep = () => {
   const handleSubmitAnswer = (question: string, answer: string) => {
     // Check if the question has already been answered
     const existingIndex = questionsAndAnswers.findIndex(qa => qa.question === question);
-    
+
     let newAnswers: QuestionAnswer[];
-    
+
     if (existingIndex !== -1) {
       // Update existing answer
       newAnswers = [...questionsAndAnswers];
@@ -75,7 +72,7 @@ const FunnyBiographyStoriesStep = () => {
       // Add new answer
       newAnswers = [...questionsAndAnswers, { question, answer }];
     }
-    
+
     setQuestionsAndAnswers(newAnswers);
     localStorage.setItem(storageKey, JSON.stringify(newAnswers));
   };
@@ -105,9 +102,9 @@ const FunnyBiographyStoriesStep = () => {
       <div className="flex justify-center w-full">
         <div className="space-y-6 w-[95%]">
           {questionsAndAnswers.map((qa, index) => (
-            <div 
-              key={index} 
-              className="bg-white rounded-lg border p-3.5 relative transition-transform hover:scale-[1.02] cursor-pointer" 
+            <div
+              key={index}
+              className="bg-white rounded-lg border p-3.5 relative transition-transform hover:scale-[1.02] cursor-pointer"
               onClick={() => handleEditAnswer(qa.question)}
             >
               <Button
@@ -125,7 +122,7 @@ const FunnyBiographyStoriesStep = () => {
               <p className="text-base">{qa.answer}</p>
             </div>
           ))}
-          
+
           <Button
             variant="outline"
             className="w-full h-16 border-dashed text-lg text-gray-700"
@@ -135,8 +132,8 @@ const FunnyBiographyStoriesStep = () => {
             }}
           >
             <PlusCircle className="mr-2 h-5 w-5 text-[#FF7F50]" />
-            {questionsAndAnswers.length === 0 
-              ? "Select a Question and Share a Story" 
+            {questionsAndAnswers.length === 0
+              ? "Select a Question and Share a Story"
               : "Add Another Story"}
           </Button>
         </div>

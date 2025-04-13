@@ -44,8 +44,11 @@ const FormatStep = () => {
     }
   ];
 
-  // 默认选择精装高光版
-  const [selectedFormat, setSelectedFormat] = useState<string>('hardcover');
+  // 直接在状态初始化时从 localStorage 加载数据，避免闪烁
+  const [selectedFormat, setSelectedFormat] = useState<string>(() => {
+    const savedFormat = localStorage.getItem('loveStorySelectedFormat');
+    return savedFormat || 'hardcover'; // 默认选择精装高光版
+  });
   const [isProcessing, setIsProcessing] = useState(false);
 
   // 处理格式选择
@@ -152,13 +155,9 @@ const FormatStep = () => {
     }
   };
 
-  // 从localStorage加载已保存的选择
-  useEffect(() => {
-    const savedFormat = localStorage.getItem('loveStorySelectedFormat');
-    if (savedFormat) {
-      setSelectedFormat(savedFormat);
-    }
-  }, []);
+  // 不再需要从 localStorage 加载已保存的选择
+  // 因为我们已经在状态初始化时直接加载了数据
+
 
   return (
     <WizardStep
