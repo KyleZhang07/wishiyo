@@ -17,6 +17,7 @@ export type Database = {
           book_content: Json | null
           book_size: string | null
           chapters: Json | null
+          client_id: string | null
           cover_pdf: string | null
           cover_source_url: string | null
           customer_email: string | null
@@ -56,6 +57,7 @@ export type Database = {
           book_content?: Json | null
           book_size?: string | null
           chapters?: Json | null
+          client_id?: string | null
           cover_pdf?: string | null
           cover_source_url?: string | null
           customer_email?: string | null
@@ -95,6 +97,7 @@ export type Database = {
           book_content?: Json | null
           book_size?: string | null
           chapters?: Json | null
+          client_id?: string | null
           cover_pdf?: string | null
           cover_source_url?: string | null
           customer_email?: string | null

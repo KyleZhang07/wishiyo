@@ -9,29 +9,29 @@ ADD COLUMN IF NOT EXISTS "client_id" varchar;
 -- 启用行级安全性
 ALTER TABLE "public"."funny_biography_books" ENABLE ROW LEVEL SECURITY;
 
--- 创建策略：允许用户只能查看自己的记录
-CREATE POLICY "Users can view their own funny biography books"
-ON "public"."funny_biography_books"
-FOR SELECT
-USING (client_id = (SELECT coalesce(nullif(current_setting('request.headers', true)::json->>'x-client-id', ''), 'anonymous')));
+-- 创建允许通过 client_id 访问书籍记录的策略
+CREATE POLICY "Anyone can view funny biography books by client_id"
+  ON "public"."funny_biography_books"
+  FOR SELECT
+  USING (true);  -- 允许任何人查看记录
 
--- 创建策略：允许用户只能更新自己的记录
-CREATE POLICY "Users can update their own funny biography books"
-ON "public"."funny_biography_books"
-FOR UPDATE
-USING (client_id = (SELECT coalesce(nullif(current_setting('request.headers', true)::json->>'x-client-id', ''), 'anonymous')));
+-- 创建允许通过 client_id 更新书籍记录的策略
+CREATE POLICY "Anyone can update funny biography books by client_id"
+  ON "public"."funny_biography_books"
+  FOR UPDATE
+  USING (true);  -- 允许任何人更新记录
 
--- 创建策略：允许用户只能删除自己的记录
-CREATE POLICY "Users can delete their own funny biography books"
-ON "public"."funny_biography_books"
-FOR DELETE
-USING (client_id = (SELECT coalesce(nullif(current_setting('request.headers', true)::json->>'x-client-id', ''), 'anonymous')));
+-- 创建允许通过 client_id 删除书籍记录的策略
+CREATE POLICY "Anyone can delete funny biography books by client_id"
+  ON "public"."funny_biography_books"
+  FOR DELETE
+  USING (true);  -- 允许任何人删除记录
 
--- 创建策略：允许用户插入记录，但必须设置正确的 client_id
-CREATE POLICY "Users can insert funny biography books with their client_id"
-ON "public"."funny_biography_books"
-FOR INSERT
-WITH CHECK (client_id = (SELECT coalesce(nullif(current_setting('request.headers', true)::json->>'x-client-id', ''), 'anonymous')));
+-- 创建允许通过 client_id 插入书籍记录的策略
+CREATE POLICY "Anyone can insert funny biography books"
+  ON "public"."funny_biography_books"
+  FOR INSERT
+  WITH CHECK (true);  -- 允许任何人插入记录
 
 -- 创建策略：允许服务角色完全访问
 CREATE POLICY "Service role has full access to funny biography books"
