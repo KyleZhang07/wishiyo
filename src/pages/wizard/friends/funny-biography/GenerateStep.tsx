@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
 import CanvasCoverPreview from '@/components/cover-generator/CanvasCoverPreview';
+import ImageAdjustDialog from '@/components/cover-generator/ImageAdjustDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { jsPDF } from 'jspdf';
 import { useFontLoader, preloadFonts } from '@/hooks/useFontLoader';
+import { ImageIcon } from 'lucide-react';
 
 // 定义赞美语接口
 interface Praise {
@@ -90,6 +92,7 @@ const FunnyBiographyGenerateStep = () => {
   const [shouldRegenerate, setShouldRegenerate] = useState(false);
   const [lastUsedImage, setLastUsedImage] = useState<string | null>(null);
   const [lastUsedStyle, setLastUsedStyle] = useState<string | null>(null);
+  const [isAdjustDialogOpen, setIsAdjustDialogOpen] = useState(false);
 
   // 使用模版字符串定义尺寸
   const standardPreviewWidth = 360; // 从320增加到360
@@ -149,8 +152,11 @@ const FunnyBiographyGenerateStep = () => {
     }
 
     if (savedPhotos) {
-      handleImageProcessing(savedPhotos);
+      // 立即设置原始图片，以便按钮可以立即显示
+      setCoverImage(savedPhotos);
       setLastUsedImage(savedPhotos);
+      // 然后异步处理图片
+      handleImageProcessing(savedPhotos);
     }
 
     if (savedGenerationComplete === 'true') {
@@ -277,6 +283,20 @@ const FunnyBiographyGenerateStep = () => {
     }
   }, [generationComplete]);
 
+  // 监听图片位置和缩放变化，触发重新生成
+  useEffect(() => {
+    // 只有当图片已经加载并且生成完成后，才在调整位置或缩放时触发重新生成
+    if (coverImage && generationComplete) {
+      console.log('图片位置或缩放变化，准备重新生成封面...');
+      // 设置一个短暂的延迟，避免频繁重新生成
+      const timer = setTimeout(() => {
+        generateImagesFromCanvas();
+      }, 300);
+
+      return () => clearTimeout(timer);
+    }
+  }, [imagePosition, imageScale]);
+
   // 监听字体加载状态
   useEffect(() => {
     if (fontStatus === 'loaded') {
@@ -309,7 +329,9 @@ const FunnyBiographyGenerateStep = () => {
       if (error) throw error;
 
       if (data.success && data.image) {
+        // 更新处理后的图片
         setCoverImage(data.image);
+        console.log('Background removed successfully');
       } else {
         throw new Error('Failed to process image');
       }
@@ -318,11 +340,14 @@ const FunnyBiographyGenerateStep = () => {
       toast({
         variant: "destructive",
         title: "Error processing image",
-        description: "Failed to remove background from the image. Please try again."
+        description: "Failed to remove background from the image. Using original image instead."
       });
-      setCoverImage(imageUrl);
+      // 如果当前没有设置图片，才使用原始图片
+      if (!coverImage) {
+        setCoverImage(imageUrl);
+      }
     }
-    
+
     // 确保字体已加载后再尝试生成
     if (!fontsLoaded) {
       console.log('等待字体加载完成...');
@@ -335,8 +360,32 @@ const FunnyBiographyGenerateStep = () => {
   };
 
   const handleImageAdjust = (position: { x: number; y: number }, scale: number) => {
+    console.log('图片调整保存，新位置:', position, '新缩放比例:', scale);
+
+    // 显示加载提示
+    toast({
+      title: "更新封面",
+      description: "正在应用图片调整...",
+      duration: 2000
+    });
+
+    // 清除已有的PDF
+    setFrontCoverPdf(null);
+    setBackCoverPdf(null);
+    setSpinePdf(null);
+
+    // 更新状态
     setImagePosition(position);
     setImageScale(scale);
+
+    // 强制重新生成，无论是否已经生成完成
+    if (coverImage) {
+      // 添加延迟，确保状态已更新
+      setTimeout(() => {
+        console.log('开始重新生成封面，使用新的位置和缩放值:', { position, scale });
+        generateImagesFromCanvas();
+      }, 100);
+    }
   };
 
   const handleStyleChange = (styleId: string) => {
@@ -353,6 +402,10 @@ const FunnyBiographyGenerateStep = () => {
       }, 500);
       return;
     }
+
+    // 打印当前的图片位置和缩放值，用于调试
+    console.log('生成图像时的图片位置:', imagePosition);
+    console.log('生成图像时的缩放比例:', imageScale);
 
     if (!canvasPdfContainerRef.current || pdfGenerating) return;
 
@@ -431,7 +484,7 @@ const FunnyBiographyGenerateStep = () => {
           Loading fonts, please wait...
         </div>
       )}
-      
+
       <div className={`transition-opacity duration-300 ${fontStatus === 'loading' ? 'opacity-50' : 'opacity-100'}`}>
         {/* 包含require-fonts类以便在字体加载前隐藏 */}
         <div className="require-fonts">
@@ -497,6 +550,32 @@ const FunnyBiographyGenerateStep = () => {
                 </div>
               )}
             </div>
+
+            {/* 添加图片调整按钮 */}
+            {coverImage && (
+              <div className="flex justify-center mb-6">
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2 rounded-full px-6 py-2 bg-white shadow-sm hover:shadow-md transition-shadow"
+                  onClick={() => setIsAdjustDialogOpen(true)}
+                >
+                  <ImageIcon className="w-5 h-5" />
+                  Adjust image
+                </Button>
+              </div>
+            )}
+
+            {/* 图片调整对话框 */}
+            {coverImage && (
+              <ImageAdjustDialog
+                open={isAdjustDialogOpen}
+                onOpenChange={setIsAdjustDialogOpen}
+                onSave={handleImageAdjust}
+                initialPosition={imagePosition}
+                initialScale={imageScale}
+                coverImage={coverImage}
+              />
+            )}
 
             <div className="space-y-4 mt-4">
               <div className="flex flex-wrap justify-center gap-6">

@@ -10,11 +10,11 @@ interface ImageControlsProps {
   onCenter: () => void;
 }
 
-const ImageControls = ({ 
-  imageScale, 
-  onScaleChange, 
-  onReset, 
-  onCenter 
+const ImageControls = ({
+  imageScale,
+  onScaleChange,
+  onReset,
+  onCenter
 }: ImageControlsProps) => {
   return (
     <div className="space-y-4 p-4 bg-gray-900 rounded-lg">
@@ -23,8 +23,8 @@ const ImageControls = ({
         <Slider
           value={[imageScale]}
           onValueChange={(value) => onScaleChange(value[0])}
-          min={50}
-          max={150}
+          min={60}
+          max={180}
           step={1}
           className="w-full mx-4"
         />

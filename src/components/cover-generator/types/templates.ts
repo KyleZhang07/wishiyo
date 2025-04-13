@@ -198,7 +198,7 @@ export const coverTemplates: { [key: string]: TemplateType } = {
     imageStyle: {
       filter: 'none',
       opacity: '1.0',
-      borderRadius: '50%'
+      borderRadius: '0'
     },
     spineStyle: {
       backgroundColor: '#000000',
