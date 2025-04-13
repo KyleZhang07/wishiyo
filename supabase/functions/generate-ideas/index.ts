@@ -221,7 +221,7 @@ serve(async (req) => {
                 - "Chaos Whisperer" / "Transforming spectacular disasters into opportunities through sheer stubbornness and luck"
 
                 For the praises, follow these guidelines:
-                1. Each praise should be a substantial paragraph (2-3 sentences) that analyzes some aspect of the book or author's style
+                1. Each praise should be a substantial paragraph (3-4 sentences) that thoroughly analyzes some aspect of the book or author's style
                 2. Use language that matches the tone of the book idea - more formal for professional concepts, more playful for quirky ones
                 3. Include specific insights about the book's themes, the author's approach, or the reader experience
                 4. Make them sound like genuine reviews from publications with names that match the subject matter
@@ -231,11 +231,11 @@ serve(async (req) => {
                 [
                   {
                     "source": "Business Innovation Quarterly",
-                    "text": "${authorName}'s approach to connecting seemingly unrelated domains creates an immediately applicable framework for problem-solving. Their ability to distill complex concepts into actionable wisdom makes this not just an entertaining read but a valuable resource for professionals seeking fresh perspectives."
+                    "text": "${authorName}'s approach to connecting seemingly unrelated domains creates an immediately applicable framework for problem-solving that stands out in today's crowded business literature. Their ability to distill complex concepts into actionable wisdom makes this not just an entertaining read but a valuable resource for professionals seeking fresh perspectives. The author's unique methodology combines analytical rigor with creative thinking in ways that challenge conventional business paradigms while remaining accessible to readers at all levels of expertise."
                   },
                   {
                     "source": "The Curious Mind Magazine",
-                    "text": "With refreshing originality and insightful observations, ${authorName} transforms everyday experiences into universal principles. The book's blend of wisdom and unexpected connections creates a reading experience that both entertains and inspires meaningful change in how readers approach familiar challenges."
+                    "text": "With refreshing originality and insightful observations, ${authorName} transforms everyday experiences into universal principles that resonate deeply with readers from diverse backgrounds. The book's blend of wisdom and unexpected connections creates a reading experience that both entertains and inspires meaningful change in how readers approach familiar challenges. What truly distinguishes this work is the author's remarkable ability to weave personal anecdotes with broader philosophical concepts, creating layers of meaning that reveal new insights with each reading. The prose flows with an effortless rhythm that belies the profound depth of the ideas being explored."
                   }
                 ]`
             }
