@@ -906,7 +906,7 @@ const CanvasCoverPreview = ({
       const titleFont = `bold 70px ${resolvedFont}`;
       const titleColor = '#D7B33E'; // 使用更柔和的金铜色调
       const titleLineHeight = 90;
-      const titleArea = { x: width * 0.15, y: height * 0.6, width: width * 0.7, height: height * 0.25 }; // 减小标题宽度，增加左右边距
+      const titleArea = { x: width * 0.075, y: height * 0.6, width: width * 0.85, height: height * 0.25 }; // 与副标题对齐
 
       // Wrap title text
       ctx.font = titleFont; // Set font for measurement
