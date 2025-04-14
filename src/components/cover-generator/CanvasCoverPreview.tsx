@@ -2018,7 +2018,7 @@ const CanvasCoverPreview = ({
         } else {
           // 放大classic样式的正文字体
           if (template.id === 'classic') {
-            ctx.font = `italic ${template.backCoverStyle.praiseFontSize || 26}px ${resolvedFont}`; // 从22px增加到26px
+            ctx.font = `italic ${template.backCoverStyle.praiseFontSize || 24}px ${resolvedFont}`; // 从26px减小到24px
           } else if (template.id === 'pastel-beige') {
             // 为 pastel-beige 样式使用特殊字体
             const comicFont = (fontStatus === 'loaded')
@@ -2054,7 +2054,7 @@ const CanvasCoverPreview = ({
         if (template.id === 'minimal') {
           ctx.font = `bold ${template.backCoverStyle.sourceFontSize || 24}px 'Montserrat', sans-serif`; // 从28px减小到24px
         } else if (template.id === 'classic') {
-          ctx.font = `bold ${template.backCoverStyle.sourceFontSize || 26}px ${resolvedFont}`; // 从28px增加到26px
+          ctx.font = `bold ${template.backCoverStyle.sourceFontSize || 24}px ${resolvedFont}`; // 从26px减小到24px
         } else if (template.id === 'pastel-beige') {
           // 为 pastel-beige 样式使用特殊字体
           const comicFont = (fontStatus === 'loaded')

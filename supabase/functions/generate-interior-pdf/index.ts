@@ -299,14 +299,15 @@ serve(async (req) => {
     let descriptionText = '';
 
     // 如果有selectedIdea，直接使用其description
-    if (selectedIdea && selectedIdea.description) {
-      descriptionText = selectedIdea.description;
+    if (selectedIdea && typeof selectedIdea === 'object' && 'description' in selectedIdea) {
+      descriptionText = (selectedIdea as any).description;
     }
     // 如果没有selectedIdea但有ideas数组，尝试匹配标题
     else if (ideas && Array.isArray(ideas)) {
       // 尝试在ideas数组中找到匹配当前标题的项
-      const matchedIdea = ideas.find(idea => idea.title === title);
-      if (matchedIdea && matchedIdea.description) {
+      const ideasArray = ideas as Array<any>;
+      const matchedIdea = ideasArray.find((idea: any) => idea && idea.title === title);
+      if (matchedIdea && typeof matchedIdea === 'object' && 'description' in matchedIdea) {
         descriptionText = matchedIdea.description;
       }
     }
@@ -378,8 +379,9 @@ serve(async (req) => {
 
     // 使用chapters数据生成目录页
     if (chapters && Array.isArray(chapters)) {
-      for (let i = 0; i < chapters.length; i++) {
-        const chapter = chapters[i];
+      const chaptersArray = chapters as Array<any>;
+      for (let i = 0; i < chaptersArray.length; i++) {
+        const chapter = chaptersArray[i] as any;
         const chapterNumber = i + 1;
 
         // 检查目录内容是否会超出页面底部，如果会，则自然换页
@@ -461,7 +463,7 @@ serve(async (req) => {
 
     // 重新计算第一个内容页的实际页码
     // 根据实际使用的章节数量估算目录页数
-    const chapterCount = chapters && Array.isArray(chapters) ? chapters.length : finalBookContent.length;
+    const chapterCount = chapters && Array.isArray(chapters) ? (chapters as Array<any>).length : (Array.isArray(finalBookContent) ? finalBookContent.length : 0);
     const tocPages = chapterCount > 12 ? 2 : 1; // 估算目录页数
     const firstContentPageNumber = 1 + 1 + tocPages + 2; // 标题页(1) + 版权页(1) + 目录页数(tocPages) + 空白页(2)
 
