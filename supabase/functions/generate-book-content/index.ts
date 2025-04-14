@@ -132,38 +132,33 @@ serve(async (req) => {
       while (retries < MAX_RETRIES) {
         try {
           const prompt = `
-You are writing a professional biography titled "${bookTitle}" about ${bookAuthor}, exploring their expertise, methodology, and insights.
+You are writing a funny biography titled "${bookTitle}" about ${bookAuthor}, exploring their expertise, methodology, and insights in a funny, satirical, or professional tone.
 The book concept is: ${ideaDescription}
 
-Additional context about the subject (use these details naturally throughout the narrative):
+Additional context about the subject (use these details naturally throughout the narrative, but don't use the details too much):
 ${answersContext}
 
 This is Chapter ${i}: ${chapterTitle}
 ${chapterDescription ? `Chapter description: ${chapterDescription}` : ''}
 
-Write this chapter with 2 distinct sections using a mixed narrative style that blends personal storytelling with professional instruction:
+Write this chapter with 4 distinct sections:
+- CRITICAL: EACH SECTION MUST CONTAIN BETWEEN 850 TO 950 WORDS. If a section is below 850 words, you must expand it. Count the words and print the count in the final output.
 - Use first-person "I" when ${bookAuthor} is sharing specific personal experiences or anecdotes
 - Use second-person "you" when explaining methodologies, principles, or when instructing the reader
 - The narrative should feel like ${bookAuthor} is personally guiding readers through their expertise using engaging metaphors
 
-IMPORTANT LENGTH REQUIREMENTS:
-- This chapter must be EXACTLY 2,400 words in total (approximately 14,000 characters)
-- Each section should be approximately 1,200 words
-- The content must be substantial enough to fill 11 pages in the final book
-- Do not include unnecessary filler content, but ensure the narrative is complete and cohesive
-
 Guidelines:
+- CRITICAL: EACH SECTION MUST CONTAIN BETWEEN 850 TO 950 WORDS. If a section is below 850 words, you must expand it. Count the words and print the count in the final output.
 - Balance between "I" (for personal stories) and "you" (for instructional content)
 - When using "I," focus on ${bookAuthor}'s personal journey, challenges overcome, and pivotal moments
 - When using "you," focus on transferable principles, methodologies, and practical applications
 - Each section should either:
   * Share a personal experience through ${bookAuthor}'s eyes (first-person) and then extract the lesson for readers (second-person)
   * Introduce a methodology using metaphors and explain how readers can apply it in their context
-  * Present success principles through engaging analogies that relate to the reader's potential challenges
   * Connect ${bookAuthor}'s unique approach to broader applications for the audience
 - Section titles should use thematic metaphors that relate to the chapter's main concepts (like "Navigating the Slopes" or "The Downhill Rush")
 - Naturally incorporate details from the context into a cohesive narrative
-- Make it insightful, methodological and engaging while maintaining a professional tone with appropriate personality
+- Make it insightful, methodological and funny while maintaining a professional tone with appropriate personality
 - Write in a style that skillfully weaves personal stories with practical wisdom, using analogies to explain complex ideas
 
 Format your response as JSON with this structure:
@@ -175,7 +170,7 @@ Format your response as JSON with this structure:
       "sectionNumber": 1,
       "title": "Section title",
       "content": "Section content...",
-      "wordCount": 1200 // 请计算并提供实际字数
+      "wordCount": 600 // 请计算并提供实际字数
     },
     ...
   ],
@@ -193,6 +188,7 @@ Format your response as JSON with this structure:
               model: 'gpt-4o',
               messages: [
                 { role: 'system', content: 'You must respond with valid JSON only. Do not include any explanation outside the JSON structure.' },
+                { role: 'system', content: 'Strictly enforce section word counts. You must calculate and include the wordCount for each section, and totalWordCount for the chapter.' },
                 { role: 'user', content: prompt }
               ],
               temperature: 1.0, // 增加创造性，从 0.5 调整为 1.0

@@ -162,12 +162,12 @@ serve(async (req) => {
 
     // 添加字体
     function addFonts(pdf: any) {
-      // 添加标准字体，包括Garamond
+      // 添加标准字体
       pdf.addFont('helvetica', 'normal');
       pdf.addFont('helvetica', 'bold');
       pdf.addFont('times', 'normal');
       pdf.addFont('times', 'bold');
-      pdf.addFont('georgia', 'normal'); // 作为Garamond的替代，因为jsPDF标准版本没有直接支持Garamond
+      pdf.addFont('georgia', 'normal');
       pdf.addFont('georgia', 'bold');
     }
 
@@ -186,69 +186,104 @@ serve(async (req) => {
     addFonts(pdf);
 
     // 设置页边距
-    const margin = {
+    // 基础边距
+    const baseMargin = {
       top: 0.5 + bleed,
-      right: 0.5 + bleed,
       bottom: 0.5 + bleed,
-      left: 0.5 + bleed
+      inner: 0.75 + bleed, // 装订侧更大的边距
+      outer: 0.5 + bleed   // 外侧边距
     };
+
+    // 获取特定页码的边距（用于正文和标题）
+    function getPageMargins(pageNum: number) {
+      // 奇数页（右页）：左侧为内侧（装订侧）
+      // 偶数页（左页）：右侧为内侧（装订侧）
+      const isRightPage = pageNum % 2 === 1;
+
+      // 奇数页（右页）的正文和标题与右边距更近
+      // 通过增加左边距和减少右边距来实现
+      // 偶数页的正文不偏移
+      const pageOffset = 0.18; // 偏移量为0.18英寸
+
+      return {
+        top: baseMargin.top,
+        bottom: baseMargin.bottom,
+        left: isRightPage ? baseMargin.inner + pageOffset : baseMargin.outer, // 只有奇数页增加左边距
+        right: isRightPage ? baseMargin.outer - pageOffset : baseMargin.inner // 只有奇数页减少右边距
+      };
+    }
+
+    // 获取特定页码的边距（用于页眉和页码）
+    // 页眉和页码不需要偏移，保持原来的边距
+    function getHeaderMargins(pageNum: number) {
+      const isRightPage = pageNum % 2 === 1;
+      return {
+        top: baseMargin.top,
+        bottom: baseMargin.bottom,
+        left: isRightPage ? baseMargin.inner : baseMargin.outer,
+        right: isRightPage ? baseMargin.outer : baseMargin.inner
+      };
+    }
+
+    // 初始页边距（将在每页渲染时动态调整）
+    const margin = getPageMargins(1);
 
     const debugLines = false;
 
     // 更新字体设置为Garamond风格（用Georgia作为近似替代）
     const fonts = {
       title: {
-        family: 'georgia',
+        family: 'Georgia',
         style: 'bold',
         size: 24
       },
       subtitle: {
-        family: 'georgia',
+        family: 'Georgia',
         style: 'normal',
         size: 16
       },
       chapterTitle: {
-        family: 'georgia',
+        family: 'Georgia',
         style: 'bold',
         size: 18
       },
       contentsTitle: {
-        family: 'georgia',
+        family: 'Georgia',
         style: 'bold',
         size: 28 // 更大的目录标题，如图所示
       },
       sectionTitle: {
-        family: 'georgia',
+        family: 'Georgia',
         style: 'bold',
         size: 12
       },
       body: {
-        family: 'georgia',
+        family: 'Georgia',
         style: 'normal',
         size: 12
       },
       copyright: {
-        family: 'georgia',
+        family: 'Georgia',
         style: 'normal',
         size: 10
       },
       tocChapter: {
-        family: 'georgia',
+        family: 'Georgia',
         style: 'normal', // 目录中的章节标题使用斜体，更符合图片中的样式
         size: 12
       },
       tocPageNumber: {
-        family: 'georgia',
+        family: 'Georgia',
         style: 'normal',
         size: 12
       },
       pageHeaderFooter: { // 新增样式用于页眉页脚
-        family: 'georgia',
+        family: 'Georgia',
         style: 'normal',
         size: 10
       },
       runningHeader: { // 新增样式，用于居中放大的页眉章节标题
-        family: 'georgia',
+        family: 'Georgia',
         style: 'normal',
         size: 11
       }
@@ -260,7 +295,7 @@ serve(async (req) => {
       pdf.setFont(font.family, font.style);
       pdf.setFontSize(font.size);
       // 返回以英寸为单位的行高
-      return font.size / 72 * 1.5; // 1.5 是行间距因子（从1.2增加）
+      return font.size / 72 * 1.6; // 1.6 是行间距因子（从1.5增加）
     }
 
     // 添加新页面的函数
@@ -290,50 +325,34 @@ serve(async (req) => {
     };
 
     // 添加标题页
+    // 获取当前页的动态边距
+    // 注意：标题页使用固定布局，不需要动态边距
+
     setFont('title'); // Georgia Bold 24pt
     pdf.setTextColor(0, 0, 0);
-    // 将标题上移至页面顶部附近
-    pdf.text(title, pageWidth / 2, margin.top + 1.0, { align: 'center' });
+    // 将标题下移到页面中部
+    const titleY = pageHeight / 2 - 1.0; // 页面中部偏上一点
+    // 将标题向右偏移0.18英寸
+    const titleOffset = 0.18;
+    const titleX = pageWidth / 2 + titleOffset;
+    pdf.text(title, titleX, titleY, { align: 'center' });
 
-    // 添加描述文本
-    let descriptionText = '';
-
-    // 如果有selectedIdea，直接使用其description
-    if (selectedIdea && typeof selectedIdea === 'object' && 'description' in selectedIdea) {
-      descriptionText = (selectedIdea as any).description;
-    }
-    // 如果没有selectedIdea但有ideas数组，尝试匹配标题
-    else if (ideas && Array.isArray(ideas)) {
-      // 尝试在ideas数组中找到匹配当前标题的项
-      const ideasArray = ideas as Array<any>;
-      const matchedIdea = ideasArray.find((idea: any) => idea && idea.title === title);
-      if (matchedIdea && typeof matchedIdea === 'object' && 'description' in matchedIdea) {
-        descriptionText = matchedIdea.description;
-      }
-    }
-
-    // 如果找到描述文本，则显示它
-    if (descriptionText) {
-      setFont('body'); // Georgia Normal 12pt
-      // 处理描述文本过长的情况
-      const maxDescWidth = pageWidth - margin.left - margin.right - 1;
-      const descLines = pdf.splitTextToSize(descriptionText, maxDescWidth);
-
-      // 在标题下方显示描述文本，但仍然接近顶部
-      const titleHeight = fonts.title.size / 72 * 1.2; // 标题行高
-      let descY = margin.top + 1.0 + titleHeight + 0.3; // 标题下方0.3英寸
-
-      pdf.text(descLines, pageWidth / 2, descY, { align: 'center' });
-    }
+    // 完全取消 selected_idea 逻辑
 
     setFont('subtitle'); // Georgia Normal 16pt
-    // 将作者下移至页面底部附近
-    pdf.text(`by ${author}`, pageWidth / 2, pageHeight - margin.bottom - 1.0, { align: 'center' });
+    // 将作者上移，位于标题下方
+    const authorY = titleY + 1.0; // 标题下方1英寸
+    // 作者名称也使用相同的偏移
+    pdf.text(`by ${author}`, titleX, authorY, { align: 'center' });
 
     addPage();
+    // 获取当前页的动态边距
+    const copyrightPageNum = pdf.internal.getNumberOfPages();
+    const copyrightMargins = getPageMargins(copyrightPageNum);
+
     setFont('copyright');
     const year = new Date().getFullYear();
-    pdf.text(`Copyright © ${year} Wishiyo.com. All rights reserved.`, margin.left, margin.top + 1);
+    pdf.text(`Copyright © ${year} Wishiyo.com. All rights reserved.`, copyrightMargins.left, copyrightMargins.top + 1);
 
     // 第一段主要内容 - 使用splitTextToSize确保正确换行
     const firstParagraph = 'This book is created for entertainment purposes only and is intended as a gift. ' +
@@ -341,12 +360,13 @@ serve(async (req) => {
                           'be taken seriously or relied upon for any factual information. It is not intended for ' +
                           'commercial use, academic purposes, or as a source of accurate knowledge.';
 
-    const maxWidth = pageWidth - margin.left - margin.right - 0.5; // 留出一些安全边距
+    const maxWidth = pageWidth - copyrightMargins.left - copyrightMargins.right - 0.5; // 使用动态边距，留出一些安全边距
     const firstParaLines = pdf.splitTextToSize(firstParagraph, maxWidth);
-    pdf.text(firstParaLines, margin.left, margin.top + 2);
+    // 减少版权信息和第一段之间的间距，从2英寸减少到1.3英寸
+    pdf.text(firstParaLines, copyrightMargins.left, copyrightMargins.top + 1.3);
 
     // 计算第一段的高度
-    const lineHeight = fonts.copyright.size / 72 * 1.5; // 行高为字体大小的1.5倍（从1.3倍增加）
+    const lineHeight = fonts.copyright.size / 72 * 1.6; // 行高为字体大小的1.6倍
     const firstParaHeight = firstParaLines.length * lineHeight;
 
     // 第二段主要内容 - 使用splitTextToSize确保正确换行
@@ -355,102 +375,95 @@ serve(async (req) => {
                            'and joy to recipients. Use this book solely in the spirit of fun and amusement.';
 
     const secondParaLines = pdf.splitTextToSize(secondParagraph, maxWidth);
-    pdf.text(secondParaLines, margin.left, margin.top + 2 + firstParaHeight + 0.5); // 第一段下方0.5英寸
+    // 减少第一段和第二段之间的间距，从0.5英寸减少到0.25英寸
+    pdf.text(secondParaLines, copyrightMargins.left, copyrightMargins.top + 1.3 + firstParaHeight + 0.25);
 
     // 计算第二段的高度
     const secondParaHeight = secondParaLines.length * lineHeight;
 
     // 版本信息
-    pdf.text('First edition, ' + year, margin.left, margin.top + 2 + firstParaHeight + 0.5 + secondParaHeight + 0.5);
+    // 使用新的坐标计算方式，减少与第二段的间距
+    pdf.text('First edition, ' + year, copyrightMargins.left, copyrightMargins.top + 1.3 + firstParaHeight + 0.25 + secondParaHeight + 0.25);
 
     // 出版信息
-    pdf.text('Published by Wishiyo.com', margin.left, margin.top + 2 + firstParaHeight + 0.5 + secondParaHeight + 0.5 + 0.5);
+    // 减少与版本信息的间距
+    pdf.text('Published by Wishiyo.com', copyrightMargins.left, copyrightMargins.top + 1.3 + firstParaHeight + 0.25 + secondParaHeight + 0.25 + 0.25);
 
     addPage();
+    // 获取当前页的动态边距
+    const contentsPageNum = pdf.internal.getNumberOfPages();
+    const contentsMargins = getPageMargins(contentsPageNum);
+
     // 使用更大的字号和Garamond样式的"Contents"标题
     setFont('contentsTitle');
-    pdf.text('Contents', pageWidth / 2, margin.top + 0.8, { align: 'center' });
+    // 将Contents标题向右偏移0.18英寸，并向下移动
+    const contentsOffset = 0.18;
+    const contentsX = pageWidth / 2 + contentsOffset;
+    const contentsY = contentsMargins.top + 1.2; // 向下移动到1.2英寸
+    pdf.text('Contents', contentsX, contentsY, { align: 'center' });
+
+    // 创建一个数组来存储目录条目的信息，以便在渲染完所有章节后回填页码
+    const tocEntries: Array<{
+      chapter: BookChapter;
+      pageNumber: number;
+      tocPageNumber: number;
+      yPosition: number;
+    }> = [];
+
+    // 记录目录页码
+    const tocPageNumbers: number[] = [];
+    tocPageNumbers.push(pdf.internal.getNumberOfPages()); // 当前页就是目录第一页
 
     // 设置目录内容样式
-    let tocY = margin.top + 2.0; // 增加目录标题和内容之间的间距
+    let tocY = contentsMargins.top + 2.0; // 使用动态边距，增加目录标题和内容之间的间距
 
-    // 跟踪当前页码位置
-    let currentPage = 4;
+    // 使用 finalBookContent 生成目录页
+    for (let i = 0; i < finalBookContent.length; i++) {
+      const chapter: BookChapter = finalBookContent[i];
 
-    // 使用chapters数据生成目录页
-    if (chapters && Array.isArray(chapters)) {
-      const chaptersArray = chapters as Array<any>;
-      for (let i = 0; i < chaptersArray.length; i++) {
-        const chapter = chaptersArray[i] as any;
-        const chapterNumber = i + 1;
+      // 获取当前页的动态边距
+      const tocPageNum = pdf.internal.getNumberOfPages();
+      const tocPageMargins = getPageMargins(tocPageNum);
 
-        // 检查目录内容是否会超出页面底部，如果会，则自然换页
-        if (tocY > pageHeight - margin.bottom - 0.3) {
-          addPage();
-          currentPage++;
-          tocY = margin.top + 1.0;
-        }
-
-        // 设置章节编号字体
-        setFont('tocChapter');
-        pdf.text(`Chapter ${chapterNumber}`, margin.left + 0.1, tocY);
-
-        // 设置章节标题字体
-        setFont('tocChapter');
-        const chapterTitleX = margin.left + 1.2; // 调整标题的左边距以增加对齐
-
-        // 处理标题过长的情况，确保与页码不重合
-        const maxTitleWidth = pageWidth - margin.right - chapterTitleX - 0.8; // 留出空间给页码
-        const titleLines = pdf.splitTextToSize(chapter.title, maxTitleWidth);
-
-        // 只显示第一行，确保目录整洁
-        pdf.text(titleLines[0], chapterTitleX, tocY);
-
-        // 设置页码字体
-        setFont('tocPageNumber');
-        // 使用chapters中的startPage数据
-        if (chapter.startPage) {
-          pdf.text(`${chapter.startPage}`, pageWidth - margin.right, tocY, { align: 'right' });
-        } else {
-          pdf.text(`...`, pageWidth - margin.right, tocY, { align: 'right' });
-        }
-
-        // 增加目录行间距
-        tocY += 0.55;
+      // 检查目录内容是否会超出页面底部，如果会，则自然换页
+      if (tocY > pageHeight - tocPageMargins.bottom - 0.3) {
+        addPage();
+        tocPageNumbers.push(pdf.internal.getNumberOfPages()); // 记录新的目录页
+        // 获取新页的动态边距
+        const newTocPageNum = pdf.internal.getNumberOfPages();
+        const newTocMargins = getPageMargins(newTocPageNum);
+        tocY = newTocMargins.top + 1.0;
       }
-    } else {
-      // 如果没有chapters数据，则使用finalBookContent
-      for (let i = 0; i < finalBookContent.length; i++) {
-        const chapter: BookChapter = finalBookContent[i];
 
-        // 检查目录内容是否会超出页面底部，如果会，则自然换页
-        if (tocY > pageHeight - margin.bottom - 0.3) {
-          addPage();
-          currentPage++;
-          tocY = margin.top + 1.0;
-        }
+      // 设置章节编号字体
+      setFont('tocChapter');
+      pdf.text(`Chapter ${chapter.chapterNumber}`, tocPageMargins.left + 0.1, tocY);
 
-        // 设置章节编号字体
-        setFont('tocChapter');
-        pdf.text(`Chapter ${chapter.chapterNumber}`, margin.left + 0.1, tocY);
+      // 设置章节标题字体
+      const chapterTitleX = tocPageMargins.left + 1.2; // 使用动态边距，调整标题的左边距以增加对齐
 
-        // 设置章节标题字体
-        const chapterTitleX = margin.left + 1.2; // 调整标题的左边距以增加对齐
+      // 处理标题过长的情况，确保与页码不重合
+      const maxTitleWidth = pageWidth - tocPageMargins.right - chapterTitleX - 0.8; // 使用动态边距，留出空间给页码
+      const titleLines = pdf.splitTextToSize(chapter.title, maxTitleWidth);
 
-        // 处理标题过长的情况，确保与页码不重合
-        const maxTitleWidth = pageWidth - margin.right - chapterTitleX - 0.8; // 留出空间给页码
-        const titleLines = pdf.splitTextToSize(chapter.title, maxTitleWidth);
+      // 只显示第一行，确保目录整洁
+      pdf.text(titleLines[0], chapterTitleX, tocY);
 
-        // 只显示第一行，确保目录整洁
-        pdf.text(titleLines[0], chapterTitleX, tocY);
+      // 设置页码字体
+      setFont('tocPageNumber');
+      // 不使用省略号，直接留空位置给实际页码
+      // 后面会回填实际页码
 
-        // 设置页码字体
-        setFont('tocPageNumber');
-        pdf.text(`...`, pageWidth - margin.right, tocY, { align: 'right' });
+      // 将目录条目信息添加到数组中
+      tocEntries.push({
+        chapter,
+        pageNumber: 0, // 先设置为0，后面会更新
+        tocPageNumber: pdf.internal.getNumberOfPages(), // 当前目录页码
+        yPosition: tocY // 记录Y坐标位置
+      });
 
-        // 增加目录行间距
-        tocY += 0.55;
-      }
+      // 增加目录行间距
+      tocY += 0.55;
     }
 
     // !! 页码计算逻辑需要重新审视和实现 !!
@@ -488,27 +501,56 @@ serve(async (req) => {
       // 记录章节开始的 *实际* 物理页码
       chapterStartPages[chapter.chapterNumber] = pdf.internal.getNumberOfPages(); // 记录当前页为章节起始页
 
+      // 获取当前页的动态边距
+      const chapterPageNum = pdf.internal.getNumberOfPages();
+      const chapterMargins = getPageMargins(chapterPageNum);
+
       // 1. 绘制 "CHAPTER X"
       setFont('chapterTitle'); // 使用 chapterTitle 样式 (size: 18)
       const chapterNumberText = `CHAPTER ${chapter.chapterNumber}`;
       // 将章节编号的Y坐标从 margin.top + 0.8 向下移动到 margin.top + 1.3
-      const chapterNumberY = margin.top + 1.3; // 向下移动0.5英寸
-      pdf.text(chapterNumberText, pageWidth / 2, chapterNumberY, { align: 'center' });
+      const chapterNumberY = chapterMargins.top + 1.3; // 使用动态边距，向下移动0.5英寸
+
+      // 根据奇偶页调整标题位置
+      const isRightPage = chapterPageNum % 2 === 1;
+      const pageOffset = 0.18; // 偏移量为0.18英寸
+      if (isRightPage) {
+        // 奇数页（右页）：标题偏右
+        const titleX = pageWidth / 2 + pageOffset; // 向右偏移
+        pdf.text(chapterNumberText, titleX, chapterNumberY, { align: 'center' });
+      } else {
+        // 偶数页（左页）：标题偏左
+        const titleX = pageWidth / 2 - pageOffset; // 向左偏移
+        pdf.text(chapterNumberText, titleX, chapterNumberY, { align: 'center' });
+      }
 
       // 2. 绘制换行的章节标题
       // 设置章节主标题的字体和大小 (与 chapterTitle 不同)
       pdf.setFont(fonts.title.family, fonts.title.style); // 使用 title 字体 (georgia, bold)
       pdf.setFontSize(28); // 从 24pt 增大到 28pt
       const chapterTitleText = chapter.title;
-      const chapterTitleMaxWidth = pageWidth - margin.left - margin.right - 1; // 减去一些额外边距以防万一
+      // 获取当前页的动态边距
+      const pageNum = pdf.internal.getNumberOfPages();
+      const currentMargins = getPageMargins(pageNum);
+
+      const chapterTitleMaxWidth = pageWidth - currentMargins.left - currentMargins.right - 1; // 减去一些额外边距以防万一
       const chapterTitleLines = pdf.splitTextToSize(chapterTitleText, chapterTitleMaxWidth);
 
-      const chapterTitleLineHeight = 28 / 72 * 1.5; // 基于 28pt 字体，行距因子增大到 1.5
+      const chapterTitleLineHeight = 28 / 72 * 1.6; // 基于 28pt 字体，行距因子增大到 1.6
       let chapterTitleY = chapterNumberY + 1.0; // 保持与章节编号的相对距离
 
       // 绘制每一行章节标题
       chapterTitleLines.forEach((line: string) => {
-        pdf.text(line, pageWidth / 2, chapterTitleY, { align: 'center' });
+        // 根据奇偶页调整标题位置
+        if (isRightPage) {
+          // 奇数页（右页）：标题偏右
+          const titleX = pageWidth / 2 + pageOffset; // 向右偏移
+          pdf.text(line, titleX, chapterTitleY, { align: 'center' });
+        } else {
+          // 偶数页（左页）：标题偏左
+          const titleX = pageWidth / 2 - pageOffset; // 向左偏移
+          pdf.text(line, titleX, chapterTitleY, { align: 'center' });
+        }
         chapterTitleY += chapterTitleLineHeight;
       });
 
@@ -517,71 +559,105 @@ serve(async (req) => {
       let contentY = chapterTitleY + 0.7; // 在最后一行标题下方增加 0.7 英寸间距 (从 0.5 增加)
 
       chapter.sections.forEach((section) => {
+        // 获取当前页的动态边距
+        const checkPageNum = pdf.internal.getNumberOfPages();
+        const checkMargins = getPageMargins(checkPageNum);
+
         // 检查是否需要新页面（为 section title 预留空间）
         const sectionTitleHeight = fonts.sectionTitle.size / 72 * 1.8; // 估算小节标题高度
-        if (contentY + sectionTitleHeight > pageHeight - margin.bottom) {
+        if (contentY + sectionTitleHeight > pageHeight - checkMargins.bottom) {
           addPage();
           currentPageNum++; // 章节内容分页时增加页码
 
-          // 在新页顶部添加居中的章节标题页眉
+          // 在新页顶部添加章节标题页眉
           setFont('runningHeader'); // 使用新样式
-          // 恢复页眉原来的位置
-          pdf.text(chapter.title, pageWidth / 2, margin.top - 0.2, { align: 'center' }); // 恢复原始位置
+          // 获取当前页的页眉边距（不偏移）
+          const pageNum = pdf.internal.getNumberOfPages();
+          const headerMargins = getHeaderMargins(pageNum);
+          // 根据奇偶页调整页眉位置
+          const isHeaderRightPage = pageNum % 2 === 1;
+          const headerOffset = 0.18; // 偏移量为0.18英寸
+          if (isHeaderRightPage) {
+            // 奇数页（右页）：页眉偏右
+            const headerX = pageWidth / 2 + headerOffset; // 向右偏移
+            pdf.text(chapter.title, headerX, headerMargins.top + 0.2, { align: 'center' }); // 将页眉下移，与内容一起整体下移
+          } else {
+            // 偶数页（左页）：页眉偏左
+            const headerX = pageWidth / 2 - headerOffset; // 向左偏移
+            pdf.text(chapter.title, headerX, headerMargins.top + 0.2, { align: 'center' }); // 将页眉下移，与内容一起整体下移
+          }
 
           // 不需要重新设置小节标题字体，因为下面会调用setFont('sectionTitle')
 
-          contentY = margin.top + 0.3; // 增加顶部内容起始的安全距离，保证文本不超出上边界
+          contentY = headerMargins.top + 0.8; // 使用页眉边距，增加顶部内容起始的安全距离，整体下移内容
         }
 
         // 设置小节标题样式
         // 增加小节标题前的间距，特别是非页面开头的情况
-        if (contentY > margin.top + 0.3) { // 如果不是在页面顶部，则增加额外间距
+        // 获取当前页的动态边距
+        const sectionPageNum = pdf.internal.getNumberOfPages();
+        const sectionMargins = getPageMargins(sectionPageNum);
+
+        if (contentY > sectionMargins.top + 0.8) { // 如果不是在页面顶部，则增加额外间距，使用动态边距
           contentY += 0.2; // 在当前段落和新小节标题之间添加额外的 0.2 英寸间距（从0.3英寸减小）
         }
 
         setFont('sectionTitle');
         // 定义安全边距，与段落处理中相同
         const safetyMarginRight = 0.15; // 额外添加的右侧安全边距
+        // 获取当前页的动态边距
+        const pageNum = pdf.internal.getNumberOfPages();
+        const currentMargins = getPageMargins(pageNum);
         // 添加小标题自动换行功能
-        const sectionTitleLines = pdf.splitTextToSize(section.title, pageWidth - margin.left - margin.right - safetyMarginRight);
-        pdf.text(sectionTitleLines, margin.left, contentY);
+        const sectionTitleLines = pdf.splitTextToSize(section.title, pageWidth - currentMargins.left - currentMargins.right - safetyMarginRight);
+        pdf.text(sectionTitleLines, currentMargins.left, contentY);
 
-        // 小标题与正文之间的间距，从 1.4 增加到 1.5
-        contentY += fonts.sectionTitle.size / 72 * 1.5 + (sectionTitleLines.length - 1) * (fonts.sectionTitle.size / 72 * 1.5);
+        // 小标题与正文之间的间距，从 1.5 增加到 1.6
+        contentY += fonts.sectionTitle.size / 72 * 1.6 + (sectionTitleLines.length - 1) * (fonts.sectionTitle.size / 72 * 1.6);
 
         // 设置正文内容样式为Garamond (georgia) - 移动到段落循环内
         const paragraphs = section.content.split('\n\n');
 
         paragraphs.forEach((paragraph) => {
           setFont('body'); // Ensure body font is set before calculations
-          // 增加正文行距，将行高因子从 1.4 增加到 1.5
-          const lineHeight = fonts.body.size / 72 * 1.5;
+          // 增加正文行距，将行高因子从 1.5 增加到 1.6
+          const lineHeight = fonts.body.size / 72 * 1.6;
           // 将段落间距设置为与行间距相同，而不是固定值0.2英寸
           const paragraphSpacing = lineHeight;
 
+          // 获取当前页的动态边距
+          const pageNum = pdf.internal.getNumberOfPages();
+          const currentMargins = getPageMargins(pageNum);
           // 使用缩小后的有效宽度分割文本
-          const textLines = pdf.splitTextToSize(paragraph, pageWidth - margin.left - margin.right - safetyMarginRight);
+          const textLines = pdf.splitTextToSize(paragraph, pageWidth - currentMargins.left - currentMargins.right - safetyMarginRight);
 
           let linesProcessed = 0;
           while (linesProcessed < textLines.length) {
-            const availableHeight = pageHeight - margin.bottom - contentY;
+            // 获取当前页的动态边距
+            const paragraphPageNum = pdf.internal.getNumberOfPages();
+            const paragraphMargins = getPageMargins(paragraphPageNum);
+            const availableHeight = pageHeight - paragraphMargins.bottom - contentY;
             const linesThatFitCount = Math.floor((availableHeight - (linesProcessed === 0 ? paragraphSpacing : 0)) / lineHeight);
 
             if (linesThatFitCount <= 0 && contentY > margin.top) { // Not enough space even for one line, and not already at top
               // Add new page
               addPage();
-              currentPageNum++;
+              // 获取新页的页码
+              const newPageNum = pdf.internal.getNumberOfPages();
+
+              // 获取新页的动态边距
+              const newPageMargins = getPageMargins(newPageNum);
 
               // 设置页眉字体并绘制页眉
               setFont('runningHeader');
-              pdf.text(chapter.title, pageWidth / 2, margin.top - 0.2, { align: 'center' }); // 恢复原始位置
+              pdf.text(chapter.title, pageWidth / 2, newPageMargins.top + 0.2, { align: 'center' }); // 将页眉下移，与内容一起整体下移
 
               // 重新设置回正文字体，确保跨页时字体一致
               setFont('body');
 
-              contentY = margin.top + 0.3; // 修改为 margin.top + 0.3，确保内容不会超出上边界
+              contentY = newPageMargins.top + 0.8; // 使用动态边距，与其他位置保持一致，整体下移内容
               // Re-calculate lines that fit on the new empty page
-              const newAvailableHeight = pageHeight - margin.bottom - contentY;
+              const newAvailableHeight = pageHeight - newPageMargins.bottom - contentY;
               const linesOnNewPageCount = Math.floor((newAvailableHeight - (linesProcessed === 0 ? paragraphSpacing : 0)) / lineHeight);
               const linesToDraw = textLines.slice(linesProcessed, linesProcessed + linesOnNewPageCount);
 
@@ -589,8 +665,11 @@ serve(async (req) => {
                  // Add paragraph spacing only if it's the start of the paragraph drawing
                  const drawY = contentY + (linesProcessed === 0 ? paragraphSpacing : 0);
 
+                 // 获取当前页的动态边距
+                 const currentPageNum = pdf.internal.getNumberOfPages();
+                 const currentMargins = getPageMargins(currentPageNum);
                  // 设置两端对齐，但使用较小的有效宽度确保内容在安全框内
-                 pdf.text(linesToDraw, margin.left, drawY, { align: 'justify', maxWidth: pageWidth - margin.left - margin.right - safetyMarginRight });
+                 pdf.text(linesToDraw, currentMargins.left, drawY, { align: 'justify', maxWidth: pageWidth - currentMargins.left - currentMargins.right - safetyMarginRight });
 
                  contentY = drawY + linesToDraw.length * lineHeight;
                  linesProcessed += linesToDraw.length;
@@ -608,8 +687,11 @@ serve(async (req) => {
                  // Add paragraph spacing only if it's the start of the paragraph drawing on this page segment
                  const drawY = contentY + (linesProcessed === 0 ? paragraphSpacing : 0);
 
+                 // 获取当前页的动态边距
+                 const currentPageNum = pdf.internal.getNumberOfPages();
+                 const currentMargins = getPageMargins(currentPageNum);
                  // 设置两端对齐，但使用较小的有效宽度确保内容在安全框内
-                 pdf.text(linesToDraw, margin.left, drawY, { align: 'justify', maxWidth: pageWidth - margin.left - margin.right - safetyMarginRight });
+                 pdf.text(linesToDraw, currentMargins.left, drawY, { align: 'justify', maxWidth: pageWidth - currentMargins.left - currentMargins.right - safetyMarginRight });
 
                  contentY = drawY + linesToDraw.length * lineHeight;
                  linesProcessed += linesToDraw.length;
@@ -626,10 +708,42 @@ serve(async (req) => {
       });
     }); // end chapters loop
 
-    // !! 回填目录页码 !!
-    // 现在我们有了 chapterStartPages，可以回去填充目录了
-    // 这需要重新访问目录页并绘制页码，实现起来比较复杂
-    // 暂时保留 '...' 作为页码占位符
+    // 记录章节页码信息
+    console.log('Chapter start pages:', chapterStartPages);
+    console.log('First content page number:', firstContentPageNumber);
+
+    // 现在回填目录页码
+    console.log('Filling in table of contents page numbers');
+
+    // 更新tocEntries中的页码信息
+    tocEntries.forEach(entry => {
+      // 获取章节的实际起始页码
+      const actualPageNumber = chapterStartPages[entry.chapter.chapterNumber];
+      if (actualPageNumber) {
+        // 计算相对于第一章的页码偏移
+        const firstChapterPage = chapterStartPages[1];
+        entry.pageNumber = actualPageNumber - firstChapterPage + 1;
+      }
+    });
+
+    // 回填目录页码
+    tocEntries.forEach(entry => {
+      if (entry.pageNumber > 0) {
+        // 切换到目录页
+        pdf.setPage(entry.tocPageNumber);
+
+        // 设置页码字体
+        setFont('tocPageNumber');
+
+        // 获取当前页的页眉边距（不偏移）
+        const headerMargins = getHeaderMargins(entry.tocPageNumber);
+
+        // 添加实际页码
+        pdf.text(String(entry.pageNumber), pageWidth - headerMargins.right, entry.yPosition, { align: 'right' });
+      }
+    });
+
+    console.log('Table of contents page numbers filled in successfully');
 
     // **添加6页空白页到书的末尾**
     for (let i = 0; i < 6; i++) {
@@ -640,13 +754,84 @@ serve(async (req) => {
     const finalPageCount = pdf.internal.getNumberOfPages(); // 使用准确的页码
     const lastContentPage = finalPageCount - 6; // 最后一个内容页（减去6页空白页）
 
-    // 从第一个 *内容* 页面开始添加页码到最后一个*内容*页面（不含最后添加的6页空白页）
+    // 从第一章开始添加页码，使第一章的页码为1
     for (let i = firstContentPageNumber; i <= lastContentPage; i++) {
       pdf.setPage(i); // 切换到指定页面
-      const displayPageNum = String(i - firstContentPageNumber + 1); // 计算显示的页码 (1, 2, 3...)
-      setFont('pageHeaderFooter');
-      // 恢复页码原来的位置
-      pdf.text(displayPageNum, pageWidth - margin.right, margin.top - 0.2, { align: 'right' }); // 恢复原始位置
+
+      // 检查当前页是否是章节开始页
+      let isChapterStartPage = false;
+      let chapterNumber = 0;
+
+      // 遍历所有章节起始页码
+      for (const [chapNum, pageNum] of Object.entries(chapterStartPages)) {
+        if (pageNum === i) {
+          isChapterStartPage = true;
+          chapterNumber = parseInt(chapNum);
+          break;
+        }
+      }
+
+      // 如果是第一章的起始页，页码设为1
+      // 其他章节页码根据与第一章起始页的偏移计算
+      if (chapterNumber === 1) {
+        // 记录第一章的实际页码
+        const firstChapterPage = i;
+        console.log(`First chapter (Chapter 1) starts at page ${firstChapterPage}`);
+
+        // 设置页码为1
+        setFont('pageHeaderFooter');
+        // 根据奇偶页调整页码位置
+        const headerMargins = getHeaderMargins(i); // 使用页眉边距（不偏移）
+        const isRightPage = i % 2 === 1;
+        const pageOffset = 0.18; // 偏移量为0.18英寸
+
+        // 对于第一章起始页，页码显示在底部中央
+        if (isRightPage) {
+          // 奇数页（右页）：页码向右偏移
+          const footerX = pageWidth / 2 + pageOffset;
+          pdf.text('1', footerX, pageHeight - headerMargins.bottom, { align: 'center' });
+        } else {
+          // 偶数页（左页）：页码向左偏移
+          const footerX = pageWidth / 2 - pageOffset;
+          pdf.text('1', footerX, pageHeight - headerMargins.bottom, { align: 'center' });
+        }
+      } else if (isChapterStartPage) {
+        // 如果是其他章节的起始页，计算相对于第一章的偏移
+        const firstChapterPage = chapterStartPages[1];
+        const displayPageNum = String(i - firstChapterPage + 1);
+        setFont('pageHeaderFooter');
+        // 根据奇偶页调整页码位置
+        const headerMargins = getHeaderMargins(i); // 使用页眉边距（不偏移）
+        const isRightPage = i % 2 === 1;
+        const pageOffset = 0.18; // 偏移量为0.18英寸
+
+        // 对于章节起始页，页码显示在底部中央
+        if (isRightPage) {
+          // 奇数页（右页）：页码向右偏移
+          const footerX = pageWidth / 2 + pageOffset;
+          pdf.text(displayPageNum, footerX, pageHeight - headerMargins.bottom, { align: 'center' });
+        } else {
+          // 偶数页（左页）：页码向左偏移
+          const footerX = pageWidth / 2 - pageOffset;
+          pdf.text(displayPageNum, footerX, pageHeight - headerMargins.bottom, { align: 'center' });
+        }
+      } else if (i > chapterStartPages[1]) {
+        // 如果是第一章之后的页面，但不是章节起始页
+        const firstChapterPage = chapterStartPages[1];
+        const displayPageNum = String(i - firstChapterPage + 1);
+        setFont('pageHeaderFooter');
+        // 根据奇偶页调整页码位置
+        const headerMargins = getHeaderMargins(i); // 使用页眉边距（不偏移）
+        const isRightPage = i % 2 === 1;
+        if (isRightPage) {
+          // 奇数页（右页）：页码在右侧
+          pdf.text(displayPageNum, pageWidth - headerMargins.right, headerMargins.top + 0.2, { align: 'right' });
+        } else {
+          // 偶数页（左页）：页码在左侧
+          pdf.text(displayPageNum, headerMargins.left, headerMargins.top + 0.2, { align: 'left' });
+        }
+      }
+      // 前面的空白页不显示页码
     }
 
     // 生成 PDF 输出
