@@ -42,7 +42,7 @@ serve(async (req) => {
     // 获取 Supabase 凭证
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
-    
+
     if (!supabaseUrl || !supabaseServiceKey) {
       throw new Error('Missing Supabase credentials');
     }
@@ -52,6 +52,9 @@ serve(async (req) => {
     let finalBookContent = bookContent;
     let title = bookTitle;
     let author = authorName;
+    let chapters = null;
+    let ideas = null;
+    let selectedIdea = null;
 
     // 如果未提供内容，从数据库获取
     if (!finalBookContent || !title || !author) {
@@ -69,8 +72,11 @@ serve(async (req) => {
       finalBookContent = finalBookContent || bookData.book_content;
       title = title || bookData.title;
       author = author || bookData.author;
+      chapters = bookData.chapters;
+      ideas = bookData.ideas;
+      selectedIdea = bookData.selected_idea;
     }
-    
+
     if (!title || !author || !finalBookContent) {
       throw new Error('Incomplete book data for PDF generation');
     }
@@ -78,13 +84,13 @@ serve(async (req) => {
     async function uploadPdfToStorage(pdfData: string, fileName: string): Promise<string> {
       try {
         console.log(`Uploading ${fileName} to storage...`);
-        
+
         const { data: buckets, error: bucketsError } = await supabase
           .storage
           .listBuckets();
-        
+
         const bucketExists = buckets?.some(bucket => bucket.name === 'book-covers');
-        
+
         if (!bucketExists) {
           console.log(`Storage bucket 'book-covers' does not exist, creating...`);
           const { error: createBucketError } = await supabase
@@ -92,7 +98,7 @@ serve(async (req) => {
             .createBucket('book-covers', {
               public: true
             });
-          
+
           if (createBucketError) {
             console.error(`Failed to create storage bucket:`, createBucketError);
             throw createBucketError;
@@ -100,10 +106,10 @@ serve(async (req) => {
             console.log(`Storage bucket 'book-covers' created successfully`);
           }
         }
-        
+
         let pdfContent = pdfData;
         let contentType = 'application/pdf';
-        
+
         if (pdfData.startsWith('data:')) {
           const parts = pdfData.split(',');
           if (parts.length > 1) {
@@ -114,13 +120,13 @@ serve(async (req) => {
             pdfContent = parts[1];
           }
         }
-        
+
         const binaryString = atob(pdfContent);
         const bytes = new Uint8Array(binaryString.length);
         for (let i = 0; i < binaryString.length; i++) {
           bytes[i] = binaryString.charCodeAt(i);
         }
-        
+
         const filePath = `${orderId}/${fileName}`;
         console.log(`Uploading to book-covers/${filePath}`);
         const { error: uploadError } = await supabase
@@ -130,22 +136,22 @@ serve(async (req) => {
             contentType,
             upsert: true
           });
-        
+
         if (uploadError) {
           const errorText = uploadError.message;
           throw new Error(`Failed to upload PDF: ${errorText}`);
         }
-        
+
         console.log(`PDF uploaded successfully to storage`);
-        
+
         const { data: urlData } = supabase
           .storage
           .from('book-covers')
           .getPublicUrl(filePath);
-        
+
         const publicUrl = urlData?.publicUrl || '';
         console.log(`Generated URL: ${publicUrl}`);
-        
+
         return publicUrl;
       } catch (error) {
         console.error(`Error uploading PDF to storage:`, error);
@@ -254,29 +260,29 @@ serve(async (req) => {
       pdf.setFont(font.family, font.style);
       pdf.setFontSize(font.size);
       // 返回以英寸为单位的行高
-      return font.size / 72 * 1.2; // 1.2 是行间距因子
+      return font.size / 72 * 1.5; // 1.5 是行间距因子（从1.2增加）
     }
 
     // 添加新页面的函数
     const addPage = () => {
       pdf.addPage([pageWidth, pageHeight]);
-      
+
       if (debugLines) {
         pdf.setDrawColor(0, 162, 232);
         pdf.setLineWidth(0.01);
         pdf.rect(0, 0, pageWidth, pageHeight);
-        
+
         pdf.setDrawColor(0, 0, 255);
         pdf.rect(bleed, bleed, 6, 9);
-        
+
         pdf.setDrawColor(255, 0, 0);
         pdf.rect(bleed + 0.5, bleed + 0.5, 5, 8);
-        
+
         pdf.setFontSize(6);
         pdf.setTextColor(0, 162, 232);
         pdf.text('TRIM / BLEED AREA', pageWidth/2, 0.1, { align: 'center' });
         pdf.text('TRIM / BLEED AREA', pageWidth/2, pageHeight - 0.05, { align: 'center' });
-        
+
         pdf.setTextColor(100, 100, 100);
         pdf.text('SAFETY MARGIN', pageWidth/2, 0.25 + bleed, { align: 'center' });
         pdf.text('SAFETY MARGIN', pageWidth/2, pageHeight - 0.25 - bleed, { align: 'center' });
@@ -284,62 +290,165 @@ serve(async (req) => {
     };
 
     // 添加标题页
-    setFont('title');
+    setFont('title'); // Georgia Bold 24pt
     pdf.setTextColor(0, 0, 0);
-    pdf.text(title, pageWidth / 2, pageHeight * 0.3, { align: 'center' });
+    // 将标题上移至页面顶部附近
+    pdf.text(title, pageWidth / 2, margin.top + 1.0, { align: 'center' });
 
-    setFont('subtitle');
-    pdf.text(`by ${author}`, pageWidth / 2, pageHeight * 0.8, { align: 'center' });
+    // 添加描述文本
+    let descriptionText = '';
+
+    // 如果有selectedIdea，直接使用其description
+    if (selectedIdea && selectedIdea.description) {
+      descriptionText = selectedIdea.description;
+    }
+    // 如果没有selectedIdea但有ideas数组，尝试匹配标题
+    else if (ideas && Array.isArray(ideas)) {
+      // 尝试在ideas数组中找到匹配当前标题的项
+      const matchedIdea = ideas.find(idea => idea.title === title);
+      if (matchedIdea && matchedIdea.description) {
+        descriptionText = matchedIdea.description;
+      }
+    }
+
+    // 如果找到描述文本，则显示它
+    if (descriptionText) {
+      setFont('body'); // Georgia Normal 12pt
+      // 处理描述文本过长的情况
+      const maxDescWidth = pageWidth - margin.left - margin.right - 1;
+      const descLines = pdf.splitTextToSize(descriptionText, maxDescWidth);
+
+      // 在标题下方显示描述文本，但仍然接近顶部
+      const titleHeight = fonts.title.size / 72 * 1.2; // 标题行高
+      let descY = margin.top + 1.0 + titleHeight + 0.3; // 标题下方0.3英寸
+
+      pdf.text(descLines, pageWidth / 2, descY, { align: 'center' });
+    }
+
+    setFont('subtitle'); // Georgia Normal 16pt
+    // 将作者下移至页面底部附近
+    pdf.text(`by ${author}`, pageWidth / 2, pageHeight - margin.bottom - 1.0, { align: 'center' });
 
     addPage();
     setFont('copyright');
     const year = new Date().getFullYear();
-    pdf.text(`Copyright ${year} by ${author}`, margin.left, margin.top + 1);
-    pdf.text('All rights reserved.', margin.left, margin.top + 1.3);
-    pdf.text('This is a work of fiction. Names, characters, places, and incidents either are the', margin.left, margin.top + 2);
-    pdf.text('product of the author\'s imagination or are used fictitiously.', margin.left, margin.top + 2.3);
+    pdf.text(`Copyright © ${year} Wishiyo.com. All rights reserved.`, margin.left, margin.top + 1);
+
+    // 第一段主要内容 - 使用splitTextToSize确保正确换行
+    const firstParagraph = 'This book is created for entertainment purposes only and is intended as a gift. ' +
+                          'The content within is fictional, generated by artificial intelligence, and should not ' +
+                          'be taken seriously or relied upon for any factual information. It is not intended for ' +
+                          'commercial use, academic purposes, or as a source of accurate knowledge.';
+
+    const maxWidth = pageWidth - margin.left - margin.right - 0.5; // 留出一些安全边距
+    const firstParaLines = pdf.splitTextToSize(firstParagraph, maxWidth);
+    pdf.text(firstParaLines, margin.left, margin.top + 2);
+
+    // 计算第一段的高度
+    const lineHeight = fonts.copyright.size / 72 * 1.5; // 行高为字体大小的1.5倍（从1.3倍增加）
+    const firstParaHeight = firstParaLines.length * lineHeight;
+
+    // 第二段主要内容 - 使用splitTextToSize确保正确换行
+    const secondParagraph = 'Wishiyo.com does not make any claims regarding the factual accuracy, ' +
+                           'truth, or completeness of the content. The book is designed purely to bring humor ' +
+                           'and joy to recipients. Use this book solely in the spirit of fun and amusement.';
+
+    const secondParaLines = pdf.splitTextToSize(secondParagraph, maxWidth);
+    pdf.text(secondParaLines, margin.left, margin.top + 2 + firstParaHeight + 0.5); // 第一段下方0.5英寸
+
+    // 计算第二段的高度
+    const secondParaHeight = secondParaLines.length * lineHeight;
+
+    // 版本信息
+    pdf.text('First edition, ' + year, margin.left, margin.top + 2 + firstParaHeight + 0.5 + secondParaHeight + 0.5);
+
+    // 出版信息
+    pdf.text('Published by Wishiyo.com', margin.left, margin.top + 2 + firstParaHeight + 0.5 + secondParaHeight + 0.5 + 0.5);
 
     addPage();
     // 使用更大的字号和Garamond样式的"Contents"标题
     setFont('contentsTitle');
     pdf.text('Contents', pageWidth / 2, margin.top + 0.8, { align: 'center' });
-    
+
     // 设置目录内容样式
     let tocY = margin.top + 2.0; // 增加目录标题和内容之间的间距
-    
+
     // 跟踪当前页码位置
     let currentPage = 4;
 
-    // 使用 for 循环处理目录项，以便于分页
-    for (let i = 0; i < finalBookContent.length; i++) {
-      const chapter: BookChapter = finalBookContent[i];
+    // 使用chapters数据生成目录页
+    if (chapters && Array.isArray(chapters)) {
+      for (let i = 0; i < chapters.length; i++) {
+        const chapter = chapters[i];
+        const chapterNumber = i + 1;
 
-      // 检查目录内容是否会超出页面底部，如果会，则自然换页
-      if (tocY > pageHeight - margin.bottom - 0.3) {
-         addPage();
-         currentPage++;
-         tocY = margin.top + 1.0;
+        // 检查目录内容是否会超出页面底部，如果会，则自然换页
+        if (tocY > pageHeight - margin.bottom - 0.3) {
+          addPage();
+          currentPage++;
+          tocY = margin.top + 1.0;
+        }
+
+        // 设置章节编号字体
+        setFont('tocChapter');
+        pdf.text(`Chapter ${chapterNumber}`, margin.left + 0.1, tocY);
+
+        // 设置章节标题字体
+        setFont('tocChapter');
+        const chapterTitleX = margin.left + 1.2; // 调整标题的左边距以增加对齐
+
+        // 处理标题过长的情况，确保与页码不重合
+        const maxTitleWidth = pageWidth - margin.right - chapterTitleX - 0.8; // 留出空间给页码
+        const titleLines = pdf.splitTextToSize(chapter.title, maxTitleWidth);
+
+        // 只显示第一行，确保目录整洁
+        pdf.text(titleLines[0], chapterTitleX, tocY);
+
+        // 设置页码字体
+        setFont('tocPageNumber');
+        // 使用chapters中的startPage数据
+        if (chapter.startPage) {
+          pdf.text(`${chapter.startPage}`, pageWidth - margin.right, tocY, { align: 'right' });
+        } else {
+          pdf.text(`...`, pageWidth - margin.right, tocY, { align: 'right' });
+        }
+
+        // 增加目录行间距
+        tocY += 0.55;
       }
+    } else {
+      // 如果没有chapters数据，则使用finalBookContent
+      for (let i = 0; i < finalBookContent.length; i++) {
+        const chapter: BookChapter = finalBookContent[i];
 
-      // 设置章节编号字体
-      setFont('tocChapter');
-      pdf.text(`Chapter ${chapter.chapterNumber}`, margin.left + 0.1, tocY);
-      
-      // 设置章节标题字体
-      const chapterTitleX = margin.left + 1.2; // 调整标题的左边距以增加对齐
-      pdf.text(`${chapter.title}`, chapterTitleX, tocY);
-      
-      // 设置页码字体
-      setFont('tocPageNumber');
-      // !! 注意：这里的页码计算需要修正，现在只是占位符 !!
-      // 准确的页码计算需要在内容完全渲染后才能确定，暂时使用估算值
-      // const estimatedChapterStartPage = currentPage + i; // 这是一个非常粗略的估算
-      // pdf.text(`${estimatedChapterStartPage}`, pageWidth - margin.right, tocY, { align: 'right' });
-      // 暂时移除页码，因为准确计算复杂
-       pdf.text(`...`, pageWidth - margin.right, tocY, { align: 'right' });
+        // 检查目录内容是否会超出页面底部，如果会，则自然换页
+        if (tocY > pageHeight - margin.bottom - 0.3) {
+          addPage();
+          currentPage++;
+          tocY = margin.top + 1.0;
+        }
 
-      // 增加目录行间距，使其更宽松，符合图片 - 从 0.6 调整回 0.55
-      tocY += 0.55; // 轻微缩小行距
+        // 设置章节编号字体
+        setFont('tocChapter');
+        pdf.text(`Chapter ${chapter.chapterNumber}`, margin.left + 0.1, tocY);
+
+        // 设置章节标题字体
+        const chapterTitleX = margin.left + 1.2; // 调整标题的左边距以增加对齐
+
+        // 处理标题过长的情况，确保与页码不重合
+        const maxTitleWidth = pageWidth - margin.right - chapterTitleX - 0.8; // 留出空间给页码
+        const titleLines = pdf.splitTextToSize(chapter.title, maxTitleWidth);
+
+        // 只显示第一行，确保目录整洁
+        pdf.text(titleLines[0], chapterTitleX, tocY);
+
+        // 设置页码字体
+        setFont('tocPageNumber');
+        pdf.text(`...`, pageWidth - margin.right, tocY, { align: 'right' });
+
+        // 增加目录行间距
+        tocY += 0.55;
+      }
     }
 
     // !! 页码计算逻辑需要重新审视和实现 !!
@@ -351,7 +460,9 @@ serve(async (req) => {
     addPage();
 
     // 重新计算第一个内容页的实际页码
-    const tocPages = finalBookContent.length > 12 ? 2 : 1; // 估算目录页数
+    // 根据实际使用的章节数量估算目录页数
+    const chapterCount = chapters && Array.isArray(chapters) ? chapters.length : finalBookContent.length;
+    const tocPages = chapterCount > 12 ? 2 : 1; // 估算目录页数
     const firstContentPageNumber = 1 + 1 + tocPages + 2; // 标题页(1) + 版权页(1) + 目录页数(tocPages) + 空白页(2)
 
     // 使用Garamond样式添加章节内容
@@ -389,8 +500,8 @@ serve(async (req) => {
       const chapterTitleText = chapter.title;
       const chapterTitleMaxWidth = pageWidth - margin.left - margin.right - 1; // 减去一些额外边距以防万一
       const chapterTitleLines = pdf.splitTextToSize(chapterTitleText, chapterTitleMaxWidth);
-      
-      const chapterTitleLineHeight = 28 / 72 * 1.4; // 基于 28pt 字体，行距因子增大到 1.4
+
+      const chapterTitleLineHeight = 28 / 72 * 1.5; // 基于 28pt 字体，行距因子增大到 1.5
       let chapterTitleY = chapterNumberY + 1.0; // 保持与章节编号的相对距离
 
       // 绘制每一行章节标题
@@ -409,41 +520,46 @@ serve(async (req) => {
         if (contentY + sectionTitleHeight > pageHeight - margin.bottom) {
           addPage();
           currentPageNum++; // 章节内容分页时增加页码
+
           // 在新页顶部添加居中的章节标题页眉
           setFont('runningHeader'); // 使用新样式
           // 恢复页眉原来的位置
           pdf.text(chapter.title, pageWidth / 2, margin.top - 0.2, { align: 'center' }); // 恢复原始位置
+
+          // 不需要重新设置小节标题字体，因为下面会调用setFont('sectionTitle')
+
           contentY = margin.top + 0.3; // 增加顶部内容起始的安全距离，保证文本不超出上边界
         }
-        
+
         // 设置小节标题样式
         // 增加小节标题前的间距，特别是非页面开头的情况
         if (contentY > margin.top + 0.3) { // 如果不是在页面顶部，则增加额外间距
-          contentY += 0.3; // 在当前段落和新小节标题之间添加额外的 0.3 英寸间距
+          contentY += 0.2; // 在当前段落和新小节标题之间添加额外的 0.2 英寸间距（从0.3英寸减小）
         }
-        
+
         setFont('sectionTitle');
         // 定义安全边距，与段落处理中相同
         const safetyMarginRight = 0.15; // 额外添加的右侧安全边距
         // 添加小标题自动换行功能
         const sectionTitleLines = pdf.splitTextToSize(section.title, pageWidth - margin.left - margin.right - safetyMarginRight);
         pdf.text(sectionTitleLines, margin.left, contentY);
-        
-        // 小标题与正文之间的间距，从 1.8 减小到 1.4
-        contentY += fonts.sectionTitle.size / 72 * 1.4 + (sectionTitleLines.length - 1) * (fonts.sectionTitle.size / 72 * 1.2);
-        
+
+        // 小标题与正文之间的间距，从 1.4 增加到 1.5
+        contentY += fonts.sectionTitle.size / 72 * 1.5 + (sectionTitleLines.length - 1) * (fonts.sectionTitle.size / 72 * 1.5);
+
         // 设置正文内容样式为Garamond (georgia) - 移动到段落循环内
         const paragraphs = section.content.split('\n\n');
-        
+
         paragraphs.forEach((paragraph) => {
           setFont('body'); // Ensure body font is set before calculations
-          // 增加正文行距，将行高因子从 1.2 增加到 1.4
-          const lineHeight = fonts.body.size / 72 * 1.4;
-          const paragraphSpacing = 0.2;
-          
+          // 增加正文行距，将行高因子从 1.4 增加到 1.5
+          const lineHeight = fonts.body.size / 72 * 1.5;
+          // 将段落间距设置为与行间距相同，而不是固定值0.2英寸
+          const paragraphSpacing = lineHeight;
+
           // 使用缩小后的有效宽度分割文本
           const textLines = pdf.splitTextToSize(paragraph, pageWidth - margin.left - margin.right - safetyMarginRight);
-          
+
           let linesProcessed = 0;
           while (linesProcessed < textLines.length) {
             const availableHeight = pageHeight - margin.bottom - contentY;
@@ -453,27 +569,33 @@ serve(async (req) => {
               // Add new page
               addPage();
               currentPageNum++;
+
+              // 设置页眉字体并绘制页眉
               setFont('runningHeader');
               pdf.text(chapter.title, pageWidth / 2, margin.top - 0.2, { align: 'center' }); // 恢复原始位置
+
+              // 重新设置回正文字体，确保跨页时字体一致
+              setFont('body');
+
               contentY = margin.top + 0.3; // 修改为 margin.top + 0.3，确保内容不会超出上边界
               // Re-calculate lines that fit on the new empty page
               const newAvailableHeight = pageHeight - margin.bottom - contentY;
               const linesOnNewPageCount = Math.floor((newAvailableHeight - (linesProcessed === 0 ? paragraphSpacing : 0)) / lineHeight);
               const linesToDraw = textLines.slice(linesProcessed, linesProcessed + linesOnNewPageCount);
-              
+
               if (linesToDraw.length > 0) {
                  // Add paragraph spacing only if it's the start of the paragraph drawing
                  const drawY = contentY + (linesProcessed === 0 ? paragraphSpacing : 0);
-                 
+
                  // 设置两端对齐，但使用较小的有效宽度确保内容在安全框内
                  pdf.text(linesToDraw, margin.left, drawY, { align: 'justify', maxWidth: pageWidth - margin.left - margin.right - safetyMarginRight });
-                 
+
                  contentY = drawY + linesToDraw.length * lineHeight;
                  linesProcessed += linesToDraw.length;
               } else {
                  // Should not happen if a full page is available, but break defensively
                  console.warn("Could not fit any lines on a new page.");
-                 break; 
+                 break;
               }
             } else {
               // Draw lines that fit on the current page
@@ -483,10 +605,10 @@ serve(async (req) => {
               if (linesToDraw.length > 0) {
                  // Add paragraph spacing only if it's the start of the paragraph drawing on this page segment
                  const drawY = contentY + (linesProcessed === 0 ? paragraphSpacing : 0);
-                 
+
                  // 设置两端对齐，但使用较小的有效宽度确保内容在安全框内
                  pdf.text(linesToDraw, margin.left, drawY, { align: 'justify', maxWidth: pageWidth - margin.left - margin.right - safetyMarginRight });
-                 
+
                  contentY = drawY + linesToDraw.length * lineHeight;
                  linesProcessed += linesToDraw.length;
               } else {
@@ -527,36 +649,36 @@ serve(async (req) => {
 
     // 生成 PDF 输出
     const pdfOutput = pdf.output('datauristring');
-    
+
     console.log(`Uploading interior PDF to storage...`);
     const interiorFileUrl = await uploadPdfToStorage(pdfOutput, 'interior.pdf');
-    
+
     if (!interiorFileUrl) {
       console.warn('Failed to upload interior PDF to storage, but will continue with database update');
     } else {
       console.log(`Interior PDF uploaded successfully to storage with URL: ${interiorFileUrl}`);
     }
-    
+
     // 更新数据库
     // const pageCount = finalBookContent.length * 5; // 旧的粗略计算
     const updateData: any = {
       interior_pdf: pdfOutput,
       page_count: finalPageCount // 使用上面已声明的 finalPageCount
     };
-    
+
     if (interiorFileUrl) {
       updateData.interior_source_url = interiorFileUrl;
     }
-    
+
     updateData.ready_for_printing = true;
-    
+
     // 查询当前书籍状态，检查封面PDF是否已生成
     const { data: bookData, error: fetchError } = await supabase
       .from('funny_biography_books')
       .select('cover_source_url, status')
       .eq('order_id', orderId)
       .single();
-    
+
     if (fetchError) {
       console.error(`Error fetching book data:`, fetchError);
     } else {
@@ -568,12 +690,12 @@ serve(async (req) => {
         console.log(`Cover PDF not yet generated, keeping current status: ${bookData?.status || 'unknown'}`);
       }
     }
-    
+
     const { error: updateError } = await supabase
       .from('funny_biography_books')
       .update(updateData)
       .eq('order_id', orderId);
-    
+
     if (updateError) {
       console.error(`Error updating database:`, updateError);
     } else {
@@ -582,10 +704,10 @@ serve(async (req) => {
         console.log(`Book status updated to 'completed'`);
       }
     }
-    
+
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         message: 'Interior PDF generated successfully',
         pdfOutput: pdfOutput,
         interiorSourceUrl: interiorFileUrl

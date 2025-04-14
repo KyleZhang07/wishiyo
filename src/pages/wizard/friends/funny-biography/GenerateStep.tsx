@@ -520,32 +520,35 @@ const FunnyBiographyGenerateStep = () => {
                 <div className="flex items-start space-x-4 justify-center">
                   {/* 前封面 */}
                   <div className="flex flex-col items-center">
-                    <img
-                      src={frontCoverPdf}
-                      style={{ width: `${standardPreviewWidth}px`, height: `${standardPreviewHeight}px` }}
-                      className="border shadow-md object-cover bg-gray-50"
-                      alt="Front Cover"
-                    />
+                    <div style={{ width: `${standardPreviewWidth}px`, height: `${standardPreviewHeight}px`, aspectRatio: '2/3' }} className="border shadow-md bg-gray-50 flex items-center justify-center overflow-hidden">
+                      <img
+                        src={frontCoverPdf}
+                        style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                        alt="Front Cover"
+                      />
+                    </div>
                   </div>
 
                   {/* 书脊 */}
                   <div className="flex flex-col items-center">
-                    <img
-                      src={spinePdf || ''}
-                      style={{ width: `${standardSpineWidth}px`, height: `${standardPreviewHeight}px` }}
-                      className="border shadow-md object-cover bg-gray-50"
-                      alt="Spine"
-                    />
+                    <div style={{ width: `${standardSpineWidth}px`, height: `${standardPreviewHeight}px` }} className="border shadow-md bg-gray-50 flex items-center justify-center overflow-hidden">
+                      <img
+                        src={spinePdf || ''}
+                        style={{ width: '100%', height: '100%', objectFit: 'fill' }}
+                        alt="Spine"
+                      />
+                    </div>
                   </div>
 
                   {/* 后封面 */}
                   <div className="flex flex-col items-center">
-                    <img
-                      src={backCoverPdf || ''}
-                      style={{ width: `${standardPreviewWidth}px`, height: `${standardPreviewHeight}px` }}
-                      className="border shadow-md object-cover bg-gray-50"
-                      alt="Back Cover"
-                    />
+                    <div style={{ width: `${standardPreviewWidth}px`, height: `${standardPreviewHeight}px`, aspectRatio: '2/3' }} className="border shadow-md bg-gray-50 flex items-center justify-center overflow-hidden">
+                      <img
+                        src={backCoverPdf || ''}
+                        style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                        alt="Back Cover"
+                      />
+                    </div>
                   </div>
                 </div>
               )}

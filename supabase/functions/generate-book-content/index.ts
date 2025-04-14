@@ -25,9 +25,15 @@ interface BookChapter {
 }
 
 // 定义批次大小和总章节数
-const BATCH_SIZE = 3;
-const TOTAL_CHAPTERS = 20;
+const BATCH_SIZE = 2; // 改为2，每批生成两章
+const TOTAL_CHAPTERS = 2; // 改为2，只生成两章进行测试
 const MAX_RETRIES = 3;
+
+// 定义页面布局常量
+const CHARS_PER_PAGE = 1300; // 每页平均字符数（包括空格）
+const WORDS_PER_PAGE = 220;  // 每页平均单词数
+const PAGES_PER_CHAPTER = 11; // 每章目标页数
+const WORDS_PER_CHAPTER = PAGES_PER_CHAPTER * WORDS_PER_PAGE; // 每章目标单词数（约2,420单词）
 const RETRY_DELAY = 1000; // 1秒
 
 serve(async (req) => {
@@ -140,6 +146,12 @@ Write this chapter with 2 distinct sections using a mixed narrative style that b
 - Use second-person "you" when explaining methodologies, principles, or when instructing the reader
 - The narrative should feel like ${bookAuthor} is personally guiding readers through their expertise using engaging metaphors
 
+IMPORTANT LENGTH REQUIREMENTS:
+- This chapter must be EXACTLY 2,400 words in total (approximately 14,000 characters)
+- Each section should be approximately 1,200 words
+- The content must be substantial enough to fill 11 pages in the final book
+- Do not include unnecessary filler content, but ensure the narrative is complete and cohesive
+
 Guidelines:
 - Balance between "I" (for personal stories) and "you" (for instructional content)
 - When using "I," focus on ${bookAuthor}'s personal journey, challenges overcome, and pivotal moments
@@ -152,7 +164,6 @@ Guidelines:
 - Section titles should use thematic metaphors that relate to the chapter's main concepts (like "Navigating the Slopes" or "The Downhill Rush")
 - Naturally incorporate details from the context into a cohesive narrative
 - Make it insightful, methodological and engaging while maintaining a professional tone with appropriate personality
-- For each section, provide a metaphorical section title and approximately 300-400 words of content
 - Write in a style that skillfully weaves personal stories with practical wisdom, using analogies to explain complex ideas
 
 Format your response as JSON with this structure:
@@ -163,10 +174,12 @@ Format your response as JSON with this structure:
     {
       "sectionNumber": 1,
       "title": "Section title",
-      "content": "Section content..."
+      "content": "Section content...",
+      "wordCount": 1200 // 请计算并提供实际字数
     },
     ...
-  ]
+  ],
+  "totalWordCount": 2400 // 请计算并提供所有小节内容的总字数
 }
 `;
 
@@ -183,7 +196,7 @@ Format your response as JSON with this structure:
                 { role: 'user', content: prompt }
               ],
               temperature: 1.0, // 增加创造性，从 0.5 调整为 1.0
-              max_tokens: 3000,
+              max_tokens: 5000, // 从4000增加到5000，确保有足够空间生成更长的内容
               response_format: { type: "json_object" }
             }),
           });
