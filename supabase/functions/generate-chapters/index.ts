@@ -13,7 +13,7 @@ serve(async (req) => {
 
   try {
     const { authorName, bookTitle, selectedIdea, answers } = await req.json();
-    
+
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAIApiKey) {
       throw new Error("OpenAI API key not configured");
@@ -59,23 +59,23 @@ Return ONLY a JSON array containing these 20 chapter objects. No other text or e
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: "gpt-4.1-nano",
         messages: [
           {
             role: "system",
-            content: `You are a creative AI assistant that generates a table of contents for a professional biography book. 
+            content: `You are a creative AI assistant that generates a table of contents for a professional biography book.
                       You must generate exactly 20 chapters, each with a metaphorical or theme-based title, brief description (15-30 words), and starting page number.
-                      
+
                       Example chapter titles:
                       - "Navigating the Slopes: Mastering Market Research"
-                      - "The Downhill Rush: Embracing Speed and Agility" 
+                      - "The Downhill Rush: Embracing Speed and Agility"
                       - "Conquering Fears: Risk Management Like a Pro"
-                      
+
                       Example descriptions:
                       - "How understanding your customer is essential, much like choosing the right ski lift for your ride to success."
                       - "The parallels between tracking market trends and observing snowfall patterns to anticipate future opportunities."
                       - "Developing resilience through unexpected challenges and learning to transform obstacles into stepping stones."
-                      
+
                       Each chapter should have a starting page number, with the first chapter starting at page 1 and subsequent chapters starting based on approximately 10-12 pages per chapter.
                       Return only valid JSON.`
           },

@@ -42,7 +42,7 @@ serve(async (req) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
+          model: 'gpt-4.1-nano',
           temperature: 1.2, // 设置高温度以增加创造性
           messages: [
             {
@@ -136,7 +136,7 @@ serve(async (req) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
+          model: 'gpt-4.1-nano',
           temperature: 1.2, // 设置高温度以增加创造性
           messages: [
             {

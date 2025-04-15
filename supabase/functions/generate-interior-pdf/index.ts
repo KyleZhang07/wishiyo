@@ -616,20 +616,90 @@ serve(async (req) => {
         contentY += fonts.sectionTitle.size / 72 * 1.6 + (sectionTitleLines.length - 1) * (fonts.sectionTitle.size / 72 * 1.6);
 
         // 设置正文内容样式为Garamond (georgia) - 移动到段落循环内
-        const paragraphs = section.content.split('\n\n');
+        // 将\n\n解释为段落分隔符，但不添加额外的段落间距
+        // 根据新的需求，当检测到 \n\n 时，将其替换为换行加四个非间断空格
+        // 这样可以在同一段内通过换行来模拟分段的效果
 
-        paragraphs.forEach((paragraph) => {
+        // 先处理文本，确保文本末尾没有多余的换行符
+        let content = section.content.trim();
+
+        // 如果最后一个字符是\n，则移除它
+        if (content.endsWith('\n')) {
+          content = content.replace(/\n+$/, '');
+        }
+
+        // 将\n\n替换为特殊标记，以便后续处理
+        const paragraphBreak = '<PARAGRAPH_BREAK>';
+        content = content.replace(/\n\n+/g, paragraphBreak);
+
+        // 在段落开头添加四个非间断空格作为缩进
+        // 将特殊标记替换为换行符加四个非间断空格
+        content = content.replace(new RegExp(paragraphBreak, 'g'), '\n\u00A0\u00A0\u00A0\u00A0');
+
+        // 在段落开头添加四个非间断空格作为缩进
+        content = '\u00A0\u00A0\u00A0\u00A0' + content;
+
+        // 将内容作为一个段落处理
+        const filteredParagraphs = [content];
+
+        filteredParagraphs.forEach((paragraph, paragraphIndex) => {
+          // 添加调试日志，查看段落渲染情况
+          console.log(`渲染段落 ${paragraphIndex+1}/${filteredParagraphs.length}, 长度: ${paragraph.length} 字符`);
           setFont('body'); // Ensure body font is set before calculations
           // 增加正文行距，将行高因子从 1.5 增加到 1.6
           const lineHeight = fonts.body.size / 72 * 1.6;
-          // 将段落间距设置为与行间距相同，而不是固定值0.2英寸
-          const paragraphSpacing = lineHeight;
+          // 段落间距设置为小值，确保段落之间有适当的间距
+          // 如果不是第一个段落，添加一个小的段落间距
+          if (paragraphIndex > 0) {
+            contentY += lineHeight * 0.5; // 段落间距为行高的0.5倍
+          }
 
           // 获取当前页的动态边距
           const pageNum = pdf.internal.getNumberOfPages();
           const currentMargins = getPageMargins(pageNum);
-          // 使用缩小后的有效宽度分割文本
-          const textLines = pdf.splitTextToSize(paragraph, pageWidth - currentMargins.left - currentMargins.right - safetyMarginRight);
+
+          // 段落已经在处理时添加了缩进，这里不需要再添加
+          let processedParagraph = paragraph;
+
+          // 使用标准宽度分割文本，不再为缩进特别减小宽度
+          const textLines = pdf.splitTextToSize(processedParagraph, pageWidth - currentMargins.left - currentMargins.right - safetyMarginRight);
+
+          // 打印所有行的内容，以便调试
+          for (let i = 0; i < textLines.length; i++) {
+            console.log(`行 ${i+1} 内容: "${textLines[i].substring(0, 20)}..."`);
+          }
+
+          // 检查每一行，如果下一行以四个非间断空格开头，则当前行需要模拟左对齐
+          for (let i = 0; i < textLines.length - 1; i++) {
+            // 检查下一行是否以四个非间断空格开头
+            const nextLine = textLines[i+1];
+            // 使用更直接的方式检测非间断空格
+            if (nextLine && (nextLine.startsWith('\u00A0\u00A0\u00A0\u00A0') ||
+                           nextLine.startsWith('    ') ||
+                           nextLine.charCodeAt(0) === 160 && nextLine.charCodeAt(1) === 160 &&
+                           nextLine.charCodeAt(2) === 160 && nextLine.charCodeAt(3) === 160)) {
+              // 当前行需要模拟左对齐
+              // 计算需要添加的空格数量
+              const currentLine = textLines[i];
+
+              // 使用 jsPDF 的方法计算文本宽度
+              const fontSize = pdf.internal.getFontSize();
+              const scaleFactor = pdf.internal.scaleFactor;
+              const lineWidth = pdf.getStringUnitWidth(currentLine) * fontSize / scaleFactor;
+              const maxWidth = pageWidth - currentMargins.left - currentMargins.right - safetyMarginRight;
+              const spaceWidth = pdf.getStringUnitWidth(' ') * fontSize / scaleFactor;
+
+              // 计算需要添加的空格数量，使行宽接近但不超过最大宽度
+              const spacesToAdd = Math.floor((maxWidth - lineWidth) / spaceWidth) - 2; // 减2是为了安全
+
+              // 添加空格
+              if (spacesToAdd > 0) {
+                const spaces = ' '.repeat(spacesToAdd);
+                textLines[i] = currentLine + spaces;
+                console.log(`向行 ${i+1} 添加了 ${spacesToAdd} 个空格，以模拟左对齐效果`);
+              }
+            }
+          }
 
           let linesProcessed = 0;
           while (linesProcessed < textLines.length) {
@@ -637,7 +707,8 @@ serve(async (req) => {
             const paragraphPageNum = pdf.internal.getNumberOfPages();
             const paragraphMargins = getPageMargins(paragraphPageNum);
             const availableHeight = pageHeight - paragraphMargins.bottom - contentY;
-            const linesThatFitCount = Math.floor((availableHeight - (linesProcessed === 0 ? paragraphSpacing : 0)) / lineHeight);
+            // 段落间距为0，不需要额外的空间
+            const linesThatFitCount = Math.floor(availableHeight / lineHeight);
 
             if (linesThatFitCount <= 0 && contentY > margin.top) { // Not enough space even for one line, and not already at top
               // Add new page
@@ -658,19 +729,36 @@ serve(async (req) => {
               contentY = newPageMargins.top + 0.8; // 使用动态边距，与其他位置保持一致，整体下移内容
               // Re-calculate lines that fit on the new empty page
               const newAvailableHeight = pageHeight - newPageMargins.bottom - contentY;
-              const linesOnNewPageCount = Math.floor((newAvailableHeight - (linesProcessed === 0 ? paragraphSpacing : 0)) / lineHeight);
+              // 段落间距为0，不需要额外的空间
+              const linesOnNewPageCount = Math.floor(newAvailableHeight / lineHeight);
               const linesToDraw = textLines.slice(linesProcessed, linesProcessed + linesOnNewPageCount);
 
               if (linesToDraw.length > 0) {
-                 // Add paragraph spacing only if it's the start of the paragraph drawing
-                 const drawY = contentY + (linesProcessed === 0 ? paragraphSpacing : 0);
+                 // 段落间距为0，直接使用当前 Y 坐标
+                 const drawY = contentY;
 
                  // 获取当前页的动态边距
                  const currentPageNum = pdf.internal.getNumberOfPages();
                  const currentMargins = getPageMargins(currentPageNum);
-                 // 设置两端对齐，但使用较小的有效宽度确保内容在安全框内
-                 pdf.text(linesToDraw, currentMargins.left, drawY, { align: 'justify', maxWidth: pageWidth - currentMargins.left - currentMargins.right - safetyMarginRight });
 
+                 // 使用简化的渲染方式，空格作为缩进已经包含在文本中
+                 console.log(`新页面上渲染段落，行数: ${linesToDraw.length}`);
+
+                 // 使用 jsPDF 的 text 方法的另一种形式来渲染文本
+                 // 不要逐行渲染，而是一次性渲染整个文本块
+                 console.log(`新页面渲染整个文本块，行数: ${linesToDraw.length}`);
+
+                 // 使用 justify 对齐方式渲染所有文本
+                 pdf.text(linesToDraw, currentMargins.left, drawY, {
+                   align: 'justify',
+                   maxWidth: pageWidth - currentMargins.left - currentMargins.right - safetyMarginRight,
+                   lineHeightFactor: 1.6 // 设置行高因子
+                 });
+
+                 console.log(`新页面应用 justify 对齐到整个文本块`);
+
+                 // 统一行高计算，确保行间距一致
+                 // 无论是否是段落的第一行，都使用相同的计算方式
                  contentY = drawY + linesToDraw.length * lineHeight;
                  linesProcessed += linesToDraw.length;
               } else {
@@ -684,15 +772,31 @@ serve(async (req) => {
               const linesToDraw = textLines.slice(linesProcessed, linesProcessed + linesToDrawCount);
 
               if (linesToDraw.length > 0) {
-                 // Add paragraph spacing only if it's the start of the paragraph drawing on this page segment
-                 const drawY = contentY + (linesProcessed === 0 ? paragraphSpacing : 0);
+                 // 段落间距为0，直接使用当前 Y 坐标
+                 const drawY = contentY;
 
                  // 获取当前页的动态边距
                  const currentPageNum = pdf.internal.getNumberOfPages();
                  const currentMargins = getPageMargins(currentPageNum);
-                 // 设置两端对齐，但使用较小的有效宽度确保内容在安全框内
-                 pdf.text(linesToDraw, currentMargins.left, drawY, { align: 'justify', maxWidth: pageWidth - currentMargins.left - currentMargins.right - safetyMarginRight });
 
+                 // 使用简化的渲染方式，空格作为缩进已经包含在文本中
+                 console.log(`渲染段落，行数: ${linesToDraw.length}`);
+
+                 // 使用 jsPDF 的 text 方法的另一种形式来渲染文本
+                 // 不要逐行渲染，而是一次性渲染整个文本块
+                 console.log(`渲染整个文本块，行数: ${linesToDraw.length}`);
+
+                 // 使用 justify 对齐方式渲染所有文本
+                 pdf.text(linesToDraw, currentMargins.left, drawY, {
+                   align: 'justify',
+                   maxWidth: pageWidth - currentMargins.left - currentMargins.right - safetyMarginRight,
+                   lineHeightFactor: 1.6 // 设置行高因子
+                 });
+
+                 console.log(`应用 justify 对齐到整个文本块`);
+
+                 // 统一行高计算，确保行间距一致
+                 // 无论是否是段落的第一行，都使用相同的计算方式
                  contentY = drawY + linesToDraw.length * lineHeight;
                  linesProcessed += linesToDraw.length;
               } else {

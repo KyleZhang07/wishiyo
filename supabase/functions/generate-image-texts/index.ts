@@ -29,13 +29,13 @@ serve(async (req) => {
 
   try {
     const { prompts, tone, personName, personAge, questionsAndAnswers = [] } = await req.json();
-    
+
     console.log(`Generating image texts for ${prompts.length} prompts with tone: ${tone}`);
-    
+
     if (!Array.isArray(prompts) || prompts.length === 0) {
       throw new Error('Prompts must be a non-empty array');
     }
-    
+
     if (!tone) {
       throw new Error('Tone is required');
     }
@@ -46,11 +46,11 @@ serve(async (req) => {
     }
 
     const texts: ImageText[] = [];
-    
+
     // Process questions and answers for personalization
     let personalInfo = '';
     if (questionsAndAnswers && questionsAndAnswers.length > 0) {
-      personalInfo = questionsAndAnswers.map((qa: QuestionAnswer) => 
+      personalInfo = questionsAndAnswers.map((qa: QuestionAnswer) =>
         `${qa.question}: ${qa.answer}`
       ).join('\n');
     }
@@ -64,13 +64,13 @@ serve(async (req) => {
                  Write in a warm, intimate tone that reflects genuine emotional connection.
                  Include specific personal details to make the text feel authentic and tailored.
                  The text should feel like a heartfelt letter to someone deeply loved and cherished.
-                 Create text that's 2-3 sentences long, you must mention the person's name in the text. 
+                 Create text that's 2-3 sentences long, you must mention the person's name in the text.
                  End with a sentiment that captures warm appreciation and nostalgic affection.
                  Example tone: Warm, sincere, emotionally resonant, appreciative.
-                 
+
                  Example of Heartfelt text:
                  "Cassie, whenever the gentle warmth of spring returns, I'm reminded of you—of the way you eagerly lace up your boots and head into the wilderness. Your joy in hiking those trails fills my heart with warmth that I treasure beyond words."`;
-          
+
         case 'Playful':
           return `You are a talented caption writer who specializes in light-hearted, fun, and slightly mischievous content.
                  Your captions should be humorous, cheerful, and playfully teasing.
@@ -80,10 +80,10 @@ serve(async (req) => {
                  Create text that's 2-3 sentences long, you must mention the person's name in the text.
                  End with an encouraging or adventurous sentiment that's upbeat and positive.
                  Example tone: Lighthearted, humorous, whimsical, friendly.
-                 
+
                  Example of Playful text:
                  "Hey Cassie! Did you notice these trees whispering behind your back? I'm pretty sure they're gossiping about that time you dreamed you'd ski right down the Eiffel Tower when you finally make it to Paris!"`;
-          
+
         case 'Inspirational':
           return `You are a talented caption writer who specializes in uplifting, motivational, and forward-looking content.
                  Your captions should inspire confidence, courage, and a sense of possibility.
@@ -93,13 +93,13 @@ serve(async (req) => {
                  Create text that's 2-3 sentences long, you must mention the person's name in the text.
                  End with a motivational sentiment that inspires them to pursue their dreams.
                  Example tone: Empowering, forward-looking, encouraging, hopeful.
-                 
+
                  Example of Inspirational text:
                  "Cassie, every trail you hike and every slope you ski brings you closer to your dreams—especially that special dream of Paris. Keep walking boldly towards them—I believe in you, always."`;
-          
+
         default:
-          return `You are a talented caption writer for an illustrated book. 
-                 Create short, engaging captions in a ${tone} tone. 
+          return `You are a talented caption writer for an illustrated book.
+                 Create short, engaging captions in a ${tone} tone.
                  The captions should complement the illustrations.
                  Write ONLY the caption text, normally 2-3 sentences.`;
       }
@@ -114,23 +114,23 @@ serve(async (req) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
+          model: 'gpt-4.1-nano',
           messages: [
-            { 
-              role: 'system', 
+            {
+              role: 'system',
               content: getToneSpecificPrompt(tone)
             },
-            { 
-              role: 'user', 
+            {
+              role: 'user',
               content: `Write a personalized caption for this image: ${prompt.prompt}
-                        
+
                         This is for an illustrated book featuring ${personName || 'my love'}, who is ${personAge || 'adult'} years old.
-                        
+
                         Personal information about ${personName}:
                         ${personalInfo || `${personName} is someone special.`}
-                        
+
                         The caption should relate to this prompt's theme: ${prompt.question}
-                        
+
                         Create a brief ${tone.toLowerCase()} caption that feels personal and evocative (2-3 sentences max).
                         Keep it short and meaningful. Less is more.
                         DO NOT include explanations or metadata.
@@ -152,7 +152,7 @@ serve(async (req) => {
 
       const data = await response.json();
       const generatedText = data.choices[0].message.content.trim();
-      
+
       return {
         text: generatedText,
         tone: tone
@@ -160,7 +160,7 @@ serve(async (req) => {
     });
 
     const generatedTexts = await Promise.all(textPromises);
-    
+
     console.log(`Successfully generated ${generatedTexts.length} texts`);
 
     return new Response(
@@ -169,12 +169,12 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error('Error generating image texts:', error);
-    
+
     return new Response(
       JSON.stringify({ error: error.message }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   }
