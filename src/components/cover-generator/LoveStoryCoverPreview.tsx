@@ -475,8 +475,8 @@ const LoveStoryCoverPreview = ({
     const authorAreaWidth = width * 0.3; // 区域宽度为封面宽度30%
     const authorAreaX = width * 0.7; // 区域左边界位置
     const authorAreaY = height * 0.95; // 区域底部位置
-    // 将文字中心点右移0.02
-    const textCenterX = authorAreaX + authorAreaWidth/2 + width * 0.02;
+    // 将文字中心点右移0.01
+    const textCenterX = authorAreaX + authorAreaWidth/2 + width * 0.01;
 
     // 设置文本居中对齐
     ctx.textAlign = 'center';
