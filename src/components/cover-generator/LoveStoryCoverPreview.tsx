@@ -473,10 +473,8 @@ const LoveStoryCoverPreview = ({
     // 作者名 - 定义固定区域并居中显示
     // 定义作者签名区域（右下角）
     const authorAreaWidth = width * 0.3; // 区域宽度为封面宽度30%
-    const authorAreaX = width * 0.7; // 区域左边界位置
+    const authorAreaX = width * 0.71; // 区域左边界位置，右移0.01
     const authorAreaY = height * 0.95; // 区域底部位置
-    // 将文字中心点右移0.01
-    const textCenterX = authorAreaX + authorAreaWidth/2 + width * 0.01;
 
     // 设置文本居中对齐
     ctx.textAlign = 'center';
@@ -486,39 +484,39 @@ const LoveStoryCoverPreview = ({
       ctx.fillStyle = '#FFFFFF';
       const authorFontSize = width * 0.035;
       ctx.font = `italic ${authorFontSize}px 'Amatic SC', cursive`;
-      ctx.fillText(`By ${author}`, textCenterX, authorAreaY); // 使用右移后的中心点
+      ctx.fillText(`By ${author}`, authorAreaX + authorAreaWidth/2, authorAreaY); // 居中显示
     }
     // 如果是elegant样式，使用极淡粉色字体
     else if (style?.id === 'elegant') {
       ctx.fillStyle = '#FDF0F3'; // 使用极淡粉色
       const authorFontSize = width * 0.025; // 缩小作者字体
       ctx.font = `italic ${authorFontSize}px 'Luckiest Guy', cursive`;
-      ctx.fillText(`By ${author}`, textCenterX, authorAreaY); // 使用右移后的中心点
+      ctx.fillText(`By ${author}`, authorAreaX + authorAreaWidth/2, authorAreaY); // 居中显示
     }
     // Classic和Vintage样式
     else if (style?.id === 'classic') {
       ctx.fillStyle = '#C75B7D'; // 使用深粉红色/玫瑰色
       const authorFontSize = width * 0.035;
       ctx.font = `italic ${authorFontSize}px 'Patrick Hand', cursive`;
-      ctx.fillText(`By ${author}`, textCenterX, authorAreaY); // 使用右移后的中心点
+      ctx.fillText(`By ${author}`, authorAreaX + authorAreaWidth/2, authorAreaY); // 居中显示
     }
     else if (style?.id === 'vintage') {
       ctx.fillStyle = style.titleColor; // 使用标题颜色
       const authorFontSize = width * 0.030; // 缩小作者字体
       ctx.font = `italic ${authorFontSize}px 'Freckle Face', cursive`;
-      ctx.fillText(`By ${author}`, textCenterX, authorAreaY); // 使用右移后的中心点
+      ctx.fillText(`By ${author}`, authorAreaX + authorAreaWidth/2, authorAreaY); // 居中显示
     }
     else if (style?.id === 'playful') {
       ctx.fillStyle = '#2A4C08'; // 使用折中的深绿色
       const authorFontSize = width * 0.035;
       ctx.font = `italic ${authorFontSize}px 'Caveat', cursive`;
-      ctx.fillText(`By ${author}`, textCenterX, authorAreaY); // 使用右移后的中心点
+      ctx.fillText(`By ${author}`, authorAreaX + authorAreaWidth/2, authorAreaY); // 居中显示
     }
     else {
       ctx.fillStyle = authorColor;
       const authorFontSize = width * 0.035;
       ctx.font = `italic ${authorFontSize}px ${fontFamily}`;
-      ctx.fillText(`By ${author}`, textCenterX, height * 0.9); // 使用右移后的中心点，位置稍高
+      ctx.fillText(`By ${author}`, authorAreaX + authorAreaWidth/2, height * 0.9); // 其他样式位置稍高
     }
 
     // 恢复文本对齐方式为默认值（左对齐）
