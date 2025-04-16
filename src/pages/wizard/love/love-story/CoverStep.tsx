@@ -853,37 +853,37 @@ const LoveStoryCoverStep = () => {
               ctx.fillStyle = '#FFFFFF';
               const authorFontSize = canvas.width * 0.035;
               ctx.font = `italic ${authorFontSize}px 'Amatic SC', cursive`;
-              ctx.fillText(`Written by ${authorName}`, canvas.width * 0.85, canvas.height * 0.95);
+              ctx.fillText(`By ${authorName}`, canvas.width * 0.85, canvas.height * 0.95); // 再右移0.02
             } else if (currentStyle.id === 'elegant') {
               // Elegant样式
               ctx.fillStyle = '#FDF0F3';
               const authorFontSize = canvas.width * 0.025; // 缩小作者字体
               ctx.font = `italic ${authorFontSize}px 'Luckiest Guy', cursive`;
-              ctx.fillText(`Written by ${authorName}`, canvas.width * 0.85, canvas.height * 0.95);
+              ctx.fillText(`By ${authorName}`, canvas.width * 0.85, canvas.height * 0.95); // 再右移0.02
             } else if (currentStyle.id === 'classic') {
               // Classic样式
               ctx.fillStyle = '#C75B7D'; // 使用深粉红色/玫瑰色
               const authorFontSize = canvas.width * 0.035;
               ctx.font = `italic ${authorFontSize}px 'Patrick Hand', cursive`;
-              ctx.fillText(`Written by ${authorName}`, canvas.width * 0.85, canvas.height * 0.95);
+              ctx.fillText(`By ${authorName}`, canvas.width * 0.85, canvas.height * 0.95); // 再右移0.02
             } else if (currentStyle.id === 'vintage') {
               // Vintage样式
               ctx.fillStyle = currentStyle.titleColor; // 使用标题颜色
               const authorFontSize = canvas.width * 0.030; // 缩小作者字体
               ctx.font = `italic ${authorFontSize}px 'Freckle Face', cursive`;
-              ctx.fillText(`Written by ${authorName}`, canvas.width * 0.85, canvas.height * 0.95);
+              ctx.fillText(`By ${authorName}`, canvas.width * 0.85, canvas.height * 0.95); // 再右移0.02
             } else if (currentStyle.id === 'playful') {
               // Playful样式
               ctx.fillStyle = '#2A4C08';
               const authorFontSize = canvas.width * 0.035;
               ctx.font = `italic ${authorFontSize}px 'Caveat', cursive`;
-              ctx.fillText(`Written by ${authorName}`, canvas.width * 0.85, canvas.height * 0.95);
+              ctx.fillText(`By ${authorName}`, canvas.width * 0.85, canvas.height * 0.95); // 再右移0.02
             } else {
               // 其他样式
               ctx.fillStyle = currentStyle.authorColor;
               const authorFontSize = canvas.width * 0.035;
               ctx.font = `italic ${authorFontSize}px ${getFontFamily(currentStyle.font)}`;
-              ctx.fillText(`Written by ${authorName}`, canvas.width * 0.75, canvas.height * 0.9);
+              ctx.fillText(`By ${authorName}`, canvas.width * 0.75, canvas.height * 0.9); // 再右移0.02
             }
 
             // 转换为图像

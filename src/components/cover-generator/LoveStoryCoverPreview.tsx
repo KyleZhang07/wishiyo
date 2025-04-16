@@ -476,39 +476,39 @@ const LoveStoryCoverPreview = ({
       ctx.fillStyle = '#FFFFFF';
       const authorFontSize = width * 0.035;
       ctx.font = `italic ${authorFontSize}px 'Amatic SC', cursive`;
-      ctx.fillText(`Written by ${author}`, width * 0.85, height * 0.95); // 与playful位置一致
+      ctx.fillText(`By ${author}`, width * 0.85, height * 0.95); // 再右移0.02
     }
     // 如果是elegant样式，使用极淡粉色字体，但位置与playful保持一致
     else if (style?.id === 'elegant') {
       ctx.fillStyle = '#FDF0F3'; // 使用极淡粉色
       const authorFontSize = width * 0.025; // 缩小作者字体
       ctx.font = `italic ${authorFontSize}px 'Luckiest Guy', cursive`;
-      ctx.fillText(`Written by ${author}`, width * 0.85, height * 0.95); // 与playful位置一致
+      ctx.fillText(`By ${author}`, width * 0.85, height * 0.95); // 再右移0.02
     }
     // Classic和Vintage样式，使用与playful相同的位置
     else if (style?.id === 'classic') {
       ctx.fillStyle = '#C75B7D'; // 使用深粉红色/玫瑰色
       const authorFontSize = width * 0.035;
       ctx.font = `italic ${authorFontSize}px 'Patrick Hand', cursive`;
-      ctx.fillText(`Written by ${author}`, width * 0.85, height * 0.95); // 与playful位置一致
+      ctx.fillText(`By ${author}`, width * 0.85, height * 0.95); // 再右移0.02
     }
     else if (style?.id === 'vintage') {
       ctx.fillStyle = style.titleColor; // 使用标题颜色
       const authorFontSize = width * 0.030; // 缩小作者字体
       ctx.font = `italic ${authorFontSize}px 'Freckle Face', cursive`;
-      ctx.fillText(`Written by ${author}`, width * 0.85, height * 0.95); // 与playful位置一致
+      ctx.fillText(`By ${author}`, width * 0.85, height * 0.95); // 再右移0.02
     }
     else if (style?.id === 'playful') {
       ctx.fillStyle = '#2A4C08'; // 使用折中的深绿色
       const authorFontSize = width * 0.035;
       ctx.font = `italic ${authorFontSize}px 'Caveat', cursive`;
-      ctx.fillText(`Written by ${author}`, width * 0.85, height * 0.95);
+      ctx.fillText(`By ${author}`, width * 0.85, height * 0.95); // 再右移0.02
     }
     else {
       ctx.fillStyle = authorColor;
       const authorFontSize = width * 0.035;
       ctx.font = `italic ${authorFontSize}px ${fontFamily}`;
-      ctx.fillText(`Written by ${author}`, width * 0.75, height * 0.9);
+      ctx.fillText(`By ${author}`, width * 0.75, height * 0.9); // 再右移0.02
     }
   };
 
