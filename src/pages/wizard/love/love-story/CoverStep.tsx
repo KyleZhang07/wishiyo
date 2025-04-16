@@ -729,7 +729,7 @@ const LoveStoryCoverStep = () => {
                     subTitleFontSize = titleFontSize * 2.0; // Playful样式副标题放大2倍
                     ctx.font = `bold ${subTitleFontSize}px 'Caveat', cursive`;
                   } else if (currentStyle.id === 'elegant') {
-                    subTitleFontSize = titleFontSize * 1.8;
+                    subTitleFontSize = titleFontSize * 1.6; // 将Elegant样式副标题字体大小从1.8改为1.6
                     ctx.font = `bold ${subTitleFontSize}px 'Luckiest Guy', cursive`;
                   } else if (currentStyle.id === 'classic') {
                     subTitleFontSize = titleFontSize * 2.0; // Classic样式副标题也放大2倍
@@ -779,7 +779,7 @@ const LoveStoryCoverStep = () => {
                     subTitleFontSize = titleFontSize * 2.0; // Playful样式副标题放大2倍
                     ctx.font = `bold ${subTitleFontSize}px 'Caveat', cursive`;
                   } else if (currentStyle.id === 'elegant') {
-                    subTitleFontSize = titleFontSize * 1.8;
+                    subTitleFontSize = titleFontSize * 1.6; // 将Elegant样式副标题字体大小从1.8改为1.6
                     ctx.font = `bold ${subTitleFontSize}px 'Luckiest Guy', cursive`;
                   } else if (currentStyle.id === 'classic') {
                     subTitleFontSize = titleFontSize * 2.0; // Classic样式副标题也放大2倍

@@ -384,6 +384,9 @@ const LoveStoryCoverPreview = ({
           } else if (style?.id === 'classic') {
             subTitleFontSize = titleFontSize * 2.0; // Classic样式副标题也放大2倍
             ctx.font = `bold ${subTitleFontSize}px 'Patrick Hand', cursive`;
+          } else if (style?.id === 'elegant') {
+            subTitleFontSize = titleFontSize * 1.6; // Elegant样式副标题保持较小的字体大小
+            ctx.font = `bold ${subTitleFontSize}px 'Luckiest Guy', cursive`;
           } else if (style?.id === 'vintage') {
             subTitleFontSize = titleFontSize * 1.8;
             ctx.font = `bold ${subTitleFontSize}px 'Freckle Face', cursive`;
@@ -411,6 +414,9 @@ const LoveStoryCoverPreview = ({
           } else if (style?.id === 'classic') {
             subTitleFontSize = titleFontSize * 2.0; // Classic样式副标题也放大2倍
             ctx.font = `bold ${subTitleFontSize}px 'Patrick Hand', cursive`;
+          } else if (style?.id === 'elegant') {
+            subTitleFontSize = titleFontSize * 1.6; // Elegant样式副标题保持较小的字体大小
+            ctx.font = `bold ${subTitleFontSize}px 'Luckiest Guy', cursive`;
           } else if (style?.id === 'vintage') {
             subTitleFontSize = titleFontSize * 1.8;
             ctx.font = `bold ${subTitleFontSize}px 'Freckle Face', cursive`;
@@ -438,6 +444,9 @@ const LoveStoryCoverPreview = ({
           } else if (style?.id === 'classic') {
             subTitleFontSize = titleFontSize * 2.0; // Classic样式副标题也放大2倍
             ctx.font = `bold ${subTitleFontSize}px 'Patrick Hand', cursive`;
+          } else if (style?.id === 'elegant') {
+            subTitleFontSize = titleFontSize * 1.6; // Elegant样式副标题保持较小的字体大小
+            ctx.font = `bold ${subTitleFontSize}px 'Luckiest Guy', cursive`;
           } else if (style?.id === 'vintage') {
             subTitleFontSize = titleFontSize * 1.8;
             ctx.font = `bold ${subTitleFontSize}px 'Freckle Face', cursive`;
