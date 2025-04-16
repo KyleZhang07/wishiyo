@@ -381,7 +381,8 @@ const LoveStoryCoverPreview = ({
           if (style?.id === 'classic') {
             ctx.font = `bold ${subTitleFontSize}px 'Patrick Hand', cursive`;
           } else if (style?.id === 'vintage') {
-            ctx.font = `bold ${subTitleFontSize}px 'Freckle Face', cursive`;
+            const vintageSubTitleFontSize = titleFontSize * 1.8; // Vintage样式保持副标题1.8倍
+            ctx.font = `bold ${vintageSubTitleFontSize}px 'Freckle Face', cursive`;
           } else if (style?.id === 'playful') {
             ctx.font = `bold ${subTitleFontSize}px 'Caveat', cursive`;
           }
@@ -405,7 +406,8 @@ const LoveStoryCoverPreview = ({
           if (style?.id === 'classic') {
             ctx.font = `bold ${subTitleFontSize}px 'Patrick Hand', cursive`;
           } else if (style?.id === 'vintage') {
-            ctx.font = `bold ${subTitleFontSize}px 'Freckle Face', cursive`;
+            const vintageSubTitleFontSize = titleFontSize * 1.8; // Vintage样式保持副标题1.8倍
+            ctx.font = `bold ${vintageSubTitleFontSize}px 'Freckle Face', cursive`;
           } else if (style?.id === 'playful') {
             ctx.font = `bold ${subTitleFontSize}px 'Caveat', cursive`;
           }
@@ -429,7 +431,8 @@ const LoveStoryCoverPreview = ({
           if (style?.id === 'classic') {
             ctx.font = `bold ${subTitleFontSize}px 'Patrick Hand', cursive`;
           } else if (style?.id === 'vintage') {
-            ctx.font = `bold ${subTitleFontSize}px 'Freckle Face', cursive`;
+            const vintageSubTitleFontSize = titleFontSize * 1.8; // Vintage样式保持副标题1.8倍
+            ctx.font = `bold ${vintageSubTitleFontSize}px 'Freckle Face', cursive`;
           } else if (style?.id === 'playful') {
             ctx.font = `bold ${subTitleFontSize}px 'Caveat', cursive`;
           }

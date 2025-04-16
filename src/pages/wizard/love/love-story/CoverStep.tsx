@@ -732,7 +732,8 @@ const LoveStoryCoverStep = () => {
                   } else if (currentStyle.id === 'classic') {
                     ctx.font = `bold ${subTitleFontSize}px 'Patrick Hand', cursive`;
                   } else if (currentStyle.id === 'vintage') {
-                    ctx.font = `bold ${subTitleFontSize}px 'Freckle Face', cursive`;
+                    const vintageSubTitleFontSize = titleFontSize * 1.8; // Vintage样式保持副标题1.8倍
+                    ctx.font = `bold ${vintageSubTitleFontSize}px 'Freckle Face', cursive`;
                   }
                   ctx.fillText(subTitle, canvas.width / 2, canvas.height * 0.32); // 下移0.02
                   ctx.fillText(thirdLine, canvas.width / 2, canvas.height * 0.42); // 下移0.02
@@ -749,7 +750,8 @@ const LoveStoryCoverStep = () => {
                 } else if (currentStyle.id === 'classic') {
                   ctx.font = `bold ${subTitleFontSize}px 'Patrick Hand', cursive`;
                 } else if (currentStyle.id === 'vintage') {
-                  ctx.font = `bold ${subTitleFontSize}px 'Freckle Face', cursive`;
+                  const vintageSubTitleFontSize = titleFontSize * 1.8; // Vintage样式保持副标题1.8倍
+                  ctx.font = `bold ${vintageSubTitleFontSize}px 'Freckle Face', cursive`;
                 }
                 ctx.fillText(subTitle, canvas.width / 2, canvas.height * 0.37); // 下移0.02
                 ctx.fillText(thirdLine, canvas.width / 2, canvas.height * 0.47); // 下移0.02
@@ -774,7 +776,8 @@ const LoveStoryCoverStep = () => {
                   } else if (currentStyle.id === 'classic') {
                     ctx.font = `bold ${subTitleFontSize}px 'Patrick Hand', cursive`;
                   } else if (currentStyle.id === 'vintage') {
-                    ctx.font = `bold ${subTitleFontSize}px 'Freckle Face', cursive`;
+                    const vintageSubTitleFontSize = titleFontSize * 1.8; // Vintage样式保持副标题1.8倍
+                    ctx.font = `bold ${vintageSubTitleFontSize}px 'Freckle Face', cursive`;
                   }
                   ctx.fillText(subTitle, canvas.width / 2, canvas.height * 0.37); // 下移0.02 // 第二行位置不变
                 }
