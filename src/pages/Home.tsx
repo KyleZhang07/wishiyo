@@ -12,14 +12,14 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
             {/* Left side - Illustrated Books */}
             <div className="hidden md:flex justify-center relative h-[400px]">
-              {/* Stack of 3 illustrated books */}
-              <div className="absolute transform -rotate-6 shadow-lg" style={{ left: '10%', top: '15%', zIndex: 1 }}>
-                <img src="/images/hero/illustrated-book1.png" alt="Illustrated Book" className="w-[220px] h-[300px] object-cover rounded-md" />
+              {/* Stack of 3 illustrated books - horizontally stacked with overlapping effect and increasing size */}
+              <div className="absolute" style={{ left: '0%', top: '60px', zIndex: 1, transform: 'perspective(800px) rotateY(5deg)', boxShadow: '2px 5px 15px rgba(0,0,0,0.3)' }}>
+                <img src="/images/hero/illustrated-book1.png" alt="Illustrated Book" className="w-[180px] h-[260px] object-cover rounded-md" />
               </div>
-              <div className="absolute transform rotate-3 shadow-lg" style={{ left: '20%', top: '10%', zIndex: 2 }}>
-                <img src="/images/hero/illustrated-book2.png" alt="Illustrated Book" className="w-[220px] h-[300px] object-cover rounded-md" />
+              <div className="absolute" style={{ left: '70px', top: '50px', zIndex: 2, transform: 'perspective(800px) rotateY(5deg)', boxShadow: '2px 5px 15px rgba(0,0,0,0.3)' }}>
+                <img src="/images/hero/illustrated-book2.png" alt="Illustrated Book" className="w-[200px] h-[280px] object-cover rounded-md" />
               </div>
-              <div className="absolute transform rotate-12 shadow-lg" style={{ left: '30%', top: '5%', zIndex: 3 }}>
+              <div className="absolute" style={{ left: '150px', top: '40px', zIndex: 3, transform: 'perspective(800px) rotateY(5deg)', boxShadow: '2px 5px 15px rgba(0,0,0,0.3)' }}>
                 <img src="/images/hero/illustrated-book3.png" alt="Illustrated Book" className="w-[220px] h-[300px] object-cover rounded-md" />
               </div>
             </div>
@@ -48,14 +48,14 @@ export default function Home() {
 
             {/* Right side - Personalized Books */}
             <div className="hidden md:flex justify-center relative h-[400px]">
-              {/* Stack of 3 personalized books */}
-              <div className="absolute transform rotate-6 shadow-lg" style={{ right: '10%', top: '15%', zIndex: 1 }}>
-                <img src="/images/hero/personalized-book1.png" alt="Personalized Book" className="w-[220px] h-[300px] object-cover rounded-md" />
+              {/* Stack of 3 personalized books - horizontally stacked with overlapping effect and increasing size */}
+              <div className="absolute" style={{ right: '0%', top: '60px', zIndex: 1, transform: 'perspective(800px) rotateY(-5deg)', boxShadow: '-2px 5px 15px rgba(0,0,0,0.3)' }}>
+                <img src="/images/hero/personalized-book1.png" alt="Personalized Book" className="w-[180px] h-[260px] object-cover rounded-md" />
               </div>
-              <div className="absolute transform -rotate-3 shadow-lg" style={{ right: '20%', top: '10%', zIndex: 2 }}>
-                <img src="/images/hero/personalized-book2.png" alt="Personalized Book" className="w-[220px] h-[300px] object-cover rounded-md" />
+              <div className="absolute" style={{ right: '70px', top: '50px', zIndex: 2, transform: 'perspective(800px) rotateY(-5deg)', boxShadow: '-2px 5px 15px rgba(0,0,0,0.3)' }}>
+                <img src="/images/hero/personalized-book2.png" alt="Personalized Book" className="w-[200px] h-[280px] object-cover rounded-md" />
               </div>
-              <div className="absolute transform -rotate-12 shadow-lg" style={{ right: '30%', top: '5%', zIndex: 3 }}>
+              <div className="absolute" style={{ right: '150px', top: '40px', zIndex: 3, transform: 'perspective(800px) rotateY(-5deg)', boxShadow: '-2px 5px 15px rgba(0,0,0,0.3)' }}>
                 <img src="/images/hero/personalized-book3.png" alt="Personalized Book" className="w-[220px] h-[300px] object-cover rounded-md" />
               </div>
             </div>
