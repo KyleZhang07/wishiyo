@@ -847,44 +847,61 @@ const LoveStoryCoverStep = () => {
               }
             }
 
-            // 作者名
+            // 作者名 - 定义固定区域并居中显示
+            // 定义作者签名区域（右下角）
+            const authorAreaWidth = canvas.width * 0.3; // 区域宽度为封面宽度30%
+            const authorAreaX = canvas.width * 0.7; // 区域左边界位置
+            const authorAreaY = canvas.height * 0.95; // 区域底部位置
+            // 将文字中心点右移0.02
+            const textCenterX = authorAreaX + authorAreaWidth/2 + canvas.width * 0.02;
+
+            // 保存当前文本对齐方式
+            const originalTextAlign = ctx.textAlign;
+
+            // 设置文本居中对齐
+            ctx.textAlign = 'center';
+
+            // 根据不同样式设置字体和颜色
             if (currentStyle.id === 'modern') {
               // Modern样式
               ctx.fillStyle = '#FFFFFF';
               const authorFontSize = canvas.width * 0.035;
               ctx.font = `italic ${authorFontSize}px 'Amatic SC', cursive`;
-              ctx.fillText(`By ${authorName}`, canvas.width * 0.85, canvas.height * 0.95); // 再右移0.02
+              ctx.fillText(`By ${authorName}`, textCenterX, authorAreaY); // 使用右移后的中心点
             } else if (currentStyle.id === 'elegant') {
               // Elegant样式
               ctx.fillStyle = '#FDF0F3';
               const authorFontSize = canvas.width * 0.025; // 缩小作者字体
               ctx.font = `italic ${authorFontSize}px 'Luckiest Guy', cursive`;
-              ctx.fillText(`By ${authorName}`, canvas.width * 0.85, canvas.height * 0.95); // 再右移0.02
+              ctx.fillText(`By ${authorName}`, textCenterX, authorAreaY); // 使用右移后的中心点
             } else if (currentStyle.id === 'classic') {
               // Classic样式
               ctx.fillStyle = '#C75B7D'; // 使用深粉红色/玫瑰色
               const authorFontSize = canvas.width * 0.035;
               ctx.font = `italic ${authorFontSize}px 'Patrick Hand', cursive`;
-              ctx.fillText(`By ${authorName}`, canvas.width * 0.85, canvas.height * 0.95); // 再右移0.02
+              ctx.fillText(`By ${authorName}`, textCenterX, authorAreaY); // 使用右移后的中心点
             } else if (currentStyle.id === 'vintage') {
               // Vintage样式
               ctx.fillStyle = currentStyle.titleColor; // 使用标题颜色
               const authorFontSize = canvas.width * 0.030; // 缩小作者字体
               ctx.font = `italic ${authorFontSize}px 'Freckle Face', cursive`;
-              ctx.fillText(`By ${authorName}`, canvas.width * 0.85, canvas.height * 0.95); // 再右移0.02
+              ctx.fillText(`By ${authorName}`, textCenterX, authorAreaY); // 使用右移后的中心点
             } else if (currentStyle.id === 'playful') {
               // Playful样式
               ctx.fillStyle = '#2A4C08';
               const authorFontSize = canvas.width * 0.035;
               ctx.font = `italic ${authorFontSize}px 'Caveat', cursive`;
-              ctx.fillText(`By ${authorName}`, canvas.width * 0.85, canvas.height * 0.95); // 再右移0.02
+              ctx.fillText(`By ${authorName}`, textCenterX, authorAreaY); // 使用右移后的中心点
             } else {
               // 其他样式
               ctx.fillStyle = currentStyle.authorColor;
               const authorFontSize = canvas.width * 0.035;
               ctx.font = `italic ${authorFontSize}px ${getFontFamily(currentStyle.font)}`;
-              ctx.fillText(`By ${authorName}`, canvas.width * 0.75, canvas.height * 0.9); // 再右移0.02
+              ctx.fillText(`By ${authorName}`, textCenterX, canvas.height * 0.9); // 使用右移后的中心点，位置稍高
             }
+
+            // 恢复原来的文本对齐方式
+            ctx.textAlign = originalTextAlign;
 
             // 转换为图像
             const imageData = canvas.toDataURL('image/jpeg', 0.9);
