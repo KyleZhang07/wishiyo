@@ -343,11 +343,11 @@ const LoveStoryCoverPreview = ({
       // 根据样式选择不同的字体
       if (style?.id === 'playful') {
         ctx.fillStyle = '#2A4C08'; // Playful样式使用折中的深绿色字体
-        const playfulTitleFontSize = titleFontSize * 2.2; // 将字体放大2.2倍
+        const playfulTitleFontSize = titleFontSize * 2.0; // 将字体放大2.0倍，与副标题保持一致
         ctx.font = `bold ${playfulTitleFontSize}px 'Caveat', cursive`;
       } else if (style?.id === 'modern') {
         ctx.fillStyle = '#FFFFFF'; // Modern样式使用白色字体
-        const modernTitleFontSize = titleFontSize * 2.2; // 将字体放大2.2倍
+        const modernTitleFontSize = titleFontSize * 2.0; // 将字体放大2.0倍，与副标题保持一致
         ctx.font = `bold ${modernTitleFontSize}px 'Amatic SC', cursive`;
       } else if (style?.id === 'elegant') {
         ctx.fillStyle = '#FDF0F3'; // Elegant样式使用更接近白色的淡粉色字体
@@ -459,7 +459,7 @@ const LoveStoryCoverPreview = ({
       if (style?.id === 'modern') {
         // 使用白色字体和更手写风格的字体
         ctx.fillStyle = '#FFFFFF';
-        const modernTitleFontSize = titleFontSize * 2.2; // 将字体放大2.2倍
+        const modernTitleFontSize = titleFontSize * 2.0; // 将字体放大2.0倍，与副标题保持一致
         ctx.font = `bold ${modernTitleFontSize}px 'Amatic SC', cursive`;
         ctx.fillText(fullTitle, width / 2, height * 0.27); // 下移0.02 // 将标题位置调整为与 CoverStep 一致
       } else if (style?.id === 'elegant') {
@@ -470,7 +470,7 @@ const LoveStoryCoverPreview = ({
         ctx.fillText(fullTitle, width / 2, height * 0.27); // 下移0.02
       } else if (style?.id === 'playful') {
         ctx.fillStyle = '#2A4C08';
-        const playfulTitleFontSize = titleFontSize * 2.2;
+        const playfulTitleFontSize = titleFontSize * 2.0; // 将字体放大2.0倍，与副标题保持一致
         ctx.font = `bold ${playfulTitleFontSize}px 'Caveat', cursive`;
         ctx.fillText(fullTitle, width / 2, height * 0.27); // 下移0.02
       } else if (style?.id === 'classic') {
