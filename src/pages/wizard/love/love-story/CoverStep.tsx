@@ -732,7 +732,7 @@ const LoveStoryCoverStep = () => {
                     subTitleFontSize = titleFontSize * 1.8;
                     ctx.font = `bold ${subTitleFontSize}px 'Luckiest Guy', cursive`;
                   } else if (currentStyle.id === 'classic') {
-                    subTitleFontSize = titleFontSize * 1.8;
+                    subTitleFontSize = titleFontSize * 2.0; // Classic样式副标题也放大2倍
                     ctx.font = `bold ${subTitleFontSize}px 'Patrick Hand', cursive`;
                   } else if (currentStyle.id === 'vintage') {
                     subTitleFontSize = titleFontSize * 1.8;
@@ -753,7 +753,7 @@ const LoveStoryCoverStep = () => {
                   subTitleFontSize = titleFontSize * 1.8;
                   ctx.font = `bold ${subTitleFontSize}px 'Luckiest Guy', cursive`;
                 } else if (currentStyle.id === 'classic') {
-                  subTitleFontSize = titleFontSize * 1.8;
+                  subTitleFontSize = titleFontSize * 2.0; // Classic样式副标题也放大2倍
                   ctx.font = `bold ${subTitleFontSize}px 'Patrick Hand', cursive`;
                 } else if (currentStyle.id === 'vintage') {
                   subTitleFontSize = titleFontSize * 1.8;
@@ -782,7 +782,7 @@ const LoveStoryCoverStep = () => {
                     subTitleFontSize = titleFontSize * 1.8;
                     ctx.font = `bold ${subTitleFontSize}px 'Luckiest Guy', cursive`;
                   } else if (currentStyle.id === 'classic') {
-                    subTitleFontSize = titleFontSize * 1.8;
+                    subTitleFontSize = titleFontSize * 2.0; // Classic样式副标题也放大2倍
                     ctx.font = `bold ${subTitleFontSize}px 'Patrick Hand', cursive`;
                   } else if (currentStyle.id === 'vintage') {
                     subTitleFontSize = titleFontSize * 1.8;
