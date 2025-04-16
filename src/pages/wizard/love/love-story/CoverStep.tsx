@@ -715,14 +715,14 @@ const LoveStoryCoverStep = () => {
                 // 三行标题位置，上移以避免与图片重合
                 if (currentStyle.id === 'modern') {
                   // Modern样式特殊处理位置
-                  ctx.fillText(mainTitle, canvas.width / 2, canvas.height * 0.20);
+                  ctx.fillText(mainTitle, canvas.width / 2, canvas.height * 0.22); // 下移0.02
 
                   const subTitleFontSize = titleFontSize * 1.8; // Modern样式副标题也放大
                   ctx.font = `bold ${subTitleFontSize}px 'Amatic SC', cursive`;
-                  ctx.fillText(subTitle, canvas.width / 2, canvas.height * 0.30);
-                  ctx.fillText(thirdLine, canvas.width / 2, canvas.height * 0.40);
+                  ctx.fillText(subTitle, canvas.width / 2, canvas.height * 0.32); // 下移0.02
+                  ctx.fillText(thirdLine, canvas.width / 2, canvas.height * 0.42); // 下移0.02
                 } else {
-                  ctx.fillText(mainTitle, canvas.width / 2, canvas.height * 0.20);
+                  ctx.fillText(mainTitle, canvas.width / 2, canvas.height * 0.22); // 下移0.02
 
                   const subTitleFontSize = titleFontSize * 1.8;
                   if (currentStyle.id === 'playful') {
@@ -734,12 +734,12 @@ const LoveStoryCoverStep = () => {
                   } else if (currentStyle.id === 'vintage') {
                     ctx.font = `bold ${subTitleFontSize}px 'Freckle Face', cursive`;
                   }
-                  ctx.fillText(subTitle, canvas.width / 2, canvas.height * 0.30);
-                  ctx.fillText(thirdLine, canvas.width / 2, canvas.height * 0.40);
+                  ctx.fillText(subTitle, canvas.width / 2, canvas.height * 0.32); // 下移0.02
+                  ctx.fillText(thirdLine, canvas.width / 2, canvas.height * 0.42); // 下移0.02
                 }
               } else if (thirdLine) {
                 // 其他三行标题情况，保持原位置不变
-                ctx.fillText(mainTitle, canvas.width / 2, canvas.height * 0.25);
+                ctx.fillText(mainTitle, canvas.width / 2, canvas.height * 0.27); // 下移0.02
 
                 const subTitleFontSize = titleFontSize * 1.8;
                 if (currentStyle.id === 'playful') {
@@ -751,19 +751,19 @@ const LoveStoryCoverStep = () => {
                 } else if (currentStyle.id === 'vintage') {
                   ctx.font = `bold ${subTitleFontSize}px 'Freckle Face', cursive`;
                 }
-                ctx.fillText(subTitle, canvas.width / 2, canvas.height * 0.35);
-                ctx.fillText(thirdLine, canvas.width / 2, canvas.height * 0.45);
+                ctx.fillText(subTitle, canvas.width / 2, canvas.height * 0.37); // 下移0.02
+                ctx.fillText(thirdLine, canvas.width / 2, canvas.height * 0.47); // 下移0.02
               } else if (mainTitle && subTitle) {
                 // 两行标题的情况，增加行间距，第一行适度上移，第二行位置不变
                 if (currentStyle.id === 'modern') {
                   // Modern样式特殊处理位置
-                  ctx.fillText(mainTitle, canvas.width / 2, canvas.height * 0.23); // 第一行适度上移
+                  ctx.fillText(mainTitle, canvas.width / 2, canvas.height * 0.25); // 下移0.02 // 第一行适度上移
 
                   const subTitleFontSize = titleFontSize * 1.8; // Modern样式副标题也放大
                   ctx.font = `bold ${subTitleFontSize}px 'Amatic SC', cursive`;
-                  ctx.fillText(subTitle, canvas.width / 2, canvas.height * 0.35); // 第二行位置不变
+                  ctx.fillText(subTitle, canvas.width / 2, canvas.height * 0.37); // 下移0.02 // 第二行位置不变
                 } else {
-                  ctx.fillText(mainTitle, canvas.width / 2, canvas.height * 0.23); // 第一行适度上移
+                  ctx.fillText(mainTitle, canvas.width / 2, canvas.height * 0.25); // 下移0.02 // 第一行适度上移
 
                   // 绘制副标题，增加间距
                   const subTitleFontSize = titleFontSize * 1.8;
@@ -776,7 +776,7 @@ const LoveStoryCoverStep = () => {
                   } else if (currentStyle.id === 'vintage') {
                     ctx.font = `bold ${subTitleFontSize}px 'Freckle Face', cursive`;
                   }
-                  ctx.fillText(subTitle, canvas.width / 2, canvas.height * 0.35); // 第二行位置不变
+                  ctx.fillText(subTitle, canvas.width / 2, canvas.height * 0.37); // 下移0.02 // 第二行位置不变
                 }
               } else {
                 // 如果没有分开的标题，则使用完整标题
@@ -785,31 +785,31 @@ const LoveStoryCoverStep = () => {
                   ctx.fillStyle = '#FFFFFF';
                   const modernTitleFontSize = titleFontSize * 2.0; // 将字体放大2倍
                   ctx.font = `bold ${modernTitleFontSize}px 'Amatic SC', cursive`;
-                  ctx.fillText(fullTitle, canvas.width / 2, canvas.height * 0.25); // 将标题位置调整为与 LoveStoryCoverPreview 一致
+                  ctx.fillText(fullTitle, canvas.width / 2, canvas.height * 0.27); // 下移0.02 // 将标题位置调整为与 LoveStoryCoverPreview 一致
                 } else if (currentStyle.id === 'elegant') {
                   // 使用淡粉色字体和手写风格的字体
                   ctx.fillStyle = '#FDF0F3';
                   const elegantTitleFontSize = titleFontSize * 1.6; // 将字体放大1.6倍
                   ctx.font = `bold ${elegantTitleFontSize}px 'Luckiest Guy', cursive`;
-                  ctx.fillText(fullTitle, canvas.width / 2, canvas.height * 0.25);
+                  ctx.fillText(fullTitle, canvas.width / 2, canvas.height * 0.27); // 下移0.02
                 } else if (currentStyle.id === 'playful') {
                   ctx.fillStyle = '#2A4C08';
                   const playfulTitleFontSize = titleFontSize * 2.0; // 将字体放大2倍
                   ctx.font = `bold ${playfulTitleFontSize}px 'Caveat', cursive`;
-                  ctx.fillText(fullTitle, canvas.width / 2, canvas.height * 0.25);
+                  ctx.fillText(fullTitle, canvas.width / 2, canvas.height * 0.27); // 下移0.02
                 } else if (currentStyle.id === 'classic') {
                   ctx.fillStyle = '#FFF5F5'; // 使用柔和的白色
                   const classicTitleFontSize = titleFontSize * 2.0; // 将字体放大2倍，与Modern一致
                   ctx.font = `bold ${classicTitleFontSize}px 'Patrick Hand', cursive`;
-                  ctx.fillText(fullTitle, canvas.width / 2, canvas.height * 0.25);
+                  ctx.fillText(fullTitle, canvas.width / 2, canvas.height * 0.27); // 下移0.02
                 } else if (currentStyle.id === 'vintage') {
                   const vintageTitleFontSize = titleFontSize * 1.8; // 将字体放大1.8倍
                   ctx.font = `bold ${vintageTitleFontSize}px 'Freckle Face', cursive`;
-                  ctx.fillText(fullTitle, canvas.width / 2, canvas.height * 0.25);
+                  ctx.fillText(fullTitle, canvas.width / 2, canvas.height * 0.27); // 下移0.02
                 } else {
                   // 其他样式使用默认字体
                   ctx.font = `bold ${titleFontSize}px ${getFontFamily(currentStyle.font)}`;
-                  ctx.fillText(fullTitle, canvas.width / 2, canvas.height * 0.25);
+                  ctx.fillText(fullTitle, canvas.width / 2, canvas.height * 0.27); // 下移0.02
                 }
               }
             } else {
@@ -819,31 +819,31 @@ const LoveStoryCoverStep = () => {
                 ctx.fillStyle = '#FFFFFF';
                 const modernTitleFontSize = titleFontSize * 2.0; // 将字体放大2倍
                 ctx.font = `bold ${modernTitleFontSize}px 'Amatic SC', cursive`;
-                ctx.fillText(fullTitle, canvas.width / 2, canvas.height * 0.25); // 将标题位置调整为与 LoveStoryCoverPreview 一致
+                ctx.fillText(fullTitle, canvas.width / 2, canvas.height * 0.27); // 下移0.02 // 将标题位置调整为与 LoveStoryCoverPreview 一致
               } else if (currentStyle.id === 'elegant') {
                 // 使用淡粉色字体和手写风格的字体
                 ctx.fillStyle = '#FDF0F3';
                 const elegantTitleFontSize = titleFontSize * 1.6; // 将字体放大1.6倍
                 ctx.font = `bold ${elegantTitleFontSize}px 'Luckiest Guy', cursive`;
-                ctx.fillText(fullTitle, canvas.width / 2, canvas.height * 0.25);
+                ctx.fillText(fullTitle, canvas.width / 2, canvas.height * 0.27); // 下移0.02
               } else if (currentStyle.id === 'playful') {
                 ctx.fillStyle = '#2A4C08';
                 const playfulTitleFontSize = titleFontSize * 2.0; // 将字体放大2倍
                 ctx.font = `bold ${playfulTitleFontSize}px 'Caveat', cursive`;
-                ctx.fillText(fullTitle, canvas.width / 2, canvas.height * 0.25);
+                ctx.fillText(fullTitle, canvas.width / 2, canvas.height * 0.27); // 下移0.02
               } else if (currentStyle.id === 'classic') {
                 ctx.fillStyle = '#C75B7D'; // 使用深粉红色/玫瑰色
                 const classicTitleFontSize = titleFontSize * 2.0; // 将字体放大2倍，与Modern一致
                 ctx.font = `bold ${classicTitleFontSize}px 'Patrick Hand', cursive`;
-                ctx.fillText(fullTitle, canvas.width / 2, canvas.height * 0.25);
+                ctx.fillText(fullTitle, canvas.width / 2, canvas.height * 0.27); // 下移0.02
               } else if (currentStyle.id === 'vintage') {
                 const vintageTitleFontSize = titleFontSize * 1.8; // 将字体放大1.8倍
                 ctx.font = `bold ${vintageTitleFontSize}px 'Freckle Face', cursive`;
-                ctx.fillText(fullTitle, canvas.width / 2, canvas.height * 0.25);
+                ctx.fillText(fullTitle, canvas.width / 2, canvas.height * 0.27); // 下移0.02
               } else {
                 // 其他样式使用默认字体
                 ctx.font = `bold ${titleFontSize}px ${getFontFamily(currentStyle.font)}`;
-                ctx.fillText(fullTitle, canvas.width / 2, canvas.height * 0.25);
+                ctx.fillText(fullTitle, canvas.width / 2, canvas.height * 0.27); // 下移0.02
               }
             }
 
