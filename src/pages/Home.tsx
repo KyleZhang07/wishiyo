@@ -64,9 +64,10 @@ export default function Home() {
               <div className="mb-6 h-[360px] flex items-center justify-center">
                 {/* Personalized Book showcase image */}
                 <img
-                  src="/images/showcase/personalized-book-showcase.svg"
+                  src="/images/showcase/personalized-book.jpeg"
                   alt="Personalized Book Example"
-                  className="w-full h-full object-contain rounded-lg"
+                  className="w-auto h-auto max-w-full max-h-full object-contain rounded-lg"
+                  style={{ aspectRatio: '1/1' }}
                 />
               </div>
               <h3 className="text-2xl font-bold mb-2">Personalized Book</h3>
