@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景 -->
+  <rect width="800" height="600" fill="#F0F7FF"/>
+  
+  <!-- 书本封面 -->
+  <rect x="200" y="100" width="400" height="400" rx="10" fill="#FFFFFF" stroke="#4A89DC" stroke-width="8"/>
+  
+  <!-- 书本标题 -->
+  <text x="400" y="180" font-family="Arial" font-size="36" font-weight="bold" fill="#2A4C08" text-anchor="middle">Illustrated Book</text>
+  
+  <!-- 书本插图 - 简化的人物和风景 -->
+  <circle cx="300" cy="280" r="50" fill="#FF6B35" stroke="#2A4C08" stroke-width="3"/> <!-- 人物头部 -->
+  <rect x="280" y="330" width="40" height="80" rx="5" fill="#FF6B35" stroke="#2A4C08" stroke-width="3"/> <!-- 人物身体 -->
+  
+  <circle cx="500" cy="280" r="50" fill="#4A89DC" stroke="#2A4C08" stroke-width="3"/> <!-- 第二个人物头部 -->
+  <rect x="480" y="330" width="40" height="80" rx="5" fill="#4A89DC" stroke="#2A4C08" stroke-width="3"/> <!-- 第二个人物身体 -->
+  
+  <!-- 简化的风景元素 -->
+  <path d="M150 450 L250 350 L350 450 L450 350 L550 450 L650 350 L750 450 L750 550 L150 550 Z" fill="#8CC63F" stroke="#2A4C08" stroke-width="3"/> <!-- 草地 -->
+  <circle cx="650" cy="150" r="40" fill="#FFD700" stroke="#FF6B35" stroke-width="3"/> <!-- 太阳 -->
+  
+  <!-- 装饰元素 -->
+  <circle cx="200" cy="150" r="20" fill="#FF6B35" opacity="0.5"/>
+  <circle cx="600" cy="450" r="25" fill="#4A89DC" opacity="0.5"/>
+  <circle cx="700" cy="200" r="15" fill="#8CC63F" opacity="0.5"/>
+  <circle cx="150" cy="350" r="18" fill="#FFD700" opacity="0.5"/>
+</svg>

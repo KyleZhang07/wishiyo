@@ -74,8 +74,12 @@ export default function Home() {
             {/* For Personalized Book */}
             <div className="p-8">
               <div className="mb-6 h-[360px] flex items-center justify-center">
-                {/* Placeholder for image - you can replace this with an actual image */}
-                <div className="bg-gray-200 w-full h-full rounded-lg"></div>
+                {/* Personalized Book showcase image */}
+                <img
+                  src="/images/showcase/personalized-book-showcase.svg"
+                  alt="Personalized Book Example"
+                  className="w-full h-full object-contain rounded-lg"
+                />
               </div>
               <h3 className="text-2xl font-bold mb-2">Personalized Book</h3>
               <p className="text-gray-700 mb-4">Create a unique story featuring your loved ones as the main characters</p>
@@ -87,8 +91,13 @@ export default function Home() {
             {/* For Illustrated Book */}
             <div className="p-8">
               <div className="mb-6 h-[360px] flex items-center justify-center">
-                {/* Placeholder for image - you can replace this with an actual image */}
-                <div className="bg-gray-200 w-full h-full rounded-lg"></div>
+                {/* Illustrated Book showcase image */}
+                <img
+                  src="/images/showcase/illustrated-book.png"
+                  alt="Illustrated Book Example"
+                  className="w-auto h-auto max-w-full max-h-full object-contain rounded-lg"
+                  style={{ aspectRatio: '1/1' }}
+                />
               </div>
               <h3 className="text-2xl font-bold mb-2">Illustrated Book</h3>
               <p className="text-gray-700 mb-4">Beautiful illustrated stories with your loved ones' photos integrated into the artwork</p>
@@ -190,7 +199,12 @@ export default function Home() {
             {/* Book 1 */}
             <div className="flex flex-col">
               <div className="bg-[#F0F7FF] p-8 rounded-lg mb-4 h-[360px] flex items-center justify-center">
-                {/* Placeholder for book image */}
+                <img
+                  src="/images/showcase/illustrated-books/love-story.svg"
+                  alt="Our Love Story"
+                  className="w-auto h-auto max-w-full max-h-full object-contain"
+                  style={{ aspectRatio: '1/1' }}
+                />
               </div>
               <h3 className="text-xl font-bold mb-2">Our Love Story</h3>
               <p className="text-gray-700">A beautiful illustrated journey of your love</p>
@@ -199,7 +213,12 @@ export default function Home() {
             {/* Book 2 */}
             <div className="flex flex-col">
               <div className="bg-[#F0F7FF] p-8 rounded-lg mb-4 h-[360px] flex items-center justify-center">
-                {/* Placeholder for book image */}
+                <img
+                  src="/images/showcase/illustrated-books/magical-adventure.svg"
+                  alt="Magical Adventure"
+                  className="w-auto h-auto max-w-full max-h-full object-contain"
+                  style={{ aspectRatio: '1/1' }}
+                />
               </div>
               <h3 className="text-xl font-bold mb-2">Magical Adventure</h3>
               <p className="text-gray-700">Turn your child into the hero of a magical tale</p>
@@ -208,7 +227,12 @@ export default function Home() {
             {/* Book 3 */}
             <div className="flex flex-col">
               <div className="bg-[#F0F7FF] p-8 rounded-lg mb-4 h-[360px] flex items-center justify-center">
-                {/* Placeholder for book image */}
+                <img
+                  src="/images/showcase/illustrated-books/friendship-chronicles.svg"
+                  alt="Friendship Chronicles"
+                  className="w-auto h-auto max-w-full max-h-full object-contain"
+                  style={{ aspectRatio: '1/1' }}
+                />
               </div>
               <h3 className="text-xl font-bold mb-2">Friendship Chronicles</h3>
               <p className="text-gray-700">Celebrate special friendships with a custom story</p>
@@ -217,7 +241,12 @@ export default function Home() {
             {/* Book 4 */}
             <div className="flex flex-col">
               <div className="bg-[#F0F7FF] p-8 rounded-lg mb-4 h-[360px] flex items-center justify-center">
-                {/* Placeholder for book image */}
+                <img
+                  src="/images/showcase/illustrated-books/family-adventures.svg"
+                  alt="Family Adventures"
+                  className="w-auto h-auto max-w-full max-h-full object-contain"
+                  style={{ aspectRatio: '1/1' }}
+                />
               </div>
               <h3 className="text-xl font-bold mb-2">Family Adventures</h3>
               <p className="text-gray-700">Turn your family photos into an illustrated storybook</p>
