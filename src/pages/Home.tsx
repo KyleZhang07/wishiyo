@@ -251,8 +251,35 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Testimonials Section */}
+      {/* Dream Life Section */}
       <section className="py-24 bg-white">
+        <div className="container px-4 md:px-6 mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <div>
+              <h2 className="text-4xl font-serif font-bold tracking-tighter mb-4">
+                Dream Life. Magically crafted.
+              </h2>
+              <p className="text-lg text-gray-700 mb-6">
+                Create a personalized fantasy autobiography that brings your
+                dream life to vivid reality
+              </p>
+              <Button asChild className="bg-[#FF6B35] hover:bg-[#FF6B35]/90 text-white">
+                <Link to="/dream-life">Create My Book</Link>
+              </Button>
+            </div>
+            <div className="rounded-lg overflow-hidden aspect-square w-full relative">
+              <img
+                src="/images/showcase/dream-life/dream-life.png"
+                alt="Dream Life Book"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="py-24 bg-gray-50">
         <div className="container px-4 md:px-6 mx-auto">
           <h2 className="text-4xl font-serif font-bold tracking-tighter text-left mb-12">
             What our customers say
