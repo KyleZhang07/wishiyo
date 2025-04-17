@@ -17,7 +17,7 @@ const LoveLanding = () => {
                 </div>
                 <div className="hidden md:block">
                   <div className="w-56 h-56 mx-auto rounded-sm overflow-hidden border-4 border-[#FF7F50]/20">
-                    <img src="/placeholder.svg" alt="" className="w-full h-full object-cover" />
+                    <img src="/images/showcase/dream-life/dream-life.png" alt="Dream Life Book" className="w-full h-full object-cover" />
                   </div>
                 </div>
               </div>
