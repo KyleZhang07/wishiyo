@@ -61,13 +61,12 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* For Personalized Book */}
             <div className="p-8">
-              <div className="mb-6 h-[360px] flex items-center justify-center">
+              <div className="bg-[#FDF7ED] rounded-lg mb-4 aspect-square w-[70%] mx-auto relative overflow-hidden">
                 {/* Personalized Book showcase image */}
                 <img
                   src="/images/showcase/personalized-book.jpeg"
                   alt="Personalized Book Example"
-                  className="w-auto h-auto max-w-full max-h-full object-contain rounded-lg"
-                  style={{ aspectRatio: '1/1' }}
+                  className="absolute inset-0 w-full h-full object-cover"
                 />
               </div>
               <h3 className="text-2xl font-bold mb-2">Personalized Book</h3>
@@ -79,13 +78,12 @@ export default function Home() {
 
             {/* For Illustrated Book */}
             <div className="p-8">
-              <div className="mb-6 h-[360px] flex items-center justify-center">
+              <div className="bg-[#F0F7FF] rounded-lg mb-4 aspect-square w-[70%] mx-auto relative overflow-hidden">
                 {/* Illustrated Book showcase image */}
                 <img
                   src="/images/showcase/illustrated-book.png"
                   alt="Illustrated Book Example"
-                  className="w-auto h-auto max-w-full max-h-full object-contain rounded-lg"
-                  style={{ aspectRatio: '1/1' }}
+                  className="absolute inset-0 w-full h-full object-cover"
                 />
               </div>
               <h3 className="text-2xl font-bold mb-2">Illustrated Book</h3>
@@ -140,8 +138,12 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* Book 1 */}
             <div className="flex flex-col">
-              <div className="bg-[#FDF7ED] p-8 rounded-lg mb-4 h-[360px] flex items-center justify-center">
-                {/* Placeholder for book image */}
+              <div className="bg-[#FDF7ED] rounded-lg mb-4 aspect-[3/4] w-full relative overflow-hidden">
+                <img
+                  src="/images/showcase/personalized-books/personalized-book1.png"
+                  alt="First Mother's Day for Mommy and Me"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
               </div>
               <h3 className="text-xl font-bold mb-2">First Mother's Day for Mommy and Me</h3>
               <p className="text-gray-700">Capture that first precious Mother's Day</p>
@@ -149,8 +151,12 @@ export default function Home() {
 
             {/* Book 2 */}
             <div className="flex flex-col">
-              <div className="bg-[#FDF7ED] p-8 rounded-lg mb-4 h-[360px] flex items-center justify-center">
-                {/* Placeholder for book image */}
+              <div className="bg-[#FDF7ED] rounded-lg mb-4 aspect-[3/4] w-full relative overflow-hidden">
+                <img
+                  src="/images/showcase/personalized-books/personalized-book2.png"
+                  alt="I Love Grandma This Much"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
               </div>
               <h3 className="text-xl font-bold mb-2">I Love Grandma This Much</h3>
               <p className="text-gray-700">A heartwarming story for a special grandma</p>
@@ -158,8 +164,12 @@ export default function Home() {
 
             {/* Book 3 */}
             <div className="flex flex-col">
-              <div className="bg-[#FDF7ED] p-8 rounded-lg mb-4 h-[360px] flex items-center justify-center">
-                {/* Placeholder for book image */}
+              <div className="bg-[#FDF7ED] rounded-lg mb-4 aspect-[3/4] w-full relative overflow-hidden">
+                <img
+                  src="/images/showcase/personalized-books/personalized-book3.png"
+                  alt="When You Were Born"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
               </div>
               <h3 className="text-xl font-bold mb-2">When You Were Born</h3>
               <p className="text-gray-700">A story to celebrate a new baby</p>
@@ -167,8 +177,12 @@ export default function Home() {
 
             {/* Book 4 */}
             <div className="flex flex-col">
-              <div className="bg-[#FDF7ED] p-8 rounded-lg mb-4 h-[360px] flex items-center justify-center">
-                {/* Placeholder for book image */}
+              <div className="bg-[#FDF7ED] rounded-lg mb-4 aspect-[3/4] w-full relative overflow-hidden">
+                <img
+                  src="/images/showcase/personalized-books/personalized-book4.png"
+                  alt="I Spy You!"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
               </div>
               <h3 className="text-xl font-bold mb-2">I Spy You!</h3>
               <p className="text-gray-700">A personalized search-and-find book for little ones</p>
@@ -187,7 +201,7 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* Book 1 */}
             <div className="flex flex-col">
-              <div className="bg-[#F0F7FF] rounded-lg mb-4 aspect-square w-full relative overflow-hidden">
+              <div className="bg-[#F0F7FF] rounded-lg mb-4 aspect-[3/4] w-full relative overflow-hidden">
                 <img
                   src="/images/showcase/illustrated-books/illustrated-book1.jpeg"
                   alt="Our Love Story"
@@ -200,7 +214,7 @@ export default function Home() {
 
             {/* Book 2 */}
             <div className="flex flex-col">
-              <div className="bg-[#F0F7FF] rounded-lg mb-4 aspect-square w-full relative overflow-hidden">
+              <div className="bg-[#F0F7FF] rounded-lg mb-4 aspect-[3/4] w-full relative overflow-hidden">
                 <img
                   src="/images/showcase/illustrated-books/illustrated-book2.jpeg"
                   alt="Magical Adventure"
@@ -213,7 +227,7 @@ export default function Home() {
 
             {/* Book 3 */}
             <div className="flex flex-col">
-              <div className="bg-[#F0F7FF] rounded-lg mb-4 aspect-square w-full relative overflow-hidden">
+              <div className="bg-[#F0F7FF] rounded-lg mb-4 aspect-[3/4] w-full relative overflow-hidden">
                 <img
                   src="/images/showcase/illustrated-books/illustrated-book3.jpeg"
                   alt="Friendship Chronicles"
@@ -226,7 +240,7 @@ export default function Home() {
 
             {/* Book 4 */}
             <div className="flex flex-col">
-              <div className="bg-[#F0F7FF] rounded-lg mb-4 aspect-square w-full relative overflow-hidden">
+              <div className="bg-[#F0F7FF] rounded-lg mb-4 aspect-[3/4] w-full relative overflow-hidden">
                 <img
                   src="/images/showcase/illustrated-books/illustrated-book4.jpeg"
                   alt="Family Adventures"
