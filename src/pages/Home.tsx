@@ -10,17 +10,11 @@ export default function Home() {
       <section className="relative py-20 md:py-32 overflow-hidden">
         <div className="container px-4 md:px-6 mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
-            {/* Left side - Illustrated Books */}
-            <div className="hidden md:flex justify-center relative h-[400px]">
-              {/* Stack of 3 illustrated books - horizontally stacked with overlapping effect and increasing size */}
-              <div className="absolute" style={{ left: '0%', top: '60px', zIndex: 1, transform: 'perspective(800px) rotateY(5deg)', boxShadow: '2px 5px 15px rgba(0,0,0,0.3)' }}>
-                <img src="/images/hero/illustrated-book1.png" alt="Illustrated Book" className="w-[180px] h-[260px] object-cover rounded-md" />
-              </div>
-              <div className="absolute" style={{ left: '70px', top: '50px', zIndex: 2, transform: 'perspective(800px) rotateY(5deg)', boxShadow: '2px 5px 15px rgba(0,0,0,0.3)' }}>
-                <img src="/images/hero/illustrated-book2.png" alt="Illustrated Book" className="w-[200px] h-[280px] object-cover rounded-md" />
-              </div>
-              <div className="absolute" style={{ left: '150px', top: '40px', zIndex: 3, transform: 'perspective(800px) rotateY(5deg)', boxShadow: '2px 5px 15px rgba(0,0,0,0.3)' }}>
-                <img src="/images/hero/illustrated-book3.png" alt="Illustrated Book" className="w-[220px] h-[300px] object-cover rounded-md" />
+            {/* Left side - Illustrated Book */}
+            <div className="hidden md:flex justify-center relative h-[500px]">
+              {/* Single illustrated book with shadow effect */}
+              <div className="absolute" style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%) perspective(800px) rotateY(5deg)', boxShadow: '2px 5px 15px rgba(0,0,0,0.3)' }}>
+                <img src="/images/hero/illustrated-book1.png" alt="Illustrated Book" className="w-[300px] h-[400px] object-cover rounded-md" />
               </div>
             </div>
 
@@ -46,17 +40,11 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Right side - Personalized Books */}
-            <div className="hidden md:flex justify-center relative h-[400px]">
-              {/* Stack of 3 personalized books - horizontally stacked with overlapping effect and increasing size */}
-              <div className="absolute" style={{ right: '0%', top: '60px', zIndex: 1, transform: 'perspective(800px) rotateY(-5deg)', boxShadow: '-2px 5px 15px rgba(0,0,0,0.3)' }}>
-                <img src="/images/hero/personalized-book1.png" alt="Personalized Book" className="w-[180px] h-[260px] object-cover rounded-md" />
-              </div>
-              <div className="absolute" style={{ right: '70px', top: '50px', zIndex: 2, transform: 'perspective(800px) rotateY(-5deg)', boxShadow: '-2px 5px 15px rgba(0,0,0,0.3)' }}>
-                <img src="/images/hero/personalized-book2.png" alt="Personalized Book" className="w-[200px] h-[280px] object-cover rounded-md" />
-              </div>
-              <div className="absolute" style={{ right: '150px', top: '40px', zIndex: 3, transform: 'perspective(800px) rotateY(-5deg)', boxShadow: '-2px 5px 15px rgba(0,0,0,0.3)' }}>
-                <img src="/images/hero/personalized-book3.png" alt="Personalized Book" className="w-[220px] h-[300px] object-cover rounded-md" />
+            {/* Right side - Personalized Book */}
+            <div className="hidden md:flex justify-center relative h-[500px]">
+              {/* Single personalized book with shadow effect */}
+              <div className="absolute" style={{ right: '50%', top: '50%', transform: 'translate(50%, -50%) perspective(800px) rotateY(-5deg)', boxShadow: '-2px 5px 15px rgba(0,0,0,0.3)' }}>
+                <img src="/images/hero/personalized-book1.png" alt="Personalized Book" className="w-[300px] h-[400px] object-cover rounded-md" />
               </div>
             </div>
           </div>
@@ -251,35 +239,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Dream Life Section */}
-      <section className="py-24 bg-white">
-        <div className="container px-4 md:px-6 mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-            <div>
-              <h2 className="text-4xl font-serif font-bold tracking-tighter mb-4">
-                Dream Life. Magically crafted.
-              </h2>
-              <p className="text-lg text-gray-700 mb-6">
-                Create a personalized fantasy autobiography that brings your
-                dream life to vivid reality
-              </p>
-              <Button asChild className="bg-[#FF6B35] hover:bg-[#FF6B35]/90 text-white">
-                <Link to="/dream-life">Create My Book</Link>
-              </Button>
-            </div>
-            <div className="rounded-lg overflow-hidden aspect-square w-full relative">
-              <img
-                src="/images/showcase/dream-life/dream-life.png"
-                alt="Dream Life Book"
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Testimonials Section */}
-      <section className="py-24 bg-gray-50">
+      <section className="py-24 bg-white">
         <div className="container px-4 md:px-6 mx-auto">
           <h2 className="text-4xl font-serif font-bold tracking-tighter text-left mb-12">
             What our customers say
