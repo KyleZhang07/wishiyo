@@ -200,7 +200,7 @@ export default function Home() {
             <div className="flex flex-col">
               <div className="bg-[#F0F7FF] p-8 rounded-lg mb-4 h-[360px] flex items-center justify-center">
                 <img
-                  src="/images/showcase/illustrated-books/love-story.svg"
+                  src="/images/showcase/illustrated-books/illustrated-book1.jpeg"
                   alt="Our Love Story"
                   className="w-auto h-auto max-w-full max-h-full object-contain"
                   style={{ aspectRatio: '1/1' }}
@@ -214,7 +214,7 @@ export default function Home() {
             <div className="flex flex-col">
               <div className="bg-[#F0F7FF] p-8 rounded-lg mb-4 h-[360px] flex items-center justify-center">
                 <img
-                  src="/images/showcase/illustrated-books/magical-adventure.svg"
+                  src="/images/showcase/illustrated-books/illustrated-book2.jpeg"
                   alt="Magical Adventure"
                   className="w-auto h-auto max-w-full max-h-full object-contain"
                   style={{ aspectRatio: '1/1' }}
@@ -228,7 +228,7 @@ export default function Home() {
             <div className="flex flex-col">
               <div className="bg-[#F0F7FF] p-8 rounded-lg mb-4 h-[360px] flex items-center justify-center">
                 <img
-                  src="/images/showcase/illustrated-books/friendship-chronicles.svg"
+                  src="/images/showcase/illustrated-books/illustrated-book3.jpeg"
                   alt="Friendship Chronicles"
                   className="w-auto h-auto max-w-full max-h-full object-contain"
                   style={{ aspectRatio: '1/1' }}
@@ -242,7 +242,7 @@ export default function Home() {
             <div className="flex flex-col">
               <div className="bg-[#F0F7FF] p-8 rounded-lg mb-4 h-[360px] flex items-center justify-center">
                 <img
-                  src="/images/showcase/illustrated-books/family-adventures.svg"
+                  src="/images/showcase/illustrated-books/illustrated-book4.jpeg"
                   alt="Family Adventures"
                   className="w-auto h-auto max-w-full max-h-full object-contain"
                   style={{ aspectRatio: '1/1' }}
