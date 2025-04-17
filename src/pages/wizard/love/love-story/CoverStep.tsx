@@ -695,7 +695,7 @@ const LoveStoryCoverStep = () => {
                 ctx.font = `bold ${playfulTitleFontSize}px 'Caveat', cursive`;
               } else if (currentStyle.id === 'modern') {
                 ctx.fillStyle = '#FFFFFF'; // Modern样式使用白色字体
-                const modernTitleFontSize = titleFontSize * 2.0; // 将字体放大2.0倍，与副标题保持一致
+                const modernTitleFontSize = titleFontSize * 2.2; // 将字体放大2.2倍
                 ctx.font = `bold ${modernTitleFontSize}px 'Amatic SC', cursive`;
               } else if (currentStyle.id === 'elegant') {
                 ctx.fillStyle = '#FDF0F3'; // Elegant样式使用淡粉色字体
@@ -717,7 +717,7 @@ const LoveStoryCoverStep = () => {
                   // Modern样式特殊处理位置
                   ctx.fillText(mainTitle, canvas.width / 2, canvas.height * 0.20); // 上移0.02
 
-                  const subTitleFontSize = titleFontSize * 2.0; // Modern样式副标题放大2倍
+                  const subTitleFontSize = titleFontSize * 2.2; // Modern样式副标题放大2.2倍
                   ctx.font = `bold ${subTitleFontSize}px 'Amatic SC', cursive`;
                   ctx.fillText(subTitle, canvas.width / 2, canvas.height * 0.30); // 上移0.02
                   ctx.fillText(thirdLine, canvas.width / 2, canvas.height * 0.40); // 上移0.02
@@ -795,7 +795,7 @@ const LoveStoryCoverStep = () => {
                 if (currentStyle.id === 'modern') {
                   // 使用白色字体和更手写风格的字体
                   ctx.fillStyle = '#FFFFFF';
-                  const modernTitleFontSize = titleFontSize * 2.0; // 将字体放大2.0倍，与副标题保持一致
+                  const modernTitleFontSize = titleFontSize * 2.2; // 将字体放大2.2倍
                   ctx.font = `bold ${modernTitleFontSize}px 'Amatic SC', cursive`;
                   ctx.fillText(fullTitle, canvas.width / 2, canvas.height * 0.27); // 下移0.02 // 将标题位置调整为与 LoveStoryCoverPreview 一致
                 } else if (currentStyle.id === 'elegant') {
@@ -829,7 +829,7 @@ const LoveStoryCoverStep = () => {
               if (currentStyle.id === 'modern') {
                 // 使用白色字体和更手写风格的字体
                 ctx.fillStyle = '#FFFFFF';
-                const modernTitleFontSize = titleFontSize * 2.0; // 将字体放大2.0倍，与副标题保持一致
+                const modernTitleFontSize = titleFontSize * 2.2; // 将字体放大2.2倍
                 ctx.font = `bold ${modernTitleFontSize}px 'Amatic SC', cursive`;
                 ctx.fillText(fullTitle, canvas.width / 2, canvas.height * 0.27); // 下移0.02 // 将标题位置调整为与 LoveStoryCoverPreview 一致
               } else if (currentStyle.id === 'elegant') {
