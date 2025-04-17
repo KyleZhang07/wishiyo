@@ -198,12 +198,11 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* Book 1 */}
             <div className="flex flex-col">
-              <div className="bg-[#F0F7FF] p-8 rounded-lg mb-4 h-[360px] flex items-center justify-center">
+              <div className="bg-[#F0F7FF] rounded-lg mb-4 aspect-square w-full relative overflow-hidden">
                 <img
                   src="/images/showcase/illustrated-books/illustrated-book1.jpeg"
                   alt="Our Love Story"
-                  className="w-auto h-auto max-w-full max-h-full object-contain"
-                  style={{ aspectRatio: '1/1' }}
+                  className="absolute inset-0 w-full h-full object-cover"
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">Our Love Story</h3>
@@ -212,12 +211,11 @@ export default function Home() {
 
             {/* Book 2 */}
             <div className="flex flex-col">
-              <div className="bg-[#F0F7FF] p-8 rounded-lg mb-4 h-[360px] flex items-center justify-center">
+              <div className="bg-[#F0F7FF] rounded-lg mb-4 aspect-square w-full relative overflow-hidden">
                 <img
                   src="/images/showcase/illustrated-books/illustrated-book2.jpeg"
                   alt="Magical Adventure"
-                  className="w-auto h-auto max-w-full max-h-full object-contain"
-                  style={{ aspectRatio: '1/1' }}
+                  className="absolute inset-0 w-full h-full object-cover"
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">Magical Adventure</h3>
@@ -226,12 +224,11 @@ export default function Home() {
 
             {/* Book 3 */}
             <div className="flex flex-col">
-              <div className="bg-[#F0F7FF] p-8 rounded-lg mb-4 h-[360px] flex items-center justify-center">
+              <div className="bg-[#F0F7FF] rounded-lg mb-4 aspect-square w-full relative overflow-hidden">
                 <img
                   src="/images/showcase/illustrated-books/illustrated-book3.jpeg"
                   alt="Friendship Chronicles"
-                  className="w-auto h-auto max-w-full max-h-full object-contain"
-                  style={{ aspectRatio: '1/1' }}
+                  className="absolute inset-0 w-full h-full object-cover"
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">Friendship Chronicles</h3>
@@ -240,12 +237,11 @@ export default function Home() {
 
             {/* Book 4 */}
             <div className="flex flex-col">
-              <div className="bg-[#F0F7FF] p-8 rounded-lg mb-4 h-[360px] flex items-center justify-center">
+              <div className="bg-[#F0F7FF] rounded-lg mb-4 aspect-square w-full relative overflow-hidden">
                 <img
                   src="/images/showcase/illustrated-books/illustrated-book4.jpeg"
                   alt="Family Adventures"
-                  className="w-auto h-auto max-w-full max-h-full object-contain"
-                  style={{ aspectRatio: '1/1' }}
+                  className="absolute inset-0 w-full h-full object-cover"
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">Family Adventures</h3>
