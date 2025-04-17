@@ -14,7 +14,7 @@ export default function Home() {
             <div className="hidden md:flex justify-center relative h-[500px]">
               {/* Single illustrated book with shadow effect */}
               <div className="absolute" style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%) perspective(800px) rotateY(5deg)', boxShadow: '2px 5px 15px rgba(0,0,0,0.3)' }}>
-                <img src="/images/hero/illustrated-book1.png" alt="Illustrated Book" className="w-[300px] h-[400px] object-cover rounded-md" />
+                <img src="/images/hero/illustrated-book1.png" alt="Illustrated Book" className="w-auto h-auto object-contain rounded-md" style={{ transform: 'scale(1.6)' }} />
               </div>
             </div>
 
@@ -44,7 +44,7 @@ export default function Home() {
             <div className="hidden md:flex justify-center relative h-[500px]">
               {/* Single personalized book with shadow effect */}
               <div className="absolute" style={{ right: '50%', top: '50%', transform: 'translate(50%, -50%) perspective(800px) rotateY(-5deg)', boxShadow: '-2px 5px 15px rgba(0,0,0,0.3)' }}>
-                <img src="/images/hero/personalized-book1.png" alt="Personalized Book" className="w-[300px] h-[400px] object-cover rounded-md" />
+                <img src="/images/hero/personalized-book1.png" alt="Personalized Book" className="w-auto h-auto object-contain rounded-md" style={{ transform: 'scale(1.6)' }} />
               </div>
             </div>
           </div>
