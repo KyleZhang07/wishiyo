@@ -49,6 +49,8 @@ const FormatStep = () => {
     const savedFormat = localStorage.getItem('loveStorySelectedFormat');
     return savedFormat || 'hardcover'; // 默认选择精装高光版
   });
+  const [couponCode, setCouponCode] = useState<string>('');
+  const [couponError, setCouponError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
   // 处理格式选择
@@ -69,6 +71,7 @@ const FormatStep = () => {
 
     if (selectedFormatObj) {
       setIsProcessing(true);
+      setCouponError(null);
 
       // 保存书籍信息到localStorage
       const bookTitle = 'THE MAGIC IN ' + (localStorage.getItem('loveStoryPersonName') || 'My Love');
@@ -88,11 +91,19 @@ const FormatStep = () => {
             title: bookTitle,
             format: selectedFormatObj.name,
             price: selectedFormatObj.price.toString(),
-            quantity: 1
+            quantity: 1,
+            couponCode: couponCode.trim() || undefined
           }),
         });
 
         if (!response.ok) {
+          // 如果优惠码无效，后端会返回400并带 message
+          const err = await response.json();
+          if (err.error === 'Invalid coupon code') {
+            setCouponError('优惠码无效');
+            setIsProcessing(false);
+            return;
+          }
           throw new Error('Network response was not ok');
         }
 
@@ -228,8 +239,25 @@ const FormatStep = () => {
           ))}
         </div>
 
+        {/* 优惠码输入区域 */}
+        <div className="mt-6">
+          <label className="block text-gray-700 text-sm mb-2" htmlFor="couponCode">
+            优惠码
+          </label>
+          <input
+            id="couponCode"
+            type="text"
+            value={couponCode}
+            onChange={(e) => setCouponCode(e.target.value)}
+            className="block w-full p-2 pl-10 text-sm text-gray-700 rounded-lg border border-gray-300 focus:ring-[#1F2937] focus:border-[#1F2937]"
+          />
+          {couponError && (
+            <p className="mt-2 text-sm text-red-500">{couponError}</p>
+          )}
+        </div>
+
         {/* 结账按钮 */}
-        <div className="mt-12">
+        <div className="mt-6">
           <Button
             variant="default"
             size="lg"

@@ -1102,9 +1102,37 @@ const LoveStoryCoverStep = () => {
               }
             }
 
-            // 转换为图像
-            const imageData = canvas.toDataURL('image/jpeg', 0.9);
-            resolve(imageData);
+            // 加载并绘制 spine-logo.png 图标
+            try {
+              const logoImg = new Image();
+              logoImg.crossOrigin = 'anonymous';
+              logoImg.onload = () => {
+                // 计算图标位置 - 居中并略微向上
+                const logoWidth = 100; // 图标宽度
+                const logoHeight = 30; // 图标高度
+                const logoX = (canvas.width - logoWidth) / 2;
+                const logoY = canvas.height * 0.85; // 位置在封底的 85% 处，略微向上
+
+                // 绘制图标
+                ctx.drawImage(logoImg, logoX, logoY, logoWidth, logoHeight);
+
+                // 转换为图像
+                const imageData = canvas.toDataURL('image/jpeg', 0.9);
+                resolve(imageData);
+              };
+              logoImg.onerror = () => {
+                console.error('Failed to load spine-logo.png');
+                // 如果图标加载失败，仍然返回没有图标的图像
+                const imageData = canvas.toDataURL('image/jpeg', 0.9);
+                resolve(imageData);
+              };
+              logoImg.src = '/assets/logos/spine-logo.png';
+            } catch (logoError) {
+              console.error('Error adding logo to back cover:', logoError);
+              // 如果出错，返回没有图标的图像
+              const imageData = canvas.toDataURL('image/jpeg', 0.9);
+              resolve(imageData);
+            }
           } catch (error) {
             reject(error);
           }
@@ -1257,23 +1285,7 @@ const LoveStoryCoverStep = () => {
               }
             }
 
-            // 添加书脊文字 - 竖直显示书名
-            ctx.save();
-            ctx.translate(canvas.width / 2, canvas.height / 2);
-            ctx.rotate(-Math.PI / 2); // 旋转90度
-
-            // 设置文本样式
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillStyle = style.titleColor;
-            ctx.font = `bold 24px ${style.font || 'serif'}`;
-
-            // 绘制竖直文字
-            const spineText = titleData.mainTitle || titleData.fullTitle;
-            ctx.fillText(spineText, 0, 0);
-
-            // 还原canvas状态
-            ctx.restore();
+            // 书脊不显示书名文字
 
             // 转换为图像
             const imageData = canvas.toDataURL('image/jpeg', 0.9);

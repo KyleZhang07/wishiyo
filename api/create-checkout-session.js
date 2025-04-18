@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
   try {
-    const { productId, title, format, price, quantity = 1 } = req.body;
+    const { productId, title, format, price, quantity = 1, couponCode } = req.body;
     
     // 验证必要的输入数据
     if (!productId) {
@@ -28,8 +28,18 @@ export default async function handler(req, res) {
     // 生成随机订单ID
     const orderId = `WY-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
     
+    let discounts;
+    if (couponCode) {
+      const promoList = await stripe.promotionCodes.list({ code: couponCode, active: true, limit: 1 });
+      if (!promoList.data || promoList.data.length === 0) {
+        return res.status(400).json({ error: 'Invalid coupon code' });
+      }
+      discounts = [{ promotion_code: promoList.data[0].id }];
+    }
+    
     // 创建Stripe Checkout会话，包含shipping address收集
     const session = await stripe.checkout.sessions.create({
+      allow_promotion_codes: true,
       payment_method_types: ['card'],
       line_items: [
         {
@@ -44,6 +54,8 @@ export default async function handler(req, res) {
           quantity: parseInt(quantity, 10) || 1, // 确保quantity为整数
         },
       ],
+      // 应用优惠
+      ...(discounts ? { discounts } : {}),
       mode: 'payment',
       shipping_address_collection: {
         allowed_countries: ['US', 'CA', 'GB', 'AU'], // 允许的国家列表

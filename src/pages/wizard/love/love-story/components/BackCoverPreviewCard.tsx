@@ -14,7 +14,7 @@ export const BackCoverPreviewCard = ({
   isGeneratingBackCover = false
 }: BackCoverPreviewCardProps) => {
   const [backCoverImage, setBackCoverImage] = useState<string | null>(null);
-  
+
   useEffect(() => {
     // 从localStorage获取背景图片URL
     const savedBackCoverImageUrl = localStorage.getItem('loveStoryBackCoverImage_url');
@@ -37,17 +37,19 @@ export const BackCoverPreviewCard = ({
               {backCoverImage ? (
                 <div className="relative w-full h-full">
                   {/* 背景图片 */}
-                  <img 
-                    src={backCoverImage} 
+                  <img
+                    src={backCoverImage}
                     alt="Book back cover"
                     className="w-full h-full object-cover"
                   />
-                  
-                  {/* 添加wishiyo字样 */}
-                  <div className="absolute inset-0 flex flex-col justify-end items-center pb-8">
-                    <p className="text-white text-lg font-medium shadow-text">
-                      wishiyo
-                    </p>
+
+                  {/* 添加wishiyo logo */}
+                  <div className="absolute inset-0 flex flex-col justify-end items-center pb-16">
+                    <img
+                      src="/assets/logos/spine-logo.png"
+                      alt="Wishiyo logo"
+                      className="h-8 w-auto"
+                    />
                   </div>
                 </div>
               ) : (
@@ -75,4 +77,4 @@ if (typeof document !== 'undefined') {
   const styleElement = document.createElement('style');
   styleElement.innerHTML = styles;
   document.head.appendChild(styleElement);
-} 
+}
