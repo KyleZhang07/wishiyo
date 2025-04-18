@@ -2,6 +2,11 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.8.0'
 import { jsPDF } from 'https://esm.sh/jspdf@2.5.1'
 
+/** Lulu hardcover template margins */
+const BLEED = 0.125; // 1/8"
+const WRAP  = 0.75;  // 3/4" board‑wrap for hard cover
+const SAFE  = 0.5;   // safety margin recommended by Lulu
+
 interface RequestBody {
   orderId: string;
 }
@@ -628,6 +633,8 @@ async function generatePdf(imageFiles: any[], orderId: string, clientId: string 
   const bookTrimSize = 8.5;        // 书籍裁切尺寸
   const bleedWidth = 0.125;        // 出血区域宽度
   const safetyMarginWidth = 0.5;   // 安全边距宽度
+  const safeBoxStart = BLEED + SAFE;               // 0.625"
+  const safeBoxSize  = totalDocSize - 2 * (BLEED + SAFE); // 7.5"
   
   let currentPage = 0
   let successCount = 0
