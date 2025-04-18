@@ -14,6 +14,7 @@ import blueTextureBackground from '../../../../assets/Generated Image March 15, 
 import greenLeafBackground from '../../../../assets/leaves.jpg';
 import rainbowBackground from '../../../../assets/rainbow2.jpg';
 import heartCoverBackground from '../../../../assets/heart_cover_8.5in_highres.png';
+import heartBackBackground from '../../../../assets/heartback.png';
 import drawSnowNightBackground from '../../../../components/cover-generator/SnowNightBackground';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
@@ -1036,7 +1037,8 @@ const LoveStoryCoverStep = () => {
             } else if (style.id === 'elegant') {
               backgroundImgPromise = loadBackgroundImage(rainbowBackground);
             } else if (style.id === 'classic') {
-              backgroundImgPromise = loadBackgroundImage(heartCoverBackground);
+              // 对于封底，使用heartback.png
+              backgroundImgPromise = loadBackgroundImage(heartBackBackground);
             }
 
             // 等待背景图片加载完成
@@ -1154,7 +1156,7 @@ const LoveStoryCoverStep = () => {
                 const logoAspectRatio = logoImg.width / logoImg.height;
                 const logoHeight = logoWidth / logoAspectRatio; // 保持原始宽高比
                 const logoX = (canvas.width - logoWidth) / 2;
-                const logoY = canvas.height * 0.75; // 位置在封底的 75% 处，显著向上移动
+                const logoY = canvas.height * 0.80; // 位置在封底的 80% 处，比原来的 75% 低 5%
 
                 // 绘制图标
                 ctx.drawImage(logoImg, logoX, logoY, logoWidth, logoHeight);
