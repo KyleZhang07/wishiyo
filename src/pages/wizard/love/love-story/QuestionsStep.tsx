@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import QuestionDialog from '@/components/wizard/QuestionDialog';
 import { Button } from '@/components/ui/button';
@@ -55,14 +55,6 @@ const LoveStoryQuestionsStep = () => {
   const questions = getQuestions(personName);
 
   const handleNext = () => {
-    if (questionsAndAnswers.length === 0) {
-      toast({
-        title: "No answers provided",
-        description: "Please share at least one story",
-        variant: "destructive",
-      });
-      return;
-    }
     navigate('/create/love/love-story/moments');
   };
 
@@ -95,6 +87,28 @@ const LoveStoryQuestionsStep = () => {
 
   const answeredQuestions = questionsAndAnswers.map(qa => qa.question);
 
+  // Update answered card questions when personName changes
+  const genericQuestionParts = useMemo(
+    () => getQuestions('{name}').map(q => q.split('{name}')),
+    []
+  );
+
+  useEffect(() => {
+    if (questionsAndAnswers.length === 0) return;
+    const updated = questionsAndAnswers.map(qa => {
+      const match = genericQuestionParts.find(
+        ([pre, suf]) => qa.question.startsWith(pre) && qa.question.endsWith(suf)
+      );
+      if (!match) return qa;
+      const [pre, suf] = match;
+      return { question: `${pre}${personName}${suf}`, answer: qa.answer };
+    });
+    if (JSON.stringify(updated) !== JSON.stringify(questionsAndAnswers)) {
+      setQuestionsAndAnswers(updated);
+      localStorage.setItem(storageKey, JSON.stringify(updated));
+    }
+  }, [personName]);
+
   return (
     <WizardStep
       title="Share the Story"
@@ -103,6 +117,7 @@ const LoveStoryQuestionsStep = () => {
       currentStep={2}
       totalSteps={6}
       onNextClick={handleNext}
+      nextDisabled={questionsAndAnswers.length === 0}
     >
       <div className="space-y-6">
         {questionsAndAnswers.map((qa, index) => (

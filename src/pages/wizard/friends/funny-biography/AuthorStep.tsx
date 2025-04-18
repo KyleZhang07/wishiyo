@@ -18,15 +18,6 @@ const FunnyBiographyAuthorStep = () => {
   }, []);
 
   const handleContinue = () => {
-    if (!authorName.trim()) {
-      toast({
-        variant: "destructive",
-        title: "Author name required",
-        description: "Please enter your name to continue"
-      });
-      return;
-    }
-
     localStorage.setItem('funnyBiographyAuthorName', authorName.trim());
     navigate('/create/friends/funny-biography/stories');
   };
@@ -39,6 +30,7 @@ const FunnyBiographyAuthorStep = () => {
       currentStep={1}
       totalSteps={7}
       onNextClick={handleContinue}
+      nextDisabled={!authorName.trim()}
     >
       <div className="space-y-4">
         <div>

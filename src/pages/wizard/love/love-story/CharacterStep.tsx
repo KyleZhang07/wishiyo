@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
@@ -23,60 +23,40 @@ const LoveStoryCharacterStep = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Monitor authorName and firstName to update persisted storage and downstream cards
+  const genericNameParts = useMemo(
+    () => [''],
+    [] // no templated questions here, but can adjust as needed
+  );
+
+  useEffect(() => {
+    // Update localStorage keys when authorName or firstName change
+    localStorage.setItem('loveStoryPersonName', firstName.trim());
+    localStorage.setItem('loveStoryAuthorName', authorName.trim());
+  }, [firstName, authorName]);
+
   const handleContinue = () => {
-    if (!firstName.trim()) {
-      toast({
-        variant: "destructive",
-        title: "Name required",
-        description: "Please enter their name to continue"
-      });
-      return;
-    }
-
-    if (!gender) {
-      toast({
-        variant: "destructive",
-        title: "Gender required",
-        description: "Please select their gender to continue"
-      });
-      return;
-    }
-
-    if (!age.trim()) {
-      toast({
-        variant: "destructive",
-        title: "Age required",
-        description: "Please enter their age to continue"
-      });
-      return;
-    }
-
-    if (!authorName.trim()) {
-      toast({
-        variant: "destructive",
-        title: "Author name required",
-        description: "Please enter your name to continue"
-      });
-      return;
-    }
-
-    // Validate age is a number and within reasonable range
-    const ageNumber = parseInt(age);
-    if (isNaN(ageNumber) || ageNumber < 1 || ageNumber > 120) {
-      toast({
-        variant: "destructive",
-        title: "Invalid age",
-        description: "Please enter a valid age between 1 and 120"
-      });
-      return;
-    }
-
     localStorage.setItem('loveStoryPersonName', firstName.trim());
     localStorage.setItem('loveStoryPersonGender', gender);
     localStorage.setItem('loveStoryPersonAge', age);
     localStorage.setItem('loveStoryAuthorName', authorName.trim());
 
     navigate('/create/love/love-story/questions');
+  };
+
+  // 验证所有输入是否有效
+  const isFormValid = () => {
+    if (!firstName.trim() || !gender || !age.trim() || !authorName.trim()) {
+      return false;
+    }
+
+    // 验证年龄是否有效
+    const ageNumber = parseInt(age);
+    if (isNaN(ageNumber) || ageNumber < 1 || ageNumber > 120) {
+      return false;
+    }
+
+    return true;
   };
 
   return (
@@ -87,6 +67,7 @@ const LoveStoryCharacterStep = () => {
       currentStep={1}
       totalSteps={6}
       onNextClick={handleContinue}
+      nextDisabled={!isFormValid()}
     >
       <div className="space-y-8">
         <div>

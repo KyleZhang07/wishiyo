@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import WizardStep from '@/components/wizard/WizardStep';
 import QuestionDialog from '@/components/wizard/QuestionDialog';
@@ -47,14 +47,6 @@ const FunnyBiographyStoriesStep = () => {
   const navigate = useNavigate();
 
   const handleNext = () => {
-    if (questionsAndAnswers.length === 0) {
-      toast({
-        title: "No funny stories added",
-        description: "Come on, add at least one hilarious story!",
-        variant: "destructive",
-      });
-      return;
-    }
     navigate('/create/friends/funny-biography/ideas');
   };
 
@@ -90,6 +82,28 @@ const FunnyBiographyStoriesStep = () => {
 
   const answeredQuestions = questionsAndAnswers.map(qa => qa.question);
 
+  // Update answered card questions when authorName changes
+  const genericQuestionParts = useMemo(
+    () => getQuestions('{name}').map(q => q.split('{name}')),
+    []
+  );
+
+  useEffect(() => {
+    if (questionsAndAnswers.length === 0) return;
+    const updatedAnswers = questionsAndAnswers.map(qa => {
+      const match = genericQuestionParts.find(
+        ([prefix, suffix]) => qa.question.startsWith(prefix) && qa.question.endsWith(suffix)
+      );
+      if (!match) return qa;
+      const [prefix, suffix] = match;
+      return { question: `${prefix}${authorName}${suffix}`, answer: qa.answer };
+    });
+    if (JSON.stringify(updatedAnswers) !== JSON.stringify(questionsAndAnswers)) {
+      setQuestionsAndAnswers(updatedAnswers);
+      localStorage.setItem(storageKey, JSON.stringify(updatedAnswers));
+    }
+  }, [authorName]);
+
   return (
     <WizardStep
       title={`What's ${authorName}'s Story?`}
@@ -98,6 +112,7 @@ const FunnyBiographyStoriesStep = () => {
       currentStep={2}
       totalSteps={7}
       onNextClick={handleNext}
+      nextDisabled={questionsAndAnswers.length === 0}
     >
       <div className="flex justify-center w-full">
         <div className="space-y-6 w-[95%]">
