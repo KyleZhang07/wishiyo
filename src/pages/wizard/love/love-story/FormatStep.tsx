@@ -75,6 +75,7 @@ const FormatStep = () => {
       localStorage.setItem('loveStoryBookTitle', bookTitle);
       localStorage.setItem('loveStoryBookFormat', selectedFormatObj.name);
       localStorage.setItem('loveStoryBookPrice', selectedFormatObj.price.toString());
+      localStorage.setItem('loveStoryBindingType', selectedFormatObj.id); // 保存装订类型
 
       try {
         // 调用Stripe支付API
@@ -88,7 +89,8 @@ const FormatStep = () => {
             title: bookTitle,
             format: selectedFormatObj.name,
             price: selectedFormatObj.price.toString(),
-            quantity: 1
+            quantity: 1,
+            binding_type: selectedFormatObj.id // 添加装订类型信息
           }),
         });
 
@@ -125,7 +127,9 @@ const FormatStep = () => {
               timestamp: new Date().toISOString(),
               client_id: clientId,
               // 保存封面样式信息
-              style: coverStyle
+              style: coverStyle,
+              // 保存装订类型（精装高光或精装哈光）
+              binding_type: selectedFormatObj.id
             })
             .select();
 

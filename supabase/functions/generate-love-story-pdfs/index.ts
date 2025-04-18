@@ -435,11 +435,11 @@ async function generateCoverPdf(backCoverFile: any, spineFile: any, frontCoverFi
 
   // 定义样式到背景色的映射
   const styleBackgroundColors: Record<string, { r: number, g: number, b: number }> = {
-    'classic': { r: 245, g: 245, b: 240 }, // #f5f5f0
+    'classic': { r: 247, g: 210, b: 213 }, // #F7D2D5
     'vintage': { r: 248, g: 233, b: 214 }, // #f8e9d6
-    'modern': { r: 0, g: 0, b: 0 }, // #000000
-    'playful': { r: 74, g: 137, b: 220 }, // #4A89DC
-    'elegant': { r: 255, g: 255, b: 255 } // #FFFFFF
+    'modern': { r: 26, g: 46, b: 90 }, // #1A2E5A
+    'playful': { r: 217, g: 234, b: 211 }, // #D9EAD3
+    'elegant': { r: 222, g: 196, b: 217 } // #DEC4D9
   };
 
   // 获取封面样式

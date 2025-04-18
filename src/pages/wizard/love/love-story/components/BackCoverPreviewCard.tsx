@@ -36,21 +36,12 @@ export const BackCoverPreviewCard = ({
             <div className="w-full h-full">
               {backCoverImage ? (
                 <div className="relative w-full h-full">
-                  {/* 背景图片 */}
+                  {/* 背景图片 - 已经包含log所以不需要再添加 */}
                   <img
                     src={backCoverImage}
                     alt="Book back cover"
                     className="w-full h-full object-cover"
                   />
-
-                  {/* 添加wishiyo logo */}
-                  <div className="absolute inset-0 flex flex-col justify-end items-center pb-16">
-                    <img
-                      src="/assets/logos/spine-logo.png"
-                      alt="Wishiyo logo"
-                      className="h-8 w-auto object-contain"
-                    />
-                  </div>
                 </div>
               ) : (
                 <div className="h-full flex flex-col justify-center items-center text-center bg-gray-100">

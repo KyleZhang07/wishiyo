@@ -1108,7 +1108,7 @@ const LoveStoryCoverStep = () => {
               logoImg.crossOrigin = 'anonymous';
               logoImg.onload = () => {
                 // 计算图标位置 - 居中并略微向上
-                const logoWidth = 100; // 图标宽度
+                const logoWidth = 160; // 图标宽度，放大到160
                 // 根据logo的原始宽高比计算正确的高度，避免图像被压扁
                 const logoAspectRatio = logoImg.width / logoImg.height;
                 const logoHeight = logoWidth / logoAspectRatio; // 保持原始宽高比
@@ -1400,10 +1400,11 @@ const LoveStoryCoverStep = () => {
         }
       }
 
-      // 保存标题数据到localStorage - 移到if语句外，确保始终执行
+      // 保存标题数据和封面样式到localStorage - 移到if语句外，确保始终执行
       localStorage.setItem('loveStoryCoverTitle', titleData.mainTitle || titleData.fullTitle);
       localStorage.setItem('loveStoryCoverSubtitle', titleData.subTitle || '');
       localStorage.setItem('loveStoryCoverThirdLine', titleData.thirdLine || '');
+      localStorage.setItem('loveStoryCoverStyle', selectedStyle); // 保存封面样式
 
       // 生成并上传版权信息页面
       try {
