@@ -99,15 +99,10 @@ const GenerateStep = () => {
   // 使用渲染上下文
   const {
     isRenderingCover,
-    setIsRenderingCover,
     coverRenderComplete,
-    setCoverRenderComplete,
     coverImageUrl,
-    setCoverImageUrl,
     backCoverImageUrl,
-    setBackCoverImageUrl,
-    spineImageUrl,
-    setSpineImageUrl
+    spineImageUrl
   } = useRenderContext();
 
   const expandImage = async (imageUrl: string): Promise<string> => {
@@ -719,8 +714,6 @@ const GenerateStep = () => {
   };
 
   useEffect(() => {
-    console.log('GenerateStep initializing...');
-
     // 加载文本内容和设置
     const savedAuthor = localStorage.getItem('loveStoryAuthorName');
     const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
@@ -740,50 +733,6 @@ const GenerateStep = () => {
     // 加载祝福语相关数据
     const savedBlessingText = localStorage.getItem('loveStoryBlessingText');
     const savedBlessingImage = localStorage.getItem('loveStoryBlessingImage_url');
-
-    // 加载已渲染的封面和封底图片
-    const savedCoverImage = localStorage.getItem('loveStorySelectedCoverImage_url');
-    const savedBackCoverImage = localStorage.getItem('loveStoryBackCoverImage_url');
-    const savedSpineImage = localStorage.getItem('loveStorySpineImage_url');
-
-    console.log('Loaded from localStorage:', {
-      savedCoverImage,
-      savedBackCoverImage,
-      savedSpineImage,
-      savedBlessingImage
-    });
-
-    // 检查当前渲染状态
-    console.log('Current render state:', {
-      isRenderingCover,
-      coverRenderComplete,
-      coverImageUrl,
-      backCoverImageUrl
-    });
-
-    // 初始化RenderContext状态
-    // 只有当当前没有渲染进行中，并且有保存的图片时，才设置状态
-    if (savedCoverImage && !isRenderingCover) {
-      console.log('Setting RenderContext state from localStorage');
-      setCoverImageUrl(savedCoverImage);
-      setCoverImage(savedCoverImage);
-      setCoverRenderComplete(true);
-      setIsRenderingCover(false);
-    }
-
-    if (savedBackCoverImage && !isRenderingCover) {
-      setBackCoverImageUrl(savedBackCoverImage);
-    }
-
-    if (savedSpineImage && !isRenderingCover) {
-      setSpineImageUrl(savedSpineImage);
-    }
-
-    // 直接设置祝福页面图片
-    if (savedBlessingImage) {
-      console.log('Setting blessing image from localStorage:', savedBlessingImage);
-      setBlessingImage(savedBlessingImage);
-    }
 
     // 直接从Supabase加载所有图片
     loadImagesFromSupabase();
@@ -1039,16 +988,12 @@ const GenerateStep = () => {
 
   // 检查渲染状态
   useEffect(() => {
-    console.log('RenderContext state changed:', { coverRenderComplete, coverImageUrl });
-
     if (coverRenderComplete && coverImageUrl) {
-      console.log('Cover render complete, updating UI with:', coverImageUrl);
       setCoverImage(coverImageUrl);
 
       // 从 localStorage 加载祝福页面图片
       const savedBlessingImage = localStorage.getItem('loveStoryBlessingImage_url');
       if (savedBlessingImage) {
-        console.log('Loading blessing image from localStorage:', savedBlessingImage);
         setBlessingImage(savedBlessingImage);
       }
 
@@ -1131,18 +1076,7 @@ const GenerateStep = () => {
       totalSteps={8}
     >
       <div className="max-w-7xl mx-auto px-4">
-        {/* 渲染中的加载状态 */}
-        {isRenderingCover && !coverRenderComplete && (
-          <div className="mb-8 p-6 bg-gray-50 rounded-lg shadow-sm">
-            <div className="flex items-center">
-              <RefreshCw className="w-6 h-6 text-[#FF7F50] animate-spin mr-3" />
-              <div>
-                <h3 className="font-medium text-gray-900">Processing your book cover</h3>
-                <p className="text-sm text-gray-500">Please wait while we render your book cover in the background...</p>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* 删除渲染中的加载状态提示 */}
 
         {/* Cover section */}
         <div className="mb-12">
