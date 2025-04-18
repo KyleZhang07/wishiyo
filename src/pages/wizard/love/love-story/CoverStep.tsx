@@ -1107,13 +1107,13 @@ const LoveStoryCoverStep = () => {
               const logoImg = new Image();
               logoImg.crossOrigin = 'anonymous';
               logoImg.onload = () => {
-                // 计算图标位置 - 居中并略微向上
-                const logoWidth = 160; // 图标宽度，放大到160
+                // 计算图标位置 - 居中并向上移动
+                const logoWidth = 200; // 图标宽度，放大到200
                 // 根据logo的原始宽高比计算正确的高度，避免图像被压扁
                 const logoAspectRatio = logoImg.width / logoImg.height;
                 const logoHeight = logoWidth / logoAspectRatio; // 保持原始宽高比
                 const logoX = (canvas.width - logoWidth) / 2;
-                const logoY = canvas.height * 0.85; // 位置在封底的 85% 处，略微向上
+                const logoY = canvas.height * 0.75; // 位置在封底的 75% 处，显著向上移动
 
                 // 绘制图标
                 ctx.drawImage(logoImg, logoX, logoY, logoWidth, logoHeight);
