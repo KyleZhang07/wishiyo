@@ -7,6 +7,7 @@ import WizardStep from '@/components/wizard/WizardStep';
 import LoveStoryCoverPreview from '@/components/cover-generator/LoveStoryCoverPreview';
 import { supabase } from '@/integrations/supabase/client';
 import { uploadImageToStorage, getClientId, getAllImagesFromStorage, deleteImageFromStorage } from '@/integrations/supabase/storage';
+import { useRenderContext } from '@/context/RenderContext';
 // 导入背景图片
 import blueTextureBackground from '../../../../assets/Generated Image March 15, 2025 - 3_12PM_LE_upscale_balanced_x4.jpg';
 import greenLeafBackground from '../../../../assets/leaves.jpg';
@@ -103,6 +104,17 @@ const LoveStoryCoverStep = () => {
   const [isGeneratingCover, setIsGeneratingCover] = useState<boolean>(false);
   const [supabaseImages, setSupabaseImages] = useState<any[]>([]);
   const [isEditTitleDialogOpen, setIsEditTitleDialogOpen] = useState<boolean>(false);
+
+  // 渲染上下文
+  const {
+    isRenderingCover,
+    setIsRenderingCover,
+    coverRenderComplete,
+    setCoverRenderComplete,
+    setCoverImageUrl,
+    setBackCoverImageUrl,
+    setSpineImageUrl
+  } = useRenderContext();
 
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -1305,14 +1317,9 @@ const LoveStoryCoverStep = () => {
     });
   };
 
-  // 修改handleContinue函数，添加渲染和上传背景图片的功能
-  const handleContinue = async () => {
+  // 添加后台渲染函数
+  const renderCoverInBackground = async () => {
     try {
-      toast({
-        title: "Processing cover",
-        description: "Rendering and uploading your cover images..."
-      });
-
       // 保存当前选中的封面图片到 localStorage
       if (coverImages.length > 0 && currentImageIndex >= 0 && currentImageIndex < coverImages.length) {
         const selectedCoverImage = coverImages[currentImageIndex];
@@ -1360,6 +1367,11 @@ const LoveStoryCoverStep = () => {
         localStorage.setItem('loveStoryBackCoverImage_url', backCoverStorageUrl);
         localStorage.setItem('loveStorySpineImage_url', spineStorageUrl);
 
+        // 更新渲染上下文
+        setCoverImageUrl(storageUrl);
+        setBackCoverImageUrl(backCoverStorageUrl);
+        setSpineImageUrl(spineStorageUrl);
+
         // 清除Supabase中的旧封面图片
         try {
           // 获取最新的图片列表
@@ -1400,12 +1412,6 @@ const LoveStoryCoverStep = () => {
         }
       }
 
-      // 保存标题数据和封面样式到localStorage - 移到if语句外，确保始终执行
-      localStorage.setItem('loveStoryCoverTitle', titleData.mainTitle || titleData.fullTitle);
-      localStorage.setItem('loveStoryCoverSubtitle', titleData.subTitle || '');
-      localStorage.setItem('loveStoryCoverThirdLine', titleData.thirdLine || '');
-      localStorage.setItem('loveStoryCoverStyle', selectedStyle); // 保存封面样式
-
       // 生成并上传版权信息页面
       try {
         // 获取最新的图片列表
@@ -1424,18 +1430,50 @@ const LoveStoryCoverStep = () => {
         // 继续处理，即使生成失败
       }
 
+      // 设置渲染完成状态
+      setCoverRenderComplete(true);
+      setIsRenderingCover(false);
+
+      console.log('Background rendering completed successfully');
+    } catch (error) {
+      console.error('Error in background rendering:', error);
+      setIsRenderingCover(false);
       toast({
-        title: "Cover processed successfully",
-        description: "Your cover has been saved. Proceeding to the next step..."
+        title: "Rendering Error",
+        description: "There was an issue rendering your cover in the background. The book may display incorrectly.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // 修改handleContinue函数，启动后台渲染并立即导航到下一步
+  const handleContinue = () => {
+    try {
+      // 保存标题数据和封面样式到localStorage
+      localStorage.setItem('loveStoryCoverTitle', titleData.mainTitle || titleData.fullTitle);
+      localStorage.setItem('loveStoryCoverSubtitle', titleData.subTitle || '');
+      localStorage.setItem('loveStoryCoverThirdLine', titleData.thirdLine || '');
+      localStorage.setItem('loveStoryCoverStyle', selectedStyle); // 保存封面样式
+
+      // 设置渲染状态
+      setIsRenderingCover(true);
+      setCoverRenderComplete(false);
+
+      // 启动后台渲染
+      renderCoverInBackground();
+
+      toast({
+        title: "Processing cover",
+        description: "Your cover is being processed in the background. You can continue to the next step."
       });
 
-      // 导航到下一步 - 移到if语句外，确保始终执行
+      // 立即导航到下一步
       navigate('/create/love/love-story/generate');
     } catch (error) {
-      console.error('Error processing cover:', error);
+      console.error('Error starting background rendering:', error);
       toast({
         title: "Error",
-        description: "Failed to process cover. Please try again.",
+        description: "Failed to start cover processing. Please try again.",
         variant: "destructive"
       });
     }

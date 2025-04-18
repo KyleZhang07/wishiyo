@@ -7,7 +7,7 @@ import ImageAdjustDialog from '@/components/cover-generator/ImageAdjustDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { jsPDF } from 'jspdf';
-import { useFontLoader, preloadFonts } from '@/hooks/useFontLoader';
+import { useFontContext } from '@/context/FontContext';
 import { ImageIcon } from 'lucide-react';
 
 // 定义赞美语接口
@@ -72,10 +72,9 @@ const FunnyBiographyGenerateStep = () => {
   const [praises, setPraises] = useState<Praise[]>([]);
   const { toast } = useToast();
 
-  // 字体加载状态
-  const [fontsLoaded, setFontsLoaded] = useState(false);
+  // 字体加载状态，改为全局 context
+  const { fontsLoaded, fontStatus } = useFontContext();
   const currentStyle = stylePresets.find(style => style.id === selectedStyle) || stylePresets[0];
-  const fontStatus = useFontLoader(currentStyle.font);
 
   // PDF状态
   const [frontCoverPdf, setFrontCoverPdf] = useState<string | null>(null);
@@ -296,29 +295,6 @@ const FunnyBiographyGenerateStep = () => {
       return () => clearTimeout(timer);
     }
   }, [imagePosition, imageScale]);
-
-  // 监听字体加载状态
-  useEffect(() => {
-    if (fontStatus === 'loaded') {
-      setFontsLoaded(true);
-    } else if (fontStatus === 'error') {
-      console.error(`无法加载字体 ${currentStyle.font}，使用后备字体`);
-      // 继续使用备用字体
-      setFontsLoaded(true);
-      toast({
-        title: "字体加载提示",
-        description: "部分字体无法加载，已使用系统字体替代",
-        variant: "default"
-      });
-    }
-  }, [fontStatus, currentStyle.font, toast]);
-
-  // 预加载所有字体
-  useEffect(() => {
-    preloadFonts().then(() => {
-      console.log('所有字体预加载完成');
-    });
-  }, []);
 
   const handleImageProcessing = async (imageUrl: string) => {
     try {

@@ -6,9 +6,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { uploadImageToStorage, getAllImagesFromStorage, deleteImageFromStorage } from '@/integrations/supabase/storage';
 import { CoverPreviewCard } from './components/CoverPreviewCard';
 import { ContentImageCard } from './components/ContentImageCard';
-import { Wand2, MessageSquareText } from 'lucide-react';
+import { Wand2, MessageSquareText, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Textarea } from '@/components/ui/textarea';
+import { useRenderContext } from '@/context/RenderContext';
 
 // 导入工具函数
 import { expandImage, handleGenericContentRegeneration as handleContentRegeneration } from './utils/imageProcessingUtils';
@@ -94,6 +95,15 @@ const GenerateStep = () => {
 
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // 使用渲染上下文
+  const {
+    isRenderingCover,
+    coverRenderComplete,
+    coverImageUrl,
+    backCoverImageUrl,
+    spineImageUrl
+  } = useRenderContext();
 
   const expandImage = async (imageUrl: string): Promise<string> => {
     try {
@@ -1050,20 +1060,36 @@ const GenerateStep = () => {
       totalSteps={8}
     >
       <div className="max-w-7xl mx-auto px-4">
-
+        {/* 渲染中的加载状态 */}
+        {isRenderingCover && !coverRenderComplete && (
+          <div className="mb-8 p-6 bg-gray-50 rounded-lg shadow-sm">
+            <div className="flex items-center">
+              <RefreshCw className="w-6 h-6 text-[#FF7F50] animate-spin mr-3" />
+              <div>
+                <h3 className="font-medium text-gray-900">Processing your book cover</h3>
+                <p className="text-sm text-gray-500">Please wait while we render your book cover in the background...</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Cover section */}
         <div className="mb-12">
           <h2 className="text-2xl font-bold mb-8">Cover</h2>
           <div className="max-w-xl mx-auto">
-            {coverImage && (
+            {(coverRenderComplete && coverImageUrl) ? (
+              <img
+                src={coverImageUrl}
+                alt="Love Story Cover"
+                className="w-full h-auto rounded-lg shadow-lg"
+              />
+            ) : coverImage ? (
               <img
                 src={coverImage}
                 alt="Love Story Cover"
                 className="w-full h-auto rounded-lg shadow-lg"
               />
-            )}
-            {!coverImage && (
+            ) : (
               <div className="w-full h-96 bg-gray-100 rounded-lg flex items-center justify-center">
                 <p className="text-gray-500">Cover image not available</p>
               </div>
@@ -1165,10 +1191,20 @@ const GenerateStep = () => {
         <div className="mb-16 border-t-2 border-gray-200 pt-10">
           <h2 className="text-2xl font-bold mb-8">Back Cover</h2>
 
-          <BackCoverPreviewCard
-            authorName={authorName}
-            backCoverText={backCoverText}
-          />
+          {(coverRenderComplete && backCoverImageUrl) ? (
+            <div className="max-w-xl mx-auto">
+              <img
+                src={backCoverImageUrl}
+                alt="Love Story Back Cover"
+                className="w-full h-auto rounded-lg shadow-lg"
+              />
+            </div>
+          ) : (
+            <BackCoverPreviewCard
+              authorName={authorName}
+              backCoverText={backCoverText}
+            />
+          )}
         </div>
       </div>
     </WizardStep>

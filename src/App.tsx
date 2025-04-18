@@ -1,10 +1,11 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { useState } from "react";
+import { FontProvider } from "@/context/FontContext";
+import { RenderProvider } from "@/context/RenderContext";
 
 import Header from "./components/Header";
 import Footer from "./components/Footer";
@@ -132,17 +133,20 @@ const AppLayout = () => {
 const App = () => {
   const [queryClient] = useState(() => new QueryClient());
 
-
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <TooltipProvider>
-          <AppLayout />
-          <Toaster />
-          <Sonner />
-        </TooltipProvider>
-      </BrowserRouter>
-    </QueryClientProvider>
+    <FontProvider>
+      <RenderProvider>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <TooltipProvider>
+              <AppLayout />
+              <Toaster />
+              <Sonner />
+            </TooltipProvider>
+          </BrowserRouter>
+        </QueryClientProvider>
+      </RenderProvider>
+    </FontProvider>
   );
 };
 
