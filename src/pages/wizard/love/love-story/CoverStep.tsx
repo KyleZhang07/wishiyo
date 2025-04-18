@@ -1459,6 +1459,52 @@ const LoveStoryCoverStep = () => {
         // 继续处理，即使生成失败
       }
 
+      // 同步渲染祝福页面
+      try {
+        // 确保获取最新的数据
+        const currentAuthorName = localStorage.getItem('loveStoryAuthorName') || authorName;
+        const currentRecipientName = localStorage.getItem('loveStoryPersonName') || recipientName;
+        const currentTextTone = localStorage.getItem('loveStoryTone') || 'Heartfelt';
+
+        // 设置预设的祝福语文本 - 不允许用户编辑
+        let predefinedBlessingText = '';
+        if (currentTextTone === 'Heartfelt') {
+          predefinedBlessingText = `Dear ${currentRecipientName},\n\nIn the quiet moments of reflection, I find my heart filled with gratitude for the beautiful journey we've shared. Each memory we've created together is a treasure I hold dear.\n\nWith all my love,\n${currentAuthorName}`;
+        } else if (currentTextTone === 'Playful') {
+          predefinedBlessingText = `Hey ${currentRecipientName}!\n\nGuess what? You're absolutely amazing! Every adventure with you turns into an epic story, and I can't wait to see what fun we'll have next! Here's to more laughter and silly moments!\n\nCheers,\n${currentAuthorName}`;
+        } else if (currentTextTone === 'Inspirational') {
+          predefinedBlessingText = `To ${currentRecipientName},\n\nMay your path be filled with light, your heart with courage, and your spirit with joy. Remember that you have the strength to overcome any challenge life presents.\n\nBelieving in you always,\n${currentAuthorName}`;
+        } else {
+          predefinedBlessingText = `Dear ${currentRecipientName},\n\nSending you warm wishes and fond memories. May this book remind you of all the special moments we've shared.\n\nWith affection,\n${currentAuthorName}`;
+        }
+
+        // 更新祝福语文本状态（不使用用户输入的文本）
+        localStorage.setItem('loveStoryBlessingText', predefinedBlessingText);
+
+        // 导入并调用renderAndUploadBlessingImage函数
+        const { renderAndUploadBlessingImage } = await import('./utils/canvasUtils');
+
+        // 获取最新的图片列表
+        const allImages = await getAllImagesFromStorage('images');
+
+        // 渲染并上传祝福语图片
+        const blessingStorageUrl = await renderAndUploadBlessingImage(
+          predefinedBlessingText,
+          currentAuthorName,
+          currentRecipientName,
+          currentTextTone,
+          allImages
+        );
+
+        // 保存URL到localStorage
+        localStorage.setItem('loveStoryBlessingImage_url', blessingStorageUrl);
+
+        console.log('Successfully generated and uploaded blessing page');
+      } catch (blessingError) {
+        console.error('Error generating blessing page:', blessingError);
+        // 继续处理，即使生成失败
+      }
+
       // 设置渲染完成状态
       setCoverRenderComplete(true);
       setIsRenderingCover(false);
@@ -1483,6 +1529,16 @@ const LoveStoryCoverStep = () => {
       localStorage.setItem('loveStoryCoverSubtitle', titleData.subTitle || '');
       localStorage.setItem('loveStoryCoverThirdLine', titleData.thirdLine || '');
       localStorage.setItem('loveStoryCoverStyle', selectedStyle); // 保存封面样式
+      localStorage.setItem('loveStorySelectedCoverIndex', currentImageIndex.toString()); // 保存当前选中的图片索引
+
+      // 保存当前封面信息作为最后渲染的状态
+      // 这些信息将在GenerateStep中用于检测封面是否发生变化
+      localStorage.setItem('lastRenderedCoverTitle', titleData.mainTitle || titleData.fullTitle);
+      localStorage.setItem('lastRenderedCoverSubtitle', titleData.subTitle || '');
+      localStorage.setItem('lastRenderedCoverStyle', selectedStyle);
+      localStorage.setItem('lastRenderedAuthorName', authorName);
+      localStorage.setItem('lastRenderedRecipientName', recipientName);
+      localStorage.setItem('lastRenderedCoverImageIndex', currentImageIndex.toString());
 
       // 设置渲染状态
       setIsRenderingCover(true);

@@ -955,11 +955,57 @@ const GenerateStep = () => {
     10: handleRegenerateContent10
   };
 
-  // 在需要时直接使用状态变量
+  // 检查封面是否需要重新渲染的函数
+  const checkIfCoverNeedsRerender = () => {
+    // 获取上次渲染时的封面信息
+    const lastRenderedTitle = localStorage.getItem('lastRenderedCoverTitle');
+    const lastRenderedSubtitle = localStorage.getItem('lastRenderedCoverSubtitle');
+    const lastRenderedStyle = localStorage.getItem('lastRenderedCoverStyle');
+    const lastRenderedAuthor = localStorage.getItem('lastRenderedAuthorName');
+    const lastRenderedRecipient = localStorage.getItem('lastRenderedRecipientName');
+    const lastRenderedImageIndex = localStorage.getItem('lastRenderedCoverImageIndex');
 
+    // 获取当前封面信息
+    const currentTitle = localStorage.getItem('loveStoryCoverTitle');
+    const currentSubtitle = localStorage.getItem('loveStoryCoverSubtitle');
+    const currentStyle = localStorage.getItem('loveStoryCoverStyle');
+    const currentAuthor = localStorage.getItem('loveStoryAuthorName');
+    const currentRecipient = localStorage.getItem('loveStoryPersonName');
+    const currentImageIndex = localStorage.getItem('loveStorySelectedCoverIndex');
 
+    // 如果任何一项发生变化，则需要重新渲染
+    if (lastRenderedTitle !== currentTitle ||
+        lastRenderedSubtitle !== currentSubtitle ||
+        lastRenderedStyle !== currentStyle ||
+        lastRenderedAuthor !== currentAuthor ||
+        lastRenderedRecipient !== currentRecipient ||
+        lastRenderedImageIndex !== currentImageIndex) {
+      return true;
+    }
 
+    return false;
+  };
 
+  // 检查渲染状态
+  useEffect(() => {
+    if (coverRenderComplete && coverImageUrl) {
+      setCoverImage(coverImageUrl);
+
+      // 从 localStorage 加载祝福页面图片
+      const savedBlessingImage = localStorage.getItem('loveStoryBlessingImage_url');
+      if (savedBlessingImage) {
+        setBlessingImage(savedBlessingImage);
+      }
+
+      // 保存当前封面信息作为最后渲染的状态
+      localStorage.setItem('lastRenderedCoverTitle', localStorage.getItem('loveStoryCoverTitle') || '');
+      localStorage.setItem('lastRenderedCoverSubtitle', localStorage.getItem('loveStoryCoverSubtitle') || '');
+      localStorage.setItem('lastRenderedCoverStyle', localStorage.getItem('loveStoryCoverStyle') || '');
+      localStorage.setItem('lastRenderedAuthorName', localStorage.getItem('loveStoryAuthorName') || '');
+      localStorage.setItem('lastRenderedRecipientName', localStorage.getItem('loveStoryPersonName') || '');
+      localStorage.setItem('lastRenderedCoverImageIndex', localStorage.getItem('loveStorySelectedCoverIndex') || '');
+    }
+  }, [coverRenderComplete, coverImageUrl]);
 
   // 渲染祝福语图片
   const handleRenderBlessingImage = async () => {
@@ -1097,15 +1143,7 @@ const GenerateStep = () => {
               </div>
             )}
 
-            <div className="mt-4 flex justify-center">
-              <Button
-                onClick={handleRenderBlessingImage}
-                disabled={isGeneratingBlessing}
-                className="bg-[#FF7F50] hover:bg-[#FF7F50]/90"
-              >
-                {isGeneratingBlessing ? 'Creating...' : 'Create Blessing Page'}
-              </Button>
-            </div>
+            {/* 删除Create Blessing Page按钮，改为自动渲染 */}
           </div>
         </div>
 
