@@ -99,10 +99,15 @@ const GenerateStep = () => {
   // 使用渲染上下文
   const {
     isRenderingCover,
+    setIsRenderingCover,
     coverRenderComplete,
+    setCoverRenderComplete,
     coverImageUrl,
+    setCoverImageUrl,
     backCoverImageUrl,
-    spineImageUrl
+    setBackCoverImageUrl,
+    spineImageUrl,
+    setSpineImageUrl
   } = useRenderContext();
 
   const expandImage = async (imageUrl: string): Promise<string> => {
@@ -733,6 +738,27 @@ const GenerateStep = () => {
     // 加载祝福语相关数据
     const savedBlessingText = localStorage.getItem('loveStoryBlessingText');
     const savedBlessingImage = localStorage.getItem('loveStoryBlessingImage_url');
+
+    // 加载已渲染的封面和封底图片
+    const savedCoverImage = localStorage.getItem('loveStorySelectedCoverImage_url');
+    const savedBackCoverImage = localStorage.getItem('loveStoryBackCoverImage_url');
+    const savedSpineImage = localStorage.getItem('loveStorySpineImage_url');
+
+    // 初始化RenderContext状态
+    if (savedCoverImage) {
+      setCoverImageUrl(savedCoverImage);
+      setCoverImage(savedCoverImage);
+      setCoverRenderComplete(true);
+      setIsRenderingCover(false);
+    }
+
+    if (savedBackCoverImage) {
+      setBackCoverImageUrl(savedBackCoverImage);
+    }
+
+    if (savedSpineImage) {
+      setSpineImageUrl(savedSpineImage);
+    }
 
     // 直接从Supabase加载所有图片
     loadImagesFromSupabase();
