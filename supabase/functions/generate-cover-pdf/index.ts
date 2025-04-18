@@ -324,8 +324,8 @@ serve(async (req) => {
       'F'
     );
 
-    // Debug lines flag - set to true to show safety margins and trim lines
-    const debugLines = true; // 保持为true以便查看辅助线
+    // Debug lines flag - set to false to hide safety margins and trim lines
+    const debugLines = false; // 设置为false以隐藏辅助线
 
     // Add images to the PDF (coordinate system starts from top-left)
     // Using calculated offsets for proper centering
