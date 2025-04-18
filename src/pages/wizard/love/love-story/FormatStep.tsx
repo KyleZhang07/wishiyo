@@ -112,6 +112,9 @@ const FormatStep = () => {
           const selectedCoverImageUrl = localStorage.getItem('loveStorySelectedCoverImage_url') ||
                                        localStorage.getItem('loveStoryCoverImage_url') || '';
 
+          // 获取用户选择的封面样式
+          const coverStyle = localStorage.getItem('loveStoryCoverStyle') || 'classic';
+
           const { data, error } = await supabase
             .from('love_story_books')
             .insert({
@@ -120,7 +123,9 @@ const FormatStep = () => {
               person_name: personName,
               status: 'created',
               timestamp: new Date().toISOString(),
-              client_id: clientId
+              client_id: clientId,
+              // 保存封面样式信息
+              style: coverStyle
             })
             .select();
 

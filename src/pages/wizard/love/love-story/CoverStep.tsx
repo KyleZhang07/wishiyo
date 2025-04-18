@@ -1109,7 +1109,9 @@ const LoveStoryCoverStep = () => {
               logoImg.onload = () => {
                 // 计算图标位置 - 居中并略微向上
                 const logoWidth = 100; // 图标宽度
-                const logoHeight = 30; // 图标高度
+                // 根据logo的原始宽高比计算正确的高度，避免图像被压扁
+                const logoAspectRatio = logoImg.width / logoImg.height;
+                const logoHeight = logoWidth / logoAspectRatio; // 保持原始宽高比
                 const logoX = (canvas.width - logoWidth) / 2;
                 const logoY = canvas.height * 0.85; // 位置在封底的 85% 处，略微向上
 

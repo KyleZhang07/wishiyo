@@ -48,7 +48,7 @@ export const BackCoverPreviewCard = ({
                     <img
                       src="/assets/logos/spine-logo.png"
                       alt="Wishiyo logo"
-                      className="h-8 w-auto"
+                      className="h-8 w-auto object-contain"
                     />
                   </div>
                 </div>
