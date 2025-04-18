@@ -719,6 +719,8 @@ const GenerateStep = () => {
   };
 
   useEffect(() => {
+    console.log('GenerateStep initializing...');
+
     // 加载文本内容和设置
     const savedAuthor = localStorage.getItem('loveStoryAuthorName');
     const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
@@ -744,20 +746,43 @@ const GenerateStep = () => {
     const savedBackCoverImage = localStorage.getItem('loveStoryBackCoverImage_url');
     const savedSpineImage = localStorage.getItem('loveStorySpineImage_url');
 
+    console.log('Loaded from localStorage:', {
+      savedCoverImage,
+      savedBackCoverImage,
+      savedSpineImage,
+      savedBlessingImage
+    });
+
+    // 检查当前渲染状态
+    console.log('Current render state:', {
+      isRenderingCover,
+      coverRenderComplete,
+      coverImageUrl,
+      backCoverImageUrl
+    });
+
     // 初始化RenderContext状态
-    if (savedCoverImage) {
+    // 只有当当前没有渲染进行中，并且有保存的图片时，才设置状态
+    if (savedCoverImage && !isRenderingCover) {
+      console.log('Setting RenderContext state from localStorage');
       setCoverImageUrl(savedCoverImage);
       setCoverImage(savedCoverImage);
       setCoverRenderComplete(true);
       setIsRenderingCover(false);
     }
 
-    if (savedBackCoverImage) {
+    if (savedBackCoverImage && !isRenderingCover) {
       setBackCoverImageUrl(savedBackCoverImage);
     }
 
-    if (savedSpineImage) {
+    if (savedSpineImage && !isRenderingCover) {
       setSpineImageUrl(savedSpineImage);
+    }
+
+    // 直接设置祝福页面图片
+    if (savedBlessingImage) {
+      console.log('Setting blessing image from localStorage:', savedBlessingImage);
+      setBlessingImage(savedBlessingImage);
     }
 
     // 直接从Supabase加载所有图片
@@ -1014,12 +1039,16 @@ const GenerateStep = () => {
 
   // 检查渲染状态
   useEffect(() => {
+    console.log('RenderContext state changed:', { coverRenderComplete, coverImageUrl });
+
     if (coverRenderComplete && coverImageUrl) {
+      console.log('Cover render complete, updating UI with:', coverImageUrl);
       setCoverImage(coverImageUrl);
 
       // 从 localStorage 加载祝福页面图片
       const savedBlessingImage = localStorage.getItem('loveStoryBlessingImage_url');
       if (savedBlessingImage) {
+        console.log('Loading blessing image from localStorage:', savedBlessingImage);
         setBlessingImage(savedBlessingImage);
       }
 
