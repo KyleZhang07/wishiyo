@@ -35,33 +35,33 @@ serve(async (req) => {
     });
 
     const { prompt, contentPrompt, content2Prompt, photo, style } = await req.json();
-    
+
     // Get the style name to use with the API
     console.log(`Requested style from client: "${style}"`);
-    
+
     // Define valid API style names for reference
     const validApiStyles = [
-      "(No style)", 
-      "Cinematic", 
-      "Disney Charactor", 
-      "Digital Art", 
-      "Photographic (Default)", 
-      "Fantasy art", 
-      "Neonpunk", 
-      "Enhance", 
-      "Comic book", 
-      "Lowpoly", 
+      "(No style)",
+      "Cinematic",
+      "Disney Charactor",
+      "Digital Art",
+      "Photographic (Default)",
+      "Fantasy art",
+      "Neonpunk",
+      "Enhance",
+      "Comic book",
+      "Lowpoly",
       "Line art"
     ];
-    
+
     // Find appropriate style or use default
     let styleName = DEFAULT_STYLE;
-    
+
     if (style) {
       // First try the mapping
       if (styleMap[style]) {
         styleName = styleMap[style];
-      } 
+      }
       // If the exact style name is in valid styles, use it directly
       else if (validApiStyles.includes(style)) {
         styleName = style;
@@ -75,7 +75,7 @@ serve(async (req) => {
         }
       }
     }
-    
+
     console.log(`Mapped to API style_name: "${styleName}"`);
 
     // 仅生成封面
@@ -89,7 +89,7 @@ serve(async (req) => {
             num_steps: 50,
             style_name: styleName,
             input_image: photo,
-            num_outputs: 3,  // 从4改为3，生成3张封面图片
+            num_outputs: 2,  // 从3改为2，生成2张封面图片
             guidance_scale: 5.0,
             style_strength_ratio: 40,
             negative_prompt:
@@ -172,7 +172,7 @@ serve(async (req) => {
             num_steps: 50,
             style_name: styleName,
             input_image: photo,
-            num_outputs: 3,  // 从4改为3，生成3张封面图片
+            num_outputs: 2,  // 从3改为2，生成2张封面图片
             guidance_scale: 5.0,
             style_strength_ratio: 40,
             negative_prompt:

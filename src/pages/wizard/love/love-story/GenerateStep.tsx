@@ -194,10 +194,7 @@ const GenerateStep = () => {
       const setLoadingFn = loadingSetters[index];
       if (setLoadingFn) setLoadingFn(true);
 
-      toast({
-        title: "Rendering content image",
-        description: `Processing content ${index} with text...`,
-      });
+      // 移除toast通知，减少用户干扰
 
       // 渲染并上传图片
       const result = await renderAndUploadContentImage(
@@ -253,15 +250,12 @@ const GenerateStep = () => {
         // 继续处理，即使删除失败
       }
 
-      toast({
-        title: "Content image rendered",
-        description: `Content ${index} successfully rendered with text and split into two parts`,
-      });
+      // 移除toast通知，减少用户干扰
     } catch (renderError: any) {
       console.error(`Error auto-rendering content image ${index}:`, renderError);
       toast({
-        title: "Error rendering image",
-        description: renderError.message || "Please try again",
+        title: "Image rendering failed",
+        description: "Could not process the image. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -273,10 +267,7 @@ const GenerateStep = () => {
 
   const generateInitialImages = async (prompts: string, partnerPhoto: string) => {
     setIsGeneratingIntro(true);
-    toast({
-      title: "Generating images",
-      description: "This may take a minute...",
-    });
+    // 移除toast通知，减少用户干扰
 
     try {
       // 获取当前图片的URL，用于后续删除
@@ -366,10 +357,7 @@ const GenerateStep = () => {
           // 获取介绍文本
           const introText = imageTexts && imageTexts.length > 1 ? imageTexts[1].text : "";
 
-          toast({
-            title: "Rendering intro image",
-            description: "Processing intro with text...",
-          });
+          // 移除toast通知，减少用户干扰
 
           // 渲染并上传图片
           const result = await renderAndUploadIntroImage(
@@ -424,15 +412,12 @@ const GenerateStep = () => {
             // 继续处理，即使删除失败
           }
 
-          toast({
-            title: "Intro image rendered",
-            description: "Introduction image has been processed with text",
-          });
+          // 移除toast通知，减少用户干扰
         } catch (renderError) {
           console.error("Error auto-rendering intro image:", renderError);
           toast({
-            title: "Error rendering intro image",
-            description: renderError.message || "Please try again",
+            title: "Intro image rendering failed",
+            description: "Could not process the introduction image. Please try again.",
             variant: "destructive",
           });
         }
@@ -1029,10 +1014,7 @@ const GenerateStep = () => {
       setBlessingImage(storageUrl);
       localStorage.setItem('loveStoryBlessingImage_url', storageUrl);
 
-      toast({
-        title: "Blessing message created",
-        description: "Your blessing message has been rendered successfully!",
-      });
+      // 移除toast通知，减少用户干扰
 
       // 刷新图片列表
       setTimeout(() => {
@@ -1041,8 +1023,8 @@ const GenerateStep = () => {
     } catch (error: any) {
       console.error('Error rendering blessing image:', error);
       toast({
-        title: "Error creating blessing",
-        description: error.message || "Please try again",
+        title: "Blessing creation failed",
+        description: "Could not create your blessing message. Please try again.",
         variant: "destructive",
       });
     } finally {

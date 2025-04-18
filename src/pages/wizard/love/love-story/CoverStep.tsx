@@ -420,10 +420,6 @@ const LoveStoryCoverStep = () => {
   // 重新生成封面功能
   const handleRegenerateCover = async () => {
     setIsGeneratingCover(true);
-    toast({
-      title: "Generating cover",
-      description: "Creating covers for your love story..."
-    });
 
     try {
       // 先删除所有旧的封面图片
@@ -528,16 +524,11 @@ const LoveStoryCoverStep = () => {
       setTimeout(() => {
         loadCoverImagesFromSupabase();
       }, 1000);
-
-      toast({
-        title: "Covers regenerated",
-        description: "Your new covers are ready! Use the arrows to browse them."
-      });
     } catch (error) {
       console.error('Error generating cover:', error);
       toast({
-        title: "Error",
-        description: "Failed to generate new covers.",
+        title: "Cover generation failed",
+        description: "Could not generate new covers. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -1473,8 +1464,8 @@ const LoveStoryCoverStep = () => {
       console.error('Error in background rendering:', error);
       setIsRenderingCover(false);
       toast({
-        title: "Rendering Error",
-        description: "There was an issue rendering your cover in the background. The book may display incorrectly.",
+        title: "Cover rendering failed",
+        description: "There was an issue processing your book cover. Please try again.",
         variant: "destructive"
       });
     }
@@ -1496,18 +1487,13 @@ const LoveStoryCoverStep = () => {
       // 启动后台渲染
       renderCoverInBackground();
 
-      toast({
-        title: "Processing cover",
-        description: "Your cover is being processed in the background. You can continue to the next step."
-      });
-
       // 立即导航到下一步
       navigate('/create/love/love-story/generate');
     } catch (error) {
       console.error('Error starting background rendering:', error);
       toast({
-        title: "Error",
-        description: "Failed to start cover processing. Please try again.",
+        title: "Cover processing failed",
+        description: "Could not start cover processing. Please try again.",
         variant: "destructive"
       });
     }
