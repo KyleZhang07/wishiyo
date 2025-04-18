@@ -8,6 +8,7 @@ import LoveStoryCoverPreview from '@/components/cover-generator/LoveStoryCoverPr
 import { supabase } from '@/integrations/supabase/client';
 import { uploadImageToStorage, getClientId, getAllImagesFromStorage, deleteImageFromStorage } from '@/integrations/supabase/storage';
 import { useRenderContext } from '@/context/RenderContext';
+import { useFontContext } from '@/context/FontContext';
 // 导入背景图片
 import blueTextureBackground from '../../../../assets/Generated Image March 15, 2025 - 3_12PM_LE_upscale_balanced_x4.jpg';
 import greenLeafBackground from '../../../../assets/leaves.jpg';
@@ -144,6 +145,9 @@ const LoveStoryCoverStep = () => {
 
     return false;
   };
+
+  // 使用FontContext中的字体加载状态
+  const { fontsLoaded, fontStatus } = useFontContext();
 
   useEffect(() => {
     // 从localStorage获取基本信息

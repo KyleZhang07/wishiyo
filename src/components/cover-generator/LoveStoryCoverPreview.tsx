@@ -6,6 +6,8 @@ import blueTextureBackground from '../../assets/Generated Image March 15, 2025 -
 import greenLeafBackground from '../../assets/leaves.jpg';
 import rainbowBackground from '../../assets/rainbow2.jpg';
 import heartCoverBackground from '../../assets/heart_cover_8.5in_highres.png';
+import { useFontContext } from '@/context/FontContext';
+import { fontMapping } from '@/hooks/useFontLoader';
 
 // 样式接口定义
 interface CoverStyle {
@@ -51,6 +53,9 @@ const LoveStoryCoverPreview = ({
   const greenLeaf = useImageLoader(greenLeafBackground);
   const rainbow = useImageLoader(rainbowBackground);
   const heartCover = useImageLoader(heartCoverBackground);
+
+  // 使用FontContext中的字体加载状态
+  const { fontsLoaded, fontStatus } = useFontContext();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -152,7 +157,15 @@ const LoveStoryCoverPreview = ({
       }
     };
 
-    preloadImages();
+    // 如果字体已加载，直接执行图像加载
+    // 否则添加小延迟确保字体加载
+    if (fontsLoaded) {
+      preloadImages();
+    } else {
+      setTimeout(() => {
+        preloadImages();
+      }, 100);
+    }
   }, [titleData, coverTitle, subtitle, authorName, recipientName, image, selectedFont, style]);
 
   const drawLoveStoryCover = (
@@ -543,7 +556,23 @@ const LoveStoryCoverPreview = ({
 
   // Helper function to get the font family based on the selected font
   const getFontFamily = (selectedFont?: string): string => {
-    switch (selectedFont) {
+    // 使用全局字体映射
+    if (selectedFont && fontMapping[selectedFont]) {
+      return fontMapping[selectedFont];
+    }
+
+    // 兼容旧版本的字体选择
+    switch (selectedFont?.toLowerCase()) {
+      case 'patrick-hand':
+        return "'Patrick Hand', cursive";
+      case 'freckle-face':
+        return "'Freckle Face', cursive";
+      case 'amatic-sc':
+        return "'Amatic SC', cursive";
+      case 'caveat':
+        return "'Caveat', cursive";
+      case 'luckiest-guy':
+        return "'Luckiest Guy', cursive";
       case 'montserrat':
         return 'sans-serif';
       case 'comic-sans':
@@ -552,6 +581,10 @@ const LoveStoryCoverPreview = ({
       case 'playfair':
         return 'serif';
       default:
+        // 如果没有匹配到，尝试直接使用传入的字体名
+        if (selectedFont) {
+          return `'${selectedFont}', serif`;
+        }
         return 'serif';
     }
   };

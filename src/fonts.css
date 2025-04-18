@@ -103,4 +103,56 @@
   font-weight: 400;
   font-display: swap;
   src: local('Times New Roman'), local('TimesNewRoman'), url('/fonts/times-new-roman.woff2') format('woff2');
-} 
+}
+
+/* Love Story Fonts */
+
+/* Patrick Hand */
+@font-face {
+  font-family: 'Patrick Hand';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Patrick Hand'), url('/fonts/patrick-hand.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Freckle Face */
+@font-face {
+  font-family: 'Freckle Face';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Freckle Face'), url('/fonts/freckle-face.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Amatic SC */
+@font-face {
+  font-family: 'Amatic SC';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Amatic SC'), url('/fonts/amatic-sc.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Caveat */
+@font-face {
+  font-family: 'Caveat';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Caveat'), url('/fonts/caveat.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Luckiest Guy */
+@font-face {
+  font-family: 'Luckiest Guy';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Luckiest Guy'), url('/fonts/luckiest-guy.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}

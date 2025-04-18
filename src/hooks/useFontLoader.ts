@@ -4,6 +4,7 @@ const fontLoadTimeoutMs = 3000; // 3 second timeout
 
 // Font mapping, maps style names to actual font names
 export const fontMapping = {
+  // funny-bio fonts
   merriweather: 'Merriweather, serif',
   montserrat: 'Montserrat, sans-serif',
   inter: 'Inter, sans-serif',
@@ -16,6 +17,20 @@ export const fontMapping = {
   'fira-mono': 'Fira Mono, monospace',
   jost: 'Jost, sans-serif',
   'comic-sans': 'Comic Sans MS, cursive',
+
+  // love-story fonts
+  'patrick-hand': "'Patrick Hand', cursive",
+  'freckle-face': "'Freckle Face', cursive",
+  'amatic-sc': "'Amatic SC', cursive",
+  'caveat': "'Caveat', cursive",
+  'luckiest-guy': "'Luckiest Guy', cursive",
+
+  // 直接映射字体名称（用于直接使用字体名的情况）
+  'Patrick Hand': "'Patrick Hand', cursive",
+  'Freckle Face': "'Freckle Face', cursive",
+  'Amatic SC': "'Amatic SC', cursive",
+  'Caveat': "'Caveat', cursive",
+  'Luckiest Guy': "'Luckiest Guy', cursive",
 };
 
 type FontStatus = 'loading' | 'loaded' | 'error';
@@ -43,7 +58,7 @@ export function useFontLoader(fontFamily: string): FontStatus {
     try {
       // Extract font family name
       const familyName = fontMapping[fontFamily as keyof typeof fontMapping] || fontFamily;
-      
+
       // Check if font is loaded
       document.fonts.ready.then(() => {
         // Only update state if component is still mounted
@@ -81,4 +96,4 @@ export function preloadFonts(): Promise<void> {
   }).catch(err => {
     console.error('Error preloading fonts:', err);
   });
-} 
+}
