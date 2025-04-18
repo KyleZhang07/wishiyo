@@ -168,6 +168,12 @@ const FormatStep = () => {
   // 因为我们已经在状态初始化时直接加载了数据
 
 
+  // 处理继续按钮点击
+  const handleContinue = () => {
+    // 在FormatStep中，我们不需要导航到下一步，因为这是最后一步
+    // 而是使用结账按钮
+  };
+
   return (
     <WizardStep
       title="Pick Your Perfect Finish"
@@ -175,6 +181,8 @@ const FormatStep = () => {
       previousStep="/create/love/love-story/generate"
       currentStep={8}
       totalSteps={8}
+      onNextClick={handleContinue}
+      nextDisabled={true} // 始终禁用继续按钮，因为我们使用结账按钮
     >
       <div className="max-w-4xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

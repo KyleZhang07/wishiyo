@@ -1507,6 +1507,12 @@ const LoveStoryCoverStep = () => {
 
   console.log('Rendering LoveStoryCoverStep with titleData:', titleData);
 
+  // 检查是否可以继续
+  const isContinueDisabled = () => {
+    // 如果没有封面图片或者正在生成封面，则禁用继续按钮
+    return coverImages.length === 0 || isGeneratingCover;
+  };
+
   return (
     <WizardStep
       title="Design your book cover"
@@ -1515,6 +1521,7 @@ const LoveStoryCoverStep = () => {
       currentStep={6}
       totalSteps={8}
       onNextClick={handleContinue}
+      nextDisabled={isContinueDisabled()}
     >
       <div className="max-w-4xl mx-auto px-4">
         {/* 封面预览 */}

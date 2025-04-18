@@ -530,30 +530,21 @@ const IdeaStep = ({
 
   const handleContinue = () => {
     if (category === 'love') {
-      if (!selectedStyle) {
-        toast({
-          title: "Selection required",
-          description: "Please select an image style.",
-          variant: "destructive",
-        });
-        return;
-      }
-
       // 对于 love 类别，在导航到下一步之前启动异步生成
       // 这样用户可以继续浏览应用，而生成过程在后台进行
       generateIdeas();
-    } else {
-      if (selectedIdeaIndex === null) {
-        toast({
-          title: "Selection required",
-          description: "Please select an idea to continue",
-          variant: "destructive",
-        });
-        return;
-      }
     }
 
     navigate(nextStep);
+  };
+
+  // 检查是否可以继续
+  const isContinueDisabled = () => {
+    if (category === 'love') {
+      return !selectedStyle;
+    } else {
+      return selectedIdeaIndex === null;
+    }
   };
 
   useEffect(() => {
@@ -631,6 +622,7 @@ const IdeaStep = ({
       currentStep={category === 'love' ? 5 : currentStep}
       totalSteps={category === 'love' ? 8 : totalSteps}
       onNextClick={handleContinue}
+      nextDisabled={isContinueDisabled()}
     >
       {category !== 'love' && !isLoading && (
         <div className="flex justify-end -mt-8 mb-2">

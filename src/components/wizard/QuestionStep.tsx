@@ -43,9 +43,9 @@ const getDefaultQuestions = (category: 'friends' | 'love') => {
   }
 };
 
-const QuestionStep = ({ 
-  category, 
-  previousStep, 
+const QuestionStep = ({
+  category,
+  previousStep,
   nextStep,
   currentStep = 2,
   totalSteps = 7
@@ -78,17 +78,8 @@ const QuestionStep = ({
       previousStep={previousStep}
       currentStep={currentStep}
       totalSteps={totalSteps}
-      onNextClick={() => {
-        if (questionsAndAnswers.length === 0) {
-          toast({
-            title: "No answers provided",
-            description: "Please answer at least one question to continue.",
-            variant: "destructive",
-          });
-          return;
-        }
-        navigate(nextStep);
-      }}
+      onNextClick={() => navigate(nextStep)}
+      nextDisabled={questionsAndAnswers.length === 0}
     >
       <div className="space-y-6">
         {questionsAndAnswers.map((qa, index) => (
@@ -117,8 +108,8 @@ const QuestionStep = ({
           }}
         >
           <PlusCircle className="mr-2 h-5 w-5" />
-          {questionsAndAnswers.length === 0 
-            ? "Select a Question and Answer It" 
+          {questionsAndAnswers.length === 0
+            ? "Select a Question and Answer It"
             : "Add Another Question"}
         </Button>
       </div>
