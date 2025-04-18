@@ -25,6 +25,7 @@ interface CoverStyle {
   authorColor: string;
   font: string;
   borderColor?: string;
+  backgroundImage?: string;
 }
 
 // 预定义的封面样式
@@ -36,16 +37,18 @@ const coverStyles: CoverStyle[] = [
     titleColor: '#C75B7D',
     subtitleColor: '#C75B7D',
     authorColor: '#C75B7D',
-    font: 'patrick-hand'
+    font: 'patrick-hand',
+    backgroundImage: heartCoverBackground
   },
   {
     id: 'vintage',
     name: 'Vintage',
-    background: '#f8e9d6',
+    background: 'linear-gradient(135deg, #f8e9d6 0%, #e8c39e 100%)',
     titleColor: '#8b4513',
     subtitleColor: '#8b4513',
     authorColor: '#333333',
-    font: 'freckle-face'
+    font: 'freckle-face',
+    backgroundImage: ''
   },
   {
     id: 'modern',
@@ -54,7 +57,8 @@ const coverStyles: CoverStyle[] = [
     titleColor: '#ffffff', // 将标题颜色改为白色
     subtitleColor: '#ffffff',
     authorColor: '#ffffff', // 将作者名颜色也改为白色
-    font: 'amatic-sc'
+    font: 'amatic-sc',
+    backgroundImage: blueTextureBackground
   },
   {
     id: 'playful',
@@ -63,7 +67,8 @@ const coverStyles: CoverStyle[] = [
     titleColor: '#2A4C08', // 将标题颜色改为折中的深绿色
     subtitleColor: '#FFFFFF',
     authorColor: '#2A4C08', // 将作者名颜色改为折中的深绿色
-    font: 'caveat'
+    font: 'caveat',
+    backgroundImage: greenLeafBackground
   },
   {
     id: 'elegant',
@@ -72,7 +77,8 @@ const coverStyles: CoverStyle[] = [
     titleColor: '#FDF0F3', // 将标题颜色改为更接近白色的淡粉红色
     subtitleColor: '#FDF0F3', // 将副标题颜色改为更接近白色的淡粉红色
     authorColor: '#FDF0F3', // 将作者名颜色改为更接近白色的淡粉红色
-    font: 'luckiest-guy'
+    font: 'luckiest-guy',
+    backgroundImage: rainbowBackground
   }
 ];
 
@@ -269,9 +275,18 @@ const LoveStoryCoverStep = () => {
       mainPart = 'THE MAGIC IN';
       subPart = title.substring(12).trim();
       thirdPart = '';
-    } else if (title.includes('I love you') && !title.startsWith('I love you')) {
-      const name = title.split('I love you')[0].trim();
-      mainPart = name + ',';
+    } else if ((title.includes('I love you') || title.includes('I love you!')) && !title.startsWith('I love you')) {
+      // 处理两种可能的格式："May I love you" 或 "May, I love you!"
+      let name: string;
+      if (title.includes('I love you!')) {
+        name = title.split('I love you!')[0].trim();
+        // 如果名字已经包含逗号，不再添加
+        mainPart = name.endsWith(',') ? name : name + ',';
+      } else {
+        name = title.split('I love you')[0].trim();
+        // 如果名字已经包含逗号，不再添加
+        mainPart = name.endsWith(',') ? name : name + ',';
+      }
       subPart = 'I love you!';
       thirdPart = '';
     } else if (title.startsWith('The little book of') && title.length > 18) {
@@ -322,11 +337,6 @@ const LoveStoryCoverStep = () => {
     localStorage.setItem('loveStoryCoverTitle', title);
 
     setIsEditTitleDialogOpen(false);
-
-    toast({
-      title: "Title updated",
-      description: "Your book title has been updated"
-    });
   };
 
   // 切换到上一张图片
@@ -1501,11 +1511,12 @@ const LoveStoryCoverStep = () => {
           )}
 
           {/* 操作按钮 */}
-          <div className="flex justify-center gap-2">
+          <div className="flex justify-center gap-12">
             <Button
               variant="secondary"
               onClick={handleEditTitle}
               disabled={isGeneratingCover}
+              className="w-28"
             >
               Edit title
             </Button>
@@ -1513,6 +1524,7 @@ const LoveStoryCoverStep = () => {
               variant="secondary"
               onClick={handleRegenerateCover}
               disabled={isGeneratingCover}
+              className="w-28"
             >
               {isGeneratingCover ? 'Generating...' : 'Regenerate'}
             </Button>
@@ -1521,21 +1533,36 @@ const LoveStoryCoverStep = () => {
 
         {/* 封面样式选择 */}
         <div className="mb-10">
-          <h2 className="text-xl font-semibold mb-4">Choose a Cover Style</h2>
+          <h2 className="text-xl font-semibold mb-4">Choose a Cover</h2>
           <div className="flex justify-center space-x-8">
             {coverStyles.map(style => (
               <div
                 key={style.id}
                 onClick={() => handleStyleSelect(style.id)}
-                className={`relative w-24 h-24 rounded-full cursor-pointer flex items-center justify-center ${
+                className={`relative w-24 h-24 rounded-full cursor-pointer overflow-hidden ${
                   selectedStyle === style.id ? 'ring-2 ring-offset-2 ring-[#FF7F50]' : ''
                 }`}
-                style={{
-                  backgroundColor: style.background,
-                  border: 'none'
-                }}
               >
-                <span className="text-center text-xs">{style.name}</span>
+                {style.backgroundImage ? (
+                  <>
+                    <div
+                      className="absolute inset-0 bg-center bg-cover"
+                      style={{ backgroundImage: `url(${style.backgroundImage})` }}
+                    />
+                    <div
+                      className="absolute inset-0"
+                      style={{ backgroundColor: style.id === 'modern' ? 'rgba(10, 26, 63, 0.3)' :
+                               style.id === 'playful' ? 'rgba(74, 137, 220, 0.2)' :
+                               style.id === 'elegant' ? 'rgba(255, 255, 255, 0.2)' :
+                               style.id === 'classic' ? 'rgba(245, 235, 220, 0.3)' : 'rgba(0, 0, 0, 0)' }}
+                    />
+                  </>
+                ) : (
+                  <div
+                    className="absolute inset-0"
+                    style={{ background: style.background }}
+                  />
+                )}
               </div>
             ))}
           </div>
@@ -1545,7 +1572,7 @@ const LoveStoryCoverStep = () => {
         <Dialog open={isEditTitleDialogOpen} onOpenChange={setIsEditTitleDialogOpen}>
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
-              <DialogTitle className="text-2xl font-bold">Choose a Book Title</DialogTitle>
+              <DialogTitle className="text-2xl font-bold">Choose a Title</DialogTitle>
             </DialogHeader>
 
             <div className="space-y-5 py-5">
@@ -1578,11 +1605,11 @@ const LoveStoryCoverStep = () => {
                 </div>
 
                 <div
-                  onClick={() => handleTitleSelect(`${recipientName} I love you`)}
+                  onClick={() => handleTitleSelect(`${recipientName}, I love you!`)}
                   className="flex items-center p-4 rounded-md cursor-pointer transition-all bg-gray-50 hover:bg-gray-100 border border-gray-200"
                 >
                   <div className="flex-1">
-                    <h4 className="font-medium text-gray-900 text-lg">{recipientName} I love you</h4>
+                    <h4 className="font-medium text-gray-900 text-lg">{recipientName}, I love you!</h4>
                   </div>
                 </div>
 

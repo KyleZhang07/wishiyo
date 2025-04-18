@@ -37,15 +37,6 @@ const LoveStoryStyleStep = () => {
   };
 
   const handleContinue = () => {
-    if (!selectedTone) {
-      toast({
-        variant: "destructive",
-        title: "Tone required",
-        description: "Please select a text tone to continue"
-      });
-      return;
-    }
-
     // 保存tone到localStorage
     localStorage.setItem('loveStoryTone', selectedTone);
 
@@ -61,6 +52,7 @@ const LoveStoryStyleStep = () => {
       currentStep={4}
       totalSteps={7}
       onNextClick={handleContinue}
+      nextDisabled={!selectedTone}
     >
       <div className="max-w-2xl mx-auto">
         <div className="space-y-5 mt-6">

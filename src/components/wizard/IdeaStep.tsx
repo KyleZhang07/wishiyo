@@ -141,7 +141,7 @@ const IdeaStep = ({
     const bookType = path.split('/')[3];
     const styleKey = bookType === 'love-story' ? 'loveStoryStyle' : '';
     const savedStyle = styleKey ? localStorage.getItem(styleKey) : null;
-    return savedStyle || 'Comic Book';
+    return savedStyle || STYLE_OPTIONS[0].id;
   });
   const [isGeneratingTexts, setIsGeneratingTexts] = useState(false);
   const [imageTexts, setImageTexts] = useState<ImageText[]>([]);
@@ -583,7 +583,8 @@ const IdeaStep = ({
       if (!savedStyle) {
         // 如果没有保存的风格，默认选择 Comic Book 并保存到 localStorage
         console.log('No saved style found, saving default Comic Book to localStorage');
-        localStorage.setItem(styleKey, 'Comic Book');
+        localStorage.setItem(styleKey, STYLE_OPTIONS[0].id);
+        setSelectedStyle(STYLE_OPTIONS[0].id);
       } else {
         console.log('Found saved style:', savedStyle);
       }
