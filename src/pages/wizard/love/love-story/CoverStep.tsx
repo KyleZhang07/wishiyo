@@ -120,6 +120,31 @@ const LoveStoryCoverStep = () => {
   const navigate = useNavigate();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  // 检查MomentsStep图片是否有变化
+  const checkPartnerPhotoChanged = () => {
+    // 获取当前的合作伙伴照片
+    const currentPartnerPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+
+    // 获取上次使用的合作伙伴照片的哈希值
+    const lastUsedPhotoHash = localStorage.getItem('loveStoryLastUsedPhotoHash');
+
+    // 如果当前照片存在
+    if (currentPartnerPhoto) {
+      // 创建一个简单的哈希值（使用字符串的前100个字符）
+      const simpleHash = currentPartnerPhoto.substring(0, 100);
+
+      // 如果哈希值不同或者没有上次使用的哈希值，说明照片已更改
+      if (!lastUsedPhotoHash || lastUsedPhotoHash !== simpleHash) {
+        console.log('检测到合作伙伴照片变更，需要重新生成封面');
+        // 保存新的哈希值
+        localStorage.setItem('loveStoryLastUsedPhotoHash', simpleHash);
+        return true;
+      }
+    }
+
+    return false;
+  };
+
   useEffect(() => {
     // 从localStorage获取基本信息
     const savedAuthorName = localStorage.getItem('loveStoryAuthorName');
@@ -138,6 +163,15 @@ const LoveStoryCoverStep = () => {
     if (savedStyle) setSelectedStyle(savedStyle);
     if (savedRecipientName) setRecipientName(savedRecipientName);
     if (savedImageIndex) setCurrentImageIndex(parseInt(savedImageIndex));
+
+    // 检查合作伙伴照片是否有变化，如果有则自动重新生成封面
+    const photoChanged = checkPartnerPhotoChanged();
+    if (photoChanged) {
+      // 延迟执行，确保其他状态已加载
+      setTimeout(() => {
+        handleRegenerateCover();
+      }, 1000);
+    }
 
     // 获取故事idea
     const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
@@ -387,8 +421,8 @@ const LoveStoryCoverStep = () => {
   const handleRegenerateCover = async () => {
     setIsGeneratingCover(true);
     toast({
-      title: "Regenerating cover",
-      description: "Creating new covers for your love story..."
+      title: "Generating cover",
+      description: "Creating covers for your love story..."
     });
 
     try {
@@ -1500,12 +1534,16 @@ const LoveStoryCoverStep = () => {
         {/* 封面预览 */}
         <div className="relative mb-5">
 
-          {/* 封面图片生成中的加载状态 */}
+          {/* 封面图片生成中的加载状态 - 修改样式与funny-bio IdeasStep一致 */}
           {isGeneratingCover && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/30 z-20 rounded-lg">
-              <div className="bg-white p-5 rounded-md shadow-lg text-center">
-                <RefreshCw className="animate-spin mx-auto mb-3 h-8 w-8 text-[#FF7F50]" />
-                <p className="text-gray-800">Generating cover...</p>
+            <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-20 rounded-lg">
+              <div className="bg-white p-6 rounded-xl shadow-lg text-center border border-gray-100">
+                <div className="relative mb-3 mx-auto w-12 h-12 flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-full border-t-2 border-[#FF7F50] animate-spin"></div>
+                  <RefreshCw className="w-6 h-6 text-[#FF7F50]" />
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-1">Generating covers</h3>
+                <p className="text-gray-500 text-sm">Creating beautiful covers for your story...</p>
               </div>
             </div>
           )}
