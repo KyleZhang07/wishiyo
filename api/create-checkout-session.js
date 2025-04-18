@@ -52,6 +52,11 @@ export default async function handler(req, res) {
             unit_amount: Math.round(parseFloat(price) * 100), // Stripe需要以美分为单位，确保四舍五入为整数
           },
           quantity: parseInt(quantity, 10) || 1, // 确保quantity为整数
+          adjustable_quantity: {
+            enabled: true,
+            minimum: 1,
+            maximum: 10
+          },
         },
       ],
       // 应用优惠
