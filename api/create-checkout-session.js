@@ -15,19 +15,19 @@ export default async function handler(req, res) {
 
   try {
     const { productId, title, format, price, quantity = 1, couponCode } = req.body;
-    
+
     // 验证必要的输入数据
     if (!productId) {
       return res.status(400).json({ error: 'Missing product ID' });
     }
-    
+
     if (!price || isNaN(parseFloat(price)) || parseFloat(price) <= 0) {
       return res.status(400).json({ error: 'Invalid price value' });
     }
-    
+
     // 生成随机订单ID
     const orderId = `WY-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
-    
+
     let discounts;
     if (couponCode) {
       const promoList = await stripe.promotionCodes.list({ code: couponCode, active: true, limit: 1 });
@@ -36,7 +36,7 @@ export default async function handler(req, res) {
       }
       discounts = [{ promotion_code: promoList.data[0].id }];
     }
-    
+
     // 创建Stripe Checkout会话，包含shipping address收集
     const session = await stripe.checkout.sessions.create({
       allow_promotion_codes: true,
@@ -53,9 +53,7 @@ export default async function handler(req, res) {
           },
           quantity: parseInt(quantity, 10) || 1, // 确保quantity为整数
           adjustable_quantity: {
-            enabled: true,
-            minimum: 1,
-            maximum: 10
+            enabled: false
           },
         },
       ],
@@ -65,7 +63,7 @@ export default async function handler(req, res) {
       shipping_address_collection: {
         allowed_countries: ['US', 'CA', 'GB', 'AU'], // 允许的国家列表
       },
-      // 收集联系电话 
+      // 收集联系电话
       phone_number_collection: {
         enabled: true, // 启用电话号码收集
       },
@@ -128,10 +126,10 @@ export default async function handler(req, res) {
 
     console.log(`Created checkout session for order ${orderId}, product ${productId}`);
 
-    res.status(200).json({ 
-      sessionId: session.id, 
+    res.status(200).json({
+      sessionId: session.id,
       url: session.url,
-      orderId 
+      orderId
     });
   } catch (error) {
     console.error('Error creating checkout session:', error);

@@ -229,7 +229,7 @@ const FormatStep = () => {
         </div>
 
         {/* 结账按钮 */}
-        <div className="mt-6">
+        <div className="mt-12">
           <Button
             variant="default"
             size="lg"
