@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import WizardStep from '@/components/wizard/WizardStep';
 import { Button } from '@/components/ui/button';
 import { ImagePlus } from 'lucide-react';
@@ -15,6 +16,7 @@ const LoveStoryMomentsStep = () => {
   const characterFileInputRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   // Load face-api models on component mount
   useEffect(() => {
@@ -138,14 +140,20 @@ const LoveStoryMomentsStep = () => {
     characterFileInputRef.current?.click();
   };
 
+  // 处理继续按钮点击
+  const handleContinue = () => {
+    navigate('/create/love/love-story/style');
+  };
+
   return (
     <WizardStep
       title="Upload the character's photo"
       description="Bring your fantasy to real life"
       previousStep="/create/love/love-story/questions"
-      nextStep="/create/love/love-story/style"
       currentStep={3}
       totalSteps={6}
+      onNextClick={handleContinue}
+      nextDisabled={!characterPhoto || isLoading}
     >
       <div className="space-y-6">
         <div className="max-w-md mx-auto">
