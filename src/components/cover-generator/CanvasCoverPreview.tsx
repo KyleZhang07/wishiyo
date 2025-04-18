@@ -1599,7 +1599,7 @@ const CanvasCoverPreview = ({
 
     // 计算作者名称的总高度
     const authorFontSize = template.spineStyle.authorFontSize || 24;
-    const authorCharSpacing = authorFontSize * (template.spineStyle.charSpacing || 0.75);
+    const authorCharSpacing = authorFontSize * (template.spineStyle.charSpacing || 1.0); // 从0.75增加到1.0，使作者名字间距适度宽松
     const authorHeight = authorChars.length * authorCharSpacing;
 
     // 将作者名称放在顶部，大幅减小边距使其更靠近顶部

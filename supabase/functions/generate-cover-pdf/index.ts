@@ -183,21 +183,25 @@ serve(async (req) => {
       bookWidth = 6.125;
       bookHeight = 9.25;
       spineWidth = 0.813; // 精装本书脊宽度更新为 0.813"
-      // 计算新的PDF总宽度 = 两个封面宽度 + 书脊宽度 + 两侧出血区域
-      pdfWidth = (bookWidth * 2) + spineWidth + 0.25; // 0.25" 是两侧各 0.125" 的出血区域
+      // 计算新的PDF总宽度 = 两个封面宽度 + 书脊宽度 + 两侧包装区域
+      const wrapAreaWidth = 0.75; // 每侧0.75"的包装区域
+      pdfWidth = (bookWidth * 2) + spineWidth + (wrapAreaWidth * 2); // 14.563"
       pdfHeight = 10.75;
       console.log(`Using hardcover dimensions: ${pdfWidth}" x ${pdfHeight}" with spine width ${spineWidth}"`);
       console.log(`Total content width: ${(bookWidth * 2) + spineWidth}"`);
+      console.log(`Wrap area width: ${wrapAreaWidth}" on each side, total ${wrapAreaWidth * 2}"`);
     } else {
       // 平装本尺寸 (基于Lulu模板)
       bookWidth = 6.0;
       bookHeight = 9.0;
       spineWidth = 0.6; // 平装本书脊宽度更新为 0.6"
-      // 计算新的PDF总宽度 = 两个封面宽度 + 书脊宽度 + 两侧出血区域
-      pdfWidth = (bookWidth * 2) + spineWidth + 0.25; // 0.25" 是两侧各 0.125" 的出血区域
+      // 计算新的PDF总宽度 = 两个封面宽度 + 书脊宽度 + 两侧包装区域
+      const wrapAreaWidth = 0.75; // 每侧0.75"的包装区域
+      pdfWidth = (bookWidth * 2) + spineWidth + (wrapAreaWidth * 2); // 14.1"
       pdfHeight = 9.25;
       console.log(`Using softcover dimensions: ${pdfWidth}" x ${pdfHeight}" with spine width ${spineWidth}"`);
       console.log(`Total content width: ${(bookWidth * 2) + spineWidth}"`);
+      console.log(`Wrap area width: ${wrapAreaWidth}" on each side, total ${wrapAreaWidth * 2}"`);
     }
 
     // Create a new PDF with appropriate dimensions
@@ -210,6 +214,8 @@ serve(async (req) => {
 
     // Calculate positions and dimensions
     const bleed = 0.125; // Bleed area: 0.125"
+    const wrapArea = 0.75; // Wrap area: 0.75" on each side
+    const totalWrapWidth = bleed + wrapArea; // 总包装区域宽度 = 0.875英寸
     const safetyMargin = 0.5; // Safety margin: 0.5"
     const backCoverWidth = bookWidth; // 使用根据装订类型设置的宽度
     const frontCoverWidth = bookWidth; // Same as back cover
@@ -321,7 +327,7 @@ serve(async (req) => {
     );
 
     // Debug lines flag - set to true to show safety margins and trim lines
-    const debugLines = true;
+    const debugLines = true; // 保持为true以便查看辅助线
 
     // Add images to the PDF (coordinate system starts from top-left)
     // Using calculated offsets for proper centering
@@ -336,6 +342,7 @@ serve(async (req) => {
     );
 
     console.log('Adding spine to PDF');
+    console.log(`Spine position: x=${xOffset + backCoverWidth}, y=${yOffset}, width=${spineWidth}, height=${bookHeight}`);
     pdf.addImage(
       spineData,
       'JPEG',
@@ -420,6 +427,7 @@ serve(async (req) => {
       pdf.setTextColor(0, 0, 0);
       pdf.text(`Binding Type: ${bindingType}`, 0.5, pdfHeight - 0.5);
       pdf.text(`PDF Size: ${pdfWidth}" x ${pdfHeight}"`, 0.5, pdfHeight - 0.3);
+      pdf.text(`Spine Width: ${spineWidth}"`, 0.5, pdfHeight - 0.1); // 添加书脊宽度信息
     }
 
     // Convert PDF to base64
