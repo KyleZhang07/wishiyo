@@ -14,10 +14,10 @@ const VerifyOrder = () => {
   const [verificationCode, setVerificationCode] = useState('');
   const [step, setStep] = useState<'email' | 'code'>('email');
   const [loading, setLoading] = useState(false);
-  
+
   const handleSendVerification = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email || !email.match(/^\S+@\S+\.\S+$/)) {
       toast({
         title: "Invalid Email Format",
@@ -26,18 +26,16 @@ const VerifyOrder = () => {
       });
       return;
     }
-    
+
     setLoading(true);
-    
+
     try {
       const response = await supabase.functions.invoke('send-order-verification', {
         body: { email }
       });
-      
+
       if (response.data.success) {
-        toast({
-          description: "Verification code sent, please check your email",
-        });
+        // 直接跳转到下一步，不需要显示成功通知
         setStep('code');
       } else {
         throw new Error(response.data.error || 'Failed to send verification code');
@@ -52,10 +50,10 @@ const VerifyOrder = () => {
       setLoading(false);
     }
   };
-  
+
   const handleVerifyCode = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!verificationCode || verificationCode.length !== 6) {
       toast({
         title: "Invalid Code",
@@ -64,24 +62,22 @@ const VerifyOrder = () => {
       });
       return;
     }
-    
+
     setLoading(true);
-    
+
     try {
       const response = await supabase.functions.invoke('verify-order-code', {
         body: { email, code: verificationCode }
       });
-      
+
       if (response.data.success) {
-        toast({
-          description: "Verification successful",
-        });
-        
+        // 直接保存数据并跳转，不需要显示成功通知
+
         // Save verification token and order data to localStorage
         localStorage.setItem('order_verification_token', response.data.token);
         localStorage.setItem('user_orders', JSON.stringify(response.data.orders || []));
         localStorage.setItem('verified_email', email);
-        
+
         // Navigate to order history page
         navigate('/orders/history');
       } else {
@@ -97,26 +93,26 @@ const VerifyOrder = () => {
       setLoading(false);
     }
   };
-  
+
   return (
     <div className="container mx-auto px-4 py-24 max-w-md">
       <div className="mb-6">
-        <button 
-          onClick={() => navigate('/')} 
+        <button
+          onClick={() => navigate('/')}
           className="flex items-center text-gray-600 hover:text-gray-900"
         >
           <ArrowLeft className="h-5 w-5 mr-1" />
           Back to Home
         </button>
       </div>
-      
+
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         <div className="p-6">
           <div className="flex items-center justify-center mb-6">
             <Package className="h-10 w-10 text-[#FF7F50]" />
           </div>
           <h1 className="text-2xl font-semibold text-center mb-6">Check My Orders</h1>
-          
+
           {step === 'email' ? (
             <form onSubmit={handleSendVerification}>
               <div className="space-y-4">

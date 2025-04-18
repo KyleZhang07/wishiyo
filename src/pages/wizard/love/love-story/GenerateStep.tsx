@@ -496,10 +496,7 @@ const GenerateStep = () => {
         }
       }
 
-      toast({
-        title: "Images generated",
-        description: "Your love story images are ready!",
-      });
+      // 不需要显示成功通知，用户可以看到图片已生成
 
       // 刷新图片列表
       setTimeout(() => {
@@ -804,10 +801,7 @@ const GenerateStep = () => {
   }, []);
 
   const handleEditCover = () => {
-    toast({
-      title: "Edit Cover",
-      description: "Opening cover editor..."
-    });
+    // 不需要显示成功通知，用户可以看到页面跳转
     // 导航到CoverStep页面
     navigate('/create/love/love-story/cover');
   };
@@ -904,10 +898,7 @@ const GenerateStep = () => {
               loadImagesFromSupabase();
             }, 1000);
 
-            toast({
-              title: "Introduction image regenerated",
-              description: `Intro image updated with ${imageStyle} style`,
-            });
+            // 不需要显示成功通知，用户可以看到图片已更新
           } else {
             throw new Error("Failed to generate intro image");
           }
@@ -975,10 +966,7 @@ const GenerateStep = () => {
     try {
       setIsGeneratingBlessing(true);
 
-    toast({
-        title: "Rendering blessing message",
-        description: "Creating a beautiful blessing message...",
-      });
+      // 不需要显示渲染开始的通知，用户可以看到UI变化
 
       // 确保获取最新的数据
       const currentAuthorName = localStorage.getItem('loveStoryAuthorName') || authorName;

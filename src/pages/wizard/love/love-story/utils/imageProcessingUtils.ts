@@ -153,17 +153,11 @@ export const handleGenericContentRegeneration = async (
     // 7) 如果提供了自动渲染函数，则调用它
     if (autoRenderImage) {
       try {
-        toast({
-          title: "Auto-rendering image",
-          description: `Rendering content ${index} with text...`,
-        });
+        // 不需要显示渲染开始的通知，用户可以看到UI变化
 
         await autoRenderImage(expandedBase64, index);
 
-        toast({
-          title: "Image rendered",
-          description: `Content ${index} successfully rendered with text`,
-        });
+        // 不需要显示渲染完成的通知，用户可以看到渲染结果
       } catch (renderError) {
         console.error(`Error auto-rendering content image ${index}:`, renderError);
         // 继续处理，即使渲染失败
@@ -175,10 +169,7 @@ export const handleGenericContentRegeneration = async (
       refreshImages();
     }, 1000);
 
-    toast({
-      title: "Image regenerated & expanded",
-      description: `Content ${index} successfully updated with ${imageStyle} style`,
-    });
+    // 不需要显示成功通知，用户可以看到图片已更新
   } catch (err: any) {
     console.error("Error in handleGenericContentRegeneration:", err);
     toast({

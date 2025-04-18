@@ -321,13 +321,8 @@ const IdeaStep = ({
       localStorage.setItem(lastQuestionsHashKey, currentQuestionsHash);
       localStorage.setItem(lastToneKey, currentTone);
 
-      // 对于 love 类别，我们显示一个 toast 通知用户生成已在后台开始
-      if (category === 'love') {
-        toast({
-          title: "Generating story",
-          description: "Your story is being generated in the background. You can continue to the next step.",
-        });
-      }
+      // 对于 love 类别，生成已在后台开始，不需要显示 toast 通知
+      // 用户可以看到UI变化作为反馈
 
       const { data, error } = await supabase.functions.invoke('generate-ideas', {
         body: {

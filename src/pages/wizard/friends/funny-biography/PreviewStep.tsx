@@ -43,7 +43,7 @@ const PreviewStep = () => {
       console.log('已经尝试过生成章节，不再重复生成');
       return;
     }
-    
+
     // 先检查数据是否完整
     const savedAuthor = localStorage.getItem('funnyBiographyAuthorName');
     const savedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
@@ -53,14 +53,14 @@ const PreviewStep = () => {
     if (!savedAuthor || !savedIdeas || !savedIdeaIndex || !savedAnswers || !coverTitle) {
       console.log('Attempted to generate chapters with missing data.');
       // 不再显示错误提示，因为用户可能刚进入页面，数据还在加载中
-      
+
       // 如果数据不完整，不标记为已尝试，这样后续可以再次尝试
       return;
     }
-    
+
     // 数据完整，标记为已尝试生成
     setChapterGenerationAttempted(true);
-    
+
     setIsLoading(true);
     try {
       const answers = JSON.parse(savedAnswers);
@@ -83,16 +83,13 @@ const PreviewStep = () => {
       });
 
       if (error) throw error;
-      
+
       console.log('生成章节响应:', data ? '有数据' : '无数据', data?.chapters ? `章节数量: ${data.chapters.length}` : '无章节');
-      
+
       if (data && data.chapters && Array.isArray(data.chapters) && data.chapters.length > 0) {
         setChapters(data.chapters);
         localStorage.setItem('funnyBiographyChapters', JSON.stringify(data.chapters));
-        toast({
-          title: "Chapters generated successfully",
-          description: "Your table of contents has been updated.",
-        });
+        // 用户可以直接看到目录更新，不需要显示成功通知
       } else {
         throw new Error('No chapters data received from the function.');
       }
@@ -130,23 +127,23 @@ const PreviewStep = () => {
       const savedImagePosition = localStorage.getItem('funnyBiographyCoverImagePosition');
       const savedImageScale = localStorage.getItem('funnyBiographyCoverImageScale');
       const savedFrontCover = localStorage.getItem('funnyBiographyFrontCoverImage');
-      
-      const ideaChangedTimestamp = 
-        localStorage.getItem('funnyBiographyIdeaChanged') || 
-        localStorage.getItem('funny-biographyIdeaChanged') || 
+
+      const ideaChangedTimestamp =
+        localStorage.getItem('funnyBiographyIdeaChanged') ||
+        localStorage.getItem('funny-biographyIdeaChanged') ||
         localStorage.getItem('friendsIdeaChanged') ||
         localStorage.getItem('funnyBiography');
-      
+
       if (ideaChangedTimestamp) {
         localStorage.removeItem('funnyBiographyIdeaChanged');
         localStorage.removeItem('funny-biographyIdeaChanged');
         localStorage.removeItem('friendsIdeaChanged');
         localStorage.removeItem('funnyBiography');
-        
+
         localStorage.removeItem('funnyBiographyChapters');
         console.log("PreviewStep: 检测到想法变更，将重新生成章节");
       }
-      
+
       if (savedAuthor) {
         setAuthorName(savedAuthor);
         loadedAuthorName = savedAuthor;
@@ -159,7 +156,7 @@ const PreviewStep = () => {
           setCoverTitle(selectedIdea.title || '');
           setSubtitle(selectedIdea.description || '');
           loadedCoverTitle = selectedIdea.title || '';
-          
+
           if (selectedIdea.praises && Array.isArray(selectedIdea.praises)) {
             setPraises(selectedIdea.praises);
           }
@@ -177,7 +174,7 @@ const PreviewStep = () => {
       if (savedStyle) {
         setSelectedStyle(savedStyle);
       }
-      
+
       if (savedChapters) {
         try {
            const parsedChapters = JSON.parse(savedChapters);
@@ -193,14 +190,14 @@ const PreviewStep = () => {
             localStorage.removeItem('funnyBiographyChapters');
         }
       }
-      
+
       if (savedImagePosition) {
         setImagePosition(JSON.parse(savedImagePosition));
       }
       if (savedImageScale) {
         setImageScale(parseFloat(savedImageScale));
       }
-      
+
       if (loadedAuthorName && loadedCoverTitle) {
          dataLoadComplete = true;
          console.log("PreviewStep: Essential data loaded.");
@@ -223,7 +220,7 @@ const PreviewStep = () => {
         });
     } finally {
         if (dataLoadComplete) {
-           setIsInitialDataLoaded(true); 
+           setIsInitialDataLoaded(true);
         }
     }
 
@@ -231,13 +228,13 @@ const PreviewStep = () => {
 
   useEffect(() => {
     console.log("PreviewStep: Chapter generation effect running. isInitialDataLoaded:", isInitialDataLoaded, "Chapters loaded:", chapters.length > 0, "Title ready:", !!coverTitle, "Author ready:", !!authorName);
-    
+
     // 如果章节已经生成过或正在生成中，跳过
     if (chapterGenerationAttempted || isLoading) {
       console.log("PreviewStep: Skipping chapter generation - already attempted or in progress.");
       return;
     }
-    
+
     if (!isInitialDataLoaded) {
       console.log("PreviewStep: Skipping chapter generation - initial data not loaded yet.");
       return;
@@ -247,14 +244,14 @@ const PreviewStep = () => {
       console.log("PreviewStep: Skipping chapter generation - chapters already exist.");
       return;
     }
-    
+
     if (!coverTitle || !authorName) {
        console.warn("PreviewStep: Skipping chapter generation - title or author name state is empty.");
        return;
     }
-    
+
     console.log("PreviewStep: Conditions met. Setting delay for chapter generation...");
-    
+
     // 添加延迟，确保数据完全加载
     setTimeout(() => {
       // 再次检查数据是否已准备好
@@ -262,15 +259,15 @@ const PreviewStep = () => {
       const savedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
       const savedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
       const savedAnswers = localStorage.getItem('funnyBiographyAnswers');
-      
-      console.log('初次加载延迟后检查数据:', { 
-        savedAuthor: !!savedAuthor, 
-        savedIdeas: !!savedIdeas, 
-        savedIdeaIndex: !!savedIdeaIndex, 
+
+      console.log('初次加载延迟后检查数据:', {
+        savedAuthor: !!savedAuthor,
+        savedIdeas: !!savedIdeas,
+        savedIdeaIndex: !!savedIdeaIndex,
         savedAnswers: !!savedAnswers,
         coverTitle: coverTitle
       });
-      
+
       // 先尝试加载封面标题，确保它可用
       if (savedIdeas && savedIdeaIndex) {
         try {
@@ -279,7 +276,7 @@ const PreviewStep = () => {
           if (selectedIdea && selectedIdea.title && (!coverTitle || coverTitle !== selectedIdea.title)) {
             console.log('初次加载设置封面标题:', selectedIdea.title);
             setCoverTitle(selectedIdea.title);
-            
+
             // 设置标题后再等待一段时间再生成
             setTimeout(() => {
               if (savedAuthor && savedIdeas && savedIdeaIndex && savedAnswers && selectedIdea.title) {
@@ -295,7 +292,7 @@ const PreviewStep = () => {
           console.error('初次加载：解析已保存想法失败:', e);
         }
       }
-      
+
       // 如果不需要设置标题或设置失败，直接检查是否可以生成
       if (savedAuthor && savedIdeas && savedIdeaIndex && savedAnswers && coverTitle) {
         console.log('初次加载：所有数据已准备好，开始生成章节');
@@ -330,13 +327,13 @@ const PreviewStep = () => {
       localStorage.removeItem(changedKey!); // 移除找到的特定键
       localStorage.removeItem('funnyBiographyChapters'); // 清除之前保存的章节
       setChapters([]); // 清除显示的数据
-      
+
       // 重置章节生成状态，允许重新生成
       setChapterGenerationAttempted(false);
-      
+
       // 标记重新生成已由 idea 变化触发，但不立即生成
       setRegenerationTriggered(true);
-      
+
       // 使用较长的延迟，给数据加载足够的时间
       console.log('设置延迟，等待数据准备完成...');
       setTimeout(() => {
@@ -345,15 +342,15 @@ const PreviewStep = () => {
         const savedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
         const savedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
         const savedAnswers = localStorage.getItem('funnyBiographyAnswers');
-        
-        console.log('延迟后检查数据:', { 
-          savedAuthor: !!savedAuthor, 
-          savedIdeas: !!savedIdeas, 
-          savedIdeaIndex: !!savedIdeaIndex, 
+
+        console.log('延迟后检查数据:', {
+          savedAuthor: !!savedAuthor,
+          savedIdeas: !!savedIdeas,
+          savedIdeaIndex: !!savedIdeaIndex,
           savedAnswers: !!savedAnswers,
           coverTitle: coverTitle
         });
-        
+
         // 先尝试加载封面标题，确保它可用
         if (savedIdeas && savedIdeaIndex) {
           try {
@@ -362,7 +359,7 @@ const PreviewStep = () => {
             if (selectedIdea && selectedIdea.title && (!coverTitle || coverTitle !== selectedIdea.title)) {
               console.log('设置封面标题:', selectedIdea.title);
               setCoverTitle(selectedIdea.title);
-              
+
               // 设置标题后再等待一段时间再生成
               setTimeout(() => {
                 if (savedAuthor && savedIdeas && savedIdeaIndex && savedAnswers) {
@@ -378,7 +375,7 @@ const PreviewStep = () => {
             console.error('Error parsing saved ideas:', e);
           }
         }
-        
+
         // 如果不需要设置标题或设置失败，直接检查是否可以生成
         if (savedAuthor && savedIdeas && savedIdeaIndex && savedAnswers && coverTitle) {
           console.log('所有数据已准备好，开始生成章节');
@@ -394,7 +391,7 @@ const PreviewStep = () => {
     // 仅在组件首次加载且未触发重新生成时执行
     if (!isInitialDataLoaded && !regenerationTriggered) {
       console.log('PreviewStep: 加载初始数据...');
-      
+
       // 加载已保存的章节数据
       const savedChapters = localStorage.getItem('funnyBiographyChapters');
       if (savedChapters) {
@@ -406,7 +403,7 @@ const PreviewStep = () => {
           console.error('解析已保存章节失败:', e);
         }
       }
-      
+
       // 加载封面标题
       const savedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
       const savedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
@@ -422,7 +419,7 @@ const PreviewStep = () => {
           console.error('解析已保存想法失败:', e);
         }
       }
-      
+
       setIsInitialDataLoaded(true);
     }
   }, [isInitialDataLoaded, regenerationTriggered]);
@@ -483,8 +480,8 @@ const PreviewStep = () => {
             <div className="book-container">
               <div className="book">
                 {frontCoverImage ? (
-                  <img 
-                    src={frontCoverImage} 
+                  <img
+                    src={frontCoverImage}
                     alt="Book Cover"
                   />
                 ) : (
@@ -528,7 +525,7 @@ const PreviewStep = () => {
               <h2 className="text-xl font-bold">Table of Contents</h2>
               {/* 删除手动重新生成按钮，因为现在已经实现自动生成 */}
             </div>
-            
+
             {isLoading ? (
               <div className="text-center py-6">
                 <div className="animate-spin inline-block w-8 h-8 border-4 border-current border-t-transparent rounded-full"></div>
