@@ -17,8 +17,8 @@ const Header = () => {
               <Link to="/" className="text-gray-600 hover:text-primary transition-colors">
                 Home
               </Link>
-              <Link to="/friends" className="text-gray-600 hover:text-primary transition-colors">Personalized Book</Link>
-              <Link to="/love" className="text-gray-600 hover:text-primary transition-colors">Illustrated Book</Link>
+              <Link to="/friends" className="text-gray-600 hover:text-primary transition-colors">Story Book</Link>
+              <Link to="/love" className="text-gray-600 hover:text-primary transition-colors">Picture Book</Link>
             </nav>
           </div>
 
@@ -60,10 +60,10 @@ const Header = () => {
               Home
             </Link>
             <Link to="/friends" className="block px-4 py-2 text-amber-600 hover:text-amber-700 transition-colors" onClick={() => setIsMenuOpen(false)}>
-              Personalized Book
+              Story Book
             </Link>
             <Link to="/love" className="block px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors" onClick={() => setIsMenuOpen(false)}>
-              Illustrated Book
+              Picture Book
             </Link>
           </nav>}
       </div>

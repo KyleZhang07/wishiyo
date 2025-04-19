@@ -28,7 +28,7 @@ const FriendsLanding = () => {
         </div>
 
         <div className="container px-4 md:px-6 mx-auto py-24">
-          <h2 className="text-4xl font-serif font-bold tracking-tighter text-left mb-12">Personalized Book Collection</h2>
+          <h2 className="text-4xl font-serif font-bold tracking-tighter text-left mb-12">Story Book Collection</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* Book 1 */}
             <div className="flex flex-col">

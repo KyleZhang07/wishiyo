@@ -10,41 +10,41 @@ export default function Home() {
       <section className="relative py-20 md:py-32 overflow-hidden">
         <div className="container px-4 md:px-6 mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
-            {/* Left side - Illustrated Book */}
+            {/* Left side - Picture Book */}
             <div className="hidden md:flex justify-center relative h-[500px]">
-              {/* Single illustrated book with shadow effect */}
+              {/* Single picture book with shadow effect */}
               <div className="absolute" style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%) perspective(800px) rotateY(5deg)', boxShadow: '2px 5px 15px rgba(0,0,0,0.3)' }}>
-                <img src="/images/hero/illustrated-book1.png" alt="Illustrated Book" className="w-auto h-auto object-contain rounded-md" style={{ transform: 'scale(1.6)' }} />
+                <img src="/images/hero/illustrated-book1.png" alt="Picture Book" className="w-auto h-auto object-contain rounded-md" style={{ transform: 'scale(1.6)' }} />
               </div>
             </div>
 
             {/* Center - Text and Buttons */}
             <div className="flex flex-col items-center text-center space-y-4 md:space-y-6">
               <h1 className="text-4xl md:text-5xl font-bold tracking-tighter">
-                Create your own custom personalized book
+                A book made just for them
               </h1>
               <p className="text-lg text-gray-500 max-w-[450px]">
-                Craft unique stories featuring your loved ones. Create beautiful personalized or illustrated books just for you.
+                Turn memories and photos into a keepsake they'll treasure forever.
               </p>
               <div className="flex flex-col items-center gap-6 mt-10 w-full max-w-[320px]">
                 <Link to="/friends" className="w-full">
                   <div className="bg-[#FF6B35] text-white py-3 px-5 rounded-md text-center font-medium text-base hover:bg-[#FF6B35]/90 transition-colors shadow-sm">
-                    Create Personalized Book
+                    Create Story Book
                   </div>
                 </Link>
                 <Link to="/love" className="w-full">
                   <div className="bg-[#FF6B35] text-white py-3 px-5 rounded-md text-center font-medium text-base hover:bg-[#FF6B35]/90 transition-colors shadow-sm">
-                    Create Illustrated Book
+                    Create Picture Book
                   </div>
                 </Link>
               </div>
             </div>
 
-            {/* Right side - Personalized Book */}
+            {/* Right side - Story Book */}
             <div className="hidden md:flex justify-center relative h-[500px]">
-              {/* Single personalized book with shadow effect */}
+              {/* Single story book with shadow effect */}
               <div className="absolute" style={{ right: '50%', top: '50%', transform: 'translate(50%, -50%) perspective(800px) rotateY(-5deg)', boxShadow: '-2px 5px 15px rgba(0,0,0,0.3)' }}>
-                <img src="/images/hero/personalized-book1.png" alt="Personalized Book" className="w-auto h-auto object-contain rounded-md" style={{ transform: 'scale(1.6)' }} />
+                <img src="/images/hero/personalized-book1.png" alt="Story Book" className="w-auto h-auto object-contain rounded-md" style={{ transform: 'scale(1.6)' }} />
               </div>
             </div>
           </div>
@@ -59,34 +59,34 @@ export default function Home() {
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* For Personalized Book */}
+            {/* For Story Book */}
             <div className="p-8">
               <div className="bg-[#FDF7ED] rounded-lg mb-4 aspect-square w-[70%] mx-auto relative overflow-hidden">
-                {/* Personalized Book showcase image */}
+                {/* Story Book showcase image */}
                 <img
                   src="/images/showcase/personalized-book.jpeg"
-                  alt="Personalized Book Example"
+                  alt="Story Book Example"
                   className="absolute inset-0 w-full h-full object-cover"
                 />
               </div>
-              <h3 className="text-2xl font-bold mb-2">Personalized Book</h3>
+              <h3 className="text-2xl font-bold mb-2">Story Book</h3>
               <p className="text-gray-700 mb-4">Create a unique story featuring your loved ones as the main characters</p>
               <Link to="/friends" className="text-primary hover:text-primary/80 inline-flex items-center">
                 Explore <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </div>
 
-            {/* For Illustrated Book */}
+            {/* For Picture Book */}
             <div className="p-8">
               <div className="bg-[#F0F7FF] rounded-lg mb-4 aspect-square w-[70%] mx-auto relative overflow-hidden">
-                {/* Illustrated Book showcase image */}
+                {/* Picture Book showcase image */}
                 <img
                   src="/images/showcase/illustrated-book.png"
-                  alt="Illustrated Book Example"
+                  alt="Picture Book Example"
                   className="absolute inset-0 w-full h-full object-cover"
                 />
               </div>
-              <h3 className="text-2xl font-bold mb-2">Illustrated Book</h3>
+              <h3 className="text-2xl font-bold mb-2">Picture Book</h3>
               <p className="text-gray-700 mb-4">Beautiful illustrated stories with your loved ones' photos integrated into the artwork</p>
               <Link to="/love" className="text-primary hover:text-primary/80 inline-flex items-center">
                 Explore <ArrowRight className="ml-2 h-4 w-4" />
@@ -128,11 +128,11 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Book Showcase Section - Personalized Bestseller */}
+      {/* Book Showcase Section - Story Book */}
       <section className="py-24 bg-white">
         <div className="container px-4 md:px-6 mx-auto">
           <h2 className="text-4xl font-serif font-bold tracking-tighter text-left mb-12">
-            Personalize a bestseller
+            Story Book showcase
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -191,11 +191,11 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Illustrated Book Showcase Section */}
+      {/* Picture Book Showcase Section */}
       <section className="py-24 bg-gray-50">
         <div className="container px-4 md:px-6 mx-auto">
           <h2 className="text-4xl font-serif font-bold tracking-tighter text-left mb-12">
-            Illustrated Book showcase
+            Picture Book showcase
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
