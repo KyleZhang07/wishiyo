@@ -1,9 +1,10 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 
 export default function Home() {
+  const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
@@ -14,29 +15,31 @@ export default function Home() {
             <div className="hidden md:flex justify-center relative h-[500px]">
               {/* Single picture book with shadow effect */}
               <div className="absolute" style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%) perspective(800px) rotateY(5deg)', boxShadow: '2px 5px 15px rgba(0,0,0,0.3)' }}>
-                <img src="/images/hero/illustrated-book1.png" alt="Picture Book" className="w-auto h-auto object-contain rounded-md" style={{ transform: 'scale(1.6)' }} />
+                <img src="/images/hero/illustrated-book1.png" alt="Colorful illustrated picture book with vibrant cover design" className="w-auto h-auto object-contain rounded-md" style={{ transform: 'scale(1.6)' }} />
               </div>
             </div>
 
             {/* Center - Text and Buttons */}
-            <div className="flex flex-col items-center text-center space-y-4 md:space-y-6">
-              <h1 className="text-4xl md:text-5xl font-bold tracking-tighter">
+            <div className="flex flex-col items-center text-center space-y-8">
+              <h1 className="text-5xl md:text-6xl font-bold tracking-tighter">
                 A book made just for them
               </h1>
-              <p className="text-lg text-gray-500 max-w-[450px]">
+              <p className="text-xl text-gray-500 max-w-[500px]">
                 Turn memories and photos into a keepsake they'll treasure forever.
               </p>
-              <div className="flex flex-col items-center gap-6 mt-10 w-full max-w-[320px]">
-                <Link to="/friends" className="w-full">
-                  <div className="bg-[#FF6B35] text-white py-3 px-5 rounded-md text-center font-medium text-base hover:bg-[#FF6B35]/90 transition-colors shadow-sm">
-                    Create Story Book
-                  </div>
-                </Link>
-                <Link to="/love" className="w-full">
-                  <div className="bg-[#FF6B35] text-white py-3 px-5 rounded-md text-center font-medium text-base hover:bg-[#FF6B35]/90 transition-colors shadow-sm">
-                    Create Picture Book
-                  </div>
-                </Link>
+              <div className="flex flex-col items-center gap-8 w-full max-w-[320px]">
+                <button
+                  onClick={() => navigate('/friends')}
+                  className="w-full bg-[#FF6B35] text-white py-3 px-5 rounded-md text-center font-medium text-base hover:bg-[#FF6B35]/90 transition-colors shadow-sm mt-8"
+                >
+                  Create Story Book
+                </button>
+                <button
+                  onClick={() => navigate('/love')}
+                  className="w-full bg-white text-[#FF6B35] border-2 border-[#FF6B35] py-3 px-5 rounded-md text-center font-medium text-base hover:bg-[#FF6B35] hover:text-white transition-colors shadow-sm"
+                >
+                  Create Picture Book
+                </button>
               </div>
             </div>
 
@@ -44,54 +47,64 @@ export default function Home() {
             <div className="hidden md:flex justify-center relative h-[500px]">
               {/* Single story book with shadow effect */}
               <div className="absolute" style={{ right: '50%', top: '50%', transform: 'translate(50%, -50%) perspective(800px) rotateY(-5deg)', boxShadow: '-2px 5px 15px rgba(0,0,0,0.3)' }}>
-                <img src="/images/hero/personalized-book1.png" alt="Story Book" className="w-auto h-auto object-contain rounded-md" style={{ transform: 'scale(1.6)' }} />
+                <img src="/images/hero/personalized-book1.png" alt="Personalized story book with custom character and storyline" className="w-auto h-auto object-contain rounded-md" style={{ transform: 'scale(1.6)' }} />
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Who are you buying for? Section */}
+      {/* Pick your book style Section */}
       <section className="py-24 bg-white">
         <div className="container px-4 md:px-6 mx-auto">
-          <h2 className="text-4xl font-serif font-bold tracking-tighter text-left mb-12">
-            Who are you buying for?
+          <h2 className="text-4xl font-serif font-bold tracking-tighter text-left mb-6">
+            Pick your book style
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* For Story Book */}
-            <div className="p-8">
-              <div className="bg-[#FDF7ED] rounded-lg mb-4 aspect-square w-[70%] mx-auto relative overflow-hidden">
-                {/* Story Book showcase image */}
-                <img
-                  src="/images/showcase/personalized-book.jpeg"
-                  alt="Story Book Example"
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
+            <button
+              onClick={() => navigate('/friends')}
+              className="group text-left"
+            >
+              <div className="p-6 rounded-lg transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                <div className="bg-[#FDF7ED] rounded-lg mb-4 aspect-square w-[66%] mx-auto relative overflow-hidden">
+                  {/* Story Book showcase image */}
+                  <img
+                    src="/images/showcase/personalized-book.jpeg"
+                    alt="Woman holding a personalized story book with custom title and character"
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                </div>
+                <h3 className="text-2xl font-bold mb-2">Story Book</h3>
+                <p className="text-gray-700 mb-4">Write a story just for them</p>
+                <span className="text-primary group-hover:text-primary/80 inline-flex items-center">
+                  Explore <ArrowRight className="ml-2 h-4 w-4" />
+                </span>
               </div>
-              <h3 className="text-2xl font-bold mb-2">Story Book</h3>
-              <p className="text-gray-700 mb-4">Create a unique story featuring your loved ones as the main characters</p>
-              <Link to="/friends" className="text-primary hover:text-primary/80 inline-flex items-center">
-                Explore <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </div>
+            </button>
 
             {/* For Picture Book */}
-            <div className="p-8">
-              <div className="bg-[#F0F7FF] rounded-lg mb-4 aspect-square w-[70%] mx-auto relative overflow-hidden">
-                {/* Picture Book showcase image */}
-                <img
-                  src="/images/showcase/illustrated-book.png"
-                  alt="Picture Book Example"
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
+            <button
+              onClick={() => navigate('/love')}
+              className="group text-left"
+            >
+              <div className="p-6 rounded-lg transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                <div className="bg-[#F0F7FF] rounded-lg mb-4 aspect-square w-[66%] mx-auto relative overflow-hidden">
+                  {/* Picture Book showcase image */}
+                  <img
+                    src="/images/showcase/illustrated-book.png"
+                    alt="Child holding a colorful illustrated picture book with vibrant artwork"
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                </div>
+                <h3 className="text-2xl font-bold mb-2">Picture Book</h3>
+                <p className="text-gray-700 mb-4">Colorful illustrations with minimal text</p>
+                <span className="text-primary group-hover:text-primary/80 inline-flex items-center">
+                  Explore <ArrowRight className="ml-2 h-4 w-4" />
+                </span>
               </div>
-              <h3 className="text-2xl font-bold mb-2">Picture Book</h3>
-              <p className="text-gray-700 mb-4">Beautiful illustrated stories with your loved ones' photos integrated into the artwork</p>
-              <Link to="/love" className="text-primary hover:text-primary/80 inline-flex items-center">
-                Explore <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </div>
+            </button>
           </div>
         </div>
       </section>
@@ -138,54 +151,54 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* Book 1 */}
             <div className="flex flex-col">
-              <div className="bg-[#FDF7ED] rounded-lg mb-4 aspect-[3/4] w-full relative overflow-hidden">
+              <div className="bg-[#FDF7ED] rounded-lg mb-4 aspect-[3/4] w-[85%] mx-auto relative overflow-hidden">
                 <img
                   src="/images/showcase/personalized-books/personalized-book1.png"
-                  alt="First Mother's Day for Mommy and Me"
+                  alt="Beatboxing Business Blues - A personalized story book memoir cover"
                   className="absolute inset-0 w-full h-full object-cover"
                 />
               </div>
-              <h3 className="text-xl font-bold mb-2">First Mother's Day for Mommy and Me</h3>
-              <p className="text-gray-700">Capture that first precious Mother's Day</p>
+              <h3 className="text-xl font-bold mb-2">Beatboxing Business Blues</h3>
+              <p className="text-gray-700">A hilarious tale of entrepreneurial rhythm</p>
             </div>
 
             {/* Book 2 */}
             <div className="flex flex-col">
-              <div className="bg-[#FDF7ED] rounded-lg mb-4 aspect-[3/4] w-full relative overflow-hidden">
+              <div className="bg-[#FDF7ED] rounded-lg mb-4 aspect-[3/4] w-[85%] mx-auto relative overflow-hidden">
                 <img
                   src="/images/showcase/personalized-books/personalized-book2.png"
-                  alt="I Love Grandma This Much"
+                  alt="Coffee, Corgis, and Quirks - A personalized story book with humorous personal story"
                   className="absolute inset-0 w-full h-full object-cover"
                 />
               </div>
-              <h3 className="text-xl font-bold mb-2">I Love Grandma This Much</h3>
-              <p className="text-gray-700">A heartwarming story for a special grandma</p>
+              <h3 className="text-xl font-bold mb-2">Coffee, Corgis, and Quirks</h3>
+              <p className="text-gray-700">Adventures with furry friends and caffeine</p>
             </div>
 
             {/* Book 3 */}
             <div className="flex flex-col">
-              <div className="bg-[#FDF7ED] rounded-lg mb-4 aspect-[3/4] w-full relative overflow-hidden">
+              <div className="bg-[#FDF7ED] rounded-lg mb-4 aspect-[3/4] w-[85%] mx-auto relative overflow-hidden">
                 <img
                   src="/images/showcase/personalized-books/personalized-book3.png"
-                  alt="When You Were Born"
+                  alt="Shakespeare and Syllables - A personalized memoir with literary themes"
                   className="absolute inset-0 w-full h-full object-cover"
                 />
               </div>
-              <h3 className="text-xl font-bold mb-2">When You Were Born</h3>
-              <p className="text-gray-700">A story to celebrate a new baby</p>
+              <h3 className="text-xl font-bold mb-2">Shakespeare and Syllables</h3>
+              <p className="text-gray-700">Literary wordplay and poetic adventures</p>
             </div>
 
             {/* Book 4 */}
             <div className="flex flex-col">
-              <div className="bg-[#FDF7ED] rounded-lg mb-4 aspect-[3/4] w-full relative overflow-hidden">
+              <div className="bg-[#FDF7ED] rounded-lg mb-4 aspect-[3/4] w-[85%] mx-auto relative overflow-hidden">
                 <img
                   src="/images/showcase/personalized-books/personalized-book4.png"
-                  alt="I Spy You!"
+                  alt="Homebrew High Jinks - A personalized story book about brewing adventures"
                   className="absolute inset-0 w-full h-full object-cover"
                 />
               </div>
-              <h3 className="text-xl font-bold mb-2">I Spy You!</h3>
-              <p className="text-gray-700">A personalized search-and-find book for little ones</p>
+              <h3 className="text-xl font-bold mb-2">Homebrew High Jinks</h3>
+              <p className="text-gray-700">Craft beer mishaps and hoppy escapades</p>
             </div>
           </div>
         </div>
@@ -201,54 +214,54 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* Book 1 */}
             <div className="flex flex-col">
-              <div className="bg-[#F0F7FF] rounded-lg mb-4 aspect-[3/4] w-full relative overflow-hidden">
+              <div className="bg-[#F0F7FF] rounded-lg mb-4 aspect-[3/4] w-[85%] mx-auto relative overflow-hidden">
                 <img
                   src="/images/showcase/illustrated-books/illustrated-book1.jpeg"
-                  alt="Our Love Story"
+                  alt="Auntie Jasmine's Wonderful Maya - A colorful illustrated children's book"
                   className="absolute inset-0 w-full h-full object-cover"
                 />
               </div>
-              <h3 className="text-xl font-bold mb-2">Our Love Story</h3>
-              <p className="text-gray-700">A beautiful illustrated journey of your love</p>
+              <h3 className="text-xl font-bold mb-2">Auntie Jasmine's Wonderful Maya</h3>
+              <p className="text-gray-700">A magical day with a special aunt</p>
             </div>
 
             {/* Book 2 */}
             <div className="flex flex-col">
-              <div className="bg-[#F0F7FF] rounded-lg mb-4 aspect-[3/4] w-full relative overflow-hidden">
+              <div className="bg-[#F0F7FF] rounded-lg mb-4 aspect-[3/4] w-[85%] mx-auto relative overflow-hidden">
                 <img
                   src="/images/showcase/illustrated-books/illustrated-book2.jpeg"
-                  alt="Magical Adventure"
+                  alt="The Magic in Mateo - A colorful illustrated children's picture book"
                   className="absolute inset-0 w-full h-full object-cover"
                 />
               </div>
-              <h3 className="text-xl font-bold mb-2">Magical Adventure</h3>
-              <p className="text-gray-700">Turn your child into the hero of a magical tale</p>
+              <h3 className="text-xl font-bold mb-2">The Magic in Mateo</h3>
+              <p className="text-gray-700">Discover the wonder in everyday moments</p>
             </div>
 
             {/* Book 3 */}
             <div className="flex flex-col">
-              <div className="bg-[#F0F7FF] rounded-lg mb-4 aspect-[3/4] w-full relative overflow-hidden">
+              <div className="bg-[#F0F7FF] rounded-lg mb-4 aspect-[3/4] w-[85%] mx-auto relative overflow-hidden">
                 <img
                   src="/images/showcase/illustrated-books/illustrated-book3.jpeg"
-                  alt="Friendship Chronicles"
+                  alt="Charlie's Amazing Adventure - A colorful illustrated children's picture book"
                   className="absolute inset-0 w-full h-full object-cover"
                 />
               </div>
-              <h3 className="text-xl font-bold mb-2">Friendship Chronicles</h3>
-              <p className="text-gray-700">Celebrate special friendships with a custom story</p>
+              <h3 className="text-xl font-bold mb-2">Charlie's Amazing Adventure</h3>
+              <p className="text-gray-700">Join Charlie on a journey of discovery</p>
             </div>
 
             {/* Book 4 */}
             <div className="flex flex-col">
-              <div className="bg-[#F0F7FF] rounded-lg mb-4 aspect-[3/4] w-full relative overflow-hidden">
+              <div className="bg-[#F0F7FF] rounded-lg mb-4 aspect-[3/4] w-[85%] mx-auto relative overflow-hidden">
                 <img
                   src="/images/showcase/illustrated-books/illustrated-book4.jpeg"
-                  alt="Family Adventures"
+                  alt="Matt, I love you! - A heartfelt illustrated children's picture book"
                   className="absolute inset-0 w-full h-full object-cover"
                 />
               </div>
-              <h3 className="text-xl font-bold mb-2">Family Adventures</h3>
-              <p className="text-gray-700">Turn your family photos into an illustrated storybook</p>
+              <h3 className="text-xl font-bold mb-2">Matt, I love you!</h3>
+              <p className="text-gray-700">A heartfelt expression of love and appreciation</p>
             </div>
           </div>
         </div>
@@ -284,8 +297,12 @@ export default function Home() {
           <p className="text-lg text-gray-600 mb-8 max-w-[600px] mx-auto">
             Start crafting your personalized book today and create memories that will last a lifetime.
           </p>
-          <Button asChild size="lg" className="rounded-full px-8">
-            <Link to="/app">Create Your Book Now</Link>
+          <Button
+            size="lg"
+            className="rounded-full px-8"
+            onClick={() => navigate('/app')}
+          >
+            Create Your Book Now
           </Button>
         </div>
       </section>
