@@ -21,7 +21,7 @@ export default function Home() {
 
             {/* Center - Text and Buttons */}
             <div className="flex flex-col items-center text-center space-y-8">
-              <h1 className="text-5xl md:text-6xl font-bold tracking-tighter">
+              <h1 className="text-5xl md:text-6xl font-serif font-bold tracking-tighter">
                 A book made just for them
               </h1>
               <p className="text-xl text-gray-500 max-w-[500px]">

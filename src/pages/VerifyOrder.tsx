@@ -14,6 +14,7 @@ const VerifyOrder = () => {
   const [verificationCode, setVerificationCode] = useState('');
   const [step, setStep] = useState<'email' | 'code'>('email');
   const [loading, setLoading] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
 
   const handleSendVerification = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,6 +38,7 @@ const VerifyOrder = () => {
       if (response.data.success) {
         // 直接跳转到下一步，不需要显示成功通知
         setStep('code');
+        setCodeSent(true);
       } else {
         throw new Error(response.data.error || 'Failed to send verification code');
       }
@@ -95,34 +97,26 @@ const VerifyOrder = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-24 max-w-md">
-      <div className="mb-6">
-        <button
-          onClick={() => navigate('/')}
-          className="flex items-center text-gray-600 hover:text-gray-900"
-        >
-          <ArrowLeft className="h-5 w-5 mr-1" />
-          Back to Home
-        </button>
-      </div>
+    <div className="container mx-auto px-4 py-24 flex flex-col items-center justify-center min-h-[70vh]">
+      <div className="w-full max-w-[420px]">
 
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <div className="p-6">
-          <div className="flex items-center justify-center mb-6">
+        <div className="p-8">
+          <div className="flex items-center justify-center mb-8">
             <Package className="h-10 w-10 text-[#FF7F50]" />
           </div>
-          <h1 className="text-2xl font-semibold text-center mb-6">Check My Orders</h1>
+          <h1 className="text-2xl font-semibold text-center mb-8">Check My Orders</h1>
 
           {step === 'email' ? (
             <form onSubmit={handleSendVerification}>
-              <div className="space-y-4">
+              <div className="space-y-8">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email Address
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Your order email
                   </label>
                   <Input
                     type="email"
-                    placeholder="Enter the email used for your order"
+                    placeholder="you@youremail.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -130,12 +124,17 @@ const VerifyOrder = () => {
                 </div>
                 <Button
                   type="submit"
-                  className="w-full bg-[#FF7F50] hover:bg-[#FF7F50]/90"
+                  className="w-full bg-[#FF7F50] hover:bg-[#FF7F50]/90 h-12 text-base font-medium"
                   disabled={loading}
                 >
-                  {loading ? 'Sending...' : 'Send Verification Code'}
+                  {loading ? 'Sending...' : 'Get Code'}
                   {!loading && <Send className="ml-2 h-4 w-4" />}
                 </Button>
+                {codeSent && (
+                  <div className="text-xs text-gray-500 flex items-center justify-center mt-4">
+                    <span className="inline-block mr-1">⏱️</span> Code expires in 15 min
+                  </div>
+                )}
               </div>
             </form>
           ) : (
@@ -195,6 +194,7 @@ const VerifyOrder = () => {
             </form>
           )}
         </div>
+      </div>
       </div>
     </div>
   );

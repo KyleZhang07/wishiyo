@@ -9,7 +9,7 @@ const LoveLanding = () => {
             <div className="max-w-6xl mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                 <div className="md:order-2 text-white space-y-6 max-w-[480px]">
-                  <h1 className="text-4xl font-display font-bold px-0 mx-0 md:text-4xl text-slate-800">Turn them into a fairy-tale hero, page by page like an animation</h1>
+                  <h1 className="text-4xl font-serif font-bold px-0 mx-0 md:text-4xl text-slate-800">Turn them into a fairy-tale hero, page by page like an animation</h1>
                   <p className="text-xl text-slate-800">Upload a few photos and instantly create full-color illustrations</p>
                   <Link to="/create/love/love-story/character" className="inline-flex items-center px-6 py-3 text-base font-medium text-white bg-[#FF7F50] rounded-sm hover:bg-[#FF7F50]/80 transition-colors">
                     Start Drawing
