@@ -71,6 +71,10 @@ const GenerateStep = () => {
   const [isGeneratingContent9, setIsGeneratingContent9] = useState(false);
   const [isGeneratingContent10, setIsGeneratingContent10] = useState(false);
 
+  // 添加数据准备状态
+  const [isWaitingForData, setIsWaitingForData] = useState(true);
+  const [dataCheckInterval, setDataCheckInterval] = useState<NodeJS.Timeout | null>(null);
+
   // 样式和内容
   const [selectedStyle, setSelectedStyle] = useState<string>('Photographic (Default)');
   const [imageTexts, setImageTexts] = useState<ImageText[]>([]);
@@ -785,6 +789,19 @@ const GenerateStep = () => {
   // 自动生成所有未生成的图片 - 使用Promise.all并发生成
   const autoGenerateAllImages = async () => {
     console.log('Checking for ungenerated images...');
+
+    // 首先检查数据是否准备好
+    const isDataReady = checkIfDataReady();
+    if (!isDataReady) {
+      console.log('Data is not ready yet, cannot generate images');
+      // 设置等待状态，这将在UI中显示生成中的状态
+      setIsWaitingForData(true);
+      return;
+    }
+
+    // 数据准备好后，继续生成过程
+    setIsWaitingForData(false);
+
     const generationStatus = checkAllContentImagesGenerated();
 
     // 输出详细的生成状态信息
@@ -807,6 +824,7 @@ const GenerateStep = () => {
       }
     }
 
+    // 这些检查在checkIfDataReady中已经做过，这里是额外的安全检查
     if (!savedPrompts || !characterPhoto) {
       console.log('Missing prompts or character photo, cannot generate images');
       return;
@@ -885,43 +903,96 @@ const GenerateStep = () => {
     console.log(`Image generation completed: ${successCount}/${generationTasks.length} successful`);
   };
 
-  // 组件加载后检查并自动生成所有未生成的图片
-  useEffect(() => {
-    // 添加详细日志帮助调试
-    console.log('GenerateStep useEffect triggered');
-    console.log('isLoadingImages:', isLoadingImages);
-    console.log('imageTexts length:', imageTexts.length);
-    console.log('supabaseImages length:', supabaseImages.length);
+  // 检查数据是否准备完成
+  const checkIfDataReady = () => {
+    // 检查imageTexts是否已加载
+    const hasImageTexts = imageTexts.length > 0;
 
-    // 检查localStorage中的关键数据
+    // 检查imagePrompts是否已生成
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    let hasImagePrompts = false;
+
+    if (savedPrompts) {
+      try {
+        const parsedPrompts = JSON.parse(savedPrompts);
+        hasImagePrompts = parsedPrompts && parsedPrompts.length >= 11; // 需要至少11个提示
+      } catch (error) {
+        console.error('Error parsing prompts:', error);
+      }
+    }
+
+    // 检查角色照片是否存在
     const characterPhoto = localStorage.getItem('loveStoryPartnerPhoto');
-    console.log('savedPrompts exists:', !!savedPrompts);
-    console.log('characterPhoto exists:', !!characterPhoto);
+    const hasCharacterPhoto = !!characterPhoto;
 
-    // 检查图片URL
-    const introImageUrl = localStorage.getItem('loveStoryIntroImage_url');
-    console.log('introImageUrl exists:', !!introImageUrl);
+    // 输出详细日志
+    console.log('Data readiness check:');
+    console.log('- Has imageTexts:', hasImageTexts, `(${imageTexts.length} items)`);
+    console.log('- Has imagePrompts:', hasImagePrompts);
+    console.log('- Has characterPhoto:', hasCharacterPhoto);
 
-    for (let i = 1; i <= 3; i++) { // 只检查前3个图片，避免日志过多
-      const imageUrl = localStorage.getItem(`loveStoryContentImage${i}_url`);
-      console.log(`contentImage${i}_url exists:`, !!imageUrl);
-    }
+    // 所有数据都准备好时返回true
+    return hasImageTexts && hasImagePrompts && hasCharacterPhoto;
+  };
 
-    // 确保所有图片数据都已加载
-    if (!isLoadingImages && imageTexts.length > 0) {
-      console.log('Conditions met, scheduling autoGenerateAllImages...');
-      // 延迟执行，确保所有状态都已更新
-      const timer = setTimeout(() => {
-        console.log('Executing autoGenerateAllImages...');
-        autoGenerateAllImages();
-      }, 2000); // 2秒延迟，确保其他操作已完成
+  // 组件加载后设置定期检查数据是否准备完成
+  useEffect(() => {
+    console.log('GenerateStep component mounted, setting up data check interval');
 
-      return () => clearTimeout(timer);
-    } else {
-      console.log('Conditions not met for autoGenerateAllImages');
-    }
-  }, [isLoadingImages, imageTexts, supabaseImages]);
+    // 初始检查
+    const initialCheck = () => {
+      const isDataReady = checkIfDataReady();
+
+      if (isDataReady) {
+        console.log('Data is ready, starting image generation...');
+        setIsWaitingForData(false);
+
+        // 开始生成图片
+        if (!isLoadingImages) {
+          console.log('Executing autoGenerateAllImages...');
+          autoGenerateAllImages();
+        }
+      } else {
+        console.log('Data is not ready yet, will check again in 2 seconds');
+        setIsWaitingForData(true);
+      }
+    };
+
+    // 立即执行一次初始检查
+    initialCheck();
+
+    // 设置定期检查
+    const interval = setInterval(() => {
+      const isDataReady = checkIfDataReady();
+
+      if (isDataReady) {
+        console.log('Data is now ready, starting image generation...');
+        setIsWaitingForData(false);
+
+        // 开始生成图片
+        if (!isLoadingImages) {
+          console.log('Executing autoGenerateAllImages...');
+          autoGenerateAllImages();
+        }
+
+        // 数据准备好后清除定时器
+        clearInterval(interval);
+        setDataCheckInterval(null);
+      } else {
+        console.log('Data is still not ready, continuing to wait...');
+        setIsWaitingForData(true);
+      }
+    }, 2000); // 每2秒检查一次
+
+    setDataCheckInterval(interval);
+
+    // 组件卸载时清除定时器
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [isLoadingImages]); // 只在组件加载和isLoadingImages变化时执行
 
   // 渲染祝福语图片
   const handleRenderBlessingImage = async () => {
@@ -1065,10 +1136,9 @@ const GenerateStep = () => {
               image={introImage}
               leftImageUrl={localStorage.getItem('loveStoryIntroImage_left_url') || undefined}
               rightImageUrl={localStorage.getItem('loveStoryIntroImage_right_url') || undefined}
-              isGenerating={isGeneratingIntro}
+              isGenerating={isGeneratingIntro || isWaitingForData}
               onRegenerate={handleRegenerateIntro}
               index={0}
-
               text={imageTexts && imageTexts.length > 1 ? imageTexts[1]?.text : undefined}
               title=""
             />
@@ -1090,8 +1160,7 @@ const GenerateStep = () => {
                     image={image}
                     leftImageUrl={localStorage.getItem(`loveStoryContentImage${index}_left_url`) || undefined}
                     rightImageUrl={localStorage.getItem(`loveStoryContentImage${index}_right_url`) || undefined}
-                    isGenerating={isLoading || false}
-
+                    isGenerating={isLoading || isWaitingForData || false}
                     onRegenerate={onRegenerate}
                     index={index}
                     text={text}
