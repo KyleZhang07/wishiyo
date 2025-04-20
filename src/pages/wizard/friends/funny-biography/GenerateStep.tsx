@@ -406,10 +406,25 @@ const FunnyBiographyGenerateStep = () => {
       console.log('检测到背景移除正在进行，等待完成...');
       try {
         await backgroundRemovalPromise.current;
-        console.log('背景移除完成，继续生成封面...');
+        console.log('背景移除完成，等待状态更新...');
+
+        // 添加额外的延时，等待状态更新和 React 渲染循环
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        console.log('状态更新完成，继续生成封面...');
       } catch (error) {
         console.error('等待背景移除完成时出错:', error);
       }
+    }
+
+    // 检查 sessionStorage 中是否有处理后的图片，如果有则强制使用
+    const sessionProcessedPhoto = sessionStorage.getItem('funnyBiographyProcessedPhoto');
+    if (sessionProcessedPhoto && coverImage !== sessionProcessedPhoto) {
+      console.log('强制使用 sessionStorage 中的处理后图片');
+      setCoverImage(sessionProcessedPhoto);
+
+      // 添加额外的延时，等待图片状态更新
+      await new Promise(resolve => setTimeout(resolve, 300));
     }
 
     // 然后生成封面
@@ -444,6 +459,17 @@ const FunnyBiographyGenerateStep = () => {
   const handleStyleChange = (styleId: string) => {
     // 更新样式，触发样式变化监听器
     setSelectedStyle(styleId);
+
+    // 当样式变化时，清除已有的PDF并重新生成
+    setFrontCoverPdf(null);
+    setBackCoverPdf(null);
+    setSpinePdf(null);
+
+    // 添加延时，等待样式状态更新
+    setTimeout(() => {
+      console.log('样式变化，重新生成封面...');
+      safeGenerateImagesFromCanvas();
+    }, 300);
   };
 
   // 生成图像的函数 - 确保使用sessionStorage中的图片
@@ -451,16 +477,19 @@ const FunnyBiographyGenerateStep = () => {
     if (!fontsLoaded) {
       console.log('字体尚未加载完成，延迟生成...');
       setTimeout(() => {
-        generateImagesFromCanvas();
+        safeGenerateImagesFromCanvas(); // 使用安全生成函数而不是直接生成
       }, 500);
       return;
     }
 
-    // 检查是否有sessionStorage中的处理后图片，如果有则优先使用
+    // 再次检查是否有sessionStorage中的处理后图片，确保使用最新的处理后图片
     const sessionProcessedPhoto = sessionStorage.getItem('funnyBiographyProcessedPhoto');
     if (sessionProcessedPhoto && coverImage !== sessionProcessedPhoto) {
       console.log('使用sessionStorage中的处理后图片生成封面');
       setCoverImage(sessionProcessedPhoto);
+
+      // 添加延时，等待状态更新
+      await new Promise(resolve => setTimeout(resolve, 300));
     }
 
     // 打印当前的图片位置和缩放值，用于调试
@@ -473,6 +502,7 @@ const FunnyBiographyGenerateStep = () => {
 
     // 确保 Canvas 已经渲染
     console.log('等待Canvas渲染...');
+    // 增加延时时间，从600ms增加到1000ms，确保有足够的时间进行渲染
     setTimeout(() => {
       try {
         if (!canvasPdfContainerRef.current) {
@@ -516,7 +546,7 @@ const FunnyBiographyGenerateStep = () => {
         console.error('Error generating cover images:', error);
         setPdfGenerating(false);
       }
-    }, 600); // 给Canvas渲染提供足够时间
+    }, 1000); // 给Canvas渲染提供更多时间，从600ms增加到1000ms
   };
 
   const handleGenerateBook = () => {
@@ -643,7 +673,7 @@ const FunnyBiographyGenerateStep = () => {
 
             <div className="space-y-4 mt-4">
               <div className="flex flex-wrap justify-center gap-6">
-                {[...stylePresets].map((style, index) => {
+                {[...stylePresets].map((style) => {
                   // Get template and layout data based on style configuration
                   const template = style.template;
 
