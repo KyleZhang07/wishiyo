@@ -758,32 +758,61 @@ const GenerateStep = () => {
 
   // 检查所有内容图片是否已生成
   const checkAllContentImagesGenerated = () => {
+    console.log('Checking all content images generation status...');
+
     // 检查intro图片
     const introImageUrl = localStorage.getItem('loveStoryIntroImage_url');
+    const introLeftUrl = localStorage.getItem('loveStoryIntroImage_left_url');
+    const introRightUrl = localStorage.getItem('loveStoryIntroImage_right_url');
 
     // 检查所有content图片
     const contentImagesStatus = [];
 
     for (let i = 1; i <= 10; i++) {
       const imageUrl = localStorage.getItem(`loveStoryContentImage${i}_url`);
+      const leftUrl = localStorage.getItem(`loveStoryContentImage${i}_left_url`);
+      const rightUrl = localStorage.getItem(`loveStoryContentImage${i}_right_url`);
+
+      // 检查图片是否完全生成（原始图片和渲染后的左右图片）
+      const isFullyGenerated = !!imageUrl && !!leftUrl && !!rightUrl;
+      // 检查图片是否部分生成（只有原始图片，没有渲染）
+      const isPartiallyGenerated = !!imageUrl && (!leftUrl || !rightUrl);
+
+      console.log(`Content image ${i} status: ${isFullyGenerated ? 'fully generated' : isPartiallyGenerated ? 'partially generated' : 'not generated'}`);
 
       contentImagesStatus.push({
         index: i,
-        isGenerated: !!imageUrl,
-        imageState: imageStateMap[i]
+        isGenerated: isFullyGenerated, // 只有完全生成才算生成成功
+        isPartiallyGenerated: isPartiallyGenerated,
+        imageState: imageStateMap[i],
+        urls: {
+          original: imageUrl || null,
+          left: leftUrl || null,
+          right: rightUrl || null
+        }
       });
     }
 
+    const introStatus = {
+      isGenerated: !!introImageUrl && !!introLeftUrl && !!introRightUrl,
+      isPartiallyGenerated: !!introImageUrl && (!introLeftUrl || !introRightUrl),
+      imageState: introImage,
+      urls: {
+        original: introImageUrl || null,
+        left: introLeftUrl || null,
+        right: introRightUrl || null
+      }
+    };
+
+    console.log(`Intro image status: ${introStatus.isGenerated ? 'fully generated' : introStatus.isPartiallyGenerated ? 'partially generated' : 'not generated'}`);
+
     return {
-      intro: {
-        isGenerated: !!introImageUrl,
-        imageState: introImage
-      },
+      intro: introStatus,
       contentImages: contentImagesStatus
     };
   };
 
-  // 自动生成所有未生成的图片 - 使用Promise.all并发生成
+  // 自动生成和渲染所有图片 - 使用Promise.all并发处理
   const autoGenerateAllImages = async () => {
     console.log('Checking for ungenerated images...');
     const generationStatus = checkAllContentImagesGenerated();
@@ -803,35 +832,69 @@ const GenerateStep = () => {
       return;
     }
 
-    // 创建生成任务数组
-    const generationTasks = [];
+    // 创建任务数组
+    const tasks = [];
 
-    // 添加intro图片生成任务（如果需要）
-    if (!generationStatus.intro.isGenerated) {
+    // 添加需要生成的图片任务
+    if (!generationStatus.intro.urls.original) {
+      // 如果原始图片不存在，需要生成
       console.log('Adding intro image generation task...');
-      generationTasks.push({
-        type: 'intro',
+      tasks.push({
+        type: 'generate',
+        imageType: 'intro',
         task: async () => {
           try {
             await handleRegenerateIntro();
             console.log('Intro image generated successfully');
             return true;
           } catch (error) {
-            console.error('Error auto-generating intro image:', error);
+            console.error('Error generating intro image:', error);
+            return false;
+          }
+        }
+      });
+    } else if (generationStatus.intro.isPartiallyGenerated) {
+      // 如果原始图片存在但没有渲染，需要渲染
+      console.log('Adding intro image rendering task...');
+      tasks.push({
+        type: 'render',
+        imageType: 'intro',
+        task: async () => {
+          try {
+            // 获取原始图片和文本
+            const introImageData = generationStatus.intro.urls.original;
+            const introText = imageTexts && imageTexts.length > 1 ? imageTexts[1].text : "Welcome to our love story.";
+
+            if (introImageData) {
+              // 渲染并上传图片
+              await renderAndUploadIntroImage(
+                introImageData,
+                introText,
+                selectedStyle,
+                supabaseImages
+              );
+              console.log('Intro image rendered successfully');
+              return true;
+            }
+            return false;
+          } catch (error) {
+            console.error('Error rendering intro image:', error);
             return false;
           }
         }
       });
     }
 
-    // 添加所有content图片生成任务（如果需要）
+    // 添加所有content图片任务
     for (const contentImage of generationStatus.contentImages) {
-      if (!contentImage.isGenerated) {
+      if (!contentImage.urls.original) {
+        // 如果原始图片不存在，需要生成
         console.log(`Adding content image ${contentImage.index} generation task...`);
         const regenerateFunction = handleRegenerateMap[contentImage.index];
         if (regenerateFunction) {
-          generationTasks.push({
-            type: 'content',
+          tasks.push({
+            type: 'generate',
+            imageType: 'content',
             index: contentImage.index,
             task: async () => {
               try {
@@ -839,66 +902,89 @@ const GenerateStep = () => {
                 console.log(`Content image ${contentImage.index} generated successfully`);
                 return true;
               } catch (error) {
-                console.error(`Error auto-generating content image ${contentImage.index}:`, error);
+                console.error(`Error generating content image ${contentImage.index}:`, error);
                 return false;
               }
             }
           });
         }
+      } else if (contentImage.isPartiallyGenerated) {
+        // 如果原始图片存在但没有渲染，需要渲染
+        console.log(`Adding content image ${contentImage.index} rendering task...`);
+        tasks.push({
+          type: 'render',
+          imageType: 'content',
+          index: contentImage.index,
+          task: async () => {
+            try {
+              // 获取原始图片和文本
+              const imageData = contentImage.urls.original;
+              const textIndex = contentImage.index + 1;
+              const text = imageTexts && imageTexts.length > textIndex ? imageTexts[textIndex].text : "A beautiful moment captured in this image.";
+
+              if (imageData) {
+                // 渲染并上传图片
+                await autoRenderContentImage(imageData, contentImage.index);
+                console.log(`Content image ${contentImage.index} rendered successfully`);
+                return true;
+              }
+              return false;
+            } catch (error) {
+              console.error(`Error rendering content image ${contentImage.index}:`, error);
+              return false;
+            }
+          }
+        });
       }
     }
 
-    // 如果没有需要生成的图片，直接返回
-    if (generationTasks.length === 0) {
-      console.log('All images already generated');
+    // 如果没有需要处理的任务，直接返回
+    if (tasks.length === 0) {
+      console.log('All images already fully generated and rendered');
       return;
     }
 
-    console.log(`Starting parallel generation of ${generationTasks.length} images...`);
+    console.log(`Starting parallel processing of ${tasks.length} tasks...`);
 
-    // 并发执行所有生成任务，每个任务之间有小的延迟以避免请求过快
+    // 并发执行所有任务，每个任务之间有小的延迟以避免请求过快
     const results = await Promise.all(
-      generationTasks.map(async (task, index) => {
+      tasks.map(async (task, index) => {
         // 添加随机延迟，避免所有请求同时发出
         await new Promise(resolve => setTimeout(resolve, index * 200));
         return task.task();
       })
     );
 
-    // 统计生成结果
+    // 统计处理结果
     const successCount = results.filter(result => result).length;
-    console.log(`Image generation completed: ${successCount}/${generationTasks.length} successful`);
+    console.log(`Image processing completed: ${successCount}/${tasks.length} successful`);
+
+    // 刷新图片列表，确保显示最新的图片
+    setTimeout(() => {
+      loadImagesFromSupabase();
+    }, 1000);
   };
 
   // 组件加载后检查并自动生成所有未生成的图片
   useEffect(() => {
     // 确保所有图片数据都已加载
-    if (!isLoadingImages && imageTexts.length > 0) {
+    if (!isLoadingImages && imageTexts.length > 0 && supabaseImages.length > 0) {
+      console.log('All data loaded, preparing to generate images...');
       // 延迟执行，确保所有状态都已更新
       const timer = setTimeout(() => {
+        console.log('Starting auto generation of images...');
         autoGenerateAllImages();
-      }, 2000); // 2秒延迟，确保其他操作已完成
+
+        // 自动生成祝福语图片
+        if (!blessingImage) {
+          console.log('Auto generating blessing image...');
+          handleRenderBlessingImage();
+        }
+      }, 3000); // 增加到3秒延迟，确保其他操作已完成
 
       return () => clearTimeout(timer);
     }
-  }, [isLoadingImages, imageTexts]);
-
-
-
-
-
-  // 组件加载后检查并自动生成所有未生成的图片
-  useEffect(() => {
-    // 确保所有图片数据都已加载
-    if (!isLoadingImages && imageTexts.length > 0) {
-      // 延迟执行，确保所有状态都已更新
-      const timer = setTimeout(() => {
-        autoGenerateAllImages();
-      }, 2000); // 2秒延迟，确保其他操作已完成
-
-      return () => clearTimeout(timer);
-    }
-  }, [isLoadingImages, imageTexts]);
+  }, [isLoadingImages, imageTexts, supabaseImages, blessingImage]);
 
   // 渲染祝福语图片
   const handleRenderBlessingImage = async () => {
