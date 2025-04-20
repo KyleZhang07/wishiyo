@@ -1,20 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import WizardStep from '@/components/wizard/WizardStep';
-import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { uploadImageToStorage, getAllImagesFromStorage, deleteImageFromStorage } from '@/integrations/supabase/storage';
-import { CoverPreviewCard } from './components/CoverPreviewCard';
 import { ContentImageCard } from './components/ContentImageCard';
-import { Wand2, MessageSquareText, RefreshCw } from 'lucide-react';
+import { Wand2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Textarea } from '@/components/ui/textarea';
 import { useRenderContext } from '@/context/RenderContext';
 
 // 导入工具函数
-import { expandImage, handleGenericContentRegeneration as handleContentRegeneration } from './utils/imageProcessingUtils';
-import { renderContentImage, createImageStateMaps } from './utils/renderUtils';
-import { loadImagesFromSupabase as fetchImagesFromSupabase } from './utils/storageUtils';
+import { handleGenericContentRegeneration as handleContentRegeneration } from './utils/imageProcessingUtils';
 import { renderAndUploadContentImage, renderAndUploadIntroImage, renderAndUploadBlessingImage } from './utils/canvasUtils';
 
 // 导入新增的BackCoverPreviewCard组件
@@ -265,254 +260,8 @@ const GenerateStep = () => {
     }
   };
 
-  const generateInitialImages = async (prompts: string, partnerPhoto: string) => {
-    setIsGeneratingIntro(true);
-    // 移除toast通知，减少用户干扰
-
-    try {
-      // 获取当前图片的URL，用于后续删除
-      const currentIntroImageUrl = localStorage.getItem('loveStoryIntroImage_url');
-
-      // 查找当前图片在Supabase中的路径
-      let currentIntroImagePath = '';
-
-      if (currentIntroImageUrl) {
-        const currentIntroImageName = currentIntroImageUrl.split('/').pop();
-        if (currentIntroImageName) {
-          const currentImage = supabaseImages.find(img => img.name.includes(currentIntroImageName));
-          if (currentImage) {
-            currentIntroImagePath = currentImage.name;
-          }
-        }
-      }
-
-      // 我们现在解析完整的prompts对象，而不是使用传入的字符串
-      // 这样我们可以正确访问每个图像对应的提示
-      const promptsObj = JSON.parse(localStorage.getItem('loveStoryImagePrompts') || '[]');
-      if (!promptsObj || promptsObj.length < 3) {
-        throw new Error("Not enough prompts for image generation");
-      }
-
-      // 为每个图像类型使用专门的提示
-      const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-        body: {
-          contentPrompt: promptsObj[1].prompt,   // intro使用prompts[1]
-          content2Prompt: promptsObj[2].prompt,  // Moment 1使用prompts[2]
-          content3Prompt: promptsObj[3].prompt,  // Moment 2使用prompts[3]
-          content4Prompt: promptsObj[4].prompt,  // Moment 3使用prompts[4]
-          content5Prompt: promptsObj[5].prompt,  // Moment 4使用prompts[5]
-          content6Prompt: promptsObj[6].prompt,  // Moment 5使用prompts[6]
-          content7Prompt: promptsObj[7].prompt,  // Moment 6使用prompts[7]
-          content8Prompt: promptsObj[8].prompt,  // Moment 7使用prompts[8]
-          content9Prompt: promptsObj[9].prompt,  // Moment 8使用prompts[9]
-          content10Prompt: promptsObj[10].prompt, // Moment 9使用prompts[10]
-          photo: partnerPhoto,
-          style: selectedStyle,
-          type: 'all'
-        }
-      });
-
-      if (error) throw error;
-
-      // 处理介绍图片
-      if (data?.contentImage?.[0]) {
-        const introImageData = data.contentImage[0];
-        setIntroImage(introImageData);
-
-        // 使用时间戳确保文件名唯一
-        const timestamp = Date.now();
-
-        // Upload to Supabase Storage
-        const storageUrl = await uploadImageToStorage(
-          introImageData,
-          'images',
-          `love-story-intro-${timestamp}`
-        );
-
-        // Update storage map
-        setImageStorageMap(prev => ({
-          ...prev,
-          ['loveStoryIntroImage']: {
-            localStorageKey: 'loveStoryIntroImage',
-            url: storageUrl
-          }
-        }));
-
-        // Store only the URL reference in localStorage
-        localStorage.setItem('loveStoryIntroImage_url', storageUrl);
-
-        // 删除旧介绍图片
-        if (currentIntroImagePath) {
-          try {
-            await deleteImageFromStorage(currentIntroImagePath, 'images');
-            console.log(`Deleted old intro image: ${currentIntroImagePath}`);
-          } catch (deleteErr) {
-            console.error(`Failed to delete old intro image: ${currentIntroImagePath}`, deleteErr);
-            // 继续处理，即使删除失败
-          }
-        }
-
-        // 自动渲染介绍图片
-        try {
-          // 获取介绍文本
-          const introText = imageTexts && imageTexts.length > 1 ? imageTexts[1].text : "";
-
-          // 移除toast通知，减少用户干扰
-
-          // 渲染并上传图片
-          const result = await renderAndUploadIntroImage(
-            introImageData,
-            introText || "Welcome to our love story.",
-            selectedStyle,
-            supabaseImages
-          );
-
-          // 更新localStorage - 只存储分割后的左右两部分URL
-          localStorage.setItem('loveStoryIntroImage_left_url', result.leftImageUrl);
-          localStorage.setItem('loveStoryIntroImage_right_url', result.rightImageUrl);
-
-          // 更新imageStorageMap
-          setImageStorageMap(prev => ({
-            ...prev,
-            ['loveStoryIntroImage']: {
-              localStorageKey: 'loveStoryIntroImage',
-              leftUrl: result.leftImageUrl,
-              rightUrl: result.rightImageUrl
-            }
-          }));
-
-          // 清除原始介绍图片
-          try {
-            // 查找所有包含原始介绍图片名称的图片
-            const originalIntroImages = supabaseImages.filter(img => {
-              // 匹配 love-story-intro-数字-时间戳 模式，但不匹配 intro-数字-数字 模式
-              const isOriginalImage = img.name.includes('love-story-intro-');
-              const isProcessedImage = /intro-\d+-\d+/.test(img.name);
-              return isOriginalImage && !isProcessedImage;
-            });
-
-            if (originalIntroImages.length > 0) {
-              console.log(`Found ${originalIntroImages.length} original intro images to delete`);
-
-              // 并行删除所有原始图片
-              const deletePromises = originalIntroImages.map(img => {
-                // 从完整路径中提取文件名
-                const pathParts = img.name.split('/');
-                const filename = pathParts[pathParts.length - 1];
-                console.log(`Deleting original intro image: ${filename}`);
-                return deleteImageFromStorage(filename, 'images');
-              });
-
-              // 等待所有删除操作完成
-              await Promise.all(deletePromises);
-              console.log('Successfully deleted original intro images');
-            }
-          } catch (deleteError) {
-            console.error('Error deleting original intro images:', deleteError);
-            // 继续处理，即使删除失败
-          }
-
-          // 移除toast通知，减少用户干扰
-        } catch (renderError) {
-          console.error("Error auto-rendering intro image:", renderError);
-          toast({
-            title: "Intro image rendering failed",
-            description: "Could not process the introduction image. Please try again.",
-            variant: "destructive",
-          });
-        }
-      }
-
-      // 处理所有内容图片
-      // 定义图片数据和状态设置函数的映射
-      const contentImageSetters = {
-        contentImage2: { setter: setContentImage1, index: 1 },
-        contentImage3: { setter: setContentImage2, index: 2 },
-        contentImage4: { setter: setContentImage3, index: 3 },
-        contentImage5: { setter: setContentImage4, index: 4 },
-        contentImage6: { setter: setContentImage5, index: 5 },
-        contentImage7: { setter: setContentImage6, index: 6 },
-        contentImage8: { setter: setContentImage7, index: 7 },
-        contentImage9: { setter: setContentImage8, index: 8 },
-        contentImage10: { setter: setContentImage9, index: 9 },
-        contentImage11: { setter: setContentImage10, index: 10 }
-      };
-
-      // 处理每个内容图片
-      for (const [dataKey, { setter, index }] of Object.entries(contentImageSetters)) {
-        if (data?.[dataKey]?.[0]) {
-          const contentImageData = data[dataKey][0];
-          setter(contentImageData);
-
-          // 获取当前内容图片的URL，用于后续删除
-          const currentContentImageUrl = localStorage.getItem(`loveStoryContentImage${index}_url`);
-          let currentContentImagePath = '';
-
-          if (currentContentImageUrl) {
-            const currentContentImageName = currentContentImageUrl.split('/').pop();
-            if (currentContentImageName) {
-              const currentImage = supabaseImages.find(img => img.name.includes(currentContentImageName));
-              if (currentImage) {
-                currentContentImagePath = currentImage.name;
-              }
-            }
-          }
-
-          // 使用时间戳确保文件名唯一
-          const timestamp = Date.now();
-
-          // Upload to Supabase Storage
-          const storageUrl = await uploadImageToStorage(
-            contentImageData,
-            'images',
-            `love-story-content-${index}-${timestamp}`
-          );
-
-          // Update storage map
-          setImageStorageMap(prev => ({
-            ...prev,
-            [`loveStoryContentImage${index}`]: {
-              localStorageKey: `loveStoryContentImage${index}`,
-              url: storageUrl
-            }
-          }));
-
-          // Store only the URL reference in localStorage
-          localStorage.setItem(`loveStoryContentImage${index}_url`, storageUrl);
-
-          // 删除旧内容图片
-          if (currentContentImagePath) {
-            try {
-              await deleteImageFromStorage(currentContentImagePath, 'images');
-              console.log(`Deleted old content image: ${currentContentImagePath}`);
-            } catch (deleteErr) {
-              console.error(`Failed to delete old content image: ${currentContentImagePath}`, deleteErr);
-              // 继续处理，即使删除失败
-            }
-          }
-
-          // 自动渲染内容图片
-          await autoRenderContentImage(contentImageData, index);
-        }
-      }
-
-      // 不需要显示成功通知，用户可以看到图片已生成
-
-      // 刷新图片列表
-      setTimeout(() => {
-        loadImagesFromSupabase();
-      }, 1000);
-    } catch (err: any) {
-      console.error("Error generating images:", err);
-      toast({
-        title: "Error generating images",
-        description: err.message || "Please try again",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGeneratingIntro(false);
-    }
-  };
+  // generateInitialImages函数已被删除，使用autoGenerateAllImages代替
+  // 该函数会自动检测并生成所有未生成的图片
 
   // 新增加：从Supabase加载所有图片
   const loadImagesFromSupabase = async () => {
@@ -1006,6 +755,113 @@ const GenerateStep = () => {
       localStorage.setItem('lastRenderedCoverImageIndex', localStorage.getItem('loveStorySelectedCoverIndex') || '');
     }
   }, [coverRenderComplete, coverImageUrl]);
+
+  // 检查所有内容图片是否已生成
+  const checkAllContentImagesGenerated = () => {
+    // 检查intro图片
+    const introImageUrl = localStorage.getItem('loveStoryIntroImage_url');
+
+    // 检查所有content图片
+    const contentImagesStatus = [];
+
+    for (let i = 1; i <= 10; i++) {
+      const imageUrl = localStorage.getItem(`loveStoryContentImage${i}_url`);
+
+      contentImagesStatus.push({
+        index: i,
+        isGenerated: !!imageUrl,
+        imageState: imageStateMap[i]
+      });
+    }
+
+    return {
+      intro: {
+        isGenerated: !!introImageUrl,
+        imageState: introImage
+      },
+      contentImages: contentImagesStatus
+    };
+  };
+
+  // 自动生成所有未生成的图片
+  const autoGenerateAllImages = async () => {
+    console.log('Checking for ungenerated images...');
+    const generationStatus = checkAllContentImagesGenerated();
+
+    // 获取必要的数据
+    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const characterPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+
+    if (!savedPrompts || !characterPhoto) {
+      console.log('Missing prompts or character photo, cannot generate images');
+      return;
+    }
+
+    const prompts = JSON.parse(savedPrompts);
+    if (!prompts || prompts.length < 11) { // 需要至少11个提示（封面+引导+9个内容）
+      console.log('Not enough prompts for image generation');
+      return;
+    }
+
+    // 生成intro图片（如果需要）
+    if (!generationStatus.intro.isGenerated) {
+      console.log('Auto-generating intro image...');
+      try {
+        // 使用handleRegenerateIntro函数生成intro图片
+        await handleRegenerateIntro();
+      } catch (error) {
+        console.error('Error auto-generating intro image:', error);
+      }
+    }
+
+    // 生成所有content图片（如果需要）
+    for (const contentImage of generationStatus.contentImages) {
+      if (!contentImage.isGenerated) {
+        console.log(`Auto-generating content image ${contentImage.index}...`);
+        try {
+          // 避免并行生成导致的问题，使用await确保顺序执行
+          const regenerateFunction = handleRegenerateMap[contentImage.index];
+          if (regenerateFunction) {
+            await regenerateFunction();
+            // 添加延迟，避免请求过快
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        } catch (error) {
+          console.error(`Error auto-generating content image ${contentImage.index}:`, error);
+        }
+      }
+    }
+  };
+
+  // 组件加载后检查并自动生成所有未生成的图片
+  useEffect(() => {
+    // 确保所有图片数据都已加载
+    if (!isLoadingImages && imageTexts.length > 0) {
+      // 延迟执行，确保所有状态都已更新
+      const timer = setTimeout(() => {
+        autoGenerateAllImages();
+      }, 2000); // 2秒延迟，确保其他操作已完成
+
+      return () => clearTimeout(timer);
+    }
+  }, [isLoadingImages, imageTexts]);
+
+
+
+
+
+  // 组件加载后检查并自动生成所有未生成的图片
+  useEffect(() => {
+    // 确保所有图片数据都已加载
+    if (!isLoadingImages && imageTexts.length > 0) {
+      // 延迟执行，确保所有状态都已更新
+      const timer = setTimeout(() => {
+        autoGenerateAllImages();
+      }, 2000); // 2秒延迟，确保其他操作已完成
+
+      return () => clearTimeout(timer);
+    }
+  }, [isLoadingImages, imageTexts]);
 
   // 渲染祝福语图片
   const handleRenderBlessingImage = async () => {
