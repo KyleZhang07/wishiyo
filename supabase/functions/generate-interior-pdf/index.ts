@@ -341,7 +341,7 @@ serve(async (req) => {
 
     setFont('subtitle'); // Georgia Normal 16pt
     // 将作者上移，位于标题下方
-    const authorY = titleY + 1.0; // 标题下方1英寸
+    const authorY = titleY + 3.0; // 标题下方3英寸（从1英寸增加）
     // 作者名称也使用相同的偏移
     pdf.text(`by ${author}`, titleX, authorY, { align: 'center' });
 
@@ -375,19 +375,19 @@ serve(async (req) => {
                            'and joy to recipients. Use this book solely in the spirit of fun and amusement.';
 
     const secondParaLines = pdf.splitTextToSize(secondParagraph, maxWidth);
-    // 减少第一段和第二段之间的间距，从0.5英寸减少到0.25英寸
-    pdf.text(secondParaLines, copyrightMargins.left, copyrightMargins.top + 1.3 + firstParaHeight + 0.25);
+    // 减少第一段和第二段之间的间距，从0.25英寸减少到0.15英寸
+    pdf.text(secondParaLines, copyrightMargins.left, copyrightMargins.top + 1.3 + firstParaHeight + 0.15);
 
     // 计算第二段的高度
     const secondParaHeight = secondParaLines.length * lineHeight;
 
     // 版本信息
-    // 使用新的坐标计算方式，减少与第二段的间距
-    pdf.text('First edition, ' + year, copyrightMargins.left, copyrightMargins.top + 1.3 + firstParaHeight + 0.25 + secondParaHeight + 0.25);
+    // 使用新的坐标计算方式，减少与第二段的间距，从0.25英寸减少到0.15英寸
+    pdf.text('First edition, ' + year, copyrightMargins.left, copyrightMargins.top + 1.3 + firstParaHeight + 0.15 + secondParaHeight + 0.15);
 
     // 出版信息
-    // 减少与版本信息的间距
-    pdf.text('Published by Wishiyo.com', copyrightMargins.left, copyrightMargins.top + 1.3 + firstParaHeight + 0.25 + secondParaHeight + 0.25 + 0.25);
+    // 减少与版本信息的间距，从0.25英寸减少到0.15英寸
+    pdf.text('Published by Wishiyo.com', copyrightMargins.left, copyrightMargins.top + 1.3 + firstParaHeight + 0.15 + secondParaHeight + 0.15 + 0.15);
 
     addPage();
     // 获取当前页的动态边距
@@ -396,11 +396,21 @@ serve(async (req) => {
 
     // 使用更大的字号和Garamond样式的"Contents"标题
     setFont('contentsTitle');
-    // 将Contents标题向右偏移0.18英寸，并向下移动
+    // 根据奇偶页调整Contents标题的位置
     const contentsOffset = 0.18;
-    const contentsX = pageWidth / 2 + contentsOffset;
     const contentsY = contentsMargins.top + 1.2; // 向下移动到1.2英寸
-    pdf.text('Contents', contentsX, contentsY, { align: 'center' });
+
+    // 检查当前页是奇数页（右页）还是偶数页（左页）
+    const isRightPage = contentsPageNum % 2 === 1;
+    if (isRightPage) {
+      // 奇数页（右页）：标题偏右
+      const contentsX = pageWidth / 2 + contentsOffset;
+      pdf.text('Contents', contentsX, contentsY, { align: 'center' });
+    } else {
+      // 偶数页（左页）：标题偏左
+      const contentsX = pageWidth / 2 - contentsOffset;
+      pdf.text('Contents', contentsX, contentsY, { align: 'center' });
+    }
 
     // 创建一个数组来存储目录条目的信息，以便在渲染完所有章节后回填页码
     const tocEntries: Array<{
@@ -408,6 +418,7 @@ serve(async (req) => {
       pageNumber: number;
       tocPageNumber: number;
       yPosition: number;
+      isRightPage: boolean; // 添加奇偶页标记
     }> = [];
 
     // 记录目录页码
@@ -426,7 +437,8 @@ serve(async (req) => {
       const tocPageMargins = getPageMargins(tocPageNum);
 
       // 检查目录内容是否会超出页面底部，如果会，则自然换页
-      if (tocY > pageHeight - tocPageMargins.bottom - 0.3) {
+      // 减小底部边距，允许更多内容（从0.3减小到0.2），以便每页容纳12章而不是11章
+      if (tocY > pageHeight - tocPageMargins.bottom - 0.2) {
         addPage();
         tocPageNumbers.push(pdf.internal.getNumberOfPages()); // 记录新的目录页
         // 获取新页的动态边距
@@ -435,35 +447,87 @@ serve(async (req) => {
         tocY = newTocMargins.top + 1.0;
       }
 
+      // 检查当前页是奇数页（右页）还是偶数页（左页）
+      const isTocRightPage = tocPageNum % 2 === 1;
+
       // 设置章节编号字体
       setFont('tocChapter');
-      pdf.text(`Chapter ${chapter.chapterNumber}`, tocPageMargins.left + 0.1, tocY);
+
+      // 根据奇偶页调整章节编号的位置
+      if (isTocRightPage) {
+        // 奇数页（右页）：章节编号偏右
+        pdf.text(`Chapter ${chapter.chapterNumber}`, tocPageMargins.left + 0.1, tocY);
+      } else {
+        // 偶数页（左页）：章节编号偏左
+        pdf.text(`Chapter ${chapter.chapterNumber}`, tocPageMargins.left + 0.1, tocY);
+      }
 
       // 设置章节标题字体
-      const chapterTitleX = tocPageMargins.left + 1.2; // 使用动态边距，调整标题的左边距以增加对齐
+      // 根据奇偶页调整标题的位置
+      let chapterTitleX: number;
+      if (isTocRightPage) {
+        // 奇数页（右页）：标题偏右
+        chapterTitleX = tocPageMargins.left + 1.2; // 使用动态边距，调整标题的左边距以增加对齐
+      } else {
+        // 偶数页（左页）：标题偏左
+        chapterTitleX = tocPageMargins.left + 1.2; // 使用相同的左边距，保持一致性
+      }
 
       // 处理标题过长的情况，确保与页码不重合
-      const maxTitleWidth = pageWidth - tocPageMargins.right - chapterTitleX - 0.8; // 使用动态边距，留出空间给页码
+      // 减小页码预留空间，从0.8减小到0.6，给标题留出更多空间
+      const maxTitleWidth = pageWidth - tocPageMargins.right - chapterTitleX - 0.6; // 使用动态边距，留出空间给页码
       const titleLines = pdf.splitTextToSize(chapter.title, maxTitleWidth);
 
-      // 只显示第一行，确保目录整洁
-      pdf.text(titleLines[0], chapterTitleX, tocY);
+      // 支持标题自动换行，最多显示两行
+      if (titleLines.length === 1) {
+        // 单行标题
+        pdf.text(titleLines[0], chapterTitleX, tocY);
+
+        // 将目录条目信息添加到数组中
+        tocEntries.push({
+          chapter,
+          pageNumber: 0, // 先设置为0，后面会更新
+          tocPageNumber: pdf.internal.getNumberOfPages(), // 当前目录页码
+          yPosition: tocY, // 记录Y坐标位置
+          isRightPage: isTocRightPage // 记录是否是奇数页（右页）
+        });
+
+        // 增加目录行间距
+        tocY += 0.5; // 从0.55减小到0.5，以便每页容纳更多章节
+      } else {
+        // 多行标题，显示最多两行
+        const firstLine = titleLines[0];
+        const secondLine = titleLines.length > 1 ? titleLines[1] : '';
+
+        // 显示第一行
+        pdf.text(firstLine, chapterTitleX, tocY);
+
+        // 将目录条目信息添加到数组中（页码与第一行对齐）
+        tocEntries.push({
+          chapter,
+          pageNumber: 0, // 先设置为0，后面会更新
+          tocPageNumber: pdf.internal.getNumberOfPages(), // 当前目录页码
+          yPosition: tocY, // 记录Y坐标位置
+          isRightPage: isTocRightPage // 记录是否是奇数页（右页）
+        });
+
+        // 显示第二行（如果有），使用较小的行间距
+        if (secondLine) {
+          const lineHeight = fonts.tocChapter.size / 72 * 1.2; // 使用较小的行间距因子1.2
+          pdf.text(secondLine, chapterTitleX, tocY + lineHeight);
+
+          // 增加目录行间距（考虑到第二行）
+          tocY += 0.5 + lineHeight; // 基础间距加上第二行的高度
+        } else {
+          // 单行标题的间距
+          tocY += 0.5;
+        }
+      }
 
       // 设置页码字体
       setFont('tocPageNumber');
       // 不使用省略号，直接留空位置给实际页码
       // 后面会回填实际页码
-
-      // 将目录条目信息添加到数组中
-      tocEntries.push({
-        chapter,
-        pageNumber: 0, // 先设置为0，后面会更新
-        tocPageNumber: pdf.internal.getNumberOfPages(), // 当前目录页码
-        yPosition: tocY // 记录Y坐标位置
-      });
-
-      // 增加目录行间距
-      tocY += 0.55;
     }
 
     // !! 页码计算逻辑需要重新审视和实现 !!
@@ -632,12 +696,12 @@ serve(async (req) => {
         const paragraphBreak = '<PARAGRAPH_BREAK>';
         content = content.replace(/\n\n+/g, paragraphBreak);
 
-        // 在段落开头添加四个非间断空格作为缩进
-        // 将特殊标记替换为换行符加四个普通空格
-        content = content.replace(new RegExp(paragraphBreak, 'g'), '\n    ');
+        // 在段落开头添加两个非间断空格作为缩进
+        // 将特殊标记替换为换行符加两个普通空格
+        content = content.replace(new RegExp(paragraphBreak, 'g'), '\n  ');
 
-        // 在段落开头添加四个普通空格作为缩进
-        content = '    ' + content;
+        // 在段落开头添加两个普通空格作为缩进
+        content = '  ' + content;
 
         // 将内容作为一个段落处理
         const filteredParagraphs = [content];
@@ -669,12 +733,12 @@ serve(async (req) => {
             console.log(`行 ${i+1} 内容: "${textLines[i].substring(0, 20)}..."`);
           }
 
-          // 检查每一行，如果下一行以四个非间断空格开头，则当前行需要模拟左对齐
+          // 检查每一行，如果下一行以两个非间断空格开头，则当前行需要模拟左对齐
           for (let i = 0; i < textLines.length - 1; i++) {
-            // 检查下一行是否以四个空格开头
+            // 检查下一行是否以两个空格开头
             const nextLine = textLines[i+1];
             // 使用更直接的方式检测空格
-            if (nextLine && nextLine.startsWith('    ')) {
+            if (nextLine && nextLine.startsWith('  ')) {
               // 当前行需要模拟左对齐
               // 计算需要添加的空格数量
               const currentLine = textLines[i];
@@ -839,8 +903,14 @@ serve(async (req) => {
         // 获取当前页的页眉边距（不偏移）
         const headerMargins = getHeaderMargins(entry.tocPageNumber);
 
-        // 添加实际页码
-        pdf.text(String(entry.pageNumber), pageWidth - headerMargins.right, entry.yPosition, { align: 'right' });
+        // 根据奇偶页调整页码的位置
+        if (entry.isRightPage) {
+          // 奇数页（右页）：页码在右侧
+          pdf.text(String(entry.pageNumber), pageWidth - headerMargins.right, entry.yPosition, { align: 'right' });
+        } else {
+          // 偶数页（左页）：页码在左侧
+          pdf.text(String(entry.pageNumber), headerMargins.left, entry.yPosition, { align: 'left' });
+        }
       }
     });
 

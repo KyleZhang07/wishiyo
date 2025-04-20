@@ -173,7 +173,7 @@ serve(async (req) => {
               },
               ...
             ],
-            "totalWordCount": 4000 // 预计总字数大约为4000左右
+
           }
           `;
 
@@ -192,8 +192,7 @@ serve(async (req) => {
 - Each chapter must have exactly 4 sections.
 - Each section MUST contain between 950 and 1050 words.
 - Each section's content must use double line breaks (\\n\\n) between paragraphs to clearly separate them.
-- Respond only with valid JSON. Do not include any commentary or explanation outside the JSON structure.
-- You may include totalWordCount for the chapter, but it's not required.`
+- Respond only with valid JSON. Do not include any commentary or explanation outside the JSON structure.`
                 },
                 {
                   role: 'user',
