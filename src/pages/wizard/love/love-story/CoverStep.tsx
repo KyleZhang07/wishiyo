@@ -92,12 +92,12 @@ const LoveStoryCoverStep = () => {
   const [selectedStyle, setSelectedStyle] = useState<string>('classic');
   const [textTone, setTextTone] = useState<string>('romantic');
 
-  // 标题状态，合并为一个结构
+  // 标题状态，合并为一个结构，设置默认值为第一个选项
   const [titleData, setTitleData] = useState({
-    mainTitle: '',
-    subTitle: '',
+    mainTitle: "Mat's",
+    subTitle: "amazing adventure",
     thirdLine: '',
-    fullTitle: 'THE MAGIC IN'
+    fullTitle: "Mat's amazing adventure"
   });
 
   // 封面图片状态
@@ -195,22 +195,16 @@ const LoveStoryCoverStep = () => {
       setTitleData(parsedDefaultTitle);
       // 同时保存默认标题到 localStorage，以便后续使用
       localStorage.setItem('loveStoryCoverTitle', firstTitleOption);
-    } else if (savedIdeas && savedIdeaIndex) {
-      try {
-        const ideas = JSON.parse(savedIdeas);
-        const selectedIdea = ideas[parseInt(savedIdeaIndex)];
-        if (selectedIdea) {
-          // 默认标题
-          setTitleData(prev => ({
-            ...prev,
-            fullTitle: 'THE MAGIC IN',
-            mainTitle: 'THE MAGIC IN',
-            subTitle: savedRecipientName || ''
-          }));
-        }
-      } catch (error) {
-        console.error('Error parsing saved ideas:', error);
-      }
+    } else {
+      // 如果没有保存的标题也没有收件人姓名，使用图中的第一个选项
+      const defaultName = 'Mat';
+      const firstTitleOption = `${defaultName}'s amazing adventure`;
+      // 调用 parseTitleString 处理默认标题
+      const parsedDefaultTitle = parseTitleString(firstTitleOption);
+      // 直接更新状态
+      setTitleData(parsedDefaultTitle);
+      // 保存默认标题到 localStorage
+      localStorage.setItem('loveStoryCoverTitle', firstTitleOption);
     }
   }, []);
 
