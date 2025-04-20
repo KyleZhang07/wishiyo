@@ -783,7 +783,7 @@ const GenerateStep = () => {
     };
   };
 
-  // 自动生成所有未生成的图片
+  // 自动生成所有未生成的图片 - 使用Promise.all并发生成
   const autoGenerateAllImages = async () => {
     console.log('Checking for ungenerated images...');
     const generationStatus = checkAllContentImagesGenerated();
@@ -803,34 +803,71 @@ const GenerateStep = () => {
       return;
     }
 
-    // 生成intro图片（如果需要）
+    // 创建生成任务数组
+    const generationTasks = [];
+
+    // 添加intro图片生成任务（如果需要）
     if (!generationStatus.intro.isGenerated) {
-      console.log('Auto-generating intro image...');
-      try {
-        // 使用handleRegenerateIntro函数生成intro图片
-        await handleRegenerateIntro();
-      } catch (error) {
-        console.error('Error auto-generating intro image:', error);
-      }
+      console.log('Adding intro image generation task...');
+      generationTasks.push({
+        type: 'intro',
+        task: async () => {
+          try {
+            await handleRegenerateIntro();
+            console.log('Intro image generated successfully');
+            return true;
+          } catch (error) {
+            console.error('Error auto-generating intro image:', error);
+            return false;
+          }
+        }
+      });
     }
 
-    // 生成所有content图片（如果需要）
+    // 添加所有content图片生成任务（如果需要）
     for (const contentImage of generationStatus.contentImages) {
       if (!contentImage.isGenerated) {
-        console.log(`Auto-generating content image ${contentImage.index}...`);
-        try {
-          // 避免并行生成导致的问题，使用await确保顺序执行
-          const regenerateFunction = handleRegenerateMap[contentImage.index];
-          if (regenerateFunction) {
-            await regenerateFunction();
-            // 添加延迟，避免请求过快
-            await new Promise(resolve => setTimeout(resolve, 1000));
-          }
-        } catch (error) {
-          console.error(`Error auto-generating content image ${contentImage.index}:`, error);
+        console.log(`Adding content image ${contentImage.index} generation task...`);
+        const regenerateFunction = handleRegenerateMap[contentImage.index];
+        if (regenerateFunction) {
+          generationTasks.push({
+            type: 'content',
+            index: contentImage.index,
+            task: async () => {
+              try {
+                await regenerateFunction();
+                console.log(`Content image ${contentImage.index} generated successfully`);
+                return true;
+              } catch (error) {
+                console.error(`Error auto-generating content image ${contentImage.index}:`, error);
+                return false;
+              }
+            }
+          });
         }
       }
     }
+
+    // 如果没有需要生成的图片，直接返回
+    if (generationTasks.length === 0) {
+      console.log('All images already generated');
+      return;
+    }
+
+    console.log(`Starting parallel generation of ${generationTasks.length} images...`);
+
+    // 并发执行所有生成任务，每个任务之间有小的延迟以避免请求过快
+    const results = await Promise.all(
+      generationTasks.map(async (task, index) => {
+        // 添加随机延迟，避免所有请求同时发出
+        await new Promise(resolve => setTimeout(resolve, index * 200));
+        return task.task();
+      })
+    );
+
+    // 统计生成结果
+    const successCount = results.filter(result => result).length;
+    console.log(`Image generation completed: ${successCount}/${generationTasks.length} successful`);
   };
 
   // 组件加载后检查并自动生成所有未生成的图片
