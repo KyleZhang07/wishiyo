@@ -759,6 +759,31 @@ const GenerateStep = () => {
     }
   }, [coverRenderComplete, coverImageUrl]);
 
+  // 检查是否已生成所有图片（封面、封底、祥福语、引导和内容图片）
+  const checkIfAllImagesGenerated = () => {
+    // 检查封面图片
+    const coverImageUrl = localStorage.getItem('loveStoryCoverImage_url');
+    // 检查封底图片
+    const backCoverImageUrl = localStorage.getItem('loveStoryBackCoverImage_url');
+    // 检查祥福语图片
+    const blessingImageUrl = localStorage.getItem('loveStoryBlessingImage_url');
+    // 检查引导图片
+    const introImageUrl = localStorage.getItem('loveStoryIntroImage_url');
+
+    // 检查所有内容图片
+    let allContentImagesGenerated = true;
+    for (let i = 1; i <= 10; i++) {
+      const contentImageUrl = localStorage.getItem(`loveStoryContentImage${i}_url`);
+      if (!contentImageUrl) {
+        allContentImagesGenerated = false;
+        break;
+      }
+    }
+
+    // 如果所有图片都已生成，返回 true
+    return !!coverImageUrl && !!backCoverImageUrl && !!blessingImageUrl && !!introImageUrl && allContentImagesGenerated;
+  };
+
   // 检查所有内容图片是否已生成
   const checkAllContentImagesGenerated = () => {
     // 检查intro图片
@@ -805,6 +830,12 @@ const GenerateStep = () => {
     // 检查是否正在加载图片
     if (isLoadingImages) {
       console.log('Images are currently loading, skipping generation');
+      return;
+    }
+
+    // 再次检查是否已生成所有图片
+    if (checkIfAllImagesGenerated()) {
+      console.log('All images are already generated, no need to generate again');
       return;
     }
 
@@ -911,10 +942,12 @@ const GenerateStep = () => {
       // 统计生成结果
       const successCount = results.filter(result => result).length;
       console.log(`Image generation completed: ${successCount}/${generationTasks.length} successful`);
+
+      // 生成完成后加载最新图片
+      await loadImagesFromSupabase();
     } catch (error) {
       console.error('Error during parallel image generation:', error);
-    } finally {
-      // 无论成功还是失败，都重置加载状态
+      // 出错时也重置加载状态
       setIsLoadingImages(false);
     }
   };
@@ -951,11 +984,29 @@ const GenerateStep = () => {
     return hasImageTexts && hasImagePrompts && hasCharacterPhoto;
   };
 
-  // 组件加载后设置一次性检查数据是否准备完成
+  // 组件加载后首先检查是否已生成所有图片，如果是则直接加载显示
   useEffect(() => {
-    console.log('GenerateStep component mounted, checking if data is ready');
+    console.log('GenerateStep component mounted, checking if all images are already generated');
 
-    // 检查数据是否准备好
+    // 首先检查是否已生成所有图片
+    const checkAndLoadImages = async () => {
+      // 检查是否已生成所有图片
+      const allImagesGenerated = checkIfAllImagesGenerated();
+
+      if (allImagesGenerated) {
+        console.log('All images are already generated, loading from Supabase...');
+        // 直接从 Supabase 加载图片
+        await loadImagesFromSupabase();
+        // 不需要进一步检查和生成
+        setIsWaitingForData(false);
+        return;
+      }
+
+      // 如果未生成所有图片，检查数据是否准备好
+      checkDataAndGenerateImages();
+    };
+
+    // 检查数据是否准备好并生成图片
     const checkDataAndGenerateImages = () => {
       const isDataReady = checkIfDataReady();
 
@@ -983,7 +1034,7 @@ const GenerateStep = () => {
     };
 
     // 立即执行检查
-    checkDataAndGenerateImages();
+    checkAndLoadImages();
 
     // 组件卸载时清除定时器
     return () => {
