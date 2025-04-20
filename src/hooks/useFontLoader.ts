@@ -91,9 +91,38 @@ export function preloadFonts(): Promise<void> {
   }
 
   console.log('Preloading fonts...');
-  return document.fonts.ready.then(() => {
-    console.log('All fonts loaded!');
-  }).catch(err => {
-    console.error('Error preloading fonts:', err);
+
+  // 主动预加载所有love-story样式字体
+  const loveStoryFonts = [
+    "'Patrick Hand', cursive",  // classic 样式
+    "'Freckle Face', cursive", // vintage 样式
+    "'Amatic SC', cursive",    // modern 样式
+    "'Caveat', cursive",       // playful 样式
+    "'Luckiest Guy', cursive"  // elegant 样式
+  ];
+
+  // 创建加载字体的Promise数组
+  const fontLoadPromises = loveStoryFonts.map(font => {
+    try {
+      // 使用12px作为测试大小
+      return document.fonts.load(`12px ${font}`);
+    } catch (err) {
+      console.error(`Error loading font ${font}:`, err);
+      return Promise.resolve(); // 即使加载失败也继续
+    }
   });
+
+  // 等待所有字体加载完成
+  return Promise.all(fontLoadPromises)
+    .then(() => {
+      console.log('All love-story style fonts preloaded successfully!');
+      // 最后等待document.fonts.ready确保所有字体都已加载
+      return document.fonts.ready;
+    })
+    .then(() => {
+      console.log('All fonts loaded!');
+    })
+    .catch(err => {
+      console.error('Error preloading fonts:', err);
+    });
 }

@@ -84,9 +84,52 @@ const LoveStoryCoverPreview = ({
     }
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // 预加载所有图片，确保在绘制前已加载完成
+    // 根据当前样式预加载对应的字体
+    const preloadStyleFont = async () => {
+      if (style?.id && typeof document !== 'undefined' && 'fonts' in document) {
+        let fontToLoad = '';
+
+        // 根据样式选择字体
+        switch (style.id) {
+          case 'classic':
+            fontToLoad = "'Patrick Hand', cursive";
+            break;
+          case 'vintage':
+            fontToLoad = "'Freckle Face', cursive";
+            break;
+          case 'modern':
+            fontToLoad = "'Amatic SC', cursive";
+            break;
+          case 'playful':
+            fontToLoad = "'Caveat', cursive";
+            break;
+          case 'elegant':
+            fontToLoad = "'Luckiest Guy', cursive";
+            break;
+        }
+
+        if (fontToLoad) {
+          try {
+            // 使用不同大小加载字体，确保它在不同大小下都可用
+            await Promise.all([
+              document.fonts.load(`12px ${fontToLoad}`),
+              document.fonts.load(`bold 24px ${fontToLoad}`),
+              document.fonts.load(`bold 48px ${fontToLoad}`)
+            ]);
+            console.log(`Style font ${fontToLoad} loaded successfully`);
+          } catch (err) {
+            console.error(`Error loading style font ${fontToLoad}:`, err);
+          }
+        }
+      }
+    };
+
+    // 预加载所有图片和字体，确保在绘制前已加载完成
     const preloadImages = async () => {
       try {
+        // 先加载当前样式的字体
+        await preloadStyleFont();
+
         // 等待所有图片加载完成
         await Promise.all([
           blueTexture?.loaded,
