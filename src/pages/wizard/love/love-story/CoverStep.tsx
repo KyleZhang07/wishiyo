@@ -1729,7 +1729,7 @@ const LoveStoryCoverStep = () => {
               <div className="grid grid-cols-1 gap-4">
                 <div
                   onClick={() => handleTitleSelect(`${recipientName}'s amazing adventure`)}
-                  className="flex items-center p-4 rounded-md cursor-pointer transition-all bg-gray-50 hover:bg-gray-100 border border-gray-200 border-l-4 border-l-[#FF7F50]"
+                  className="flex items-center p-4 rounded-md cursor-pointer transition-all bg-gray-50 hover:bg-gray-100 border border-gray-200"
                 >
                   <div className="flex-1">
                     <h4 className="font-medium text-gray-900 text-lg">{recipientName}'s amazing adventure</h4>
