@@ -48,6 +48,10 @@ const LoveStoryCoverPreview = ({
   style
 }: LoveStoryCoverPreviewProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isLoading, setIsLoading] = useState(true); // 添加加载状态
+  const [canvasRendered, setCanvasRendered] = useState(false); // 跟踪Canvas是否已经渲染
+
+  // 预加载所有图片
   const image = useImageLoader(coverImage);
   const blueTexture = useImageLoader(blueTextureBackground);
   const greenLeaf = useImageLoader(greenLeafBackground);
@@ -58,6 +62,10 @@ const LoveStoryCoverPreview = ({
   const { fontsLoaded, fontStatus } = useFontContext();
 
   useEffect(() => {
+    // 当组件挂载时设置加载状态
+    setIsLoading(true);
+    setCanvasRendered(false);
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -67,6 +75,14 @@ const LoveStoryCoverPreview = ({
     // 设置画布尺寸为 1:1 比例
     canvas.width = 2400;
     canvas.height = 2400;
+
+    // 先绘制一个简单的背景，避免空白闪烁
+    if (style) {
+      ctx.fillStyle = style.background || '#FFFFFF';
+    } else {
+      ctx.fillStyle = '#FFFFFF';
+    }
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // 预加载所有图片，确保在绘制前已加载完成
     const preloadImages = async () => {
@@ -138,6 +154,10 @@ const LoveStoryCoverPreview = ({
           selectedFont,
           style
         );
+
+        // 设置加载完成状态
+        setIsLoading(false);
+        setCanvasRendered(true);
       } catch (error) {
         console.error('Error loading images:', error);
 
@@ -154,6 +174,10 @@ const LoveStoryCoverPreview = ({
           selectedFont,
           style
         );
+
+        // 即使出错也设置加载完成状态
+        setIsLoading(false);
+        setCanvasRendered(true);
       }
     };
 
@@ -651,9 +675,14 @@ const LoveStoryCoverPreview = ({
   return (
     <div className="space-y-4">
       <div className="relative rounded-lg overflow-hidden shadow-xl" style={{ maxWidth: '600px', margin: '0 auto' }}>
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-80 z-10">
+            <div className="animate-spin h-12 w-12 border-4 border-[#FF7F50] border-t-transparent rounded-full"></div>
+          </div>
+        )}
         <canvas
           ref={canvasRef}
-          className="w-full h-full object-contain"
+          className={`w-full h-full object-contain ${canvasRendered ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
         />
       </div>
     </div>
