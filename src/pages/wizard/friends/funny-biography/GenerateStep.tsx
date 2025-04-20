@@ -363,11 +363,12 @@ const FunnyBiographyGenerateStep = () => {
       }
     } catch (error) {
       console.error('Error removing background:', error);
-      toast({
-        variant: "destructive",
-        title: "Error processing image",
-        description: "Failed to remove background from the image. Using original image instead."
-      });
+      // 移除toast提示
+      // toast({
+      //   variant: "destructive",
+      //   title: "Error processing image",
+      //   description: "Failed to remove background from the image. Using original image instead."
+      // });
       // 如果当前没有设置图片，才使用原始图片
       if (!coverImage) {
         setCoverImage(imageUrl);
@@ -383,23 +384,20 @@ const FunnyBiographyGenerateStep = () => {
     // 确保字体已加载后再尝试生成
     if (!fontsLoaded) {
       console.log('等待字体加载完成...');
-      toast({
-        title: "正在准备资源",
-        description: "正在加载字体资源，稍等片刻...",
-        variant: "default"
-      });
+      // 移除toast提示
+      // toast({
+      //   title: "正在准备资源",
+      //   description: "正在加载字体资源，稍等片刻...",
+      //   variant: "default"
+      // });
     }
   };
 
   const handleImageAdjust = (position: { x: number; y: number }, scale: number) => {
     console.log('图片调整保存，新位置:', position, '新缩放比例:', scale);
 
-    // 显示加载提示
-    toast({
-      title: "更新封面",
-      description: "正在应用图片调整...",
-      duration: 2000
-    });
+    // 移除toast提示
+    // console.log('正在应用图片调整...');
 
     // 清除已有的PDF
     setFrontCoverPdf(null);
