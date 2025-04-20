@@ -158,6 +158,54 @@ const LoveStoryCoverStep = () => {
   // 使用FontContext中的字体加载状态
   const { fontsLoaded, fontStatus } = useFontContext();
 
+  // 添加字体加载状态日志和手动重试机制
+  useEffect(() => {
+    console.log('CoverStep - Font status:', fontStatus, 'Fonts loaded:', fontsLoaded);
+
+    // 如果字体加载失败，尝试手动加载当前样式的字体
+    if (fontStatus === 'error' && selectedStyle) {
+      console.log('Attempting to manually load font for style:', selectedStyle);
+
+      // 根据样式选择字体
+      let fontToLoad = '';
+      switch (selectedStyle) {
+        case 'classic':
+          fontToLoad = "'Patrick Hand', cursive";
+          break;
+        case 'vintage':
+          fontToLoad = "'Freckle Face', cursive";
+          break;
+        case 'modern':
+          fontToLoad = "'Amatic SC', cursive";
+          break;
+        case 'playful':
+          fontToLoad = "'Caveat', cursive";
+          break;
+        case 'elegant':
+          fontToLoad = "'Luckiest Guy', cursive";
+          break;
+      }
+
+      if (fontToLoad && typeof document !== 'undefined' && 'fonts' in document) {
+        // 尝试加载字体
+        const fontSizes = [12, 24, 36, 48, 64, 72, 96, 120, 144];
+        const fontWeights = ['normal', 'bold', 'italic'];
+
+        Promise.all(
+          fontSizes.flatMap(size =>
+            fontWeights.map(weight =>
+              document.fonts.load(`${weight} ${size}px ${fontToLoad}`)
+            )
+          )
+        ).then(() => {
+          console.log(`Manually loaded font ${fontToLoad} for style ${selectedStyle}`);
+        }).catch(err => {
+          console.error(`Failed to manually load font ${fontToLoad}:`, err);
+        });
+      }
+    }
+  }, [fontStatus, fontsLoaded, selectedStyle]);
+
   useEffect(() => {
     // 从localStorage获取基本信息
     const savedAuthorName = localStorage.getItem('loveStoryAuthorName');

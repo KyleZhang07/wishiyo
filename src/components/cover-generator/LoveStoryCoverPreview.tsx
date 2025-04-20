@@ -84,7 +84,7 @@ const LoveStoryCoverPreview = ({
     }
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // 根据当前样式预加载对应的字体
+    // 根据当前样式预加载对应的字体 - 增强版
     const preloadStyleFont = async () => {
       if (style?.id && typeof document !== 'undefined' && 'fonts' in document) {
         let fontToLoad = '';
@@ -109,26 +109,62 @@ const LoveStoryCoverPreview = ({
         }
 
         if (fontToLoad) {
+          console.log(`Preloading style font: ${fontToLoad} for style ${style.id}`);
           try {
-            // 使用不同大小加载字体，确保它在不同大小下都可用
-            await Promise.all([
-              document.fonts.load(`12px ${fontToLoad}`),
-              document.fonts.load(`bold 24px ${fontToLoad}`),
-              document.fonts.load(`bold 48px ${fontToLoad}`)
-            ]);
-            console.log(`Style font ${fontToLoad} loaded successfully`);
+            // 使用更多大小和粗细加载字体，确保它在不同大小下都可用
+            const fontSizes = [12, 24, 36, 48, 64, 72];
+            const fontWeights = ['normal', 'bold', 'italic'];
+
+            const loadPromises = [];
+
+            // 为每种大小和粗细创建加载承诺
+            for (const size of fontSizes) {
+              for (const weight of fontWeights) {
+                loadPromises.push(document.fonts.load(`${weight} ${size}px ${fontToLoad}`));
+              }
+            }
+
+            // 等待所有字体加载完成
+            await Promise.all(loadPromises);
+            console.log(`Style font ${fontToLoad} loaded successfully with ${loadPromises.length} variations`);
+
+            // 测试字体是否真正加载完成
+            const testFont = await document.fonts.load(`bold 48px ${fontToLoad}`);
+            console.log(`Font load test result:`, testFont.length > 0 ? 'Success' : 'Failed');
+
+            return true;
           } catch (err) {
             console.error(`Error loading style font ${fontToLoad}:`, err);
+            return false;
           }
         }
       }
+      return false;
     };
 
-    // 预加载所有图片和字体，确保在绘制前已加载完成
+    // 预加载所有图片和字体，确保在绘制前已加载完成 - 增强版带重试
     const preloadImages = async () => {
       try {
-        // 先加载当前样式的字体
-        await preloadStyleFont();
+        // 先加载当前样式的字体，最多重试3次
+        let fontLoaded = false;
+        let attempts = 0;
+        const maxAttempts = 3;
+
+        while (!fontLoaded && attempts < maxAttempts) {
+          attempts++;
+          console.log(`Attempt ${attempts}/${maxAttempts} to load style font`);
+          fontLoaded = await preloadStyleFont();
+
+          if (!fontLoaded && attempts < maxAttempts) {
+            // 等待一小段时间再重试
+            console.log(`Font loading attempt ${attempts} failed, waiting before retry...`);
+            await new Promise(resolve => setTimeout(resolve, 300));
+          }
+        }
+
+        if (!fontLoaded) {
+          console.warn(`Failed to load style font after ${maxAttempts} attempts, proceeding with fallback fonts`);
+        }
 
         // 等待所有图片加载完成
         await Promise.all([

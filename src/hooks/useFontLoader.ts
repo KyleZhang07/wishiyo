@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-const fontLoadTimeoutMs = 3000; // 3 second timeout
+const fontLoadTimeoutMs = 5000; // 5 second timeout - 增加超时时间以确保字体有足够的时间加载
 
 // Font mapping, maps style names to actual font names
 export const fontMapping = {
@@ -101,28 +101,96 @@ export function preloadFonts(): Promise<void> {
     "'Luckiest Guy', cursive"  // elegant 样式
   ];
 
-  // 创建加载字体的Promise数组
-  const fontLoadPromises = loveStoryFonts.map(font => {
+  // 使用多种字体大小预加载每种字体，确保它们在不同大小下都可用
+  // 根据实际使用的字体大小范围添加更多大小
+  // 最大的字体大小是 width * 0.132，对于2400px的画布是316.8px
+  const fontSizes = [12, 24, 36, 48, 64, 72, 96, 120, 144, 192, 240, 320]; // 添加更大的字体大小
+  const fontWeights = ['normal', 'bold', 'italic', 'bold italic']; // 添加更多粗细变体
+
+  // 创建加载字体的Promise数组 - 对每种字体使用多种大小和粗细
+  const fontLoadPromises: Promise<any>[] = [];
+
+  // 预加载字体的函数
+  const preloadFont = (font: string, size: number, weight: string) => {
     try {
-      // 使用12px作为测试大小
-      return document.fonts.load(`12px ${font}`);
+      const loadPromise = document.fonts.load(`${weight} ${size}px ${font}`);
+      fontLoadPromises.push(loadPromise);
+      return true;
     } catch (err) {
-      console.error(`Error loading font ${font}:`, err);
-      return Promise.resolve(); // 即使加载失败也继续
+      console.error(`Error loading font ${font} at ${size}px ${weight}:`, err);
+      return false;
     }
+  };
+
+  // 对每种字体使用多种大小和粗细
+  loveStoryFonts.forEach(font => {
+    // 首先加载实际使用的大小
+    // 根据分析，各种样式的实际字体大小
+    if (font === "'Patrick Hand', cursive") { // classic
+      // 主标题: width * 0.12, 副标题: width * 0.12, 作者名: width * 0.035
+      [120, 35].forEach(size => {
+        fontWeights.forEach(weight => preloadFont(font, size, weight));
+      });
+    } else if (font === "'Freckle Face', cursive") { // vintage
+      // 主标题: width * 0.108, 副标题: width * 0.108, 作者名: width * 0.030
+      [108, 30].forEach(size => {
+        fontWeights.forEach(weight => preloadFont(font, size, weight));
+      });
+    } else if (font === "'Amatic SC', cursive") { // modern
+      // 主标题: width * 0.12, 副标题: width * 0.12, 作者名: width * 0.035
+      [120, 35].forEach(size => {
+        fontWeights.forEach(weight => preloadFont(font, size, weight));
+      });
+    } else if (font === "'Caveat', cursive") { // playful
+      // 主标题: width * 0.132, 副标题: width * 0.132, 作者名: width * 0.035
+      [132, 35].forEach(size => {
+        fontWeights.forEach(weight => preloadFont(font, size, weight));
+      });
+    } else if (font === "'Luckiest Guy', cursive") { // elegant
+      // 主标题: width * 0.096, 副标题: width * 0.096, 作者名: width * 0.025
+      [96, 25].forEach(size => {
+        fontWeights.forEach(weight => preloadFont(font, size, weight));
+      });
+    }
+
+    // 然后加载其他常用大小
+    fontSizes.forEach(size => {
+      fontWeights.forEach(weight => preloadFont(font, size, weight));
+    });
   });
 
-  // 等待所有字体加载完成
-  return Promise.all(fontLoadPromises)
-    .then(() => {
-      console.log('All love-story style fonts preloaded successfully!');
+  // 主动触发字体加载
+  if (fontLoadPromises.length === 0) {
+    console.warn('No font load promises created, using document.fonts.ready as fallback');
+    return document.fonts.ready.then(() => {
+      console.log('Fonts loaded via document.fonts.ready');
+    });
+  }
+
+  console.log(`Starting to load ${fontLoadPromises.length} font variations...`);
+
+  // 使用Promise.allSettled而不是Promise.all，确保即使有失败也不会影响整体加载
+  return Promise.allSettled(fontLoadPromises)
+    .then((results) => {
+      const fulfilled = results.filter(r => r.status === 'fulfilled').length;
+      const rejected = results.filter(r => r.status === 'rejected').length;
+      console.log(`Font preloading completed: ${fulfilled} successful, ${rejected} failed`);
+
       // 最后等待document.fonts.ready确保所有字体都已加载
       return document.fonts.ready;
     })
     .then(() => {
       console.log('All fonts loaded!');
+
+      // 测试字体是否真正加载完成
+      return Promise.all(loveStoryFonts.map(async (font) => {
+        const testFont = await document.fonts.load(`bold 48px ${font}`);
+        console.log(`Font load test for ${font}:`, testFont.length > 0 ? 'Success' : 'Failed');
+      }));
     })
     .catch(err => {
       console.error('Error preloading fonts:', err);
+      // 即使出错也返回已解决的Promise，以便应用程序可以继续
+      return document.fonts.ready;
     });
 }

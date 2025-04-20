@@ -201,8 +201,8 @@ serve(async (req) => {
                   content: prompt
                 }
               ],
-              temperature: 1.0, // 增加创造性，从 0.5 调整为 1.0
-              max_tokens: 5000, // 从4000增加到5000，确保有足够空间生成更长的内容
+              temperature: 1.0,
+              max_tokens: 5000,
               response_format: { type: "json_object" }
             }),
           });
