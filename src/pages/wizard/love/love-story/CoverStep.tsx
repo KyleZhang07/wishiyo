@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Edit, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Edit, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import WizardStep from '@/components/wizard/WizardStep';
 import LoveStoryCoverPreview from '@/components/cover-generator/LoveStoryCoverPreview';
@@ -1593,17 +1593,15 @@ const LoveStoryCoverStep = () => {
         {/* 封面预览 */}
         <div className="relative mb-5">
 
-          {/* 封面图片生成中的加载状态 - 修改样式与funny-bio IdeasStep一致 */}
+          {/* 封面图片生成中的加载状态 - 使用更简洁的样式 */}
           {isGeneratingCover && (
-            <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-20 rounded-lg">
-              <div className="bg-white p-6 rounded-xl shadow-lg text-center border border-gray-100">
-                <div className="relative mb-3 mx-auto w-12 h-12 flex items-center justify-center">
-                  <div className="absolute inset-0 rounded-full border-t-2 border-[#FF7F50] animate-spin"></div>
-                  <RefreshCw className="w-6 h-6 text-[#FF7F50]" />
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-1">Generating covers</h3>
-                <p className="text-gray-500 text-sm">Creating beautiful covers for your story...</p>
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-white z-20 rounded-lg">
+              <div className="relative w-16 h-16 mb-4">
+                <div className="absolute inset-0 rounded-full border-t-2 border-[#FF7F50] animate-spin"></div>
               </div>
+              <h3 className="text-xl font-medium text-[#FF7F50]">
+                Generating covers
+              </h3>
             </div>
           )}
 
