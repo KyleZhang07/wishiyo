@@ -51,7 +51,6 @@ serve(async (req) => {
                 Create 13 unique and creative scenes focusing solely on one person - the recipient.
                 Each prompt should imagine the person in different fantasy scenarios that represent their ideal dream life.
                 Consider the person's gender (${recipientGender}) and age (${recipientAge}) when creating prompts.
-                Make the prompts suitable for high-quality photo-realistic AI image generation.
                 Focus on solo portraits and scenes that showcase the person living their fantasy dream life.
                 Include a variety of settings: adventure scenarios, career achievements, lifestyle dreams, and aspirational moments.`
             },
@@ -61,19 +60,18 @@ serve(async (req) => {
                 Create:
                 1. One cover image prompt that captures ${recipientName}'s essence (${recipientGender}, ${recipientAge} years old) in an aspirational setting
                 2. Twelve fantasy autobiography image prompts showing ${recipientName} in various dream life scenarios
-                Each prompt should be detailed and photo-realistic.
                 Format the response as a JSON array of 13 objects, each with 'question' (short description) and 'prompt' (detailed AI image generation prompt) fields.
                 Make the prompts reflect fantasy scenarios like:
                 - ${recipientName} achieving career dreams
                 - ${recipientName} in adventure settings (exploring exotic locations, etc.)
-                - ${recipientName} living luxury lifestyle moments
+                - ${recipientName} living fantasy lifestyle moments
                 - ${recipientName} accomplishing personal goals
                 Ensure the prompts are appropriate for the person's gender (${recipientGender}) and age (${recipientAge}).
                 Do not include other people in the scenes - focus solely on ${recipientName}.
                 Example prompt structure:
                 {
                   "question": "${recipientName} living their dream",
-                  "prompt": "Ultra-realistic portrait of ${recipientName}, ${recipientGender === 'male' ? 'handsome' : 'beautiful'} ${recipientAge}-year-old person standing on a private yacht in crystal blue waters, luxurious setting, golden hour lighting, successful lifestyle, solo portrait, high detail"
+                  "prompt": "Image of ${recipientName}, ${recipientGender === 'male' ? 'handsome' : 'beautiful'} ${recipientAge}-year-old person standing on a private yacht in crystal blue waters, luxurious setting, golden hour lighting, successful lifestyle, solo portrait, high detail"
                 }`
             }
           ],
