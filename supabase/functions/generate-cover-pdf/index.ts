@@ -290,39 +290,75 @@ serve(async (req) => {
     pdf.rect(0, 0, pdfWidth, pdfHeight, 'F');
 
     // 填充扩展的出血区域背景
+    if (bindingType === 'hardcover') {
+      // 硬封面使用 totalWrapWidth (0.875")
+      // 1. 绘制背面封面背景颜色（包括出血区域和包装区域）
+      console.log('Filling hardcover back cover background with bleed and wrap extension');
+      pdf.setFillColor(styleColor.r, styleColor.g, styleColor.b); // 使用样式背景色
+      pdf.rect(
+        0, // 左侧扩展到PDF边缘
+        0, // 顶部扩展到PDF边缘
+        xOffset + backCoverWidth, // 宽度包括左侧出血区和封底
+        pdfHeight, // 高度扩展到整个PDF高度
+        'F'
+      );
 
-    // 1. 绘制背面封面背景颜色（包括出血区域）
-    console.log('Filling back cover background with bleed extension');
-    pdf.setFillColor(styleColor.r, styleColor.g, styleColor.b); // 使用样式背景色
-    pdf.rect(
-      0, // 左侧扩展到PDF边缘
-      0, // 顶部扩展到PDF边缘
-      xOffset + backCoverWidth, // 宽度包括左侧出血区和封底
-      pdfHeight, // 高度扩展到整个PDF高度
-      'F'
-    );
+      // 2. 绘制书脊背景颜色（包括出血区域）
+      console.log('Filling hardcover spine background with bleed extension');
+      pdf.setFillColor(styleColor.r, styleColor.g, styleColor.b); // 使用样式背景色
+      pdf.rect(
+        xOffset + backCoverWidth,
+        0, // 顶部扩展到PDF边缘
+        spineWidth,
+        pdfHeight, // 高度扩展到整个PDF高度
+        'F'
+      );
 
-    // 2. 绘制书脊背景颜色（包括出血区域）
-    console.log('Filling spine background with bleed extension');
-    pdf.setFillColor(styleColor.r, styleColor.g, styleColor.b); // 使用样式背景色
-    pdf.rect(
-      xOffset + backCoverWidth,
-      0, // 顶部扩展到PDF边缘
-      spineWidth,
-      pdfHeight, // 高度扩展到整个PDF高度
-      'F'
-    );
+      // 3. 绘制正面封面背景颜色（包括出血区域）
+      console.log('Filling hardcover front cover background with bleed extension');
+      pdf.setFillColor(styleColor.r, styleColor.g, styleColor.b); // 使用样式背景色
+      pdf.rect(
+        xOffset + backCoverWidth + spineWidth,
+        0, // 顶部扩展到PDF边缘
+        pdfWidth - (xOffset + backCoverWidth + spineWidth), // 宽度扩展到PDF右边缘
+        pdfHeight, // 高度扩展到整个PDF高度
+        'F'
+      );
+    } else {
+      // 软封面只使用 bleed (0.125")
+      // 1. 绘制背面封面背景颜色（只包括出血区域）
+      console.log('Filling softcover back cover background with bleed only');
+      pdf.setFillColor(styleColor.r, styleColor.g, styleColor.b); // 使用样式背景色
+      pdf.rect(
+        0, // 左侧扩展到PDF边缘
+        0, // 顶部扩展到PDF边缘
+        bleed + backCoverWidth, // 只使用出血区域宽度
+        pdfHeight, // 高度扩展到整个PDF高度
+        'F'
+      );
 
-    // 3. 绘制正面封面背景颜色（包括出血区域）
-    console.log('Filling front cover background with bleed extension');
-    pdf.setFillColor(styleColor.r, styleColor.g, styleColor.b); // 使用样式背景色
-    pdf.rect(
-      xOffset + backCoverWidth + spineWidth,
-      0, // 顶部扩展到PDF边缘
-      pdfWidth - (xOffset + backCoverWidth + spineWidth), // 宽度扩展到PDF右边缘
-      pdfHeight, // 高度扩展到整个PDF高度
-      'F'
-    );
+      // 2. 绘制书脊背景颜色
+      console.log('Filling softcover spine background');
+      pdf.setFillColor(styleColor.r, styleColor.g, styleColor.b); // 使用样式背景色
+      pdf.rect(
+        bleed + backCoverWidth,
+        0, // 顶部扩展到PDF边缘
+        spineWidth,
+        pdfHeight, // 高度扩展到整个PDF高度
+        'F'
+      );
+
+      // 3. 绘制正面封面背景颜色（只包括出血区域）
+      console.log('Filling softcover front cover background with bleed only');
+      pdf.setFillColor(styleColor.r, styleColor.g, styleColor.b); // 使用样式背景色
+      pdf.rect(
+        bleed + backCoverWidth + spineWidth,
+        0, // 顶部扩展到PDF边缘
+        frontCoverWidth + bleed, // 只使用出血区域宽度
+        pdfHeight, // 高度扩展到整个PDF高度
+        'F'
+      );
+    }
 
     // Debug lines flag - set to false to hide safety margins and trim lines
     const debugLines = false; // 设置为false以隐藏辅助线
