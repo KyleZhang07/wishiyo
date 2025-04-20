@@ -93,6 +93,10 @@ const FunnyBiographyGenerateStep = () => {
   const [lastUsedStyle, setLastUsedStyle] = useState<string | null>(null);
   const [isAdjustDialogOpen, setIsAdjustDialogOpen] = useState(false);
 
+  // 背景移除状态跟踪
+  const [isRemovingBackground, setIsRemovingBackground] = useState(false);
+  const backgroundRemovalPromise = useRef<Promise<void> | null>(null);
+
   // 使用模版字符串定义尺寸
   const standardPreviewWidth = 360; // 从320增加到360
   const standardPreviewHeight = 540; // 从480增加到540
@@ -292,7 +296,7 @@ const FunnyBiographyGenerateStep = () => {
 
       // 生成新的图像
       setTimeout(() => {
-        generateImagesFromCanvas();
+        safeGenerateImagesFromCanvas();
         setShouldRegenerate(false);
       }, 1000);
     }
@@ -312,7 +316,7 @@ const FunnyBiographyGenerateStep = () => {
       console.log('图片位置或缩放变化，准备重新生成封面...');
       // 设置一个短暂的延迟，避免频繁重新生成
       const timer = setTimeout(() => {
-        generateImagesFromCanvas();
+        safeGenerateImagesFromCanvas();
       }, 300);
 
       return () => clearTimeout(timer);
@@ -328,73 +332,88 @@ const FunnyBiographyGenerateStep = () => {
     setBackCoverPdf(null);
     setSpinePdf(null);
 
-    try {
-      console.log('开始去除背景...');
+    // 设置背景移除状态
+    setIsRemovingBackground(true);
 
-      // 第一步：去除背景
-      const { data, error } = await supabase.functions.invoke('remove-background', {
-        body: { imageUrl }
-      });
+    // 创建一个新的 Promise 并存储在 ref 中
+    backgroundRemovalPromise.current = new Promise(async (resolve) => {
+      try {
+        console.log('开始去除背景...');
 
-      if (error) throw error;
+        // 第一步：去除背景
+        const { data, error } = await supabase.functions.invoke('remove-background', {
+          body: { imageUrl }
+        });
 
-      if (data.success && data.image) {
-        // 第二步：保存处理后的图片到sessionStorage
-        try {
-          sessionStorage.setItem('funnyBiographyProcessedPhoto', data.image);
-          console.log('Background removed successfully and saved to sessionStorage');
+        if (error) throw error;
 
-          // 第三步：更新状态并设置处理后的图片
-          // 使用回调函数确保状态更新后再生成封面
-          console.log('背景去除完成，设置图片并生成封面...');
+        if (data.success && data.image) {
+          // 第二步：保存处理后的图片到sessionStorage
+          try {
+            sessionStorage.setItem('funnyBiographyProcessedPhoto', data.image);
+            console.log('Background removed successfully and saved to sessionStorage');
 
-          // 直接使用已处理的图片生成封面，不需要等待React状态更新
-          // 在generateImagesFromCanvas函数中会优先使用sessionStorage中的图片
-          setCoverImage(data.image);
-          generateImagesFromCanvas();
+            // 第三步：更新状态并设置处理后的图片
+            console.log('背景去除完成，设置图片...');
 
-        } catch (storageError) {
-          console.error('Error saving to sessionStorage:', storageError);
-          // 即使存储失败，仍然继续生成封面
-          // 先设置图片，然后生成封面
-          console.log('存储失败，但仍然生成封面...');
-          setCoverImage(data.image);
-          // 直接使用已处理的图片生成封面
-          generateImagesFromCanvas();
+            // 设置处理后的图片
+            setCoverImage(data.image);
+          } catch (storageError) {
+            console.error('Error saving to sessionStorage:', storageError);
+            // 即使存储失败，仍然继续生成封面
+            console.log('存储失败，但仍然设置图片...');
+            setCoverImage(data.image);
+          }
+        } else {
+          throw new Error('Failed to process image');
         }
-      } else {
-        throw new Error('Failed to process image');
+      } catch (error) {
+        console.error('Error removing background:', error);
+
+        // 如果当前没有设置图片，才使用原始图片
+        console.log('背景去除失败，使用原始图片...');
+        if (!coverImage) {
+          setCoverImage(imageUrl);
+        }
+      } finally {
+        // 无论成功还是失败，都标记背景移除过程结束
+        setIsRemovingBackground(false);
+        resolve();
       }
+    });
+
+    // 等待背景移除完成，然后生成封面
+    try {
+      await backgroundRemovalPromise.current;
+      console.log('背景移除完成，开始生成封面...');
+
+      // 确保字体已加载后再尝试生成
+      if (!fontsLoaded) {
+        console.log('等待字体加载完成...');
+      }
+
+      // 生成封面
+      await safeGenerateImagesFromCanvas();
     } catch (error) {
-      console.error('Error removing background:', error);
-      // 移除toast提示
-      // toast({
-      //   variant: "destructive",
-      //   title: "Error processing image",
-      //   description: "Failed to remove background from the image. Using original image instead."
-      // });
+      console.error('等待背景移除过程时出错:', error);
+    }
+  };
 
-      // 如果当前没有设置图片，才使用原始图片
-      console.log('背景去除失败，使用原始图片生成封面...');
-      if (!coverImage) {
-        setCoverImage(imageUrl);
+  // 安全生成函数，确保在背景移除完成后再生成封面
+  const safeGenerateImagesFromCanvas = async () => {
+    // 如果正在移除背景，等待完成
+    if (isRemovingBackground && backgroundRemovalPromise.current) {
+      console.log('检测到背景移除正在进行，等待完成...');
+      try {
+        await backgroundRemovalPromise.current;
+        console.log('背景移除完成，继续生成封面...');
+      } catch (error) {
+        console.error('等待背景移除完成时出错:', error);
       }
-
-      // 即使背景去除失败，仍然尝试生成封面
-      // 直接生成封面，使用当前可用的图片
-      generateImagesFromCanvas();
     }
 
-    // 确保字体已加载后再尝试生成
-    if (!fontsLoaded) {
-      console.log('等待字体加载完成...');
-      // 移除toast提示
-      // toast({
-      //   title: "正在准备资源",
-      //   description: "正在加载字体资源，稍等片刻...",
-      //   variant: "default"
-      // });
-    }
+    // 然后生成封面
+    generateImagesFromCanvas();
   };
 
   const handleImageAdjust = (position: { x: number; y: number }, scale: number) => {
@@ -417,7 +436,7 @@ const FunnyBiographyGenerateStep = () => {
       // 添加延迟，确保状态已更新
       setTimeout(() => {
         console.log('开始重新生成封面，使用新的位置和缩放值:', { position, scale });
-        generateImagesFromCanvas();
+        safeGenerateImagesFromCanvas();
       }, 100);
     }
   };
@@ -503,7 +522,7 @@ const FunnyBiographyGenerateStep = () => {
   const handleGenerateBook = () => {
     // If PDFs haven't been generated yet, try generating once
     if (!frontCoverPdf || !backCoverPdf || !spinePdf) {
-      generateImagesFromCanvas();
+      safeGenerateImagesFromCanvas();
     }
 
     // Save current style selection to localStorage
