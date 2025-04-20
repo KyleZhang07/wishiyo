@@ -93,15 +93,6 @@ const FunnyBiographyGenerateStep = () => {
   const [lastUsedStyle, setLastUsedStyle] = useState<string | null>(null);
   const [isAdjustDialogOpen, setIsAdjustDialogOpen] = useState(false);
 
-  // 背景移除状态跟踪
-  const [isRemovingBackground, setIsRemovingBackground] = useState(false);
-  const backgroundRemovalPromise = useRef<Promise<void> | null>(null);
-
-  // 添加一个标记来跟踪当前图片是否已经处理过
-  const [imageProcessed, setImageProcessed] = useState(false);
-  // 添加一个标记来跟踪当前图片的处理状态
-  const currentProcessingImage = useRef<string | null>(null);
-
   // 使用模版字符串定义尺寸
   const standardPreviewWidth = 360; // 从320增加到360
   const standardPreviewHeight = 540; // 从480增加到540
@@ -269,55 +260,22 @@ const FunnyBiographyGenerateStep = () => {
     };
   }, []);
 
-  // 监听图片变化，当图片变化时直接按顺序执行背景移除和图片生成
+  // 监听图片变化，只有当图片变化时才触发重新生成
+  // 注意：现在我们在handleImageProcessing中直接处理背景去除完成后的封面生成
+  // 这个useEffect主要用于处理其他情况下的图片变化
   useEffect(() => {
-    // 如果没有图片或者图片没有变化，直接返回
-    if (!coverImage || lastUsedImage === coverImage) {
-      return;
-    }
-
     // 更新lastUsedImage以跟踪图片变化
-    setLastUsedImage(coverImage);
+    if (coverImage && lastUsedImage !== coverImage) {
+      setLastUsedImage(coverImage);
 
-    // 如果正在移除背景，并且当前处理的就是这个图片，则跳过
-    if (isRemovingBackground && currentProcessingImage.current === coverImage) {
-      console.log('当前图片正在移除背景中，跳过重复处理...');
-      return;
-    }
-
-    // 检查是否需要移除背景
-    const isNewUploadedImage = coverImage.startsWith('data:image') &&
-                               !coverImage.includes('funnyBiographyProcessedPhoto') &&
-                               !coverImage.includes('processed');
-    const sessionProcessedPhoto = sessionStorage.getItem('funnyBiographyProcessedPhoto');
-
-    // 如果是新上传的图片，需要移除背景
-    if (isNewUploadedImage && !isRemovingBackground) {
-      console.log('检测到新上传的图片，开始移除背景...');
-      // 记录当前正在处理的图片
-      currentProcessingImage.current = coverImage;
-      // 设置图片未处理状态
-      setImageProcessed(false);
-      // 开始移除背景
-      handleImageProcessing(coverImage);
-    }
-    // 如果是已处理过的图片，直接生成
-    else if (sessionProcessedPhoto && coverImage === sessionProcessedPhoto) {
-      console.log('检测到已处理过的图片，直接生成封面...');
-      // 设置图片已处理状态
-      setImageProcessed(true);
+      // 只有当不是通过handleImageProcessing函数设置的图片变化才触发重新生成
+      // 判断条件：不在生成中且已经生成完成
       if (!pdfGenerating && generationComplete) {
+        console.log('检测到图片变化，准备重新生成封面...');
         setShouldRegenerate(true);
       }
     }
-    // 其他情况（如选择不同的idea），直接生成
-    else if (!isRemovingBackground) {
-      console.log('检测到图片变化，直接生成封面...');
-      if (!pdfGenerating && generationComplete) {
-        setShouldRegenerate(true);
-      }
-    }
-  }, [coverImage, lastUsedImage, pdfGenerating, generationComplete, isRemovingBackground]);
+  }, [coverImage, lastUsedImage, pdfGenerating, generationComplete]);
 
   // 只在需要重新生成时执行生成操作
   useEffect(() => {
@@ -334,7 +292,7 @@ const FunnyBiographyGenerateStep = () => {
 
       // 生成新的图像
       setTimeout(() => {
-        safeGenerateImagesFromCanvas();
+        generateImagesFromCanvas();
         setShouldRegenerate(false);
       }, 1000);
     }
@@ -354,7 +312,7 @@ const FunnyBiographyGenerateStep = () => {
       console.log('图片位置或缩放变化，准备重新生成封面...');
       // 设置一个短暂的延迟，避免频繁重新生成
       const timer = setTimeout(() => {
-        safeGenerateImagesFromCanvas();
+        generateImagesFromCanvas();
       }, 300);
 
       return () => clearTimeout(timer);
@@ -363,12 +321,6 @@ const FunnyBiographyGenerateStep = () => {
 
   // 新的时序处理函数，确保背景去除完成后再生成封面
   const handleImageProcessing = async (imageUrl: string) => {
-    // 如果已经在处理这个图片，直接返回
-    if (isRemovingBackground && currentProcessingImage.current === imageUrl) {
-      console.log('当前图片已经在处理中，跳过重复处理...');
-      return;
-    }
-
     // 开始处理时设置生成状态，显示加载中
     setPdfGenerating(true);
     setGenerationComplete(false);
@@ -376,119 +328,73 @@ const FunnyBiographyGenerateStep = () => {
     setBackCoverPdf(null);
     setSpinePdf(null);
 
-    // 设置背景移除状态
-    setIsRemovingBackground(true);
-    // 记录当前正在处理的图片
-    currentProcessingImage.current = imageUrl;
-    // 设置图片未处理状态
-    setImageProcessed(false);
-
-    // 创建一个新的 Promise 并存储在 ref 中
-    backgroundRemovalPromise.current = new Promise(async (resolve) => {
-      try {
-        console.log('开始去除背景...');
-
-        // 第一步：去除背景
-        const { data, error } = await supabase.functions.invoke('remove-background', {
-          body: { imageUrl }
-        });
-
-        if (error) throw error;
-
-        if (data.success && data.image) {
-          // 第二步：保存处理后的图片到sessionStorage
-          try {
-            sessionStorage.setItem('funnyBiographyProcessedPhoto', data.image);
-            console.log('Background removed successfully and saved to sessionStorage');
-
-            // 第三步：更新状态并设置处理后的图片
-            console.log('背景去除完成，设置图片...');
-
-            // 设置图片已处理状态
-            setImageProcessed(true);
-            // 设置处理后的图片
-            setCoverImage(data.image);
-          } catch (storageError) {
-            console.error('Error saving to sessionStorage:', storageError);
-            // 即使存储失败，仍然继续生成封面
-            console.log('存储失败，但仍然设置图片...');
-            setImageProcessed(true);
-            setCoverImage(data.image);
-          }
-        } else {
-          throw new Error('Failed to process image');
-        }
-      } catch (error) {
-        console.error('Error removing background:', error);
-
-        // 如果当前没有设置图片，才使用原始图片
-        console.log('背景去除失败，使用原始图片...');
-        if (!coverImage) {
-          setCoverImage(imageUrl);
-        }
-        // 即使失败也标记为已处理，避免重复处理
-        setImageProcessed(true);
-      } finally {
-        // 无论成功还是失败，都标记背景移除过程结束
-        setIsRemovingBackground(false);
-        // 清除当前处理的图片记录
-        currentProcessingImage.current = null;
-        resolve();
-      }
-    });
-
-    // 等待背景移除完成，然后生成封面
     try {
-      await backgroundRemovalPromise.current;
-      console.log('背景移除完成，开始生成封面...');
+      console.log('开始去除背景...');
 
-      // 确保字体已加载后再尝试生成
-      if (!fontsLoaded) {
-        console.log('等待字体加载完成...');
+      // 第一步：去除背景
+      const { data, error } = await supabase.functions.invoke('remove-background', {
+        body: { imageUrl }
+      });
+
+      if (error) throw error;
+
+      if (data.success && data.image) {
+        // 第二步：保存处理后的图片到sessionStorage
+        try {
+          sessionStorage.setItem('funnyBiographyProcessedPhoto', data.image);
+          console.log('Background removed successfully and saved to sessionStorage');
+
+          // 第三步：更新状态并设置处理后的图片
+          // 使用回调函数确保状态更新后再生成封面
+          console.log('背景去除完成，设置图片并生成封面...');
+
+          // 直接使用已处理的图片生成封面，不需要等待React状态更新
+          // 在generateImagesFromCanvas函数中会优先使用sessionStorage中的图片
+          setCoverImage(data.image);
+          generateImagesFromCanvas();
+
+        } catch (storageError) {
+          console.error('Error saving to sessionStorage:', storageError);
+          // 即使存储失败，仍然继续生成封面
+          // 先设置图片，然后生成封面
+          console.log('存储失败，但仍然生成封面...');
+          setCoverImage(data.image);
+          // 直接使用已处理的图片生成封面
+          generateImagesFromCanvas();
+        }
+      } else {
+        throw new Error('Failed to process image');
+      }
+    } catch (error) {
+      console.error('Error removing background:', error);
+      // 移除toast提示
+      // toast({
+      //   variant: "destructive",
+      //   title: "Error processing image",
+      //   description: "Failed to remove background from the image. Using original image instead."
+      // });
+
+      // 如果当前没有设置图片，才使用原始图片
+      console.log('背景去除失败，使用原始图片生成封面...');
+      if (!coverImage) {
+        setCoverImage(imageUrl);
       }
 
-      // 生成封面
-      await safeGenerateImagesFromCanvas();
-    } catch (error) {
-      console.error('等待背景移除过程时出错:', error);
-    }
-  };
-
-  // 安全生成函数，确保在背景移除完成后再生成封面
-  const safeGenerateImagesFromCanvas = async () => {
-    // 如果正在移除背景，不进行生成，因为背景移除完成后会自动生成
-    if (isRemovingBackground) {
-      console.log('检测到背景移除正在进行，跳过生成...');
-      return;
-    }
-
-    // 如果图片已经处理过，直接生成
-    if (imageProcessed) {
-      console.log('图片已经处理过，直接生成封面');
+      // 即使背景去除失败，仍然尝试生成封面
+      // 直接生成封面，使用当前可用的图片
       generateImagesFromCanvas();
-      return;
     }
 
-    // 检查是否有sessionStorage中的处理后图片，如果有则优先使用
-    const sessionProcessedPhoto = sessionStorage.getItem('funnyBiographyProcessedPhoto');
-    if (sessionProcessedPhoto && coverImage !== sessionProcessedPhoto) {
-      console.log('使用sessionStorage中的处理后图片生成封面');
-      // 设置图片已处理状态
-      setImageProcessed(true);
-      // 设置处理后的图片
-      setCoverImage(sessionProcessedPhoto);
-      return; // 设置图片后会触发useEffect，不需要再次生成
+    // 确保字体已加载后再尝试生成
+    if (!fontsLoaded) {
+      console.log('等待字体加载完成...');
+      // 移除toast提示
+      // toast({
+      //   title: "正在准备资源",
+      //   description: "正在加载字体资源，稍等片刻...",
+      //   variant: "default"
+      // });
     }
-
-    // 如果是新上传的图片但还没有处理，则先处理
-    if (coverImage && coverImage.startsWith('data:image') && !coverImage.includes('funnyBiographyProcessedPhoto') && !coverImage.includes('processed')) {
-      console.log('检测到新上传的图片需要先移除背景');
-      handleImageProcessing(coverImage);
-      return;
-    }
-
-    // 其他情况，直接生成封面
-    generateImagesFromCanvas();
   };
 
   const handleImageAdjust = (position: { x: number; y: number }, scale: number) => {
@@ -511,7 +417,7 @@ const FunnyBiographyGenerateStep = () => {
       // 添加延迟，确保状态已更新
       setTimeout(() => {
         console.log('开始重新生成封面，使用新的位置和缩放值:', { position, scale });
-        safeGenerateImagesFromCanvas();
+        generateImagesFromCanvas();
       }, 100);
     }
   };
@@ -531,7 +437,12 @@ const FunnyBiographyGenerateStep = () => {
       return;
     }
 
-    // 注意：这里不再检查sessionStorage，因为已经在safeGenerateImagesFromCanvas中处理了
+    // 检查是否有sessionStorage中的处理后图片，如果有则优先使用
+    const sessionProcessedPhoto = sessionStorage.getItem('funnyBiographyProcessedPhoto');
+    if (sessionProcessedPhoto && coverImage !== sessionProcessedPhoto) {
+      console.log('使用sessionStorage中的处理后图片生成封面');
+      setCoverImage(sessionProcessedPhoto);
+    }
 
     // 打印当前的图片位置和缩放值，用于调试
     console.log('生成图像时的图片位置:', imagePosition);
@@ -592,7 +503,7 @@ const FunnyBiographyGenerateStep = () => {
   const handleGenerateBook = () => {
     // If PDFs haven't been generated yet, try generating once
     if (!frontCoverPdf || !backCoverPdf || !spinePdf) {
-      safeGenerateImagesFromCanvas();
+      generateImagesFromCanvas();
     }
 
     // Save current style selection to localStorage
