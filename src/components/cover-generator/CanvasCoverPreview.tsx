@@ -924,7 +924,18 @@ const CanvasCoverPreview = ({
       }
 
       // Draw title using a custom loop because font/color/lineHeight changes per line
-      const midpoint = Math.ceil(titleLines.length / 2);
+      // 确保至少有一行文字在红色背景部分
+      let midpoint;
+      if (titleLines.length === 1) {
+        // 如果只有一行，强制分成两部分：白色和红色
+        midpoint = 0; // 所有行都使用红色
+      } else if (titleLines.length === 2) {
+        // 如果有两行，第一行白色，第二行红色
+        midpoint = 1;
+      } else {
+        // 如果有三行或更多，大约一半使用白色，一半使用红色
+        midpoint = Math.ceil(titleLines.length / 2);
+      }
 
       const whiteLinesHeight = (midpoint > 0 ? (midpoint - 1) * normalLineHeight : 0);
       const redLinesHeight = (titleLines.length - midpoint > 0 ? (titleLines.length - midpoint) * largeLineHeight : 0);
@@ -935,30 +946,72 @@ const CanvasCoverPreview = ({
       startY = Math.max(titleArea.y, startY);
       ctx.textAlign = 'center';
       let currentY = startY;
-      for (let i = 0; i < titleLines.length; i++) {
-          const lineText = titleLines[i].toUpperCase();
-          let effectiveLineHeight = largeLineHeight; // Default to large
 
-          if (i < midpoint) {
-              ctx.fillStyle = '#FFFFFF';
-              ctx.font = `bold 54px ${resolvedFont}`;
-              if (i < midpoint - 1) { // Use smaller lineHeight for lines before the last white one
-                effectiveLineHeight = normalLineHeight;
-              }
-              // The transition from white to red uses largeLineHeight
-          } else {
-              ctx.fillStyle = '#9B0000';
-              ctx.font = `bold 80px ${resolvedFont}`;
-              // All red lines use largeLineHeight
-          }
+      // 如果只有一行文字，将其分成两部分：白色和红色
+      if (titleLines.length === 1) {
+        const lineText = titleLines[0].toUpperCase();
+        const words = lineText.split(' ');
 
-          if (currentY < titleArea.y + titleArea.height) {
-            ctx.fillText(lineText, titleArea.x + titleArea.width / 2, currentY);
-          }
-          // Increment Y based on the line height used *before* this line
-          if (i < titleLines.length - 1) {
-            currentY += (i < midpoint -1) ? normalLineHeight : largeLineHeight;
-          }
+        if (words.length === 1) {
+          // 如果只有一个单词，将其一半显示为白色，一半显示为红色
+          const halfIndex = Math.ceil(lineText.length / 2);
+          const firstHalf = lineText.substring(0, halfIndex);
+          const secondHalf = lineText.substring(halfIndex);
+
+          // 绘制第一部分（白色）
+          ctx.fillStyle = '#FFFFFF';
+          ctx.font = `bold 54px ${resolvedFont}`;
+          ctx.fillText(firstHalf, titleArea.x + titleArea.width / 2, currentY);
+
+          // 绘制第二部分（红色）
+          ctx.fillStyle = '#9B0000';
+          ctx.font = `bold 80px ${resolvedFont}`;
+          currentY += largeLineHeight;
+          ctx.fillText(secondHalf, titleArea.x + titleArea.width / 2, currentY);
+        } else {
+          // 如果有多个单词，将前半部分单词显示为白色，后半部分显示为红色
+          const halfIndex = Math.ceil(words.length / 2);
+          const firstHalf = words.slice(0, halfIndex).join(' ');
+          const secondHalf = words.slice(halfIndex).join(' ');
+
+          // 绘制第一部分（白色）
+          ctx.fillStyle = '#FFFFFF';
+          ctx.font = `bold 54px ${resolvedFont}`;
+          ctx.fillText(firstHalf, titleArea.x + titleArea.width / 2, currentY);
+
+          // 绘制第二部分（红色）
+          ctx.fillStyle = '#9B0000';
+          ctx.font = `bold 80px ${resolvedFont}`;
+          currentY += largeLineHeight;
+          ctx.fillText(secondHalf, titleArea.x + titleArea.width / 2, currentY);
+        }
+      } else {
+        // 多行文字的处理
+        for (let i = 0; i < titleLines.length; i++) {
+            const lineText = titleLines[i].toUpperCase();
+            let effectiveLineHeight = largeLineHeight; // Default to large
+
+            if (i < midpoint) {
+                ctx.fillStyle = '#FFFFFF';
+                ctx.font = `bold 54px ${resolvedFont}`;
+                if (i < midpoint - 1) { // Use smaller lineHeight for lines before the last white one
+                  effectiveLineHeight = normalLineHeight;
+                }
+                // The transition from white to red uses largeLineHeight
+            } else {
+                ctx.fillStyle = '#9B0000';
+                ctx.font = `bold 80px ${resolvedFont}`;
+                // All red lines use largeLineHeight
+            }
+
+            if (currentY < titleArea.y + titleArea.height) {
+              ctx.fillText(lineText, titleArea.x + titleArea.width / 2, currentY);
+            }
+            // Increment Y based on the line height used *before* this line
+            if (i < titleLines.length - 1) {
+              currentY += (i < midpoint -1) ? normalLineHeight : largeLineHeight;
+            }
+        }
       }
 
       // 绘制红色底部区域

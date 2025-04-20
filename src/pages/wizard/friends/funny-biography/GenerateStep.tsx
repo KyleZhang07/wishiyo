@@ -108,6 +108,7 @@ const FunnyBiographyGenerateStep = () => {
     const savedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
     const savedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
     const savedPhotos = localStorage.getItem('funnyBiographyPhoto');
+    const savedProcessedPhoto = localStorage.getItem('funnyBiographyProcessedPhoto');
     const savedStyle = localStorage.getItem('funnyBiographySelectedStyle');
     const savedGenerationComplete = localStorage.getItem('funnyBiographyGenerationComplete');
 
@@ -150,7 +151,12 @@ const FunnyBiographyGenerateStep = () => {
       }
     }
 
-    if (savedPhotos) {
+    // 优先使用已处理的图片，避免重复进行背景去除
+    if (savedProcessedPhoto) {
+      console.log('使用已处理的图片，跳过背景去除');
+      setCoverImage(savedProcessedPhoto);
+      setLastUsedImage(savedProcessedPhoto);
+    } else if (savedPhotos) {
       // 立即设置原始图片，以便按钮可以立即显示
       setCoverImage(savedPhotos);
       setLastUsedImage(savedPhotos);
@@ -207,6 +213,8 @@ const FunnyBiographyGenerateStep = () => {
         // 重新加载选择的想法数据
         const savedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
         const savedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
+        // 检查是否有已处理的图片，避免重复进行背景去除
+        const savedProcessedPhoto = localStorage.getItem('funnyBiographyProcessedPhoto');
 
         if (savedIdeas && savedIdeaIndex) {
           const ideas = JSON.parse(savedIdeas);
@@ -220,6 +228,13 @@ const FunnyBiographyGenerateStep = () => {
               setPraises(selectedIdea.praises);
             }
           }
+        }
+
+        // 如果有已处理的图片，直接使用，不需要重新进行背景去除
+        if (savedProcessedPhoto && coverImage !== savedProcessedPhoto) {
+          console.log('检测到想法变更，使用已处理的图片，跳过背景去除');
+          setCoverImage(savedProcessedPhoto);
+          setLastUsedImage(savedProcessedPhoto);
         }
 
         // 延迟生成新的图像，确保数据已更新
@@ -307,7 +322,9 @@ const FunnyBiographyGenerateStep = () => {
       if (data.success && data.image) {
         // 更新处理后的图片
         setCoverImage(data.image);
-        console.log('Background removed successfully');
+        // 保存处理后的图片到localStorage，避免重复进行背景去除
+        localStorage.setItem('funnyBiographyProcessedPhoto', data.image);
+        console.log('Background removed successfully and saved to localStorage');
       } else {
         throw new Error('Failed to process image');
       }
