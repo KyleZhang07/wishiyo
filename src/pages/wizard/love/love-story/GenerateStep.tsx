@@ -788,9 +788,25 @@ const GenerateStep = () => {
     console.log('Checking for ungenerated images...');
     const generationStatus = checkAllContentImagesGenerated();
 
+    // 输出详细的生成状态信息
+    console.log('Generation status:', JSON.stringify(generationStatus, null, 2));
+
     // 获取必要的数据
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
     const characterPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+
+    console.log('savedPrompts exists:', !!savedPrompts);
+    console.log('characterPhoto exists:', !!characterPhoto);
+
+    if (savedPrompts) {
+      try {
+        const parsedPrompts = JSON.parse(savedPrompts);
+        console.log('Parsed prompts length:', parsedPrompts.length);
+        console.log('First few prompts:', parsedPrompts.slice(0, 3));
+      } catch (error) {
+        console.error('Error parsing prompts:', error);
+      }
+    }
 
     if (!savedPrompts || !characterPhoto) {
       console.log('Missing prompts or character photo, cannot generate images');
@@ -799,7 +815,7 @@ const GenerateStep = () => {
 
     const prompts = JSON.parse(savedPrompts);
     if (!prompts || prompts.length < 11) { // 需要至少11个提示（封面+引导+9个内容）
-      console.log('Not enough prompts for image generation');
+      console.log('Not enough prompts for image generation, found:', prompts ? prompts.length : 0);
       return;
     }
 
@@ -872,33 +888,41 @@ const GenerateStep = () => {
 
   // 组件加载后检查并自动生成所有未生成的图片
   useEffect(() => {
+    // 添加详细日志帮助调试
+    console.log('GenerateStep useEffect triggered');
+    console.log('isLoadingImages:', isLoadingImages);
+    console.log('imageTexts length:', imageTexts.length);
+    console.log('supabaseImages length:', supabaseImages.length);
+
+    // 检查localStorage中的关键数据
+    const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
+    const characterPhoto = localStorage.getItem('loveStoryPartnerPhoto');
+    console.log('savedPrompts exists:', !!savedPrompts);
+    console.log('characterPhoto exists:', !!characterPhoto);
+
+    // 检查图片URL
+    const introImageUrl = localStorage.getItem('loveStoryIntroImage_url');
+    console.log('introImageUrl exists:', !!introImageUrl);
+
+    for (let i = 1; i <= 3; i++) { // 只检查前3个图片，避免日志过多
+      const imageUrl = localStorage.getItem(`loveStoryContentImage${i}_url`);
+      console.log(`contentImage${i}_url exists:`, !!imageUrl);
+    }
+
     // 确保所有图片数据都已加载
     if (!isLoadingImages && imageTexts.length > 0) {
+      console.log('Conditions met, scheduling autoGenerateAllImages...');
       // 延迟执行，确保所有状态都已更新
       const timer = setTimeout(() => {
+        console.log('Executing autoGenerateAllImages...');
         autoGenerateAllImages();
       }, 2000); // 2秒延迟，确保其他操作已完成
 
       return () => clearTimeout(timer);
+    } else {
+      console.log('Conditions not met for autoGenerateAllImages');
     }
-  }, [isLoadingImages, imageTexts]);
-
-
-
-
-
-  // 组件加载后检查并自动生成所有未生成的图片
-  useEffect(() => {
-    // 确保所有图片数据都已加载
-    if (!isLoadingImages && imageTexts.length > 0) {
-      // 延迟执行，确保所有状态都已更新
-      const timer = setTimeout(() => {
-        autoGenerateAllImages();
-      }, 2000); // 2秒延迟，确保其他操作已完成
-
-      return () => clearTimeout(timer);
-    }
-  }, [isLoadingImages, imageTexts]);
+  }, [isLoadingImages, imageTexts, supabaseImages]);
 
   // 渲染祝福语图片
   const handleRenderBlessingImage = async () => {
