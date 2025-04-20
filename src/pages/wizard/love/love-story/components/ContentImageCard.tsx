@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Edit, RefreshCw, ImageIcon, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { getOptimizedImageUrl } from '@/integrations/supabase/storage';
 import {
   Dialog,
   DialogContent,
@@ -142,7 +143,10 @@ export const ContentImageCard = ({
                   <div className="flex w-full h-full relative shadow-lg">
                     <div className="w-1/2 h-full relative overflow-hidden">
                       <img
-                        src={leftImageUrl}
+                        src={getOptimizedImageUrl(leftImageUrl || '', {
+                          format: 'webp',
+                          quality: 85
+                        })}
                         alt={`${title || `Content ${index}`} (left page)`}
                         className="w-full h-full object-cover"
                         onLoad={handleLeftImageLoad}
@@ -153,7 +157,10 @@ export const ContentImageCard = ({
 
                     <div className="w-1/2 h-full relative overflow-hidden">
                       <img
-                        src={rightImageUrl}
+                        src={getOptimizedImageUrl(rightImageUrl || '', {
+                          format: 'webp',
+                          quality: 85
+                        })}
                         alt={`${title || `Content ${index}`} (right page)`}
                         className="w-full h-full object-cover"
                         onLoad={handleRightImageLoad}
@@ -167,7 +174,10 @@ export const ContentImageCard = ({
                 </div>
               ) : image ? (
                 <img
-                  src={image}
+                  src={getOptimizedImageUrl(image || '', {
+                    format: 'webp',
+                    quality: 85
+                  })}
                   alt={title || `Content ${index}`}
                   className="w-full h-full object-cover"
                 />
