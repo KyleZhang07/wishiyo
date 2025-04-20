@@ -31,23 +31,76 @@ const ImageAdjustDialog = ({
     setScale(initialScale);
   }, [initialPosition, initialScale]);
 
-  // 只保留点击调整位置的逻辑
-  const updatePosition = (event: React.MouseEvent) => {
+  // 拖动相关状态
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartPos, setDragStartPos] = useState({ x: 0, y: 0 });
+  const [dragStartImagePos, setDragStartImagePos] = useState({ x: 0, y: 0 });
+
+  // 更新位置的逻辑
+  const updatePosition = (event: React.MouseEvent, isDragEvent: boolean = false) => {
     if (!gridRef.current) return;
 
     const rect = gridRef.current.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
-    const y = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
 
-    setPosition({
-      x: Math.max(-1, Math.min(1, x)),
-      y: Math.max(-1, Math.min(1, y))
-    });
+    if (isDragEvent && isDragging) {
+      // 如果是拖动事件，计算位置偏移
+      const deltaX = (event.clientX - dragStartPos.x) / rect.width * 2;
+      const deltaY = (event.clientY - dragStartPos.y) / rect.height * 2;
+
+      // 基于拖动起始位置计算新位置
+      const newX = dragStartImagePos.x + deltaX;
+      const newY = dragStartImagePos.y + deltaY;
+
+      setPosition({
+        x: Math.max(-1, Math.min(1, newX)),
+        y: Math.max(-1, Math.min(1, newY))
+      });
+    } else {
+      // 直接点击时，计算绝对位置
+      const x = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
+      const y = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
+
+      setPosition({
+        x: Math.max(-1, Math.min(1, x)),
+        y: Math.max(-1, Math.min(1, y))
+      });
+    }
   };
 
-  // 简化为只有点击事件
+  // 鼠标事件处理函数
+  const handleMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
+    // 只在点击图片时才开始拖动
+    if (event.target instanceof HTMLImageElement) {
+      setIsDragging(true);
+      setDragStartPos({ x: event.clientX, y: event.clientY });
+      setDragStartImagePos({ ...position });
+
+      // 防止默认行为和文本选择
+      event.preventDefault();
+    }
+  };
+
+  const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (isDragging) {
+      updatePosition(event, true);
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // 添加鼠标离开事件处理
+  const handleMouseLeave = () => {
+    setIsDragging(false);
+  };
+
+  // 点击事件处理
   const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    updatePosition(event);
+    // 只在非拖动状态下处理点击
+    if (!isDragging && !(event.target instanceof HTMLImageElement)) {
+      updatePosition(event);
+    }
   };
 
   return (
@@ -59,8 +112,12 @@ const ImageAdjustDialog = ({
 
         <div
           ref={gridRef}
-          className="relative aspect-[4/3] mb-6 bg-gray-900 rounded-lg overflow-hidden cursor-pointer"
+          className="relative aspect-[4/3] mb-6 bg-gray-900 rounded-lg overflow-hidden"
           onClick={handleClick}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseLeave}
         >
           {/* Grid lines */}
           <div className="absolute inset-0 grid grid-cols-3 grid-rows-3">
@@ -83,7 +140,9 @@ const ImageAdjustDialog = ({
               <img
                 src={coverImage}
                 alt="Cover preview"
-                className="max-w-full max-h-full object-contain"
+                className="max-w-full max-h-full object-contain cursor-move"
+                style={{ userSelect: 'none' }}
+                draggable="false"
               />
             </div>
           )}
