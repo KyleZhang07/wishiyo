@@ -92,13 +92,21 @@ const LoveStoryCoverStep = () => {
   const [selectedStyle, setSelectedStyle] = useState<string>('classic');
   const [textTone, setTextTone] = useState<string>('romantic');
 
-  // 标题状态，合并为一个结构，设置默认值为第一个选项
+  // 标题状态，合并为一个结构，默认使用第一个选项
+  const defaultTitle = "Mat's amazing adventure";
   const [titleData, setTitleData] = useState({
     mainTitle: "Mat's",
     subTitle: "amazing adventure",
     thirdLine: '',
-    fullTitle: "Mat's amazing adventure"
+    fullTitle: defaultTitle
   });
+
+  // 将默认标题保存到localStorage
+  useEffect(() => {
+    if (!localStorage.getItem('loveStoryCoverTitle')) {
+      localStorage.setItem('loveStoryCoverTitle', defaultTitle);
+    }
+  }, []);
 
   // 封面图片状态
   const [coverImages, setCoverImages] = useState<string[]>([]);
@@ -195,16 +203,22 @@ const LoveStoryCoverStep = () => {
       setTitleData(parsedDefaultTitle);
       // 同时保存默认标题到 localStorage，以便后续使用
       localStorage.setItem('loveStoryCoverTitle', firstTitleOption);
-    } else {
-      // 如果没有保存的标题也没有收件人姓名，使用图中的第一个选项
-      const defaultName = 'Mat';
-      const firstTitleOption = `${defaultName}'s amazing adventure`;
-      // 调用 parseTitleString 处理默认标题
-      const parsedDefaultTitle = parseTitleString(firstTitleOption);
-      // 直接更新状态
-      setTitleData(parsedDefaultTitle);
-      // 保存默认标题到 localStorage
-      localStorage.setItem('loveStoryCoverTitle', firstTitleOption);
+    } else if (savedIdeas && savedIdeaIndex) {
+      try {
+        const ideas = JSON.parse(savedIdeas);
+        const selectedIdea = ideas[parseInt(savedIdeaIndex)];
+        if (selectedIdea) {
+          // 默认标题
+          setTitleData(prev => ({
+            ...prev,
+            fullTitle: 'THE MAGIC IN',
+            mainTitle: 'THE MAGIC IN',
+            subTitle: savedRecipientName || ''
+          }));
+        }
+      } catch (error) {
+        console.error('Error parsing saved ideas:', error);
+      }
     }
   }, []);
 
@@ -418,7 +432,10 @@ const LoveStoryCoverStep = () => {
 
   // 重新生成封面功能
   const handleRegenerateCover = async () => {
+    if (isGeneratingCover) return;
+
     setIsGeneratingCover(true);
+    // 注意：不需要额外的加载状态，因为LoveStoryCoverPreview组件内部已经有加载状态
 
     try {
       // 先删除所有旧的封面图片
@@ -1712,7 +1729,7 @@ const LoveStoryCoverStep = () => {
               <div className="grid grid-cols-1 gap-4">
                 <div
                   onClick={() => handleTitleSelect(`${recipientName}'s amazing adventure`)}
-                  className="flex items-center p-4 rounded-md cursor-pointer transition-all bg-gray-50 hover:bg-gray-100 border border-gray-200"
+                  className="flex items-center p-4 rounded-md cursor-pointer transition-all bg-gray-50 hover:bg-gray-100 border border-gray-200 border-l-4 border-l-[#FF7F50]"
                 >
                   <div className="flex-1">
                     <h4 className="font-medium text-gray-900 text-lg">{recipientName}'s amazing adventure</h4>
