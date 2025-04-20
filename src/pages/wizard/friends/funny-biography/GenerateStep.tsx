@@ -344,19 +344,22 @@ const FunnyBiographyGenerateStep = () => {
           sessionStorage.setItem('funnyBiographyProcessedPhoto', data.image);
           console.log('Background removed successfully and saved to sessionStorage');
 
-          // 背景去除完成后，等待一下确保状态更新，然后生成封面
+          // 背景去除完成后，等待状态更新，然后生成封面
+          console.log('背景去除完成，等待状态更新...');
+          // 使用单次延迟，时间适中
           setTimeout(() => {
-            console.log('背景去除完成，开始生成封面...');
+            console.log('开始生成封面...');
             generateImagesFromCanvas();
-          }, 300);
+          }, 400);
 
         } catch (storageError) {
           console.error('Error saving to sessionStorage:', storageError);
           // 即使存储失败，仍然继续生成封面
+          console.log('存储失败，等待状态更新...');
           setTimeout(() => {
             console.log('尝试生成封面...');
             generateImagesFromCanvas();
-          }, 300);
+          }, 400);
         }
       } else {
         throw new Error('Failed to process image');
@@ -375,10 +378,11 @@ const FunnyBiographyGenerateStep = () => {
       }
 
       // 即使背景去除失败，仍然尝试生成封面
+      console.log('背景去除失败，等待状态更新...');
       setTimeout(() => {
-        console.log('背景去除失败，使用原始图片生成封面...');
+        console.log('使用原始图片生成封面...');
         generateImagesFromCanvas();
-      }, 300);
+      }, 400);
     }
 
     // 确保字体已加载后再尝试生成
@@ -441,7 +445,8 @@ const FunnyBiographyGenerateStep = () => {
 
     setPdfGenerating(true);
 
-    // Ensure Canvas is rendered
+    // 确保 Canvas 已经渲染
+    console.log('等待Canvas渲染...');
     setTimeout(() => {
       try {
         if (!canvasPdfContainerRef.current) {
@@ -485,7 +490,7 @@ const FunnyBiographyGenerateStep = () => {
         console.error('Error generating cover images:', error);
         setPdfGenerating(false);
       }
-    }, 500); // Give time for canvas rendering
+    }, 600); // 给Canvas渲染提供足够时间
   };
 
   const handleGenerateBook = () => {
