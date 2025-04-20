@@ -131,9 +131,11 @@ export const ContentImageCard = ({
       <div className="max-w-4xl mx-auto">
         <div className="aspect-[2/1] overflow-hidden relative">
           {isGenerating ? (
-            <div className="h-full flex flex-col justify-center items-center text-center bg-gray-100/50 rounded-sm">
-              <RefreshCw className="animate-spin h-8 w-8 mb-4" />
-              <p className="text-gray-600">Generating image...</p>
+            <div className="h-full flex flex-col justify-center items-center text-center bg-white rounded-sm shadow-lg">
+              <div className="relative w-8 h-8 mb-2">
+                <div className="absolute inset-0 rounded-full border-t-2 border-[#FF7F50] animate-spin"></div>
+              </div>
+              <p className="text-sm font-medium text-[#FF7F50]">Generating image...</p>
             </div>
           ) : (
             <div className="w-full h-full rounded-sm overflow-hidden">

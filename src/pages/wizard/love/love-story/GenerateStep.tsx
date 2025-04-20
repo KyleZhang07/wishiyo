@@ -1070,13 +1070,13 @@ const GenerateStep = () => {
           <h2 className="text-2xl font-bold mb-8">Cover</h2>
           <div className="max-w-xl mx-auto">
             {isRenderingCover ? (
-              <div className="w-full aspect-[1/1.5] bg-white rounded-lg flex flex-col items-center justify-center">
-                <div className="relative w-16 h-16 mb-4">
+              <div className="w-full aspect-[1/1.5] bg-white rounded-lg shadow-lg flex flex-col items-center justify-center">
+                <div className="relative w-8 h-8 mb-2">
                   <div className="absolute inset-0 rounded-full border-t-2 border-[#FF7F50] animate-spin"></div>
                 </div>
-                <h3 className="text-xl font-medium text-[#FF7F50]">
+                <p className="text-sm font-medium text-[#FF7F50]">
                   Generating cover
-                </h3>
+                </p>
               </div>
             ) : (coverRenderComplete && coverImageUrl) ? (
               <img
@@ -1104,13 +1104,13 @@ const GenerateStep = () => {
           <div className="max-w-xl mx-auto">
             {/* 祝福语预览 */}
             {isGeneratingBlessing ? (
-              <div className="w-full aspect-[1/1.5] bg-white rounded-lg flex flex-col items-center justify-center">
-                <div className="relative w-16 h-16 mb-4">
+              <div className="w-full aspect-[1/1.5] bg-white rounded-lg shadow-lg flex flex-col items-center justify-center">
+                <div className="relative w-8 h-8 mb-2">
                   <div className="absolute inset-0 rounded-full border-t-2 border-[#FF7F50] animate-spin"></div>
                 </div>
-                <h3 className="text-xl font-medium text-[#FF7F50]">
+                <p className="text-sm font-medium text-[#FF7F50]">
                   Generating blessing
-                </h3>
+                </p>
               </div>
             ) : blessingImage ? (
               <img
@@ -1180,13 +1180,13 @@ const GenerateStep = () => {
 
           <div className="max-w-xl mx-auto">
             {isRenderingCover ? (
-              <div className="w-full aspect-[1/1.5] bg-white rounded-lg flex flex-col items-center justify-center">
-                <div className="relative w-16 h-16 mb-4">
+              <div className="w-full aspect-[1/1.5] bg-white rounded-lg shadow-lg flex flex-col items-center justify-center">
+                <div className="relative w-8 h-8 mb-2">
                   <div className="absolute inset-0 rounded-full border-t-2 border-[#FF7F50] animate-spin"></div>
                 </div>
-                <h3 className="text-xl font-medium text-[#FF7F50]">
+                <p className="text-sm font-medium text-[#FF7F50]">
                   Generating back cover
-                </h3>
+                </p>
               </div>
             ) : (coverRenderComplete && backCoverImageUrl) ? (
               <img
