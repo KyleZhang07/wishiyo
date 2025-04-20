@@ -142,13 +142,13 @@ serve(async (req) => {
           ${chapterDescription ? `Chapter description: ${chapterDescription}` : ''}
 
           Write this chapter with 4 distinct sections:
-          - CRITICAL: EACH SECTION MUST CONTAIN BETWEEN 950 TO 1050 WORDS. If a section is below 950 words, you must expand it. Count the words and print the count in the final output.
+          - CRITICAL: EACH SECTION MUST CONTAIN BETWEEN 950 TO 1050 WORDS. If a section is below 950 words, you must expand it.
           - Use first-person "I" when ${bookAuthor} is sharing specific personal experiences or anecdotes
           - Use second-person "you" when explaining methodologies, principles, or when instructing the reader
           - The narrative should feel like ${bookAuthor} is personally guiding readers through their expertise using engaging metaphors
 
           Guidelines:
-          - CRITICAL: EACH SECTION MUST CONTAIN BETWEEN 950 TO 1050 WORDS. If a section is below 950 words, you must expand it. Count the words and print the count in the final output.
+          - CRITICAL: EACH SECTION MUST CONTAIN BETWEEN 950 TO 1050 WORDS. If a section is below 950 words, you must expand it.
           - Balance between "I" (for personal stories) and "you" (for instructional content)
           - When using "I," focus on ${bookAuthor}'s personal journey, challenges overcome, and pivotal moments
           - When using "you," focus on transferable principles, methodologies, and practical applications
@@ -169,12 +169,11 @@ serve(async (req) => {
               {
                 "sectionNumber": 1,
                 "title": "Section title",
-                "content": "Section content...",
-                "wordCount": 900 // 请计算并提供实际字数
+                "content": "Section content..."
               },
               ...
             ],
-            "totalWordCount": 3600 // 请计算并提供所有小节内容的总字数，应该在 3400-3800 之间
+            "totalWordCount": 4000 // 预计总字数大约为4000左右
           }
           `;
 
@@ -194,7 +193,7 @@ serve(async (req) => {
 - Each section MUST contain between 950 and 1050 words.
 - Each section's content must use double line breaks (\\n\\n) between paragraphs to clearly separate them.
 - Respond only with valid JSON. Do not include any commentary or explanation outside the JSON structure.
-- Include wordCount for each section, and totalWordCount for the chapter.`
+- You may include totalWordCount for the chapter, but it's not required.`
                 },
                 {
                   role: 'user',
@@ -202,7 +201,7 @@ serve(async (req) => {
                 }
               ],
               temperature: 1.0,
-              max_tokens: 5000,
+              max_tokens: 6000,
               response_format: { type: "json_object" }
             }),
           });
