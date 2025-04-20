@@ -331,7 +331,7 @@ const FunnyBiographyGenerateStep = () => {
     try {
       console.log('开始去除背景...');
 
-      // 1. 先进行背景去除
+      // 第一步：去除背景
       const { data, error } = await supabase.functions.invoke('remove-background', {
         body: { imageUrl }
       });
@@ -339,66 +339,61 @@ const FunnyBiographyGenerateStep = () => {
       if (error) throw error;
 
       if (data.success && data.image) {
-        console.log('背景去除成功，更新图片状态...');
-
-        // 2. 更新处理后的图片状态
-        setCoverImage(data.image);
-
-        // 3. 保存处理后的图片到sessionStorage
+        // 第二步：保存处理后的图片到sessionStorage
         try {
           sessionStorage.setItem('funnyBiographyProcessedPhoto', data.image);
-          console.log('已保存处理后的图片到sessionStorage');
+          console.log('Background removed successfully and saved to sessionStorage');
+
+          // 第三步：更新状态并设置处理后的图片
+          // 使用回调函数确保状态更新后再生成封面
+          console.log('背景去除完成，设置图片并生成封面...');
+
+          // 直接使用已处理的图片生成封面，不需要等待React状态更新
+          // 在generateImagesFromCanvas函数中会优先使用sessionStorage中的图片
+          setCoverImage(data.image);
+          generateImagesFromCanvas();
+
         } catch (storageError) {
           console.error('Error saving to sessionStorage:', storageError);
-          // 存储失败不影响后续处理
+          // 即使存储失败，仍然继续生成封面
+          // 先设置图片，然后生成封面
+          console.log('存储失败，但仍然生成封面...');
+          setCoverImage(data.image);
+          // 直接使用已处理的图片生成封面
+          generateImagesFromCanvas();
         }
-
-        // 4. 等待React状态更新
-        await new Promise(resolve => setTimeout(resolve, 100));
-
-        // 5. 手动更新DOM中的图片
-        if (canvasPdfContainerRef.current) {
-          const canvasContainer = canvasPdfContainerRef.current;
-          const imgElements = canvasContainer.querySelectorAll('img');
-          if (imgElements.length > 0) {
-            // 将处理后的图片应用到所有图片元素
-            imgElements.forEach(img => {
-              if (img instanceof HTMLImageElement) {
-                img.src = data.image;
-                console.log('手动更新了Canvas中的图片');
-              }
-            });
-          }
-        }
-
-        // 6. 再次等待确保图片加载
-        await new Promise(resolve => setTimeout(resolve, 100));
-
-        // 7. 生成封面
-        console.log('开始生成封面...');
-        generateImagesFromCanvas();
       } else {
         throw new Error('Failed to process image');
       }
     } catch (error) {
       console.error('Error removing background:', error);
+      // 移除toast提示
+      // toast({
+      //   variant: "destructive",
+      //   title: "Error processing image",
+      //   description: "Failed to remove background from the image. Using original image instead."
+      // });
 
       // 如果当前没有设置图片，才使用原始图片
+      console.log('背景去除失败，使用原始图片生成封面...');
       if (!coverImage) {
         setCoverImage(imageUrl);
-
-        // 等待状态更新
-        await new Promise(resolve => setTimeout(resolve, 100));
       }
 
       // 即使背景去除失败，仍然尝试生成封面
-      console.log('背景去除失败，使用原始图片生成封面...');
+      // 直接生成封面，使用当前可用的图片
       generateImagesFromCanvas();
     }
 
     // 确保字体已加载后再尝试生成
     if (!fontsLoaded) {
       console.log('等待字体加载完成...');
+      // 移除toast提示
+      // toast({
+      //   title: "正在准备资源",
+      //   description: "正在加载字体资源，稍等片刻...",
+      //   variant: "default"
+      // });
     }
   };
 
@@ -432,7 +427,7 @@ const FunnyBiographyGenerateStep = () => {
     setSelectedStyle(styleId);
   };
 
-  // 生成图像的函数
+  // 生成图像的函数 - 确保使用sessionStorage中的图片
   const generateImagesFromCanvas = async () => {
     if (!fontsLoaded) {
       console.log('字体尚未加载完成，延迟生成...');
@@ -440,6 +435,13 @@ const FunnyBiographyGenerateStep = () => {
         generateImagesFromCanvas();
       }, 500);
       return;
+    }
+
+    // 检查是否有sessionStorage中的处理后图片，如果有则优先使用
+    const sessionProcessedPhoto = sessionStorage.getItem('funnyBiographyProcessedPhoto');
+    if (sessionProcessedPhoto && coverImage !== sessionProcessedPhoto) {
+      console.log('使用sessionStorage中的处理后图片生成封面');
+      setCoverImage(sessionProcessedPhoto);
     }
 
     // 打印当前的图片位置和缩放值，用于调试
