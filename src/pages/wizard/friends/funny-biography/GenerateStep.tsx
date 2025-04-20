@@ -150,21 +150,19 @@ const FunnyBiographyGenerateStep = () => {
       }
     }
 
-    // 检查是否已经处理过图片，避免重复进行背景去除
-    const photoProcessed = localStorage.getItem('funnyBiographyPhotoProcessed') === 'true';
-
-    if (savedPhotos) {
+    // 优先使用已处理的图片，避免重复进行背景去除
+    // 使用sessionStorage而非localStorage来存储大型图片数据
+    const sessionProcessedPhoto = sessionStorage.getItem('funnyBiographyProcessedPhoto');
+    if (sessionProcessedPhoto) {
+      console.log('使用已处理的图片，跳过背景去除');
+      setCoverImage(sessionProcessedPhoto);
+      setLastUsedImage(sessionProcessedPhoto);
+    } else if (savedPhotos) {
       // 立即设置原始图片，以便按钮可以立即显示
       setCoverImage(savedPhotos);
       setLastUsedImage(savedPhotos);
-
-      // 只有当图片未处理过时，才进行背景去除
-      if (!photoProcessed) {
-        console.log('图片未处理过，进行背景去除');
-        handleImageProcessing(savedPhotos);
-      } else {
-        console.log('图片已处理过，跳过背景去除');
-      }
+      // 然后异步处理图片
+      handleImageProcessing(savedPhotos);
     }
 
     if (savedGenerationComplete === 'true') {
@@ -216,8 +214,9 @@ const FunnyBiographyGenerateStep = () => {
         // 重新加载选择的想法数据
         const savedIdeas = localStorage.getItem('funnyBiographyGeneratedIdeas');
         const savedIdeaIndex = localStorage.getItem('funnyBiographySelectedIdea');
-        // 检查是否已经处理过图片，避免重复进行背景去除
-        const photoProcessed = localStorage.getItem('funnyBiographyPhotoProcessed') === 'true';
+        // 检查是否有已处理的图片，避免重复进行背景去除
+        // 使用sessionStorage而非localStorage来存储大型图片数据
+        const sessionProcessedPhoto = sessionStorage.getItem('funnyBiographyProcessedPhoto');
 
         if (savedIdeas && savedIdeaIndex) {
           const ideas = JSON.parse(savedIdeas);
@@ -233,10 +232,11 @@ const FunnyBiographyGenerateStep = () => {
           }
         }
 
-        // 如果图片已经处理过，不需要重新进行背景去除
-        // 注意：我们不需要设置新的图片，因为原始图片已经在初始化时设置了
-        if (photoProcessed) {
-          console.log('检测到想法变更，图片已处理过，跳过背景去除');
+        // 如果有已处理的图片，直接使用，不需要重新进行背景去除
+        if (sessionProcessedPhoto && coverImage !== sessionProcessedPhoto) {
+          console.log('检测到想法变更，使用已处理的图片，跳过背景去除');
+          setCoverImage(sessionProcessedPhoto);
+          setLastUsedImage(sessionProcessedPhoto);
         }
 
         // 延迟生成新的图像，确保数据已更新
@@ -261,15 +261,21 @@ const FunnyBiographyGenerateStep = () => {
   }, []);
 
   // 监听图片变化，只有当图片变化时才触发重新生成
+  // 注意：现在我们在handleImageProcessing中直接处理背景去除完成后的封面生成
+  // 这个useEffect主要用于处理其他情况下的图片变化
   useEffect(() => {
-    if (coverImage && lastUsedImage !== coverImage && !generationComplete) {
-      setShouldRegenerate(true);
+    // 更新lastUsedImage以跟踪图片变化
+    if (coverImage && lastUsedImage !== coverImage) {
       setLastUsedImage(coverImage);
-    } else if (coverImage && !lastUsedImage) {
-      // 如果是第一次加载图片但没有lastUsedImage记录，只更新lastUsedImage，不触发重新生成
-      setLastUsedImage(coverImage);
+
+      // 只有当不是通过handleImageProcessing函数设置的图片变化才触发重新生成
+      // 判断条件：不在生成中且已经生成完成
+      if (!pdfGenerating && generationComplete) {
+        console.log('检测到图片变化，准备重新生成封面...');
+        setShouldRegenerate(true);
+      }
     }
-  }, [coverImage, lastUsedImage, generationComplete]);
+  }, [coverImage, lastUsedImage, pdfGenerating, generationComplete]);
 
   // 只在需要重新生成时执行生成操作
   useEffect(() => {
@@ -314,7 +320,15 @@ const FunnyBiographyGenerateStep = () => {
   }, [imagePosition, imageScale]);
 
   const handleImageProcessing = async (imageUrl: string) => {
+    // 开始处理时设置生成状态，显示加载中
+    setPdfGenerating(true);
+    setGenerationComplete(false);
+    setFrontCoverPdf(null);
+    setBackCoverPdf(null);
+    setSpinePdf(null);
+
     try {
+      console.log('开始去除背景...');
       const { data, error } = await supabase.functions.invoke('remove-background', {
         body: { imageUrl }
       });
@@ -324,14 +338,25 @@ const FunnyBiographyGenerateStep = () => {
       if (data.success && data.image) {
         // 更新处理后的图片
         setCoverImage(data.image);
-
+        // 保存处理后的图片到sessionStorage，避免重复进行背景去除
+        // 使用sessionStorage而非localStorage来存储大型图片数据
         try {
-          // 尝试保存处理后的图片到localStorage
-          // 但不将完整图片保存，而是保存一个标记表示已处理
-          localStorage.setItem('funnyBiographyPhotoProcessed', 'true');
-          console.log('Background removed successfully and processing status saved');
+          sessionStorage.setItem('funnyBiographyProcessedPhoto', data.image);
+          console.log('Background removed successfully and saved to sessionStorage');
+
+          // 背景去除完成后，等待一下确保状态更新，然后生成封面
+          setTimeout(() => {
+            console.log('背景去除完成，开始生成封面...');
+            generateImagesFromCanvas();
+          }, 300);
+
         } catch (storageError) {
-          console.warn('Failed to save to localStorage, but continuing:', storageError);
+          console.error('Error saving to sessionStorage:', storageError);
+          // 即使存储失败，仍然继续生成封面
+          setTimeout(() => {
+            console.log('尝试生成封面...');
+            generateImagesFromCanvas();
+          }, 300);
         }
       } else {
         throw new Error('Failed to process image');
@@ -347,6 +372,12 @@ const FunnyBiographyGenerateStep = () => {
       if (!coverImage) {
         setCoverImage(imageUrl);
       }
+
+      // 即使背景去除失败，仍然尝试生成封面
+      setTimeout(() => {
+        console.log('背景去除失败，使用原始图片生成封面...');
+        generateImagesFromCanvas();
+      }, 300);
     }
 
     // 确保字体已加载后再尝试生成

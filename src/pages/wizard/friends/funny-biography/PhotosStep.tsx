@@ -99,9 +99,12 @@ const FunnyBiographyPhotosStep = () => {
         localStorage.removeItem('funnyBiographyFrontCoverImage');
         localStorage.removeItem('funnyBiographyBackCoverImage');
         localStorage.removeItem('funnyBiographySpineImage');
-        // 清除已处理标记，确保会重新进行背景去除
-        localStorage.removeItem('funnyBiographyPhotoProcessed');
-        console.log('上传新照片，清除已处理标记');
+        // 清除已处理的图片，确保会重新进行背景去除
+        // 使用sessionStorage而非localStorage来存储大型图片数据
+        sessionStorage.removeItem('funnyBiographyProcessedPhoto');
+        // 同时清除localStorage中可能存在的旧数据
+        localStorage.removeItem('funnyBiographyProcessedPhoto');
+        console.log('上传新照片，清除已处理的图片缓存');
       } catch (error) {
         console.error('Error saving to localStorage:', error);
         toast({
