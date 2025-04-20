@@ -97,6 +97,11 @@ const FunnyBiographyGenerateStep = () => {
   const [isRemovingBackground, setIsRemovingBackground] = useState(false);
   const backgroundRemovalPromise = useRef<Promise<void> | null>(null);
 
+  // 添加一个标记来跟踪当前图片是否已经处理过
+  const [imageProcessed, setImageProcessed] = useState(false);
+  // 添加一个标记来跟踪当前图片的处理状态
+  const currentProcessingImage = useRef<string | null>(null);
+
   // 使用模版字符串定义尺寸
   const standardPreviewWidth = 360; // 从320增加到360
   const standardPreviewHeight = 540; // 从480增加到540
@@ -266,32 +271,50 @@ const FunnyBiographyGenerateStep = () => {
 
   // 监听图片变化，当图片变化时直接按顺序执行背景移除和图片生成
   useEffect(() => {
+    // 如果没有图片或者图片没有变化，直接返回
+    if (!coverImage || lastUsedImage === coverImage) {
+      return;
+    }
+
     // 更新lastUsedImage以跟踪图片变化
-    if (coverImage && lastUsedImage !== coverImage) {
-      setLastUsedImage(coverImage);
+    setLastUsedImage(coverImage);
 
-      // 检查是否需要移除背景
-      const isNewUploadedImage = coverImage.startsWith('data:image') && !coverImage.includes('funnyBiographyProcessedPhoto');
-      const sessionProcessedPhoto = sessionStorage.getItem('funnyBiographyProcessedPhoto');
+    // 如果正在移除背景，并且当前处理的就是这个图片，则跳过
+    if (isRemovingBackground && currentProcessingImage.current === coverImage) {
+      console.log('当前图片正在移除背景中，跳过重复处理...');
+      return;
+    }
 
-      // 如果是新上传的图片，需要移除背景
-      if (isNewUploadedImage && !isRemovingBackground) {
-        console.log('检测到新上传的图片，开始移除背景...');
-        handleImageProcessing(coverImage);
+    // 检查是否需要移除背景
+    const isNewUploadedImage = coverImage.startsWith('data:image') &&
+                               !coverImage.includes('funnyBiographyProcessedPhoto') &&
+                               !coverImage.includes('processed');
+    const sessionProcessedPhoto = sessionStorage.getItem('funnyBiographyProcessedPhoto');
+
+    // 如果是新上传的图片，需要移除背景
+    if (isNewUploadedImage && !isRemovingBackground) {
+      console.log('检测到新上传的图片，开始移除背景...');
+      // 记录当前正在处理的图片
+      currentProcessingImage.current = coverImage;
+      // 设置图片未处理状态
+      setImageProcessed(false);
+      // 开始移除背景
+      handleImageProcessing(coverImage);
+    }
+    // 如果是已处理过的图片，直接生成
+    else if (sessionProcessedPhoto && coverImage === sessionProcessedPhoto) {
+      console.log('检测到已处理过的图片，直接生成封面...');
+      // 设置图片已处理状态
+      setImageProcessed(true);
+      if (!pdfGenerating && generationComplete) {
+        setShouldRegenerate(true);
       }
-      // 如果是已处理过的图片，直接生成
-      else if (sessionProcessedPhoto && coverImage === sessionProcessedPhoto) {
-        console.log('检测到已处理过的图片，直接生成封面...');
-        if (!pdfGenerating && generationComplete) {
-          setShouldRegenerate(true);
-        }
-      }
-      // 其他情况（如选择不同的idea），直接生成
-      else if (!isRemovingBackground) {
-        console.log('检测到图片变化，直接生成封面...');
-        if (!pdfGenerating && generationComplete) {
-          setShouldRegenerate(true);
-        }
+    }
+    // 其他情况（如选择不同的idea），直接生成
+    else if (!isRemovingBackground) {
+      console.log('检测到图片变化，直接生成封面...');
+      if (!pdfGenerating && generationComplete) {
+        setShouldRegenerate(true);
       }
     }
   }, [coverImage, lastUsedImage, pdfGenerating, generationComplete, isRemovingBackground]);
@@ -340,6 +363,12 @@ const FunnyBiographyGenerateStep = () => {
 
   // 新的时序处理函数，确保背景去除完成后再生成封面
   const handleImageProcessing = async (imageUrl: string) => {
+    // 如果已经在处理这个图片，直接返回
+    if (isRemovingBackground && currentProcessingImage.current === imageUrl) {
+      console.log('当前图片已经在处理中，跳过重复处理...');
+      return;
+    }
+
     // 开始处理时设置生成状态，显示加载中
     setPdfGenerating(true);
     setGenerationComplete(false);
@@ -349,6 +378,10 @@ const FunnyBiographyGenerateStep = () => {
 
     // 设置背景移除状态
     setIsRemovingBackground(true);
+    // 记录当前正在处理的图片
+    currentProcessingImage.current = imageUrl;
+    // 设置图片未处理状态
+    setImageProcessed(false);
 
     // 创建一个新的 Promise 并存储在 ref 中
     backgroundRemovalPromise.current = new Promise(async (resolve) => {
@@ -371,12 +404,15 @@ const FunnyBiographyGenerateStep = () => {
             // 第三步：更新状态并设置处理后的图片
             console.log('背景去除完成，设置图片...');
 
+            // 设置图片已处理状态
+            setImageProcessed(true);
             // 设置处理后的图片
             setCoverImage(data.image);
           } catch (storageError) {
             console.error('Error saving to sessionStorage:', storageError);
             // 即使存储失败，仍然继续生成封面
             console.log('存储失败，但仍然设置图片...');
+            setImageProcessed(true);
             setCoverImage(data.image);
           }
         } else {
@@ -390,9 +426,13 @@ const FunnyBiographyGenerateStep = () => {
         if (!coverImage) {
           setCoverImage(imageUrl);
         }
+        // 即使失败也标记为已处理，避免重复处理
+        setImageProcessed(true);
       } finally {
         // 无论成功还是失败，都标记背景移除过程结束
         setIsRemovingBackground(false);
+        // 清除当前处理的图片记录
+        currentProcessingImage.current = null;
         resolve();
       }
     });
@@ -422,15 +462,32 @@ const FunnyBiographyGenerateStep = () => {
       return;
     }
 
+    // 如果图片已经处理过，直接生成
+    if (imageProcessed) {
+      console.log('图片已经处理过，直接生成封面');
+      generateImagesFromCanvas();
+      return;
+    }
+
     // 检查是否有sessionStorage中的处理后图片，如果有则优先使用
     const sessionProcessedPhoto = sessionStorage.getItem('funnyBiographyProcessedPhoto');
     if (sessionProcessedPhoto && coverImage !== sessionProcessedPhoto) {
       console.log('使用sessionStorage中的处理后图片生成封面');
+      // 设置图片已处理状态
+      setImageProcessed(true);
+      // 设置处理后的图片
       setCoverImage(sessionProcessedPhoto);
       return; // 设置图片后会触发useEffect，不需要再次生成
     }
 
-    // 生成封面
+    // 如果是新上传的图片但还没有处理，则先处理
+    if (coverImage && coverImage.startsWith('data:image') && !coverImage.includes('funnyBiographyProcessedPhoto') && !coverImage.includes('processed')) {
+      console.log('检测到新上传的图片需要先移除背景');
+      handleImageProcessing(coverImage);
+      return;
+    }
+
+    // 其他情况，直接生成封面
     generateImagesFromCanvas();
   };
 
