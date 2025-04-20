@@ -802,6 +802,12 @@ const GenerateStep = () => {
     // 数据准备好后，继续生成过程
     setIsWaitingForData(false);
 
+    // 检查是否正在加载图片
+    if (isLoadingImages) {
+      console.log('Images are currently loading, skipping generation');
+      return;
+    }
+
     const generationStatus = checkAllContentImagesGenerated();
 
     // 输出详细的生成状态信息
@@ -889,18 +895,28 @@ const GenerateStep = () => {
 
     console.log(`Starting parallel generation of ${generationTasks.length} images...`);
 
-    // 并发执行所有生成任务，每个任务之间有小的延迟以避免请求过快
-    const results = await Promise.all(
-      generationTasks.map(async (task, index) => {
-        // 添加随机延迟，避免所有请求同时发出
-        await new Promise(resolve => setTimeout(resolve, index * 200));
-        return task.task();
-      })
-    );
+    // 设置正在生成状态，防止重复生成
+    setIsLoadingImages(true);
 
-    // 统计生成结果
-    const successCount = results.filter(result => result).length;
-    console.log(`Image generation completed: ${successCount}/${generationTasks.length} successful`);
+    // 并发执行所有生成任务，每个任务之间有小的延迟以避免请求过快
+    try {
+      const results = await Promise.all(
+        generationTasks.map(async (task, index) => {
+          // 添加随机延迟，避免所有请求同时发出
+          await new Promise(resolve => setTimeout(resolve, index * 200));
+          return task.task();
+        })
+      );
+
+      // 统计生成结果
+      const successCount = results.filter(result => result).length;
+      console.log(`Image generation completed: ${successCount}/${generationTasks.length} successful`);
+    } catch (error) {
+      console.error('Error during parallel image generation:', error);
+    } finally {
+      // 无论成功还是失败，都重置加载状态
+      setIsLoadingImages(false);
+    }
   };
 
   // 检查数据是否准备完成
@@ -935,12 +951,12 @@ const GenerateStep = () => {
     return hasImageTexts && hasImagePrompts && hasCharacterPhoto;
   };
 
-  // 组件加载后设置定期检查数据是否准备完成
+  // 组件加载后设置一次性检查数据是否准备完成
   useEffect(() => {
-    console.log('GenerateStep component mounted, setting up data check interval');
+    console.log('GenerateStep component mounted, checking if data is ready');
 
-    // 初始检查
-    const initialCheck = () => {
+    // 检查数据是否准备好
+    const checkDataAndGenerateImages = () => {
       const isDataReady = checkIfDataReady();
 
       if (isDataReady) {
@@ -955,44 +971,27 @@ const GenerateStep = () => {
       } else {
         console.log('Data is not ready yet, will check again in 2 seconds');
         setIsWaitingForData(true);
+
+        // 如果数据还没准备好，设置一个一次性的定时器再次检查
+        const timeout = setTimeout(() => {
+          checkDataAndGenerateImages();
+        }, 2000);
+
+        // 保存定时器ID以便清除
+        setDataCheckInterval(timeout);
       }
     };
 
-    // 立即执行一次初始检查
-    initialCheck();
-
-    // 设置定期检查
-    const interval = setInterval(() => {
-      const isDataReady = checkIfDataReady();
-
-      if (isDataReady) {
-        console.log('Data is now ready, starting image generation...');
-        setIsWaitingForData(false);
-
-        // 开始生成图片
-        if (!isLoadingImages) {
-          console.log('Executing autoGenerateAllImages...');
-          autoGenerateAllImages();
-        }
-
-        // 数据准备好后清除定时器
-        clearInterval(interval);
-        setDataCheckInterval(null);
-      } else {
-        console.log('Data is still not ready, continuing to wait...');
-        setIsWaitingForData(true);
-      }
-    }, 2000); // 每2秒检查一次
-
-    setDataCheckInterval(interval);
+    // 立即执行检查
+    checkDataAndGenerateImages();
 
     // 组件卸载时清除定时器
     return () => {
-      if (interval) {
-        clearInterval(interval);
+      if (dataCheckInterval) {
+        clearTimeout(dataCheckInterval);
       }
     };
-  }, [isLoadingImages]); // 只在组件加载和isLoadingImages变化时执行
+  }, []); // 只在组件加载时执行一次
 
   // 渲染祝福语图片
   const handleRenderBlessingImage = async () => {
