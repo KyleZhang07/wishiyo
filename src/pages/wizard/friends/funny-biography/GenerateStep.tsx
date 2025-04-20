@@ -351,7 +351,9 @@ const FunnyBiographyGenerateStep = () => {
           // 直接使用已处理的图片生成封面，不需要等待React状态更新
           // 在generateImagesFromCanvas函数中会优先使用sessionStorage中的图片
           setCoverImage(data.image);
-          generateImagesFromCanvas();
+          // Defer PDF regeneration until after the React state has updated and the
+          // CanvasCoverPreview has re‑rendered
+          setShouldRegenerate(true);
 
         } catch (storageError) {
           console.error('Error saving to sessionStorage:', storageError);
@@ -359,8 +361,8 @@ const FunnyBiographyGenerateStep = () => {
           // 先设置图片，然后生成封面
           console.log('存储失败，但仍然生成封面...');
           setCoverImage(data.image);
-          // 直接使用已处理的图片生成封面
-          generateImagesFromCanvas();
+          // 等待状态更新后再触发重新生成
+          setShouldRegenerate(true);
         }
       } else {
         throw new Error('Failed to process image');
@@ -376,13 +378,12 @@ const FunnyBiographyGenerateStep = () => {
 
       // 如果当前没有设置图片，才使用原始图片
       console.log('背景去除失败，使用原始图片生成封面...');
-      if (!coverImage) {
-        setCoverImage(imageUrl);
-      }
+        if (!coverImage) {
+          setCoverImage(imageUrl);
+        }
 
-      // 即使背景去除失败，仍然尝试生成封面
-      // 直接生成封面，使用当前可用的图片
-      generateImagesFromCanvas();
+        // 背景去除失败后，等待 state 更新完毕再生成封面
+        setShouldRegenerate(true);
     }
 
     // 确保字体已加载后再尝试生成
