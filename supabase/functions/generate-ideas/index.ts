@@ -43,7 +43,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           model: 'gpt-4.1-nano',
-          temperature: 1.2, // 设置高温度以增加创造性
+          temperature: 1,
           messages: [
             {
               role: 'system',
@@ -51,6 +51,7 @@ serve(async (req) => {
                 Create 13 unique and creative scenes focusing solely on one person - the recipient.
                 Each prompt should imagine the person in different fantasy scenarios that represent their ideal dream life.
                 Consider the person's gender (${recipientGender}) and age (${recipientAge}) when creating prompts.
+                Don't include the definition of image style in prompt, like "serene scene", "striking scene" is PROHIBITED, start the sentence with "Image of".
                 Focus on solo portraits and scenes that showcase the person living their fantasy dream life.
                 Include a variety of settings: adventure scenarios, career achievements, lifestyle dreams, and aspirational moments.`
             },
