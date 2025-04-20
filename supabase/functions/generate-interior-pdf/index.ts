@@ -633,11 +633,11 @@ serve(async (req) => {
         content = content.replace(/\n\n+/g, paragraphBreak);
 
         // 在段落开头添加四个非间断空格作为缩进
-        // 将特殊标记替换为换行符加四个非间断空格
-        content = content.replace(new RegExp(paragraphBreak, 'g'), '\n\u00A0\u00A0\u00A0\u00A0');
+        // 将特殊标记替换为换行符加四个普通空格
+        content = content.replace(new RegExp(paragraphBreak, 'g'), '\n    ');
 
-        // 在段落开头添加四个非间断空格作为缩进
-        content = '\u00A0\u00A0\u00A0\u00A0' + content;
+        // 在段落开头添加四个普通空格作为缩进
+        content = '    ' + content;
 
         // 将内容作为一个段落处理
         const filteredParagraphs = [content];
@@ -671,13 +671,10 @@ serve(async (req) => {
 
           // 检查每一行，如果下一行以四个非间断空格开头，则当前行需要模拟左对齐
           for (let i = 0; i < textLines.length - 1; i++) {
-            // 检查下一行是否以四个非间断空格开头
+            // 检查下一行是否以四个空格开头
             const nextLine = textLines[i+1];
-            // 使用更直接的方式检测非间断空格
-            if (nextLine && (nextLine.startsWith('\u00A0\u00A0\u00A0\u00A0') ||
-                           nextLine.startsWith('    ') ||
-                           nextLine.charCodeAt(0) === 160 && nextLine.charCodeAt(1) === 160 &&
-                           nextLine.charCodeAt(2) === 160 && nextLine.charCodeAt(3) === 160)) {
+            // 使用更直接的方式检测空格
+            if (nextLine && nextLine.startsWith('    ')) {
               // 当前行需要模拟左对齐
               // 计算需要添加的空格数量
               const currentLine = textLines[i];
