@@ -1070,7 +1070,7 @@ const GenerateStep = () => {
           <h2 className="text-2xl font-bold mb-8">Cover</h2>
           <div className="max-w-xl mx-auto">
             {isRenderingCover ? (
-              <div className="w-full aspect-[1/1.5] bg-white rounded-lg shadow-lg flex flex-col items-center justify-center">
+              <div className="max-w-[360px] mx-auto aspect-[1/1.5] bg-white rounded-lg shadow-lg flex flex-col items-center justify-center">
                 <div className="relative w-8 h-8 mb-2">
                   <div className="absolute inset-0 rounded-full border-t-2 border-[#FF7F50] animate-spin"></div>
                 </div>
@@ -1082,16 +1082,16 @@ const GenerateStep = () => {
               <img
                 src={coverImageUrl}
                 alt="Love Story Cover"
-                className="w-full h-auto rounded-lg shadow-lg"
+                className="max-w-[360px] mx-auto w-full h-auto rounded-lg shadow-lg"
               />
             ) : coverImage ? (
               <img
                 src={coverImage}
                 alt="Love Story Cover"
-                className="w-full h-auto rounded-lg shadow-lg"
+                className="max-w-[360px] mx-auto w-full h-auto rounded-lg shadow-lg"
               />
             ) : (
-              <div className="w-full aspect-[1/1.5] bg-gray-100 rounded-lg flex items-center justify-center">
+              <div className="max-w-[360px] mx-auto aspect-[1/1.5] bg-gray-100 rounded-lg flex items-center justify-center">
                 <p className="text-gray-500">Cover image not available</p>
               </div>
             )}
@@ -1104,7 +1104,7 @@ const GenerateStep = () => {
           <div className="max-w-xl mx-auto">
             {/* 祝福语预览 */}
             {isGeneratingBlessing ? (
-              <div className="w-full aspect-[1/1.5] bg-white rounded-lg shadow-lg flex flex-col items-center justify-center">
+              <div className="max-w-[360px] mx-auto aspect-[1/1.5] bg-white rounded-lg shadow-lg flex flex-col items-center justify-center">
                 <div className="relative w-8 h-8 mb-2">
                   <div className="absolute inset-0 rounded-full border-t-2 border-[#FF7F50] animate-spin"></div>
                 </div>
@@ -1116,10 +1116,10 @@ const GenerateStep = () => {
               <img
                 src={blessingImage}
                 alt="Blessing Message"
-                className="w-full h-auto rounded-lg shadow-lg"
+                className="max-w-[360px] mx-auto w-full h-auto rounded-lg shadow-lg"
               />
             ) : (
-              <div className="w-full aspect-[1/1.5] bg-gray-100 rounded-lg flex items-center justify-center">
+              <div className="max-w-[360px] mx-auto aspect-[1/1.5] bg-gray-100 rounded-lg flex items-center justify-center">
                 <p className="text-gray-500 text-center px-8">
                   Your blessing will appear here after creation.
                 </p>
@@ -1180,7 +1180,7 @@ const GenerateStep = () => {
 
           <div className="max-w-xl mx-auto">
             {isRenderingCover ? (
-              <div className="w-full aspect-[1/1.5] bg-white rounded-lg shadow-lg flex flex-col items-center justify-center">
+              <div className="max-w-[360px] mx-auto aspect-[1/1.5] bg-white rounded-lg shadow-lg flex flex-col items-center justify-center">
                 <div className="relative w-8 h-8 mb-2">
                   <div className="absolute inset-0 rounded-full border-t-2 border-[#FF7F50] animate-spin"></div>
                 </div>
@@ -1192,7 +1192,7 @@ const GenerateStep = () => {
               <img
                 src={backCoverImageUrl}
                 alt="Love Story Back Cover"
-                className="w-full h-auto rounded-lg shadow-lg"
+                className="max-w-[360px] mx-auto w-full h-auto rounded-lg shadow-lg"
               />
             ) : (
               <BackCoverPreviewCard
