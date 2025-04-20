@@ -264,22 +264,37 @@ const FunnyBiographyGenerateStep = () => {
     };
   }, []);
 
-  // 监听图片变化，只有当图片变化时才触发重新生成
-  // 注意：现在我们在handleImageProcessing中直接处理背景去除完成后的封面生成
-  // 这个useEffect主要用于处理其他情况下的图片变化
+  // 监听图片变化，当图片变化时直接按顺序执行背景移除和图片生成
   useEffect(() => {
     // 更新lastUsedImage以跟踪图片变化
     if (coverImage && lastUsedImage !== coverImage) {
       setLastUsedImage(coverImage);
 
-      // 只有当不是通过handleImageProcessing函数设置的图片变化才触发重新生成
-      // 判断条件：不在生成中且已经生成完成
-      if (!pdfGenerating && generationComplete) {
-        console.log('检测到图片变化，准备重新生成封面...');
-        setShouldRegenerate(true);
+      // 检查是否需要移除背景
+      const isNewUploadedImage = coverImage.startsWith('data:image') && !coverImage.includes('funnyBiographyProcessedPhoto');
+      const sessionProcessedPhoto = sessionStorage.getItem('funnyBiographyProcessedPhoto');
+
+      // 如果是新上传的图片，需要移除背景
+      if (isNewUploadedImage && !isRemovingBackground) {
+        console.log('检测到新上传的图片，开始移除背景...');
+        handleImageProcessing(coverImage);
+      }
+      // 如果是已处理过的图片，直接生成
+      else if (sessionProcessedPhoto && coverImage === sessionProcessedPhoto) {
+        console.log('检测到已处理过的图片，直接生成封面...');
+        if (!pdfGenerating && generationComplete) {
+          setShouldRegenerate(true);
+        }
+      }
+      // 其他情况（如选择不同的idea），直接生成
+      else if (!isRemovingBackground) {
+        console.log('检测到图片变化，直接生成封面...');
+        if (!pdfGenerating && generationComplete) {
+          setShouldRegenerate(true);
+        }
       }
     }
-  }, [coverImage, lastUsedImage, pdfGenerating, generationComplete]);
+  }, [coverImage, lastUsedImage, pdfGenerating, generationComplete, isRemovingBackground]);
 
   // 只在需要重新生成时执行生成操作
   useEffect(() => {
@@ -401,33 +416,21 @@ const FunnyBiographyGenerateStep = () => {
 
   // 安全生成函数，确保在背景移除完成后再生成封面
   const safeGenerateImagesFromCanvas = async () => {
-    // 如果正在移除背景，等待完成
-    if (isRemovingBackground && backgroundRemovalPromise.current) {
-      console.log('检测到背景移除正在进行，等待完成...');
-      try {
-        await backgroundRemovalPromise.current;
-        console.log('背景移除完成，等待状态更新...');
-
-        // 添加额外的延时，等待状态更新和 React 渲染循环
-        await new Promise(resolve => setTimeout(resolve, 300));
-
-        console.log('状态更新完成，继续生成封面...');
-      } catch (error) {
-        console.error('等待背景移除完成时出错:', error);
-      }
+    // 如果正在移除背景，不进行生成，因为背景移除完成后会自动生成
+    if (isRemovingBackground) {
+      console.log('检测到背景移除正在进行，跳过生成...');
+      return;
     }
 
-    // 检查 sessionStorage 中是否有处理后的图片，如果有则强制使用
+    // 检查是否有sessionStorage中的处理后图片，如果有则优先使用
     const sessionProcessedPhoto = sessionStorage.getItem('funnyBiographyProcessedPhoto');
     if (sessionProcessedPhoto && coverImage !== sessionProcessedPhoto) {
-      console.log('强制使用 sessionStorage 中的处理后图片');
+      console.log('使用sessionStorage中的处理后图片生成封面');
       setCoverImage(sessionProcessedPhoto);
-
-      // 添加额外的延时，等待图片状态更新
-      await new Promise(resolve => setTimeout(resolve, 300));
+      return; // 设置图片后会触发useEffect，不需要再次生成
     }
 
-    // 然后生成封面
+    // 生成封面
     generateImagesFromCanvas();
   };
 
@@ -459,17 +462,6 @@ const FunnyBiographyGenerateStep = () => {
   const handleStyleChange = (styleId: string) => {
     // 更新样式，触发样式变化监听器
     setSelectedStyle(styleId);
-
-    // 当样式变化时，清除已有的PDF并重新生成
-    setFrontCoverPdf(null);
-    setBackCoverPdf(null);
-    setSpinePdf(null);
-
-    // 添加延时，等待样式状态更新
-    setTimeout(() => {
-      console.log('样式变化，重新生成封面...');
-      safeGenerateImagesFromCanvas();
-    }, 300);
   };
 
   // 生成图像的函数 - 确保使用sessionStorage中的图片
@@ -477,20 +469,12 @@ const FunnyBiographyGenerateStep = () => {
     if (!fontsLoaded) {
       console.log('字体尚未加载完成，延迟生成...');
       setTimeout(() => {
-        safeGenerateImagesFromCanvas(); // 使用安全生成函数而不是直接生成
+        generateImagesFromCanvas();
       }, 500);
       return;
     }
 
-    // 再次检查是否有sessionStorage中的处理后图片，确保使用最新的处理后图片
-    const sessionProcessedPhoto = sessionStorage.getItem('funnyBiographyProcessedPhoto');
-    if (sessionProcessedPhoto && coverImage !== sessionProcessedPhoto) {
-      console.log('使用sessionStorage中的处理后图片生成封面');
-      setCoverImage(sessionProcessedPhoto);
-
-      // 添加延时，等待状态更新
-      await new Promise(resolve => setTimeout(resolve, 300));
-    }
+    // 注意：这里不再检查sessionStorage，因为已经在safeGenerateImagesFromCanvas中处理了
 
     // 打印当前的图片位置和缩放值，用于调试
     console.log('生成图像时的图片位置:', imagePosition);
@@ -502,7 +486,6 @@ const FunnyBiographyGenerateStep = () => {
 
     // 确保 Canvas 已经渲染
     console.log('等待Canvas渲染...');
-    // 增加延时时间，从600ms增加到1000ms，确保有足够的时间进行渲染
     setTimeout(() => {
       try {
         if (!canvasPdfContainerRef.current) {
@@ -546,7 +529,7 @@ const FunnyBiographyGenerateStep = () => {
         console.error('Error generating cover images:', error);
         setPdfGenerating(false);
       }
-    }, 1000); // 给Canvas渲染提供更多时间，从600ms增加到1000ms
+    }, 600); // 给Canvas渲染提供足够时间
   };
 
   const handleGenerateBook = () => {
@@ -673,7 +656,7 @@ const FunnyBiographyGenerateStep = () => {
 
             <div className="space-y-4 mt-4">
               <div className="flex flex-wrap justify-center gap-6">
-                {[...stylePresets].map((style) => {
+                {[...stylePresets].map((style, index) => {
                   // Get template and layout data based on style configuration
                   const template = style.template;
 
