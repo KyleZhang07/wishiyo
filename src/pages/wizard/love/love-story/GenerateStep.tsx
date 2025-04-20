@@ -552,12 +552,6 @@ const GenerateStep = () => {
     if (savedTextTone) setTextTone(savedTextTone);
   }, []);
 
-  const handleEditCover = () => {
-    // 不需要显示成功通知，用户可以看到页面跳转
-    // 导航到CoverStep页面
-    navigate('/create/love/love-story/cover');
-  };
-
 
 
   const handleRegenerateIntro = async (style?: string) => {
@@ -759,29 +753,25 @@ const GenerateStep = () => {
     }
   }, [coverRenderComplete, coverImageUrl]);
 
-  // 检查是否已生成所有图片（封面、封底、祥福语、引导和内容图片）
+  // 检查是否已生成所有内容图片（引导和内容图片）
+  // 封面和祥福语有自己的处理逻辑，不在这里检查
   const checkIfAllImagesGenerated = () => {
-    // 检查封面图片
-    const coverImageUrl = localStorage.getItem('loveStoryCoverImage_url');
-    // 检查封底图片
-    const backCoverImageUrl = localStorage.getItem('loveStoryBackCoverImage_url');
-    // 检查祥福语图片
-    const blessingImageUrl = localStorage.getItem('loveStoryBlessingImage_url');
     // 检查引导图片
     const introImageUrl = localStorage.getItem('loveStoryIntroImage_url');
+    if (!introImageUrl) {
+      return false;
+    }
 
     // 检查所有内容图片
-    let allContentImagesGenerated = true;
     for (let i = 1; i <= 10; i++) {
       const contentImageUrl = localStorage.getItem(`loveStoryContentImage${i}_url`);
       if (!contentImageUrl) {
-        allContentImagesGenerated = false;
-        break;
+        return false;
       }
     }
 
-    // 如果所有图片都已生成，返回 true
-    return !!coverImageUrl && !!backCoverImageUrl && !!blessingImageUrl && !!introImageUrl && allContentImagesGenerated;
+    // 如果引导和所有内容图片都已生成，返回 true
+    return true;
   };
 
   // 检查所有内容图片是否已生成
