@@ -25,8 +25,8 @@ interface BookChapter {
 }
 
 // 定义批次大小和总章节数
-const BATCH_SIZE = 2; // 改为2，每批生成两章
-const TOTAL_CHAPTERS = 2; // 改为2，只生成两章进行测试
+const BATCH_SIZE = 3; // 每批生成3章
+const TOTAL_CHAPTERS = 20; // 总共生成20章
 const MAX_RETRIES = 3;
 
 // 定义页面布局常量
@@ -134,19 +134,19 @@ serve(async (req) => {
           const prompt = `
           You are writing a funny biography titled "${bookTitle}" about ${bookAuthor}, exploring their expertise, methodology, and insights in a funny, satirical, or professional tone.
           The book concept is: ${ideaDescription}
-          
+
           Additional context about the subject (use these details naturally throughout the narrative, but don't use the details too much):
           ${answersContext}
-          
+
           This is Chapter ${i}: ${chapterTitle}
           ${chapterDescription ? `Chapter description: ${chapterDescription}` : ''}
-          
+
           Write this chapter with 4 distinct sections:
           - CRITICAL: EACH SECTION MUST CONTAIN BETWEEN 850 TO 950 WORDS. If a section is below 850 words, you must expand it. Count the words and print the count in the final output.
           - Use first-person "I" when ${bookAuthor} is sharing specific personal experiences or anecdotes
           - Use second-person "you" when explaining methodologies, principles, or when instructing the reader
           - The narrative should feel like ${bookAuthor} is personally guiding readers through their expertise using engaging metaphors
-          
+
           Guidelines:
           - CRITICAL: EACH SECTION MUST CONTAIN BETWEEN 850 TO 950 WORDS. If a section is below 850 words, you must expand it. Count the words and print the count in the final output.
           - Balance between "I" (for personal stories) and "you" (for instructional content)
@@ -160,7 +160,7 @@ serve(async (req) => {
           - Naturally incorporate details from the context into a cohesive narrative
           - Make it insightful, methodological and funny while maintaining a professional tone with appropriate personality
           - Write in a style that skillfully weaves personal stories with practical wisdom, using analogies to explain complex ideas
-          
+
           Format your response as JSON with this structure:
           {
             "chapterNumber": ${i},
@@ -174,7 +174,7 @@ serve(async (req) => {
               },
               ...
             ],
-            "totalWordCount": 3600 // 请计算并提供所有小节内容的总字数
+            "totalWordCount": 3600 // 请计算并提供所有小节内容的总字数，应该在 3400-3800 之间
           }
           `;
 
@@ -185,7 +185,7 @@ serve(async (req) => {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              model: 'gpt-4.1',
+              model: 'gpt-4.1-nano',
               messages: [
                 {
                   role: 'system',
