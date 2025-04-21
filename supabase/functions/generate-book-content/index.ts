@@ -200,7 +200,6 @@ serve(async (req) => {
                 }
               ],
               temperature: 1.0,
-              max_tokens: 7000,
               response_format: { type: "json_object" }
             }),
           });
