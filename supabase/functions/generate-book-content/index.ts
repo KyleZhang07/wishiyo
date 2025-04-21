@@ -141,14 +141,14 @@ serve(async (req) => {
           This is Chapter ${i}: ${chapterTitle}
           ${chapterDescription ? `Chapter description: ${chapterDescription}` : ''}
 
-          Write this chapter with 4 distinct sections:
-          - CRITICAL: EACH SECTION MUST CONTAIN BETWEEN 850 TO 950 WORDS. If a section is below 850 words, you must expand it. If above 950 words, you must trim it.
+          Write this chapter with 5 distinct sections:
+          - CRITICAL: EACH SECTION MUST CONTAIN BETWEEN 600 TO 700 WORDS.
           - Use first-person "I" when ${bookAuthor} is sharing specific personal experiences or anecdotes
           - Use second-person "you" when explaining methodologies, principles, or when instructing the reader
           - The narrative should feel like ${bookAuthor} is personally guiding readers through their expertise using engaging metaphors
 
           Guidelines:
-          - CRITICAL: EACH SECTION MUST CONTAIN BETWEEN 850 TO 950 WORDS. If a section is below 850 words, you must expand it. If above 950 words, you must trim it.
+          - CRITICAL: EACH SECTION MUST CONTAIN BETWEEN 600 TO 700 WORDS.
           - Balance between "I" (for personal stories) and "you" (for instructional content)
           - When using "I," focus on ${bookAuthor}'s personal journey, challenges overcome, and pivotal moments
           - When using "you," focus on transferable principles, methodologies, and practical applications
@@ -189,11 +189,8 @@ serve(async (req) => {
                 {
                   role: 'system',
                   content: `You MUST STRICTLY enforce these requirements, especially the word count requirements:
-- Each chapter must have exactly 4 sections.
-- CRITICAL REQUIREMENT: Each section MUST contain EXACTLY between 850 and 950 words. This is a HARD REQUIREMENT.
-- You MUST count words in each section before finalizing your response.
-- If any section has fewer than 850 words, you MUST expand it before responding.
-- If any section has more than 950 words, you MUST trim it before responding.
+- Each chapter must have exactly 5 sections.
+- CRITICAL REQUIREMENT: Each section MUST contain EXACTLY between 600 and 700 words. This is a HARD REQUIREMENT.
 - Each section's content must use double line breaks (\\n\\n) between paragraphs to clearly separate them.
 - Respond only with valid JSON. Do not include any commentary or explanation outside the JSON structure.`
                 },
