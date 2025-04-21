@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { useRenderContext } from '@/context/RenderContext';
 
 // 导入工具函数
-import { handleGenericContentRegeneration as handleContentRegeneration } from './utils/imageProcessingUtils';
+import { handleGenericContentRegeneration as handleContentRegeneration, expandImage } from './utils/imageProcessingUtils';
 import { renderAndUploadContentImage, renderAndUploadIntroImage, renderAndUploadBlessingImage } from './utils/canvasUtils';
 
 // 导入新增的BackCoverPreviewCard组件
@@ -118,28 +118,6 @@ const GenerateStep = () => {
     backCoverImageUrl,
     spineImageUrl
   } = useRenderContext();
-
-  const expandImage = async (imageUrl: string): Promise<string> => {
-    try {
-      console.log('Starting image expansion for:', imageUrl);
-      const { data, error } = await supabase.functions.invoke('expand-image', {
-        body: {
-          imageUrl,
-          textPrompt: "CRITICAL: Expanded area MUST BE 100% EMPTY. Absolutely NO people, NO objects, NO animals, NO text. Repeat: ZERO features allowed. Generate ONLY a clean, simple background (solid color or smooth gradient) matching original edge colors. Seamless transition. Suitable for text overlay. "
-        }
-      });
-
-      if (error) throw error;
-      if (!data?.imageData) {
-        throw new Error("No imageData returned from expand-image");
-      }
-
-      return data.imageData;
-    } catch (err) {
-      console.error("Error expanding image:", err);
-      throw err;
-    }
-  };
 
 
   // 内容重新生成函数封装
@@ -722,8 +700,9 @@ const GenerateStep = () => {
           }
 
           if (introImageData) {
-            // 尝试扩展图片
+            // 尝试扩展图片 - 使用从 imageProcessingUtils 导入的 expandImage 函数
             try {
+              console.log('Using imported expandImage function from imageProcessingUtils');
               const expandedBase64 = await expandImage(introImageData);
               introImageData = expandedBase64;
             } catch (expandError) {
