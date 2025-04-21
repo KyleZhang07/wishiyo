@@ -454,24 +454,12 @@ serve(async (req) => {
       setFont('tocChapter');
 
       // 根据奇偶页调整章节编号的位置
-      if (isTocRightPage) {
-        // 奇数页（右页）：章节编号偏右
-        pdf.text(`Chapter ${chapter.chapterNumber}`, tocPageMargins.left + 0.1, tocY);
-      } else {
-        // 偶数页（左页）：章节编号偏左
-        pdf.text(`Chapter ${chapter.chapterNumber}`, tocPageMargins.left + 0.1, tocY);
-      }
+      // 无论奇偶页，章节编号都从相同的左边距开始
+      pdf.text(`Chapter ${chapter.chapterNumber}`, tocPageMargins.left + 0.1, tocY);
 
       // 设置章节标题字体
-      // 根据奇偶页调整标题的位置
-      let chapterTitleX: number;
-      if (isTocRightPage) {
-        // 奇数页（右页）：标题偏右
-        chapterTitleX = tocPageMargins.left + 1.2; // 使用动态边距，调整标题的左边距以增加对齐
-      } else {
-        // 偶数页（左页）：标题偏左
-        chapterTitleX = tocPageMargins.left + 1.2; // 使用相同的左边距，保持一致性
-      }
+      // 无论奇偶页，章节标题都使用相同的左边距
+      const chapterTitleX = tocPageMargins.left + 1.2; // 使用相同的左边距，保持一致性
 
       // 处理标题过长的情况，确保与页码不重合
       // 减小页码预留空间，从0.8减小到0.6，给标题留出更多空间
@@ -493,7 +481,7 @@ serve(async (req) => {
         });
 
         // 增加目录行间距
-        tocY += 0.5; // 从0.55减小到0.5，以便每页容纳更多章节
+        tocY += 0.35; // 从0.5减小到0.35，减小章节间距
       } else {
         // 多行标题，显示最多两行
         const firstLine = titleLines[0];
@@ -517,10 +505,10 @@ serve(async (req) => {
           pdf.text(secondLine, chapterTitleX, tocY + lineHeight);
 
           // 增加目录行间距（考虑到第二行）
-          tocY += 0.5 + lineHeight; // 基础间距加上第二行的高度
+          tocY += 0.35 + lineHeight; // 减小基础间距加上第二行的高度
         } else {
           // 单行标题的间距
-          tocY += 0.5;
+          tocY += 0.35; // 与其他地方保持一致
         }
       }
 
@@ -943,8 +931,8 @@ serve(async (req) => {
           // 奇数页（右页）：页码在右侧
           pdf.text(String(entry.pageNumber), pageWidth - headerMargins.right, entry.yPosition, { align: 'right' });
         } else {
-          // 偶数页（左页）：页码在左侧
-          pdf.text(String(entry.pageNumber), headerMargins.left, entry.yPosition, { align: 'left' });
+          // 偶数页（左页）：页码在右侧（与奇数页保持一致）
+          pdf.text(String(entry.pageNumber), pageWidth - headerMargins.right, entry.yPosition, { align: 'right' });
         }
       }
     });
