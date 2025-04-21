@@ -200,9 +200,32 @@ const GenerateStep = () => {
     };
 
     try {
-      // 获取对应的文本
+      // 获取对应的文本 - content图片对应prompts[index+1]，因此对应imageTexts[index+1]
+      // 注意：在IdeaStep.tsx中，generateImageTexts函数会为每个prompt生成一个对应的text
+      // 所以我们需要确保使用正确的索引
       const textIndex = index + 1; // 图像索引对应文本索引
-      const text = imageTexts && imageTexts.length > textIndex ? imageTexts[textIndex].text : "";
+      let contentText = "";
+
+      // 先检查localStorage中是否有保存的imageTexts
+      const savedTexts = localStorage.getItem('loveStoryImageTexts');
+      if (savedTexts) {
+        try {
+          const parsedTexts = JSON.parse(savedTexts);
+          // content图片对应prompts[index+1]，因此对应imageTexts[index+1]
+          if (parsedTexts && Array.isArray(parsedTexts) && parsedTexts.length > textIndex) {
+            contentText = parsedTexts[textIndex].text || "";
+            console.log(`Found content ${index} text from localStorage:`, contentText);
+          }
+        } catch (error) {
+          console.error('Error parsing saved texts from localStorage:', error);
+        }
+      }
+
+      // 如果从 localStorage 中没有找到，则使用状态变量
+      if (!contentText && imageTexts && imageTexts.length > textIndex) {
+        contentText = imageTexts[textIndex].text || "";
+        console.log(`Using content ${index} text from state:`, contentText);
+      }
 
       // 设置加载状态
       const setLoadingFn = loadingSetters[index];
@@ -211,9 +234,10 @@ const GenerateStep = () => {
       // 移除toast通知，减少用户干扰
 
       // 渲染并上传图片
+      console.log(`Rendering content ${index} image with text:`, contentText || "A beautiful moment captured in this image.");
       const result = await renderAndUploadContentImage(
         imageData,
-        text || "A beautiful moment captured in this image.",
+        contentText || "A beautiful moment captured in this image.",
         index,
         selectedStyle,
         supabaseImages
@@ -575,10 +599,34 @@ const GenerateStep = () => {
     try {
       setIsGeneratingIntro(true);
 
-      // 获取对应的文本
-      const introText = imageTexts && imageTexts.length > 1 ? imageTexts[1].text : "";
+      // 获取对应的文本 - intro图片对应prompts[1]，因此对应imageTexts[1]
+      // 注意：在IdeaStep.tsx中，generateImageTexts函数会为每个prompt生成一个对应的text
+      // 所以我们需要确保使用正确的索引
+      let introText = "";
+
+      // 先检查localStorage中是否有保存的imageTexts
+      const savedTexts = localStorage.getItem('loveStoryImageTexts');
+      if (savedTexts) {
+        try {
+          const parsedTexts = JSON.parse(savedTexts);
+          // intro图片对应prompts[1]，因此对应imageTexts[1]
+          if (parsedTexts && Array.isArray(parsedTexts) && parsedTexts.length > 1) {
+            introText = parsedTexts[1].text || "";
+            console.log('Found intro text from localStorage:', introText);
+          }
+        } catch (error) {
+          console.error('Error parsing saved texts from localStorage:', error);
+        }
+      }
+
+      // 如果从 localStorage 中没有找到，则使用状态变量
+      if (!introText && imageTexts && imageTexts.length > 1) {
+        introText = imageTexts[1].text || "";
+        console.log('Using intro text from state:', introText);
+      }
 
       // 渲染并上传图片
+      console.log('Rendering intro image with text:', introText || "A beautiful moment captured in this image.");
       const result = await renderAndUploadIntroImage(
         imageData,
         introText || "A beautiful moment captured in this image.",
