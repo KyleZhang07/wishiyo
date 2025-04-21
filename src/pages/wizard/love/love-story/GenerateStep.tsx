@@ -76,7 +76,23 @@ const GenerateStep = () => {
   const [dataCheckInterval, setDataCheckInterval] = useState<NodeJS.Timeout | null>(null);
 
   // 样式和内容
-  const [selectedStyle, setSelectedStyle] = useState<string>('Photographic (Default)');
+  const [selectedStyle, setSelectedStyle] = useState<string>(() => {
+    // 从 localStorage 读取风格或使用默认值
+    const savedStyle = localStorage.getItem('loveStoryStyle');
+    if (savedStyle) {
+      // Map old style names to new API-compatible style names
+      const styleMapping: Record<string, string> = {
+        'Comic Book': 'Comic book',
+        'Line Art': 'Line art',
+        'Fantasy Art': 'Fantasy art',
+        'Photographic': 'Photographic (Default)',
+        'Disney Character': 'Disney Charactor'
+      };
+      // Use the mapping or the original value
+      return styleMapping[savedStyle] || savedStyle;
+    }
+    return 'Photographic (Default)';
+  });
   const [imageTexts, setImageTexts] = useState<ImageText[]>([]);
 
   // 存储状态
@@ -554,6 +570,76 @@ const GenerateStep = () => {
 
 
 
+  // 自动渲染intro图片的函数
+  const autoRenderIntroImage = async (imageData: string) => {
+    try {
+      setIsGeneratingIntro(true);
+
+      // 获取对应的文本
+      const introText = imageTexts && imageTexts.length > 1 ? imageTexts[1].text : "";
+
+      // 渲染并上传图片
+      const result = await renderAndUploadIntroImage(
+        imageData,
+        introText || "A beautiful moment captured in this image.",
+        selectedStyle,
+        supabaseImages
+      );
+
+      // 更新localStorage
+      localStorage.setItem('loveStoryIntroImage_left_url', result.leftImageUrl);
+      localStorage.setItem('loveStoryIntroImage_right_url', result.rightImageUrl);
+
+      // 更新imageStorageMap
+      setImageStorageMap(prev => ({
+        ...prev,
+        ['loveStoryIntroImage']: {
+          localStorageKey: 'loveStoryIntroImage',
+          leftUrl: result.leftImageUrl,
+          rightUrl: result.rightImageUrl
+        }
+      }));
+
+      // 清除原始图片
+      try {
+        // 查找所有包含原始intro图片名称的图片
+        const originalIntroImages = supabaseImages.filter(img => {
+          const isOriginalImage = img.name.includes('love-story-intro');
+          const isProcessedImage = /intro-\d+-\d+/.test(img.name);
+          return isOriginalImage && !isProcessedImage;
+        });
+
+        if (originalIntroImages.length > 0) {
+          console.log(`Found ${originalIntroImages.length} original intro images to delete`);
+
+          // 并行删除所有原始图片
+          const deletePromises = originalIntroImages.map(img => {
+            const pathParts = img.name.split('/');
+            const filename = pathParts[pathParts.length - 1];
+            console.log(`Deleting original intro image: ${filename}`);
+            return deleteImageFromStorage(filename, 'images');
+          });
+
+          // 等待所有删除操作完成
+          await Promise.all(deletePromises);
+          console.log('Successfully deleted original intro images');
+        }
+      } catch (deleteError) {
+        console.error('Error deleting original intro images:', deleteError);
+        // 继续处理，即使删除失败
+      }
+    } catch (renderError: any) {
+      console.error('Error auto-rendering intro image:', renderError);
+      toast({
+        title: "Image rendering failed",
+        description: "Could not process the image. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingIntro(false);
+    }
+  };
+
   const handleRegenerateIntro = async (style?: string) => {
     // 清除localStorage中的引用
     localStorage.removeItem('loveStoryIntroImage');
@@ -668,6 +754,10 @@ const GenerateStep = () => {
                 // 继续处理，即使删除失败
               }
             }
+
+            // 自动渲染intro图片
+            console.log('Auto rendering intro image...');
+            await autoRenderIntroImage(introImageData);
 
             // 延迟刷新图片列表，确保上传完成
             setTimeout(() => {
@@ -905,6 +995,38 @@ const GenerateStep = () => {
           try {
             await handleRegenerateIntro();
             console.log('Intro image generated successfully');
+
+            // 检查intro图片是否已经渲染
+            const leftImageUrl = localStorage.getItem('loveStoryIntroImage_left_url');
+            const rightImageUrl = localStorage.getItem('loveStoryIntroImage_right_url');
+
+            if (!leftImageUrl || !rightImageUrl) {
+              console.log('Intro image needs rendering, checking for image data...');
+              const introImageUrl = localStorage.getItem('loveStoryIntroImage_url');
+
+              if (introImageUrl) {
+                // 找到对应的图片对象
+                const introImage = supabaseImages.find(img => img.url === introImageUrl);
+
+                if (introImage && introImage.url) {
+                  console.log('Found intro image, auto rendering...');
+                  // 下载图片数据
+                  const response = await fetch(introImage.url);
+                  const blob = await response.blob();
+                  const reader = new FileReader();
+
+                  return new Promise((resolve) => {
+                    reader.onloadend = async () => {
+                      const imageData = reader.result as string;
+                      await autoRenderIntroImage(imageData);
+                      resolve(true);
+                    };
+                    reader.readAsDataURL(blob);
+                  });
+                }
+              }
+            }
+
             return true;
           } catch (error) {
             console.error('Error auto-generating intro image:', error);
