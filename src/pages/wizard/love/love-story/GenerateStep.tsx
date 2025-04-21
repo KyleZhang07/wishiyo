@@ -931,18 +931,33 @@ const GenerateStep = () => {
     // 创建生成任务数组
     const generationTasks = [];
 
-    // 添加intro图片生成任务（如果需要）
-    if (!generationStatus.intro.isGenerated) {
+    // 检查是否有正在生成的标记
+    const isIntroGenerating = localStorage.getItem('loveStoryIntroGenerating');
+    const introGeneratingTimestamp = isIntroGenerating ? parseInt(isIntroGenerating) : 0;
+    const currentTime = Date.now();
+    const isIntroGeneratingExpired = currentTime - introGeneratingTimestamp > 5 * 60 * 1000; // 5分钟过期
+
+    // 添加intro图片生成任务（如果需要且没有正在生成）
+    if (!generationStatus.intro.isGenerated && (!isIntroGenerating || isIntroGeneratingExpired)) {
       console.log('Adding intro image generation task...');
       generationTasks.push({
         type: 'intro',
         task: async () => {
           try {
+            // 设置正在生成标记
+            localStorage.setItem('loveStoryIntroGenerating', Date.now().toString());
+
             await handleRegenerateIntro();
             console.log('Intro image generated successfully');
+
+            // 清除生成标记
+            localStorage.removeItem('loveStoryIntroGenerating');
+
             return true;
           } catch (error) {
             console.error('Error auto-generating intro image:', error);
+            // 即使出错也清除生成标记
+            localStorage.removeItem('loveStoryIntroGenerating');
             return false;
           }
         }
@@ -951,7 +966,13 @@ const GenerateStep = () => {
 
     // 添加所有content图片生成任务（如果需要）
     for (const contentImage of generationStatus.contentImages) {
-      if (!contentImage.isGenerated) {
+      // 检查是否有正在生成的标记
+      const isContentGenerating = localStorage.getItem(`loveStoryContent${contentImage.index}Generating`);
+      const contentGeneratingTimestamp = isContentGenerating ? parseInt(isContentGenerating) : 0;
+      const currentTime = Date.now();
+      const isContentGeneratingExpired = currentTime - contentGeneratingTimestamp > 5 * 60 * 1000; // 5分钟过期
+
+      if (!contentImage.isGenerated && (!isContentGenerating || isContentGeneratingExpired)) {
         console.log(`Adding content image ${contentImage.index} generation task...`);
         const regenerateFunction = handleRegenerateMap[contentImage.index];
         if (regenerateFunction) {
@@ -960,11 +981,20 @@ const GenerateStep = () => {
             index: contentImage.index,
             task: async () => {
               try {
+                // 设置正在生成标记
+                localStorage.setItem(`loveStoryContent${contentImage.index}Generating`, Date.now().toString());
+
                 await regenerateFunction();
                 console.log(`Content image ${contentImage.index} generated successfully`);
+
+                // 清除生成标记
+                localStorage.removeItem(`loveStoryContent${contentImage.index}Generating`);
+
                 return true;
               } catch (error) {
                 console.error(`Error auto-generating content image ${contentImage.index}:`, error);
+                // 即使出错也清除生成标记
+                localStorage.removeItem(`loveStoryContent${contentImage.index}Generating`);
                 return false;
               }
             }
