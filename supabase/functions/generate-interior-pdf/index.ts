@@ -445,25 +445,35 @@ serve(async (req) => {
         const newTocPageNum = pdf.internal.getNumberOfPages();
         const newTocMargins = getPageMargins(newTocPageNum);
         tocY = newTocMargins.top + 1.0;
+
+        // 重要：在新页面上，重新检查奇偶页状态
+        // 这确保了章节编号和标题在新页面上正确对齐
+        const isTocRightPage = newTocPageNum % 2 === 1;
+        console.log(`目录换页：新页码 ${newTocPageNum}，是右页: ${isTocRightPage}`);
       }
 
-      // 检查当前页是奇数页（右页）还是偶数页（左页）
-      const isTocRightPage = tocPageNum % 2 === 1;
+      // 注意：我们现在使用 currentTocPageNum 和 currentIsTocRightPage 来确保正确的奇偶页状态
 
       // 设置章节编号字体
       setFont('tocChapter');
 
       // 根据奇偶页调整章节编号的位置
-      // 无论奇偶页，章节编号都从相同的左边距开始
-      pdf.text(`Chapter ${chapter.chapterNumber}`, tocPageMargins.left + 0.1, tocY);
+      // 使用当前页的动态边距，而不是固定值
+      // 确保使用正确的奇偶页状态
+      const currentTocPageNum = pdf.internal.getNumberOfPages();
+      const currentTocMargins = getPageMargins(currentTocPageNum);
+      const currentIsTocRightPage = currentTocPageNum % 2 === 1;
+
+      // 使用当前页的边距，而不是循环开始时的边距
+      pdf.text(`Chapter ${chapter.chapterNumber}`, currentTocMargins.left, tocY);
 
       // 设置章节标题字体
-      // 无论奇偶页，章节标题都使用相同的左边距
-      const chapterTitleX = tocPageMargins.left + 1.2; // 使用相同的左边距，保持一致性
+      // 使用当前页的动态边距，而不是固定值
+      const chapterTitleX = currentTocMargins.left + 1.2; // 从当前页的左边距偏移1.2英寸
 
       // 处理标题过长的情况，确保与页码不重合
       // 减小页码预留空间，从0.8减小到0.6，给标题留出更多空间
-      const maxTitleWidth = pageWidth - tocPageMargins.right - chapterTitleX - 0.6; // 使用动态边距，留出空间给页码
+      const maxTitleWidth = pageWidth - currentTocMargins.right - chapterTitleX - 0.6; // 使用当前页的动态边距，留出空间给页码
       const titleLines = pdf.splitTextToSize(chapter.title, maxTitleWidth);
 
       // 支持标题自动换行，最多显示两行
@@ -475,9 +485,9 @@ serve(async (req) => {
         tocEntries.push({
           chapter,
           pageNumber: 0, // 先设置为0，后面会更新
-          tocPageNumber: pdf.internal.getNumberOfPages(), // 当前目录页码
+          tocPageNumber: currentTocPageNum, // 当前目录页码
           yPosition: tocY, // 记录Y坐标位置
-          isRightPage: isTocRightPage // 记录是否是奇数页（右页）
+          isRightPage: currentIsTocRightPage // 使用当前页的奇偶页状态
         });
 
         // 增加目录行间距
@@ -494,9 +504,9 @@ serve(async (req) => {
         tocEntries.push({
           chapter,
           pageNumber: 0, // 先设置为0，后面会更新
-          tocPageNumber: pdf.internal.getNumberOfPages(), // 当前目录页码
+          tocPageNumber: currentTocPageNum, // 当前目录页码
           yPosition: tocY, // 记录Y坐标位置
-          isRightPage: isTocRightPage // 记录是否是奇数页（右页）
+          isRightPage: currentIsTocRightPage // 使用当前页的奇偶页状态
         });
 
         // 显示第二行（如果有），使用较小的行间距
@@ -923,17 +933,11 @@ serve(async (req) => {
         // 设置页码字体
         setFont('tocPageNumber');
 
-        // 获取当前页的页眉边距（不偏移）
-        const headerMargins = getHeaderMargins(entry.tocPageNumber);
-
-        // 根据奇偶页调整页码的位置
-        if (entry.isRightPage) {
-          // 奇数页（右页）：页码在右侧
-          pdf.text(String(entry.pageNumber), pageWidth - headerMargins.right, entry.yPosition, { align: 'right' });
-        } else {
-          // 偶数页（左页）：页码在右侧（与奇数页保持一致）
-          pdf.text(String(entry.pageNumber), pageWidth - headerMargins.right, entry.yPosition, { align: 'right' });
-        }
+        // 根据当前页的动态边距调整页码的位置
+        // 获取当前目录页的动态边距
+        const tocPageMargins = getPageMargins(entry.tocPageNumber);
+        // 无论奇偶页，页码都在右侧
+        pdf.text(String(entry.pageNumber), pageWidth - tocPageMargins.right, entry.yPosition, { align: 'right' });
       }
     });
 

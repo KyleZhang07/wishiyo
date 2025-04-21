@@ -26,7 +26,7 @@ interface BookChapter {
 
 // 定义批次大小和总章节数
 const BATCH_SIZE = 2; // 每批生成2章
-const TOTAL_CHAPTERS = 2; // 总共生成2章
+const TOTAL_CHAPTERS = 20; // 总共生成2章
 const MAX_RETRIES = 3;
 
 // 定义页面布局常量
@@ -132,7 +132,7 @@ serve(async (req) => {
       while (retries < MAX_RETRIES) {
         try {
           const prompt = `
-          You are writing a funny biography titled "${bookTitle}" about ${bookAuthor}, exploring their expertise, methodology, and insights in a funny, satirical, or professional tone.
+          You will obey every rule in the prompt, especially the word count rule, and you are writing a funny biography titled "${bookTitle}" about ${bookAuthor}, exploring their expertise, methodology, and insights in a funny, satirical, or professional tone.
           The book concept is: ${ideaDescription}
 
           Additional context about the subject (use these details naturally throughout the narrative, but don't use the details too much):
@@ -142,13 +142,13 @@ serve(async (req) => {
           ${chapterDescription ? `Chapter description: ${chapterDescription}` : ''}
 
           Write this chapter with 5 distinct sections:
-          - CRITICAL: EACH SECTION MUST CONTAIN BETWEEN 600 TO 700 WORDS.
+          - CRITICAL: EACH SECTION MUST CONTAIN BETWEEN 500 TO 600 WORDS. THE whole chapter will contain 2500-3000 words
           - Use first-person "I" when ${bookAuthor} is sharing specific personal experiences or anecdotes
           - Use second-person "you" when explaining methodologies, principles, or when instructing the reader
           - The narrative should feel like ${bookAuthor} is personally guiding readers through their expertise using engaging metaphors
 
           Guidelines:
-          - CRITICAL: EACH SECTION MUST CONTAIN BETWEEN 600 TO 700 WORDS.
+          - CRITICAL: EACH SECTION MUST CONTAIN BETWEEN 500 TO 600 WORDS.THE whole chapter will contain 2500-3000 words
           - Balance between "I" (for personal stories) and "you" (for instructional content)
           - When using "I," focus on ${bookAuthor}'s personal journey, challenges overcome, and pivotal moments
           - When using "you," focus on transferable principles, methodologies, and practical applications
@@ -184,13 +184,13 @@ serve(async (req) => {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              model: 'gpt-4.1',
+              model: 'gpt-4.1-mini',
               messages: [
                 {
                   role: 'system',
                   content: `You MUST STRICTLY enforce these requirements, especially the word count requirements:
+- CRITICAL REQUIREMENT: Each section MUST contain EXACTLY between 500 and 600 words. The whole chapter will contain 2500-3000 words
 - Each chapter must have exactly 5 sections.
-- CRITICAL REQUIREMENT: Each section MUST contain EXACTLY between 600 and 700 words. This is a HARD REQUIREMENT.
 - Each section's content must use double line breaks (\\n\\n) between paragraphs to clearly separate them.
 - Respond only with valid JSON. Do not include any commentary or explanation outside the JSON structure.`
                 },
@@ -199,7 +199,7 @@ serve(async (req) => {
                   content: prompt
                 }
               ],
-              temperature: 1.0,
+              temperature: 0.9,
               response_format: { type: "json_object" }
             }),
           });

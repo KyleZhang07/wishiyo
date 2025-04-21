@@ -7,6 +7,12 @@ interface RequestBody {
 }
 
 serve(async (req) => {
+  // 记录可用内存
+  // @ts-ignore: Deno 全局变量
+  console.log(`可用内存: ${Deno.env.get('SUPABASE_FUNCTION_MEMORY_MB') || '未知'} MB`);
+
+  // 注意：Deno环境下不能使用process.memoryUsage()
+
   // 设置CORS头
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -167,8 +173,7 @@ serve(async (req) => {
     // 生成完整封面PDF (封底 + 书脊 + 封面)
     const coverPdf = await generateCoverPdf(backCoverImages[0], spineImages[0], coverImages[0], orderId, clientId, supabaseAdmin)
 
-    // 生成内页PDF（按顺序合并：blessing + intro + content图片）
-    const interiorPdf = await generatePdf([...blessingImages, ...introImages, ...contentImages, ...endingImages], orderId, clientId, supabaseAdmin)
+    // 不再一次性生成内页PDF，而是使用分段生成
 
     // 上传PDF到Storage
     const coverPdfPath = `love-story/${orderId}/cover.pdf`
@@ -197,169 +202,79 @@ serve(async (req) => {
     }
     console.log(`封面PDF上传成功`)
 
-    // 检查内页PDF大小
-    const interiorPdfSize = interiorPdf.byteLength;
-    console.log(`内页PDF大小: ${interiorPdfSize} 字节 (${Math.round(interiorPdfSize/1024/1024 * 100) / 100} MB)`)
+    // 分段生成和上传内页PDF
+    try {
+      console.log(`开始分段生成和上传内页PDF`);
 
-    // 定义分块上传的大小限制 - 增大每块大小，减少分割份数
-    const MAX_CHUNKS = 6; // 最多分成6份
-    const MIN_CHUNK_SIZE = 1.5 * 1024 * 1024; // 最小块大小为1.5MB
-    // 根据文件大小和最大块数计算块大小
-    const CHUNK_SIZE = Math.max(MIN_CHUNK_SIZE, Math.ceil(interiorPdfSize / MAX_CHUNKS));
+      // 使用分段生成和上传
+      const { segments, totalSize, indexPath } = await generateAndUploadPdfInSegments(
+        [...blessingImages, ...introImages, ...contentImages, ...endingImages],
+        orderId,
+        clientId,
+        supabaseAdmin
+      );
 
-    // 如果PDF较小，直接上传
-    if (interiorPdfSize <= MIN_CHUNK_SIZE) {
-      console.log(`开始上传内页PDF到路径: ${interiorPdfPath}`)
-      const { data: interiorUploadData, error: interiorUploadError } = await supabaseAdmin
-        .storage
-        .from('pdfs')
-        .upload(interiorPdfPath, interiorPdf, {
-          contentType: 'application/pdf',
-          upsert: true
-        })
-
-      if (interiorUploadError) {
-        console.error(`上传内页PDF失败:`, JSON.stringify(interiorUploadError))
-        return new Response(
-          JSON.stringify({ error: 'Failed to upload interior PDF', details: interiorUploadError }),
-          { headers: { ...headers, 'Content-Type': 'application/json' }, status: 500 }
-        )
-      }
-      console.log(`内页PDF上传成功`)
-    } else {
-      // 对于大文件，我们需要一个替代方案
-      console.log(`内页PDF过大 (${Math.round(interiorPdfSize/1024/1024 * 100) / 100} MB)，使用分割上传`)
+      // 异步触发合并操作
+      const origin = req.headers.get('origin') || 'https://wishiyo.com';
+      const mergeEndpoint = `${origin}/api/merge-pdf`;
 
       try {
-        // 将大PDF分割成多个较小的PDF文件上传
-        const splitPdfCount = Math.min(MAX_CHUNKS, Math.ceil(interiorPdfSize / CHUNK_SIZE));
-        console.log(`将PDF分割成 ${splitPdfCount} 个较小的文件上传，每个文件大约 ${Math.round(CHUNK_SIZE/1024/1024 * 100) / 100} MB`);
-
-        // 创建一个包含所有页面信息的数组
-        const pageInfoArray: string[] = [];
-        for (let i = 0; i < splitPdfCount; i++) {
-          const partPath = `love-story/${orderId}/interior-part${i+1}.pdf`;
-          pageInfoArray.push(partPath);
-        }
-
-        // 将原始PDF拆分成多个较小的PDF文件
-        // 注意：由于我们不能在Edge Function中直接拆分PDF，
-        // 所以我们将整个PDF按字节拆分，而不是按页面拆分
-        for (let i = 0; i < splitPdfCount; i++) {
-          const start = i * CHUNK_SIZE;
-          const end = Math.min(start + CHUNK_SIZE, interiorPdfSize);
-          const chunk = interiorPdf.slice(start, end);
-
-          const partPath = `love-story/${orderId}/interior-part${i+1}.pdf`;
-          console.log(`上传PDF部分 ${i+1}/${splitPdfCount} 到 ${partPath}, 大小: ${chunk.byteLength} 字节`);
-
-          const { error: partUploadError } = await supabaseAdmin
-            .storage
-            .from('pdfs')
-            .upload(partPath, chunk, {
-              contentType: 'application/pdf',
-              upsert: true
-            });
-
-          if (partUploadError) {
-            console.error(`上传PDF部分 ${i+1} 失败:`, JSON.stringify(partUploadError));
-            throw new Error(`上传PDF部分 ${i+1} 失败: ${JSON.stringify(partUploadError)}`);
-          }
-        }
-
-        // 创建一个索引文件，记录所有部分文件的路径
-        const indexContent = JSON.stringify({
-          orderId: orderId,
-          parts: pageInfoArray,
-          totalSize: interiorPdfSize,
-          createdAt: new Date().toISOString()
+        // 使用fire-and-forget模式，不等待响应
+        fetch(mergeEndpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            orderId: orderId,
+            type: 'interior'
+          })
+        }).catch(err => {
+          console.warn(`触发合并操作失败，但这不会影响上传流程:`, err);
         });
 
-        // 上传索引文件
-        const indexPath = `love-story/${orderId}/interior-index.json`;
-        const { error: indexUploadError } = await supabaseAdmin
-          .storage
-          .from('pdfs')
-          .upload(indexPath, new TextEncoder().encode(indexContent), {
-            contentType: 'application/json',
-            upsert: true
-          });
-
-        if (indexUploadError) {
-          console.error(`上传索引文件失败:`, JSON.stringify(indexUploadError));
-          throw new Error(`上传索引文件失败: ${JSON.stringify(indexUploadError)}`);
-        }
-
-        console.log(`索引文件上传成功，现在异步触发合并操作`);
-
-        // 异步触发合并操作
-        // 获取当前请求的origin
-        const origin = req.headers.get('origin') || 'https://wishiyo.com';
-        const mergeEndpoint = `${origin}/api/merge-pdf`;
-
-        // 使用fetch API发送POST请求，不等待响应
-        try {
-          // 使用fire-and-forget模式，不等待响应
-          fetch(mergeEndpoint, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              orderId: orderId,
-              type: 'interior'
-            })
-          }).catch(err => {
-            // 记录错误但不中断主流程
-            console.warn(`触发合并操作失败，但这不会影响上传流程:`, err);
-          });
-
-          console.log(`已触发合并操作，继续执行`);
-        } catch (triggerError) {
-          // 记录错误但不中断主流程
-          console.warn(`触发合并操作失败，但这不会影响上传流程:`, triggerError);
-        }
-
-        // 上传一个小的占位PDF文件到原始路径，以便前端可以获取URL
-        // 这个文件包含一个说明页，告知用户完整PDF正在处理中
-        const placeholderPdf = new jsPDF();
-        placeholderPdf.text('您的PDF正在处理中...', 10, 10);
-        placeholderPdf.text(`原始文件大小: ${Math.round(interiorPdfSize/1024/1024 * 100) / 100} MB`, 10, 20);
-        placeholderPdf.text(`分割成 ${splitPdfCount} 个部分`, 10, 30);
-        placeholderPdf.text(`订单ID: ${orderId}`, 10, 40);
-        placeholderPdf.text('系统正在后台合并您的PDF，请稍后刷新页面查看。', 10, 50);
-
-        // 使用当前请求的URL构建合并服务链接
-        const mergeUrl = `${origin}/api/merge-pdf?orderId=${orderId}&type=interior`;
-        placeholderPdf.setTextColor(0, 0, 255);
-        placeholderPdf.text('如果长时间未完成，请点击此处手动下载', 10, 60);
-        placeholderPdf.link(10, 57, 180, 10, { url: mergeUrl });
-        placeholderPdf.setTextColor(0, 0, 0);
-
-        const placeholderPdfBytes = placeholderPdf.output('arraybuffer');
-
-        const { error: placeholderUploadError } = await supabaseAdmin
-          .storage
-          .from('pdfs')
-          .upload(interiorPdfPath, new Uint8Array(placeholderPdfBytes), {
-            contentType: 'application/pdf',
-            upsert: true
-          });
-
-        if (placeholderUploadError) {
-          console.error(`上传占位PDF失败:`, JSON.stringify(placeholderUploadError));
-          throw new Error(`上传占位PDF失败: ${JSON.stringify(placeholderUploadError)}`);
-        }
-
-        console.log(`PDF分割上传成功，共 ${splitPdfCount} 个部分，已触发后台合并`);
-
-      } catch (error) {
-        console.error(`PDF分割上传过程中出错:`, error);
-        return new Response(
-          JSON.stringify({ error: 'Failed to upload interior PDF using split upload', details: error }),
-          { headers: { ...headers, 'Content-Type': 'application/json' }, status: 500 }
-        );
+        console.log(`已触发合并操作，继续执行`);
+      } catch (triggerError) {
+        console.warn(`触发合并操作失败，但这不会影响上传流程:`, triggerError);
       }
+
+      // 上传占位PDF
+      const placeholderPdf = new jsPDF();
+      placeholderPdf.text('您的PDF正在处理中...', 10, 10);
+      placeholderPdf.text(`原始文件大小: ${Math.round(totalSize/1024/1024 * 100) / 100} MB`, 10, 20);
+      placeholderPdf.text(`分割成 ${segments.length} 个部分`, 10, 30);
+      placeholderPdf.text(`订单ID: ${orderId}`, 10, 40);
+      placeholderPdf.text('系统正在后台合并您的PDF，请稍后刷新页面查看。', 10, 50);
+
+      const mergeUrl = `${origin}/api/merge-pdf?orderId=${orderId}&type=interior`;
+      placeholderPdf.setTextColor(0, 0, 255);
+      placeholderPdf.text('如果长时间未完成，请点击此处手动下载', 10, 60);
+      placeholderPdf.link(10, 57, 180, 10, { url: mergeUrl });
+      placeholderPdf.setTextColor(0, 0, 0);
+
+      const placeholderPdfBytes = placeholderPdf.output('arraybuffer');
+
+      const { error: placeholderUploadError } = await supabaseAdmin
+        .storage
+        .from('pdfs')
+        .upload(interiorPdfPath, new Uint8Array(placeholderPdfBytes), {
+          contentType: 'application/pdf',
+          upsert: true
+        });
+
+      if (placeholderUploadError) {
+        console.error(`上传占位PDF失败:`, JSON.stringify(placeholderUploadError));
+        throw new Error(`上传占位PDF失败: ${JSON.stringify(placeholderUploadError)}`);
+      }
+
+      console.log(`PDF分段生成和上传成功，共 ${segments.length} 个部分，已触发后台合并`);
+
+    } catch (error) {
+      console.error(`PDF分段生成和上传过程中出错:`, error);
+      return new Response(
+        JSON.stringify({ error: 'Failed to generate and upload interior PDF', details: error }),
+        { headers: { ...headers, 'Content-Type': 'application/json' }, status: 500 }
+      );
     }
 
     // 获取PDF的公共URL
@@ -802,7 +717,7 @@ async function generateCoverPdf(backCoverFile: any, spineFile: any, frontCoverFi
   return new Uint8Array(pdfOutput)
 }
 
-// 辅助函数：生成PDF
+// 辅助函数：生成PDF (注意：这个函数已经不再使用，我们现在使用分段生成方式)
 async function generatePdf(imageFiles: any[], orderId: string, clientId: string | null, supabase: any): Promise<Uint8Array> {
   console.log(`开始生成PDF，处理 ${imageFiles.length} 张图片...`)
   console.log(`订单ID: ${orderId}`)
@@ -985,6 +900,213 @@ async function blobToBase64(blob: Blob): Promise<string> {
     reader.onerror = reject
     reader.readAsDataURL(blob)
   })
+}
+
+// 分段生成PDF并上传
+async function generateAndUploadPdfInSegments(imageFiles: any[], orderId: string, clientId: string | null, supabase: any) {
+  const segmentSize = 3; // 每段处理3张图片
+  const segments: string[] = [];
+  let totalSize = 0;
+
+  console.log(`开始分段生成PDF，共 ${imageFiles.length} 张图片，每段 ${segmentSize} 张`);
+
+  // 注意：Deno环境不支持process.memoryUsage()
+
+  // 分段处理图片
+  for (let i = 0; i < imageFiles.length; i += segmentSize) {
+    const segmentImages = imageFiles.slice(i, Math.min(i + segmentSize, imageFiles.length));
+    console.log(`生成第 ${Math.floor(i/segmentSize) + 1} 段PDF，处理 ${segmentImages.length} 张图片`);
+
+    // 为这一段图片生成PDF
+    const segmentPdf = await generatePdfSegment(segmentImages, orderId, clientId, supabase);
+
+    // 上传段PDF
+    const segmentPath = `love-story/${orderId}/interior-part${Math.floor(i/segmentSize) + 1}.pdf`;
+    console.log(`上传PDF段 ${Math.floor(i/segmentSize) + 1} 到 ${segmentPath}, 大小: ${segmentPdf.byteLength} 字节`);
+
+    const { error: segmentUploadError } = await supabase.storage.from('pdfs').upload(
+      segmentPath,
+      segmentPdf,
+      { contentType: 'application/pdf', upsert: true }
+    );
+
+    if (segmentUploadError) {
+      console.error(`上传PDF段 ${Math.floor(i/segmentSize) + 1} 失败:`, segmentUploadError);
+      throw new Error(`上传PDF段失败: ${JSON.stringify(segmentUploadError)}`);
+    }
+
+    segments.push(segmentPath);
+    totalSize += segmentPdf.byteLength;
+
+    // 清空内存
+    if (typeof global !== 'undefined' && global.gc) {
+      global.gc();
+    }
+    await new Promise(resolve => setTimeout(resolve, 500));
+  }
+
+  // 创建索引文件
+  const indexContent = JSON.stringify({
+    orderId: orderId,
+    parts: segments,
+    totalSize: totalSize,
+    createdAt: new Date().toISOString()
+  });
+
+  // 上传索引文件
+  const indexPath = `love-story/${orderId}/interior-index.json`;
+  const { error: indexUploadError } = await supabase.storage.from('pdfs').upload(
+    indexPath,
+    new TextEncoder().encode(indexContent),
+    { contentType: 'application/json', upsert: true }
+  );
+
+  if (indexUploadError) {
+    console.error(`上传索引文件失败:`, indexUploadError);
+    throw new Error(`上传索引文件失败: ${JSON.stringify(indexUploadError)}`);
+  }
+
+  console.log(`索引文件上传成功，共 ${segments.length} 个PDF段，总大小 ${totalSize} 字节`);
+
+  return { segments, totalSize, indexPath };
+}
+
+// 生成单个PDF段
+async function generatePdfSegment(imageFiles: any[], orderId: string, clientId: string | null, supabase: any): Promise<Uint8Array> {
+  console.log(`开始生成PDF段，处理 ${imageFiles.length} 张图片...`);
+
+  // 创建新的PDF
+  const pdf = new jsPDF({
+    orientation: 'portrait',
+    unit: 'in',
+    format: [8.75, 8.75] // 总文档尺寸 8.75" x 8.75"
+  });
+
+  // Lulu内页模板尺寸设置
+  const totalDocSize = 8.75;       // 总文档尺寸
+  const bleedWidth = 0.125;        // 出血区域宽度
+
+  let currentPage = 0;
+  let successCount = 0;
+  let errorCount = 0;
+
+  // 处理每张图片
+  for (const file of imageFiles) {
+    try {
+      console.log(`处理图片 ${currentPage + 1}/${imageFiles.length}: ${file.name}`);
+
+      // 下载图片
+      let imageData = null;
+      let imageError = null;
+
+      // 首先尝试仌client_id路径获取图片
+      if (clientId) {
+        const clientPathResult = await supabase
+          .storage
+          .from('images')
+          .download(`${clientId}/${file.name}`);
+
+        if (!clientPathResult.error && clientPathResult.data) {
+          imageData = clientPathResult.data;
+          imageError = null;
+        } else {
+          // 如果仌client_id路径获取失败，尝试仌order_id路径获取
+          const orderPathResult = await supabase
+            .storage
+            .from('images')
+            .download(`love-story/${orderId}/${file.name}`);
+
+          imageData = orderPathResult.data;
+          imageError = orderPathResult.error;
+        }
+      } else {
+        // 如果没有client_id，直接仌order_id路径获取
+        const { data, error } = await supabase
+          .storage
+          .from('images')
+          .download(`love-story/${orderId}/${file.name}`);
+
+        imageData = data;
+        imageError = error;
+      }
+
+      if (imageError || !imageData) {
+        console.error(`无法下载图片 ${file.name}:`, imageError);
+        errorCount++;
+        continue; // 跳过这张图片，继续处理下一张
+      }
+
+      // 转换图片为base64
+      const imageBase64 = await blobToBase64(imageData);
+
+      // 立即释放原始图片数据内存
+      imageData = null;
+
+      // 添加新页（除了第一页）
+      if (currentPage > 0) {
+        pdf.addPage();
+      }
+
+      // 添加图片到PDF
+      pdf.addImage(
+        imageBase64,
+        'JPEG',
+        0, // x坐标
+        0, // y坐标
+        totalDocSize, // 宽度
+        totalDocSize, // 高度
+        `img_${currentPage}` // 唯一ID
+      );
+
+      // 添加边界线和标记（如果需要）
+      // 注意：Deno环境不支持process.env
+      const DEBUG_LINES = false; // 设置为静态值
+      if (DEBUG_LINES) {
+        // 添加裁切线
+        pdf.setDrawColor(255, 0, 0); // 红色
+        pdf.rect(bleedWidth, bleedWidth, totalDocSize - 2 * bleedWidth, totalDocSize - 2 * bleedWidth);
+
+        // 添加总文档边界
+        pdf.setDrawColor(0, 162, 232); // 浅蓝色
+        pdf.rect(0, 0, totalDocSize, totalDocSize);
+
+        // 添加标签文本
+        pdf.setFontSize(6);
+        pdf.setTextColor(0, 162, 232);
+        pdf.text('TRIM / BLEED AREA', totalDocSize/2, 0.1, { align: 'center' });
+        pdf.text('TRIM / BLEED AREA', totalDocSize/2, totalDocSize - 0.05, { align: 'center' });
+
+        // 添加页码标签
+        pdf.setTextColor(0, 0, 0);
+        pdf.text(`PAGE ${currentPage + 1}`, totalDocSize/2, bleedWidth/2, { align: 'center' });
+      }
+
+      currentPage++;
+      successCount++;
+
+      // 每处理一张图片就尝试手动触发垃圾回收
+      if (typeof global !== 'undefined' && global.gc) {
+        global.gc();
+      }
+
+      // 每张图片处理后暂停一小段时间
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // 记录处理进度
+      console.log(`处理完图片 ${currentPage}/${imageFiles.length}`);
+      // 注意：Deno环境不支持process.memoryUsage()
+
+    } catch (error) {
+      console.error(`处理图片 ${file.name} 时出错:`, error);
+      errorCount++;
+    }
+  }
+
+  console.log(`PDF段生成完成，共处理 ${imageFiles.length} 张图片 (成功: ${successCount}, 失败: ${errorCount})`);
+
+  // 转换PDF为Uint8Array
+  const pdfOutput = pdf.output('arraybuffer');
+  return new Uint8Array(pdfOutput);
 }
 
 // 注意：dataURLtoBlob函数已被移除，因为它未被使用
