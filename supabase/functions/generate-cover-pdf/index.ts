@@ -182,10 +182,10 @@ serve(async (req) => {
       // 精装本尺寸 (基于Lulu模板)
       bookWidth = 6.125;
       bookHeight = 9.25;
-      spineWidth = 0.813; // 精装本书脊宽度更新为 0.813"
+      spineWidth = 0.75; // 精装本书脊宽度从0.813"改为0.75"
       // 计算新的PDF总宽度 = 两个封面宽度 + 书脊宽度 + 两侧包装区域
       const wrapAreaWidth = 0.75; // 每侧0.75"的包装区域
-      pdfWidth = (bookWidth * 2) + spineWidth + (wrapAreaWidth * 2); // 14.563"
+      pdfWidth = (bookWidth * 2) + spineWidth + (wrapAreaWidth * 2); // 14.5" (减小了0.063")
       pdfHeight = 10.75;
       console.log(`Using hardcover dimensions: ${pdfWidth}" x ${pdfHeight}" with spine width ${spineWidth}"`);
       console.log(`Total content width: ${(bookWidth * 2) + spineWidth}"`);
@@ -194,9 +194,9 @@ serve(async (req) => {
       // 平装本尺寸 (基于Lulu模板)
       bookWidth = 6.0;
       bookHeight = 9.0;
-      spineWidth = 0.6; // 平装本书脊宽度更新为 0.6"
+      spineWidth = 0.55; // 平装本书脊宽度从0.6"改为0.55"
       // 计算新的PDF总宽度 = 两个封面宽度 + 书脊宽度 + 两侧出血区域
-      pdfWidth = (bookWidth * 2) + spineWidth + 0.25; // 0.25" 是两侧各 0.125" 的出血区域
+      pdfWidth = (bookWidth * 2) + spineWidth + 0.25; // 0.25" 是两侧各 0.125" 的出血区域 (减小了0.05")
       pdfHeight = 9.25;
       console.log(`Using softcover dimensions: ${pdfWidth}" x ${pdfHeight}" with spine width ${spineWidth}"`);
       console.log(`Total content width: ${(bookWidth * 2) + spineWidth}"`);

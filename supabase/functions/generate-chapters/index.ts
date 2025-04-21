@@ -108,11 +108,29 @@ Return ONLY a JSON array containing these 20 chapter objects. No other text or e
       }
 
       // Validate and format each chapter
-      const formattedChapters = chapters.map((chapter, index) => ({
-        title: String(chapter.title || `Chapter ${index + 1}`),
-        description: String(chapter.description || "An exciting chapter in this story"),
-        startPage: Number(chapter.startPage || index * 12 + 1)
-      }));
+      // 根据截图中的目录页数计算每章的页数
+      // 第1章：页码为1
+      // 第2章：页码为13
+      // 第3章：页码为25
+      // 第4章：页码为37
+      // 第5章：页码为49
+      // 每章约12页，总共200页，20章
+      const formattedChapters = chapters.map((chapter, index) => {
+        // 计算起始页码
+        let startPage;
+        if (index === 0) {
+          startPage = 1; // 第一章从第1页开始
+        } else {
+          // 每章约10页，适应200页总长度
+          startPage = index * 10 + 1;
+        }
+
+        return {
+          title: String(chapter.title || `Chapter ${index + 1}`),
+          description: String(chapter.description || "An exciting chapter in this story"),
+          startPage: Number(chapter.startPage || startPage)
+        };
+      });
 
       return new Response(
         JSON.stringify({ chapters: formattedChapters }),

@@ -1730,14 +1730,11 @@ const CanvasCoverPreview = ({
 
     // 在底部绘制 logo
     if (spineLogo?.element) {
-      // 计算原始尺寸
-      const originalWidth = Math.min(width - 4, 60); // 原始限制宽度
+      // 将 logo 宽度缩减为原来的 90%
+      const originalLogoWidth = Math.min(width - 4, 60); // 原始限制宽度
+      const logoWidth = originalLogoWidth * 0.9; // 缩减为原来的 90%
       const logoAspectRatio = spineLogo.element.width / spineLogo.element.height;
-      const originalHeight = originalWidth / logoAspectRatio;
-
-      // 保持原始高度，只将宽度缩小到原来的80%
-      const logoHeight = originalHeight; // 保持原始高度
-      const logoWidth = originalWidth * 0.8; // 将宽度缩小到原来的80%
+      const calculatedLogoHeight = logoWidth / logoAspectRatio;
 
       // 居中绘制 logo
       const logoX = (width - logoWidth) / 2;
@@ -1752,7 +1749,7 @@ const CanvasCoverPreview = ({
         logoX,
         logoY,
         logoWidth,
-        logoHeight
+        calculatedLogoHeight
       );
     }
   };
