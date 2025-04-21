@@ -1582,7 +1582,7 @@ const LoveStoryCoverStep = () => {
     }
   };
 
-  // 修改handleContinue函数，启动后台渲染并立即导航到下一步
+  // 修改handleContinue函数，只有在封面有变化时才重新渲染
   const handleContinue = () => {
     try {
       // 保存标题数据和封面样式到localStorage
@@ -1592,8 +1592,35 @@ const LoveStoryCoverStep = () => {
       localStorage.setItem('loveStoryCoverStyle', selectedStyle); // 保存封面样式
       localStorage.setItem('loveStorySelectedCoverIndex', currentImageIndex.toString()); // 保存当前选中的图片索引
 
+      // 检查封面是否有变化
+      const lastTitle = localStorage.getItem('lastRenderedCoverTitle');
+      const lastSubtitle = localStorage.getItem('lastRenderedCoverSubtitle');
+      const lastStyle = localStorage.getItem('lastRenderedCoverStyle');
+      const lastAuthor = localStorage.getItem('lastRenderedAuthorName');
+      const lastRecipient = localStorage.getItem('lastRenderedRecipientName');
+      const lastImageIndex = localStorage.getItem('lastRenderedCoverImageIndex');
+
+      // 检查是否需要重新渲染
+      const needsRerender =
+        !lastTitle || // 第一次渲染
+        lastTitle !== (titleData.mainTitle || titleData.fullTitle) ||
+        lastSubtitle !== (titleData.subTitle || '') ||
+        lastStyle !== selectedStyle ||
+        lastAuthor !== authorName ||
+        lastRecipient !== recipientName ||
+        lastImageIndex !== currentImageIndex.toString();
+
+      console.log('Cover change detection:', {
+        needsRerender,
+        currentTitle: titleData.mainTitle || titleData.fullTitle,
+        lastTitle,
+        currentStyle: selectedStyle,
+        lastStyle,
+        currentImageIndex,
+        lastImageIndex
+      });
+
       // 保存当前封面信息作为最后渲染的状态
-      // 这些信息将在GenerateStep中用于检测封面是否发生变化
       localStorage.setItem('lastRenderedCoverTitle', titleData.mainTitle || titleData.fullTitle);
       localStorage.setItem('lastRenderedCoverSubtitle', titleData.subTitle || '');
       localStorage.setItem('lastRenderedCoverStyle', selectedStyle);
@@ -1603,10 +1630,18 @@ const LoveStoryCoverStep = () => {
 
       // 设置渲染状态
       setIsRenderingCover(true);
-      setCoverRenderComplete(false);
 
-      // 启动后台渲染
-      renderCoverInBackground();
+      if (needsRerender) {
+        // 如果需要重新渲染，设置为未完成状态并启动渲染
+        console.log('Cover has changed, starting background rendering...');
+        setCoverRenderComplete(false);
+        renderCoverInBackground();
+      } else {
+        // 如果不需要重新渲染，直接设置为完成状态
+        console.log('Cover has not changed, skipping rendering...');
+        setCoverRenderComplete(true);
+        setIsRenderingCover(false);
+      }
 
       // 立即导航到下一步
       navigate('/create/love/love-story/generate');
