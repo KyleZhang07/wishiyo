@@ -200,31 +200,27 @@ const GenerateStep = () => {
     };
 
     try {
-      // 获取对应的文本 - content图片对应prompts[index+1]，因此对应imageTexts[index+1]
-      // 注意：在IdeaStep.tsx中，generateImageTexts函数会为每个prompt生成一个对应的text
-      // 所以我们需要确保使用正确的索引
+      // 获取对应的文本
+      // 根据注释，图像索引1-10对应文本索引2-11，因为text[0]是cover，text[1]是intro
       const textIndex = index + 1; // 图像索引对应文本索引
-      let contentText = "";
 
-      // 先检查localStorage中是否有保存的imageTexts
+      // 从 localStorage 直接读取 imageTexts，确保有最新数据
+      let text = "";
       const savedTexts = localStorage.getItem('loveStoryImageTexts');
       if (savedTexts) {
         try {
           const parsedTexts = JSON.parse(savedTexts);
-          // content图片对应prompts[index+1]，因此对应imageTexts[index+1]
           if (parsedTexts && Array.isArray(parsedTexts) && parsedTexts.length > textIndex) {
-            contentText = parsedTexts[textIndex].text || "";
-            console.log(`Found content ${index} text from localStorage:`, contentText);
+            text = parsedTexts[textIndex].text || "";
           }
         } catch (error) {
-          console.error('Error parsing saved texts from localStorage:', error);
+          console.error('Error parsing saved texts in autoRenderContentImage:', error);
         }
       }
 
-      // 如果从 localStorage 中没有找到，则使用状态变量
-      if (!contentText && imageTexts && imageTexts.length > textIndex) {
-        contentText = imageTexts[textIndex].text || "";
-        console.log(`Using content ${index} text from state:`, contentText);
+      // 如果从 localStorage 读取失败，则尝试使用状态变量
+      if (!text && imageTexts && imageTexts.length > textIndex) {
+        text = imageTexts[textIndex].text || "";
       }
 
       // 设置加载状态
@@ -234,10 +230,9 @@ const GenerateStep = () => {
       // 移除toast通知，减少用户干扰
 
       // 渲染并上传图片
-      console.log(`Rendering content ${index} image with text:`, contentText || "A beautiful moment captured in this image.");
       const result = await renderAndUploadContentImage(
         imageData,
-        contentText || "A beautiful moment captured in this image.",
+        text || "A beautiful moment captured in this image.",
         index,
         selectedStyle,
         supabaseImages
@@ -594,100 +589,6 @@ const GenerateStep = () => {
 
 
 
-  // 自动渲染intro图片的函数
-  const autoRenderIntroImage = async (imageData: string) => {
-    try {
-      setIsGeneratingIntro(true);
-
-      // 获取对应的文本 - intro图片对应prompts[1]，因此对应imageTexts[1]
-      // 注意：在IdeaStep.tsx中，generateImageTexts函数会为每个prompt生成一个对应的text
-      // 所以我们需要确保使用正确的索引
-      let introText = "";
-
-      // 先检查localStorage中是否有保存的imageTexts
-      const savedTexts = localStorage.getItem('loveStoryImageTexts');
-      if (savedTexts) {
-        try {
-          const parsedTexts = JSON.parse(savedTexts);
-          // intro图片对应prompts[1]，因此对应imageTexts[1]
-          if (parsedTexts && Array.isArray(parsedTexts) && parsedTexts.length > 1) {
-            introText = parsedTexts[1].text || "";
-            console.log('Found intro text from localStorage:', introText);
-          }
-        } catch (error) {
-          console.error('Error parsing saved texts from localStorage:', error);
-        }
-      }
-
-      // 如果从 localStorage 中没有找到，则使用状态变量
-      if (!introText && imageTexts && imageTexts.length > 1) {
-        introText = imageTexts[1].text || "";
-        console.log('Using intro text from state:', introText);
-      }
-
-      // 渲染并上传图片
-      console.log('Rendering intro image with text:', introText || "A beautiful moment captured in this image.");
-      const result = await renderAndUploadIntroImage(
-        imageData,
-        introText || "A beautiful moment captured in this image.",
-        selectedStyle,
-        supabaseImages
-      );
-
-      // 更新localStorage
-      localStorage.setItem('loveStoryIntroImage_left_url', result.leftImageUrl);
-      localStorage.setItem('loveStoryIntroImage_right_url', result.rightImageUrl);
-
-      // 更新imageStorageMap
-      setImageStorageMap(prev => ({
-        ...prev,
-        ['loveStoryIntroImage']: {
-          localStorageKey: 'loveStoryIntroImage',
-          leftUrl: result.leftImageUrl,
-          rightUrl: result.rightImageUrl
-        }
-      }));
-
-      // 清除原始图片
-      try {
-        // 查找所有包含原始intro图片名称的图片
-        const originalIntroImages = supabaseImages.filter(img => {
-          const isOriginalImage = img.name.includes('love-story-intro');
-          const isProcessedImage = /intro-\d+-\d+/.test(img.name);
-          return isOriginalImage && !isProcessedImage;
-        });
-
-        if (originalIntroImages.length > 0) {
-          console.log(`Found ${originalIntroImages.length} original intro images to delete`);
-
-          // 并行删除所有原始图片
-          const deletePromises = originalIntroImages.map(img => {
-            const pathParts = img.name.split('/');
-            const filename = pathParts[pathParts.length - 1];
-            console.log(`Deleting original intro image: ${filename}`);
-            return deleteImageFromStorage(filename, 'images');
-          });
-
-          // 等待所有删除操作完成
-          await Promise.all(deletePromises);
-          console.log('Successfully deleted original intro images');
-        }
-      } catch (deleteError) {
-        console.error('Error deleting original intro images:', deleteError);
-        // 继续处理，即使删除失败
-      }
-    } catch (renderError: any) {
-      console.error('Error auto-rendering intro image:', renderError);
-      toast({
-        title: "Image rendering failed",
-        description: "Could not process the image. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGeneratingIntro(false);
-    }
-  };
-
   const handleRegenerateIntro = async (style?: string) => {
     // 清除localStorage中的引用
     localStorage.removeItem('loveStoryIntroImage');
@@ -802,10 +703,6 @@ const GenerateStep = () => {
                 // 继续处理，即使删除失败
               }
             }
-
-            // 自动渲染intro图片
-            console.log('Auto rendering intro image...');
-            await autoRenderIntroImage(introImageData);
 
             // 延迟刷新图片列表，确保上传完成
             setTimeout(() => {
@@ -1043,38 +940,6 @@ const GenerateStep = () => {
           try {
             await handleRegenerateIntro();
             console.log('Intro image generated successfully');
-
-            // 检查intro图片是否已经渲染
-            const leftImageUrl = localStorage.getItem('loveStoryIntroImage_left_url');
-            const rightImageUrl = localStorage.getItem('loveStoryIntroImage_right_url');
-
-            if (!leftImageUrl || !rightImageUrl) {
-              console.log('Intro image needs rendering, checking for image data...');
-              const introImageUrl = localStorage.getItem('loveStoryIntroImage_url');
-
-              if (introImageUrl) {
-                // 找到对应的图片对象
-                const introImage = supabaseImages.find(img => img.url === introImageUrl);
-
-                if (introImage && introImage.url) {
-                  console.log('Found intro image, auto rendering...');
-                  // 下载图片数据
-                  const response = await fetch(introImage.url);
-                  const blob = await response.blob();
-                  const reader = new FileReader();
-
-                  return new Promise((resolve) => {
-                    reader.onloadend = async () => {
-                      const imageData = reader.result as string;
-                      await autoRenderIntroImage(imageData);
-                      resolve(true);
-                    };
-                    reader.readAsDataURL(blob);
-                  });
-                }
-              }
-            }
-
             return true;
           } catch (error) {
             console.error('Error auto-generating intro image:', error);
@@ -1147,11 +1012,18 @@ const GenerateStep = () => {
     // 检查imageTexts是否已加载 - 直接从localStorage读取，而不是依赖状态变量
     const savedTexts = localStorage.getItem('loveStoryImageTexts');
     let hasImageTexts = false;
+    let parsedTexts = null;
 
     if (savedTexts) {
       try {
-        const parsedTexts = JSON.parse(savedTexts);
+        parsedTexts = JSON.parse(savedTexts);
         hasImageTexts = parsedTexts && Array.isArray(parsedTexts) && parsedTexts.length > 0;
+
+        // 如果有数据但状态变量为空，更新状态变量
+        if (hasImageTexts && (!imageTexts || imageTexts.length === 0)) {
+          setImageTexts(parsedTexts);
+          console.log('Updated imageTexts state from localStorage');
+        }
       } catch (error) {
         console.error('Error parsing saved texts:', error);
       }
@@ -1176,7 +1048,7 @@ const GenerateStep = () => {
 
     // 输出详细日志
     console.log('Data readiness check:');
-    console.log('- Has imageTexts (from localStorage):', hasImageTexts);
+    console.log('- Has imageTexts (from localStorage):', hasImageTexts, parsedTexts ? `(${parsedTexts.length} items)` : '(0 items)');
     console.log('- Has imageTexts (from state):', imageTexts.length > 0, `(${imageTexts.length} items)`);
     console.log('- Has imagePrompts:', hasImagePrompts);
     console.log('- Has characterPhoto:', hasCharacterPhoto);
@@ -1388,7 +1260,23 @@ const GenerateStep = () => {
               isGenerating={isGeneratingIntro || isWaitingForData}
               onRegenerate={handleRegenerateIntro}
               index={0}
-              text={imageTexts && imageTexts.length > 1 ? imageTexts[1]?.text : undefined}
+              text={(() => {
+                // 从 localStorage 直接读取 imageTexts，确保有最新数据
+                const savedTexts = localStorage.getItem('loveStoryImageTexts');
+                if (savedTexts) {
+                  try {
+                    const parsedTexts = JSON.parse(savedTexts);
+                    if (parsedTexts && Array.isArray(parsedTexts) && parsedTexts.length > 1) {
+                      return parsedTexts[1]?.text;
+                    }
+                  } catch (error) {
+                    console.error('Error parsing saved texts for intro:', error);
+                  }
+                }
+
+                // 如果从 localStorage 读取失败，则尝试使用状态变量
+                return imageTexts && imageTexts.length > 1 ? imageTexts[1]?.text : undefined;
+              })()}
               title=""
             />
 
@@ -1400,8 +1288,27 @@ const GenerateStep = () => {
               const image = imageStateMap[index];
               const isLoading = loadingStateMap[index];
               const onRegenerate = handleRegenerateMap[index];
+              // 根据注释，图像索引1-10对应文本索引2-11，因为text[0]是cover，text[1]是intro
               const textIndex = index + 1;
-              const text = imageTexts && imageTexts.length > textIndex ? imageTexts[textIndex]?.text : undefined;
+
+              // 从 localStorage 直接读取 imageTexts，确保有最新数据
+              let text = undefined;
+              const savedTexts = localStorage.getItem('loveStoryImageTexts');
+              if (savedTexts) {
+                try {
+                  const parsedTexts = JSON.parse(savedTexts);
+                  if (parsedTexts && Array.isArray(parsedTexts) && parsedTexts.length > textIndex) {
+                    text = parsedTexts[textIndex]?.text;
+                  }
+                } catch (error) {
+                  console.error('Error parsing saved texts in ContentImageCard:', error);
+                }
+              }
+
+              // 如果从 localStorage 读取失败，则尝试使用状态变量
+              if (!text && imageTexts && imageTexts.length > textIndex) {
+                text = imageTexts[textIndex]?.text;
+              }
 
               return (
                 <div key={index}>
