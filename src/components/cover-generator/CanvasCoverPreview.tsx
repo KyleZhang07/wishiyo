@@ -1738,8 +1738,8 @@ const CanvasCoverPreview = ({
       const logoAspectRatio = spineLogo.element.width / spineLogo.element.height;
       const originalLogoWidth = originalLogoHeight * logoAspectRatio;
 
-      // 将宽度缩小到原来的85%
-      const logoWidth = originalLogoWidth * 0.85;
+      // 将宽度缩小到原来的75%
+      const logoWidth = originalLogoWidth * 0.75;
 
       // 居中绘制 logo
       const logoX = (width - logoWidth) / 2;
