@@ -110,10 +110,10 @@ Return ONLY a JSON array containing these 20 chapter objects. No other text or e
       // Validate and format each chapter
       // 根据截图中的目录页数计算每章的页数
       // 第1章：页码为1
-      // 第2章：页码为13
-      // 第3章：页码为25
-      // 第4章：页码为37
-      // 第5章：页码为49
+      // 第2章：页码为12
+      // 第3章：页码为23
+      // 第4章：页码为34
+      // 第5章：页码为45
       // 每章约11页，总共220页，20章
       const formattedChapters = chapters.map((chapter, index) => {
         // 计算起始页码
