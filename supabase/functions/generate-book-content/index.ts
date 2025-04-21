@@ -246,7 +246,7 @@ Previous sections covered:\n${summaries}\n\nYour job is to bring closure to the 
             const wordCount = sectionContent.content.split(/\s+/).length;
             console.log(`Section ${sectionNumber} generated with ${wordCount} words`);
 
-            if (wordCount < 450 || wordCount > 700) {
+            if (wordCount < 550 || wordCount > 700) {
               console.warn(`Section ${sectionNumber} word count (${wordCount}) outside acceptable range, retrying...`);
               throw new Error(`Word count outside acceptable range: ${wordCount}`);
             }

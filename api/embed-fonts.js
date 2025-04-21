@@ -8,7 +8,7 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 /**
  * 处理PDF字体嵌入
- * 
+ *
  * 此函数接收一个PDF文件（可以是URL或base64字符串），
  * 使用pdf-lib处理字体嵌入，然后返回处理后的PDF
  */
@@ -88,17 +88,52 @@ export default async function handler(req, res) {
 
       console.log(`从数据库获取PDF数据，表: ${table}, 列: ${column}, 订单ID: ${orderId}`);
 
+      // 先检查表中是否有任何记录
+      const { data: allRecords, error: listError } = await supabase
+        .from(table)
+        .select('id, order_id')
+        .limit(5);
+
+      console.log(`表 ${table} 中的前5条记录:`, allRecords);
+
+      // 尝试不同的查询方式
+      console.log(`尝试查询订单ID为 ${orderId} 的记录`);
       const { data: bookData, error: bookError } = await supabase
         .from(table)
-        .select(column)
+        .select(`id, ${column}, order_id`)
         .eq('order_id', orderId)
         .single();
 
-      if (bookError || !bookData) {
-        throw new Error(`Failed to fetch PDF data from database: ${bookError?.message || 'No data found'}`);
+      if (bookError) {
+        console.error(`查询数据库出错:`, bookError);
+        // 尝试使用ID查询
+        if (orderId.match(/^\d+$/)) {
+          console.log(`尝试使用数字ID ${orderId} 查询`);
+          const { data: idData, error: idError } = await supabase
+            .from(table)
+            .select(`id, ${column}, order_id`)
+            .eq('id', parseInt(orderId))
+            .single();
+
+          if (!idError && idData) {
+            console.log(`使用ID查询成功:`, idData);
+            return idData;
+          } else {
+            console.error(`使用ID查询也失败:`, idError);
+          }
+        }
+        throw new Error(`Failed to fetch PDF data from database: ${bookError.message}`);
       }
 
+      if (!bookData) {
+        console.error(`未找到订单ID为 ${orderId} 的记录`);
+        throw new Error(`No data found for order ${orderId}`);
+      }
+
+      console.log(`找到记录:`, bookData);
+
       const pdfUrl = bookData[column];
+      console.log(`获取到的PDF URL字段值:`, pdfUrl);
       if (!pdfUrl) {
         throw new Error(`No PDF URL found in database for order ${orderId}`);
       }
@@ -122,40 +157,40 @@ export default async function handler(req, res) {
 
     // 使用pdf-lib处理字体嵌入
     const pdfDoc = await PDFDocument.load(pdfData);
-    
+
     // 获取文档中的所有字体
     const fontNames = new Set();
     const pages = pdfDoc.getPages();
-    
+
     console.log(`PDF包含 ${pages.length} 页`);
-    
+
     // 嵌入所有字体
     // 注意：pdf-lib不直接提供字体嵌入API，但我们可以通过复制页面来确保字体被正确嵌入
     const newPdfDoc = await PDFDocument.create();
     const copiedPages = await newPdfDoc.copyPages(pdfDoc, pdfDoc.getPageIndices());
-    
+
     for (const page of copiedPages) {
       newPdfDoc.addPage(page);
     }
-    
+
     console.log(`字体处理完成，保存处理后的PDF...`);
-    
+
     // 保存处理后的PDF
     const processedPdfBytes = await newPdfDoc.save();
     console.log(`处理后的PDF大小: ${processedPdfBytes.byteLength} 字节`);
-    
+
     // 如果提供了orderId和type，则更新数据库
     if (orderId && type) {
       const table = tableName || (type.includes('love') ? 'love_story_books' : 'funny_biography_books');
       const column = type.includes('cover') ? 'cover_source_url' : 'interior_source_url';
-      
+
       // 上传处理后的PDF
-      const filePath = type.includes('love') 
+      const filePath = type.includes('love')
         ? `love-story/${orderId}/${type.includes('cover') ? 'cover' : 'interior'}-embedded.pdf`
         : `funny-bio/${orderId}/${type.includes('cover') ? 'cover' : 'interior'}-embedded.pdf`;
-      
+
       console.log(`上传处理后的PDF到: ${filePath}`);
-      
+
       const { data: uploadData, error: uploadError } = await supabase
         .storage
         .from('pdfs')
@@ -163,35 +198,35 @@ export default async function handler(req, res) {
           contentType: 'application/pdf',
           upsert: true
         });
-      
+
       if (uploadError) {
         throw new Error(`Failed to upload processed PDF: ${uploadError.message}`);
       }
-      
+
       // 获取上传后的URL
       const { data: urlData } = await supabase
         .storage
         .from('pdfs')
         .getPublicUrl(filePath);
-      
+
       const publicUrl = urlData?.publicUrl;
       console.log(`处理后的PDF已上传，URL: ${publicUrl}`);
-      
+
       // 更新数据库
       const updateData = {};
       updateData[column] = publicUrl;
-      
+
       const { error: updateError } = await supabase
         .from(table)
         .update(updateData)
         .eq('order_id', orderId);
-      
+
       if (updateError) {
         throw new Error(`Failed to update database: ${updateError.message}`);
       }
-      
+
       console.log(`数据库已更新，字段 ${column} 设置为 ${publicUrl}`);
-      
+
       // 返回成功响应
       return res.status(200).json({
         success: true,
@@ -206,7 +241,7 @@ export default async function handler(req, res) {
       // 返回处理后的PDF数据
       const base64Data = Buffer.from(processedPdfBytes).toString('base64');
       const dataUrl = `data:application/pdf;base64,${base64Data}`;
-      
+
       // 返回成功响应
       return res.status(200).json({
         success: true,
