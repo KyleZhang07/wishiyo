@@ -555,6 +555,10 @@ const GenerateStep = () => {
 
 
   const handleRegenerateIntro = async (style?: string) => {
+    // 获取当前图片的URL，用于后续删除
+    const currentImageUrl = localStorage.getItem('loveStoryIntroImage_url');
+
+    // 清除localStorage中的引用
     localStorage.removeItem('loveStoryIntroImage');
     localStorage.removeItem('loveStoryIntroImage_url');
 
@@ -575,6 +579,37 @@ const GenerateStep = () => {
         }
 
         try {
+          // 尝试删除Supabase中的旧图片
+          if (currentImageUrl) {
+            try {
+              // 查找当前图片在Supabase中的路径
+              const introImages = supabaseImages.filter(img => {
+                // 匹配 love-story-intro 模式，但不匹配已处理的图片
+                return img.name.includes('love-story-intro') && img.url === currentImageUrl;
+              });
+
+              if (introImages.length > 0) {
+                console.log(`Found ${introImages.length} intro images to delete`);
+
+                // 并行删除所有找到的图片
+                const deletePromises = introImages.map(img => {
+                  // 从完整路径中提取文件名
+                  const pathParts = img.name.split('/');
+                  const filename = pathParts[pathParts.length - 1];
+                  console.log(`Deleting intro image: ${filename}`);
+                  return deleteImageFromStorage(filename, 'images');
+                });
+
+                // 等待所有删除操作完成
+                await Promise.all(deletePromises);
+                console.log('Successfully deleted old intro images');
+              }
+            } catch (deleteError) {
+              console.error('Error deleting old intro images:', deleteError);
+              // 继续处理，即使删除失败
+            }
+          }
+
           // 修复请求结构，使用prompts[1]而非prompts[0]（prompts[0]是封面）
           const requestBody = {
             contentPrompt: prompts[1].prompt,
