@@ -479,6 +479,48 @@ serve(async (req) => {
 
     console.log(`Cover PDF uploaded successfully to storage with URL: ${coverFileUrl}`);
 
+    // 处理字体嵌入
+    let processedCoverUrl = coverFileUrl;
+    try {
+      if (coverFileUrl) {
+        console.log(`调用字体嵌入处理API处理封面PDF...`);
+        // 获取当前域名
+        const origin = req.headers.get('origin') || 'https://wishiyo.com';
+        const embedFontsEndpoint = `${origin}/api/embed-fonts`;
+
+        try {
+          const embedResponse = await fetch(embedFontsEndpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              orderId: orderId,
+              type: 'cover',
+              tableName: 'funny_biography_books'
+            })
+          });
+
+          if (embedResponse.ok) {
+            const embedResult = await embedResponse.json();
+            if (embedResult.success && embedResult.processedUrl) {
+              processedCoverUrl = embedResult.processedUrl;
+              console.log(`字体嵌入处理成功，新URL: ${processedCoverUrl}`);
+            } else {
+              console.warn(`字体嵌入处理返回失败结果: ${JSON.stringify(embedResult)}`);
+            }
+          } else {
+            console.warn(`字体嵌入处理请求失败: ${embedResponse.status} ${embedResponse.statusText}`);
+          }
+        } catch (embedError) {
+          console.warn(`调用字体嵌入处理API时出错: ${embedError.message}`);
+          // 继续使用原始的PDF URL
+        }
+      }
+    } catch (fontEmbedError) {
+      console.warn(`字体嵌入处理失败，使用原始 PDF: ${fontEmbedError.message}`);
+    }
+
     // 查询数据库获取书籍信息
     const { data: bookData, error: bookError } = await supabase
       .from('funny_biography_books')
@@ -515,7 +557,7 @@ serve(async (req) => {
 
       const updateData: any = {
         cover_pdf: pdfOutput,
-        cover_source_url: coverFileUrl
+        cover_source_url: processedCoverUrl || coverFileUrl
       };
 
       if (fetchError) {
@@ -549,7 +591,7 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         pdfOutput: pdfOutput.substring(0, 100) + '...',  // Just show a small preview in the response
-        coverSourceUrl: coverFileUrl
+        coverSourceUrl: processedCoverUrl || coverFileUrl
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

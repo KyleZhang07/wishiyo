@@ -25,7 +25,7 @@ interface BookChapter {
 }
 
 // 定义批次大小和总章节数
-const BATCH_SIZE = 2; // 每批生成2章
+const BATCH_SIZE = 1; // 每批生成2章
 const TOTAL_CHAPTERS = 20; // 总共生成2章
 const MAX_RETRIES = 3;
 
@@ -125,141 +125,250 @@ serve(async (req) => {
         chapterTitle = `Chapter ${i}`;
       }
 
-      // 带重试机制的OpenAI API调用
-      let chapterContent: string | null = null;
-      let retries = 0;
+      // 分别生成每个section的函数
+      async function generateSection(sectionNumber: number, chapterNum: number, chapterTitle: string, chapterDescription: string, previousSections: Array<{title: string, content: string}> = []): Promise<{title: string, content: string}> {
+        let retries = 0;
 
-      while (retries < MAX_RETRIES) {
-        try {
-          const prompt = `
-          You will obey every rule in the prompt, especially the word count rule, and you are writing a funny biography titled "${bookTitle}" about ${bookAuthor}, exploring their expertise, methodology, and insights in a funny, satirical, or professional tone.
-          The book concept is: ${ideaDescription}
+        // 为不同的section定义不同的角色和目的
+        let sectionRole = '';
+        let previousSectionsContext = '';
 
-          Additional context about the subject (use these details naturally throughout the narrative, but don't use the details too much):
-          ${answersContext}
+        // 根据section编号分配不同的角色
+        if (sectionNumber === 1) {
+          sectionRole = `This is the FIRST section of the chapter. Your role is to introduce the main theme of the chapter and set up the narrative framework. Begin with a compelling hook or anecdote that draws readers in.`;
+        } else if (sectionNumber === 2) {
+          sectionRole = `This is the SECOND section of the chapter. Your role is to develop the main ideas introduced in the first section. Expand on the concepts with examples and deeper analysis.`;
 
-          This is Chapter ${i}: ${chapterTitle}
-          ${chapterDescription ? `Chapter description: ${chapterDescription}` : ''}
+          // 添加前一个section的上下文
+          if (previousSections.length > 0) {
+            previousSectionsContext = `
+Previous section (${previousSections[0].title}) covered: ${previousSections[0].content.substring(0, 150)}... [content continues]
 
-          Write this chapter with 5 distinct sections:
-          - CRITICAL: EACH SECTION MUST CONTAIN BETWEEN 500 TO 600 WORDS. THE whole chapter will contain 2500-3000 words
-          - Use first-person "I" when ${bookAuthor} is sharing specific personal experiences or anecdotes
-          - Use second-person "you" when explaining methodologies, principles, or when instructing the reader
-          - The narrative should feel like ${bookAuthor} is personally guiding readers through their expertise using engaging metaphors
-
-          Guidelines:
-          - CRITICAL: EACH SECTION MUST CONTAIN BETWEEN 500 TO 600 WORDS.THE whole chapter will contain 2500-3000 words
-          - Balance between "I" (for personal stories) and "you" (for instructional content)
-          - When using "I," focus on ${bookAuthor}'s personal journey, challenges overcome, and pivotal moments
-          - When using "you," focus on transferable principles, methodologies, and practical applications
-          - Each section should either:
-            * Share a personal experience through ${bookAuthor}'s eyes (first-person) and then extract the lesson for readers (second-person)
-            * Introduce a methodology using metaphors and explain how readers can apply it in their context
-            * Connect ${bookAuthor}'s unique approach to broader applications for the audience
-          - Section titles should use thematic metaphors that relate to the chapter's main concepts (like "Navigating the Slopes" or "The Downhill Rush")
-          - Naturally incorporate details from the context into a cohesive narrative
-          - Make it insightful, methodological and funny while maintaining a professional tone with appropriate personality
-          - Write in a style that skillfully weaves personal stories with practical wisdom, using analogies to explain complex ideas
-
-          Format your response as JSON with this structure:
-          {
-            "chapterNumber": ${i},
-            "title": "Chapter title",
-            "sections": [
-              {
-                "sectionNumber": 1,
-                "title": "Section title",
-                "content": "Section content..."
-              },
-              ...
-            ],
-
+You should build upon these ideas and maintain narrative continuity. Do not repeat the same examples or anecdotes, but do reference key concepts to create a cohesive flow.`;
           }
-          `;
+        } else if (sectionNumber === 3) {
+          sectionRole = `This is the THIRD section of the chapter. Your role is to present a turning point, contrast, or new perspective on the chapter's theme. Introduce a twist or insight that adds depth to the narrative.`;
 
-          const response = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${OPENAI_API_KEY}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              model: 'gpt-4.1-mini',
-              messages: [
-                {
-                  role: 'system',
-                  content: `You MUST STRICTLY enforce these requirements, especially the word count requirements:
-- CRITICAL REQUIREMENT: Each section MUST contain EXACTLY between 500 and 600 words. The whole chapter will contain 2500-3000 words
-- Each chapter must have exactly 5 sections.
-- Each section's content must use double line breaks (\\n\\n) between paragraphs to clearly separate them.
-- Respond only with valid JSON. Do not include any commentary or explanation outside the JSON structure.`
-                },
-                {
-                  role: 'user',
-                  content: prompt
-                }
-              ],
-              temperature: 0.9,
-              response_format: { type: "json_object" }
-            }),
-          });
-
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(`OpenAI API error: ${JSON.stringify(errorData)}`);
+          // 添加前两个section的上下文
+          if (previousSections.length > 0) {
+            const summaries = previousSections.map((section, index) =>
+              `Section ${index+1} (${section.title}): ${section.content.substring(0, 100)}...`
+            ).join('\n');
+            previousSectionsContext = `
+Previous sections covered:\n${summaries}\n\nBuild upon these ideas while introducing new perspectives. Create smooth transitions between sections and maintain narrative continuity.`;
           }
+        } else if (sectionNumber === 4) {
+          sectionRole = `This is the FINAL section of the chapter. Your role is to provide resolution, practical applications, and connect back to the chapter's main theme. End with a memorable conclusion that leaves readers with a clear takeaway.`;
 
-          const result = await response.json();
-          chapterContent = result.choices[0].message.content;
-          break; // 成功获取内容，跳出重试循环
-
-        } catch (error) {
-          retries++;
-          console.error(`Error generating chapter ${i}, attempt ${retries}:`, error);
-
-          if (retries >= MAX_RETRIES) {
-            console.error(`Failed to generate chapter ${i} after ${MAX_RETRIES} attempts`);
-            // 创建一个错误占位章节
-            chapterContent = JSON.stringify({
-              chapterNumber: i,
-              title: chapterTitle,
-              sections: [
-                {
-                  sectionNumber: 1,
-                  title: "Content Error",
-                  content: "There was an error processing this chapter's content. It will be regenerated later."
-                }
-              ]
-            });
-          } else {
-            // 等待一段时间后重试
-            await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * retries));
+          // 添加前三个section的上下文
+          if (previousSections.length > 0) {
+            const summaries = previousSections.map((section, index) =>
+              `Section ${index+1} (${section.title}): ${section.content.substring(0, 80)}...`
+            ).join('\n');
+            previousSectionsContext = `
+Previous sections covered:\n${summaries}\n\nYour job is to bring closure to the themes and ideas presented in the previous sections. Reference key concepts from earlier sections to create a sense of completion and cohesion.`;
           }
         }
+
+        while (retries < MAX_RETRIES) {
+          try {
+            const sectionPrompt = `
+            You will obey every rule in the prompt, especially the word count rule. You are writing section ${sectionNumber} of 4 total sections for a funny biography titled "${bookTitle}" about ${bookAuthor}.
+            The book concept is: ${ideaDescription}
+
+            Additional context about the subject (use these details naturally):
+            ${answersContext}
+
+            This is for Chapter ${chapterNum}: ${chapterTitle}
+            ${chapterDescription ? `Chapter description: ${chapterDescription}` : ''}
+
+            ${sectionRole}
+            ${previousSectionsContext}
+
+            Guidelines for this section:
+            - CRITICAL: THIS SECTION MUST CONTAIN EXACTLY BETWEEN 500 TO 600 WORDS. Not less, not more.
+            - Use first-person "I" when ${bookAuthor} is sharing personal experiences or anecdotes
+            - Use second-person "you" when explaining methodologies or instructing the reader
+            - The section should either:
+              * Share a personal experience through ${bookAuthor}'s eyes (first-person) and extract the lesson (second-person)
+              * Introduce a methodology using metaphors and explain how readers can apply it
+              * Connect ${bookAuthor}'s unique approach to broader applications for the audience
+            - Section title should use thematic metaphors related to the chapter's main concepts
+            - Make it insightful, methodological and funny while maintaining a professional tone
+            - Use double line breaks (\n\n) between paragraphs to clearly separate them
+            - IMPORTANT: Create smooth transitions between sections. Reference ideas from previous sections when appropriate to maintain narrative flow.
+
+            Format your response as JSON with this structure:
+            {
+              "title": "Section title",
+              "content": "Section content with 500-600 words..."
+            }
+            `;
+
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${OPENAI_API_KEY}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                model: 'gpt-4.1-mini',
+                messages: [
+                  {
+                    role: 'system',
+                    content: `You MUST STRICTLY enforce these requirements:
+- CRITICAL REQUIREMENT: The section MUST contain EXACTLY between 500 and 600 words. Count the words carefully.
+- Each chapter has exactly 4 sections (not 5).
+- The section's content must use double line breaks (\\n\\n) between paragraphs to clearly separate them.
+- Maintain narrative continuity with previous sections when applicable.
+- Create smooth transitions between ideas and reference previous concepts when appropriate.
+- Respond only with valid JSON. Do not include any commentary outside the JSON structure.`
+                  },
+                  {
+                    role: 'user',
+                    content: sectionPrompt
+                  }
+                ],
+                temperature: 1.0,
+                response_format: { type: "json_object" }
+              }),
+            });
+
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(`OpenAI API error: ${JSON.stringify(errorData)}`);
+            }
+
+            const result = await response.json();
+            const sectionContent = JSON.parse(result.choices[0].message.content);
+
+            // 验证字数
+            const wordCount = sectionContent.content.split(/\s+/).length;
+            console.log(`Section ${sectionNumber} generated with ${wordCount} words`);
+
+            if (wordCount < 450 || wordCount > 700) {
+              console.warn(`Section ${sectionNumber} word count (${wordCount}) outside acceptable range, retrying...`);
+              throw new Error(`Word count outside acceptable range: ${wordCount}`);
+            }
+
+            return sectionContent;
+          } catch (error) {
+            retries++;
+            console.error(`Error generating section ${sectionNumber}, attempt ${retries}:`, error);
+
+            if (retries >= MAX_RETRIES) {
+              console.error(`Failed to generate section ${sectionNumber} after ${MAX_RETRIES} attempts`);
+              // 返回错误占位内容
+              return {
+                title: `Section ${sectionNumber}`,
+                content: `There was an error generating this section's content. It contains approximately 500 words of placeholder text to maintain the book's structure. This section will be regenerated later with proper content.
+
+${'Lorem ipsum dolor sit amet. '.repeat(100)}`
+              };
+            } else {
+              // 等待一段时间后重试
+              await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * retries));
+            }
+          }
+        }
+
+        // 如果所有重试都失败，返回错误占位内容
+        return {
+          title: `Section ${sectionNumber}`,
+          content: `There was an error generating this section's content. It contains approximately 500 words of placeholder text to maintain the book's structure. This section will be regenerated later with proper content.
+
+${'Lorem ipsum dolor sit amet. '.repeat(100)}`
+        };
       }
 
-      try {
-        // 解析JSON响应
-        const parsedChapter = JSON.parse(chapterContent!);
-        bookChapters.push(parsedChapter);
+      // 生成完整章节
+      console.log(`Generating chapter ${i} with 5 sections individually...`);
 
-        // 每生成一章就更新数据库，确保不丢失进度
-        if (i % 1 === 0 || i === endChapter) { // 每章或批次结束时更新
+      // 创建章节结构
+      const chapter = {
+        chapterNumber: i,
+        title: chapterTitle,
+        sections: []
+      };
+
+      // 分别生成每个section
+      try {
+        // 用于存储已生成的section，传递给下一个section作为上下文
+        const generatedSections: Array<{title: string, content: string}> = [];
+
+        for (let sectionNum = 1; sectionNum <= 4; sectionNum++) {
+          console.log(`Generating section ${sectionNum} for chapter ${i}...`);
+          // 将已生成的section传递给生成函数
+          const section = await generateSection(sectionNum, i, chapterTitle, chapterDescription, generatedSections);
+
+          // 将新生成的section添加到已生成列表中
+          generatedSections.push({
+            title: section.title,
+            content: section.content
+          });
+
+          chapter.sections.push({
+            sectionNumber: sectionNum,
+            title: section.title,
+            content: section.content
+          });
+
+          // 每生成一个section就更新数据库，确保不丢失进度
+          bookChapters = bookChapters.filter(ch => ch.chapterNumber !== i); // 移除旧的章节（如果有）
+          bookChapters.push(chapter);
+
           const { error: updateError } = await supabase
             .from('funny_biography_books')
             .update({ book_content: bookChapters })
             .eq('order_id', orderId);
 
           if (updateError) {
-            console.error(`Warning: Failed to update book data after chapter ${i}:`, updateError);
+            console.error(`Warning: Failed to update book data after section ${sectionNum} of chapter ${i}:`, updateError);
+          } else {
+            console.log(`Successfully saved progress after section ${sectionNum} of chapter ${i}`);
+          }
+
+          // 添加延迟，避免API限制
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
+        console.log(`Successfully generated all 4 sections for chapter ${i}`);
+
+      } catch (chapterError) {
+        console.error(`Error generating chapter ${i}:`, chapterError);
+
+        // 如果生成章节失败，创建一个错误占位章节
+        if (chapter.sections.length === 0) {
+          chapter.sections.push({
+            sectionNumber: 1,
+            title: "Content Error",
+            content: "There was an error processing this chapter's content. It will be regenerated later."
+          });
+
+          // 更新数据库，保存错误章节
+          bookChapters = bookChapters.filter(ch => ch.chapterNumber !== i);
+          bookChapters.push(chapter);
+
+          const { error: updateError } = await supabase
+            .from('funny_biography_books')
+            .update({ book_content: bookChapters })
+            .eq('order_id', orderId);
+
+          if (updateError) {
+            console.error(`Warning: Failed to update book data with error chapter ${i}:`, updateError);
           }
         }
-      } catch (parseError) {
-        console.error(`Error parsing chapter ${i} content:`, parseError);
-        console.error(`Original content (first 300 chars): ${chapterContent!.substring(0, 300)}...`);
+      }
 
-        // 如果解析失败，创建一个带有错误信息的章节
-        const errorChapter = {
+      // 注意：我们已经在生成每个section后更新了数据库
+      // 这里只需要确保章节已经添加到bookChapters中
+      const chapterExists = bookChapters.some(ch => ch.chapterNumber === i);
+
+      if (!chapterExists) {
+        console.error(`Warning: Chapter ${i} was not properly added to bookChapters. Adding placeholder.`);
+
+        // 添加占位章节
+        const placeholderChapter = {
           chapterNumber: i,
           title: chapterTitle,
           sections: [
@@ -271,16 +380,16 @@ serve(async (req) => {
           ]
         };
 
-        bookChapters.push(errorChapter);
+        bookChapters.push(placeholderChapter);
 
-        // 更新数据库，保存进度
+        // 更新数据库
         const { error: updateError } = await supabase
           .from('funny_biography_books')
           .update({ book_content: bookChapters })
           .eq('order_id', orderId);
 
         if (updateError) {
-          console.error(`Warning: Failed to update book data after error in chapter ${i}:`, updateError);
+          console.error(`Warning: Failed to update book data with placeholder chapter ${i}:`, updateError);
         }
       }
     }

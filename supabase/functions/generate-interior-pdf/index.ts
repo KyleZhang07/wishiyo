@@ -1044,6 +1044,48 @@ serve(async (req) => {
       console.log(`Interior PDF uploaded successfully to storage with URL: ${interiorFileUrl}`);
     }
 
+    // 处理字体嵌入
+    let processedInteriorUrl = interiorFileUrl;
+    try {
+      if (interiorFileUrl) {
+        console.log(`调用字体嵌入处理API处理内页PDF...`);
+        // 获取当前域名
+        const origin = req.headers.get('origin') || 'https://wishiyo.com';
+        const embedFontsEndpoint = `${origin}/api/embed-fonts`;
+
+        try {
+          const embedResponse = await fetch(embedFontsEndpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              orderId: orderId,
+              type: 'interior',
+              tableName: 'funny_biography_books'
+            })
+          });
+
+          if (embedResponse.ok) {
+            const embedResult = await embedResponse.json();
+            if (embedResult.success && embedResult.processedUrl) {
+              processedInteriorUrl = embedResult.processedUrl;
+              console.log(`字体嵌入处理成功，新URL: ${processedInteriorUrl}`);
+            } else {
+              console.warn(`字体嵌入处理返回失败结果: ${JSON.stringify(embedResult)}`);
+            }
+          } else {
+            console.warn(`字体嵌入处理请求失败: ${embedResponse.status} ${embedResponse.statusText}`);
+          }
+        } catch (embedError) {
+          console.warn(`调用字体嵌入处理API时出错: ${embedError.message}`);
+          // 继续使用原始的PDF URL
+        }
+      }
+    } catch (fontEmbedError) {
+      console.warn(`字体嵌入处理失败，使用原始 PDF: ${fontEmbedError.message}`);
+    }
+
     // 更新数据库
     // const pageCount = finalBookContent.length * 5; // 旧的粗略计算
     const updateData: any = {
@@ -1051,7 +1093,9 @@ serve(async (req) => {
       page_count: finalPageCount // 使用上面已声明的 finalPageCount
     };
 
-    if (interiorFileUrl) {
+    if (processedInteriorUrl) {
+      updateData.interior_source_url = processedInteriorUrl;
+    } else if (interiorFileUrl) {
       updateData.interior_source_url = interiorFileUrl;
     }
 
