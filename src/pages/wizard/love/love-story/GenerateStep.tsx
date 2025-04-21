@@ -974,8 +974,18 @@ const GenerateStep = () => {
 
   // 检查数据是否准备完成
   const checkIfDataReady = () => {
-    // 检查imageTexts是否已加载
-    const hasImageTexts = imageTexts.length > 0;
+    // 检查imageTexts是否已加载 - 直接从localStorage读取，而不是依赖状态变量
+    const savedTexts = localStorage.getItem('loveStoryImageTexts');
+    let hasImageTexts = false;
+
+    if (savedTexts) {
+      try {
+        const parsedTexts = JSON.parse(savedTexts);
+        hasImageTexts = parsedTexts && Array.isArray(parsedTexts) && parsedTexts.length > 0;
+      } catch (error) {
+        console.error('Error parsing saved texts:', error);
+      }
+    }
 
     // 检查imagePrompts是否已生成
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
@@ -996,7 +1006,8 @@ const GenerateStep = () => {
 
     // 输出详细日志
     console.log('Data readiness check:');
-    console.log('- Has imageTexts:', hasImageTexts, `(${imageTexts.length} items)`);
+    console.log('- Has imageTexts (from localStorage):', hasImageTexts);
+    console.log('- Has imageTexts (from state):', imageTexts.length > 0, `(${imageTexts.length} items)`);
     console.log('- Has imagePrompts:', hasImagePrompts);
     console.log('- Has characterPhoto:', hasCharacterPhoto);
 
@@ -1190,9 +1201,7 @@ const GenerateStep = () => {
               />
             ) : (
               <div className="max-w-[640px] mx-auto aspect-[1/1] bg-gray-100 rounded-lg flex items-center justify-center">
-                <p className="text-gray-500 text-center px-8">
-                  Your blessing will appear here after creation.
-                </p>
+                <p className="text-gray-500">Your blessing will appear here after creation.</p>
               </div>
             )}
           </div>
