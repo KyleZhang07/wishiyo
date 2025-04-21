@@ -1,5 +1,6 @@
 // 导入所需模块
 import { createClient } from '@supabase/supabase-js';
+import { PDFDocument } from 'pdf-lib';
 
 // 初始化Supabase客户端 - 使用正确的URL
 const supabaseUrl = process.env.SUPABASE_URL || 'https://hbkgbggctzvqffqfrmhl.supabase.co';
@@ -24,7 +25,7 @@ export default async function handler(req, res) {
   try {
     // 获取请求参数
     const { orderId, type } = req.method === 'GET' ? req.query : req.body;
-    
+
     // 验证参数
     if (!orderId || !type) {
       return res.status(400).json({ error: '缺少必要参数' });
@@ -36,7 +37,7 @@ export default async function handler(req, res) {
     if (!supabaseUrl) {
       return res.status(500).json({ error: 'Supabase URL未设置' });
     }
-    
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     if (!supabase) {
       return res.status(500).json({ error: '无法初始化Supabase客户端' });
@@ -93,16 +94,79 @@ export default async function handler(req, res) {
       console.log(`已下载 ${pdfParts.length}/${parts.length} 个部分，已用时: ${(Date.now() - startTime)/1000}秒`);
     }
 
-    // 合并所有PDF部分
-    console.log(`开始合并 ${pdfParts.length} 个PDF部分`);
-    const mergedPdf = new Uint8Array(totalSize);
-    let offset = 0;
+    // 合并所有PDF部分（使用 pdf-lib）
+    console.log(`开始合并 ${pdfParts.length} 个PDF部分（使用 pdf-lib）`);
 
-    for (const part of pdfParts) {
-      mergedPdf.set(part, offset);
-      offset += part.byteLength;
+    // 创建新的PDF文档
+    const mergedDoc = await PDFDocument.create();
+
+    // 记录页面统计信息
+    let totalExpectedPages = 0;
+    let totalActualPages = 0;
+
+    // 处理每个PDF部分
+    for (let i = 0; i < pdfParts.length; i++) {
+      const part = pdfParts[i];
+      console.log(`处理PDF部分 ${i+1}/${pdfParts.length}, 大小: ${part.length} 字节`);
+
+      try {
+        // 验证PDF段的有效性
+        if (part.length === 0) {
+          console.warn(`警告: PDF部分 ${i+1} 大小为0字节，跳过`);
+          continue;
+        }
+
+        // 检查PDF头部签名
+        const pdfSignature = new TextDecoder().decode(part.slice(0, 5));
+        if (pdfSignature !== '%PDF-') {
+          console.warn(`警告: PDF部分 ${i+1} 不是有效的PDF文件（头部: ${pdfSignature}），跳过`);
+          continue;
+        }
+
+        // 加载PDF段
+        const partDoc = await PDFDocument.load(part);
+        const pageIndices = partDoc.getPageIndices();
+        console.log(`PDF部分 ${i+1} 包含 ${pageIndices.length} 页`);
+        totalExpectedPages += pageIndices.length;
+
+        if (pageIndices.length === 0) {
+          console.warn(`警告: PDF部分 ${i+1} 不包含任何页面，跳过`);
+          continue;
+        }
+
+        // 复制页面
+        const copiedPages = await mergedDoc.copyPages(partDoc, pageIndices);
+        console.log(`成功复制 ${copiedPages.length} 页从部分 ${i+1}`);
+
+        // 添加页面到合并文档
+        for (let j = 0; j < copiedPages.length; j++) {
+          mergedDoc.addPage(copiedPages[j]);
+          totalActualPages++;
+        }
+
+        console.log(`已添加 ${copiedPages.length} 页到合并文档，当前总页数: ${totalActualPages}`);
+      } catch (error) {
+        console.error(`处理PDF部分 ${i+1} 时出错:`, error);
+        // 继续处理下一个部分，而不是中断整个过程
+      }
     }
-    console.log(`PDF合并完成，总大小: ${mergedPdf.byteLength} 字节，已用时: ${(Date.now() - startTime)/1000}秒`);
+
+    // 验证页面计数
+    const finalPageCount = mergedDoc.getPageCount();
+    console.log(`验证页面计数: 预期 ${totalExpectedPages} 页, 实际添加 ${totalActualPages} 页, 最终文档包含 ${finalPageCount} 页`);
+
+    if (finalPageCount === 0) {
+      console.error(`错误: 合并后的PDF不包含任何页面!`);
+      return res.status(500).json({ error: '合并失败: 生成的PDF不包含任何页面' });
+    }
+
+    if (finalPageCount !== totalExpectedPages) {
+      console.warn(`警告: 最终PDF页数 (${finalPageCount}) 与预期页数 (${totalExpectedPages}) 不符`);
+    }
+
+    // 保存合并后的PDF
+    const mergedPdf = await mergedDoc.save();
+    console.log(`PDF合并完成，总大小: ${mergedPdf.byteLength} 字节, 总页数: ${finalPageCount}, 已用时: ${(Date.now() - startTime)/1000}秒`);
 
     // 上传合并后的PDF
     const finalPath = `${pdfPath}.pdf`;
@@ -137,7 +201,7 @@ export default async function handler(req, res) {
 
       if (signedURLError) {
         console.error('获取签名上传URL失败:', signedURLError);
-        
+
         // 如果签名URL失败，尝试直接上传（带upsert选项）
         console.log('尝试使用直接上传方式（带upsert选项）...');
         const { error: directUploadError } = await supabase
@@ -147,15 +211,15 @@ export default async function handler(req, res) {
             contentType: 'application/pdf',
             upsert: true
           });
-          
+
         if (directUploadError) {
           console.error('直接上传也失败了:', directUploadError);
-          return res.status(500).json({ 
-            error: '上传PDF失败', 
-            details: directUploadError 
+          return res.status(500).json({
+            error: '上传PDF失败',
+            details: directUploadError
           });
         }
-        
+
         console.log('使用直接上传成功');
         // 直接上传成功，跳到获取公共URL部分
       } else {
@@ -167,10 +231,10 @@ export default async function handler(req, res) {
 
         // 检查返回的数据结构
         console.log('获取到的签名URL数据:', JSON.stringify(data));
-        
+
         // 兼容处理signedURL和signedUrl两种字段名
         const signedURL = data.signedURL || data.signedUrl;
-        
+
         if (!signedURL) {
           console.error('签名URL字段不存在:', data);
           return res.status(500).json({ error: '签名URL字段不存在', details: data });
@@ -190,10 +254,10 @@ export default async function handler(req, res) {
         if (!uploadResponse.ok) {
           const errorText = await uploadResponse.text();
           console.error(`上传失败: ${uploadResponse.status} - ${errorText}`);
-          return res.status(500).json({ 
-            error: '上传PDF失败', 
+          return res.status(500).json({
+            error: '上传PDF失败',
             status: uploadResponse.status,
-            details: errorText 
+            details: errorText
           });
         }
 
@@ -218,7 +282,7 @@ export default async function handler(req, res) {
       console.log(`更新数据库中的interior_pdf和interior_source_url字段为合并后的PDF URL`);
       const { error: updateError } = await supabase
         .from('love_story_books')
-        .update({ 
+        .update({
           interior_pdf: publicUrl,
           interior_source_url: publicUrl
         })
@@ -235,9 +299,9 @@ export default async function handler(req, res) {
       console.log(`更新数据库中的cover_pdf和cover_source_url字段`);
       const { error: updateError } = await supabase
         .from('love_story_books')
-        .update({ 
+        .update({
           cover_pdf: publicUrl,
-          cover_source_url: publicUrl 
+          cover_source_url: publicUrl
         })
         .eq('order_id', orderId);
 
@@ -254,15 +318,15 @@ export default async function handler(req, res) {
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="${type}.pdf"`);
       res.setHeader('Content-Length', mergedPdf.length);
-      
+
       // 返回PDF文件
       return res.status(200).send(Buffer.from(mergedPdf));
     } else {
       // 如果是POST请求，返回成功消息和URL
-      return res.status(200).json({ 
-        success: true, 
-        message: 'PDF合并成功', 
-        url: publicUrl 
+      return res.status(200).json({
+        success: true,
+        message: 'PDF合并成功',
+        url: publicUrl
       });
     }
 
