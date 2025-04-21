@@ -132,10 +132,61 @@ export default async function handler(req, res) {
 
       console.log(`找到记录:`, bookData);
 
-      const pdfUrl = bookData[column];
+      let pdfUrl = bookData[column];
       console.log(`获取到的PDF URL字段值:`, pdfUrl);
+
+      // 如果URL为null，尝试重试几次，等待PDF上传完成
       if (!pdfUrl) {
-        throw new Error(`No PDF URL found in database for order ${orderId}`);
+        console.log(`URL为null，将尝试重试查询...`);
+
+        // 设置重试参数
+        const maxRetries = 5;
+        const retryDelay = 3000; // 3秒
+
+        // 定义延时函数
+        const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+        // 定义重试查询函数
+        const retryQuery = async (retryCount) => {
+          if (retryCount >= maxRetries) {
+            console.log(`达到最大重试次数(${maxRetries})，放弃重试`);
+            throw new Error(`No PDF URL found in database for order ${orderId} after ${maxRetries} retries`);
+          }
+
+          console.log(`重试第 ${retryCount + 1} 次，等待 ${retryDelay}ms...`);
+          await delay(retryDelay);
+
+          // 重新查询
+          console.log(`重新查询订单 ${orderId} 的PDF URL...`);
+          const { data: retryData, error: retryError } = await supabase
+            .from(table)
+            .select(`id, ${column}, order_id`)
+            .eq('order_id', orderId)
+            .single();
+
+          if (retryError) {
+            console.error(`重试查询出错:`, retryError);
+            return retryQuery(retryCount + 1);
+          }
+
+          if (!retryData) {
+            console.error(`重试查询未找到记录`);
+            return retryQuery(retryCount + 1);
+          }
+
+          const retryUrl = retryData[column];
+          console.log(`重试查询结果: ${retryUrl ? '找到URL' : 'URL仍为null'}`);
+
+          if (!retryUrl) {
+            return retryQuery(retryCount + 1);
+          }
+
+          return retryUrl;
+        };
+
+        // 开始重试
+        pdfUrl = await retryQuery(0);
+        console.log(`重试成功，获取到PDF URL: ${pdfUrl}`);
       }
 
       console.log(`获取到PDF URL: ${pdfUrl}`);
