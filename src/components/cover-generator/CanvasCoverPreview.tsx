@@ -1730,9 +1730,9 @@ const CanvasCoverPreview = ({
 
     // 在底部绘制 logo
     if (spineLogo?.element) {
-      // 将 logo 宽度缩减为原来的 90%
+      // 将 logo 宽度缩减为原来的 80%
       const originalLogoWidth = Math.min(width - 4, 60); // 原始限制宽度
-      const logoWidth = originalLogoWidth * 0.9; // 缩减为原来的 90%
+      const logoWidth = originalLogoWidth * 0.8; // 缩减为原来的 80%
       const logoAspectRatio = spineLogo.element.width / spineLogo.element.height;
       const calculatedLogoHeight = logoWidth / logoAspectRatio;
 
