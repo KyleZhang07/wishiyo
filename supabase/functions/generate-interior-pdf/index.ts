@@ -662,7 +662,42 @@ serve(async (req) => {
         const sectionPageNum = pdf.internal.getNumberOfPages();
         const sectionMargins = getPageMargins(sectionPageNum);
 
-        if (contentY > sectionMargins.top + 0.8) { // 如果不是在页面顶部，则增加额外间距，使用动态边距
+        // 检查页面剩余空间，确保section标题不会出现在页面的最后一行
+        // 计算当前页面底部边距
+        const pageBottom = pageHeight - sectionMargins.bottom;
+        // 计算section标题需要的最小空间（标题高度 + 至少一行正文）
+        // 使用不同的变量名避免重复声明
+        const sectionTitleLineHeight = fonts.sectionTitle.size / 72 * 1.6; // 标题高度
+        const bodyLineHeight = fonts.body.size / 72 * 1.6; // 正文行高
+        const minSpaceNeeded = sectionTitleLineHeight + bodyLineHeight + 0.1; // 额外添加0.1英寸作为安全边距
+
+        // 如果剩余空间不足，则添加新页面
+        if (pageBottom - contentY < minSpaceNeeded) {
+          console.log('Section title would be at bottom of page, adding new page');
+          addPage();
+          // 获取新页的页码
+          const newPageNum = pdf.internal.getNumberOfPages();
+          // 获取新页的动态边距
+          const newPageMargins = getPageMargins(newPageNum);
+
+          // 设置页眉字体并绘制页眉
+          setFont('runningHeader');
+          // 根据奇偶页调整页眉位置
+          const isHeaderRightPage = newPageNum % 2 === 1;
+          const headerOffset = 0.18; // 偏移量为0.18英寸
+          if (isHeaderRightPage) {
+            // 奇数页（右页）：页眉偏右
+            const headerX = pageWidth / 2 + headerOffset; // 向右偏移
+            pdf.text(chapter.title, headerX, newPageMargins.top + 0.2, { align: 'center' }); // 将页眉下移，与内容一起整体下移
+          } else {
+            // 偶数页（左页）：页眉偏左
+            const headerX = pageWidth / 2 - headerOffset; // 向左偏移
+            pdf.text(chapter.title, headerX, newPageMargins.top + 0.2, { align: 'center' }); // 将页眉下移，与内容一起整体下移
+          }
+
+          // 重置contentY到新页面的顶部位置
+          contentY = newPageMargins.top + 0.8;
+        } else if (contentY > sectionMargins.top + 0.8) { // 如果不是在页面顶部，则增加额外间距，使用动态边距
           contentY += 0.2; // 在当前段落和新小节标题之间添加额外的 0.2 英寸间距（从0.3英寸减小）
         }
 
