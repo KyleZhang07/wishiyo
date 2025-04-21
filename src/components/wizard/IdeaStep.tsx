@@ -210,10 +210,6 @@ const IdeaStep = ({
     // 如果是 love 类别，我们不设置 isLoading，因为这是异步的，不应阻止用户继续
     if (category !== 'love') {
       setIsLoading(true);
-    } else {
-      // 对于 love 类别，设置一个标记表示正在生成数据
-      localStorage.setItem('loveStoryGeneratingData', 'true');
-      console.log('Set loveStoryGeneratingData flag to true - starting idea generation');
     }
 
     try {
@@ -407,22 +403,12 @@ const IdeaStep = ({
     } finally {
       if (category !== 'love') {
         setIsLoading(false);
-      } else {
-        // 对于 love 类别，如果没有生成图像文本，则移除生成数据的标记
-        // 如果正在生成图像文本，则标记将在 generateImageTexts 完成时移除
-        if (!isGeneratingTexts) {
-          localStorage.removeItem('loveStoryGeneratingData');
-          console.log('Removed loveStoryGeneratingData flag - idea generation completed without text generation');
-        }
       }
     }
   };
 
   const generateImageTexts = async (prompts: ImagePrompt[], tone: string) => {
     setIsGeneratingTexts(true);
-    // 设置一个标记表示正在生成数据
-    localStorage.setItem('loveStoryGeneratingData', 'true');
-    console.log('Set loveStoryGeneratingData flag to true - starting image text generation');
     try {
       const path = window.location.pathname;
       const bookType = path.split('/')[3];
@@ -475,9 +461,6 @@ const IdeaStep = ({
       localStorage.setItem(getStorageKeys('love-story').textsKey, JSON.stringify(defaultTexts));
     } finally {
       setIsGeneratingTexts(false);
-      // 移除正在生成数据的标记
-      localStorage.removeItem('loveStoryGeneratingData');
-      console.log('Removed loveStoryGeneratingData flag - image text generation completed');
     }
   };
 

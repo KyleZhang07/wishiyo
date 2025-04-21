@@ -944,13 +944,6 @@ const GenerateStep = () => {
 
   // 检查数据是否准备完成
   const checkIfDataReady = () => {
-    // 首先检查是否有正在生成的数据
-    const isGeneratingData = localStorage.getItem('loveStoryGeneratingData') === 'true';
-    if (isGeneratingData) {
-      console.log('Data is currently being generated in IdeaStep, waiting for completion...');
-      return false; // 数据正在生成中，尚未准备好
-    }
-
     // 检查imageTexts是否已加载
     const hasImageTexts = imageTexts.length > 0;
 
@@ -973,7 +966,6 @@ const GenerateStep = () => {
 
     // 输出详细日志
     console.log('Data readiness check:');
-    console.log('- Is generating data:', isGeneratingData);
     console.log('- Has imageTexts:', hasImageTexts, `(${imageTexts.length} items)`);
     console.log('- Has imagePrompts:', hasImagePrompts);
     console.log('- Has characterPhoto:', hasCharacterPhoto);
