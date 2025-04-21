@@ -8,7 +8,7 @@ export const expandImage = async (imageUrl: string): Promise<string> => {
     const { data, error } = await supabase.functions.invoke('expand-image', {
       body: {
         imageUrl,
-        textPrompt: "CRITICAL: Expanded area MUST BE 100% EMPTY. Absolutely NO people, NO objects, NO animals, NO text. Repeat: ZERO features allowed. Generate ONLY a clean, simple background (solid color or smooth gradient) matching original edge colors. Seamless transition. Suitable for text overlay. "
+        textPrompt: "CRITICAL: Expanded area MUST BE 100% EMPTY. Absolutely NO people, NO objects, NO animals, NO text, NO features. Repeat: ZERO features allowed. Generate ONLY a clean, simple background (solid color or smooth gradient) matching original edge colors. Seamless transition. Suitable for text overlay. "
       }
     });
 
