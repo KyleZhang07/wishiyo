@@ -183,6 +183,68 @@ const GenerateStep = () => {
   const handleRegenerateContent9 = (style?: string) => handleGenericContentRegeneration(9, style);
   const handleRegenerateContent10 = (style?: string) => handleGenericContentRegeneration(10, style);
 
+  // 自动渲染intro图片函数
+  const autoRenderIntroImage = async (imageData: string) => {
+    try {
+      // 获取对应的文本 - intro图片对应文本索引1
+      // 从 localStorage 直接读取 imageTexts，确保有最新数据
+      let text = "";
+      const savedTexts = localStorage.getItem('loveStoryImageTexts');
+      if (savedTexts) {
+        try {
+          const parsedTexts = JSON.parse(savedTexts);
+          if (parsedTexts && Array.isArray(parsedTexts) && parsedTexts.length > 1) {
+            text = parsedTexts[1].text || "";
+          }
+        } catch (error) {
+          console.error('Error parsing saved texts in autoRenderIntroImage:', error);
+        }
+      }
+
+      // 如果从 localStorage 读取失败，则尝试使用状态变量
+      if (!text && imageTexts && imageTexts.length > 1) {
+        text = imageTexts[1].text || "";
+      }
+
+      // 设置加载状态
+      setIsGeneratingIntro(true);
+
+      // 渲染并上传图片
+      const result = await renderAndUploadIntroImage(
+        imageData,
+        text || "A beautiful moment captured in this image.",
+        selectedStyle,
+        supabaseImages
+      );
+
+      // 更新localStorage
+      localStorage.setItem('loveStoryIntroImage_left_url', result.leftImageUrl);
+      localStorage.setItem('loveStoryIntroImage_right_url', result.rightImageUrl);
+
+      // 更新imageStorageMap
+      setImageStorageMap(prev => ({
+        ...prev,
+        ['loveStoryIntroImage']: {
+          localStorageKey: 'loveStoryIntroImage',
+          leftUrl: result.leftImageUrl,
+          rightUrl: result.rightImageUrl
+        }
+      }));
+
+      console.log('Intro image rendered successfully with text:', text);
+    } catch (renderError: any) {
+      console.error('Error auto-rendering intro image:', renderError);
+      toast({
+        title: "Image rendering failed",
+        description: "Could not process the intro image. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      // 重置加载状态
+      setIsGeneratingIntro(false);
+    }
+  };
+
   // 自动渲染内容图片的通用函数
   const autoRenderContentImage = async (imageData: string, index: number) => {
     // 定义加载状态设置函数的映射
@@ -702,6 +764,15 @@ const GenerateStep = () => {
                 console.error(`Failed to delete old image: ${currentImagePath}`, deleteErr);
                 // 继续处理，即使删除失败
               }
+            }
+
+            // 自动渲染intro图片
+            try {
+              await autoRenderIntroImage(introImageData);
+              console.log('Intro image rendered successfully');
+            } catch (renderError) {
+              console.error('Error auto-rendering intro image:', renderError);
+              // 继续处理，即使渲染失败
             }
 
             // 延迟刷新图片列表，确保上传完成
