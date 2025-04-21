@@ -142,13 +142,13 @@ serve(async (req) => {
           ${chapterDescription ? `Chapter description: ${chapterDescription}` : ''}
 
           Write this chapter with 4 distinct sections:
-          - CRITICAL: EACH SECTION MUST CONTAIN BETWEEN 950 TO 1050 WORDS. If a section is below 950 words, you must expand it.
+          - CRITICAL: EACH SECTION MUST CONTAIN BETWEEN 1100 TO 1200 WORDS. If a section is below 1100 words, you must expand it.
           - Use first-person "I" when ${bookAuthor} is sharing specific personal experiences or anecdotes
           - Use second-person "you" when explaining methodologies, principles, or when instructing the reader
           - The narrative should feel like ${bookAuthor} is personally guiding readers through their expertise using engaging metaphors
 
           Guidelines:
-          - CRITICAL: EACH SECTION MUST CONTAIN BETWEEN 950 TO 1050 WORDS. If a section is below 950 words, you must expand it.
+          - CRITICAL: EACH SECTION MUST CONTAIN BETWEEN 1100 TO 1200 WORDS. If a section is below 1100 words, you must expand it.
           - Balance between "I" (for personal stories) and "you" (for instructional content)
           - When using "I," focus on ${bookAuthor}'s personal journey, challenges overcome, and pivotal moments
           - When using "you," focus on transferable principles, methodologies, and practical applications
@@ -190,7 +190,7 @@ serve(async (req) => {
                   role: 'system',
                   content: `You MUST STRICTLY enforce these requirements, especially the word count requirements:
 - Each chapter must have exactly 4 sections.
-- Each section MUST contain between 950 and 1050 words.
+- Each section MUST contain between 1100 and 1200 words.
 - Each section's content must use double line breaks (\\n\\n) between paragraphs to clearly separate them.
 - Respond only with valid JSON. Do not include any commentary or explanation outside the JSON structure.`
                 },
@@ -200,7 +200,7 @@ serve(async (req) => {
                 }
               ],
               temperature: 1.0,
-              max_tokens: 6000,
+              max_tokens: 7000,
               response_format: { type: "json_object" }
             }),
           });
