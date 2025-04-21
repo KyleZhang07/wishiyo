@@ -32,7 +32,7 @@ const MAX_RETRIES = 3;
 // 定义页面布局常量
 const CHARS_PER_PAGE = 1300; // 每页平均字符数（包括空格）
 const WORDS_PER_PAGE = 220;  // 每页平均单词数
-const PAGES_PER_CHAPTER = 11; // 每章目标页数
+const PAGES_PER_CHAPTER = 11; // 每章目标页数，总共220页
 const WORDS_PER_CHAPTER = PAGES_PER_CHAPTER * WORDS_PER_PAGE; // 每章目标单词数（约2,420单词）
 const RETRY_DELAY = 1000; // 1秒
 

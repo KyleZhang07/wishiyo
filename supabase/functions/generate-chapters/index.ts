@@ -114,15 +114,15 @@ Return ONLY a JSON array containing these 20 chapter objects. No other text or e
       // 第3章：页码为25
       // 第4章：页码为37
       // 第5章：页码为49
-      // 每章约12页，总共200页，20章
+      // 每章约11页，总共220页，20章
       const formattedChapters = chapters.map((chapter, index) => {
         // 计算起始页码
         let startPage;
         if (index === 0) {
           startPage = 1; // 第一章从第1页开始
         } else {
-          // 每章约10页，适应200页总长度
-          startPage = index * 10 + 1;
+          // 每章约11页，适应220页总长度
+          startPage = index * 11 + 1;
         }
 
         return {

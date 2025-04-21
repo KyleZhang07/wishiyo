@@ -185,7 +185,7 @@ serve(async (req) => {
       spineWidth = 0.813; // 精装本书脊宽度
       // 计算新的PDF总宽度 = 两个封面宽度 + 书脊宽度 + 两侧包装区域
       const wrapAreaWidth = 0.75; // 每侧0.75"的包装区域
-      pdfWidth = (bookWidth * 2) + spineWidth + (wrapAreaWidth * 2); // 14.5" (减小了0.063")
+      pdfWidth = (bookWidth * 2) + spineWidth + (wrapAreaWidth * 2); // 14.563" 
       pdfHeight = 10.75;
       console.log(`Using hardcover dimensions: ${pdfWidth}" x ${pdfHeight}" with spine width ${spineWidth}"`);
       console.log(`Total content width: ${(bookWidth * 2) + spineWidth}"`);
@@ -196,7 +196,7 @@ serve(async (req) => {
       bookHeight = 9.0;
       spineWidth = 0.58; // 平装本书脊宽度
       // 计算新的PDF总宽度 = 两个封面宽度 + 书脊宽度 + 两侧出血区域
-      pdfWidth = (bookWidth * 2) + spineWidth + 0.25; // 0.25" 是两侧各 0.125" 的出血区域 (减小了0.05")
+      pdfWidth = (bookWidth * 2) + spineWidth + 0.25; // 0.25" 是两侧各 0.125" 的出血区域 (减小了0.02")
       pdfHeight = 9.25;
       console.log(`Using softcover dimensions: ${pdfWidth}" x ${pdfHeight}" with spine width ${spineWidth}"`);
       console.log(`Total content width: ${(bookWidth * 2) + spineWidth}"`);

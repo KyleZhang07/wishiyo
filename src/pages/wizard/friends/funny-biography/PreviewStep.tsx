@@ -514,7 +514,7 @@ const PreviewStep = () => {
               <div className="flex items-center justify-center mt-2">
                 <span>by <span className="font-medium">{authorName}</span></span>
                 <span className="mx-2">•</span>
-                <span className="text-gray-500">200 pages</span>
+                <span className="text-gray-500">220 pages</span>
               </div>
             </div>
           </div>
