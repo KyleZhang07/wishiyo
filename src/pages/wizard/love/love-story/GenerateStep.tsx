@@ -555,12 +555,26 @@ const GenerateStep = () => {
 
 
   const handleRegenerateIntro = async (style?: string) => {
-    // 获取当前图片的URL，用于后续删除
-    const currentImageUrl = localStorage.getItem('loveStoryIntroImage_url');
-
     // 清除localStorage中的引用
     localStorage.removeItem('loveStoryIntroImage');
+
+    // 获取当前图片的URL，用于后续删除
+    const currentImageUrl = localStorage.getItem('loveStoryIntroImage_url');
     localStorage.removeItem('loveStoryIntroImage_url');
+
+    // 查找当前图片在Supabase中的路径
+    let currentImagePath = '';
+    if (currentImageUrl) {
+      // 从 URL 中提取文件名
+      const currentImageName = currentImageUrl.split('/').pop();
+      if (currentImageName) {
+        // 在 supabaseImages 中查找包含该文件名的图片
+        const currentImage = supabaseImages.find(img => img.name.includes(currentImageName));
+        if (currentImage) {
+          currentImagePath = currentImage.name;
+        }
+      }
+    }
 
     const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
     const characterPhoto = localStorage.getItem('loveStoryPartnerPhoto');
@@ -579,36 +593,6 @@ const GenerateStep = () => {
         }
 
         try {
-          // 尝试删除Supabase中的旧图片
-          if (currentImageUrl) {
-            try {
-              // 查找当前图片在Supabase中的路径
-              const introImages = supabaseImages.filter(img => {
-                // 匹配 love-story-intro 模式，但不匹配已处理的图片
-                return img.name.includes('love-story-intro') && img.url === currentImageUrl;
-              });
-
-              if (introImages.length > 0) {
-                console.log(`Found ${introImages.length} intro images to delete`);
-
-                // 并行删除所有找到的图片
-                const deletePromises = introImages.map(img => {
-                  // 从完整路径中提取文件名
-                  const pathParts = img.name.split('/');
-                  const filename = pathParts[pathParts.length - 1];
-                  console.log(`Deleting intro image: ${filename}`);
-                  return deleteImageFromStorage(filename, 'images');
-                });
-
-                // 等待所有删除操作完成
-                await Promise.all(deletePromises);
-                console.log('Successfully deleted old intro images');
-              }
-            } catch (deleteError) {
-              console.error('Error deleting old intro images:', deleteError);
-              // 继续处理，即使删除失败
-            }
-          }
 
           // 修复请求结构，使用prompts[1]而非prompts[0]（prompts[0]是封面）
           const requestBody = {
@@ -673,6 +657,17 @@ const GenerateStep = () => {
 
             // Store only the URL reference in localStorage
             localStorage.setItem('loveStoryIntroImage_url', storageUrl);
+
+            // 删除旧图片
+            if (currentImagePath) {
+              try {
+                await deleteImageFromStorage(currentImagePath, 'images');
+                console.log(`Deleted old image: ${currentImagePath}`);
+              } catch (deleteErr) {
+                console.error(`Failed to delete old image: ${currentImagePath}`, deleteErr);
+                // 继续处理，即使删除失败
+              }
+            }
 
             // 延迟刷新图片列表，确保上传完成
             setTimeout(() => {
