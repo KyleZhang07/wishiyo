@@ -84,30 +84,9 @@ serve(async (req) => {
     const { selected_idea, answers, chapters } = bookData;
 
     // 使用传入的现有内容或从数据库获取
-    // 首先从数据库加载完整的章节内容
-    let bookChapters: BookChapter[] = [];
-
-    if (Array.isArray(bookData.book_content)) {
-      bookChapters = [...bookData.book_content];
-    }
-
-    // 如果传入了上下文内容（当前章节的部分内容），使用它来更新对应章节
-    if (existingContent && existingContent.length > 0) {
-      console.log(`Received context with ${existingContent.length} chapters`);
-      // 这里只会有当前章节的内容
-      for (const contextChapter of existingContent) {
-        // 查找数据库中是否已有该章节
-        const existingIndex = bookChapters.findIndex(ch => ch.chapterNumber === contextChapter.chapterNumber);
-
-        if (existingIndex !== -1) {
-          // 更新现有章节
-          bookChapters[existingIndex] = contextChapter;
-        } else {
-          // 添加新章节
-          bookChapters.push(contextChapter);
-        }
-      }
-    }
+    let bookChapters: BookChapter[] = existingContent.length > 0
+      ? [...existingContent]
+      : (Array.isArray(bookData.book_content) ? [...bookData.book_content] : []);
 
     if (!bookTitle || !bookAuthor || !selected_idea || !chapters) {
       throw new Error('Incomplete book data for content generation');
@@ -123,33 +102,9 @@ serve(async (req) => {
     for (let i = startChapter; i <= endChapter; i++) {
       // 检查是否已存在该章节（错误恢复）
       const existingChapterIndex = bookChapters.findIndex(ch => ch.chapterNumber === i);
-
-      // 如果章节已存在，检查是否所有section都已生成
       if (existingChapterIndex !== -1) {
-        const existingChapter = bookChapters[existingChapterIndex];
-        const existingSections = existingChapter.sections || [];
-
-        // 检查是否有全部4个section
-        if (existingSections.length === 4) {
-          // 检查每个section是否都有内容
-          const allSectionsComplete = existingSections.every(section =>
-            section && section.title && section.content &&
-            !section.content.includes('There was an error processing this chapter\'s content')
-          );
-
-          if (allSectionsComplete) {
-            console.log(`Chapter ${i} already exists with all 4 sections complete, skipping generation`);
-            continue;
-          } else {
-            console.log(`Chapter ${i} exists but has incomplete sections, regenerating...`);
-            // 删除现有章节，重新生成
-            bookChapters = bookChapters.filter(ch => ch.chapterNumber !== i);
-          }
-        } else {
-          console.log(`Chapter ${i} exists but only has ${existingSections.length}/4 sections, continuing generation...`);
-          // 删除现有章节，重新生成
-          bookChapters = bookChapters.filter(ch => ch.chapterNumber !== i);
-        }
+        console.log(`Chapter ${i} already exists, skipping generation`);
+        continue;
       }
 
       console.log(`Generating chapter ${i} content...`);
@@ -180,9 +135,9 @@ serve(async (req) => {
 
         // 根据section编号分配不同的角色
         if (sectionNumber === 1) {
-          sectionRole = `This is the FIRST section of the chapter. Your role is to introduce the main theme of the chapter and set up the narrative framework. Begin with a compelling hook or humorous anecdote that draws readers in. Start with something funny or surprising from ${bookAuthor}'s life that captures the reader's attention and establishes the entertaining tone of this biography.`;
+          sectionRole = `This is the FIRST section of the chapter. Your role is to introduce the main theme of the chapter and set up the narrative framework. Begin with a compelling hook or anecdote that draws readers in.`;
         } else if (sectionNumber === 2) {
-          sectionRole = `This is the SECOND section of the chapter. Your role is to develop the main ideas introduced in the first section. Expand on the concepts with examples, amusing observations, and deeper analysis. Include at least one humorous personal story that reveals something about ${bookAuthor}'s character or approach to life.`;
+          sectionRole = `This is the SECOND section of the chapter. Your role is to develop the main ideas introduced in the first section. Expand on the concepts with examples and deeper analysis.`;
 
           // 添加前一个section的上下文
           if (previousSections.length > 0) {
@@ -192,7 +147,7 @@ Previous section (${previousSections[0].title}) covered: ${previousSections[0].c
 You should build upon these ideas and maintain narrative continuity. Do not repeat the same examples or anecdotes, but do reference key concepts to create a cohesive flow.`;
           }
         } else if (sectionNumber === 3) {
-          sectionRole = `This is the THIRD section of the chapter. Your role is to present a turning point, contrast, or new perspective on the chapter's theme. Introduce a twist or insight that adds depth to the narrative. This is a good place for a humorous self-realization moment or an amusing contradiction in ${bookAuthor}'s approach that leads to an unexpected lesson.`;
+          sectionRole = `This is the THIRD section of the chapter. Your role is to present a turning point, contrast, or new perspective on the chapter's theme. Introduce a twist or insight that adds depth to the narrative.`;
 
           // 添加前两个section的上下文
           if (previousSections.length > 0) {
@@ -203,7 +158,7 @@ You should build upon these ideas and maintain narrative continuity. Do not repe
 Previous sections covered:\n${summaries}\n\nBuild upon these ideas while introducing new perspectives. Create smooth transitions between sections and maintain narrative continuity.`;
           }
         } else if (sectionNumber === 4) {
-          sectionRole = `This is the FINAL section of the chapter. Your role is to provide resolution, practical applications, and connect back to the chapter's main theme. End with a memorable and slightly humorous conclusion that leaves readers with a clear takeaway. Include a witty final thought or amusing reflection from ${bookAuthor} that encapsulates the chapter's message while making the reader smile.`;
+          sectionRole = `This is the FINAL section of the chapter. Your role is to provide resolution, practical applications, and connect back to the chapter's main theme. End with a memorable conclusion that leaves readers with a clear takeaway.`;
 
           // 添加前三个section的上下文
           if (previousSections.length > 0) {
@@ -232,16 +187,14 @@ Previous sections covered:\n${summaries}\n\nYour job is to bring closure to the 
 
             Guidelines for this section:
             - CRITICAL: THIS SECTION MUST CONTAIN EXACTLY BETWEEN 500 TO 600 WORDS. Not less, not more.
-            - This is a FUNNY BIOGRAPHY - humor should be woven throughout the narrative, not just added as an afterthought
-            - Use first-person "I" when ${bookAuthor} is sharing personal experiences or anecdotes - make these stories engaging and humorous
+            - Use first-person "I" when ${bookAuthor} is sharing personal experiences or anecdotes
             - Use second-person "you" when explaining methodologies or instructing the reader
             - The section should either:
-              * Share a personal experience through ${bookAuthor}'s eyes (first-person) with humorous details and extract the lesson (second-person)
-              * Introduce a methodology using witty metaphors and explain how readers can apply it
-              * Connect ${bookAuthor}'s unique approach to broader applications for the audience with a touch of self-deprecating humor
-            - Include at least one humorous anecdote, amusing observation, or witty remark that reveals something about ${bookAuthor}'s character
-            - Section title should use thematic metaphors related to the chapter's main concepts - be creative and slightly playful
-            - Make it insightful, methodological and genuinely funny while maintaining a professional tone
+              * Share a personal experience through ${bookAuthor}'s eyes (first-person) and extract the lesson (second-person)
+              * Introduce a methodology using metaphors and explain how readers can apply it
+              * Connect ${bookAuthor}'s unique approach to broader applications for the audience
+            - Section title should use thematic metaphors related to the chapter's main concepts
+            - Make it insightful, methodological and funny while maintaining a professional tone
             - Use double line breaks (\n\n) between paragraphs to clearly separate them
             - IMPORTANT: Create smooth transitions between sections. Reference ideas from previous sections when appropriate to maintain narrative flow.
 
@@ -266,8 +219,6 @@ Previous sections covered:\n${summaries}\n\nYour job is to bring closure to the 
                     content: `You MUST STRICTLY enforce these requirements:
 - CRITICAL REQUIREMENT: The section MUST contain EXACTLY between 500 and 600 words. Count the words carefully.
 - Each chapter has exactly 4 sections (not 5).
-- This is a FUNNY BIOGRAPHY - ensure each section contains humor that reveals something about the subject's character.
-- Balance humor with insight - the funny anecdotes should feel authentic and meaningful, not forced.
 - The section's content must use double line breaks (\\n\\n) between paragraphs to clearly separate them.
 - Maintain narrative continuity with previous sections when applicable.
 - Create smooth transitions between ideas and reference previous concepts when appropriate.
@@ -331,7 +282,7 @@ ${'Lorem ipsum dolor sit amet. '.repeat(100)}`
       }
 
       // 生成完整章节
-      console.log(`Generating chapter ${i} with 4 sections individually...`);
+      console.log(`Generating chapter ${i} with 5 sections individually...`);
 
       // 创建章节结构
       const chapter = {
@@ -457,28 +408,6 @@ ${'Lorem ipsum dolor sit amet. '.repeat(100)}`
     if (endChapter < TOTAL_CHAPTERS) {
       console.log(`Triggering next batch (${batchNumber + 1}) for order ${orderId}`);
       try {
-        // 计算下一章节
-        const nextChapter = endChapter + 1;
-
-        // 提取上下文信息 - 只包含必要的内容
-        // 1. 当前章节的已生成部分（如果是章节的最后一部分，则不需要）
-        // 2. 不传递之前章节的内容
-        let contextContent = [];
-
-        // 如果当前章节有内容，并且不是完整章节，则传递当前章节的已生成部分
-        const currentChapterIndex = bookChapters.findIndex(ch => ch.chapterNumber === endChapter);
-        if (currentChapterIndex !== -1) {
-          const currentChapter = bookChapters[currentChapterIndex];
-          // 只传递当前章节的内容
-          contextContent.push({
-            chapterNumber: currentChapter.chapterNumber,
-            title: currentChapter.title,
-            sections: currentChapter.sections
-          });
-        }
-
-        console.log(`Passing context with ${contextContent.length} chapters to next batch`);
-
         // 异步触发下一批次，不等待响应
         fetch(`${supabaseUrl}/functions/v1/generate-book-content`, {
           method: 'POST',
@@ -489,7 +418,7 @@ ${'Lorem ipsum dolor sit amet. '.repeat(100)}`
           body: JSON.stringify({
             orderId,
             batchNumber: batchNumber + 1,
-            existingContent: contextContent // 只传递必要的上下文内容
+            existingContent: bookChapters
           })
         }).catch(error => {
           console.error(`Error triggering next batch: ${error.message}`);
