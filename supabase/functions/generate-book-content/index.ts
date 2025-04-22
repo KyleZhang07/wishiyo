@@ -212,13 +212,13 @@ Previous sections covered:\n${summaries}\n\nYour job is to bring closure to the 
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({
-                model: 'gpt-4.1-mini',
+                model: 'gpt-4.1-nano',
                 messages: [
                   {
                     role: 'system',
                     content: `You MUST STRICTLY enforce these requirements:
 - CRITICAL REQUIREMENT: The section MUST contain EXACTLY between 500 and 600 words. Count the words carefully.
-- Each chapter has exactly 4 sections (not 5).
+- Each chapter has exactly 4 sections.
 - The section's content must use double line breaks (\\n\\n) between paragraphs to clearly separate them.
 - Maintain narrative continuity with previous sections when applicable.
 - Create smooth transitions between ideas and reference previous concepts when appropriate.

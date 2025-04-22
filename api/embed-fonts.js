@@ -157,9 +157,17 @@ export default async function handler(req, res) {
           console.log(`重试第 ${retryCount + 1} 次，等待 ${retryDelay}ms...`);
           await delay(retryDelay);
 
-          // 重新查询
+          // 重新查询 - 使用新的Supabase客户端实例避免缓存问题
           console.log(`重新查询订单 ${orderId} 的PDF URL...`);
-          const { data: retryData, error: retryError } = await supabase
+
+          // 创建新的Supabase客户端实例
+          const freshSupabase = createClient(supabaseUrl, supabaseServiceKey);
+
+          // 添加时间戳参数避免缓存
+          const timestamp = Date.now();
+          console.log(`使用新的Supabase客户端和时间戳 ${timestamp} 查询`);
+
+          const { data: retryData, error: retryError } = await freshSupabase
             .from(table)
             .select(`id, ${column}, order_id`)
             .eq('order_id', orderId)
@@ -176,7 +184,7 @@ export default async function handler(req, res) {
           }
 
           const retryUrl = retryData[column];
-          console.log(`重试查询结果: ${retryUrl ? '找到URL' : 'URL仍为null'}`);
+          console.log(`重试查询结果: ${retryUrl ? `找到URL: ${retryUrl}` : 'URL仍为null'}`);
 
           if (!retryUrl) {
             return retryQuery(retryCount + 1);
