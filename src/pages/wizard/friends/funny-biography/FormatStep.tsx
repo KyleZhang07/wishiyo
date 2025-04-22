@@ -29,18 +29,18 @@ const FormatStep = () => {
   // 可选的封面格式
   const coverFormats: CoverFormat[] = [
     {
-      id: 'hardcover',
-      name: 'Hardcover',
-      price: 59.99,
-      description: 'A luxurious hardcover made to last for generations.',
-      imageSrc: hardcoverImage
-    },
-    {
       id: 'softcover',
       name: 'Softcover',
       price: 39.99,
       description: 'Lightweight and beautiful – perfect for everyday reading.',
       imageSrc: softcoverImage
+    },
+    {
+      id: 'hardcover',
+      name: 'Hardcover',
+      price: 59.99,
+      description: 'A luxurious hardcover made to last for generations.',
+      imageSrc: hardcoverImage
     }
   ];
 

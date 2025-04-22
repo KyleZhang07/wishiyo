@@ -141,7 +141,7 @@ export default async function handler(req, res) {
 
         // 设置重试参数
         const maxRetries = 5;
-        const retryDelay = 3000; // 3秒
+        const retryDelay = 8000; // 8秒
 
         // 定义延时函数
         const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));

@@ -31,14 +31,14 @@ const FormatStep = () => {
     {
       id: 'hardcover',
       name: 'Elegant Glossy',
-      price: 35.99,
+      price: 59.99,
       description: 'A vibrant glossy finish with bright, eye-catching colors.',
       imageSrc: hardcoverImage
     },
     {
       id: 'hardcover_matte',
       name: 'Classic Matte',
-      price: 39.99,
+      price: 54.99,
       description: 'An elegant matte finish – perfect for timeless gifts.',
       imageSrc: softcoverImage
     }
