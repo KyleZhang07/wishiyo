@@ -1,7 +1,7 @@
 // 导入所需模块
 import { createClient } from '@supabase/supabase-js';
-import { PDFDocument } from 'pdf-lib';
-import fontkit from '@pdf-lib/fontkit';
+import GS from '@jspawn/ghostscript-wasm';
+import fs from 'fs';
 
 // 初始化Supabase客户端
 const supabaseUrl = process.env.SUPABASE_URL || 'https://hbkgbggctzvqffqfrmhl.supabase.co';
@@ -207,46 +207,42 @@ export default async function handler(req, res) {
 
     console.log(`PDF数据获取成功，大小: ${pdfData.byteLength} 字节，开始处理字体嵌入...`);
 
-    // 使用pdf-lib和fontkit处理字体嵌入
-    const pdfDoc = await PDFDocument.load(pdfData);
+    // 使用 ghostscript-wasm 强制全量嵌入字体并生成 PDF/X
+    let processedPdfBytes;
+    try {
+      console.log('初始化 Ghostscript WASM...');
+      const gs = await GS();
+      console.log('Ghostscript WASM 初始化成功');
 
-    // 注册fontkit以处理字体
-    pdfDoc.registerFontkit(fontkit);
+      // 创建虚拟文件路径
+      const inPath = '/input.pdf';
+      const outPath = '/output.pdf';
 
-    // 获取文档中的所有页面
-    const pages = pdfDoc.getPages();
-    console.log(`PDF包含 ${pages.length} 页`);
+      // 将PDF数据写入虚拟文件系统
+      console.log('将PDF数据写入虚拟文件系统...');
+      await fs.promises.writeFile(inPath, Buffer.from(pdfData));
 
-    // 创建新的PDF文档，并注册fontkit
-    const newPdfDoc = await PDFDocument.create();
-    newPdfDoc.registerFontkit(fontkit);
+      // 调用 Ghostscript 处理PDF
+      console.log('调用 Ghostscript 处理PDF...');
+      await gs.call([
+        '-dPDFX',
+        '-dEmbedAllFonts=true',
+        '-dSubsetFonts=false',
+        '-dCompatibilityLevel=1.5',
+        '-dPDFSETTINGS=/prepress',
+        '-sDEVICE=pdfwrite',
+        `-sOutputFile=${outPath}`,
+        inPath
+      ]);
 
-    // 设置PDF元数据，确保标记所有字体为嵌入
-    newPdfDoc.setTitle(pdfDoc.getTitle() || 'Embedded Font Document');
-    newPdfDoc.setAuthor(pdfDoc.getAuthor() || 'Wishiyo');
-    newPdfDoc.setSubject('Document with embedded fonts');
-    newPdfDoc.setKeywords(['embedded', 'fonts', 'wishiyo']);
-    newPdfDoc.setProducer('Wishiyo PDF Generator');
-    newPdfDoc.setCreator('Wishiyo Font Embedder');
-
-    // 复制所有页面，确保字体嵌入
-    const copiedPages = await newPdfDoc.copyPages(pdfDoc, pdfDoc.getPageIndices());
-
-    for (const page of copiedPages) {
-      newPdfDoc.addPage(page);
+      // 读取处理后的PDF
+      console.log('读取处理后的PDF...');
+      processedPdfBytes = await fs.promises.readFile(outPath);
+      console.log(`使用 Ghostscript 处理后的PDF大小: ${processedPdfBytes.byteLength} 字节`);
+    } catch (gsError) {
+      console.error('Ghostscript 处理出错:', gsError);
+      throw new Error(`Ghostscript 处理失败: ${gsError.message}`);
     }
-
-    console.log(`字体处理完成，保存处理后的PDF...`);
-
-    // 保存处理后的PDF，使用更高的压缩设置和字体嵌入选项
-    const processedPdfBytes = await newPdfDoc.save({
-      useObjectStreams: true,
-      addDefaultPage: false,
-      preservePDFForm: true,
-      updateFieldAppearances: true
-    });
-
-    console.log(`处理后的PDF大小: ${processedPdfBytes.byteLength} 字节`);
 
     // 如果提供了orderId和type，则更新数据库
     if (orderId && type) {
