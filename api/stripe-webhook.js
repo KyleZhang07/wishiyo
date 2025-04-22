@@ -346,7 +346,7 @@ export default async function handler(req, res) {
                 // 使用 Vercel API 路由而不是 Supabase Edge Function
                 const apiUrl = process.env.VERCEL_URL
                   ? `https://${process.env.VERCEL_URL}/api/generate-book-content`
-                  : `${process.env.NEXT_PUBLIC_SITE_URL}/api/generate-book-content`;
+                  : `${process.env.SITE_URL}/api/generate-book-content`;
 
                 console.log(`[${orderId}] Using API URL: ${apiUrl}`);
                 const contentPromise = fetch(

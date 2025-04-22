@@ -64,7 +64,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // 获取环境变量
     const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+    const supabaseUrl = process.env.SUPABASE_URL || '';
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
     if (!supabaseUrl || !supabaseServiceKey || !OPENAI_API_KEY) {
@@ -418,7 +418,7 @@ ${'Lorem ipsum dolor sit amet. '.repeat(100)}`
         // 异步触发下一批次，不等待响应
         const apiUrl = process.env.VERCEL_URL
           ? `https://${process.env.VERCEL_URL}/api/generate-book-content`
-          : `${process.env.NEXT_PUBLIC_SITE_URL}/api/generate-book-content`;
+          : `${process.env.SITE_URL}/api/generate-book-content`;
 
         fetch(apiUrl, {
           method: 'POST',
@@ -482,7 +482,7 @@ ${'Lorem ipsum dolor sit amet. '.repeat(100)}`
         setTimeout(async () => {
           const apiUrl = process.env.VERCEL_URL
             ? `https://${process.env.VERCEL_URL}/api/generate-book-content`
-            : `${process.env.NEXT_PUBLIC_SITE_URL}/api/generate-book-content`;
+            : `${process.env.SITE_URL}/api/generate-book-content`;
 
           try {
             await fetch(apiUrl, {
