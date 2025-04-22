@@ -263,7 +263,7 @@ export default async function handler(req, res) {
             console.log('[DEBUG] Shipping level details:', {
               shipping_option_exists: !!shippingOption,
               display_name: shippingOption?.display_name || 'null',
-              mapped_shipping_level: shippingOption?.display_name === 'Express Shipping' ? 'EXPRESS' : 'GROUND'
+              mapped_shipping_level: shippingOption?.display_name === 'Express Shipping' ? 'EXPEDITED' : 'GROUND_HD'
             });
 
             // 如果图书类型是funny-biography，启动生成过程
@@ -293,7 +293,7 @@ export default async function handler(req, res) {
                       shipping_address: shippingAddress,
                       shipping_option: shippingOption,
                       customer_email: expandedSession.customer_details?.email,
-                      shipping_level: shippingOption?.display_name === 'Express Shipping' ? 'EXPRESS' : 'GROUND',
+                      shipping_level: shippingOption?.display_name === 'Express Shipping' ? 'EXPEDITED' : 'GROUND_HD',
                       recipient_phone: expandedSession.customer_details?.phone || ''
                     })
                   }
@@ -520,7 +520,7 @@ export default async function handler(req, res) {
                       shipping_address: shippingAddress,
                       shipping_option: shippingOption,
                       customer_email: expandedSession.customer_details?.email,
-                      shipping_level: shippingOption?.display_name === 'Express Shipping' ? 'EXPRESS' : 'GROUND',
+                      shipping_level: shippingOption?.display_name === 'Express Shipping' ? 'EXPEDITED' : 'GROUND_HD',
                       recipient_phone: expandedSession.customer_details?.phone || '',
                       binding_type: binding_type, // 直接使用传递的binding_type，不再使用format进行回退
                       is_color: is_color === 'true' ? true : false,
