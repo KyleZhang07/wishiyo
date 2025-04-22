@@ -102,9 +102,33 @@ serve(async (req) => {
     for (let i = startChapter; i <= endChapter; i++) {
       // 检查是否已存在该章节（错误恢复）
       const existingChapterIndex = bookChapters.findIndex(ch => ch.chapterNumber === i);
+
+      // 如果章节已存在，检查是否所有section都已生成
       if (existingChapterIndex !== -1) {
-        console.log(`Chapter ${i} already exists, skipping generation`);
-        continue;
+        const existingChapter = bookChapters[existingChapterIndex];
+        const existingSections = existingChapter.sections || [];
+
+        // 检查是否有全部4个section
+        if (existingSections.length === 4) {
+          // 检查每个section是否都有内容
+          const allSectionsComplete = existingSections.every(section =>
+            section && section.title && section.content &&
+            !section.content.includes('There was an error processing this chapter\'s content')
+          );
+
+          if (allSectionsComplete) {
+            console.log(`Chapter ${i} already exists with all 4 sections complete, skipping generation`);
+            continue;
+          } else {
+            console.log(`Chapter ${i} exists but has incomplete sections, regenerating...`);
+            // 删除现有章节，重新生成
+            bookChapters = bookChapters.filter(ch => ch.chapterNumber !== i);
+          }
+        } else {
+          console.log(`Chapter ${i} exists but only has ${existingSections.length}/4 sections, continuing generation...`);
+          // 删除现有章节，重新生成
+          bookChapters = bookChapters.filter(ch => ch.chapterNumber !== i);
+        }
       }
 
       console.log(`Generating chapter ${i} content...`);
@@ -282,7 +306,7 @@ ${'Lorem ipsum dolor sit amet. '.repeat(100)}`
       }
 
       // 生成完整章节
-      console.log(`Generating chapter ${i} with 5 sections individually...`);
+      console.log(`Generating chapter ${i} with 4 sections individually...`);
 
       // 创建章节结构
       const chapter = {
