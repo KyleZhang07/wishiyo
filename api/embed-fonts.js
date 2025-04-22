@@ -1,16 +1,78 @@
 // 导入所需模块
 import { createClient } from '@supabase/supabase-js';
 import { PDFDocument } from 'pdf-lib';
+import { exec } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+import util from 'util';
+
+// 将exec转换为Promise版本
+const execPromise = util.promisify(exec);
 
 // 初始化Supabase客户端
 const supabaseUrl = process.env.SUPABASE_URL || 'https://hbkgbggctzvqffqfrmhl.supabase.co';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 /**
+ * 使用Ghostscript处理PDF字体嵌入
+ *
+ * @param {Buffer|ArrayBuffer} pdfData - PDF数据
+ * @returns {Promise<Buffer>} - 处理后的PDF数据
+ */
+async function embedFontsWithGhostscript(pdfData) {
+  try {
+    // 创建临时文件路径
+    const tempDir = os.tmpdir();
+    const timestamp = Date.now();
+    const inputPath = path.join(tempDir, `input-${timestamp}.pdf`);
+    const outputPath = path.join(tempDir, `output-${timestamp}.pdf`);
+
+    // 将PDF数据写入临时文件
+    fs.writeFileSync(inputPath, Buffer.from(pdfData));
+
+    // 使用Ghostscript强制嵌入所有字体
+    const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -dEmbedAllFonts=true -dSubsetFonts=true -sOutputFile=${outputPath} ${inputPath}`;
+
+    console.log(`执行Ghostscript命令: ${gsCommand}`);
+
+    // 执行Ghostscript命令
+    const { stdout, stderr } = await execPromise(gsCommand);
+
+    if (stderr) {
+      console.warn(`Ghostscript警告: ${stderr}`);
+    }
+
+    if (stdout) {
+      console.log(`Ghostscript输出: ${stdout}`);
+    }
+
+    // 检查输出文件是否存在
+    if (!fs.existsSync(outputPath)) {
+      throw new Error(`Ghostscript没有生成输出文件: ${outputPath}`);
+    }
+
+    // 读取处理后的PDF数据
+    const processedPdfData = fs.readFileSync(outputPath);
+
+    // 清理临时文件
+    fs.unlinkSync(inputPath);
+    fs.unlinkSync(outputPath);
+
+    console.log(`Ghostscript处理成功，原始大小: ${pdfData.byteLength} 字节，处理后大小: ${processedPdfData.length} 字节`);
+
+    return processedPdfData;
+  } catch (error) {
+    console.error(`Ghostscript处理失败:`, error);
+    throw error;
+  }
+}
+
+/**
  * 处理PDF字体嵌入
  *
  * 此函数接收一个PDF文件（可以是URL或base64字符串），
- * 使用pdf-lib处理字体嵌入，然后返回处理后的PDF
+ * 使用Ghostscript处理字体嵌入，然后返回处理后的PDF
  */
 export default async function handler(req, res) {
   // 设置CORS头
@@ -206,29 +268,39 @@ export default async function handler(req, res) {
 
     console.log(`PDF数据获取成功，大小: ${pdfData.byteLength} 字节，开始处理字体嵌入...`);
 
-    // 使用pdf-lib处理字体嵌入
-    const pdfDoc = await PDFDocument.load(pdfData);
+    // 尝试使用Ghostscript处理字体嵌入
+    let processedPdfBytes;
+    try {
+      console.log(`尝试使用Ghostscript处理字体嵌入...`);
+      processedPdfBytes = await embedFontsWithGhostscript(pdfData);
+      console.log(`Ghostscript处理成功，处理后的PDF大小: ${processedPdfBytes.length} 字节`);
+    } catch (gsError) {
+      console.error(`Ghostscript处理失败，回退到pdf-lib处理:`, gsError);
 
-    // 获取文档中的所有字体
-    const fontNames = new Set();
-    const pages = pdfDoc.getPages();
+      // 如果Ghostscript失败，回退到使用pdf-lib处理
+      console.log(`使用pdf-lib处理字体嵌入...`);
+      const pdfDoc = await PDFDocument.load(pdfData);
 
-    console.log(`PDF包含 ${pages.length} 页`);
+      // 获取文档中的页面
+      const pages = pdfDoc.getPages();
 
-    // 嵌入所有字体
-    // 注意：pdf-lib不直接提供字体嵌入API，但我们可以通过复制页面来确保字体被正确嵌入
-    const newPdfDoc = await PDFDocument.create();
-    const copiedPages = await newPdfDoc.copyPages(pdfDoc, pdfDoc.getPageIndices());
+      console.log(`PDF包含 ${pages.length} 页`);
 
-    for (const page of copiedPages) {
-      newPdfDoc.addPage(page);
+      // 嵌入所有字体
+      // 注意：pdf-lib不直接提供字体嵌入API，但我们可以通过复制页面来确保字体被正确嵌入
+      const newPdfDoc = await PDFDocument.create();
+      const copiedPages = await newPdfDoc.copyPages(pdfDoc, pdfDoc.getPageIndices());
+
+      for (const page of copiedPages) {
+        newPdfDoc.addPage(page);
+      }
+
+      console.log(`字体处理完成，保存处理后的PDF...`);
+
+      // 保存处理后的PDF
+      processedPdfBytes = await newPdfDoc.save();
+      console.log(`处理后的PDF大小: ${processedPdfBytes.byteLength} 字节`);
     }
-
-    console.log(`字体处理完成，保存处理后的PDF...`);
-
-    // 保存处理后的PDF
-    const processedPdfBytes = await newPdfDoc.save();
-    console.log(`处理后的PDF大小: ${processedPdfBytes.byteLength} 字节`);
 
     // 如果提供了orderId和type，则更新数据库
     if (orderId && type) {
@@ -242,7 +314,7 @@ export default async function handler(req, res) {
 
       console.log(`上传处理后的PDF到: ${filePath}`);
 
-      const { data: uploadData, error: uploadError } = await supabase
+      const { error: uploadError } = await supabase
         .storage
         .from('pdfs')
         .upload(filePath, processedPdfBytes, {
@@ -255,7 +327,7 @@ export default async function handler(req, res) {
       }
 
       // 获取上传后的URL
-      const { data: urlData } = await supabase
+      const { data: urlData } = supabase
         .storage
         .from('pdfs')
         .getPublicUrl(filePath);
