@@ -174,12 +174,12 @@ export default async function handler(req, res) {
     });
 
     // 使用订单提供的shipping_level或默认值
-    let shippingLevel = order.shipping_level || 'GROUND_HD';
+    let shippingLevel = order.shipping_level || 'MAIL';
 
     // 验证 shipping_level 是否为有效值
     if (!validShippingLevels.includes(shippingLevel)) {
-      console.warn(`Invalid shipping_level: ${shippingLevel}, using default: GROUND_HD`);
-      shippingLevel = 'GROUND_HD';
+      console.warn(`Invalid shipping_level: ${shippingLevel}, using default: MAIL`);
+      shippingLevel = 'MAIL';
     }
 
     console.log(`[DEBUG] Final shipping_level for order ${orderId}: ${shippingLevel}`);
