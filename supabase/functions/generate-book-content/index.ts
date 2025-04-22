@@ -180,9 +180,9 @@ serve(async (req) => {
 
         // 根据section编号分配不同的角色
         if (sectionNumber === 1) {
-          sectionRole = `This is the FIRST section of the chapter. Your role is to introduce the main theme of the chapter and set up the narrative framework. Begin with a compelling hook or anecdote that draws readers in.`;
+          sectionRole = `This is the FIRST section of the chapter. Your role is to introduce the main theme of the chapter and set up the narrative framework. Begin with a compelling hook or humorous anecdote that draws readers in. Start with something funny or surprising from ${bookAuthor}'s life that captures the reader's attention and establishes the entertaining tone of this biography.`;
         } else if (sectionNumber === 2) {
-          sectionRole = `This is the SECOND section of the chapter. Your role is to develop the main ideas introduced in the first section. Expand on the concepts with examples and deeper analysis.`;
+          sectionRole = `This is the SECOND section of the chapter. Your role is to develop the main ideas introduced in the first section. Expand on the concepts with examples, amusing observations, and deeper analysis. Include at least one humorous personal story that reveals something about ${bookAuthor}'s character or approach to life.`;
 
           // 添加前一个section的上下文
           if (previousSections.length > 0) {
@@ -192,7 +192,7 @@ Previous section (${previousSections[0].title}) covered: ${previousSections[0].c
 You should build upon these ideas and maintain narrative continuity. Do not repeat the same examples or anecdotes, but do reference key concepts to create a cohesive flow.`;
           }
         } else if (sectionNumber === 3) {
-          sectionRole = `This is the THIRD section of the chapter. Your role is to present a turning point, contrast, or new perspective on the chapter's theme. Introduce a twist or insight that adds depth to the narrative.`;
+          sectionRole = `This is the THIRD section of the chapter. Your role is to present a turning point, contrast, or new perspective on the chapter's theme. Introduce a twist or insight that adds depth to the narrative. This is a good place for a humorous self-realization moment or an amusing contradiction in ${bookAuthor}'s approach that leads to an unexpected lesson.`;
 
           // 添加前两个section的上下文
           if (previousSections.length > 0) {
@@ -203,7 +203,7 @@ You should build upon these ideas and maintain narrative continuity. Do not repe
 Previous sections covered:\n${summaries}\n\nBuild upon these ideas while introducing new perspectives. Create smooth transitions between sections and maintain narrative continuity.`;
           }
         } else if (sectionNumber === 4) {
-          sectionRole = `This is the FINAL section of the chapter. Your role is to provide resolution, practical applications, and connect back to the chapter's main theme. End with a memorable conclusion that leaves readers with a clear takeaway.`;
+          sectionRole = `This is the FINAL section of the chapter. Your role is to provide resolution, practical applications, and connect back to the chapter's main theme. End with a memorable and slightly humorous conclusion that leaves readers with a clear takeaway. Include a witty final thought or amusing reflection from ${bookAuthor} that encapsulates the chapter's message while making the reader smile.`;
 
           // 添加前三个section的上下文
           if (previousSections.length > 0) {
@@ -232,14 +232,16 @@ Previous sections covered:\n${summaries}\n\nYour job is to bring closure to the 
 
             Guidelines for this section:
             - CRITICAL: THIS SECTION MUST CONTAIN EXACTLY BETWEEN 500 TO 600 WORDS. Not less, not more.
-            - Use first-person "I" when ${bookAuthor} is sharing personal experiences or anecdotes
+            - This is a FUNNY BIOGRAPHY - humor should be woven throughout the narrative, not just added as an afterthought
+            - Use first-person "I" when ${bookAuthor} is sharing personal experiences or anecdotes - make these stories engaging and humorous
             - Use second-person "you" when explaining methodologies or instructing the reader
             - The section should either:
-              * Share a personal experience through ${bookAuthor}'s eyes (first-person) and extract the lesson (second-person)
-              * Introduce a methodology using metaphors and explain how readers can apply it
-              * Connect ${bookAuthor}'s unique approach to broader applications for the audience
-            - Section title should use thematic metaphors related to the chapter's main concepts
-            - Make it insightful, methodological and funny while maintaining a professional tone
+              * Share a personal experience through ${bookAuthor}'s eyes (first-person) with humorous details and extract the lesson (second-person)
+              * Introduce a methodology using witty metaphors and explain how readers can apply it
+              * Connect ${bookAuthor}'s unique approach to broader applications for the audience with a touch of self-deprecating humor
+            - Include at least one humorous anecdote, amusing observation, or witty remark that reveals something about ${bookAuthor}'s character
+            - Section title should use thematic metaphors related to the chapter's main concepts - be creative and slightly playful
+            - Make it insightful, methodological and genuinely funny while maintaining a professional tone
             - Use double line breaks (\n\n) between paragraphs to clearly separate them
             - IMPORTANT: Create smooth transitions between sections. Reference ideas from previous sections when appropriate to maintain narrative flow.
 
@@ -264,6 +266,8 @@ Previous sections covered:\n${summaries}\n\nYour job is to bring closure to the 
                     content: `You MUST STRICTLY enforce these requirements:
 - CRITICAL REQUIREMENT: The section MUST contain EXACTLY between 500 and 600 words. Count the words carefully.
 - Each chapter has exactly 4 sections (not 5).
+- This is a FUNNY BIOGRAPHY - ensure each section contains humor that reveals something about the subject's character.
+- Balance humor with insight - the funny anecdotes should feel authentic and meaningful, not forced.
 - The section's content must use double line breaks (\\n\\n) between paragraphs to clearly separate them.
 - Maintain narrative continuity with previous sections when applicable.
 - Create smooth transitions between ideas and reference previous concepts when appropriate.
