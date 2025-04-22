@@ -170,13 +170,13 @@ serve(async (req) => {
       pdf.addFont('georgia', 'normal');
       pdf.addFont('georgia', 'bold');
 
-      // 加载并嵌入自定义字体
+      // 加载并嵌入 Georgia 字体
       try {
-        await loadAndEmbedFont(pdf, 'Garamond', 'https://wishiyo.com/fonts/EBGaramond-Regular.ttf', 'normal');
-        await loadAndEmbedFont(pdf, 'Garamond', 'https://wishiyo.com/fonts/EBGaramond-Bold.ttf', 'bold');
-        console.log('自定义字体加载并嵌入成功');
+        await loadAndEmbedFont(pdf, 'Georgia', 'https://wishiyo.com/fonts/georgia.ttf', 'normal');
+        await loadAndEmbedFont(pdf, 'Georgia', 'https://wishiyo.com/fonts/georgiab.ttf', 'bold');
+        console.log('Georgia 字体加载并嵌入成功');
       } catch (error) {
-        console.warn('加载自定义字体失败，将使用标准字体:', error);
+        console.warn('加载 Georgia 字体失败，将使用标准字体:', error);
       }
     }
 
@@ -233,7 +233,7 @@ serve(async (req) => {
       // 异步加载字体
       await addFonts(pdf);
       customFontsLoaded = true;
-      console.log('自定义字体加载成功，将使用 Garamond 字体');
+      console.log('自定义字体加载成功，将使用 Georgia 字体');
     } catch (fontError) {
       console.warn('自定义字体加载失败，将使用备用字体:', fontError);
       customFontsLoaded = false;
@@ -284,60 +284,60 @@ serve(async (req) => {
 
     const debugLines = false;
 
-    // 更新字体设置为Garamond风格
+    // 更新字体设置为 Georgia 风格
     const fonts = {
       title: {
-        family: 'Garamond', // 使用嵌入的Garamond字体
+        family: 'Georgia', // 使用嵌入的 Georgia 字体
         style: 'bold',
         size: 24
       },
       subtitle: {
-        family: 'Garamond',
+        family: 'Georgia',
         style: 'normal',
         size: 16
       },
       chapterTitle: {
-        family: 'Garamond',
+        family: 'Georgia',
         style: 'bold',
         size: 18
       },
       contentsTitle: {
-        family: 'Garamond',
+        family: 'Georgia',
         style: 'bold',
         size: 28 // 更大的目录标题，如图所示
       },
       sectionTitle: {
-        family: 'Garamond',
+        family: 'Georgia',
         style: 'bold',
         size: 12
       },
       body: {
-        family: 'Garamond',
+        family: 'Georgia',
         style: 'normal',
         size: 12
       },
       copyright: {
-        family: 'Garamond',
+        family: 'Georgia',
         style: 'normal',
         size: 10
       },
       tocChapter: {
-        family: 'Garamond',
+        family: 'Georgia',
         style: 'normal', // 目录中的章节标题使用斜体，更符合图片中的样式
         size: 12
       },
       tocPageNumber: {
-        family: 'Garamond',
+        family: 'Georgia',
         style: 'normal',
         size: 12
       },
       pageHeaderFooter: { // 新增样式用于页眉页脚
-        family: 'Garamond',
+        family: 'Georgia',
         style: 'normal',
         size: 10
       },
       runningHeader: { // 新增样式，用于居中放大的页眉章节标题
-        family: 'Garamond',
+        family: 'Georgia',
         style: 'normal',
         size: 11
       }

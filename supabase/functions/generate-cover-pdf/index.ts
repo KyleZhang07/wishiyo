@@ -210,54 +210,7 @@ serve(async (req) => {
       format: [pdfWidth, pdfHeight] // Width x Height with bleed areas
     });
 
-    // 加载并嵌入字体
-    let customFontsLoaded = false;
-    try {
-      await loadAndEmbedFont(pdf, 'Garamond', 'https://wishiyo.com/fonts/EBGaramond-Regular.ttf', 'normal');
-      await loadAndEmbedFont(pdf, 'Garamond', 'https://wishiyo.com/fonts/EBGaramond-Bold.ttf', 'bold');
-      customFontsLoaded = true;
-      console.log('封面PDF字体加载并嵌入成功');
-    } catch (error) {
-      console.warn('封面PDF加载自定义字体失败，将使用标准字体:', error);
-      customFontsLoaded = false;
-    }
-
-    // 加载并嵌入字体函数
-    async function loadAndEmbedFont(
-      doc: any,
-      fontName: string,              // 自定义字体名称
-      fontUrl: string,               // 字体文件 URL
-      fontStyle: string = 'normal'   // 字体样式
-    ) {
-      try {
-        // 1. 拉取字体文件
-        console.log(`加载字体: ${fontName} ${fontStyle} 从 ${fontUrl}`);
-        const res = await fetch(fontUrl);
-        if (!res.ok) throw new Error(`Failed to load font ${fontUrl}: ${res.status} ${res.statusText}`);
-        const buffer = new Uint8Array(await res.arrayBuffer());
-
-        // 2. 转 Base64
-        console.log(`转换字体为Base64: ${fontName} ${fontStyle}`);
-        const binary = Array.from(buffer)
-          .map((b) => String.fromCharCode(b))
-          .join("");
-        const base64 = btoa(binary);
-
-        // 3. 注册到 VFS（虚拟文件系统）
-        const fileName = `${fontName}-${fontStyle}.ttf`;
-        console.log(`添加字体到VFS: ${fileName}`);
-        doc.addFileToVFS(fileName, base64);
-
-        // 4. 声明字体
-        console.log(`注册字体: ${fontName} ${fontStyle}`);
-        doc.addFont(fileName, fontName, fontStyle);
-
-        return true;
-      } catch (error) {
-        console.error(`加载字体失败 ${fontName} ${fontStyle}:`, error);
-        throw error;
-      }
-    }
+    // 封面PDF不需要嵌入字体
 
     // Calculate positions and dimensions
     const bleed = 0.125; // Bleed area: 0.125"
@@ -528,8 +481,8 @@ serve(async (req) => {
 
     console.log(`Cover PDF uploaded successfully to storage with URL: ${coverFileUrl}`);
 
-    // 字体已在PDF生成过程中直接嵌入，无需再调用外部API
-    console.log(`字体已在PDF生成过程中直接嵌入，使用原始上传的PDF URL`);
+    // 封面PDF不需要嵌入字体
+    console.log(`封面PDF不需要嵌入字体，直接使用原始上传的PDF URL`);
     let processedCoverUrl = coverFileUrl;
 
     // 查询数据库获取书籍信息
