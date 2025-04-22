@@ -84,9 +84,30 @@ serve(async (req) => {
     const { selected_idea, answers, chapters } = bookData;
 
     // 使用传入的现有内容或从数据库获取
-    let bookChapters: BookChapter[] = existingContent.length > 0
-      ? [...existingContent]
-      : (Array.isArray(bookData.book_content) ? [...bookData.book_content] : []);
+    // 首先从数据库加载完整的章节内容
+    let bookChapters: BookChapter[] = [];
+
+    if (Array.isArray(bookData.book_content)) {
+      bookChapters = [...bookData.book_content];
+    }
+
+    // 如果传入了上下文内容（当前章节的部分内容），使用它来更新对应章节
+    if (existingContent && existingContent.length > 0) {
+      console.log(`Received context with ${existingContent.length} chapters`);
+      // 这里只会有当前章节的内容
+      for (const contextChapter of existingContent) {
+        // 查找数据库中是否已有该章节
+        const existingIndex = bookChapters.findIndex(ch => ch.chapterNumber === contextChapter.chapterNumber);
+
+        if (existingIndex !== -1) {
+          // 更新现有章节
+          bookChapters[existingIndex] = contextChapter;
+        } else {
+          // 添加新章节
+          bookChapters.push(contextChapter);
+        }
+      }
+    }
 
     if (!bookTitle || !bookAuthor || !selected_idea || !chapters) {
       throw new Error('Incomplete book data for content generation');
@@ -432,6 +453,28 @@ ${'Lorem ipsum dolor sit amet. '.repeat(100)}`
     if (endChapter < TOTAL_CHAPTERS) {
       console.log(`Triggering next batch (${batchNumber + 1}) for order ${orderId}`);
       try {
+        // 计算下一章节
+        const nextChapter = endChapter + 1;
+
+        // 提取上下文信息 - 只包含必要的内容
+        // 1. 当前章节的已生成部分（如果是章节的最后一部分，则不需要）
+        // 2. 不传递之前章节的内容
+        let contextContent = [];
+
+        // 如果当前章节有内容，并且不是完整章节，则传递当前章节的已生成部分
+        const currentChapterIndex = bookChapters.findIndex(ch => ch.chapterNumber === endChapter);
+        if (currentChapterIndex !== -1) {
+          const currentChapter = bookChapters[currentChapterIndex];
+          // 只传递当前章节的内容
+          contextContent.push({
+            chapterNumber: currentChapter.chapterNumber,
+            title: currentChapter.title,
+            sections: currentChapter.sections
+          });
+        }
+
+        console.log(`Passing context with ${contextContent.length} chapters to next batch`);
+
         // 异步触发下一批次，不等待响应
         fetch(`${supabaseUrl}/functions/v1/generate-book-content`, {
           method: 'POST',
@@ -442,7 +485,7 @@ ${'Lorem ipsum dolor sit amet. '.repeat(100)}`
           body: JSON.stringify({
             orderId,
             batchNumber: batchNumber + 1,
-            existingContent: bookChapters
+            existingContent: contextContent // 只传递必要的上下文内容
           })
         }).catch(error => {
           console.error(`Error triggering next batch: ${error.message}`);
