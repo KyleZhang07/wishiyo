@@ -162,21 +162,27 @@ serve(async (req) => {
 
     // 添加字体
     async function addFonts(pdf: any) {
-      // 添加标准字体
-      pdf.addFont('helvetica', 'normal');
-      pdf.addFont('helvetica', 'bold');
-      pdf.addFont('times', 'normal');
-      pdf.addFont('times', 'bold');
-      pdf.addFont('georgia', 'normal');
-      pdf.addFont('georgia', 'bold');
+      // 注意：不需要显式添加标准字体，它们已经内置在 jsPDF 中
 
-      // 加载并嵌入 Georgia 字体
+      // 加载并嵌入 EB Garamond 字体
       try {
-        await loadAndEmbedFont(pdf, 'Georgia', 'https://wishiyo.com/fonts/georgia.ttf', 'normal');
-        await loadAndEmbedFont(pdf, 'Georgia', 'https://wishiyo.com/fonts/georgiab.ttf', 'bold');
-        console.log('Georgia 字体加载并嵌入成功');
+        await loadAndEmbedFont(
+          pdf,
+          'EBGaramond',
+          'https://hbkgbggctzvqffqfrmhl.supabase.co/storage/v1/object/public/fonts/EBGaramond-Regular.ttf',
+          'normal'
+        );
+        await loadAndEmbedFont(
+          pdf,
+          'EBGaramond',
+          'https://hbkgbggctzvqffqfrmhl.supabase.co/storage/v1/object/public/fonts/EBGaramond-Bold.ttf',
+          'bold'
+        );
+        console.log('EB Garamond 字体加载并嵌入成功');
+        return true;
       } catch (error) {
-        console.warn('加载 Georgia 字体失败，将使用标准字体:', error);
+        console.warn('加载 EB Garamond 字体失败，将使用标准字体:', error);
+        return false;
       }
     }
 
@@ -222,6 +228,9 @@ serve(async (req) => {
     const pageWidth = 6 + (bleed * 2);
     const pageHeight = 9 + (bleed * 2);
 
+    // 字体加载状态
+    let customFontsLoaded = false;
+
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'in',
@@ -231,9 +240,12 @@ serve(async (req) => {
     // 异步加载字体
     try {
       // 异步加载字体
-      await addFonts(pdf);
-      customFontsLoaded = true;
-      console.log('自定义字体加载成功，将使用 Georgia 字体');
+      customFontsLoaded = await addFonts(pdf);
+      if (customFontsLoaded) {
+        console.log('自定义字体加载成功，将使用 EB Garamond 字体');
+      } else {
+        console.log('使用标准字体');
+      }
     } catch (fontError) {
       console.warn('自定义字体加载失败，将使用备用字体:', fontError);
       customFontsLoaded = false;
@@ -284,60 +296,60 @@ serve(async (req) => {
 
     const debugLines = false;
 
-    // 更新字体设置为 Georgia 风格
+    // 更新字体设置为 EB Garamond 风格
     const fonts = {
       title: {
-        family: 'Georgia', // 使用嵌入的 Georgia 字体
+        family: 'EBGaramond', // 使用嵌入的 EB Garamond 字体
         style: 'bold',
         size: 24
       },
       subtitle: {
-        family: 'Georgia',
+        family: 'EBGaramond',
         style: 'normal',
         size: 16
       },
       chapterTitle: {
-        family: 'Georgia',
+        family: 'EBGaramond',
         style: 'bold',
         size: 18
       },
       contentsTitle: {
-        family: 'Georgia',
+        family: 'EBGaramond',
         style: 'bold',
         size: 28 // 更大的目录标题，如图所示
       },
       sectionTitle: {
-        family: 'Georgia',
+        family: 'EBGaramond',
         style: 'bold',
         size: 12
       },
       body: {
-        family: 'Georgia',
+        family: 'EBGaramond',
         style: 'normal',
         size: 12
       },
       copyright: {
-        family: 'Georgia',
+        family: 'EBGaramond',
         style: 'normal',
         size: 10
       },
       tocChapter: {
-        family: 'Georgia',
+        family: 'EBGaramond',
         style: 'normal', // 目录中的章节标题使用斜体，更符合图片中的样式
         size: 12
       },
       tocPageNumber: {
-        family: 'Georgia',
+        family: 'EBGaramond',
         style: 'normal',
         size: 12
       },
       pageHeaderFooter: { // 新增样式用于页眉页脚
-        family: 'Georgia',
+        family: 'EBGaramond',
         style: 'normal',
         size: 10
       },
       runningHeader: { // 新增样式，用于居中放大的页眉章节标题
-        family: 'Georgia',
+        family: 'EBGaramond',
         style: 'normal',
         size: 11
       }
@@ -346,64 +358,63 @@ serve(async (req) => {
     // 备用字体设置，如果自定义字体加载失败则使用这些
     const fallbackFonts = {
       title: {
-        family: 'Georgia',
+        family: 'times',
         style: 'bold',
         size: 24
       },
       subtitle: {
-        family: 'Georgia',
+        family: 'times',
         style: 'normal',
         size: 16
       },
       chapterTitle: {
-        family: 'Georgia',
+        family: 'times',
         style: 'bold',
         size: 18
       },
       contentsTitle: {
-        family: 'Georgia',
+        family: 'times',
         style: 'bold',
         size: 28
       },
       sectionTitle: {
-        family: 'Georgia',
+        family: 'times',
         style: 'bold',
         size: 12
       },
       body: {
-        family: 'Georgia',
+        family: 'times',
         style: 'normal',
         size: 12
       },
       copyright: {
-        family: 'Georgia',
+        family: 'times',
         style: 'normal',
         size: 10
       },
       tocChapter: {
-        family: 'Georgia',
+        family: 'times',
         style: 'normal',
         size: 12
       },
       tocPageNumber: {
-        family: 'Georgia',
+        family: 'times',
         style: 'normal',
         size: 12
       },
       pageHeaderFooter: {
-        family: 'Georgia',
+        family: 'times',
         style: 'normal',
         size: 10
       },
       runningHeader: {
-        family: 'Georgia',
+        family: 'times',
         style: 'normal',
         size: 11
       }
     };
 
-    // 字体加载状态
-    let customFontsLoaded = false;
+
 
     // 设置字体和大小的辅助函数
     function setFont(type: keyof typeof fonts) {
@@ -1161,8 +1172,8 @@ serve(async (req) => {
       console.log(`Interior PDF uploaded successfully to storage with URL: ${interiorFileUrl}`);
     }
 
-    // 字体已在PDF生成过程中直接嵌入，无需再调用外部API
-    console.log(`字体已在PDF生成过程中直接嵌入，使用原始上传的PDF URL`);
+    // EB Garamond 字体已在PDF生成过程中直接嵌入，无需再调用外部API
+    console.log(`EB Garamond 字体已在PDF生成过程中直接嵌入，使用原始上传的PDF URL`);
     let processedInteriorUrl = interiorFileUrl;
 
     // 更新数据库

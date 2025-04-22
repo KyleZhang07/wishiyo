@@ -11,9 +11,6 @@
   "functions": {
     "api/merge-pdf.js": {
       "maxDuration": 60
-    },
-    "api/embed-fonts.js": {
-      "maxDuration": 60
     }
   }
 }

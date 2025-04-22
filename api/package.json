@@ -1,9 +1,0 @@
-{
-  "name": "wishiyo-api-functions",
-  "version": "1.0.0",
-  "description": "API functions for Wishiyo",
-  "dependencies": {
-    "pdf-lib": "^1.17.1",
-    "@supabase/supabase-js": "^2.49.1"
-  }
-}
