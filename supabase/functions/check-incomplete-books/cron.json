@@ -1,6 +1,0 @@
-{
-  "name": "check_incomplete_books",
-  "schedule": "*/5 * * * *",
-  "http_method": "GET",
-  "function_name": "check-incomplete-books"
-}

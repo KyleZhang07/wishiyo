@@ -343,13 +343,18 @@ export default async function handler(req, res) {
 
                 // 3. 调用内容生成函数
                 console.log(`[${orderId}] Calling content generation function`);
+                // 使用 Vercel API 路由而不是 Supabase Edge Function
+                const apiUrl = process.env.VERCEL_URL
+                  ? `https://${process.env.VERCEL_URL}/api/generate-book-content`
+                  : `${process.env.NEXT_PUBLIC_SITE_URL}/api/generate-book-content`;
+
+                console.log(`[${orderId}] Using API URL: ${apiUrl}`);
                 const contentPromise = fetch(
-                  `${supabaseUrl}/functions/v1/generate-book-content`,
+                  apiUrl,
                   {
                     method: 'POST',
                     headers: {
-                      'Content-Type': 'application/json',
-                      'Authorization': `Bearer ${supabaseKey}`
+                      'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
                       orderId
