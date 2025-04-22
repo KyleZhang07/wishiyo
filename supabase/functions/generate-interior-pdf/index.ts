@@ -161,7 +161,7 @@ serve(async (req) => {
     }
 
     // 添加字体
-    function addFonts(pdf: any) {
+    async function addFonts(pdf: any) {
       // 添加标准字体
       pdf.addFont('helvetica', 'normal');
       pdf.addFont('helvetica', 'bold');
@@ -169,6 +169,52 @@ serve(async (req) => {
       pdf.addFont('times', 'bold');
       pdf.addFont('georgia', 'normal');
       pdf.addFont('georgia', 'bold');
+
+      // 加载并嵌入自定义字体
+      try {
+        await loadAndEmbedFont(pdf, 'Garamond', 'https://wishiyo.com/fonts/EBGaramond-Regular.ttf', 'normal');
+        await loadAndEmbedFont(pdf, 'Garamond', 'https://wishiyo.com/fonts/EBGaramond-Bold.ttf', 'bold');
+        console.log('自定义字体加载并嵌入成功');
+      } catch (error) {
+        console.warn('加载自定义字体失败，将使用标准字体:', error);
+      }
+    }
+
+    // 加载并嵌入字体
+    async function loadAndEmbedFont(
+      doc: any,
+      fontName: string,              // 自定义字体名称
+      fontUrl: string,               // 字体文件 URL
+      fontStyle: string = 'normal'   // 字体样式
+    ) {
+      try {
+        // 1. 拉取字体文件
+        console.log(`加载字体: ${fontName} ${fontStyle} 从 ${fontUrl}`);
+        const res = await fetch(fontUrl);
+        if (!res.ok) throw new Error(`Failed to load font ${fontUrl}: ${res.status} ${res.statusText}`);
+        const buffer = new Uint8Array(await res.arrayBuffer());
+
+        // 2. 转 Base64
+        console.log(`转换字体为Base64: ${fontName} ${fontStyle}`);
+        const binary = Array.from(buffer)
+          .map((b) => String.fromCharCode(b))
+          .join("");
+        const base64 = btoa(binary);
+
+        // 3. 注册到 VFS（虚拟文件系统）
+        const fileName = `${fontName}-${fontStyle}.ttf`;
+        console.log(`添加字体到VFS: ${fileName}`);
+        doc.addFileToVFS(fileName, base64);
+
+        // 4. 声明字体
+        console.log(`注册字体: ${fontName} ${fontStyle}`);
+        doc.addFont(fileName, fontName, fontStyle);
+
+        return true;
+      } catch (error) {
+        console.error(`加载字体失败 ${fontName} ${fontStyle}:`, error);
+        throw error;
+      }
     }
 
     // 设置页面出血和尺寸
@@ -182,8 +228,16 @@ serve(async (req) => {
       format: [pageWidth, pageHeight]
     });
 
-    // 添加字体
-    addFonts(pdf);
+    // 异步加载字体
+    try {
+      // 异步加载字体
+      await addFonts(pdf);
+      customFontsLoaded = true;
+      console.log('自定义字体加载成功，将使用 Garamond 字体');
+    } catch (fontError) {
+      console.warn('自定义字体加载失败，将使用备用字体:', fontError);
+      customFontsLoaded = false;
+    }
 
     // 设置页边距
     // 基础边距
@@ -230,8 +284,67 @@ serve(async (req) => {
 
     const debugLines = false;
 
-    // 更新字体设置为Garamond风格（用Georgia作为近似替代）
+    // 更新字体设置为Garamond风格
     const fonts = {
+      title: {
+        family: 'Garamond', // 使用嵌入的Garamond字体
+        style: 'bold',
+        size: 24
+      },
+      subtitle: {
+        family: 'Garamond',
+        style: 'normal',
+        size: 16
+      },
+      chapterTitle: {
+        family: 'Garamond',
+        style: 'bold',
+        size: 18
+      },
+      contentsTitle: {
+        family: 'Garamond',
+        style: 'bold',
+        size: 28 // 更大的目录标题，如图所示
+      },
+      sectionTitle: {
+        family: 'Garamond',
+        style: 'bold',
+        size: 12
+      },
+      body: {
+        family: 'Garamond',
+        style: 'normal',
+        size: 12
+      },
+      copyright: {
+        family: 'Garamond',
+        style: 'normal',
+        size: 10
+      },
+      tocChapter: {
+        family: 'Garamond',
+        style: 'normal', // 目录中的章节标题使用斜体，更符合图片中的样式
+        size: 12
+      },
+      tocPageNumber: {
+        family: 'Garamond',
+        style: 'normal',
+        size: 12
+      },
+      pageHeaderFooter: { // 新增样式用于页眉页脚
+        family: 'Garamond',
+        style: 'normal',
+        size: 10
+      },
+      runningHeader: { // 新增样式，用于居中放大的页眉章节标题
+        family: 'Garamond',
+        style: 'normal',
+        size: 11
+      }
+    };
+
+    // 备用字体设置，如果自定义字体加载失败则使用这些
+    const fallbackFonts = {
       title: {
         family: 'Georgia',
         style: 'bold',
@@ -250,7 +363,7 @@ serve(async (req) => {
       contentsTitle: {
         family: 'Georgia',
         style: 'bold',
-        size: 28 // 更大的目录标题，如图所示
+        size: 28
       },
       sectionTitle: {
         family: 'Georgia',
@@ -269,7 +382,7 @@ serve(async (req) => {
       },
       tocChapter: {
         family: 'Georgia',
-        style: 'normal', // 目录中的章节标题使用斜体，更符合图片中的样式
+        style: 'normal',
         size: 12
       },
       tocPageNumber: {
@@ -277,21 +390,25 @@ serve(async (req) => {
         style: 'normal',
         size: 12
       },
-      pageHeaderFooter: { // 新增样式用于页眉页脚
+      pageHeaderFooter: {
         family: 'Georgia',
         style: 'normal',
         size: 10
       },
-      runningHeader: { // 新增样式，用于居中放大的页眉章节标题
+      runningHeader: {
         family: 'Georgia',
         style: 'normal',
         size: 11
       }
     };
 
+    // 字体加载状态
+    let customFontsLoaded = false;
+
     // 设置字体和大小的辅助函数
     function setFont(type: keyof typeof fonts) {
-      const font = fonts[type];
+      // 根据字体加载状态选择使用主字体或备用字体
+      const font = customFontsLoaded ? fonts[type] : fallbackFonts[type];
       pdf.setFont(font.family, font.style);
       pdf.setFontSize(font.size);
       // 返回以英寸为单位的行高
@@ -1044,47 +1161,9 @@ serve(async (req) => {
       console.log(`Interior PDF uploaded successfully to storage with URL: ${interiorFileUrl}`);
     }
 
-    // 处理字体嵌入
+    // 字体已在PDF生成过程中直接嵌入，无需再调用外部API
+    console.log(`字体已在PDF生成过程中直接嵌入，使用原始上传的PDF URL`);
     let processedInteriorUrl = interiorFileUrl;
-    try {
-      if (interiorFileUrl) {
-        console.log(`调用字体嵌入处理API处理内页PDF...`);
-        // 获取当前域名
-        const origin = req.headers.get('origin') || 'https://wishiyo.com';
-        const embedFontsEndpoint = `${origin}/api/embed-fonts`;
-
-        try {
-          const embedResponse = await fetch(embedFontsEndpoint, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              orderId: orderId,
-              type: 'interior',
-              tableName: 'funny_biography_books'
-            })
-          });
-
-          if (embedResponse.ok) {
-            const embedResult = await embedResponse.json();
-            if (embedResult.success && embedResult.processedUrl) {
-              processedInteriorUrl = embedResult.processedUrl;
-              console.log(`字体嵌入处理成功，新URL: ${processedInteriorUrl}`);
-            } else {
-              console.warn(`字体嵌入处理返回失败结果: ${JSON.stringify(embedResult)}`);
-            }
-          } else {
-            console.warn(`字体嵌入处理请求失败: ${embedResponse.status} ${embedResponse.statusText}`);
-          }
-        } catch (embedError) {
-          console.warn(`调用字体嵌入处理API时出错: ${embedError.message}`);
-          // 继续使用原始的PDF URL
-        }
-      }
-    } catch (fontEmbedError) {
-      console.warn(`字体嵌入处理失败，使用原始 PDF: ${fontEmbedError.message}`);
-    }
 
     // 更新数据库
     // const pageCount = finalBookContent.length * 5; // 旧的粗略计算

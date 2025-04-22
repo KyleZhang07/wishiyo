@@ -185,7 +185,7 @@ serve(async (req) => {
       spineWidth = 0.813; // 精装本书脊宽度
       // 计算新的PDF总宽度 = 两个封面宽度 + 书脊宽度 + 两侧包装区域
       const wrapAreaWidth = 0.75; // 每侧0.75"的包装区域
-      pdfWidth = (bookWidth * 2) + spineWidth + (wrapAreaWidth * 2); // 14.563" 
+      pdfWidth = (bookWidth * 2) + spineWidth + (wrapAreaWidth * 2); // 14.563"
       pdfHeight = 10.75;
       console.log(`Using hardcover dimensions: ${pdfWidth}" x ${pdfHeight}" with spine width ${spineWidth}"`);
       console.log(`Total content width: ${(bookWidth * 2) + spineWidth}"`);
@@ -209,6 +209,55 @@ serve(async (req) => {
       unit: 'in',
       format: [pdfWidth, pdfHeight] // Width x Height with bleed areas
     });
+
+    // 加载并嵌入字体
+    let customFontsLoaded = false;
+    try {
+      await loadAndEmbedFont(pdf, 'Garamond', 'https://wishiyo.com/fonts/EBGaramond-Regular.ttf', 'normal');
+      await loadAndEmbedFont(pdf, 'Garamond', 'https://wishiyo.com/fonts/EBGaramond-Bold.ttf', 'bold');
+      customFontsLoaded = true;
+      console.log('封面PDF字体加载并嵌入成功');
+    } catch (error) {
+      console.warn('封面PDF加载自定义字体失败，将使用标准字体:', error);
+      customFontsLoaded = false;
+    }
+
+    // 加载并嵌入字体函数
+    async function loadAndEmbedFont(
+      doc: any,
+      fontName: string,              // 自定义字体名称
+      fontUrl: string,               // 字体文件 URL
+      fontStyle: string = 'normal'   // 字体样式
+    ) {
+      try {
+        // 1. 拉取字体文件
+        console.log(`加载字体: ${fontName} ${fontStyle} 从 ${fontUrl}`);
+        const res = await fetch(fontUrl);
+        if (!res.ok) throw new Error(`Failed to load font ${fontUrl}: ${res.status} ${res.statusText}`);
+        const buffer = new Uint8Array(await res.arrayBuffer());
+
+        // 2. 转 Base64
+        console.log(`转换字体为Base64: ${fontName} ${fontStyle}`);
+        const binary = Array.from(buffer)
+          .map((b) => String.fromCharCode(b))
+          .join("");
+        const base64 = btoa(binary);
+
+        // 3. 注册到 VFS（虚拟文件系统）
+        const fileName = `${fontName}-${fontStyle}.ttf`;
+        console.log(`添加字体到VFS: ${fileName}`);
+        doc.addFileToVFS(fileName, base64);
+
+        // 4. 声明字体
+        console.log(`注册字体: ${fontName} ${fontStyle}`);
+        doc.addFont(fileName, fontName, fontStyle);
+
+        return true;
+      } catch (error) {
+        console.error(`加载字体失败 ${fontName} ${fontStyle}:`, error);
+        throw error;
+      }
+    }
 
     // Calculate positions and dimensions
     const bleed = 0.125; // Bleed area: 0.125"
@@ -479,47 +528,9 @@ serve(async (req) => {
 
     console.log(`Cover PDF uploaded successfully to storage with URL: ${coverFileUrl}`);
 
-    // 处理字体嵌入
+    // 字体已在PDF生成过程中直接嵌入，无需再调用外部API
+    console.log(`字体已在PDF生成过程中直接嵌入，使用原始上传的PDF URL`);
     let processedCoverUrl = coverFileUrl;
-    try {
-      if (coverFileUrl) {
-        console.log(`调用字体嵌入处理API处理封面PDF...`);
-        // 获取当前域名
-        const origin = req.headers.get('origin') || 'https://wishiyo.com';
-        const embedFontsEndpoint = `${origin}/api/embed-fonts`;
-
-        try {
-          const embedResponse = await fetch(embedFontsEndpoint, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              orderId: orderId,
-              type: 'cover',
-              tableName: 'funny_biography_books'
-            })
-          });
-
-          if (embedResponse.ok) {
-            const embedResult = await embedResponse.json();
-            if (embedResult.success && embedResult.processedUrl) {
-              processedCoverUrl = embedResult.processedUrl;
-              console.log(`字体嵌入处理成功，新URL: ${processedCoverUrl}`);
-            } else {
-              console.warn(`字体嵌入处理返回失败结果: ${JSON.stringify(embedResult)}`);
-            }
-          } else {
-            console.warn(`字体嵌入处理请求失败: ${embedResponse.status} ${embedResponse.statusText}`);
-          }
-        } catch (embedError) {
-          console.warn(`调用字体嵌入处理API时出错: ${embedError.message}`);
-          // 继续使用原始的PDF URL
-        }
-      }
-    } catch (fontEmbedError) {
-      console.warn(`字体嵌入处理失败，使用原始 PDF: ${fontEmbedError.message}`);
-    }
 
     // 查询数据库获取书籍信息
     const { data: bookData, error: bookError } = await supabase
