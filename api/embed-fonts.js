@@ -1,6 +1,5 @@
 // 导入所需模块
 import { createClient } from '@supabase/supabase-js';
-import { PDFDocument } from 'pdf-lib';
 import { exec } from 'child_process';
 import fs from 'fs';
 import path from 'path';
@@ -151,7 +150,7 @@ export default async function handler(req, res) {
       console.log(`从数据库获取PDF数据，表: ${table}, 列: ${column}, 订单ID: ${orderId}`);
 
       // 先检查表中是否有任何记录
-      const { data: allRecords, error: listError } = await supabase
+      const { data: allRecords } = await supabase
         .from(table)
         .select('id, order_id')
         .limit(5);
@@ -268,39 +267,10 @@ export default async function handler(req, res) {
 
     console.log(`PDF数据获取成功，大小: ${pdfData.byteLength} 字节，开始处理字体嵌入...`);
 
-    // 尝试使用Ghostscript处理字体嵌入
-    let processedPdfBytes;
-    try {
-      console.log(`尝试使用Ghostscript处理字体嵌入...`);
-      processedPdfBytes = await embedFontsWithGhostscript(pdfData);
-      console.log(`Ghostscript处理成功，处理后的PDF大小: ${processedPdfBytes.length} 字节`);
-    } catch (gsError) {
-      console.error(`Ghostscript处理失败，回退到pdf-lib处理:`, gsError);
-
-      // 如果Ghostscript失败，回退到使用pdf-lib处理
-      console.log(`使用pdf-lib处理字体嵌入...`);
-      const pdfDoc = await PDFDocument.load(pdfData);
-
-      // 获取文档中的页面
-      const pages = pdfDoc.getPages();
-
-      console.log(`PDF包含 ${pages.length} 页`);
-
-      // 嵌入所有字体
-      // 注意：pdf-lib不直接提供字体嵌入API，但我们可以通过复制页面来确保字体被正确嵌入
-      const newPdfDoc = await PDFDocument.create();
-      const copiedPages = await newPdfDoc.copyPages(pdfDoc, pdfDoc.getPageIndices());
-
-      for (const page of copiedPages) {
-        newPdfDoc.addPage(page);
-      }
-
-      console.log(`字体处理完成，保存处理后的PDF...`);
-
-      // 保存处理后的PDF
-      processedPdfBytes = await newPdfDoc.save();
-      console.log(`处理后的PDF大小: ${processedPdfBytes.byteLength} 字节`);
-    }
+    // 使用Ghostscript处理字体嵌入
+    console.log(`使用Ghostscript处理字体嵌入...`);
+    const processedPdfBytes = await embedFontsWithGhostscript(pdfData);
+    console.log(`Ghostscript处理成功，处理后的PDF大小: ${processedPdfBytes.length} 字节`);
 
     // 如果提供了orderId和type，则更新数据库
     if (orderId && type) {
