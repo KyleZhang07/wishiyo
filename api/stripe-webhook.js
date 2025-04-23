@@ -203,6 +203,46 @@ export default async function handler(req, res) {
             console.log(`[DEBUG] Has shipping_cost:`, !!expandedSession.shipping_cost);
             console.log(`[DEBUG] Has shipping_details:`, !!expandedSession.shipping_details);
 
+            // 记录完整的 expandedSession 结构
+            console.log('[DEBUG] Full expandedSession structure (truncated):',
+              JSON.stringify(expandedSession, (key, value) => {
+                // 对敏感信息进行脱敏
+                if (key === 'customer_details' && value && value.email) {
+                  return { ...value, email: '***@***.com' };
+                }
+                if (key === 'customer_details' && value && value.phone) {
+                  return { ...value, phone: '***********' };
+                }
+                return value;
+              }, 2).substring(0, 2000) + '...');
+
+            // 特别记录与运输相关的字段
+            console.log('[DEBUG] Shipping related fields:', {
+              shipping_cost: expandedSession.shipping_cost,
+              shipping_details: expandedSession.shipping_details,
+              shipping_options: expandedSession.shipping_options,
+              shipping_rate: expandedSession.shipping_rate,
+              shipping_address_collection: expandedSession.shipping_address_collection,
+              shipping_methods: expandedSession.shipping_methods,
+              total_details: expandedSession.total_details
+            });
+
+            // 如果存在 shipping_cost，记录其完整结构
+            if (expandedSession.shipping_cost) {
+              console.log('[DEBUG] Full shipping_cost structure:', JSON.stringify(expandedSession.shipping_cost, null, 2));
+              console.log('[DEBUG] shipping_cost keys:', Object.keys(expandedSession.shipping_cost));
+            }
+
+            // 如果存在 total_details，记录其完整结构
+            if (expandedSession.total_details) {
+              console.log('[DEBUG] Full total_details structure:', JSON.stringify(expandedSession.total_details, null, 2));
+            }
+
+            // 如果存在 line_items，记录其完整结构
+            if (expandedSession.line_items && expandedSession.line_items.data) {
+              console.log('[DEBUG] First line item:', JSON.stringify(expandedSession.line_items.data[0], null, 2));
+            }
+
             // 从会话元数据中提取图书信息
             const { productId, format, title, orderId, binding_type, is_color, paper_type } = session.metadata || {};
 
@@ -254,12 +294,42 @@ export default async function handler(req, res) {
               sessionId: session.id
             });
 
+            // 检查所有可能包含运输信息的字段
+            console.log('[DEBUG] Checking all possible shipping fields:', {
+              'shipping_cost': expandedSession.shipping_cost,
+              'shipping_cost_type': typeof expandedSession.shipping_cost,
+              'shipping_cost.shipping_rate': expandedSession.shipping_cost?.shipping_rate,
+              'shipping_cost.amount_total': expandedSession.shipping_cost?.amount_total,
+              'shipping_cost.amount_subtotal': expandedSession.shipping_cost?.amount_subtotal,
+              'shipping_cost.amount_tax': expandedSession.shipping_cost?.amount_tax,
+              'total_details': expandedSession.total_details,
+              'total_details.amount_shipping': expandedSession.total_details?.amount_shipping,
+              'shipping_options': expandedSession.shipping_options,
+              'shipping_rate': expandedSession.shipping_rate,
+              'shipping_methods': expandedSession.shipping_methods,
+              'line_items': expandedSession.line_items ? 'exists' : 'null',
+              'line_items.data.length': expandedSession.line_items?.data?.length || 0
+            });
+
+            // 如果存在 line_items，检查其中的运输信息
+            if (expandedSession.line_items && expandedSession.line_items.data && expandedSession.line_items.data.length > 0) {
+              console.log('[DEBUG] First line item shipping info:', {
+                'shipping_rate': expandedSession.line_items.data[0].shipping_rate,
+                'shipping_details': expandedSession.line_items.data[0].shipping_details,
+                'shipping': expandedSession.line_items.data[0].shipping,
+                'has_shipping_cost': !!expandedSession.line_items.data[0].shipping_cost
+              });
+            }
+
             // 提取运输速度信息
             const shippingOption = expandedSession.shipping_cost ? {
               shipping_rate: expandedSession.shipping_cost.shipping_rate,
               display_name: expandedSession.shipping_cost.display_name,
               delivery_estimate: expandedSession.shipping_cost.delivery_estimate
             } : null;
+
+            // 记录提取的 shippingOption 对象
+            console.log('[DEBUG] Extracted shippingOption object:', shippingOption);
 
             console.log('Payment successful for order', orderId);
             console.log('Product ID:', productId);
@@ -270,7 +340,29 @@ export default async function handler(req, res) {
             console.log('[DEBUG] Shipping level details:', {
               shipping_option_exists: !!shippingOption,
               display_name: shippingOption?.display_name || 'null',
+              shipping_rate_id: shippingOption?.shipping_rate || 'null',
               mapped_shipping_level: shippingOption?.display_name === 'Express Shipping' ? 'EXPEDITED' : 'MAIL'
+            });
+
+            // 检查是否有运输费用，可能用于判断是否是快递运输
+            if (expandedSession.total_details) {
+              const hasShippingCost = expandedSession.total_details.amount_shipping > 0;
+              console.log('[DEBUG] Shipping cost check:', {
+                total_details: expandedSession.total_details,
+                amount_shipping: expandedSession.total_details.amount_shipping,
+                has_shipping_cost: hasShippingCost,
+                shipping_level_by_cost: hasShippingCost ? 'EXPEDITED' : 'MAIL'
+              });
+            }
+
+            // 检查是否有其他可能的运输相关字段
+            console.log('[DEBUG] Additional shipping related fields:', {
+              amount_subtotal: expandedSession.amount_subtotal,
+              amount_total: expandedSession.amount_total,
+              payment_intent: expandedSession.payment_intent ? 'exists' : 'null',
+              metadata: expandedSession.metadata,
+              shipping_cost_object_id: expandedSession.shipping_cost_object_id,
+              shipping_rate_object: expandedSession.shipping_rate_object
             });
 
             // 如果图书类型是funny-biography，启动生成过程
