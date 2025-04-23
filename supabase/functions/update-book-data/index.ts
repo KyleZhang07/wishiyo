@@ -13,12 +13,12 @@ serve(async (req) => {
   }
 
   try {
-    const { 
-      orderId, 
-      table_name, 
-      bookContent, 
-      coverPdf, 
-      interiorPdf, 
+    const {
+      orderId,
+      table_name,
+      bookContent,
+      coverPdf,
+      interiorPdf,
       status,
       shipping_address,
       shipping_option,
@@ -41,7 +41,7 @@ serve(async (req) => {
       lulu_tracking_url,
       print_date,
       print_attempts,
-      style, 
+      style,
     } = await req.json();
 
     // Debug logging for shipping address
@@ -60,7 +60,7 @@ serve(async (req) => {
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
-    
+
     if (!supabaseUrl || !supabaseServiceKey) {
       throw new Error('Missing Supabase credentials');
     }
@@ -72,31 +72,31 @@ serve(async (req) => {
 
     // Prepare update data
     const updateData: Record<string, any> = {};
-    
+
     if (bookContent) {
       updateData.book_content = bookContent;
     }
-    
+
     if (coverPdf) {
       updateData.cover_pdf = coverPdf;
     }
-    
+
     if (interiorPdf) {
       updateData.interior_pdf = interiorPdf;
     }
-    
+
     if (status) {
       updateData.status = status;
     }
 
     if (shipping_address) {
       console.log('Setting shipping_address in database:', JSON.stringify(shipping_address));
-      
+
       // Handle different formats of shipping_address to ensure proper JSONB storage
       try {
         // First determine if shipping_address is already a string or an object
         let shippingAddressObj;
-        
+
         if (typeof shipping_address === 'string') {
           // If it's a string, parse it to ensure it's valid JSON
           try {
@@ -110,13 +110,13 @@ serve(async (req) => {
           // If it's already an object, use it directly
           shippingAddressObj = shipping_address;
         }
-        
+
         // Now ensure we have a proper object for JSONB field
         // For PostgreSQL JSONB, we need a plain JavaScript object that can be stringified
         updateData.shipping_address = shippingAddressObj;
-        
-        console.log('Final shipping_address format for database:', 
-          typeof updateData.shipping_address, 
+
+        console.log('Final shipping_address format for database:',
+          typeof updateData.shipping_address,
           JSON.stringify(updateData.shipping_address)
         );
       } catch (error) {
@@ -125,83 +125,91 @@ serve(async (req) => {
         updateData.shipping_address = { data: shipping_address };
       }
     }
-    
+
     if (shipping_option) {
       updateData.shipping_option = shipping_option;
     }
-    
+
     if (customer_email) {
       updateData.customer_email = customer_email;
     }
-    
+
     if (shipping_level) {
+      console.log('[DEBUG] Setting shipping_level in database:', {
+        shipping_level,
+        shipping_level_type: typeof shipping_level,
+        table_name: targetTable,
+        order_id: orderId
+      });
       updateData.shipping_level = shipping_level;
+    } else {
+      console.log('[DEBUG] No shipping_level provided for order:', orderId);
     }
-    
+
     if (recipient_phone) {
       updateData.recipient_phone = recipient_phone;
     }
-    
+
     if (cover_source_url) {
       updateData.cover_source_url = cover_source_url;
     }
-    
+
     if (interior_source_url) {
       updateData.interior_source_url = interior_source_url;
     }
-    
+
     if (pod_package_id) {
       updateData.pod_package_id = pod_package_id;
     }
-    
+
     if (print_quantity !== undefined) {
       updateData.print_quantity = print_quantity;
     }
-    
+
     if (book_size) {
       updateData.book_size = book_size;
     }
-    
+
     if (page_count !== undefined) {
       updateData.page_count = page_count;
     }
-    
+
     if (is_color !== undefined) {
       updateData.is_color = is_color;
     }
-    
+
     if (paper_type) {
       updateData.paper_type = paper_type;
     }
-    
+
     if (binding_type) {
       updateData.binding_type = binding_type;
     }
-    
+
     if (ready_for_printing !== undefined) {
       updateData.ready_for_printing = ready_for_printing;
     }
-    
+
     if (lulu_print_job_id) {
       updateData.lulu_print_job_id = lulu_print_job_id;
     }
-    
+
     if (lulu_print_status) {
       updateData.lulu_print_status = lulu_print_status;
     }
-    
+
     if (lulu_tracking_number) {
       updateData.lulu_tracking_number = lulu_tracking_number;
     }
-    
+
     if (lulu_tracking_url) {
       updateData.lulu_tracking_url = lulu_tracking_url;
     }
-    
+
     if (print_date) {
       updateData.print_date = print_date;
     }
-    
+
     if (print_attempts !== undefined) {
       updateData.print_attempts = print_attempts;
     }
@@ -223,8 +231,8 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         message: 'Book data updated successfully',
         data
       }),

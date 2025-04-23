@@ -190,11 +190,18 @@ export default async function handler(req, res) {
             console.log(`[DEBUG] Session metadata:`, session.metadata);
             console.log(`[DEBUG] Payment status:`, session.payment_status);
             // 获取完整的会话数据，包括客户和运输信息
+            console.log(`[DEBUG] Retrieving expanded session with ID: ${session.id}`);
+            console.log(`[DEBUG] Expand parameters:`, ['customer', 'shipping', 'shipping_cost', 'line_items']);
+
             const expandedSession = await stripe.checkout.sessions.retrieve(
               session.id, {
                 expand: ['customer', 'shipping', 'shipping_cost', 'line_items']
               }
             );
+
+            console.log(`[DEBUG] Expanded session retrieved successfully. Session object keys:`, Object.keys(expandedSession));
+            console.log(`[DEBUG] Has shipping_cost:`, !!expandedSession.shipping_cost);
+            console.log(`[DEBUG] Has shipping_details:`, !!expandedSession.shipping_details);
 
             // 从会话元数据中提取图书信息
             const { productId, format, title, orderId, binding_type, is_color, paper_type } = session.metadata || {};
