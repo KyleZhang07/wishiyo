@@ -22,7 +22,7 @@ function getEmailContent(status: string, bookTitle: string, orderId: string, tra
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h2 style="color: #FF6B35;">WISHIYO Order Status Update</h2>
           <p>Hello,</p>
-          <p>Thank you for your order with WISHIYO. We have received your order and sent it to our printing partner.</p>
+          <p>Thank you for your order with WISHIYO. We have received your order and it is being processed.</p>
           <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
             <p><strong>Order ID:</strong> ${orderId}</p>
             <p><strong>Book Title:</strong> ${bookTitle}</p>
