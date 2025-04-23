@@ -36,12 +36,12 @@ async function updateOrderStatusAndNotify(supabase, orderId, type, status, track
   try {
     // 确定表名
     const tableName = type === 'love_story' ? 'love_story_books' : 'funny_biography_books';
-    
+
     // 准备更新数据
     const updateData = {
       lulu_print_status: status
     };
-    
+
     // 根据状态更新订单状态字段
     if (status === 'SHIPPED') {
       updateData.status = 'shipped';
@@ -60,7 +60,7 @@ async function updateOrderStatusAndNotify(supabase, orderId, type, status, track
     } else if (status === 'IN_PRODUCTION' || status === 'MANUFACTURING') {
       updateData.status = 'printing';
     }
-    
+
     // 更新数据库
     const { data, error } = await supabase
       .from(tableName)
@@ -68,13 +68,16 @@ async function updateOrderStatusAndNotify(supabase, orderId, type, status, track
       .eq('order_id', orderId)
       .select('customer_email, title')
       .single();
-    
+
     if (error) {
       throw new Error(`更新订单状态失败: ${error.message}`);
     }
-    
-    // 如果有客户邮箱，发送通知
-    if (data && data.customer_email) {
+
+    // 只在特定状态下发送通知
+    const notificationStatuses = ['CREATED', 'ACCEPTED', 'IN_PRODUCTION', 'MANUFACTURING', 'SHIPPED', 'REJECTED', 'CANCELED'];
+
+    // 如果有客户邮箱，且状态在需要通知的列表中，发送通知
+    if (data && data.customer_email && notificationStatuses.includes(status)) {
       // 调用Supabase函数发送邮件通知
       const notificationResponse = await fetch(
         `${supabaseUrl}/functions/v1/send-order-status-notification`,
@@ -94,15 +97,17 @@ async function updateOrderStatusAndNotify(supabase, orderId, type, status, track
           })
         }
       );
-      
+
       if (!notificationResponse.ok) {
         const errorText = await notificationResponse.text();
         console.error(`发送订单状态通知失败: ${notificationResponse.status} ${notificationResponse.statusText} - ${errorText}`);
       } else {
         console.log(`订单状态通知已发送至 ${data.customer_email}`);
       }
+    } else if (data && data.customer_email) {
+      console.log(`订单 ${orderId} 状态 ${status} 不在通知列表中，跳过邮件通知`);
     }
-    
+
     return { success: true, data };
   } catch (error) {
     console.error('更新订单状态和发送通知时出错:', error);
@@ -112,13 +117,13 @@ async function updateOrderStatusAndNotify(supabase, orderId, type, status, track
 
 export default async function handler(req, res) {
   console.log(`[LULU-WEBHOOK] 收到webhook请求，时间: ${new Date().toISOString()}`);
-  
+
   // 只允许POST请求
   if (req.method !== 'POST') {
     console.log('[LULU-WEBHOOK] 不允许的方法:', req.method);
     return res.status(405).json({ error: '方法不允许' });
   }
-  
+
   try {
     // 验证Supabase凭证
     if (!supabaseUrl || !supabaseServiceKey) {
@@ -128,18 +133,18 @@ export default async function handler(req, res) {
         error: '服务器配置错误: 缺少Supabase凭证'
       });
     }
-    
+
     // 创建Supabase客户端
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    
+
     // 获取HMAC签名头
     const hmacHeader = req.headers['lulu-hmac-sha256'];
     const luluApiSecret = process.env.LULU_CLIENT_SECRET;
-    
+
     // 解析请求体
     const webhookData = req.body;
     console.log('[LULU-WEBHOOK] 收到的数据:', JSON.stringify(webhookData));
-    
+
     // 验证HMAC签名
     const isValidHmac = await verifyLuluHmac(JSON.stringify(webhookData), hmacHeader, luluApiSecret);
     if (!isValidHmac) {
@@ -149,7 +154,7 @@ export default async function handler(req, res) {
         error: 'HMAC验证失败'
       });
     }
-    
+
     // 验证webhook数据格式
     if (!webhookData || !webhookData.topic || webhookData.topic !== 'PRINT_JOB_STATUS_CHANGED' || !webhookData.data) {
       console.error('[LULU-WEBHOOK] 无效的webhook数据格式');
@@ -158,10 +163,10 @@ export default async function handler(req, res) {
         error: '无效的webhook数据格式'
       });
     }
-    
+
     // 提取打印作业数据
     const printJobData = webhookData.data;
-    
+
     // 验证必要字段
     if (!printJobData.external_id || !printJobData.status) {
       console.error('[LULU-WEBHOOK] 无效的打印作业数据');
@@ -170,21 +175,21 @@ export default async function handler(req, res) {
         error: '无效的打印作业数据，缺少必要字段'
       });
     }
-    
+
     const orderId = printJobData.external_id;
     const status = printJobData.status.name;
-    
+
     // 查找订单以确定类型
     let orderType = null;
     let order = null;
-    
+
     // 先检查love_story_books表
     const { data: loveStoryOrder, error: loveStoryError } = await supabase
       .from('love_story_books')
       .select('order_id')
       .eq('order_id', orderId)
       .single();
-    
+
     if (loveStoryOrder) {
       orderType = 'love_story';
       order = loveStoryOrder;
@@ -195,13 +200,13 @@ export default async function handler(req, res) {
         .select('order_id')
         .eq('order_id', orderId)
         .single();
-      
+
       if (funnyBiographyOrder) {
         orderType = 'funny_biography';
         order = funnyBiographyOrder;
       }
     }
-    
+
     // 如果找不到订单
     if (!order) {
       console.error(`[LULU-WEBHOOK] 找不到订单 ${orderId}`);
@@ -210,7 +215,7 @@ export default async function handler(req, res) {
         error: `找不到订单 ${orderId}`
       });
     }
-    
+
     // 提取跟踪信息（如果有）
     let trackingInfo = null;
     if (status === 'SHIPPED' && printJobData.line_item_statuses && printJobData.line_item_statuses.length > 0) {
@@ -223,7 +228,7 @@ export default async function handler(req, res) {
         };
       }
     }
-    
+
     // 更新订单状态并发送通知
     const updateResult = await updateOrderStatusAndNotify(
       supabase,
@@ -232,7 +237,7 @@ export default async function handler(req, res) {
       status,
       trackingInfo
     );
-    
+
     if (!updateResult.success) {
       console.error(`[LULU-WEBHOOK] 更新订单状态失败: ${updateResult.error}`);
       return res.status(500).json({
@@ -240,9 +245,9 @@ export default async function handler(req, res) {
         error: `更新订单状态失败: ${updateResult.error}`
       });
     }
-    
+
     console.log(`[LULU-WEBHOOK] 订单 ${orderId} 状态已更新为 ${status}`);
-    
+
     // 返回成功响应
     return res.status(200).json({
       success: true,

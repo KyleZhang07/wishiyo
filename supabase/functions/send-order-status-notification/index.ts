@@ -114,24 +114,8 @@ function getEmailContent(status: string, bookTitle: string, orderId: string, tra
       break;
 
     default:
-      subject = `Your Order #${orderId} Status Update - WISHIYO`;
-      content = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h2 style="color: #FF6B35;">WISHIYO Order Status Update</h2>
-          <p>Hello,</p>
-          <p>There has been an update to your order status.</p>
-          <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
-            <p><strong>Order ID:</strong> ${orderId}</p>
-            <p><strong>Book Title:</strong> ${bookTitle}</p>
-            <p><strong>Current Status:</strong> ${status}</p>
-          </div>
-          <p>If you have any questions, please contact our customer support team.</p>
-          <p>Email: <a href="mailto:support@wishiyo.com" style="color: #FF6B35; text-decoration: none;">support@wishiyo.com</a></p>
-          <p>Thank you for using WISHIYO's services!</p>
-          <hr style="border: 1px solid #eee; margin: 20px 0;">
-          <p style="font-size: 12px; color: #777;">This email was sent automatically. Please do not reply.</p>
-        </div>
-      `;
+      // 不处理其他状态，返回null表示不发送通知
+      return null;
   }
 
   return { subject, content };
@@ -181,7 +165,21 @@ serve(async (req) => {
     }
 
     // 获取邮件内容
-    const { subject, content } = getEmailContent(status, bookTitle || "Your Book", orderId, trackingInfo);
+    const emailContent = getEmailContent(status, bookTitle || "Your Book", orderId, trackingInfo);
+
+    // 如果没有为该状态定义邮件内容，则不发送通知
+    if (!emailContent) {
+      console.log(`No notification configured for status: ${status}, skipping email notification`);
+      return new Response(
+        JSON.stringify({ success: true, message: "Notification skipped for this status", status }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    const { subject, content } = emailContent;
 
     // Send email
     const emailResponse = await resend.emails.send({
