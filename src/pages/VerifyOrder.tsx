@@ -13,7 +13,8 @@ const VerifyOrder = () => {
   const [email, setEmail] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [step, setStep] = useState<'email' | 'code'>('email');
-  const [loading, setLoading] = useState(false);
+  const [verifyLoading, setVerifyLoading] = useState(false);
+  const [sendLoading, setSendLoading] = useState(false);
   const [codeSent, setCodeSent] = useState(false);
 
   const handleSendVerification = async (e: React.FormEvent) => {
@@ -28,7 +29,7 @@ const VerifyOrder = () => {
       return;
     }
 
-    setLoading(true);
+    setSendLoading(true);
 
     try {
       const response = await supabase.functions.invoke('send-order-verification', {
@@ -49,7 +50,7 @@ const VerifyOrder = () => {
         variant: "destructive"
       });
     } finally {
-      setLoading(false);
+      setSendLoading(false);
     }
   };
 
@@ -65,7 +66,7 @@ const VerifyOrder = () => {
       return;
     }
 
-    setLoading(true);
+    setVerifyLoading(true);
 
     try {
       const response = await supabase.functions.invoke('verify-order-code', {
@@ -92,7 +93,7 @@ const VerifyOrder = () => {
         variant: "destructive"
       });
     } finally {
-      setLoading(false);
+      setVerifyLoading(false);
     }
   };
 
@@ -125,10 +126,10 @@ const VerifyOrder = () => {
                 <Button
                   type="submit"
                   className="w-full bg-[#FF7F50] hover:bg-[#FF7F50]/90 h-12 text-base font-medium"
-                  disabled={loading}
+                  disabled={sendLoading}
                 >
-                  {loading ? 'Sending...' : 'Get Code'}
-                  {!loading && <Send className="ml-2 h-4 w-4" />}
+                  {sendLoading ? 'Sending...' : 'Get Code'}
+                  {!sendLoading && <Send className="ml-2 h-4 w-4" />}
                 </Button>
                 {codeSent && (
                   <div className="text-xs text-gray-500 flex items-center justify-center mt-4">
@@ -176,19 +177,19 @@ const VerifyOrder = () => {
                 <Button
                   type="submit"
                   className="w-full bg-[#FF7F50] hover:bg-[#FF7F50]/90"
-                  disabled={loading}
+                  disabled={verifyLoading || sendLoading}
                 >
-                  {loading ? 'Verifying...' : 'Verify and View Orders'}
-                  {!loading && <ArrowRight className="ml-2 h-4 w-4" />}
+                  {verifyLoading ? 'Verifying...' : 'Verify and View Orders'}
+                  {!verifyLoading && <ArrowRight className="ml-2 h-4 w-4" />}
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
                   className="w-full"
                   onClick={handleSendVerification}
-                  disabled={loading}
+                  disabled={verifyLoading || sendLoading}
                 >
-                  Resend Verification Code
+                  {sendLoading ? 'Resending...' : 'Resend Verification Code'}
                 </Button>
               </div>
             </form>

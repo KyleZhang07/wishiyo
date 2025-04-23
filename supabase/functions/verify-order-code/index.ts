@@ -81,17 +81,21 @@ serve(async (req) => {
       .setExpirationTime('24h')
       .sign(secret);
 
-    // 查询用户的订单
+    // 查询用户的订单 - 只查找支付完成或已提交给Lulu的订单
+    // Love Story 书籍的有效状态: processing, pdf_generated, print_submitted
     const { data: loveStoryOrders } = await supabase
       .from('love_story_books')
       .select('*')
       .eq('customer_email', email)
+      .in('status', ['processing', 'pdf_generated', 'print_submitted'])
       .order('timestamp', { ascending: false });
 
+    // Funny Biography 书籍的有效状态: processing, completed, print_submitted
     const { data: funnyBiographyOrders } = await supabase
       .from('funny_biography_books')
       .select('*')
       .eq('customer_email', email)
+      .in('status', ['processing', 'completed', 'print_submitted'])
       .order('timestamp', { ascending: false });
 
     // 合并订单列表
@@ -104,16 +108,16 @@ serve(async (req) => {
         ...order,
         type: 'funny_biography'
       }))
-    ].sort((a, b) => 
+    ].sort((a, b) =>
       new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     );
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         token: jwt,
         orders: allOrders,
-        message: "验证成功" 
+        message: "验证成功"
       }),
       {
         status: 200,
