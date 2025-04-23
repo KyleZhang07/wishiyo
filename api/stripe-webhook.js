@@ -392,7 +392,7 @@ export default async function handler(req, res) {
                       shipping_address: shippingAddress,
                       shipping_option: shippingOption,
                       customer_email: expandedSession.customer_details?.email,
-                      shipping_level: shippingOption?.display_name === 'Express Shipping' ? 'EXPEDITED' : 'MAIL',
+                      shipping_level: expandedSession.total_details?.amount_shipping > 0 ? 'EXPEDITED' : 'MAIL',
                       recipient_phone: expandedSession.customer_details?.phone || ''
                     })
                   }
@@ -619,7 +619,7 @@ export default async function handler(req, res) {
                       shipping_address: shippingAddress,
                       shipping_option: shippingOption,
                       customer_email: expandedSession.customer_details?.email,
-                      shipping_level: shippingOption?.display_name === 'Express Shipping' ? 'EXPEDITED' : 'MAIL',
+                      shipping_level: expandedSession.total_details?.amount_shipping > 0 ? 'EXPEDITED' : 'MAIL',
                       recipient_phone: expandedSession.customer_details?.phone || '',
                       binding_type: binding_type, // 直接使用传递的binding_type，不再使用format进行回退
                       is_color: is_color === 'true' ? true : false,
