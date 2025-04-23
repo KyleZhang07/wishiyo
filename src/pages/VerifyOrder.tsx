@@ -31,23 +31,16 @@ const VerifyOrder = () => {
     setLoading(true);
 
     try {
-      // 使用 Vercel API 而不是 Supabase Edge Function
-      const response = await fetch('/api/send-order-verification', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email })
+      const response = await supabase.functions.invoke('send-order-verification', {
+        body: { email }
       });
 
-      const data = await response.json();
-
-      if (response.ok && data.success) {
+      if (response.data.success) {
         // 直接跳转到下一步，不需要显示成功通知
         setStep('code');
         setCodeSent(true);
       } else {
-        throw new Error(data.error || 'Failed to send verification code');
+        throw new Error(response.data.error || 'Failed to send verification code');
       }
     } catch (error: any) {
       toast({
@@ -75,29 +68,22 @@ const VerifyOrder = () => {
     setLoading(true);
 
     try {
-      // 使用 Vercel API 而不是 Supabase Edge Function
-      const response = await fetch('/api/verify-order-code', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, code: verificationCode })
+      const response = await supabase.functions.invoke('verify-order-code', {
+        body: { email, code: verificationCode }
       });
 
-      const data = await response.json();
-
-      if (response.ok && data.success) {
+      if (response.data.success) {
         // 直接保存数据并跳转，不需要显示成功通知
 
         // Save verification token and order data to localStorage
-        localStorage.setItem('order_verification_token', data.token);
-        localStorage.setItem('user_orders', JSON.stringify(data.orders || []));
+        localStorage.setItem('order_verification_token', response.data.token);
+        localStorage.setItem('user_orders', JSON.stringify(response.data.orders || []));
         localStorage.setItem('verified_email', email);
 
         // Navigate to order history page
         navigate('/orders/history');
       } else {
-        throw new Error(data.error || 'Verification code validation failed');
+        throw new Error(response.data.error || 'Verification code validation failed');
       }
     } catch (error: any) {
       toast({
