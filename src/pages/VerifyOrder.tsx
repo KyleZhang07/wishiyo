@@ -31,16 +31,23 @@ const VerifyOrder = () => {
     setLoading(true);
 
     try {
-      const response = await supabase.functions.invoke('send-order-verification', {
-        body: { email }
+      // 使用 Vercel API 而不是 Supabase Edge Function
+      const response = await fetch('/api/send-order-verification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email })
       });
 
-      if (response.data.success) {
+      const data = await response.json();
+
+      if (response.ok && data.success) {
         // 直接跳转到下一步，不需要显示成功通知
         setStep('code');
         setCodeSent(true);
       } else {
-        throw new Error(response.data.error || 'Failed to send verification code');
+        throw new Error(data.error || 'Failed to send verification code');
       }
     } catch (error: any) {
       toast({
