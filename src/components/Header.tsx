@@ -8,17 +8,21 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
 
-  return <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-200">
+  return <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-200" itemScope itemType="https://schema.org/SiteNavigationElement" role="navigation" aria-label="Main Navigation">
       <div className="container mx-auto px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-8">
-            <Link to="/" className="text-xl pl-4 brand-logo">WISHIYO</Link>
-            <nav className="hidden md:flex items-center space-x-8">
-              <Link to="/" className="text-gray-600 hover:text-primary transition-colors">
-                Home
+            <Link to="/" className="text-xl pl-4 brand-logo" aria-label="WISHIYO Home">WISHIYO</Link>
+            <nav className="hidden md:flex items-center space-x-8" aria-label="Primary Navigation">
+              <Link to="/" className="text-gray-600 hover:text-primary transition-colors" itemProp="url">
+                <span itemProp="name">Home</span>
               </Link>
-              <Link to="/friends" className="text-gray-600 hover:text-primary transition-colors">Story Book</Link>
-              <Link to="/love" className="text-gray-600 hover:text-primary transition-colors">Picture Book</Link>
+              <Link to="/friends" className="text-gray-600 hover:text-primary transition-colors" itemProp="url">
+                <span itemProp="name">Story Book</span>
+              </Link>
+              <Link to="/love" className="text-gray-600 hover:text-primary transition-colors" itemProp="url">
+                <span itemProp="name">Picture Book</span>
+              </Link>
             </nav>
           </div>
 

@@ -2,11 +2,51 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
+import { Helmet } from 'react-helmet';
 
 export default function Home() {
   const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-white">
+      <Helmet>
+        <title>WISHIYO - Custom Story Books & Picture Books | Create Personalized Books</title>
+        <meta name="description" content="Create personalized story books and picture books with WISHIYO. Turn memories and photos into custom books that make perfect gifts. Easy to create in minutes." />
+        <link rel="canonical" href="https://www.wishiyo.com/" />
+
+        {/* WebPage structured data */}
+        <script type="application/ld+json">
+          {`
+            {
+              "@context": "https://schema.org",
+              "@type": "WebPage",
+              "name": "WISHIYO - Custom Story Books & Picture Books",
+              "description": "Create personalized story books and picture books with WISHIYO. Turn memories and photos into custom books that make perfect gifts.",
+              "url": "https://www.wishiyo.com/",
+              "speakable": {
+                "@type": "SpeakableSpecification",
+                "cssSelector": ["h1", "h2", "p"]
+              },
+              "mainEntity": {
+                "@type": "ItemList",
+                "itemListElement": [
+                  {
+                    "@type": "ListItem",
+                    "position": 1,
+                    "name": "Story Book",
+                    "url": "https://www.wishiyo.com/friends"
+                  },
+                  {
+                    "@type": "ListItem",
+                    "position": 2,
+                    "name": "Picture Book",
+                    "url": "https://www.wishiyo.com/love"
+                  }
+                ]
+              }
+            }
+          `}
+        </script>
+      </Helmet>
       {/* Hero Section */}
       <section className="relative py-20 md:py-32 overflow-hidden">
         <div className="container px-4 md:px-6 mx-auto">

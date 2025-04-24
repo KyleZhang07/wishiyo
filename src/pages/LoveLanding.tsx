@@ -1,7 +1,37 @@
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet';
 
 const LoveLanding = () => {
   return <div className="page-transition">
+      <Helmet>
+        <script type="application/ld+json">
+          {`
+            {
+              "@context": "https://schema.org/",
+              "@type": "Product",
+              "name": "Picture Book",
+              "image": "https://www.wishiyo.com/images/showcase/illustrated-books/illustrated-book1.jpeg",
+              "description": "Turn them into a fairy-tale hero, page by page like an animation. Upload a few photos and instantly create full-color illustrations.",
+              "brand": {
+                "@type": "Brand",
+                "name": "Wishiyo"
+              },
+              "offers": {
+                "@type": "Offer",
+                "url": "https://www.wishiyo.com/love",
+                "priceCurrency": "USD",
+                "price": "59",
+                "availability": "https://schema.org/InStock"
+              },
+              "aggregateRating": {
+                "@type": "AggregateRating",
+                "ratingValue": "4.9",
+                "reviewCount": "42"
+              }
+            }
+          `}
+        </script>
+      </Helmet>
       <div className="bg-white shadow-lg">
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-[#FF7F50] to-[#FF7F50]/80" />

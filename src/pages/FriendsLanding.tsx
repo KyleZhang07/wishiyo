@@ -1,9 +1,39 @@
 
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet';
 
 const FriendsLanding = () => {
   return (
     <div className="page-transition">
+      <Helmet>
+        <script type="application/ld+json">
+          {`
+            {
+              "@context": "https://schema.org/",
+              "@type": "Product",
+              "name": "Funny Biography Book",
+              "image": "https://www.wishiyo.com/images/showcase/personalized-books/personalized-book1.png",
+              "description": "Turn your friend's funniest moments into a hilarious memoir. Write online in just 3 minutes — delivered as a premium book.",
+              "brand": {
+                "@type": "Brand",
+                "name": "Wishiyo"
+              },
+              "offers": {
+                "@type": "Offer",
+                "url": "https://www.wishiyo.com/friends",
+                "priceCurrency": "USD",
+                "price": "49",
+                "availability": "https://schema.org/InStock"
+              },
+              "aggregateRating": {
+                "@type": "AggregateRating",
+                "ratingValue": "4.8",
+                "reviewCount": "37"
+              }
+            }
+          `}
+        </script>
+      </Helmet>
       <div className="bg-white shadow-lg">
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-[#FF7F50] to-[#FF7F50]/80" />
