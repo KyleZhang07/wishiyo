@@ -16,6 +16,9 @@ import LoveLanding from "./pages/LoveLanding";
 import OrdersPage from "./pages/OrdersPage";
 import OrderHistory from "./pages/OrderHistory";
 import VerifyOrder from "./pages/VerifyOrder";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import ReturnPolicy from "./pages/ReturnPolicy";
+import TermsOfService from "./pages/TermsOfService";
 
 // Friends Book Creation Routes - Funny Biography
 import FunnyBiographyAuthorStep from "./pages/wizard/friends/funny-biography/AuthorStep";
@@ -121,6 +124,11 @@ const AppLayout = () => {
           <Route path="/orders" element={<OrdersPage />} />
           <Route path="/verify-order" element={<VerifyOrder />} />
           <Route path="/orders/history" element={<OrderHistory />} />
+
+          {/* Legal Pages */}
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/return-policy" element={<ReturnPolicy />} />
+          <Route path="/terms" element={<TermsOfService />} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>

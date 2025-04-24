@@ -8,7 +8,7 @@ const Footer = () => {
           <div>
             <h3 className="text-xl brand-logo mb-4">WISHIYO</h3>
             <p className="text-gray-600">
-              Create beautiful books powered by artificial intelligence.
+              Create beautiful books powered by artificial intelligence in 3 minutes.
             </p>
             <div className="mt-4 flex space-x-4">
               <a href="https://www.tiktok.com/@wishiyo" target="_blank" rel="noopener noreferrer" aria-label="TikTok" className="text-gray-600 hover:text-[#FF6B35]">
@@ -25,7 +25,13 @@ const Footer = () => {
             <nav aria-label="Footer Navigation - Quick Links">
               <ul className="space-y-2">
                 <li>
-                  <Link to="/" className="text-gray-600 hover:text-gray-900 transition-colors">
+                  <Link
+                    to="/"
+                    onClick={() => {
+                      window.scrollTo(0, 0);
+                    }}
+                    className="text-gray-600 hover:text-gray-900 transition-colors"
+                  >
                     Home
                   </Link>
                 </li>
@@ -53,11 +59,6 @@ const Footer = () => {
                   </Link>
                 </li>
                 <li>
-                  <Link to="/faq" className="text-gray-600 hover:text-gray-900 transition-colors">
-                    FAQ
-                  </Link>
-                </li>
-                <li>
                   <Link to="/contact" className="text-gray-600 hover:text-gray-900 transition-colors">
                     Contact Us
                   </Link>
@@ -76,13 +77,13 @@ const Footer = () => {
                   </Link>
                 </li>
                 <li>
-                  <Link to="/terms" className="text-gray-600 hover:text-gray-900 transition-colors">
-                    Terms of Service
+                  <Link to="/return-policy" className="text-gray-600 hover:text-gray-900 transition-colors">
+                    Return Policy
                   </Link>
                 </li>
                 <li>
-                  <Link to="/sitemap.xml" className="text-gray-600 hover:text-gray-900 transition-colors">
-                    Sitemap
+                  <Link to="/terms" className="text-gray-600 hover:text-gray-900 transition-colors">
+                    Terms of Service
                   </Link>
                 </li>
               </ul>

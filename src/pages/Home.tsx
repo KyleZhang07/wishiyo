@@ -1,11 +1,24 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { Helmet } from 'react-helmet';
 
 export default function Home() {
   const navigate = useNavigate();
+
+  // State to track which FAQ items are open (all closed by default)
+  const [openFaqs, setOpenFaqs] = useState<number[]>([]);
+
+  // Toggle FAQ open/close
+  const toggleFaq = (index: number) => {
+    setOpenFaqs(prev =>
+      prev.includes(index)
+        ? prev.filter(item => item !== index)
+        : [...prev, index]
+    );
+  };
+
   return (
     <div className="min-h-screen bg-white">
       <Helmet>
@@ -48,14 +61,17 @@ export default function Home() {
         </script>
       </Helmet>
       {/* Hero Section */}
-      <section className="relative py-20 md:py-32 overflow-hidden">
-        <div className="container px-4 md:px-6 mx-auto">
+      <section className="relative py-20 md:py-32 overflow-hidden bg-gradient-to-b from-white via-white to-[#FFE1CE]" style={{ backgroundSize: '100% 200%', backgroundPosition: '0 70%' }}>
+        {/* Gradient fade at bottom for smooth transition */}
+        <div className="absolute bottom-0 left-0 right-0 h-[7vh] bg-gradient-to-t from-white to-transparent z-10"></div>
+
+        <div className="container px-4 md:px-6 mx-auto relative z-20">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
             {/* Left side - Picture Book */}
             <div className="hidden md:flex justify-center relative h-[500px]">
-              {/* Single picture book with shadow effect */}
-              <div className="absolute" style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%) perspective(800px) rotateY(5deg)', boxShadow: '2px 5px 15px rgba(0,0,0,0.3)' }}>
-                <img src="/images/hero/illustrated-book1.png" alt="Colorful illustrated picture book with vibrant cover design" className="w-auto h-auto object-contain rounded-md" style={{ transform: 'scale(1.6)' }} />
+              {/* Single picture book */}
+              <div className="absolute" style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}>
+                <img src="/images/hero/illustrated-book1.png" alt="Colorful illustrated picture book with vibrant cover design" className="w-auto h-auto object-contain" style={{ transform: 'scale(1.6)' }} />
               </div>
             </div>
 
@@ -65,18 +81,18 @@ export default function Home() {
                 A book made just for them
               </h1>
               <p className="text-xl text-gray-500 max-w-[500px]">
-                Turn memories and photos into a keepsake they'll treasure forever.
+                Turn memories and photos into a keepsake they'll treasure forever, in just 3 minutes.
               </p>
               <div className="flex flex-col items-center gap-8 w-full max-w-[320px]">
                 <button
                   onClick={() => navigate('/friends')}
-                  className="w-full bg-[#FF6B35] text-white py-3 px-5 rounded-md text-center font-medium text-base hover:bg-[#FF6B35]/90 transition-colors shadow-sm mt-8"
+                  className="w-full bg-[#FF6B35] text-white py-3 px-5 rounded-md text-center font-medium text-base hover:bg-[#FF6B35]/90 transition-all duration-300 shadow-sm hover:shadow-md mt-8"
                 >
                   Create Story Book
                 </button>
                 <button
                   onClick={() => navigate('/love')}
-                  className="w-full bg-white text-[#FF6B35] border-2 border-[#FF6B35] py-3 px-5 rounded-md text-center font-medium text-base hover:bg-[#FF6B35] hover:text-white transition-colors shadow-sm"
+                  className="w-full bg-white text-[#FF6B35] border-2 border-[#FF6B35] py-3 px-5 rounded-md text-center font-medium text-base hover:bg-[#FF6B35] hover:text-white transition-all duration-300 shadow-sm hover:shadow-md"
                 >
                   Create Picture Book
                 </button>
@@ -85,9 +101,9 @@ export default function Home() {
 
             {/* Right side - Story Book */}
             <div className="hidden md:flex justify-center relative h-[500px]">
-              {/* Single story book with shadow effect */}
-              <div className="absolute" style={{ right: '50%', top: '50%', transform: 'translate(50%, -50%) perspective(800px) rotateY(-5deg)', boxShadow: '-2px 5px 15px rgba(0,0,0,0.3)' }}>
-                <img src="/images/hero/personalized-book1.png" alt="Personalized story book with custom character and storyline" className="w-auto h-auto object-contain rounded-md" style={{ transform: 'scale(1.6)' }} />
+              {/* Single story book */}
+              <div className="absolute" style={{ right: '50%', top: '50%', transform: 'translate(50%, -50%)' }}>
+                <img src="/images/hero/personalized-book1.png" alt="Personalized story book with custom character and storyline" className="w-auto h-auto object-contain" style={{ transform: 'scale(1.6)' }} />
               </div>
             </div>
           </div>
@@ -262,7 +278,7 @@ export default function Home() {
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">Auntie Jasmine's Wonderful Maya</h3>
-              <p className="text-gray-700">A magical day with a special aunt</p>
+              <p className="text-gray-700">A magical adventure of wonder and joy</p>
             </div>
 
             {/* Book 2 */}
@@ -330,20 +346,202 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-24 bg-primary/5">
-        <div className="container px-4 md:px-6 mx-auto text-center">
-          <h2 className="text-4xl font-serif font-bold tracking-tighter mb-4">Ready to create your story?</h2>
-          <p className="text-lg text-gray-600 mb-8 max-w-[600px] mx-auto">
-            Start crafting your personalized book today and create memories that will last a lifetime.
-          </p>
-          <Button
-            size="lg"
-            className="rounded-full px-8"
-            onClick={() => navigate('/app')}
-          >
-            Create Your Book Now
-          </Button>
+      {/* FAQ Section */}
+      <section className="py-24 bg-gray-50" aria-labelledby="faq-heading">
+        <div className="container px-4 md:px-6 mx-auto">
+          <h2 id="faq-heading" className="text-4xl font-serif font-bold tracking-tighter text-left mb-12">
+            Frequently Asked Questions
+          </h2>
+
+          {/* Schema.org FAQPage structured data */}
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: `
+            {
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              "mainEntity": [
+                {
+                  "@type": "Question",
+                  "name": "Why should I choose Wishiyo?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Wishiyo makes it easy to create personalized books in minutes. Simply choose between a Story Book or Picture Book, upload photos, add details about your recipient, and our AI will generate a unique, high-quality book that's printed and shipped directly to you or your recipient."
+                  }
+                },
+                {
+                  "@type": "Question",
+                  "name": "Why are Wishiyo books splendid gifts?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Wishiyo books make perfect gifts for friends, family members, partners, and colleagues. Each book features a completely personalized story or illustrations that belong exclusively to the recipient. They're ideal for birthdays, anniversaries, graduations, retirements, or any special occasion when you want to give something truly meaningful that captures your shared memories or transforms them into the star of their own story."
+                  }
+                },
+                {
+                  "@type": "Question",
+                  "name": "How long does it take to get the book?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "After placing your order, your book will be printed within 3-5 business days. Standard shipping takes 5-7 business days within the US. Express shipping options are available at checkout for faster delivery."
+                  }
+                },
+                {
+                  "@type": "Question",
+                  "name": "What are the sizes of the books?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Our Picture Books measure 8.5\\" x 8.5\\" (21.6cm x 21.6cm) with 24-32 pages of vibrant color illustrations. Story Books are 6\\" x 9\\" (15.2cm x 22.9cm) and typically contain 220-240 pages of personalized content. Both book types are printed on premium paper and professionally bound for durability."
+                  }
+                },
+                {
+                  "@type": "Question",
+                  "name": "What is your return policy?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Since each book is custom-made, we don't accept returns. However, if there's a printing error or damage during shipping, we'll gladly replace your book at no additional cost. Just contact us within 14 days of receiving your order."
+                  }
+                },
+                {
+                  "@type": "Question",
+                  "name": "Can I use the book for commercial purposes?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "No. Wishiyo books are created for fun and as gifts only. They are designed for personal enjoyment and to be shared with friends and family. Our books are not intended for commercial use, resale, or distribution beyond personal gifting."
+                  }
+                }
+              ]
+            }
+          `}} />
+
+          <div className="w-full" role="region" aria-label="Frequently Asked Questions about Wishiyo personalized books">
+            {/* FAQ Item 1 */}
+            <div className="border-b border-gray-200" itemScope itemType="https://schema.org/Question">
+              <button
+                className="w-full flex justify-between items-center py-6 text-left focus:outline-none"
+                onClick={() => toggleFaq(0)}
+                aria-expanded={openFaqs.includes(0)}
+                aria-controls="faq-answer-1"
+              >
+                <h3 className="text-2xl font-serif font-bold text-[#333333]" itemProp="name">Why should I choose Wishiyo?</h3>
+                <ChevronDown className={`h-6 w-6 text-[#FF6B35] transition-transform duration-200 ${openFaqs.includes(0) ? 'rotate-180' : ''}`} aria-hidden="true" />
+              </button>
+              {openFaqs.includes(0) && (
+                <div id="faq-answer-1" className="pb-6" itemScope itemProp="acceptedAnswer" itemType="https://schema.org/Answer">
+                  <p className="text-lg text-gray-700" itemProp="text">
+                    Wishiyo makes it easy to create personalized books in minutes. Simply choose between a Story Book or Picture Book,
+                    upload photos, add details about your recipient, and our AI will generate a unique, high-quality book that's printed
+                    and shipped directly to you or your recipient.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* FAQ Item 2 */}
+            <div className="border-b border-gray-200" itemScope itemType="https://schema.org/Question">
+              <button
+                className="w-full flex justify-between items-center py-6 text-left focus:outline-none"
+                onClick={() => toggleFaq(1)}
+                aria-expanded={openFaqs.includes(1)}
+                aria-controls="faq-answer-2"
+              >
+                <h3 className="text-2xl font-serif font-bold text-[#333333]" itemProp="name">Why are Wishiyo books splendid gifts?</h3>
+                <ChevronDown className={`h-6 w-6 text-[#FF6B35] transition-transform duration-200 ${openFaqs.includes(1) ? 'rotate-180' : ''}`} aria-hidden="true" />
+              </button>
+              {openFaqs.includes(1) && (
+                <div id="faq-answer-2" className="pb-6" itemScope itemProp="acceptedAnswer" itemType="https://schema.org/Answer">
+                  <p className="text-lg text-gray-700" itemProp="text">
+                    Wishiyo books make perfect gifts for friends, family members, partners, and colleagues. Each book features a completely
+                    personalized story or illustrations that belong exclusively to the recipient. They're ideal for birthdays, anniversaries,
+                    graduations, retirements, or any special occasion when you want to give something truly meaningful that captures your
+                    shared memories or transforms them into the star of their own story.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* FAQ Item 3 */}
+            <div className="border-b border-gray-200" itemScope itemType="https://schema.org/Question">
+              <button
+                className="w-full flex justify-between items-center py-6 text-left focus:outline-none"
+                onClick={() => toggleFaq(2)}
+                aria-expanded={openFaqs.includes(2)}
+                aria-controls="faq-answer-3"
+              >
+                <h3 className="text-2xl font-serif font-bold text-[#333333]" itemProp="name">How long does it take to get the book?</h3>
+                <ChevronDown className={`h-6 w-6 text-[#FF6B35] transition-transform duration-200 ${openFaqs.includes(2) ? 'rotate-180' : ''}`} aria-hidden="true" />
+              </button>
+              {openFaqs.includes(2) && (
+                <div id="faq-answer-3" className="pb-6" itemScope itemProp="acceptedAnswer" itemType="https://schema.org/Answer">
+                  <p className="text-lg text-gray-700" itemProp="text">
+                    After placing your order, your book will be printed within 3-5 business days. Standard shipping takes 5-7 business days
+                    within the US. Express shipping options are available at checkout for faster delivery.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* FAQ Item 4 */}
+            <div className="border-b border-gray-200" itemScope itemType="https://schema.org/Question">
+              <button
+                className="w-full flex justify-between items-center py-6 text-left focus:outline-none"
+                onClick={() => toggleFaq(3)}
+                aria-expanded={openFaqs.includes(3)}
+                aria-controls="faq-answer-4"
+              >
+                <h3 className="text-2xl font-serif font-bold text-[#333333]" itemProp="name">What are the sizes of the books?</h3>
+                <ChevronDown className={`h-6 w-6 text-[#FF6B35] transition-transform duration-200 ${openFaqs.includes(3) ? 'rotate-180' : ''}`} aria-hidden="true" />
+              </button>
+              {openFaqs.includes(3) && (
+                <div id="faq-answer-4" className="pb-6" itemScope itemProp="acceptedAnswer" itemType="https://schema.org/Answer">
+                  <p className="text-lg text-gray-700" itemProp="text">
+                    Our Picture Books measure 8.5" x 8.5" (21.6cm x 21.6cm) with 24-32 pages of vibrant color illustrations.
+                    Story Books are 6" x 9" (15.2cm x 22.9cm) and typically contain 220-240 pages of personalized content.
+                    Both book types are printed on premium paper and professionally bound for durability.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* FAQ Item 5 */}
+            <div className="border-b border-gray-200" itemScope itemType="https://schema.org/Question">
+              <button
+                className="w-full flex justify-between items-center py-6 text-left focus:outline-none"
+                onClick={() => toggleFaq(4)}
+                aria-expanded={openFaqs.includes(4)}
+                aria-controls="faq-answer-5"
+              >
+                <h3 className="text-2xl font-serif font-bold text-[#333333]" itemProp="name">What is your return policy?</h3>
+                <ChevronDown className={`h-6 w-6 text-[#FF6B35] transition-transform duration-200 ${openFaqs.includes(4) ? 'rotate-180' : ''}`} aria-hidden="true" />
+              </button>
+              {openFaqs.includes(4) && (
+                <div id="faq-answer-5" className="pb-6" itemScope itemProp="acceptedAnswer" itemType="https://schema.org/Answer">
+                  <p className="text-lg text-gray-700" itemProp="text">
+                    Since each book is custom-made, we don't accept returns. However, if there's a printing error or damage during shipping,
+                    we'll gladly replace your book at no additional cost. Just contact us within 14 days of receiving your order.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* FAQ Item 6 */}
+            <div className="border-b border-gray-200" itemScope itemType="https://schema.org/Question">
+              <button
+                className="w-full flex justify-between items-center py-6 text-left focus:outline-none"
+                onClick={() => toggleFaq(5)}
+                aria-expanded={openFaqs.includes(5)}
+                aria-controls="faq-answer-6"
+              >
+                <h3 className="text-2xl font-serif font-bold text-[#333333]" itemProp="name">Can I use the book for commercial purposes?</h3>
+                <ChevronDown className={`h-6 w-6 text-[#FF6B35] transition-transform duration-200 ${openFaqs.includes(5) ? 'rotate-180' : ''}`} aria-hidden="true" />
+              </button>
+              {openFaqs.includes(5) && (
+                <div id="faq-answer-6" className="pb-6" itemScope itemProp="acceptedAnswer" itemType="https://schema.org/Answer">
+                  <p className="text-lg text-gray-700" itemProp="text">
+                    No. Wishiyo books are created for fun and as gifts only. They are designed for personal enjoyment and to be shared
+                    with friends and family. Our books are not intended for commercial use, resale, or distribution beyond personal gifting.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </section>
     </div>

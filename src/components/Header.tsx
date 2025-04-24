@@ -14,14 +14,17 @@ const Header = () => {
           <div className="flex items-center space-x-8">
             <Link to="/" className="text-xl pl-4 brand-logo" aria-label="WISHIYO Home">WISHIYO</Link>
             <nav className="hidden md:flex items-center space-x-8" aria-label="Primary Navigation">
-              <Link to="/" className="text-gray-600 hover:text-primary transition-colors" itemProp="url">
+              <Link to="/" className="text-gray-600 hover:text-primary transition-colors relative group" itemProp="url">
                 <span itemProp="name">Home</span>
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gray-200 transition-all duration-300 group-hover:w-full"></span>
               </Link>
-              <Link to="/friends" className="text-gray-600 hover:text-primary transition-colors" itemProp="url">
+              <Link to="/friends" className="text-gray-600 hover:text-primary transition-colors relative group" itemProp="url">
                 <span itemProp="name">Story Book</span>
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#FF6B35] transition-all duration-300 group-hover:w-full"></span>
               </Link>
-              <Link to="/love" className="text-gray-600 hover:text-primary transition-colors" itemProp="url">
+              <Link to="/love" className="text-gray-600 hover:text-primary transition-colors relative group" itemProp="url">
                 <span itemProp="name">Picture Book</span>
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 transition-all duration-300 group-hover:w-full"></span>
               </Link>
             </nav>
           </div>
@@ -60,14 +63,17 @@ const Header = () => {
 
         {/* Mobile Navigation */}
         {isMenuOpen && <nav className="md:hidden py-4 space-y-4">
-            <Link to="/" className="block px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors" onClick={() => setIsMenuOpen(false)}>
+            <Link to="/" className="block px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors relative" onClick={() => setIsMenuOpen(false)}>
               Home
+              <span className="absolute left-4 -bottom-1 w-12 h-0.5 bg-gray-200"></span>
             </Link>
-            <Link to="/friends" className="block px-4 py-2 text-amber-600 hover:text-amber-700 transition-colors" onClick={() => setIsMenuOpen(false)}>
+            <Link to="/friends" className="block px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors relative" onClick={() => setIsMenuOpen(false)}>
               Story Book
+              <span className="absolute left-4 -bottom-1 w-20 h-0.5 bg-[#FF6B35]"></span>
             </Link>
-            <Link to="/love" className="block px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors" onClick={() => setIsMenuOpen(false)}>
+            <Link to="/love" className="block px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors relative" onClick={() => setIsMenuOpen(false)}>
               Picture Book
+              <span className="absolute left-4 -bottom-1 w-24 h-0.5 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500"></span>
             </Link>
           </nav>}
       </div>
