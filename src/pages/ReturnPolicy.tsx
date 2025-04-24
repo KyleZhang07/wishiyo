@@ -5,8 +5,8 @@ const ReturnPolicy = () => {
   return (
     <div className="container mx-auto px-4 py-16 max-w-4xl">
       <Helmet>
-        <title>Return Policy - WISHIYO</title>
-        <meta name="description" content="Learn about WISHIYO's return policy for personalized Story Books and Picture Books." />
+        <title>Return Policy - Wishiyo</title>
+        <meta name="description" content="Learn about Wishiyo's return policy for personalized Story Books and Picture Books." />
         <meta name="robots" content="index, follow" />
         <link rel="canonical" href="https://www.wishiyo.com/return-policy" />
       </Helmet>

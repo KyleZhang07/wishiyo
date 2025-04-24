@@ -5,8 +5,8 @@ const PrivacyPolicy = () => {
   return (
     <div className="container mx-auto px-4 py-16 max-w-4xl">
       <Helmet>
-        <title>Privacy Policy - WISHIYO</title>
-        <meta name="description" content="Learn about WISHIYO's privacy policy and how we protect your personal information when creating personalized books." />
+        <title>Privacy Policy - Wishiyo</title>
+        <meta name="description" content="Learn about Wishiyo's privacy policy and how we protect your personal information when creating personalized books." />
         <meta name="robots" content="index, follow" />
         <link rel="canonical" href="https://www.wishiyo.com/privacy" />
       </Helmet>

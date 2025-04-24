@@ -5,8 +5,8 @@ const TermsOfService = () => {
   return (
     <div className="container mx-auto px-4 py-16 max-w-4xl">
       <Helmet>
-        <title>Terms of Service - WISHIYO</title>
-        <meta name="description" content="Read WISHIYO's Terms of Service for creating and ordering personalized Story Books and Picture Books." />
+        <title>Terms of Service - Wishiyo</title>
+        <meta name="description" content="Read Wishiyo's Terms of Service for creating and ordering personalized Story Books and Picture Books." />
         <meta name="robots" content="index, follow" />
         <link rel="canonical" href="https://www.wishiyo.com/terms" />
       </Helmet>

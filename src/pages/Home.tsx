@@ -22,8 +22,8 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white">
       <Helmet>
-        <title>WISHIYO - Custom Story Books & Picture Books | Create Personalized Books</title>
-        <meta name="description" content="Create personalized story books and picture books with WISHIYO. Turn memories and photos into custom books that make perfect gifts. Easy to create in minutes." />
+        <title>Wishiyo - Custom Story Books & Picture Books | Create Personalized Books</title>
+        <meta name="description" content="Create personalized story books and picture books with Wishiyo. Turn memories and photos into custom books that make perfect gifts. Easy to create in minutes." />
         <link rel="canonical" href="https://www.wishiyo.com/" />
 
         {/* WebPage structured data */}
@@ -32,8 +32,8 @@ export default function Home() {
             {
               "@context": "https://schema.org",
               "@type": "WebPage",
-              "name": "WISHIYO - Custom Story Books & Picture Books",
-              "description": "Create personalized story books and picture books with WISHIYO. Turn memories and photos into custom books that make perfect gifts.",
+              "name": "Wishiyo - Custom Story Books & Picture Books",
+              "description": "Create personalized story books and picture books with Wishiyo. Turn memories and photos into custom books that make perfect gifts.",
               "url": "https://www.wishiyo.com/",
               "speakable": {
                 "@type": "SpeakableSpecification",
