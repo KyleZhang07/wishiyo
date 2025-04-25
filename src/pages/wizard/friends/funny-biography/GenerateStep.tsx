@@ -358,10 +358,14 @@ const FunnyBiographyGenerateStep = () => {
           // 设置背景去除状态为false
           setIsBackgroundRemoving(false);
 
-          // 直接使用已处理的图片生成封面，不需要等待React状态更新
-          // 在generateImagesFromCanvas函数中会优先使用sessionStorage中的图片
+          // 设置图片并延迟生成封面，确保状态更新和Canvas渲染
           setCoverImage(data.image);
-          generateImagesFromCanvas();
+
+          // 添加延迟，确保状态更新和Canvas重新渲染
+          console.log('背景去除完成，延迟生成封面以确保Canvas更新...');
+          setTimeout(() => {
+            generateImagesFromCanvas();
+          }, 300);
 
         } catch (storageError) {
           console.error('Error saving to sessionStorage:', storageError);
@@ -373,8 +377,12 @@ const FunnyBiographyGenerateStep = () => {
           setIsBackgroundRemoving(false);
 
           setCoverImage(data.image);
-          // 直接使用已处理的图片生成封面
-          generateImagesFromCanvas();
+
+          // 添加延迟，确保状态更新和Canvas重新渲染
+          console.log('存储失败，但仍然延迟生成封面以确保Canvas更新...');
+          setTimeout(() => {
+            generateImagesFromCanvas();
+          }, 300);
         }
       } else {
         throw new Error('Failed to process image');
@@ -391,9 +399,11 @@ const FunnyBiographyGenerateStep = () => {
         setCoverImage(imageUrl);
       }
 
-      // 即使背景去除失败，仍然尝试生成封面
-      // 直接生成封面，使用当前可用的图片
-      generateImagesFromCanvas();
+      // 即使背景去除失败，仍然尝试生成封面，但添加延迟
+      console.log('背景去除失败，延迟生成封面以确保Canvas更新...');
+      setTimeout(() => {
+        generateImagesFromCanvas();
+      }, 300);
 
       // 显示错误提示
       toast({
@@ -454,6 +464,13 @@ const FunnyBiographyGenerateStep = () => {
     if (sessionProcessedPhoto && coverImage !== sessionProcessedPhoto) {
       console.log('使用sessionStorage中的处理后图片生成封面');
       setCoverImage(sessionProcessedPhoto);
+
+      // 添加延迟，确保状态更新和Canvas重新渲染
+      console.log('检测到图片变化，延迟生成以确保Canvas更新...');
+      setTimeout(() => {
+        generateImagesFromCanvas();
+      }, 300);
+      return; // 重要：返回并等待下一次调用
     }
 
     // 打印当前的图片位置和缩放值，用于调试
@@ -479,6 +496,21 @@ const FunnyBiographyGenerateStep = () => {
         if (canvases.length < 3) {
           console.error('Not enough canvas elements found');
           setPdfGenerating(false);
+          return;
+        }
+
+        // 再次检查sessionStorage中的图片是否与当前coverImage一致
+        // 这是一个额外的安全检查
+        const currentSessionPhoto = sessionStorage.getItem('funnyBiographyProcessedPhoto');
+        if (currentSessionPhoto && coverImage !== currentSessionPhoto) {
+          console.log('检测到图片不一致，更新图片并重新生成...');
+          setPdfGenerating(false);
+          setCoverImage(currentSessionPhoto);
+
+          // 延迟重新生成
+          setTimeout(() => {
+            generateImagesFromCanvas();
+          }, 300);
           return;
         }
 
@@ -509,7 +541,7 @@ const FunnyBiographyGenerateStep = () => {
         console.error('Error generating cover images:', error);
         setPdfGenerating(false);
       }
-    }, 600); // 给Canvas渲染提供足够时间
+    }, 800); // 增加延迟时间，从600ms增加到800ms，给Canvas更多渲染时间
   };
 
   const handleGenerateBook = () => {
