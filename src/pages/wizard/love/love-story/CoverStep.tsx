@@ -102,8 +102,10 @@ const LoveStoryCoverStep = () => {
     fullTitle: defaultTitle
   });
 
-  // 背景图片加载状态
+  // 背景图片和字体加载状态
   const [backgroundsLoaded, setBackgroundsLoaded] = useState<boolean>(false);
+  const [fontsLoaded, setFontsLoaded] = useState<boolean>(false);
+  const [resourcesLoaded, setResourcesLoaded] = useState<boolean>(false);
 
   // 预加载所有背景图片
   const blueTexture = useImageLoader(blueTextureBackground);
@@ -167,7 +169,7 @@ const LoveStoryCoverStep = () => {
   };
 
   // 使用FontContext中的字体加载状态
-  const { fontsLoaded, fontStatus } = useFontContext();
+  const { fontsLoaded: fontContextLoaded, fontStatus } = useFontContext();
 
   // 检查背景图片是否已加载完成
   useEffect(() => {
@@ -194,12 +196,16 @@ const LoveStoryCoverStep = () => {
     checkBackgroundsLoaded();
   }, [blueTexture, greenLeaf, rainbow, heartCover, heartBack]);
 
-  // 添加字体加载状态日志和手动重试机制
+  // 添加字体加载状态检查和手动重试机制
   useEffect(() => {
-    console.log('CoverStep - Font status:', fontStatus, 'Fonts loaded:', fontsLoaded);
+    console.log('CoverStep - Font status:', fontStatus, 'Fonts loaded from context:', fontContextLoaded);
 
-    // 如果字体加载失败，尝试手动加载当前样式的字体
-    if (fontStatus === 'error' && selectedStyle) {
+    // 如果字体已加载完成或加载状态为error（表示已尝试加载但失败），设置字体加载状态为true
+    if (fontStatus === 'loaded' || (fontStatus === 'error' && fontContextLoaded)) {
+      console.log('Fonts are considered loaded (either successfully or with fallbacks)');
+      setFontsLoaded(true);
+    } else if (fontStatus === 'error' && selectedStyle) {
+      // 如果字体加载失败，尝试手动加载当前样式的字体
       console.log('Attempting to manually load font for style:', selectedStyle);
 
       // 根据样式选择字体
@@ -235,12 +241,32 @@ const LoveStoryCoverStep = () => {
           )
         ).then(() => {
           console.log(`Manually loaded font ${fontToLoad} for style ${selectedStyle}`);
+          setFontsLoaded(true);
         }).catch(err => {
           console.error(`Failed to manually load font ${fontToLoad}:`, err);
+          // 即使字体加载失败，也设置为已加载，以便应用可以继续使用后备字体
+          setFontsLoaded(true);
         });
+      } else {
+        // 如果无法加载字体，也设置为已加载，以便应用可以继续
+        setFontsLoaded(true);
       }
+    } else if (fontStatus === 'loading') {
+      // 字体正在加载中，等待加载完成
+      console.log('Fonts are still loading...');
+      setFontsLoaded(false);
     }
-  }, [fontStatus, fontsLoaded, selectedStyle]);
+  }, [fontStatus, fontContextLoaded, selectedStyle]);
+
+  // 综合判断所有资源是否加载完成
+  useEffect(() => {
+    if (backgroundsLoaded && fontsLoaded) {
+      console.log('All resources (backgrounds and fonts) loaded successfully');
+      setResourcesLoaded(true);
+    } else {
+      setResourcesLoaded(false);
+    }
+  }, [backgroundsLoaded, fontsLoaded]);
 
   useEffect(() => {
     // 从localStorage获取基本信息
@@ -402,19 +428,61 @@ const LoveStoryCoverStep = () => {
       styleBackgroundLoaded = false;
     }
 
-    // 如果背景图片尚未加载，显示提示
-    if (!styleBackgroundLoaded) {
-      console.log(`Background image for style ${styleId} is still loading`);
+    // 检查字体是否已加载
+    const styleFontLoaded = fontsLoaded;
+
+    // 如果资源尚未加载，显示提示
+    if (!styleBackgroundLoaded || !styleFontLoaded) {
+      console.log(`Resources for style ${styleId} are still loading - Background: ${styleBackgroundLoaded}, Font: ${styleFontLoaded}`);
+
+      let message = "";
+      if (!styleBackgroundLoaded && !styleFontLoaded) {
+        message = "Background images and fonts are loading, please wait...";
+      } else if (!styleBackgroundLoaded) {
+        message = "Background images are loading, please wait...";
+      } else if (!styleFontLoaded) {
+        message = "Fonts are loading, please wait...";
+      }
+
       toast({
-        title: "背景图片加载中",
-        description: "请稍等片刻，背景图片正在加载...",
+        title: "Resources Loading",
+        description: message,
         variant: "default"
       });
     }
 
-    // 无论如何都设置样式，因为我们已经添加了背景图片加载检查
+    // 无论如何都设置样式，因为我们已经添加了资源加载检查
     setSelectedStyle(styleId);
     localStorage.setItem('loveStoryCoverStyle', styleId);
+
+    // 如果切换样式，可能需要加载新的字体，重新检查字体加载状态
+    if (fontStatus === 'loaded' && styleId !== selectedStyle) {
+      // 根据样式选择字体
+      let fontToLoad = '';
+      switch (styleId) {
+        case 'classic':
+          fontToLoad = "'Patrick Hand', cursive";
+          break;
+        case 'vintage':
+          fontToLoad = "'Freckle Face', cursive";
+          break;
+        case 'modern':
+          fontToLoad = "'Amatic SC', cursive";
+          break;
+        case 'playful':
+          fontToLoad = "'Caveat', cursive";
+          break;
+        case 'elegant':
+          fontToLoad = "'Luckiest Guy', cursive";
+          break;
+      }
+
+      if (fontToLoad && typeof document !== 'undefined' && 'fonts' in document) {
+        // 尝试预加载新样式的字体
+        console.log(`Preloading font for new style: ${fontToLoad}`);
+        document.fonts.load(`bold 48px ${fontToLoad}`);
+      }
+    }
   };
 
   // 编辑标题功能
@@ -1761,14 +1829,19 @@ const LoveStoryCoverStep = () => {
           )}
 
           {/* 封面预览组件 - 直接传递titleData而非使用localStorage */}
-          {!backgroundsLoaded ? (
+          {!resourcesLoaded ? (
             <div className="flex flex-col items-center justify-center bg-white rounded-lg p-8 h-[600px]">
               <div className="relative w-16 h-16 mb-4">
                 <div className="absolute inset-0 rounded-full border-t-2 border-[#FF7F50] animate-spin"></div>
               </div>
               <h3 className="text-xl font-medium text-[#FF7F50]">
-                加载背景图片...
+                {!backgroundsLoaded ? 'Loading background images...' : !fontsLoaded ? 'Loading fonts...' : 'Preparing...'}
               </h3>
+              <p className="text-gray-500 mt-2 text-center">
+                {!backgroundsLoaded && !fontsLoaded ? 'Loading resources, please wait...' :
+                 !backgroundsLoaded ? 'Loading background images...' :
+                 !fontsLoaded ? 'Loading fonts...' : 'Almost ready...'}
+              </p>
             </div>
           ) : (
             <LoveStoryCoverPreview
