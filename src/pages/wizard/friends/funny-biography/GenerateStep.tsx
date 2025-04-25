@@ -94,6 +94,25 @@ const FunnyBiographyGenerateStep = () => {
   const [isAdjustDialogOpen, setIsAdjustDialogOpen] = useState(false);
   // 新增状态：跟踪背景去除过程
   const [isBackgroundRemoving, setIsBackgroundRemoving] = useState(false);
+  // Step 1: add state to track when the cover image has actually loaded
+  const [coverImageLoaded, setCoverImageLoaded] = useState(false);
+  // Step 2: detect image load
+  // 等待封面图像真正加载完成
+  useEffect(() => {
+    if (!coverImage) return;
+
+    setCoverImageLoaded(false); // reset
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => setCoverImageLoaded(true);
+    img.onerror = () => {
+      console.error('封面图像加载失败');
+      setCoverImageLoaded(false);
+    };
+    img.src = coverImage.startsWith('data:image')
+      ? coverImage
+      : `data:image/png;base64,${coverImage.replace(/^data:.*?,/, '')}`;
+  }, [coverImage]);
 
   // 使用模版字符串定义尺寸
   const standardPreviewWidth = 360; // 从320增加到360
@@ -358,18 +377,15 @@ const FunnyBiographyGenerateStep = () => {
           // 设置背景去除状态为false
           setIsBackgroundRemoving(false);
 
-          // 先更新状态，然后使用 requestAnimationFrame 确保 Canvas 已重新渲染
-          console.log('设置处理后的图片到状态...');
-          setCoverImage(data.image);
+          // Step 4: ensure processed image is a proper data‑URL
+          // 确保字符串前缀正确
+          const processedImage =
+            data.image.startsWith('data:image')
+              ? data.image
+              : `data:image/png;base64,${data.image.replace(/^data:.*?,/, '')}`;
 
-          // 使用 requestAnimationFrame 确保状态更新和 Canvas 重新渲染完成
-          requestAnimationFrame(() => {
-            // 再等一帧，确保渲染完成
-            requestAnimationFrame(() => {
-              console.log('状态更新后开始生成封面...');
-              generateImagesFromCanvas();
-            });
-          });
+          setCoverImage(processedImage);
+          generateImagesFromCanvas();
 
         } catch (storageError) {
           console.error('Error saving to sessionStorage:', storageError);
@@ -380,18 +396,14 @@ const FunnyBiographyGenerateStep = () => {
           // 设置背景去除状态为false
           setIsBackgroundRemoving(false);
 
-          // 先更新状态，然后使用 requestAnimationFrame 确保 Canvas 已重新渲染
-          console.log('设置处理后的图片到状态...');
-          setCoverImage(data.image);
-
-          // 使用 requestAnimationFrame 确保状态更新和 Canvas 重新渲染完成
-          requestAnimationFrame(() => {
-            // 再等一帧，确保渲染完成
-            requestAnimationFrame(() => {
-              console.log('状态更新后开始生成封面...');
-              generateImagesFromCanvas();
-            });
-          });
+          // Step 4: ensure processed image is a proper data‑URL
+          const processedImage =
+            data.image.startsWith('data:image')
+              ? data.image
+              : `data:image/png;base64,${data.image.replace(/^data:.*?,/, '')}`;
+          setCoverImage(processedImage);
+          // 直接使用已处理的图片生成封面
+          generateImagesFromCanvas();
         }
       } else {
         throw new Error('Failed to process image');
@@ -405,28 +417,12 @@ const FunnyBiographyGenerateStep = () => {
       // 如果当前没有设置图片，才使用原始图片
       console.log('背景去除失败，使用原始图片生成封面...');
       if (!coverImage) {
-        console.log('设置原始图片到状态...');
         setCoverImage(imageUrl);
-
-        // 使用 requestAnimationFrame 确保状态更新和 Canvas 重新渲染完成
-        requestAnimationFrame(() => {
-          // 再等一帧，确保渲染完成
-          requestAnimationFrame(() => {
-            console.log('状态更新后开始生成封面...');
-            generateImagesFromCanvas();
-          });
-        });
-      } else {
-        // 如果已经有图片，直接使用当前图片生成封面
-        console.log('使用当前图片生成封面...');
-
-        // 使用 requestAnimationFrame 确保 Canvas 已重新渲染
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            generateImagesFromCanvas();
-          });
-        });
       }
+
+      // 即使背景去除失败，仍然尝试生成封面
+      // 直接生成封面，使用当前可用的图片
+      generateImagesFromCanvas();
 
       // 显示错误提示
       toast({
@@ -499,16 +495,15 @@ const FunnyBiographyGenerateStep = () => {
 
     // 确保 Canvas 已经渲染
     console.log('等待Canvas渲染...');
-    console.log('当前使用的图片:', coverImage?.substring(0, 50) + '...');
-
-    // 使用 requestAnimationFrame 确保 Canvas 已重新渲染最新的图像
-    const captureCanvasImages = async () => {
+    await new Promise(requestAnimationFrame);
+    // Step 3: guard generateImagesFromCanvas until the image is loaded
+    if (!coverImageLoaded) {
+      console.log('封面图像仍在加载，稍后再试...');
+      setTimeout(generateImagesFromCanvas, 200);
+      return;
+    }
+    setTimeout(() => {
       try {
-        // 确保 Canvas 已重新渲染最新的图像
-        await new Promise(requestAnimationFrame);
-        // 再等一帧，确保渲染完成
-        await new Promise(requestAnimationFrame);
-
         if (!canvasPdfContainerRef.current) {
           console.error('Canvas container not found');
           setPdfGenerating(false);
@@ -550,10 +545,7 @@ const FunnyBiographyGenerateStep = () => {
         console.error('Error generating cover images:', error);
         setPdfGenerating(false);
       }
-    };
-
-    // 执行捕获
-    captureCanvasImages();
+    }, 600); // 给Canvas渲染提供足够时间
   };
 
   const handleGenerateBook = () => {
@@ -682,9 +674,12 @@ const FunnyBiographyGenerateStep = () => {
 
             <div className="space-y-4 mt-4">
               <div className="flex flex-wrap justify-center gap-6">
-                {[...stylePresets].map((style) => {
+                {[...stylePresets].map((style, index) => {
+                  // Get template and layout data based on style configuration
+                  const template = style.template;
+
                   // Define style colors to match the image
-                  let styleConfig: { bg: string; text: string; border: string };
+                  let styleConfig;
                   if (style.id === 'classic-red') {
                     styleConfig = { bg: '#C41E3A', text: '#FFFFFF', border: 'none' }; // Red with white text (first circle)
                   } else if (style.id === 'bestseller-style') {
