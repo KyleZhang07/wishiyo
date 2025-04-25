@@ -15,45 +15,59 @@ export const renderContentImage = (
   loadingStateMap: Record<number, boolean>,
   handleRegenerateMap: Record<number, (style?: string) => void>,
   imageTexts: ImageText[] | undefined,
-  handleRenderContentImage?: (index: number) => Promise<void>
+  handleRenderContentImage?: (index: number, fontId?: string) => Promise<void>
 ) => {
   const image = imageStateMap[imageIndex];
   const isLoading = loadingStateMap[imageIndex];
   const handleRegenerate = handleRegenerateMap[imageIndex];
-  
+
   // 修正：图像索引与文本索引对应关系
   // 根据新逻辑，图像索引1-10对应文本索引2-11(moment3-12重命名为moment1-10)
   const textIndex = imageIndex + 1; // +1是因为text[0]是cover，text[1]是intro
   const imageText = imageTexts && imageTexts.length > textIndex ? imageTexts[textIndex] : null;
-  
+
   // 显示标题适配新的命名方式 - 显示为Moment 1-10
   let title = "";  // 不再显示标题
-  
+
   // 检查图片是否是渲染后的图片
   const isRenderedImage = image && (
-    image.includes(`content-${imageIndex}-`) || 
+    image.includes(`content-${imageIndex}-`) ||
     image.includes(`love-story-content-rendered-${imageIndex}-`)
   );
-  
+
+  // 从localStorage获取保存的字体，如果没有则使用默认字体
+  const savedFont = typeof window !== 'undefined' ?
+    localStorage.getItem(`loveStoryFont_${imageIndex}`) || 'comic-sans' :
+    'comic-sans';
+
+  // 处理字体变更
+  const handleFontChange = async (fontId: string) => {
+    if (handleRenderContentImage && image && imageText?.text) {
+      await handleRenderContentImage(imageIndex, fontId);
+    }
+  };
+
   return (
     <div>
-      <ContentImageCard 
-        image={image} 
+      <ContentImageCard
+        image={image}
         isGenerating={isLoading}
         onRegenerate={handleRegenerate}
         index={imageIndex}
         onEditText={() => {}}
+        onFontChange={handleFontChange}
         text={imageText?.text}
         title={title}
+        selectedFont={savedFont}
       />
-      
+
       {/* 添加渲染按钮 - 无论是否是渲染后的图片都显示 */}
       {handleRenderContentImage && image && imageText?.text && (
         <div className="mt-4 flex justify-end">
           <Button
             variant="outline"
             size="sm"
-            onClick={() => handleRenderContentImage(imageIndex)}
+            onClick={() => handleRenderContentImage(imageIndex, savedFont)}
             disabled={isLoading}
             className="bg-[#8e44ad]/10 text-[#8e44ad] hover:bg-[#8e44ad]/20 border-[#8e44ad]/30"
           >
@@ -115,13 +129,13 @@ export const createImageStateMaps = (
     9: contentImage9,
     10: contentImage10,
   };
-  
+
   const loadingStateMap: Record<number, boolean> = {
     0: isGeneratingIntro,
     1: isGeneratingContent1,
     2: isGeneratingContent2,
     3: isGeneratingContent3,
-    4: isGeneratingContent4, 
+    4: isGeneratingContent4,
     5: isGeneratingContent5,
     6: isGeneratingContent6,
     7: isGeneratingContent7,
@@ -129,7 +143,7 @@ export const createImageStateMaps = (
     9: isGeneratingContent9,
     10: isGeneratingContent10,
   };
-  
+
   const handleRegenerateMap: Record<number, (style?: string) => void> = {
     0: handleRegenerateIntro,
     1: handleRegenerateContent1,
@@ -143,6 +157,6 @@ export const createImageStateMaps = (
     9: handleRegenerateContent9,
     10: handleRegenerateContent10,
   };
-  
+
   return { imageStateMap, loadingStateMap, handleRegenerateMap };
-}; 
+};

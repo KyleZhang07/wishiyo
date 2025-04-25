@@ -162,7 +162,7 @@ const GenerateStep = () => {
   const handleRegenerateContent10 = (style?: string) => handleGenericContentRegeneration(10, style);
 
   // 自动渲染intro图片函数
-  const autoRenderIntroImage = async (imageData: string) => {
+  const autoRenderIntroImage = async (imageData: string, fontId?: string) => {
     try {
       // 获取对应的文本 - intro图片对应文本索引1
       // 从 localStorage 直接读取 imageTexts，确保有最新数据
@@ -187,12 +187,16 @@ const GenerateStep = () => {
       // 设置加载状态
       setIsGeneratingIntro(true);
 
+      // 获取字体ID，如果没有提供则从localStorage获取
+      const currentFontId = fontId || localStorage.getItem('loveStoryFont_0') || 'comic-sans';
+
       // 渲染并上传图片
       const result = await renderAndUploadIntroImage(
         imageData,
         text || "A beautiful moment captured in this image.",
         selectedStyle,
-        supabaseImages
+        supabaseImages,
+        currentFontId
       );
 
       // 更新localStorage
@@ -224,7 +228,7 @@ const GenerateStep = () => {
   };
 
   // 自动渲染内容图片的通用函数
-  const autoRenderContentImage = async (imageData: string, index: number) => {
+  const autoRenderContentImage = async (imageData: string, index: number, fontId?: string) => {
     // 定义加载状态设置函数的映射
     const loadingSetters: {[key: number]: (loading: boolean) => void} = {
       1: setIsGeneratingContent1,
@@ -267,6 +271,9 @@ const GenerateStep = () => {
       const setLoadingFn = loadingSetters[index];
       if (setLoadingFn) setLoadingFn(true);
 
+      // 获取字体ID，如果没有提供则从localStorage获取
+      const currentFontId = fontId || localStorage.getItem(`loveStoryFont_${index}`) || 'comic-sans';
+
       // 移除toast通知，减少用户干扰
 
       // 渲染并上传图片
@@ -275,7 +282,8 @@ const GenerateStep = () => {
         text || "A beautiful moment captured in this image.",
         index,
         selectedStyle,
-        supabaseImages
+        supabaseImages,
+        currentFontId
       );
 
       // 更新localStorage
@@ -777,6 +785,163 @@ const GenerateStep = () => {
     }
   };
 
+
+  // 处理intro图片的字体变更
+  const handleRenderIntroImage = async (fontId?: string) => {
+    // 获取当前图片
+    if (!introImage) {
+      console.error('No intro image found');
+      toast({
+        title: "Rendering failed",
+        description: "No intro image found to render with text",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // 获取旧的左右图片URL
+      const oldLeftUrl = localStorage.getItem('loveStoryIntroImage_left_url');
+      const oldRightUrl = localStorage.getItem('loveStoryIntroImage_right_url');
+
+      // 使用autoRenderIntroImage函数渲染图片
+      await autoRenderIntroImage(introImage, fontId);
+
+      // 删除旧的左右图片
+      if (oldLeftUrl || oldRightUrl) {
+        try {
+          // 查找所有包含旧URL的图片
+          const oldImages = supabaseImages.filter(img => {
+            // 从完整路径中提取文件名
+            const pathParts = img.name.split('/');
+            const fileName = pathParts[pathParts.length - 1];
+
+            // 检查是否是旧的左右图片
+            if (oldLeftUrl && oldLeftUrl.includes(fileName)) return true;
+            if (oldRightUrl && oldRightUrl.includes(fileName)) return true;
+            return false;
+          });
+
+          if (oldImages.length > 0) {
+            console.log(`Found ${oldImages.length} old intro images to delete`);
+
+            // 并行删除所有旧图片
+            const deletePromises = oldImages.map(img => {
+              // 从完整路径中提取文件名
+              const pathParts = img.name.split('/');
+              const filename = pathParts[pathParts.length - 1];
+              console.log(`Deleting old intro image: ${filename}`);
+              return deleteImageFromStorage(filename, 'images');
+            });
+
+            // 等待所有删除操作完成
+            await Promise.all(deletePromises);
+            console.log('Successfully deleted old intro images');
+          }
+        } catch (deleteError) {
+          console.error('Error deleting old intro images:', deleteError);
+          // 继续处理，即使删除失败
+        }
+      }
+
+      toast({
+        title: "Text font updated",
+        description: "The intro image has been rendered with the new font",
+        variant: "default",
+      });
+
+      // 刷新图片列表
+      setTimeout(() => {
+        loadImagesFromSupabase();
+      }, 1000);
+    } catch (error) {
+      console.error('Error rendering intro image with font:', error);
+      toast({
+        title: "Font update failed",
+        description: "Could not apply the selected font to intro image. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // 处理字体变更和内容图片重新渲染
+  const handleRenderContentImage = async (index: number, fontId?: string) => {
+    // 获取当前图片
+    const currentImage = imageStateMap[index];
+    if (!currentImage) {
+      console.error(`No image found for index ${index}`);
+      toast({
+        title: "Rendering failed",
+        description: "No image found to render with text",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // 获取旧的左右图片URL
+      const oldLeftUrl = localStorage.getItem(`loveStoryContentImage${index}_left_url`);
+      const oldRightUrl = localStorage.getItem(`loveStoryContentImage${index}_right_url`);
+
+      // 使用autoRenderContentImage函数渲染图片
+      await autoRenderContentImage(currentImage, index, fontId);
+
+      // 删除旧的左右图片
+      if (oldLeftUrl || oldRightUrl) {
+        try {
+          // 查找所有包含旧URL的图片
+          const oldImages = supabaseImages.filter(img => {
+            // 从完整路径中提取文件名
+            const pathParts = img.name.split('/');
+            const fileName = pathParts[pathParts.length - 1];
+
+            // 检查是否是旧的左右图片
+            if (oldLeftUrl && oldLeftUrl.includes(fileName)) return true;
+            if (oldRightUrl && oldRightUrl.includes(fileName)) return true;
+            return false;
+          });
+
+          if (oldImages.length > 0) {
+            console.log(`Found ${oldImages.length} old content images to delete for index ${index}`);
+
+            // 并行删除所有旧图片
+            const deletePromises = oldImages.map(img => {
+              // 从完整路径中提取文件名
+              const pathParts = img.name.split('/');
+              const filename = pathParts[pathParts.length - 1];
+              console.log(`Deleting old content image: ${filename}`);
+              return deleteImageFromStorage(filename, 'images');
+            });
+
+            // 等待所有删除操作完成
+            await Promise.all(deletePromises);
+            console.log(`Successfully deleted old content images for index ${index}`);
+          }
+        } catch (deleteError) {
+          console.error(`Error deleting old content images for index ${index}:`, deleteError);
+          // 继续处理，即使删除失败
+        }
+      }
+
+      toast({
+        title: "Text font updated",
+        description: "The image has been rendered with the new font",
+        variant: "default",
+      });
+
+      // 刷新图片列表
+      setTimeout(() => {
+        loadImagesFromSupabase();
+      }, 1000);
+    } catch (error) {
+      console.error(`Error rendering content image ${index} with font:`, error);
+      toast({
+        title: "Font update failed",
+        description: "Could not apply the selected font. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   // 使用状态变量直接创建映射
   const imageStateMap: {[key: number]: string} = {
@@ -1339,6 +1504,7 @@ const GenerateStep = () => {
               rightImageUrl={localStorage.getItem('loveStoryIntroImage_right_url') || undefined}
               isGenerating={isGeneratingIntro || isWaitingForData}
               onRegenerate={handleRegenerateIntro}
+              onFontChange={(fontId) => handleRenderIntroImage(fontId)}
               index={0}
               text={(() => {
                 // 从 localStorage 直接读取 imageTexts，确保有最新数据
@@ -1358,6 +1524,7 @@ const GenerateStep = () => {
                 return imageTexts && imageTexts.length > 1 ? imageTexts[1]?.text : undefined;
               })()}
               title=""
+              selectedFont={localStorage.getItem('loveStoryFont_0') || 'comic-sans'}
             />
 
 
@@ -1390,6 +1557,9 @@ const GenerateStep = () => {
                 text = imageTexts[textIndex]?.text;
               }
 
+              // 获取保存的字体ID
+              const savedFont = localStorage.getItem(`loveStoryFont_${index}`) || 'comic-sans';
+
               return (
                 <div key={index}>
                   <ContentImageCard
@@ -1398,9 +1568,11 @@ const GenerateStep = () => {
                     rightImageUrl={localStorage.getItem(`loveStoryContentImage${index}_right_url`) || undefined}
                     isGenerating={isLoading || isWaitingForData || false}
                     onRegenerate={onRegenerate}
+                    onFontChange={(fontId) => handleRenderContentImage(index, fontId)}
                     index={index}
                     text={text}
                     title={`Moment ${index}`}
+                    selectedFont={savedFont}
                   />
 
 

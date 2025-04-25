@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Edit, RefreshCw, ImageIcon, X } from 'lucide-react';
+import { Edit, RefreshCw, ImageIcon, X, Type } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import {
   Dialog,
@@ -10,6 +10,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Check } from 'lucide-react';
+import FontSelectionDialog from './FontSelectionDialog';
 
 interface ContentImageCardProps {
   image?: string;
@@ -18,12 +19,14 @@ interface ContentImageCardProps {
   isGenerating: boolean;
   onEditText?: () => void;
   onRegenerate: (style?: string) => void;
+  onFontChange?: (fontId: string) => Promise<void>;
   index: number;
   authorName?: string;
   coverTitle?: string;
   showDedicationText?: boolean;
   text?: string;
   title?: string;
+  selectedFont?: string;
 }
 
 // Image style options for love story
@@ -67,15 +70,19 @@ export const ContentImageCard = ({
   isGenerating,
   onEditText,
   onRegenerate,
+  onFontChange,
   index,
   authorName,
   coverTitle,
   showDedicationText = false,
   text,
-  title
+  title,
+  selectedFont = 'comic-sans'
 }: ContentImageCardProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isFontDialogOpen, setIsFontDialogOpen] = useState(false);
   const [selectedStyle, setSelectedStyle] = useState<string>('Photographic (Default)');
+  const [currentFont, setCurrentFont] = useState<string>(selectedFont);
   const [leftImageLoaded, setLeftImageLoaded] = useState(false);
   const [rightImageLoaded, setRightImageLoaded] = useState(false);
 
@@ -124,6 +131,18 @@ export const ContentImageCard = ({
 
   const handleRightImageLoad = () => {
     setRightImageLoaded(true);
+  };
+
+  const handleFontSelect = async (fontId: string) => {
+    setCurrentFont(fontId);
+
+    // 保存选择的字体到localStorage
+    localStorage.setItem(`loveStoryFont_${index}`, fontId);
+
+    // 如果提供了字体更改回调，则调用它
+    if (onFontChange) {
+      await onFontChange(fontId);
+    }
   };
 
   return (
@@ -183,6 +202,25 @@ export const ContentImageCard = ({
           )}
         </div>
         <div className="absolute bottom-4 right-4 flex gap-2">
+          {/* Edit Text Button */}
+          <Button
+            className="bg-[#FF7F50] hover:bg-[#FF7F50]/90 text-white"
+            disabled={isGenerating}
+            onClick={() => setIsFontDialogOpen(true)}
+          >
+            <Type className="w-4 h-4 mr-2" />
+            Edit text
+          </Button>
+
+          {/* Font Selection Dialog */}
+          <FontSelectionDialog
+            open={isFontDialogOpen}
+            onOpenChange={setIsFontDialogOpen}
+            onSelectFont={handleFontSelect}
+            selectedFont={currentFont}
+          />
+
+          {/* Regenerate Image Dialog */}
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button
