@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Check, X } from 'lucide-react';
 
-// 为插画书定义五种适合的字体
+// 为插画书定义四种适合的字体
 export const PICTURE_BOOK_FONTS = [
   {
     id: 'comic-sans',
@@ -39,13 +39,6 @@ export const PICTURE_BOOK_FONTS = [
     description: 'Flowing handwritten style with natural look',
     className: 'font-caveat',
     fontFamily: "'Caveat', cursive"
-  },
-  {
-    id: 'playfair-display',
-    name: 'Playfair Display',
-    description: 'Elegant serif font with classic appeal',
-    className: 'font-playfair-display',
-    fontFamily: "'Playfair Display', serif"
   }
 ];
 
@@ -62,7 +55,12 @@ const FontSelectionDialog = ({
   onSelectFont,
   selectedFont
 }: FontSelectionDialogProps) => {
-  const [tempSelectedFont, setTempSelectedFont] = useState<string>(selectedFont || PICTURE_BOOK_FONTS[0].id);
+  // 确保选择的字体在当前可用的字体列表中
+  const [tempSelectedFont, setTempSelectedFont] = useState<string>(() => {
+    // 检查selectedFont是否在当前字体列表中
+    const isValidFont = PICTURE_BOOK_FONTS.some(font => font.id === selectedFont);
+    return isValidFont ? selectedFont : PICTURE_BOOK_FONTS[0].id;
+  });
 
   const handleFontSelect = (fontId: string) => {
     setTempSelectedFont(fontId);
