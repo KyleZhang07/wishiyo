@@ -696,7 +696,7 @@ const FunnyBiographyGenerateStep = () => {
                   disabled={isBackgroundRemoving}
                 >
                   <ImageIcon className="w-5 h-5" />
-                  Adjust image
+                  Drag image
                 </Button>
               </div>
             )}

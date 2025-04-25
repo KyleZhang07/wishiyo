@@ -25,7 +25,7 @@ const CoverImageControls = ({
         onClick={() => setIsAdjustDialogOpen(true)}
         className="w-full"
       >
-        Adjust Image
+        Drag Image
       </Button>
 
       <ImageAdjustDialog

@@ -90,7 +90,7 @@ const ImageAdjustDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogTitle className="text-center text-2xl mb-4">
-          Adjust image
+          Drag image
         </DialogTitle>
 
         <div
