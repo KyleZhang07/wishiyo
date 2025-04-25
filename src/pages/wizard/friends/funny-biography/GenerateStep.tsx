@@ -635,13 +635,16 @@ const FunnyBiographyGenerateStep = () => {
               )}
             </div>
 
-            {/* 添加图片调整按钮 */}
-            {coverImage && !isBackgroundRemoving && (
+            {/* 添加图片调整按钮 - 在背景去除过程中显示但禁用 */}
+            {coverImage && (
               <div className="flex justify-center mb-6">
                 <Button
                   variant="outline"
-                  className="flex items-center gap-2 rounded-full px-6 py-2 bg-white shadow-sm hover:shadow-md transition-shadow"
-                  onClick={() => setIsAdjustDialogOpen(true)}
+                  className={`flex items-center gap-2 rounded-full px-6 py-2 bg-white shadow-sm transition-shadow ${
+                    isBackgroundRemoving ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md'
+                  }`}
+                  onClick={() => !isBackgroundRemoving && setIsAdjustDialogOpen(true)}
+                  disabled={isBackgroundRemoving}
                 >
                   <ImageIcon className="w-5 h-5" />
                   Adjust image
