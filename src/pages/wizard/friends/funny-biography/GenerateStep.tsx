@@ -362,13 +362,14 @@ const FunnyBiographyGenerateStep = () => {
           // 在generateImagesFromCanvas函数中会优先使用sessionStorage中的图片
           setCoverImage(data.image);
 
-          // 确保选择第一种样式（classic-red）
+          // 确保选择第二种样式（bestseller-style）
           // 这样可以确保背景去除后立即生成封面
-          setSelectedStyle('classic-red');
-          localStorage.setItem('funnyBiographySelectedStyle', 'classic-red');
+          setSelectedStyle('bestseller-style');
+          localStorage.setItem('funnyBiographySelectedStyle', 'bestseller-style');
 
-          // 生成封面
-          generateImagesFromCanvas();
+          // 设置shouldRegenerate为true，触发重新生成逻辑
+          // 这与点击新样式的逻辑保持一致
+          setShouldRegenerate(true);
 
         } catch (storageError) {
           console.error('Error saving to sessionStorage:', storageError);
@@ -381,12 +382,13 @@ const FunnyBiographyGenerateStep = () => {
 
           setCoverImage(data.image);
 
-          // 确保选择第一种样式（classic-red）
-          setSelectedStyle('classic-red');
-          localStorage.setItem('funnyBiographySelectedStyle', 'classic-red');
+          // 确保选择第二种样式（bestseller-style）
+          setSelectedStyle('bestseller-style');
+          localStorage.setItem('funnyBiographySelectedStyle', 'bestseller-style');
 
-          // 直接使用已处理的图片生成封面
-          generateImagesFromCanvas();
+          // 设置shouldRegenerate为true，触发重新生成逻辑
+          // 这与点击新样式的逻辑保持一致
+          setShouldRegenerate(true);
         }
       } else {
         throw new Error('Failed to process image');
@@ -404,12 +406,13 @@ const FunnyBiographyGenerateStep = () => {
       }
 
       // 即使背景去除失败，仍然尝试生成封面
-      // 确保选择第一种样式（classic-red）
-      setSelectedStyle('classic-red');
-      localStorage.setItem('funnyBiographySelectedStyle', 'classic-red');
+      // 确保选择第二种样式（bestseller-style）
+      setSelectedStyle('bestseller-style');
+      localStorage.setItem('funnyBiographySelectedStyle', 'bestseller-style');
 
-      // 直接生成封面，使用当前可用的图片
-      generateImagesFromCanvas();
+      // 设置shouldRegenerate为true，触发重新生成逻辑
+      // 这与点击新样式的逻辑保持一致
+      setShouldRegenerate(true);
 
       // 显示错误提示
       toast({
