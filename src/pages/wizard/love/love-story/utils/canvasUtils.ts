@@ -16,7 +16,7 @@ export const getFontFamily = (fontName: string): string => {
     'patrick-hand': "'Patrick Hand', cursive",
     'amatic-sc': "'Amatic SC', cursive",
     'caveat': "'Caveat', cursive",
-    'lora': "'Lora', serif"
+    'playfair-display': "'Playfair Display', serif"
   };
 
   return fontMap[fontName] || fontMap['default'];

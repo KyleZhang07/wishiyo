@@ -24,6 +24,7 @@ export const fontMapping = {
   'amatic-sc': "'Amatic SC', cursive",
   'caveat': "'Caveat', cursive",
   'luckiest-guy': "'Luckiest Guy', cursive",
+  'playfair-display': "'Playfair Display', serif",
 
   // 直接映射字体名称（用于直接使用字体名的情况）
   'Patrick Hand': "'Patrick Hand', cursive",
@@ -31,6 +32,7 @@ export const fontMapping = {
   'Amatic SC': "'Amatic SC', cursive",
   'Caveat': "'Caveat', cursive",
   'Luckiest Guy': "'Luckiest Guy', cursive",
+  'Playfair Display': "'Playfair Display', serif",
 };
 
 type FontStatus = 'loading' | 'loaded' | 'error';
@@ -98,7 +100,8 @@ export function preloadFonts(): Promise<void> {
     "'Freckle Face', cursive", // vintage 样式
     "'Amatic SC', cursive",    // modern 样式
     "'Caveat', cursive",       // playful 样式
-    "'Luckiest Guy', cursive"  // elegant 样式
+    "'Luckiest Guy', cursive", // elegant 样式
+    "'Playfair Display', serif" // 新增的Playfair Display字体
   ];
 
   // 使用多种字体大小预加载每种字体，确保它们在不同大小下都可用
@@ -149,6 +152,11 @@ export function preloadFonts(): Promise<void> {
     } else if (font === "'Luckiest Guy', cursive") { // elegant
       // 主标题: width * 0.096, 副标题: width * 0.096, 作者名: width * 0.025
       [96, 25].forEach(size => {
+        fontWeights.forEach(weight => preloadFont(font, size, weight));
+      });
+    } else if (font === "'Playfair Display', serif") { // playfair display
+      // 主标题: width * 0.11, 副标题: width * 0.11, 作者名: width * 0.03
+      [110, 30].forEach(size => {
         fontWeights.forEach(weight => preloadFont(font, size, weight));
       });
     }

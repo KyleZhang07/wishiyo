@@ -41,11 +41,11 @@ export const PICTURE_BOOK_FONTS = [
     fontFamily: "'Caveat', cursive"
   },
   {
-    id: 'lora',
-    name: 'Lora',
-    description: 'Elegant serif font with good readability',
-    className: 'font-lora',
-    fontFamily: "'Lora', serif"
+    id: 'playfair-display',
+    name: 'Playfair Display',
+    description: 'Elegant serif font with classic appeal',
+    className: 'font-playfair-display',
+    fontFamily: "'Playfair Display', serif"
   }
 ];
 
@@ -75,7 +75,7 @@ const FontSelectionDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Select Text Font</DialogTitle>
           <DialogDescription>
@@ -83,14 +83,14 @@ const FontSelectionDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          <div className="grid grid-cols-1 gap-4">
+        <div className="space-y-2 py-2">
+          <div className="grid grid-cols-1 gap-2">
             {PICTURE_BOOK_FONTS.map((font) => (
               <div
                 key={font.id}
                 onClick={() => handleFontSelect(font.id)}
                 className={`
-                  border rounded-lg cursor-pointer transition-all p-4
+                  border rounded-lg cursor-pointer transition-all p-3
                   ${tempSelectedFont === font.id
                     ? 'border-2 border-[#FF7F50]'
                     : 'border border-gray-200 hover:border-gray-300'}
@@ -107,8 +107,8 @@ const FontSelectionDialog = ({
                     </div>
                   )}
                 </div>
-                <div 
-                  className="mt-3 p-2 bg-gray-50 rounded"
+                <div
+                  className="mt-2 p-2 bg-gray-50 rounded"
                   style={{ fontFamily: font.fontFamily }}
                 >
                   <p className="text-lg">The quick brown fox jumps over the lazy dog</p>
@@ -118,11 +118,7 @@ const FontSelectionDialog = ({
           </div>
         </div>
 
-        <div className="flex justify-between">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            <X className="w-4 h-4 mr-2" />
-            Cancel
-          </Button>
+        <div className="flex justify-end">
           <Button
             onClick={handleApply}
             className="bg-[#FF7F50] text-white hover:bg-[#FF7F50]/90"
