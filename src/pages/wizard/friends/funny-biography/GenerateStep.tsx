@@ -358,14 +358,14 @@ const FunnyBiographyGenerateStep = () => {
           // 设置背景去除状态为false
           setIsBackgroundRemoving(false);
 
-          // 设置图片并延迟生成封面，确保状态更新和Canvas渲染
+          // 设置图片并强制生成封面
           setCoverImage(data.image);
 
-          // 添加延迟，确保状态更新和Canvas重新渲染
-          console.log('背景去除完成，延迟生成封面以确保Canvas更新...');
+          // 添加短延迟，确保状态更新，然后强制生成
+          console.log('背景去除完成，短延迟后强制生成封面...');
           setTimeout(() => {
-            generateImagesFromCanvas();
-          }, 300);
+            generateImagesFromCanvas(true); // 使用forceGenerate=true强制生成
+          }, 100);
 
         } catch (storageError) {
           console.error('Error saving to sessionStorage:', storageError);
@@ -378,11 +378,11 @@ const FunnyBiographyGenerateStep = () => {
 
           setCoverImage(data.image);
 
-          // 添加延迟，确保状态更新和Canvas重新渲染
-          console.log('存储失败，但仍然延迟生成封面以确保Canvas更新...');
+          // 添加短延迟，确保状态更新，然后强制生成
+          console.log('存储失败，但仍然短延迟后强制生成封面...');
           setTimeout(() => {
-            generateImagesFromCanvas();
-          }, 300);
+            generateImagesFromCanvas(true); // 使用forceGenerate=true强制生成
+          }, 100);
         }
       } else {
         throw new Error('Failed to process image');
@@ -399,11 +399,11 @@ const FunnyBiographyGenerateStep = () => {
         setCoverImage(imageUrl);
       }
 
-      // 即使背景去除失败，仍然尝试生成封面，但添加延迟
-      console.log('背景去除失败，延迟生成封面以确保Canvas更新...');
+      // 即使背景去除失败，仍然尝试生成封面，但使用强制生成
+      console.log('背景去除失败，短延迟后强制生成封面...');
       setTimeout(() => {
-        generateImagesFromCanvas();
-      }, 300);
+        generateImagesFromCanvas(true); // 使用forceGenerate=true强制生成
+      }, 100);
 
       // 显示错误提示
       toast({
@@ -436,10 +436,10 @@ const FunnyBiographyGenerateStep = () => {
 
     // 强制重新生成，无论是否已经生成完成
     if (coverImage) {
-      // 添加延迟，确保状态已更新
+      // 添加短延迟，确保状态已更新，然后强制生成
       setTimeout(() => {
         console.log('开始重新生成封面，使用新的位置和缩放值:', { position, scale });
-        generateImagesFromCanvas();
+        generateImagesFromCanvas(true); // 使用forceGenerate=true强制生成
       }, 100);
     }
   };
@@ -450,11 +450,11 @@ const FunnyBiographyGenerateStep = () => {
   };
 
   // 生成图像的函数 - 确保使用sessionStorage中的图片
-  const generateImagesFromCanvas = async () => {
+  const generateImagesFromCanvas = async (forceGenerate = false) => {
     if (!fontsLoaded) {
       console.log('字体尚未加载完成，延迟生成...');
       setTimeout(() => {
-        generateImagesFromCanvas();
+        generateImagesFromCanvas(forceGenerate);
       }, 500);
       return;
     }
@@ -465,23 +465,25 @@ const FunnyBiographyGenerateStep = () => {
       console.log('使用sessionStorage中的处理后图片生成封面');
       setCoverImage(sessionProcessedPhoto);
 
-      // 添加延迟，确保状态更新和Canvas重新渲染
-      console.log('检测到图片变化，延迟生成以确保Canvas更新...');
+      // 添加较短的延迟，确保状态更新
+      console.log('检测到图片变化，短延迟后强制生成...');
       setTimeout(() => {
-        generateImagesFromCanvas();
-      }, 300);
+        // 使用forceGenerate=true调用，确保不会再次检查图片
+        generateImagesFromCanvas(true);
+      }, 100);
       return; // 重要：返回并等待下一次调用
     }
+
+    // 如果已经在生成中且不是强制生成，则退出
+    if (!forceGenerate && (!canvasPdfContainerRef.current || pdfGenerating)) return;
 
     // 打印当前的图片位置和缩放值，用于调试
     console.log('生成图像时的图片位置:', imagePosition);
     console.log('生成图像时的缩放比例:', imageScale);
 
-    if (!canvasPdfContainerRef.current || pdfGenerating) return;
-
     setPdfGenerating(true);
 
-    // 确保 Canvas 已经渲染
+    // 确保 Canvas 已经渲染，使用较短的延迟
     console.log('等待Canvas渲染...');
     setTimeout(() => {
       try {
@@ -499,19 +501,20 @@ const FunnyBiographyGenerateStep = () => {
           return;
         }
 
-        // 再次检查sessionStorage中的图片是否与当前coverImage一致
-        // 这是一个额外的安全检查
-        const currentSessionPhoto = sessionStorage.getItem('funnyBiographyProcessedPhoto');
-        if (currentSessionPhoto && coverImage !== currentSessionPhoto) {
-          console.log('检测到图片不一致，更新图片并重新生成...');
-          setPdfGenerating(false);
-          setCoverImage(currentSessionPhoto);
+        // 如果不是强制生成，再次检查sessionStorage中的图片是否与当前coverImage一致
+        if (!forceGenerate) {
+          const currentSessionPhoto = sessionStorage.getItem('funnyBiographyProcessedPhoto');
+          if (currentSessionPhoto && coverImage !== currentSessionPhoto) {
+            console.log('检测到图片不一致，更新图片并强制重新生成...');
+            setPdfGenerating(false);
+            setCoverImage(currentSessionPhoto);
 
-          // 延迟重新生成
-          setTimeout(() => {
-            generateImagesFromCanvas();
-          }, 300);
-          return;
+            // 短延迟后强制重新生成
+            setTimeout(() => {
+              generateImagesFromCanvas(true); // 强制生成
+            }, 100);
+            return;
+          }
         }
 
         // Front cover - 直接保存为图像
@@ -535,13 +538,15 @@ const FunnyBiographyGenerateStep = () => {
         // 设置生成完成状态
         setPdfGenerating(false);
         setGenerationComplete(true);
+        setIsBackgroundRemoving(false); // 确保背景去除状态也被重置
 
         console.log('All cover images generated successfully');
       } catch (error) {
         console.error('Error generating cover images:', error);
         setPdfGenerating(false);
+        setIsBackgroundRemoving(false); // 确保背景去除状态也被重置
       }
-    }, 800); // 增加延迟时间，从600ms增加到800ms，给Canvas更多渲染时间
+    }, 400); // 减少延迟时间，从800ms减少到400ms，加快响应速度
   };
 
   const handleGenerateBook = () => {
