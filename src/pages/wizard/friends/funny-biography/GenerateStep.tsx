@@ -569,7 +569,7 @@ const FunnyBiographyGenerateStep = () => {
                 <div className="flex items-center justify-center h-[540px]">
                   <div className="animate-spin h-12 w-12 border-4 border-[#FF7F50] border-t-transparent rounded-full"></div>
                   <span className="ml-3 text-xl">
-                    {isBackgroundRemoving ? "Removing background..." : "Generating cover..."}
+                    Generating cover...
                   </span>
                 </div>
               ) : (
