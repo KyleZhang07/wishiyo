@@ -1822,7 +1822,7 @@ const LoveStoryCoverStep = () => {
                 <div className="absolute inset-0 rounded-full border-t-2 border-[#FF7F50] animate-spin"></div>
               </div>
               <h3 className="text-xl font-medium text-[#FF7F50]">
-                Generating covers
+                Generating cover
               </h3>
             </div>
           )}
@@ -1847,13 +1847,8 @@ const LoveStoryCoverStep = () => {
                   <div className="absolute inset-0 rounded-full border-t-2 border-[#FF7F50] animate-spin"></div>
                 </div>
                 <h3 className="text-xl font-medium text-[#FF7F50]">
-                  {!backgroundsLoaded ? 'Loading background images...' : !fontsLoaded ? 'Loading fonts...' : 'Preparing...'}
+                  Generating cover
                 </h3>
-                <p className="text-gray-500 mt-2 text-center">
-                  {!backgroundsLoaded && !fontsLoaded ? 'Loading resources, please wait...' :
-                   !backgroundsLoaded ? 'Loading background images...' :
-                   !fontsLoaded ? 'Loading fonts...' : 'Almost ready...'}
-                </p>
               </div>
             )}
 
@@ -1918,7 +1913,7 @@ const LoveStoryCoverStep = () => {
               disabled={isGeneratingCover}
               className="w-28"
             >
-              {isGeneratingCover ? 'Generating...' : 'Regenerate'}
+              {isGeneratingCover ? 'Generating cover' : 'Regenerate'}
             </Button>
           </div>
         </div>
