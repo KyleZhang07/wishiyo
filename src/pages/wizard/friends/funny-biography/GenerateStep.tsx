@@ -96,22 +96,31 @@ const FunnyBiographyGenerateStep = () => {
   const [isBackgroundRemoving, setIsBackgroundRemoving] = useState(false);
   // Step 1: add state to track when the cover image has actually loaded
   const [coverImageLoaded, setCoverImageLoaded] = useState(false);
-  // Step 2: detect image load
-  // 等待封面图像真正加载完成
+  // 等待封面图像真正加载完成 —— 对 data:URL 直接判定已加载
   useEffect(() => {
     if (!coverImage) return;
 
-    setCoverImageLoaded(false); // reset
+    // Data‑URL 本地字符串不会触发网络请求，直接视为已就绪
+    if (coverImage.startsWith('data:image')) {
+      setCoverImageLoaded(true);
+      return;
+    }
+
+    setCoverImageLoaded(false);
     const img = new Image();
+
+    // 只有跨域 URL 才需要 anonymous；data: 和同源 URL 不要设置，避免 Safari bug
     img.crossOrigin = 'anonymous';
-    img.onload = () => setCoverImageLoaded(true);
-    img.onerror = () => {
-      console.error('封面图像加载失败');
+
+    img.onload = () => {
+      setCoverImageLoaded(true);
+      console.log('封面图像加载完成');
+    };
+    img.onerror = (e) => {
+      console.error('封面图像加载失败', e);
       setCoverImageLoaded(false);
     };
-    img.src = coverImage.startsWith('data:image')
-      ? coverImage
-      : `data:image/png;base64,${coverImage.replace(/^data:.*?,/, '')}`;
+    img.src = coverImage;
   }, [coverImage]);
 
   // 使用模版字符串定义尺寸
