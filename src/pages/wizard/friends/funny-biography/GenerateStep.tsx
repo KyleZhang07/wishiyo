@@ -367,9 +367,11 @@ const FunnyBiographyGenerateStep = () => {
           setSelectedStyle('bestseller-style');
           localStorage.setItem('funnyBiographySelectedStyle', 'bestseller-style');
 
-          // 设置shouldRegenerate为true，触发重新生成逻辑
-          // 这与点击新样式的逻辑保持一致
-          setShouldRegenerate(true);
+          // 直接生成封面，不依赖于状态更新和useEffect
+          // 这样可以确保封面立即生成，不会卡在加载状态
+          setTimeout(() => {
+            generateImagesFromCanvas();
+          }, 300);
 
         } catch (storageError) {
           console.error('Error saving to sessionStorage:', storageError);
@@ -386,9 +388,11 @@ const FunnyBiographyGenerateStep = () => {
           setSelectedStyle('bestseller-style');
           localStorage.setItem('funnyBiographySelectedStyle', 'bestseller-style');
 
-          // 设置shouldRegenerate为true，触发重新生成逻辑
-          // 这与点击新样式的逻辑保持一致
-          setShouldRegenerate(true);
+          // 直接生成封面，不依赖于状态更新和useEffect
+          // 这样可以确保封面立即生成，不会卡在加载状态
+          setTimeout(() => {
+            generateImagesFromCanvas();
+          }, 300);
         }
       } else {
         throw new Error('Failed to process image');
@@ -410,9 +414,11 @@ const FunnyBiographyGenerateStep = () => {
       setSelectedStyle('bestseller-style');
       localStorage.setItem('funnyBiographySelectedStyle', 'bestseller-style');
 
-      // 设置shouldRegenerate为true，触发重新生成逻辑
-      // 这与点击新样式的逻辑保持一致
-      setShouldRegenerate(true);
+      // 直接生成封面，不依赖于状态更新和useEffect
+      // 这样可以确保封面立即生成，不会卡在加载状态
+      setTimeout(() => {
+        generateImagesFromCanvas();
+      }, 300);
 
       // 显示错误提示
       toast({
