@@ -33,7 +33,7 @@ export default function Home() {
               "@context": "https://schema.org",
               "@type": "WebPage",
               "name": "Wishiyo - Every Page, Just for Them | Custom Story Books & Picture Books",
-              "description": "The only book where every page is truly about them, in just 3 minutes. Personalized story books and picture books that make perfect gifts.",
+              "description": "The only book where every page is truly about them, in just 3 minutes. Personalized story books and picture books that make perfect gifts. Featuring titles like Beatboxing Business Blues, Coffee, Corgis, and Quirks, Auntie Jasmine's Wonderful Maya, and more.",
               "url": "https://www.wishiyo.com/",
               "speakable": {
                 "@type": "SpeakableSpecification",
@@ -155,7 +155,7 @@ export default function Home() {
                   />
                 </div>
                 <h3 className="text-2xl font-bold mb-2">Picture Book</h3>
-                <p className="text-gray-700 mb-4">Colorful illustrations with minimal text</p>
+                <p className="text-gray-700 mb-4">Draw an imaginary book for them</p>
                 <span className="text-primary group-hover:text-primary/80 inline-flex items-center">
                   Explore <ArrowRight className="ml-2 h-4 w-4" />
                 </span>
@@ -215,7 +215,7 @@ export default function Home() {
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">Beatboxing Business Blues</h3>
-              <p className="text-gray-700">A hilarious tale of entrepreneurial rhythm</p>
+              <p className="text-gray-700">Her story—beats, business, and a whole lot of laughs.</p>
             </div>
 
             {/* Book 2 */}
@@ -228,7 +228,7 @@ export default function Home() {
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">Coffee, Corgis, and Quirks</h3>
-              <p className="text-gray-700">Adventures with furry friends and caffeine</p>
+              <p className="text-gray-700">All the little things that make him special.</p>
             </div>
 
             {/* Book 3 */}
@@ -241,7 +241,7 @@ export default function Home() {
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">Shakespeare and Syllables</h3>
-              <p className="text-gray-700">Literary wordplay and poetic adventures</p>
+              <p className="text-gray-700">Celebrating her love of poetry and teaching.</p>
             </div>
 
             {/* Book 4 */}
@@ -254,7 +254,7 @@ export default function Home() {
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">Homebrew High Jinks</h3>
-              <p className="text-gray-700">Craft beer mishaps and hoppy escapades</p>
+              <p className="text-gray-700">Cheers to his craft beers and adventures gone sideways!</p>
             </div>
           </div>
         </div>
@@ -278,7 +278,7 @@ export default function Home() {
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">Auntie Jasmine's Wonderful Maya</h3>
-              <p className="text-gray-700">A magical adventure of wonder and joy</p>
+              <p className="text-gray-700">A special story starring Maya and the auntie who adores her.</p>
             </div>
 
             {/* Book 2 */}
@@ -291,7 +291,7 @@ export default function Home() {
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">The Magic in Mateo</h3>
-              <p className="text-gray-700">Discover the wonder in everyday moments</p>
+              <p className="text-gray-700">Discovering everyday magic through Mateo's eyes.</p>
             </div>
 
             {/* Book 3 */}
@@ -304,7 +304,7 @@ export default function Home() {
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">Charlie's Amazing Adventure</h3>
-              <p className="text-gray-700">Join Charlie on a journey of discovery</p>
+              <p className="text-gray-700">Charlie's own adventure, told one page at a time.</p>
             </div>
 
             {/* Book 4 */}
@@ -317,7 +317,7 @@ export default function Home() {
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">Matt, I love you!</h3>
-              <p className="text-gray-700">A heartfelt expression of love and appreciation</p>
+              <p className="text-gray-700">Because Matt deserves his very own love story.</p>
             </div>
           </div>
         </div>

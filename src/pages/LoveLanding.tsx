@@ -11,7 +11,7 @@ const LoveLanding = () => {
               "@type": "Product",
               "name": "Picture Book",
               "image": "https://www.wishiyo.com/images/showcase/illustrated-books/illustrated-book1.jpeg",
-              "description": "Get a picture book where every page features their face - created instantly. Any dream, anywhere—they're the star.",
+              "description": "Get a picture book where every page features their face - created instantly. Any dream, anywhere—they're the star. Features books like Auntie Jasmine's Wonderful Maya, The Magic in Mateo, Charlie's Amazing Adventure, and Matt, I Love You!",
               "brand": {
                 "@type": "Brand",
                 "name": "Wishiyo"
@@ -68,7 +68,7 @@ const LoveLanding = () => {
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">Auntie Jasmine's Wonderful Maya</h3>
-              <p className="text-gray-700">A magical day with a special aunt</p>
+              <p className="text-gray-700">A special story starring Maya and the auntie who adores her.</p>
             </div>
 
             {/* Book 2 */}
@@ -81,7 +81,7 @@ const LoveLanding = () => {
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">The Magic in Mateo</h3>
-              <p className="text-gray-700">Discover the wonder in everyday moments</p>
+              <p className="text-gray-700">Discovering everyday magic through Mateo's eyes.</p>
             </div>
 
             {/* Book 3 */}
@@ -94,7 +94,7 @@ const LoveLanding = () => {
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">Charlie's Amazing Adventure</h3>
-              <p className="text-gray-700">Join Charlie on a journey of discovery</p>
+              <p className="text-gray-700">Charlie's own adventure, told one page at a time.</p>
             </div>
 
             {/* Book 4 */}
@@ -107,7 +107,7 @@ const LoveLanding = () => {
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">Matt, I love you!</h3>
-              <p className="text-gray-700">A heartfelt expression of love and appreciation</p>
+              <p className="text-gray-700">Because Matt deserves his very own love story.</p>
             </div>
           </div>
         </div>

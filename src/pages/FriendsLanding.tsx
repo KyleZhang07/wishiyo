@@ -13,7 +13,7 @@ const FriendsLanding = () => {
               "@type": "Product",
               "name": "Funny Biography Book",
               "image": "https://www.wishiyo.com/images/showcase/personalized-books/personalized-book1.png",
-              "description": "Create a funny biography that's literally about them - real unforgettable. We'll do the writing, you get the laughs.",
+              "description": "Create a funny biography that's literally about them - real unforgettable. We'll do the writing, you get the laughs. Features books like Beatboxing Business Blues, Coffee, Corgis, and Quirks, Shakespeare and Syllables, and Homebrew High Jinks.",
               "brand": {
                 "@type": "Brand",
                 "name": "Wishiyo"
@@ -70,7 +70,7 @@ const FriendsLanding = () => {
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">Beatboxing Business Blues</h3>
-              <p className="text-gray-700">A hilarious tale of entrepreneurial rhythm</p>
+              <p className="text-gray-700">Her story—beats, business, and a whole lot of laughs.</p>
             </div>
 
             {/* Book 2 */}
@@ -83,7 +83,7 @@ const FriendsLanding = () => {
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">Coffee, Corgis, and Quirks</h3>
-              <p className="text-gray-700">Adventures with furry friends and caffeine</p>
+              <p className="text-gray-700">All the little things that make him special.</p>
             </div>
 
             {/* Book 3 */}
@@ -96,7 +96,7 @@ const FriendsLanding = () => {
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">Shakespeare and Syllables</h3>
-              <p className="text-gray-700">Literary wordplay and poetic adventures</p>
+              <p className="text-gray-700">Celebrating her love of poetry and teaching.</p>
             </div>
 
             {/* Book 4 */}
@@ -109,7 +109,7 @@ const FriendsLanding = () => {
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">Homebrew High Jinks</h3>
-              <p className="text-gray-700">Craft beer mishaps and hoppy escapades</p>
+              <p className="text-gray-700">Cheers to his craft beers and adventures gone sideways!</p>
             </div>
           </div>
         </div>
