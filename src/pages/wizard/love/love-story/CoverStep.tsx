@@ -1805,61 +1805,58 @@ const LoveStoryCoverStep = () => {
         {/* 封面预览 */}
         <div className="relative mb-5">
 
-          {/* 封面图片生成中的加载状态 - 使用更简洁的样式 */}
-          {isGeneratingCover && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-white z-20 rounded-lg">
-              <div className="relative w-16 h-16 mb-4">
-                <div className="absolute inset-0 rounded-full border-t-2 border-[#FF7F50] animate-spin"></div>
-              </div>
-              <h3 className="text-xl font-medium text-[#FF7F50]">
-                Generating covers
-              </h3>
-            </div>
-          )}
-
           {/* 左箭头 */}
           {coverImages.length > 1 && (
             <button
               onClick={handlePrevImage}
               className="absolute left-0 top-1/2 transform -translate-y-1/2 -ml-10 bg-white/80 rounded-full p-2 shadow-md z-10 hover:bg-white transition-colors"
-              disabled={isGeneratingCover}
+              disabled={isGeneratingCover || !resourcesLoaded || initialLoading}
             >
               <ChevronLeft className="w-6 h-6 text-gray-700" />
             </button>
           )}
 
-          {/* 封面预览组件 - 直接传递titleData而非使用localStorage */}
-          {(!resourcesLoaded || initialLoading) ? (
-            <div className="flex flex-col items-center justify-center bg-white rounded-lg p-8 h-[600px]">
-              <div className="relative w-16 h-16 mb-4">
-                <div className="absolute inset-0 rounded-full border-t-2 border-[#FF7F50] animate-spin"></div>
+          {/* 统一的加载状态和封面预览 */}
+          <div className="relative">
+            {/* 统一的加载状态层 - 处理所有加载状态 */}
+            {(isGeneratingCover || !resourcesLoaded || initialLoading) && (
+              <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-white rounded-lg p-8 transition-opacity duration-300 ease-in-out">
+                <div className="relative w-16 h-16 mb-4">
+                  <div className="absolute inset-0 rounded-full border-t-2 border-[#FF7F50] animate-spin"></div>
+                </div>
+                <h3 className="text-xl font-medium text-[#FF7F50]">
+                  {isGeneratingCover ? 'Generating covers' :
+                   !backgroundsLoaded ? 'Loading background images...' :
+                   !fontsLoaded ? 'Loading fonts...' : 'Preparing...'}
+                </h3>
+                <p className="text-gray-500 mt-2 text-center">
+                  {isGeneratingCover ? 'This may take a moment...' :
+                   !backgroundsLoaded && !fontsLoaded ? 'Loading resources, please wait...' :
+                   !backgroundsLoaded ? 'Loading background images...' :
+                   !fontsLoaded ? 'Loading fonts...' : 'Almost ready...'}
+                </p>
               </div>
-              <h3 className="text-xl font-medium text-[#FF7F50]">
-                {!backgroundsLoaded ? 'Loading background images...' : !fontsLoaded ? 'Loading fonts...' : 'Preparing...'}
-              </h3>
-              <p className="text-gray-500 mt-2 text-center">
-                {!backgroundsLoaded && !fontsLoaded ? 'Loading resources, please wait...' :
-                 !backgroundsLoaded ? 'Loading background images...' :
-                 !fontsLoaded ? 'Loading fonts...' : 'Almost ready...'}
-              </p>
+            )}
+
+            {/* 始终渲染预览组件，但在加载时隐藏 */}
+            <div className={`transition-opacity duration-300 ease-in-out ${(isGeneratingCover || !resourcesLoaded || initialLoading) ? 'opacity-0' : 'opacity-100'}`}>
+              <LoveStoryCoverPreview
+                titleData={titleData}
+                authorName={authorName}
+                recipientName={recipientName}
+                coverImage={currentCoverImage}
+                selectedFont={currentStyle.font}
+                style={currentStyle}
+              />
             </div>
-          ) : (
-            <LoveStoryCoverPreview
-              titleData={titleData}
-              authorName={authorName}
-              recipientName={recipientName}
-              coverImage={currentCoverImage}
-              selectedFont={currentStyle.font}
-              style={currentStyle}
-            />
-          )}
+          </div>
 
           {/* 右箭头 */}
           {coverImages.length > 1 && (
             <button
               onClick={handleNextImage}
               className="absolute right-0 top-1/2 transform -translate-y-1/2 -mr-10 bg-white/80 rounded-full p-2 shadow-md z-10 hover:bg-white transition-colors"
-              disabled={isGeneratingCover}
+              disabled={isGeneratingCover || !resourcesLoaded || initialLoading}
             >
               <ChevronRight className="w-6 h-6 text-gray-700" />
             </button>
