@@ -106,6 +106,8 @@ const LoveStoryCoverStep = () => {
   const [backgroundsLoaded, setBackgroundsLoaded] = useState<boolean>(false);
   const [fontsLoaded, setFontsLoaded] = useState<boolean>(false);
   const [resourcesLoaded, setResourcesLoaded] = useState<boolean>(false);
+  // 添加初始加载状态，确保在第一次渲染时就显示加载界面
+  const [initialLoading, setInitialLoading] = useState<boolean>(true);
 
   // 预加载所有背景图片
   const blueTexture = useImageLoader(blueTextureBackground);
@@ -262,7 +264,15 @@ const LoveStoryCoverStep = () => {
   useEffect(() => {
     if (backgroundsLoaded && fontsLoaded) {
       console.log('All resources (backgrounds and fonts) loaded successfully');
-      setResourcesLoaded(true);
+
+      // 使用短延迟确保平滑过渡，避免闪烁
+      const timer = setTimeout(() => {
+        setResourcesLoaded(true);
+        // 资源加载完成后，取消初始加载状态
+        setInitialLoading(false);
+      }, 300);
+
+      return () => clearTimeout(timer);
     } else {
       setResourcesLoaded(false);
     }
@@ -1805,33 +1815,42 @@ const LoveStoryCoverStep = () => {
         {/* 封面预览 */}
         <div className="relative mb-5">
 
+          {/* 封面图片生成中的加载状态 - 使用更简洁的样式 */}
+          {isGeneratingCover && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-white z-20 rounded-lg">
+              <div className="relative w-16 h-16 mb-4">
+                <div className="absolute inset-0 rounded-full border-t-2 border-[#FF7F50] animate-spin"></div>
+              </div>
+              <h3 className="text-xl font-medium text-[#FF7F50]">
+                Generating covers
+              </h3>
+            </div>
+          )}
+
           {/* 左箭头 */}
           {coverImages.length > 1 && (
             <button
               onClick={handlePrevImage}
               className="absolute left-0 top-1/2 transform -translate-y-1/2 -ml-10 bg-white/80 rounded-full p-2 shadow-md z-10 hover:bg-white transition-colors"
-              disabled={isGeneratingCover || !resourcesLoaded || initialLoading}
+              disabled={isGeneratingCover}
             >
               <ChevronLeft className="w-6 h-6 text-gray-700" />
             </button>
           )}
 
-          {/* 统一的加载状态和封面预览 */}
+          {/* 封面预览组件 - 直接传递titleData而非使用localStorage */}
           <div className="relative">
-            {/* 统一的加载状态层 - 处理所有加载状态 */}
-            {(isGeneratingCover || !resourcesLoaded || initialLoading) && (
-              <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-white rounded-lg p-8 transition-opacity duration-300 ease-in-out">
+            {/* 加载状态层 - 使用绝对定位和透明度过渡 */}
+            {(!resourcesLoaded || initialLoading) && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white rounded-lg p-8 transition-opacity duration-300 ease-in-out">
                 <div className="relative w-16 h-16 mb-4">
                   <div className="absolute inset-0 rounded-full border-t-2 border-[#FF7F50] animate-spin"></div>
                 </div>
                 <h3 className="text-xl font-medium text-[#FF7F50]">
-                  {isGeneratingCover ? 'Generating covers' :
-                   !backgroundsLoaded ? 'Loading background images...' :
-                   !fontsLoaded ? 'Loading fonts...' : 'Preparing...'}
+                  {!backgroundsLoaded ? 'Loading background images...' : !fontsLoaded ? 'Loading fonts...' : 'Preparing...'}
                 </h3>
                 <p className="text-gray-500 mt-2 text-center">
-                  {isGeneratingCover ? 'This may take a moment...' :
-                   !backgroundsLoaded && !fontsLoaded ? 'Loading resources, please wait...' :
+                  {!backgroundsLoaded && !fontsLoaded ? 'Loading resources, please wait...' :
                    !backgroundsLoaded ? 'Loading background images...' :
                    !fontsLoaded ? 'Loading fonts...' : 'Almost ready...'}
                 </p>
@@ -1839,7 +1858,7 @@ const LoveStoryCoverStep = () => {
             )}
 
             {/* 始终渲染预览组件，但在加载时隐藏 */}
-            <div className={`transition-opacity duration-300 ease-in-out ${(isGeneratingCover || !resourcesLoaded || initialLoading) ? 'opacity-0' : 'opacity-100'}`}>
+            <div className={`transition-opacity duration-300 ease-in-out ${(!resourcesLoaded || initialLoading) ? 'opacity-0' : 'opacity-100'}`}>
               <LoveStoryCoverPreview
                 titleData={titleData}
                 authorName={authorName}
@@ -1856,7 +1875,7 @@ const LoveStoryCoverStep = () => {
             <button
               onClick={handleNextImage}
               className="absolute right-0 top-1/2 transform -translate-y-1/2 -mr-10 bg-white/80 rounded-full p-2 shadow-md z-10 hover:bg-white transition-colors"
-              disabled={isGeneratingCover || !resourcesLoaded || initialLoading}
+              disabled={isGeneratingCover}
             >
               <ChevronRight className="w-6 h-6 text-gray-700" />
             </button>
