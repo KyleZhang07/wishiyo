@@ -47,8 +47,7 @@ serve(async (req) => {
           messages: [
             {
               role: 'system',
-              content: `You are a creative assistant that generates imaginative image prompts for a fantasy autobiography book.
-                Create 13 unique and creative scenes focusing solely on one person - the recipient.
+              content: `Create 13 unique and creative scenes focusing solely on one person - the recipient.
                 Each prompt should imagine the person in different fantasy scenarios that represent their ideal dream life.
                 Consider the person's gender (${recipientGender}) and age (${recipientAge}) when creating prompts.
                 Focus on solo portraits and scenes that showcase the person living their fantasy dream life.
@@ -71,7 +70,7 @@ serve(async (req) => {
                 Example prompt structure:
                 {
                   "question": "${recipientName} living their dream",
-                  "prompt": "Image of ${recipientName}, ${recipientGender === 'male' ? 'handsome' : 'beautiful'} ${recipientAge}-year-old person standing on a private yacht in crystal blue waters, luxurious setting, golden hour lighting, successful lifestyle, solo portrait, high detail"
+                  "prompt": "Image of ${recipientName}, ${recipientGender === 'male' ? 'handsome' : 'beautiful'} ${recipientAge}-year-old person standing on a private yacht in crystal blue waters, standing atop a floating island with glowing crystals and a swirling sky, adventurous and empowered"
                 }`
             }
           ],

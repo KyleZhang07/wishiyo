@@ -126,10 +126,6 @@
   font-family: 'Oswald', 'Arial Narrow', Arial, sans-serif;
 }
 
-.font-playfair-display {
-  font-family: 'Playfair Display', Georgia, serif;
-}
-
 @layer base {
   :root {
     --background: 16 30% 98%;

@@ -246,10 +246,12 @@ const FunnyBiographyGenerateStep = () => {
           setLastUsedImage(sessionProcessedPhoto);
         }
 
-        // 延迟生成新的图像，确保数据已更新
-        setTimeout(() => {
-          generateImagesFromCanvas();
-        }, 500);
+        // 使用requestAnimationFrame确保数据已更新后再生成新的图像
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            generateImagesFromCanvas();
+          });
+        });
 
         console.log('检测到想法变更，重新生成封面');
       }
@@ -298,10 +300,12 @@ const FunnyBiographyGenerateStep = () => {
       localStorage.removeItem('funnyBiographyGenerationComplete');
 
       // 生成新的图像
-      setTimeout(() => {
-        generateImagesFromCanvas();
-        setShouldRegenerate(false);
-      }, 1000);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          generateImagesFromCanvas();
+          setShouldRegenerate(false);
+        });
+      });
     }
   }, [shouldRegenerate, coverImage, authorName, coverTitle]);
 
@@ -317,12 +321,24 @@ const FunnyBiographyGenerateStep = () => {
     // 只有当图片已经加载并且生成完成后，才在调整位置或缩放时触发重新生成
     if (coverImage && generationComplete) {
       console.log('图片位置或缩放变化，准备重新生成封面...');
-      // 设置一个短暂的延迟，避免频繁重新生成
-      const timer = setTimeout(() => {
-        generateImagesFromCanvas();
-      }, 300);
+      // 使用requestAnimationFrame避免频繁重新生成
+      let animationFrameId: number;
 
-      return () => clearTimeout(timer);
+      const scheduleRender = () => {
+        animationFrameId = requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            generateImagesFromCanvas();
+          });
+        });
+      };
+
+      scheduleRender();
+
+      return () => {
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId);
+        }
+      };
     }
   }, [imagePosition, imageScale]);
 
@@ -367,11 +383,14 @@ const FunnyBiographyGenerateStep = () => {
           setSelectedStyle('bestseller-style');
           localStorage.setItem('funnyBiographySelectedStyle', 'bestseller-style');
 
-          // 直接生成封面，不依赖于状态更新和useEffect
+          // 使用requestAnimationFrame确保状态更新完成后再生成封面
           // 这样可以确保封面立即生成，不会卡在加载状态
-          setTimeout(() => {
-            generateImagesFromCanvas();
-          }, 300);
+          requestAnimationFrame(() => {
+            // 使用第二个requestAnimationFrame确保状态已完全更新
+            requestAnimationFrame(() => {
+              generateImagesFromCanvas();
+            });
+          });
 
         } catch (storageError) {
           console.error('Error saving to sessionStorage:', storageError);
@@ -388,11 +407,14 @@ const FunnyBiographyGenerateStep = () => {
           setSelectedStyle('bestseller-style');
           localStorage.setItem('funnyBiographySelectedStyle', 'bestseller-style');
 
-          // 直接生成封面，不依赖于状态更新和useEffect
+          // 使用requestAnimationFrame确保状态更新完成后再生成封面
           // 这样可以确保封面立即生成，不会卡在加载状态
-          setTimeout(() => {
-            generateImagesFromCanvas();
-          }, 300);
+          requestAnimationFrame(() => {
+            // 使用第二个requestAnimationFrame确保状态已完全更新
+            requestAnimationFrame(() => {
+              generateImagesFromCanvas();
+            });
+          });
         }
       } else {
         throw new Error('Failed to process image');
@@ -414,11 +436,14 @@ const FunnyBiographyGenerateStep = () => {
       setSelectedStyle('bestseller-style');
       localStorage.setItem('funnyBiographySelectedStyle', 'bestseller-style');
 
-      // 直接生成封面，不依赖于状态更新和useEffect
+      // 使用requestAnimationFrame确保状态更新完成后再生成封面
       // 这样可以确保封面立即生成，不会卡在加载状态
-      setTimeout(() => {
-        generateImagesFromCanvas();
-      }, 300);
+      requestAnimationFrame(() => {
+        // 使用第二个requestAnimationFrame确保状态已完全更新
+        requestAnimationFrame(() => {
+          generateImagesFromCanvas();
+        });
+      });
 
       // 显示错误提示
       toast({
@@ -451,11 +476,14 @@ const FunnyBiographyGenerateStep = () => {
 
     // 强制重新生成，无论是否已经生成完成
     if (coverImage) {
-      // 添加延迟，确保状态已更新
-      setTimeout(() => {
-        console.log('开始重新生成封面，使用新的位置和缩放值:', { position, scale });
-        generateImagesFromCanvas();
-      }, 100);
+      // 使用requestAnimationFrame确保状态已更新
+      requestAnimationFrame(() => {
+        // 使用第二个requestAnimationFrame确保状态已完全更新
+        requestAnimationFrame(() => {
+          console.log('开始重新生成封面，使用新的位置和缩放值:', { position, scale });
+          generateImagesFromCanvas();
+        });
+      });
     }
   };
 
@@ -468,9 +496,11 @@ const FunnyBiographyGenerateStep = () => {
   const generateImagesFromCanvas = async () => {
     if (!fontsLoaded) {
       console.log('字体尚未加载完成，延迟生成...');
-      setTimeout(() => {
-        generateImagesFromCanvas();
-      }, 500);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          generateImagesFromCanvas();
+        });
+      });
       return;
     }
 
@@ -489,10 +519,29 @@ const FunnyBiographyGenerateStep = () => {
 
     setPdfGenerating(true);
 
-    // 确保 Canvas 已经渲染
+    // 使用requestAnimationFrame确保Canvas渲染完成
     console.log('等待Canvas渲染...');
-    setTimeout(() => {
+
+    // 创建一个Promise包装的requestAnimationFrame，确保Canvas已完全渲染
+    const waitForCanvasRender = () => {
+      return new Promise<void>(resolve => {
+        // 使用两层嵌套的requestAnimationFrame确保Canvas已完全渲染
+        // 第一个requestAnimationFrame等待下一帧
+        requestAnimationFrame(() => {
+          // 第二个requestAnimationFrame等待再下一帧，此时Canvas应该已完全渲染
+          requestAnimationFrame(() => {
+            resolve();
+          });
+        });
+      });
+    };
+
+    // 使用async/await处理渲染和捕获过程
+    (async () => {
       try {
+        // 等待Canvas完全渲染
+        await waitForCanvasRender();
+
         if (!canvasPdfContainerRef.current) {
           console.error('Canvas container not found');
           setPdfGenerating(false);
@@ -534,7 +583,7 @@ const FunnyBiographyGenerateStep = () => {
         console.error('Error generating cover images:', error);
         setPdfGenerating(false);
       }
-    }, 600); // 给Canvas渲染提供足够时间
+    })();
   };
 
   const handleGenerateBook = () => {
@@ -636,7 +685,7 @@ const FunnyBiographyGenerateStep = () => {
             </div>
 
             {/* 添加图片调整按钮 - 在背景去除过程中显示但禁用 */}
-            {coverImage && (
+            {(isBackgroundRemoving || coverImage) && (
               <div className="flex justify-center mb-6">
                 <Button
                   variant="outline"
@@ -653,14 +702,14 @@ const FunnyBiographyGenerateStep = () => {
             )}
 
             {/* 图片调整对话框 */}
-            {coverImage && (
+            {(isBackgroundRemoving || coverImage) && (
               <ImageAdjustDialog
                 open={isAdjustDialogOpen}
                 onOpenChange={setIsAdjustDialogOpen}
                 onSave={handleImageAdjust}
                 initialPosition={imagePosition}
                 initialScale={imageScale}
-                coverImage={coverImage}
+                coverImage={coverImage || ''}
               />
             )}
 
