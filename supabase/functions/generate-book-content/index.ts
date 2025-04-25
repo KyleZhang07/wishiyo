@@ -27,7 +27,7 @@ interface BookChapter {
 // 定义批次大小和总章节数
 const BATCH_SIZE = 1; // 每批生成2章
 const TOTAL_CHAPTERS = 20; // 总共生成2章
-const MAX_RETRIES = 3;
+const MAX_RETRIES = 7;
 
 // 定义页面布局常量
 const CHARS_PER_PAGE = 1300; // 每页平均字符数（包括空格）

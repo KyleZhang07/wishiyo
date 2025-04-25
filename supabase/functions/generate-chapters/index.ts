@@ -48,7 +48,7 @@ Example descriptions:
 - "The parallels between tracking market trends and observing snowfall patterns to anticipate future opportunities."
 - "Developing resilience through unexpected challenges and learning to transform obstacles into stepping stones."
 
-Return ONLY a JSON array containing these 20 chapter objects. No other text or explanation.`;
+Return ONLY a JSON object with a "chapters" array containing these 20 chapter objects. The response must be a valid JSON object with the format: {"chapters": [...]}. No other text or explanation.`;
 
     console.log("Sending prompt to OpenAI:", prompt);
 
@@ -59,7 +59,7 @@ Return ONLY a JSON array containing these 20 chapter objects. No other text or e
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4.1-nano",
+        model: "gpt-4o-mini",
         messages: [
           {
             role: "system",
@@ -77,7 +77,20 @@ Return ONLY a JSON array containing these 20 chapter objects. No other text or e
                       - "Developing resilience through unexpected challenges and learning to transform obstacles into stepping stones."
 
                       Each chapter should have a starting page number, with the first chapter starting at page 1 and subsequent chapters starting based on approximately 10-12 pages per chapter.
-                      Return only valid JSON.`
+
+                      Return a JSON object with a "chapters" array containing exactly 20 chapter objects. Each chapter object must have "title", "description", and "startPage" fields.
+
+                      Example format:
+                      {
+                        "chapters": [
+                          {
+                            "title": "Chapter Title",
+                            "description": "Brief description",
+                            "startPage": 1
+                          },
+                          ...
+                        ]
+                      }`
           },
           {
             role: "user",
@@ -86,6 +99,7 @@ Return ONLY a JSON array containing these 20 chapter objects. No other text or e
         ],
         temperature: 0.8,
         max_tokens: 2000,
+        response_format: { type: "json_object" },
       }),
     });
 
@@ -101,10 +115,47 @@ Return ONLY a JSON array containing these 20 chapter objects. No other text or e
     try {
       // Remove any markdown formatting if present
       generatedText = generatedText.replace(/```json\n?|\n?```/g, '').trim();
-      const chapters = JSON.parse(generatedText);
+      const parsedResponse = JSON.parse(generatedText);
 
-      if (!Array.isArray(chapters) || chapters.length !== 20) {
-        throw new Error("Invalid chapter array structure");
+      // 由于使用了 response_format: { type: "json_object" }，
+      // 模型可能会返回 { chapters: [...] } 或其他包含章节数组的对象
+      // 我们需要提取章节数组
+      let chapters: any[] | undefined;
+
+      if (Array.isArray(parsedResponse)) {
+        // 如果直接返回数组
+        chapters = parsedResponse;
+      } else if (parsedResponse && typeof parsedResponse === 'object') {
+        // 如果返回对象，尝试找到章节数组
+        // 可能的键名：chapters, items, content 等
+        const possibleArrayKeys = ['chapters', 'items', 'content', 'data'];
+        for (const key of possibleArrayKeys) {
+          if (Array.isArray(parsedResponse[key])) {
+            chapters = parsedResponse[key];
+            break;
+          }
+        }
+
+        // 如果没有找到数组，但对象有值，尝试使用对象的值
+        if (!chapters) {
+          const values = Object.values(parsedResponse);
+          const arrayValues = values.filter(v => Array.isArray(v));
+          if (arrayValues.length > 0) {
+            chapters = arrayValues[0];
+          }
+        }
+      }
+
+      // 如果仍然没有找到章节数组，抛出错误
+      if (!chapters || !Array.isArray(chapters)) {
+        console.error("Parsed response structure:", JSON.stringify(parsedResponse, null, 2));
+        throw new Error("Could not find chapters array in response");
+      }
+
+      // 验证章节数量
+      if (chapters.length !== 20) {
+        console.warn(`Expected 20 chapters but got ${chapters.length}`);
+        // 继续处理，不抛出错误
       }
 
       // Validate and format each chapter
@@ -117,7 +168,7 @@ Return ONLY a JSON array containing these 20 chapter objects. No other text or e
       // 每章约11页，总共220页，20章
       const formattedChapters = chapters.map((chapter, index) => {
         // 计算起始页码
-        let startPage;
+        let startPage: number;
         if (index === 0) {
           startPage = 1; // 第一章从第1页开始
         } else {

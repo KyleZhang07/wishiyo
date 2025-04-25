@@ -92,6 +92,8 @@ const FunnyBiographyGenerateStep = () => {
   const [lastUsedImage, setLastUsedImage] = useState<string | null>(null);
   const [lastUsedStyle, setLastUsedStyle] = useState<string | null>(null);
   const [isAdjustDialogOpen, setIsAdjustDialogOpen] = useState(false);
+  // 新增状态：跟踪背景去除过程
+  const [isBackgroundRemoving, setIsBackgroundRemoving] = useState(false);
 
   // 使用模版字符串定义尺寸
   const standardPreviewWidth = 360; // 从320增加到360
@@ -158,10 +160,15 @@ const FunnyBiographyGenerateStep = () => {
       setCoverImage(sessionProcessedPhoto);
       setLastUsedImage(sessionProcessedPhoto);
     } else if (savedPhotos) {
-      // 立即设置原始图片，以便按钮可以立即显示
-      setCoverImage(savedPhotos);
+      // 设置背景去除状态为true，显示加载中状态
+      setIsBackgroundRemoving(true);
+      setPdfGenerating(true);
+
+      // 不立即设置原始图片，避免显示未处理的图片
+      // 只保存原始图片的引用，用于处理
       setLastUsedImage(savedPhotos);
-      // 然后异步处理图片
+
+      // 异步处理图片
       handleImageProcessing(savedPhotos);
     }
 
@@ -324,6 +331,7 @@ const FunnyBiographyGenerateStep = () => {
     // 开始处理时设置生成状态，显示加载中
     setPdfGenerating(true);
     setGenerationComplete(false);
+    setIsBackgroundRemoving(true); // 设置背景去除状态为true
     setFrontCoverPdf(null);
     setBackCoverPdf(null);
     setSpinePdf(null);
@@ -345,8 +353,10 @@ const FunnyBiographyGenerateStep = () => {
           console.log('Background removed successfully and saved to sessionStorage');
 
           // 第三步：更新状态并设置处理后的图片
-          // 使用回调函数确保状态更新后再生成封面
           console.log('背景去除完成，设置图片并生成封面...');
+
+          // 设置背景去除状态为false
+          setIsBackgroundRemoving(false);
 
           // 直接使用已处理的图片生成封面，不需要等待React状态更新
           // 在generateImagesFromCanvas函数中会优先使用sessionStorage中的图片
@@ -358,6 +368,10 @@ const FunnyBiographyGenerateStep = () => {
           // 即使存储失败，仍然继续生成封面
           // 先设置图片，然后生成封面
           console.log('存储失败，但仍然生成封面...');
+
+          // 设置背景去除状态为false
+          setIsBackgroundRemoving(false);
+
           setCoverImage(data.image);
           // 直接使用已处理的图片生成封面
           generateImagesFromCanvas();
@@ -367,12 +381,9 @@ const FunnyBiographyGenerateStep = () => {
       }
     } catch (error) {
       console.error('Error removing background:', error);
-      // 移除toast提示
-      // toast({
-      //   variant: "destructive",
-      //   title: "Error processing image",
-      //   description: "Failed to remove background from the image. Using original image instead."
-      // });
+
+      // 设置背景去除状态为false，即使失败也结束背景去除过程
+      setIsBackgroundRemoving(false);
 
       // 如果当前没有设置图片，才使用原始图片
       console.log('背景去除失败，使用原始图片生成封面...');
@@ -383,17 +394,18 @@ const FunnyBiographyGenerateStep = () => {
       // 即使背景去除失败，仍然尝试生成封面
       // 直接生成封面，使用当前可用的图片
       generateImagesFromCanvas();
+
+      // 显示错误提示
+      toast({
+        variant: "destructive",
+        title: "背景去除失败",
+        description: "无法去除图片背景，将使用原始图片。您可以尝试上传其他照片。",
+      });
     }
 
     // 确保字体已加载后再尝试生成
     if (!fontsLoaded) {
       console.log('等待字体加载完成...');
-      // 移除toast提示
-      // toast({
-      //   title: "正在准备资源",
-      //   description: "正在加载字体资源，稍等片刻...",
-      //   variant: "default"
-      // });
     }
   };
 
@@ -553,10 +565,12 @@ const FunnyBiographyGenerateStep = () => {
 
             {/* PDF预览区域 - 简化版本 */}
             <div className="mx-auto flex flex-col items-center my-8">
-              {!frontCoverPdf || pdfGenerating ? (
+              {!frontCoverPdf || pdfGenerating || isBackgroundRemoving ? (
                 <div className="flex items-center justify-center h-[540px]">
                   <div className="animate-spin h-12 w-12 border-4 border-[#FF7F50] border-t-transparent rounded-full"></div>
-                  <span className="ml-3 text-xl">Generating cover...</span>
+                  <span className="ml-3 text-xl">
+                    {isBackgroundRemoving ? "Removing background..." : "Generating cover..."}
+                  </span>
                 </div>
               ) : (
                 <div className="flex items-start space-x-4 justify-center">
@@ -597,7 +611,7 @@ const FunnyBiographyGenerateStep = () => {
             </div>
 
             {/* 添加图片调整按钮 */}
-            {coverImage && (
+            {coverImage && !isBackgroundRemoving && (
               <div className="flex justify-center mb-6">
                 <Button
                   variant="outline"
@@ -645,14 +659,16 @@ const FunnyBiographyGenerateStep = () => {
                   return (
                     <div
                       key={style.id}
-                      onClick={() => handleStyleChange(style.id)}
-                      className="flex flex-col items-center"
+                      onClick={() => !isBackgroundRemoving && handleStyleChange(style.id)}
+                      className={`flex flex-col items-center ${isBackgroundRemoving ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       <div
-                        className={`w-[80px] h-[80px] rounded-full flex items-center justify-center cursor-pointer transition-all ${
+                        className={`w-[80px] h-[80px] rounded-full flex items-center justify-center transition-all ${
                           selectedStyle === style.id
                             ? 'ring-4 ring-[#FF7F50] ring-offset-2'
-                            : 'hover:ring-2 hover:ring-[#FF7F50]/50'
+                            : isBackgroundRemoving
+                              ? ''
+                              : 'hover:ring-2 hover:ring-[#FF7F50]/50 cursor-pointer'
                         }`}
                         style={{
                           backgroundColor: styleConfig.bg,
@@ -684,7 +700,7 @@ const FunnyBiographyGenerateStep = () => {
               <Button
                 className="w-full py-6 text-lg bg-[#FF7F50] hover:bg-[#FF7F50]/80 text-white"
                 onClick={handleGenerateBook}
-                disabled={pdfGenerating}
+                disabled={pdfGenerating || isBackgroundRemoving}
               >
                 Continue
               </Button>
