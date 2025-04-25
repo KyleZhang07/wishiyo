@@ -110,7 +110,15 @@ export const renderContentToCanvas = (
         const drawStrokedText = (text: string, x: number, y: number, fontSize: number) => {
           // 使用传入的字体ID获取字体
           const fontFamily = getFontFamily(fontId);
-          ctx.font = `bold ${fontSize}px ${fontFamily}`;
+
+          // 根据字体类型调整字体大小
+          let adjustedFontSize = fontSize;
+          if (fontId === 'patrick-hand' || fontId === 'amatic-sc' || fontId === 'caveat') {
+            // 增大Patrick Hand、Amatic SC和Caveat字体的渲染字号
+            adjustedFontSize = fontSize + 1;
+          }
+
+          ctx.font = `bold ${adjustedFontSize}px ${fontFamily}`;
 
           // 增强阴影效果以提高可读性 - 使阴影更加明显
           ctx.shadowOffsetX = 4;
@@ -150,12 +158,26 @@ export const renderContentToCanvas = (
             for (let n = 0; n < words.length; n++) {
               const testLine = line + words[n] + ' ';
               const fontFamily = getFontFamily(fontId);
-              ctx.font = `bold ${fontSize}px ${fontFamily}`;
+
+              // 根据字体类型调整字体大小
+              let adjustedFontSize = fontSize;
+              if (fontId === 'patrick-hand' || fontId === 'amatic-sc' || fontId === 'caveat') {
+                // 增大Patrick Hand、Amatic SC和Caveat字体的渲染字号
+                adjustedFontSize = fontSize + 1;
+              }
+
+              ctx.font = `bold ${adjustedFontSize}px ${fontFamily}`;
               const metrics = ctx.measureText(testLine);
               const testWidth = metrics.width;
 
               if (testWidth > maxWidth && n > 0) {
-                drawStrokedText(line, x, lineY, fontSize);
+                // 使用相同的字体大小调整逻辑
+                let adjustedFontSize = fontSize;
+                if (fontId === 'patrick-hand' || fontId === 'amatic-sc' || fontId === 'caveat') {
+                  adjustedFontSize = fontSize + 1;
+                }
+
+                drawStrokedText(line, x, lineY, adjustedFontSize);
                 line = words[n] + ' ';
                 lineY += lineHeight;
               } else {
@@ -164,14 +186,20 @@ export const renderContentToCanvas = (
             }
 
             if (line) {
-              drawStrokedText(line, x, lineY, fontSize);
+              // 使用相同的字体大小调整逻辑
+              let adjustedFontSize = fontSize;
+              if (fontId === 'patrick-hand' || fontId === 'amatic-sc' || fontId === 'caveat') {
+                adjustedFontSize = fontSize + 1;
+              }
+
+              drawStrokedText(line, x, lineY, adjustedFontSize);
               lineY += lineHeight * 2; // 增加句子之间的间距，添加空行效果
             }
           }
         };
 
         // 绘制内容文本 - 只在图片左侧50%区域
-        const textFontSize = canvas.width * 0.021; // 减小字体大小
+        const textFontSize = canvas.width * 0.021; // 基础字体大小
         const textX = canvas.width * 0.07; // 左侧边距 - 与参考图像匹配
         const textY = canvas.height * 0.18; // 降低文字起始位置，使其更靠近上边缘
         const maxWidth = canvas.width * 0.36; // 限制文本宽度在左侧区域内
@@ -179,13 +207,20 @@ export const renderContentToCanvas = (
         // 设置文本对齐为左对齐
         ctx.textAlign = 'left';
 
+        // 根据字体类型调整行高
+        let lineHeight = textFontSize * 1.2; // 默认行高
+        if (fontId === 'patrick-hand' || fontId === 'amatic-sc' || fontId === 'caveat') {
+          // 为增大的字体调整行高
+          lineHeight = textFontSize * 1.3;
+        }
+
         // 绘制文本
         wrapText(
           contentText || "A beautiful moment captured in this image.",
           textX,
           textY,
           maxWidth,
-          textFontSize * 1.2, // 根据参考图像调整行距
+          lineHeight, // 使用调整后的行高
           textFontSize
         );
 
