@@ -844,11 +844,7 @@ const GenerateStep = () => {
         }
       }
 
-      toast({
-        title: "Text font updated",
-        description: "The intro image has been rendered with the new font",
-        variant: "default",
-      });
+      // 移除toast通知，减少用户干扰
 
       // 刷新图片列表
       setTimeout(() => {
@@ -923,11 +919,7 @@ const GenerateStep = () => {
         }
       }
 
-      toast({
-        title: "Text font updated",
-        description: "The image has been rendered with the new font",
-        variant: "default",
-      });
+      // 移除toast通知，减少用户干扰
 
       // 刷新图片列表
       setTimeout(() => {

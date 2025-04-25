@@ -108,7 +108,13 @@ export const ContentImageCard = ({
         localStorage.setItem('loveStoryStyle', normalizedStyle);
       }
     }
-  }, []);
+
+    // Load the saved font from localStorage
+    const savedFont = localStorage.getItem(`loveStoryFont_${index}`);
+    if (savedFont) {
+      setCurrentFont(savedFont);
+    }
+  }, [index]);
 
   const handleStyleSelect = (style: string) => {
     setSelectedStyle(style);
