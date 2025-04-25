@@ -22,8 +22,8 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white">
       <Helmet>
-        <title>Wishiyo - Custom Story Books & Picture Books | Create Personalized Books</title>
-        <meta name="description" content="Create personalized story books and picture books with Wishiyo. Turn memories and photos into custom books that make perfect gifts. Easy to create in minutes." />
+        <title>Wishiyo - Every Page, Just for Them | Custom Story Books & Picture Books</title>
+        <meta name="description" content="The only book where every page is truly about them, in just 3 minutes. Personalized story books and picture books that make perfect gifts." />
         <link rel="canonical" href="https://www.wishiyo.com/" />
 
         {/* WebPage structured data */}
@@ -32,8 +32,8 @@ export default function Home() {
             {
               "@context": "https://schema.org",
               "@type": "WebPage",
-              "name": "Wishiyo - Custom Story Books & Picture Books",
-              "description": "Create personalized story books and picture books with Wishiyo. Turn memories and photos into custom books that make perfect gifts.",
+              "name": "Wishiyo - Every Page, Just for Them | Custom Story Books & Picture Books",
+              "description": "The only book where every page is truly about them, in just 3 minutes. Personalized story books and picture books that make perfect gifts.",
               "url": "https://www.wishiyo.com/",
               "speakable": {
                 "@type": "SpeakableSpecification",
@@ -78,10 +78,10 @@ export default function Home() {
             {/* Center - Text and Buttons */}
             <div className="flex flex-col items-center text-center space-y-8">
               <h1 className="text-5xl md:text-6xl font-serif font-bold tracking-tighter">
-                The Only Book Where Every Page Is Truly About Them
+                Every Page, Just for Them
               </h1>
-              <p className="text-xl text-gray-500 max-w-[500px]">
-                Turn memories and photos into a keepsake they'll treasure forever, in just 3 minutes.
+              <p className="text-2xl text-gray-500 max-w-[500px]">
+                The only book where every page is truly about them, in just 3 minutes.
               </p>
               <div className="flex flex-col items-center gap-8 w-full max-w-[320px]">
                 <button
