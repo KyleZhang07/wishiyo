@@ -13,7 +13,7 @@ const FriendsLanding = () => {
               "@type": "Product",
               "name": "Funny Biography Book",
               "image": "https://www.wishiyo.com/images/showcase/personalized-books/personalized-book1.png",
-              "description": "Turn your friend's funniest moments into a hilarious memoir. Write online in just 3 minutes — delivered as a premium book.",
+              "description": "Create a hilarious biography that's literally about them - effortless for you, unforgettable for them. We'll do the writing, you get the laughs.",
               "brand": {
                 "@type": "Brand",
                 "name": "Wishiyo"
@@ -41,8 +41,8 @@ const FriendsLanding = () => {
             <div className="max-w-6xl mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                 <div className="md:order-2 text-white space-y-6 max-w-[480px]">
-                  <h1 className="text-4xl font-serif font-bold px-0 mx-0 md:text-4xl text-slate-800">Turn your friend's funniest moments into a hilarious memoir</h1>
-                  <p className="text-xl text-slate-800">Write online in just 3 minutes — delivered as a premium book</p>
+                  <h1 className="text-4xl font-serif font-bold px-0 mx-0 md:text-4xl text-slate-800">Create a hilarious biography that's literally about them - effortless for you, unforgettable for them.</h1>
+                  <p className="text-xl text-slate-800">We'll do the writing, you get the laughs.</p>
                   <Link to="/create/friends/funny-biography/author" className="inline-flex items-center px-6 py-3 text-base font-medium text-white bg-[#FF7F50] rounded-sm hover:bg-[#FF7F50]/80 transition-colors">
                     Start Writing
                   </Link>
