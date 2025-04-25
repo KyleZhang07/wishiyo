@@ -358,15 +358,18 @@ const FunnyBiographyGenerateStep = () => {
           // 设置背景去除状态为false
           setIsBackgroundRemoving(false);
 
-          // 先更新状态，然后等待状态更新和重新渲染完成后再生成封面
+          // 先更新状态，然后使用 requestAnimationFrame 确保 Canvas 已重新渲染
           console.log('设置处理后的图片到状态...');
           setCoverImage(data.image);
 
-          // 增加延迟，确保状态更新和Canvas重新渲染完成
-          setTimeout(() => {
-            console.log('状态更新后开始生成封面...');
-            generateImagesFromCanvas();
-          }, 1000);
+          // 使用 requestAnimationFrame 确保状态更新和 Canvas 重新渲染完成
+          requestAnimationFrame(() => {
+            // 再等一帧，确保渲染完成
+            requestAnimationFrame(() => {
+              console.log('状态更新后开始生成封面...');
+              generateImagesFromCanvas();
+            });
+          });
 
         } catch (storageError) {
           console.error('Error saving to sessionStorage:', storageError);
@@ -377,15 +380,18 @@ const FunnyBiographyGenerateStep = () => {
           // 设置背景去除状态为false
           setIsBackgroundRemoving(false);
 
-          // 先更新状态，然后等待状态更新和重新渲染完成后再生成封面
+          // 先更新状态，然后使用 requestAnimationFrame 确保 Canvas 已重新渲染
           console.log('设置处理后的图片到状态...');
           setCoverImage(data.image);
 
-          // 增加延迟，确保状态更新和Canvas重新渲染完成
-          setTimeout(() => {
-            console.log('状态更新后开始生成封面...');
-            generateImagesFromCanvas();
-          }, 1000);
+          // 使用 requestAnimationFrame 确保状态更新和 Canvas 重新渲染完成
+          requestAnimationFrame(() => {
+            // 再等一帧，确保渲染完成
+            requestAnimationFrame(() => {
+              console.log('状态更新后开始生成封面...');
+              generateImagesFromCanvas();
+            });
+          });
         }
       } else {
         throw new Error('Failed to process image');
@@ -402,17 +408,24 @@ const FunnyBiographyGenerateStep = () => {
         console.log('设置原始图片到状态...');
         setCoverImage(imageUrl);
 
-        // 增加延迟，确保状态更新和Canvas重新渲染完成
-        setTimeout(() => {
-          console.log('状态更新后开始生成封面...');
-          generateImagesFromCanvas();
-        }, 1000);
+        // 使用 requestAnimationFrame 确保状态更新和 Canvas 重新渲染完成
+        requestAnimationFrame(() => {
+          // 再等一帧，确保渲染完成
+          requestAnimationFrame(() => {
+            console.log('状态更新后开始生成封面...');
+            generateImagesFromCanvas();
+          });
+        });
       } else {
         // 如果已经有图片，直接使用当前图片生成封面
         console.log('使用当前图片生成封面...');
-        setTimeout(() => {
-          generateImagesFromCanvas();
-        }, 1000);
+
+        // 使用 requestAnimationFrame 确保 Canvas 已重新渲染
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            generateImagesFromCanvas();
+          });
+        });
       }
 
       // 显示错误提示
@@ -488,9 +501,14 @@ const FunnyBiographyGenerateStep = () => {
     console.log('等待Canvas渲染...');
     console.log('当前使用的图片:', coverImage?.substring(0, 50) + '...');
 
-    // 增加延迟时间，确保 Canvas 有足够的时间渲染
-    setTimeout(() => {
+    // 使用 requestAnimationFrame 确保 Canvas 已重新渲染最新的图像
+    const captureCanvasImages = async () => {
       try {
+        // 确保 Canvas 已重新渲染最新的图像
+        await new Promise(requestAnimationFrame);
+        // 再等一帧，确保渲染完成
+        await new Promise(requestAnimationFrame);
+
         if (!canvasPdfContainerRef.current) {
           console.error('Canvas container not found');
           setPdfGenerating(false);
@@ -532,7 +550,10 @@ const FunnyBiographyGenerateStep = () => {
         console.error('Error generating cover images:', error);
         setPdfGenerating(false);
       }
-    }, 1200); // 增加到1200ms，给Canvas渲染提供更充足的时间
+    };
+
+    // 执行捕获
+    captureCanvasImages();
   };
 
   const handleGenerateBook = () => {
