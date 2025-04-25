@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { uploadImageToStorage, getClientId, getAllImagesFromStorage, deleteImageFromStorage } from '@/integrations/supabase/storage';
 import { useRenderContext } from '@/context/RenderContext';
 import { useFontContext } from '@/context/FontContext';
+import { useImageLoader } from '@/components/cover-generator/hooks/useImageLoader';
 // 导入背景图片
 import blueTextureBackground from '../../../../assets/Generated Image March 15, 2025 - 3_12PM_LE_upscale_balanced_x4.jpg';
 import greenLeafBackground from '../../../../assets/leaves.jpg';
@@ -101,6 +102,16 @@ const LoveStoryCoverStep = () => {
     fullTitle: defaultTitle
   });
 
+  // 背景图片加载状态
+  const [backgroundsLoaded, setBackgroundsLoaded] = useState<boolean>(false);
+
+  // 预加载所有背景图片
+  const blueTexture = useImageLoader(blueTextureBackground);
+  const greenLeaf = useImageLoader(greenLeafBackground);
+  const rainbow = useImageLoader(rainbowBackground);
+  const heartCover = useImageLoader(heartCoverBackground);
+  const heartBack = useImageLoader(heartBackBackground);
+
   // 将默认标题保存到localStorage
   useEffect(() => {
     if (!localStorage.getItem('loveStoryCoverTitle')) {
@@ -157,6 +168,31 @@ const LoveStoryCoverStep = () => {
 
   // 使用FontContext中的字体加载状态
   const { fontsLoaded, fontStatus } = useFontContext();
+
+  // 检查背景图片是否已加载完成
+  useEffect(() => {
+    const checkBackgroundsLoaded = async () => {
+      try {
+        // 等待所有背景图片加载完成
+        await Promise.all([
+          blueTexture?.loaded,
+          greenLeaf?.loaded,
+          rainbow?.loaded,
+          heartCover?.loaded,
+          heartBack?.loaded
+        ].filter(Boolean));
+
+        console.log('All background images loaded successfully');
+        setBackgroundsLoaded(true);
+      } catch (error) {
+        console.error('Error loading background images:', error);
+        // 即使有错误也设置为已加载，以便应用可以继续
+        setBackgroundsLoaded(true);
+      }
+    };
+
+    checkBackgroundsLoaded();
+  }, [blueTexture, greenLeaf, rainbow, heartCover, heartBack]);
 
   // 添加字体加载状态日志和手动重试机制
   useEffect(() => {
@@ -352,6 +388,31 @@ const LoveStoryCoverStep = () => {
 
   // 处理样式选择
   const handleStyleSelect = (styleId: string) => {
+    // 检查对应样式的背景图片是否已加载
+    let styleBackgroundLoaded = true;
+
+    // 根据样式ID检查对应的背景图片
+    if (styleId === 'modern' && !blueTexture?.element) {
+      styleBackgroundLoaded = false;
+    } else if (styleId === 'playful' && !greenLeaf?.element) {
+      styleBackgroundLoaded = false;
+    } else if (styleId === 'elegant' && !rainbow?.element) {
+      styleBackgroundLoaded = false;
+    } else if (styleId === 'classic' && !heartCover?.element) {
+      styleBackgroundLoaded = false;
+    }
+
+    // 如果背景图片尚未加载，显示提示
+    if (!styleBackgroundLoaded) {
+      console.log(`Background image for style ${styleId} is still loading`);
+      toast({
+        title: "背景图片加载中",
+        description: "请稍等片刻，背景图片正在加载...",
+        variant: "default"
+      });
+    }
+
+    // 无论如何都设置样式，因为我们已经添加了背景图片加载检查
     setSelectedStyle(styleId);
     localStorage.setItem('loveStoryCoverStyle', styleId);
   };
@@ -1700,14 +1761,25 @@ const LoveStoryCoverStep = () => {
           )}
 
           {/* 封面预览组件 - 直接传递titleData而非使用localStorage */}
-          <LoveStoryCoverPreview
-            titleData={titleData}
-            authorName={authorName}
-            recipientName={recipientName}
-            coverImage={currentCoverImage}
-            selectedFont={currentStyle.font}
-            style={currentStyle}
-          />
+          {!backgroundsLoaded ? (
+            <div className="flex flex-col items-center justify-center bg-white rounded-lg p-8 h-[600px]">
+              <div className="relative w-16 h-16 mb-4">
+                <div className="absolute inset-0 rounded-full border-t-2 border-[#FF7F50] animate-spin"></div>
+              </div>
+              <h3 className="text-xl font-medium text-[#FF7F50]">
+                加载背景图片...
+              </h3>
+            </div>
+          ) : (
+            <LoveStoryCoverPreview
+              titleData={titleData}
+              authorName={authorName}
+              recipientName={recipientName}
+              coverImage={currentCoverImage}
+              selectedFont={currentStyle.font}
+              style={currentStyle}
+            />
+          )}
 
           {/* 右箭头 */}
           {coverImages.length > 1 && (
