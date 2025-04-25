@@ -38,7 +38,7 @@ const FormatStep = () => {
     {
       id: 'hardcover_matte',
       name: 'Classic Matte',
-      price: 54.99,
+      price: 49.99,
       description: 'An elegant matte finish – perfect for timeless gifts.',
       imageSrc: softcoverImage
     }

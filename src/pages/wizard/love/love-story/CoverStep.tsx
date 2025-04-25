@@ -1390,6 +1390,8 @@ const LoveStoryCoverStep = () => {
   };
 
   // 修改renderSpineToCanvas函数
+  // 注意：对于Classic样式，我们使用封底图片(heartBackBackground)而不是封面图片来生成书脊
+  // 这是因为Classic样式的爱情故事书籍需要特殊处理，使书脊与封底保持一致的视觉效果
   const renderSpineToCanvas = async (): Promise<string> => {
     return new Promise((resolve, reject) => {
       try {
@@ -1431,7 +1433,8 @@ const LoveStoryCoverStep = () => {
             } else if (style.id === 'elegant') {
               backgroundImgPromise = loadBackgroundImage(rainbowBackground);
             } else if (style.id === 'classic') {
-              backgroundImgPromise = loadBackgroundImage(heartCoverBackground);
+              // 对于Classic样式的spine，使用heartBackBackground而不是heartCoverBackground
+              backgroundImgPromise = loadBackgroundImage(heartBackBackground);
             }
 
             // 等待背景图片加载完成
@@ -1495,7 +1498,7 @@ const LoveStoryCoverStep = () => {
                   ctx.fill();
                 }
               } else if (style.id === 'classic' && backgroundImgLoaded) {
-                // 使用已加载的心形背景图片
+                // 使用已加载的背景图片（对于Classic样式，这是heartBackBackground）
                 // 对于书脉，我们需要截取中间部分
                 const sourceX = backgroundImgLoaded.width / 2 - (canvas.width / 2);
                 ctx.drawImage(backgroundImgLoaded,
