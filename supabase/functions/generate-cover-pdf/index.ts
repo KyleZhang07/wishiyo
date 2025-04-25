@@ -44,8 +44,12 @@ serve(async (req) => {
       throw new Error('Missing Supabase credentials');
     }
 
-    // 初始化Supabase客户端
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    // 初始化Supabase客户端，确保不设置全局Content-Type头
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        persistSession: false
+      }
+    });
 
     // 从URL获取图片数据
     async function getImageFromUrl(imageUrl: string): Promise<string> {
@@ -129,16 +133,22 @@ serve(async (req) => {
         // 上传到Supabase Storage
         const filePath = `${orderId}/${fileName}`;
         console.log(`Uploading to book-covers/${filePath}`);
+
+        // 创建Blob对象，明确设置MIME类型
+        const pdfBlob = new Blob([bytes], { type: 'application/pdf' });
+
+        // 使用Blob上传，不再设置contentType参数
         const { error: uploadError } = await supabase
           .storage
           .from('book-covers')
-          .upload(filePath, bytes, {
-            contentType: 'application/pdf',
+          .upload(filePath, pdfBlob, {
             upsert: true
           });
 
         if (uploadError) {
-          const errorText = uploadError.message;
+          // 记录详细的错误信息
+          console.error('Upload error details:', JSON.stringify(uploadError));
+          const errorText = uploadError.message || JSON.stringify(uploadError);
           throw new Error(`Failed to upload PDF: ${errorText}`);
         }
 

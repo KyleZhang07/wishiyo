@@ -27,7 +27,7 @@ interface BookChapter {
 // 定义批次大小和总章节数
 const BATCH_SIZE = 1; // 每批生成2章
 const TOTAL_CHAPTERS = 20; // 总共生成2章
-const MAX_RETRIES = 7;
+const MAX_RETRIES = 12;
 
 // 定义页面布局常量
 const CHARS_PER_PAGE = 1300; // 每页平均字符数（包括空格）
@@ -186,7 +186,7 @@ Previous sections covered:\n${summaries}\n\nYour job is to bring closure to the 
             ${previousSectionsContext}
 
             Guidelines for this section:
-            - CRITICAL: THIS SECTION MUST CONTAIN EXACTLY BETWEEN 500 TO 600 WORDS. Not less, not more.
+            - CRITICAL: THIS SECTION MUST CONTAIN EXACTLY BETWEEN 550 TO 650 WORDS. Not less, not more.
             - Use first-person "I" when ${bookAuthor} is sharing personal experiences or anecdotes
             - Use second-person "you" when explaining methodologies or instructing the reader
             - The section should either:
@@ -201,7 +201,7 @@ Previous sections covered:\n${summaries}\n\nYour job is to bring closure to the 
             Format your response as JSON with this structure:
             {
               "title": "Section title",
-              "content": "Section content with 500-600 words..."
+              "content": "Section content with 550-650 words..."
             }
             `;
 
@@ -217,7 +217,7 @@ Previous sections covered:\n${summaries}\n\nYour job is to bring closure to the 
                   {
                     role: 'system',
                     content: `You MUST STRICTLY enforce these requirements:
-- CRITICAL REQUIREMENT: The section MUST contain EXACTLY between 500 and 600 words. Count the words carefully.
+- CRITICAL REQUIREMENT: The section MUST contain EXACTLY between 550 and 650 words. Count the words carefully.
 - Each chapter has exactly 4 sections.
 - The section's content must use double line breaks (\\n\\n) between paragraphs to clearly separate them.
 - Maintain narrative continuity with previous sections when applicable.

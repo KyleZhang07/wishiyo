@@ -47,14 +47,17 @@ serve(async (req) => {
       throw new Error('Missing Supabase credentials');
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    // 初始化Supabase客户端，确保不设置全局Content-Type头
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        persistSession: false
+      }
+    });
 
     let finalBookContent = bookContent;
     let title = bookTitle;
     let author = authorName;
     let chapters = null;
-    let ideas = null;
-    let selectedIdea = null;
 
     // 如果未提供内容，从数据库获取
     if (!finalBookContent || !title || !author) {
@@ -73,8 +76,6 @@ serve(async (req) => {
       title = title || bookData.title;
       author = author || bookData.author;
       chapters = bookData.chapters;
-      ideas = bookData.ideas;
-      selectedIdea = bookData.selected_idea;
     }
 
     if (!title || !author || !finalBookContent) {
@@ -108,15 +109,10 @@ serve(async (req) => {
         }
 
         let pdfContent = pdfData;
-        let contentType = 'application/pdf';
 
         if (pdfData.startsWith('data:')) {
           const parts = pdfData.split(',');
           if (parts.length > 1) {
-            const matches = parts[0].match(/^data:([^;]+);base64$/);
-            if (matches && matches[1]) {
-              contentType = matches[1];
-            }
             pdfContent = parts[1];
           }
         }
@@ -129,11 +125,14 @@ serve(async (req) => {
 
         const filePath = `${orderId}/${fileName}`;
         console.log(`Uploading to book-covers/${filePath}`);
+        // 创建Blob对象，明确设置MIME类型
+        const pdfBlob = new Blob([bytes], { type: 'application/pdf' });
+
+        // 使用Blob上传，不再设置contentType参数
         const { error: uploadError } = await supabase
           .storage
           .from('book-covers')
-          .upload(filePath, bytes, {
-            contentType,
+          .upload(filePath, pdfBlob, {
             upsert: true
           });
 
@@ -1023,7 +1022,9 @@ serve(async (req) => {
                  linesProcessed += linesToDraw.length;
               } else {
                   // No lines fit, break (should be handled by the case above, but for safety)
-                  if (contentY <= margin.top) { // If we are already at the top and still can't fit, paragraph is too big for page.
+                  // 获取当前页的动态边距
+                  const currentPageMargins = getPageMargins(pdf.internal.getNumberOfPages());
+                  if (contentY <= currentPageMargins.top) { // If we are already at the top and still can't fit, paragraph is too big for page.
                        console.error("Paragraph segment too large to fit on a single page.");
                   }
                   break;
@@ -1228,7 +1229,8 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         message: 'Interior PDF generated successfully',
-        pdfOutput: pdfOutput,
+        // 不返回完整PDF数据，避免响应体过大
+        pdfSize: pdfOutput.length,
         interiorSourceUrl: interiorFileUrl
       }),
       {
