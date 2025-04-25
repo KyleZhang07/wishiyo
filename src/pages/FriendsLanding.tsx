@@ -44,7 +44,7 @@ const FriendsLanding = () => {
                   <h1 className="text-4xl font-serif font-bold px-0 mx-0 md:text-4xl text-slate-800">Create a funny biography that's literally about them - real unforgettable</h1>
                   <p className="text-xl text-slate-800">We'll do the writing, you get the laughs.</p>
                   <Link to="/create/friends/funny-biography/author" className="inline-flex items-center px-6 py-3 text-base font-medium text-white bg-[#FF7F50] rounded-sm hover:bg-[#FF7F50]/80 transition-colors">
-                    Start Writing
+                    Start
                   </Link>
                 </div>
                 <div className="md:order-1 hidden md:block">

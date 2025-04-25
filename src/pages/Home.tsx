@@ -78,7 +78,7 @@ export default function Home() {
             {/* Center - Text and Buttons */}
             <div className="flex flex-col items-center text-center space-y-8">
               <h1 className="text-5xl md:text-6xl font-serif font-bold tracking-tighter">
-                A book made just for them
+                The Only Book Where Every Page Is Truly About Them
               </h1>
               <p className="text-xl text-gray-500 max-w-[500px]">
                 Turn memories and photos into a keepsake they'll treasure forever, in just 3 minutes.
