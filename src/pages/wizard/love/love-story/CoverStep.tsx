@@ -1829,8 +1829,22 @@ const LoveStoryCoverStep = () => {
           )}
 
           {/* 封面预览组件 - 直接传递titleData而非使用localStorage */}
-          {!resourcesLoaded ? (
-            <div className="flex flex-col items-center justify-center bg-white rounded-lg p-8 h-[600px]">
+          <div style={{ position: 'relative', minHeight: '600px' }}>
+            {/* 始终渲染加载状态，但根据resourcesLoaded控制显示/隐藏 */}
+            <div
+              className="flex flex-col items-center justify-center bg-white rounded-lg p-8 h-[600px]"
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                zIndex: 10,
+                opacity: !resourcesLoaded ? 1 : 0,
+                transition: 'opacity 0.3s ease-in-out',
+                pointerEvents: !resourcesLoaded ? 'auto' : 'none'
+              }}
+            >
               <div className="relative w-16 h-16 mb-4">
                 <div className="absolute inset-0 rounded-full border-t-2 border-[#FF7F50] animate-spin"></div>
               </div>
@@ -1843,16 +1857,23 @@ const LoveStoryCoverStep = () => {
                  !fontsLoaded ? 'Loading fonts...' : 'Almost ready...'}
               </p>
             </div>
-          ) : (
-            <LoveStoryCoverPreview
-              titleData={titleData}
-              authorName={authorName}
-              recipientName={recipientName}
-              coverImage={currentCoverImage}
-              selectedFont={currentStyle.font}
-              style={currentStyle}
-            />
-          )}
+
+            {/* 始终渲染预览组件，但控制其可见性 */}
+            <div style={{
+              opacity: resourcesLoaded ? 1 : 0,
+              transition: 'opacity 0.3s ease-in-out',
+              visibility: resourcesLoaded ? 'visible' : 'hidden'
+            }}>
+              <LoveStoryCoverPreview
+                titleData={titleData}
+                authorName={authorName}
+                recipientName={recipientName}
+                coverImage={currentCoverImage}
+                selectedFont={currentStyle.font}
+                style={currentStyle}
+              />
+            </div>
+          </div>
 
           {/* 右箭头 */}
           {coverImages.length > 1 && (
