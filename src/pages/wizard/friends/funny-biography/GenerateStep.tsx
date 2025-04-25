@@ -94,34 +94,6 @@ const FunnyBiographyGenerateStep = () => {
   const [isAdjustDialogOpen, setIsAdjustDialogOpen] = useState(false);
   // 新增状态：跟踪背景去除过程
   const [isBackgroundRemoving, setIsBackgroundRemoving] = useState(false);
-  // Step 1: add state to track when the cover image has actually loaded
-  const [coverImageLoaded, setCoverImageLoaded] = useState(false);
-  // 等待封面图像真正加载完成 —— 对 data:URL 直接判定已加载
-  useEffect(() => {
-    if (!coverImage) return;
-
-    // Data‑URL 本地字符串不会触发网络请求，直接视为已就绪
-    if (coverImage.startsWith('data:image')) {
-      setCoverImageLoaded(true);
-      return;
-    }
-
-    setCoverImageLoaded(false);
-    const img = new Image();
-
-    // 只有跨域 URL 才需要 anonymous；data: 和同源 URL 不要设置，避免 Safari bug
-    img.crossOrigin = 'anonymous';
-
-    img.onload = () => {
-      setCoverImageLoaded(true);
-      console.log('封面图像加载完成');
-    };
-    img.onerror = (e) => {
-      console.error('封面图像加载失败', e);
-      setCoverImageLoaded(false);
-    };
-    img.src = coverImage;
-  }, [coverImage]);
 
   // 使用模版字符串定义尺寸
   const standardPreviewWidth = 360; // 从320增加到360
@@ -386,14 +358,16 @@ const FunnyBiographyGenerateStep = () => {
           // 设置背景去除状态为false
           setIsBackgroundRemoving(false);
 
-          // Step 4: ensure processed image is a proper data‑URL
-          // 确保字符串前缀正确
-          const processedImage =
-            data.image.startsWith('data:image')
-              ? data.image
-              : `data:image/png;base64,${data.image.replace(/^data:.*?,/, '')}`;
+          // 直接使用已处理的图片生成封面，不需要等待React状态更新
+          // 在generateImagesFromCanvas函数中会优先使用sessionStorage中的图片
+          setCoverImage(data.image);
 
-          setCoverImage(processedImage);
+          // 确保选择第一种样式（classic-red）
+          // 这样可以确保背景去除后立即生成封面
+          setSelectedStyle('classic-red');
+          localStorage.setItem('funnyBiographySelectedStyle', 'classic-red');
+
+          // 生成封面
           generateImagesFromCanvas();
 
         } catch (storageError) {
@@ -405,12 +379,12 @@ const FunnyBiographyGenerateStep = () => {
           // 设置背景去除状态为false
           setIsBackgroundRemoving(false);
 
-          // Step 4: ensure processed image is a proper data‑URL
-          const processedImage =
-            data.image.startsWith('data:image')
-              ? data.image
-              : `data:image/png;base64,${data.image.replace(/^data:.*?,/, '')}`;
-          setCoverImage(processedImage);
+          setCoverImage(data.image);
+
+          // 确保选择第一种样式（classic-red）
+          setSelectedStyle('classic-red');
+          localStorage.setItem('funnyBiographySelectedStyle', 'classic-red');
+
           // 直接使用已处理的图片生成封面
           generateImagesFromCanvas();
         }
@@ -430,6 +404,10 @@ const FunnyBiographyGenerateStep = () => {
       }
 
       // 即使背景去除失败，仍然尝试生成封面
+      // 确保选择第一种样式（classic-red）
+      setSelectedStyle('classic-red');
+      localStorage.setItem('funnyBiographySelectedStyle', 'classic-red');
+
       // 直接生成封面，使用当前可用的图片
       generateImagesFromCanvas();
 
@@ -504,13 +482,6 @@ const FunnyBiographyGenerateStep = () => {
 
     // 确保 Canvas 已经渲染
     console.log('等待Canvas渲染...');
-    await new Promise(requestAnimationFrame);
-    // Step 3: guard generateImagesFromCanvas until the image is loaded
-    if (!coverImageLoaded) {
-      console.log('封面图像仍在加载，稍后再试...');
-      setTimeout(generateImagesFromCanvas, 200);
-      return;
-    }
     setTimeout(() => {
       try {
         if (!canvasPdfContainerRef.current) {
@@ -683,12 +654,9 @@ const FunnyBiographyGenerateStep = () => {
 
             <div className="space-y-4 mt-4">
               <div className="flex flex-wrap justify-center gap-6">
-                {[...stylePresets].map((style, index) => {
-                  // Get template and layout data based on style configuration
-                  const template = style.template;
-
+                {[...stylePresets].map((style) => {
                   // Define style colors to match the image
-                  let styleConfig;
+                  let styleConfig: { bg: string; text: string; border: string };
                   if (style.id === 'classic-red') {
                     styleConfig = { bg: '#C41E3A', text: '#FFFFFF', border: 'none' }; // Red with white text (first circle)
                   } else if (style.id === 'bestseller-style') {
