@@ -22,7 +22,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white">
       <Helmet>
-        <title>Wishiyo - Custom Story Books & Picture Books | Create Personalized Books</title>
+        <title>Wishiyo | Truly Personalized Story Books & Custom Picture Books</title>
         <meta name="description" content="The only book where every page is truly about them, in just 3 minutes. Personalized story books and picture books that make perfect gifts." />
         <link rel="canonical" href="https://www.wishiyo.com/" />
 
@@ -32,7 +32,7 @@ export default function Home() {
             {
               "@context": "https://schema.org",
               "@type": "WebPage",
-              "name": "Wishiyo - Custom Story Books & Picture Books | Create Personalized Books",
+              "name": "Wishiyo | Truly Personalized Story Books & Custom Picture Books",
               "description": "The only book where every page is truly about them, in just 3 minutes. Personalized story books and picture books that make perfect gifts. Featuring titles like Beatboxing Business Blues, Coffee, Corgis, and Quirks, Auntie Jasmine's Wonderful Maya, and more.",
               "url": "https://www.wishiyo.com/",
               "speakable": {
