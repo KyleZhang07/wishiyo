@@ -36,11 +36,6 @@ const Header = () => {
                 <Package className="h-5 w-5" />
               </Button>
             </Link>
-            <Link to="/orders" className="relative">
-              <Button variant="ghost" size="icon">
-                <Search className="h-5 w-5" />
-              </Button>
-            </Link>
           </div>
 
           {/* Mobile Menu Button */}
@@ -48,11 +43,6 @@ const Header = () => {
             <Link to="/verify-order" className="relative mr-2">
               <Button variant="ghost" size="icon">
                 <Package className="h-5 w-5" />
-              </Button>
-            </Link>
-            <Link to="/orders" className="relative mr-2">
-              <Button variant="ghost" size="icon">
-                <Search className="h-5 w-5" />
               </Button>
             </Link>
             <button className="p-2" onClick={() => setIsMenuOpen(!isMenuOpen)}>
