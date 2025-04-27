@@ -48,10 +48,19 @@ async function updateOrderStatusAndNotify(supabase, orderId, type, status, track
       if (trackingInfo) {
         if (trackingInfo.tracking_id) {
           updateData.lulu_tracking_number = trackingInfo.tracking_id;
+          console.log(`[LULU-WEBHOOK] 设置跟踪号码: ${trackingInfo.tracking_id}`);
+        } else {
+          console.log('[LULU-WEBHOOK] 跟踪信息中没有 tracking_id');
         }
+
         if (trackingInfo.tracking_urls && trackingInfo.tracking_urls.length > 0) {
           updateData.lulu_tracking_url = trackingInfo.tracking_urls[0];
+          console.log(`[LULU-WEBHOOK] 设置跟踪URL: ${trackingInfo.tracking_urls[0]}`);
+        } else {
+          console.log('[LULU-WEBHOOK] 跟踪信息中没有 tracking_urls 或为空');
         }
+      } else {
+        console.log('[LULU-WEBHOOK] 没有跟踪信息可用');
       }
     } else if (status === 'REJECTED' || status === 'CANCELED') {
       updateData.status = 'error';
@@ -61,16 +70,30 @@ async function updateOrderStatusAndNotify(supabase, orderId, type, status, track
       updateData.status = 'printing';
     }
 
+    console.log(`[LULU-WEBHOOK] 更新数据:`, JSON.stringify(updateData));
+
     // 更新数据库
     const { data, error } = await supabase
       .from(tableName)
       .update(updateData)
       .eq('order_id', orderId)
-      .select('customer_email, title')
+      .select('*') // 选择所有字段以验证更新
       .single();
 
     if (error) {
+      console.error(`[LULU-WEBHOOK] 数据库更新错误:`, error);
       throw new Error(`更新订单状态失败: ${error.message}`);
+    }
+
+    // 验证更新是否成功
+    console.log(`[LULU-WEBHOOK] 更新后的数据:`, JSON.stringify(data));
+    if (status === 'SHIPPED' && trackingInfo) {
+      if (trackingInfo.tracking_id && data.lulu_tracking_number !== trackingInfo.tracking_id) {
+        console.warn(`[LULU-WEBHOOK] 跟踪号码未正确更新! 期望: ${trackingInfo.tracking_id}, 实际: ${data.lulu_tracking_number}`);
+      }
+      if (trackingInfo.tracking_urls && trackingInfo.tracking_urls.length > 0 && data.lulu_tracking_url !== trackingInfo.tracking_urls[0]) {
+        console.warn(`[LULU-WEBHOOK] 跟踪URL未正确更新! 期望: ${trackingInfo.tracking_urls[0]}, 实际: ${data.lulu_tracking_url}`);
+      }
     }
 
     // 只在特定状态下发送通知
@@ -166,18 +189,67 @@ export default async function handler(req, res) {
 
     // 提取打印作业数据
     const printJobData = webhookData.data;
+    console.log('[LULU-WEBHOOK] 打印作业数据:', JSON.stringify(printJobData));
 
     // 验证必要字段
-    if (!printJobData.external_id || !printJobData.status) {
-      console.error('[LULU-WEBHOOK] 无效的打印作业数据');
+    let orderId, status;
+
+    // 根据文档，print_job_id 应该存在于 printJobData 中
+    if (printJobData.print_job_id) {
+      // 需要查询数据库，根据 print_job_id 找到对应的 order_id
+      // 这里假设我们已经在数据库中存储了 lulu_print_job_id 字段
+      const { data: orderData, error: orderError } = await supabase
+        .from('love_story_books')
+        .select('order_id')
+        .eq('lulu_print_job_id', printJobData.print_job_id)
+        .single();
+
+      if (orderData) {
+        orderId = orderData.order_id;
+      } else {
+        // 如果在 love_story_books 中找不到，尝试在 funny_biography_books 中查找
+        const { data: funnyOrderData, error: funnyOrderError } = await supabase
+          .from('funny_biography_books')
+          .select('order_id')
+          .eq('lulu_print_job_id', printJobData.print_job_id)
+          .single();
+
+        if (funnyOrderData) {
+          orderId = funnyOrderData.order_id;
+        } else {
+          console.error(`[LULU-WEBHOOK] 找不到与 print_job_id ${printJobData.print_job_id} 对应的订单`);
+          return res.status(404).json({
+            success: false,
+            error: `找不到与 print_job_id ${printJobData.print_job_id} 对应的订单`
+          });
+        }
+      }
+    } else if (printJobData.external_id) {
+      // 兼容旧版本的 webhook 数据结构
+      orderId = printJobData.external_id;
+    } else {
+      console.error('[LULU-WEBHOOK] 无法找到订单ID字段');
       return res.status(400).json({
         success: false,
-        error: '无效的打印作业数据，缺少必要字段'
+        error: '无效的打印作业数据，缺少订单ID字段'
       });
     }
 
-    const orderId = printJobData.external_id;
-    const status = printJobData.status.name;
+    // 根据文档，状态应该在 name 字段中
+    if (printJobData.name) {
+      status = printJobData.name;
+    } else if (printJobData.status && printJobData.status.name) {
+      // 兼容旧版本的 webhook 数据结构
+      status = printJobData.status.name;
+    } else {
+      console.error('[LULU-WEBHOOK] 无法找到状态字段');
+      return res.status(400).json({
+        success: false,
+        error: '无效的打印作业数据，缺少状态字段'
+      });
+    }
+
+    console.log(`[LULU-WEBHOOK] 提取的订单ID: ${orderId}, 状态: ${status}`);
 
     // 查找订单以确定类型
     let orderType = null;
@@ -218,14 +290,26 @@ export default async function handler(req, res) {
 
     // 提取跟踪信息（如果有）
     let trackingInfo = null;
-    if (status === 'SHIPPED' && printJobData.line_item_statuses && printJobData.line_item_statuses.length > 0) {
-      const lineItemStatus = printJobData.line_item_statuses[0];
-      if (lineItemStatus.messages) {
-        trackingInfo = {
-          tracking_id: lineItemStatus.messages.tracking_id,
-          tracking_urls: lineItemStatus.messages.tracking_urls,
-          carrier_name: lineItemStatus.messages.carrier_name
-        };
+    if (status === 'SHIPPED') {
+      // 根据文档，line_item_statuses 可能是顶级属性或 printJobData 的属性
+      const lineItemStatuses = printJobData.line_item_statuses || webhookData.line_item_statuses;
+
+      if (lineItemStatuses && lineItemStatuses.length > 0) {
+        const lineItemStatus = lineItemStatuses[0];
+        console.log('[LULU-WEBHOOK] Line item status:', JSON.stringify(lineItemStatus));
+
+        if (lineItemStatus.messages) {
+          trackingInfo = {
+            tracking_id: lineItemStatus.messages.tracking_id,
+            tracking_urls: lineItemStatus.messages.tracking_urls,
+            carrier_name: lineItemStatus.messages.carrier_name
+          };
+          console.log('[LULU-WEBHOOK] 提取的跟踪信息:', JSON.stringify(trackingInfo));
+        } else {
+          console.log('[LULU-WEBHOOK] Line item status 中没有 messages 字段');
+        }
+      } else {
+        console.log('[LULU-WEBHOOK] 没有找到 line_item_statuses 字段或为空');
       }
     }
 

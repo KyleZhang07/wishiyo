@@ -36,13 +36,18 @@ export default async function handler(req, res) {
 
   try {
     // 解析请求体
-    const { orderId, type = 'love_story' } = req.body;
+    const { orderId, type = 'love_story', autoSubmit = false } = req.body;
 
     if (!orderId) {
       return res.status(400).json({
         success: false,
         error: 'Order ID is required'
       });
+    }
+
+    // 记录是否为自动提交
+    if (autoSubmit) {
+      console.log(`Auto-submit print request for ${type} book: ${orderId}`);
     }
 
     // =====================================================================
