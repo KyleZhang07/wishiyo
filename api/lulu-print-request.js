@@ -357,7 +357,7 @@ export default async function handler(req, res) {
       }
 
       // 更新数据库中的订单状态
-      const { error: updateError } = await supabase
+      const { data: updatedOrder, error: updateError } = await supabase
         .from(tableName)
         .update({
           lulu_print_status: 'SUBMITTED',
@@ -365,7 +365,9 @@ export default async function handler(req, res) {
           lulu_print_job_id: printJobId,
           print_date: new Date().toISOString()
         })
-        .eq('order_id', orderId);
+        .eq('order_id', orderId)
+        .select('*')
+        .single();
 
       if (updateError) {
         console.error(`Error updating order status:`, updateError);
@@ -376,6 +378,47 @@ export default async function handler(req, res) {
           print_job_id: printJobId,
           details: printData
         });
+      }
+
+      // 发送订单提交确认邮件
+      try {
+        // 获取客户邮箱和书籍标题
+        const customerEmail = updatedOrder.customer_email || order.customer_email;
+        const bookTitle = updatedOrder.title || order.title || 'Your Book';
+
+        if (customerEmail) {
+          // 调用Supabase函数发送邮件通知
+          const notificationResponse = await fetchFunc(
+            `${supabaseUrl}/functions/v1/send-order-status-notification`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${supabaseServiceKey}`
+              },
+              body: JSON.stringify({
+                email: customerEmail,
+                orderId: orderId,
+                status: 'CREATED', // 使用 'CREATED' 状态来触发确认邮件
+                bookTitle: bookTitle,
+                trackingInfo: null,
+                type: type
+              })
+            }
+          );
+
+          if (!notificationResponse.ok) {
+            const errorText = await notificationResponse.text();
+            console.error(`Failed to send order confirmation email: ${notificationResponse.status} ${notificationResponse.statusText} - ${errorText}`);
+          } else {
+            console.log(`Order confirmation email sent to ${customerEmail}`);
+          }
+        } else {
+          console.warn(`No customer email found for order ${orderId}, skipping confirmation email`);
+        }
+      } catch (emailError) {
+        console.error(`Error sending confirmation email for order ${orderId}:`, emailError);
+        // 邮件发送失败不影响API响应
       }
 
       // 返回成功响应

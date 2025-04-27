@@ -97,7 +97,8 @@ async function updateOrderStatusAndNotify(supabase, orderId, type, status, track
     }
 
     // 只在特定状态下发送通知
-    const notificationStatuses = ['CREATED', 'ACCEPTED', 'IN_PRODUCTION', 'MANUFACTURING', 'SHIPPED', 'REJECTED', 'CANCELED'];
+    // 不再为 'CREATED' 和 'ACCEPTED' 状态发送通知，因为我们已经在订单提交时发送了确认邮件
+    const notificationStatuses = ['IN_PRODUCTION', 'MANUFACTURING', 'SHIPPED', 'REJECTED', 'CANCELED'];
 
     // 如果有客户邮箱，且状态在需要通知的列表中，发送通知
     if (data && data.customer_email && notificationStatuses.includes(status)) {
