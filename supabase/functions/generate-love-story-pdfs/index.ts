@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.8.0'
 import { jsPDF } from 'https://esm.sh/jspdf@2.5.1'
+import { submitPrintRequest } from "./submit-print-request.ts"
 
 interface RequestBody {
   orderId: string;
@@ -315,12 +316,43 @@ serve(async (req) => {
     }
     console.log(`数据库记录更新成功`)
 
+    // 自动提交打印请求
+    try {
+      console.log(`Book ${orderId} PDF generated, auto-submitting print request to Lulu Press`)
+
+      // 获取应用基础URL
+      const baseUrl = Deno.env.get('VERCEL_URL')
+        ? `https://${Deno.env.get('VERCEL_URL')}`
+        : 'https://wishiyo.com'
+
+      // 获取服务角色密钥
+      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+
+      // 自动提交打印请求
+      const printResult = await submitPrintRequest(
+        orderId,
+        'love_story',
+        baseUrl,
+        supabaseServiceKey
+      )
+
+      if (printResult.success) {
+        console.log(`Auto-submitted print request for book ${orderId} successfully, print job ID: ${printResult.print_job_id}`)
+      } else {
+        console.error(`Failed to auto-submit print request for book ${orderId}: ${printResult.message}`)
+      }
+    } catch (printError) {
+      console.error(`Error auto-submitting print request for book ${orderId}:`, printError)
+      // 继续执行，不中断响应
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
         coverPdfUrl: coverUrl.publicUrl,
         interiorPdfUrl: interiorUrl.publicUrl,
-        book: updateData
+        book: updateData,
+        print_request_triggered: true
       }),
       { headers: { ...headers, 'Content-Type': 'application/json' } }
     )

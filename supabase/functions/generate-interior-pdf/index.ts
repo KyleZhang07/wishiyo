@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { jsPDF } from "https://esm.sh/jspdf@2.5.2";
 import { autoTable } from "https://esm.sh/jspdf-autotable@3.8.1";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.8.0";
+import { submitPrintRequest } from "./submit-print-request.ts";
 
 // CORS 头设置
 const corsHeaders = {
@@ -1222,6 +1223,32 @@ serve(async (req) => {
       console.log(`Database updated successfully with interior-pdf, interior_source_url, and marked as ready for printing with ${finalPageCount} pages`); // 使用准确页码
       if (updateData.status === 'completed') {
         console.log(`Book status updated to 'completed'`);
+
+        // 如果状态更新为 'completed'，自动提交打印请求
+        try {
+          console.log(`Book ${orderId} is completed, auto-submitting print request to Lulu Press`);
+
+          // 获取应用基础URL
+          const baseUrl = Deno.env.get('VERCEL_URL')
+            ? `https://${Deno.env.get('VERCEL_URL')}`
+            : 'https://wishiyo.com';
+
+          // 自动提交打印请求
+          const printResult = await submitPrintRequest(
+            orderId,
+            'funny_biography',
+            baseUrl,
+            supabaseServiceKey
+          );
+
+          if (printResult.success) {
+            console.log(`Auto-submitted print request for book ${orderId} successfully, print job ID: ${printResult.print_job_id}`);
+          } else {
+            console.error(`Failed to auto-submit print request for book ${orderId}: ${printResult.message}`);
+          }
+        } catch (printError) {
+          console.error(`Error auto-submitting print request for book ${orderId}:`, printError);
+        }
       }
     }
 
