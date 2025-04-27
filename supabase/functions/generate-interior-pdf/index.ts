@@ -1238,7 +1238,8 @@ serve(async (req) => {
             orderId,
             'funny_biography',
             baseUrl,
-            supabaseServiceKey
+            supabaseServiceKey,
+            supabase // 传递 Supabase 客户端以检查订单状态
           );
 
           if (printResult.success) {

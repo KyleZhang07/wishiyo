@@ -1,6 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.8.0'
-import { jsPDF } from 'https://esm.sh/jspdf@2.5.1'
+import { jsPDF } from 'https://esm.sh/jspdf@2.5.2'
 import { submitPrintRequest } from "./submit-print-request.ts"
 
 interface RequestBody {
@@ -333,7 +333,8 @@ serve(async (req) => {
         orderId,
         'love_story',
         baseUrl,
-        supabaseServiceKey
+        supabaseServiceKey,
+        supabaseAdmin // 传递 Supabase 客户端以检查订单状态
       )
 
       if (printResult.success) {
