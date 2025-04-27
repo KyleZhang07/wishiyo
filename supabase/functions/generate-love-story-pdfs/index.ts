@@ -1,7 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.8.0'
 import { jsPDF } from 'https://esm.sh/jspdf@2.5.2'
-import { submitPrintRequest } from "./submit-print-request.ts"
 
 interface RequestBody {
   orderId: string;
@@ -37,12 +36,17 @@ serve(async (req) => {
       )
     }
 
-    // 创建Supabase客户端
+    // 创建Supabase客户端，确保不设置全局Content-Type头
     const supabaseAdmin = createClient(
       // @ts-ignore: Deno 全局变量
       Deno.env.get('SUPABASE_URL') ?? '',
       // @ts-ignore: Deno 全局变量
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          persistSession: false
+        }
+      }
     )
 
     // 获取love_story_books记录
@@ -186,11 +190,14 @@ serve(async (req) => {
     console.log(`封面PDF大小: ${coverPdfSize} 字节 (${Math.round(coverPdfSize/1024/1024 * 100) / 100} MB)`)
 
     // 上传封面PDF（通常较小，直接上传）
+    // 创建Blob对象，明确设置MIME类型
+    const coverPdfBlob = new Blob([coverPdf], { type: 'application/pdf' });
+
+    // 使用Blob上传，不再设置contentType参数
     const { data: coverUploadData, error: coverUploadError } = await supabaseAdmin
       .storage
       .from('pdfs')
-      .upload(coverPdfPath, coverPdf, {
-        contentType: 'application/pdf',
+      .upload(coverPdfPath, coverPdfBlob, {
         upsert: true
       })
 
@@ -255,11 +262,14 @@ serve(async (req) => {
 
       const placeholderPdfBytes = placeholderPdf.output('arraybuffer');
 
+      // 创建Blob对象，明确设置MIME类型
+      const placeholderPdfBlob = new Blob([new Uint8Array(placeholderPdfBytes)], { type: 'application/pdf' });
+
+      // 使用Blob上传，不再设置contentType参数
       const { error: placeholderUploadError } = await supabaseAdmin
         .storage
         .from('pdfs')
-        .upload(interiorPdfPath, new Uint8Array(placeholderPdfBytes), {
-          contentType: 'application/pdf',
+        .upload(interiorPdfPath, placeholderPdfBlob, {
           upsert: true
         });
 
@@ -316,36 +326,9 @@ serve(async (req) => {
     }
     console.log(`数据库记录更新成功`)
 
-    // 自动提交打印请求
-    try {
-      console.log(`Book ${orderId} PDF generated, auto-submitting print request to Lulu Press`)
-
-      // 获取应用基础URL
-      const baseUrl = Deno.env.get('VERCEL_URL')
-        ? `https://${Deno.env.get('VERCEL_URL')}`
-        : 'https://wishiyo.com'
-
-      // 获取服务角色密钥
-      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
-
-      // 自动提交打印请求
-      const printResult = await submitPrintRequest(
-        orderId,
-        'love_story',
-        baseUrl,
-        supabaseServiceKey,
-        supabaseAdmin // 传递 Supabase 客户端以检查订单状态
-      )
-
-      if (printResult.success) {
-        console.log(`Auto-submitted print request for book ${orderId} successfully, print job ID: ${printResult.print_job_id}`)
-      } else {
-        console.error(`Failed to auto-submit print request for book ${orderId}: ${printResult.message}`)
-      }
-    } catch (printError) {
-      console.error(`Error auto-submitting print request for book ${orderId}:`, printError)
-      // 继续执行，不中断响应
-    }
+    // 不再在这里自动提交打印请求
+    // 打印请求将在 PDF 合并完成后由 merge-pdf.js 触发
+    console.log(`Book ${orderId} PDF 生成中，将在合并完成后自动提交打印请求到 Lulu Press`)
 
     return new Response(
       JSON.stringify({
@@ -957,10 +940,14 @@ async function generateAndUploadPdfInSegments(imageFiles: any[], orderId: string
     const segmentPath = `love-story/${orderId}/interior-part${Math.floor(i/segmentSize) + 1}.pdf`;
     console.log(`上传PDF段 ${Math.floor(i/segmentSize) + 1} 到 ${segmentPath}, 大小: ${segmentPdf.byteLength} 字节`);
 
+    // 创建Blob对象，明确设置MIME类型
+    const segmentPdfBlob = new Blob([segmentPdf], { type: 'application/pdf' });
+
+    // 使用Blob上传，不再设置contentType参数
     const { error: segmentUploadError } = await supabase.storage.from('pdfs').upload(
       segmentPath,
-      segmentPdf,
-      { contentType: 'application/pdf', upsert: true }
+      segmentPdfBlob,
+      { upsert: true }
     );
 
     if (segmentUploadError) {
@@ -988,10 +975,15 @@ async function generateAndUploadPdfInSegments(imageFiles: any[], orderId: string
 
   // 上传索引文件
   const indexPath = `love-story/${orderId}/interior-index.json`;
+
+  // 创建Blob对象，明确设置MIME类型
+  const indexBlob = new Blob([new TextEncoder().encode(indexContent)], { type: 'application/json' });
+
+  // 使用Blob上传，不再设置contentType参数
   const { error: indexUploadError } = await supabase.storage.from('pdfs').upload(
     indexPath,
-    new TextEncoder().encode(indexContent),
-    { contentType: 'application/json', upsert: true }
+    indexBlob,
+    { upsert: true }
   );
 
   if (indexUploadError) {

@@ -280,12 +280,26 @@ export default async function handler(req, res) {
     // 更新数据库中的URL
     if (type === 'interior') {
       console.log(`更新数据库中的interior_pdf和interior_source_url字段为合并后的PDF URL`);
+
+      // 检查PDF页数
+      const finalPageCount = mergedDoc.getPageCount();
+      console.log(`合并后的PDF页数: ${finalPageCount}`);
+
+      // 只有当PDF页数大于1时才更新状态为ready_for_printing
+      const updateData = {
+        interior_pdf: publicUrl,
+        interior_source_url: publicUrl
+      };
+
+      // 如果PDF有足够的页数，标记为准备好打印
+      if (finalPageCount > 1) {
+        updateData.ready_for_printing = true;
+        updateData.status = 'pdf_generated';
+      }
+
       const { error: updateError } = await supabase
         .from('love_story_books')
-        .update({
-          interior_pdf: publicUrl,
-          interior_source_url: publicUrl
-        })
+        .update(updateData)
         .eq('order_id', orderId);
 
       if (updateError) {
@@ -294,6 +308,44 @@ export default async function handler(req, res) {
         console.warn(`数据库更新失败，但PDF已成功合并和上传`);
       } else {
         console.log(`数据库更新成功，interior_source_url和interior_pdf现在指向合并后的PDF`);
+
+        // 如果PDF有足够的页数，自动提交到Lulu Press
+        if (finalPageCount > 1) {
+          try {
+            console.log(`PDF合并完成且页数足够(${finalPageCount}页)，自动提交到Lulu Press`);
+
+            // 获取基础URL
+            const baseUrl = process.env.VERCEL_URL
+              ? `https://${process.env.VERCEL_URL}`
+              : 'https://wishiyo.com';
+
+            // 调用API发送打印请求
+            const response = await fetch(`${baseUrl}/api/lulu-print-request`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${supabaseServiceKey}`
+              },
+              body: JSON.stringify({
+                orderId,
+                type: 'love_story',
+                autoSubmit: true
+              })
+            });
+
+            if (!response.ok) {
+              const errorText = await response.text();
+              console.error(`提交到Lulu Press失败: ${response.status} ${response.statusText} - ${errorText}`);
+            } else {
+              const data = await response.json();
+              console.log(`成功提交到Lulu Press，打印作业ID: ${data.print_job_id || '未知'}`);
+            }
+          } catch (error) {
+            console.error(`自动提交到Lulu Press时出错:`, error);
+          }
+        } else {
+          console.warn(`PDF页数不足(${finalPageCount}页)，不自动提交到Lulu Press`);
+        }
       }
     } else if (type === 'cover') {
       console.log(`更新数据库中的cover_pdf和cover_source_url字段`);
