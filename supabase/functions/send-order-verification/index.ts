@@ -10,6 +10,19 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+// 从电子邮件中提取名字
+function getFirstName(email: string): string {
+  // 从电子邮件地址中提取名字部分
+  const namePart = email.split('@')[0];
+
+  // 尝试从常见的电子邮件格式中提取名字
+  // 例如：john.doe@example.com, john_doe@example.com, johndoe@example.com
+  const possibleName = namePart.split(/[._]/)[0];
+
+  // 首字母大写
+  return possibleName.charAt(0).toUpperCase() + possibleName.slice(1).toLowerCase();
+}
+
 serve(async (req) => {
   // 处理 CORS 预检请求
   if (req.method === "OPTIONS") {
@@ -45,7 +58,7 @@ serve(async (req) => {
 
     // 生成6位随机验证码
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-    
+
     // 设置验证码有效期 (15分钟)
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
@@ -79,25 +92,73 @@ serve(async (req) => {
       throw new Error(`验证码保存失败: ${insertError.message}`);
     }
 
+    // 获取收件人名字
+    const firstName = getFirstName(email);
+
+    // HTML 邮件内容
+    const htmlContent = `
+      <div style="font-family:Arial,Helvetica,sans-serif;
+                  max-width:600px;margin:0 auto;padding:24px;color:#333;">
+        <h2 style="color:#FF6B35;margin:0 0 16px;">
+          Your Wishiyo Verification Code
+        </h2>
+
+        <p>Hi ${firstName},</p>
+
+        <p>You're trying to access your Wishiyo order information. Please use the verification code below:</p>
+
+        <div style="background-color:#f5f5f5;padding:15px;border-radius:5px;text-align:center;font-size:24px;letter-spacing:5px;margin:20px 0;">
+          <strong>${code}</strong>
+        </div>
+
+        <p>This code will expire in 15 minutes. If you didn't request this code, please ignore this email.</p>
+
+        <p>Thanks for choosing Wishiyo!</p>
+
+        <p>— Wishiyo</p>
+
+        <hr style="border:none;border-top:1px solid #E0E0E0;margin:32px 0;">
+        <p style="font-size:12px;color:#777;margin:0;">
+           This email was sent automatically from an unmonitored address.<br>
+           Need help? Please visit
+           <a href="https://wishiyo.com/contact" style="color:#FF6B35;text-decoration:none;">
+             wishiyo.com/contact
+           </a> to reach our customer service team.
+        </p>
+      </div>
+    `;
+
+    // 纯文本邮件内容
+    const textContent = `
+      Your Wishiyo Verification Code
+
+      Hi ${firstName},
+
+      You're trying to access your Wishiyo order information. Please use the verification code below:
+
+      ${code}
+
+      This code will expire in 15 minutes. If you didn't request this code, please ignore this email.
+
+      Thanks for choosing Wishiyo!
+
+      — Wishiyo
+
+      ---
+      This email was sent automatically from an unmonitored address.
+      Need help? Please visit wishiyo.com/contact to reach our customer service team.
+    `;
+
     // 发送邮件
     const emailResponse = await resend.emails.send({
-      from: "WISHIYO <verify@wishiyo.com>",
+      from: "Wishiyo <hi@wishiyo.com>",
       to: [email],
-      subject: "订单查询验证码",
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h2 style="color: #FF7F50;">WISHIYO 订单查询验证码</h2>
-          <p>您好，</p>
-          <p>您正在尝试查询WISHIYO订单信息。请使用以下验证码进行验证：</p>
-          <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; text-align: center; font-size: 24px; letter-spacing: 5px; margin: 20px 0;">
-            <strong>${code}</strong>
-          </div>
-          <p>此验证码将在15分钟后失效。如果您没有请求此验证码，请忽略此邮件。</p>
-          <p>感谢您使用WISHIYO的服务！</p>
-          <hr style="border: 1px solid #eee; margin: 20px 0;">
-          <p style="font-size: 12px; color: #777;">本邮件由系统自动发送，请勿回复。</p>
-        </div>
-      `,
+      subject: "Your Wishiyo Verification Code",
+      html: htmlContent,
+      text: textContent,
+      headers: {
+        "X-Entity-Ref-ID": Date.now().toString(), // 唯一标识符
+      }
     });
 
     console.log("邮件发送响应:", emailResponse);

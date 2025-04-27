@@ -195,12 +195,22 @@ serve(async (req) => {
 
     const { subject, content } = emailContent;
 
-    // Send email
+    // 创建纯文本版本
+    const plainText = content
+      .replace(/<[^>]*>/g, '') // 移除所有HTML标签
+      .replace(/\s+/g, ' ')    // 将多个空白字符替换为单个空格
+      .trim();                 // 移除首尾空白
+
+    // Send email with improved headers
     const emailResponse = await resend.emails.send({
-      from: "Wishiyo <orders@wishiyo.com>",
+      from: "Wishiyo <hi@wishiyo.com>",
       to: [email],
       subject: subject,
       html: content,
+      text: plainText,
+      headers: {
+        "X-Entity-Ref-ID": orderId || Date.now().toString(), // 唯一标识符
+      }
     });
 
     console.log("Email send response:", emailResponse);
