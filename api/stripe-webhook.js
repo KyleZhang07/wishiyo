@@ -350,19 +350,8 @@ export default async function handler(req, res) {
               console.log('[DEBUG] Shipping cost check:', {
                 total_details: expandedSession.total_details,
                 amount_shipping: expandedSession.total_details.amount_shipping,
-                amount_discount: expandedSession.total_details.amount_discount,
                 has_shipping_cost: hasShippingCost,
-                has_discount: expandedSession.total_details.amount_discount > 0,
                 shipping_level_by_cost: hasShippingCost ? 'EXPEDITED' : 'MAIL'
-              });
-            }
-
-            // 检查是否使用了促销码
-            if (expandedSession.discount) {
-              console.log('[DEBUG] Discount information:', {
-                discount: expandedSession.discount,
-                promotion_code: expandedSession.discount.promotion_code,
-                coupon: expandedSession.discount.coupon
               });
             }
 
@@ -681,87 +670,6 @@ export default async function handler(req, res) {
                 console.error('启动Love Story图书生成过程时出错:', error);
                 console.error(error.stack); // 打印堆栈跟踪
                 // 记录错误但仍向Stripe返回成功，以防止重试逻辑
-              }
-            }
-
-            // 检查是否使用了促销码
-            if (expandedSession.total_details && expandedSession.total_details.amount_discount > 0) {
-              try {
-                console.log('[WEBHOOK] Discount detected in order:', {
-                  amount_discount: expandedSession.total_details.amount_discount,
-                  discount_exists: !!expandedSession.discount
-                });
-
-                // 如果有促销码信息，记录使用情况
-                if (expandedSession.discount && expandedSession.discount.promotion_code) {
-                  const promoCodeId = expandedSession.discount.promotion_code;
-
-                  // 获取促销码详情
-                  const promoCode = await stripe.promotionCodes.retrieve(promoCodeId);
-
-                  if (promoCode && promoCode.code) {
-                    console.log(`[WEBHOOK] Promotion code used: ${promoCode.code}`);
-
-                    // 查询数据库中是否有此促销码
-                    const { data: existingPromo, error: fetchError } = await supabase
-                      .from('promotion_codes')
-                      .select('*')
-                      .eq('code', promoCode.code)
-                      .single();
-
-                    if (!fetchError && existingPromo) {
-                      // 更新使用次数
-                      const { error: updateError } = await supabase
-                        .from('promotion_codes')
-                        .update({
-                          usage_count: existingPromo.usage_count + 1,
-                          updated_at: new Date().toISOString()
-                        })
-                        .eq('id', existingPromo.id);
-
-                      if (updateError) {
-                        console.error('[WEBHOOK] Error updating promotion code usage count:', updateError);
-                      } else {
-                        console.log(`[WEBHOOK] Updated usage count for promotion code ${promoCode.code}`);
-                      }
-                    } else {
-                      // 如果数据库中没有此促销码，创建一个新记录
-                      const couponId = promoCode.coupon ? promoCode.coupon.id : null;
-                      const discountType = promoCode.coupon && promoCode.coupon.percent_off
-                        ? 'percentage'
-                        : 'fixed_amount';
-                      const discountValue = promoCode.coupon
-                        ? (promoCode.coupon.percent_off || (promoCode.coupon.amount_off ? promoCode.coupon.amount_off / 100 : 0))
-                        : 0;
-
-                      const { error: insertError } = await supabase
-                        .from('promotion_codes')
-                        .insert({
-                          code: promoCode.code,
-                          description: promoCode.coupon ? promoCode.coupon.name : 'Imported from Stripe',
-                          discount_type: discountType,
-                          discount_value: discountValue,
-                          start_date: new Date(promoCode.created * 1000).toISOString(),
-                          end_date: promoCode.expires_at
-                            ? new Date(promoCode.expires_at * 1000).toISOString()
-                            : new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000).toISOString(), // 10年后
-                          is_active: promoCode.active,
-                          usage_count: 1,
-                          stripe_promotion_code_id: promoCodeId,
-                          stripe_coupon_id: couponId
-                        });
-
-                      if (insertError) {
-                        console.error('[WEBHOOK] Error creating promotion code record:', insertError);
-                      } else {
-                        console.log(`[WEBHOOK] Created new promotion code record for ${promoCode.code}`);
-                      }
-                    }
-                  }
-                }
-              } catch (discountError) {
-                console.error('[WEBHOOK] Error processing discount information:', discountError);
-                // 不中断主流程，继续处理订单
               }
             }
 
