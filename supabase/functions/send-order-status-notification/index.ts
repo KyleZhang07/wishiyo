@@ -119,7 +119,7 @@ function getEmailContent(status: string, bookTitle: string, orderId: string, tra
 
   <p>Thanks for choosing Wishiyo – we can't wait for you to hold your book!</p>
 
-  <p>— The Wishiyo Team</p>
+  <p>— Wishiyo</p>
 
   <hr style="border:none;border-top:1px solid #E0E0E0;margin:32px 0;">
   <p style="font-size:12px;color:#777;margin:0;">
@@ -197,7 +197,7 @@ serve(async (req) => {
 
     // Send email
     const emailResponse = await resend.emails.send({
-      from: "Wishiyo Team <orders@wishiyo.com>",
+      from: "Wishiyo <orders@wishiyo.com>",
       to: [email],
       subject: subject,
       html: content,
