@@ -9,114 +9,128 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-// Get email subject and content based on order status
-function getEmailContent(status: string, bookTitle: string, orderId: string, trackingInfo: any = null) {
-  let subject = '';
-  let content = '';
+// 获取收件人的名字（从电子邮件中提取）
+function getFirstName(email: string): string {
+  // 从电子邮件地址中提取名字部分
+  const namePart = email.split('@')[0];
 
+  // 尝试从常见的电子邮件格式中提取名字
+  // 例如：john.doe@example.com, john_doe@example.com, johndoe@example.com
+  const possibleName = namePart.split(/[._]/)[0];
+
+  // 首字母大写
+  return possibleName.charAt(0).toUpperCase() + possibleName.slice(1).toLowerCase();
+}
+
+// 根据订单状态生成电子邮件主题和内容
+function getEmailContent(status: string, bookTitle: string, orderId: string, trackingInfo: any = null, email: string = '') {
+  // 提取收件人名字
+  const firstName = getFirstName(email);
+
+  // 定义电子邮件模板变量
+  let subject = '';
+  let headline = '';
+  let body = '';
+  let optionalBlock = '';
+  let nextStep = '';
+  let statusText = '';
+
+  // 根据状态设置相应的内容
   switch (status) {
     case 'CREATED':
     case 'ACCEPTED':
-      subject = `Your Order #${orderId} Has Been Received - WISHIYO`;
-      content = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h2 style="color: #FF6B35;">WISHIYO Order Status Update</h2>
-          <p>Hello,</p>
-          <p>Thank you for your order with WISHIYO. We have received your order and it is being processed.</p>
-          <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
-            <p><strong>Order ID:</strong> ${orderId}</p>
-            <p><strong>Book Title:</strong> ${bookTitle}</p>
-            <p><strong>Current Status:</strong> Received, awaiting printing</p>
-          </div>
-          <p>We will notify you when there are updates to your order status.</p>
-          <p>Thank you for using WISHIYO's services!</p>
-          <hr style="border: 1px solid #eee; margin: 20px 0;">
-          <p style="font-size: 12px; color: #777;">This email was sent automatically. Please do not reply.</p>
-        </div>
-      `;
+      subject = `We've got your order #${orderId} 🎉`;
+      headline = "We've received your order!";
+      body = `Thank you for ordering <strong>${bookTitle}</strong>. Our team is queuing it for printing.`;
+      nextStep = "<p>We'll email you the moment it hits the press.</p>";
+      statusText = 'Received, awaiting printing';
       break;
 
     case 'IN_PRODUCTION':
     case 'MANUFACTURING':
-      subject = `Your Order #${orderId} Is Being Printed - WISHIYO`;
-      content = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h2 style="color: #FF6B35;">WISHIYO Order Status Update</h2>
-          <p>Hello,</p>
-          <p>We're pleased to inform you that your book is now being printed!</p>
-          <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
-            <p><strong>Order ID:</strong> ${orderId}</p>
-            <p><strong>Book Title:</strong> ${bookTitle}</p>
-            <p><strong>Current Status:</strong> Printing in progress</p>
-          </div>
-          <p>Once printing is complete, we will arrange shipping and notify you again.</p>
-          <p>Thank you for using WISHIYO's services!</p>
-          <hr style="border: 1px solid #eee; margin: 20px 0;">
-          <p style="font-size: 12px; color: #777;">This email was sent automatically. Please do not reply.</p>
-        </div>
-      `;
+      subject = `Your book is on the press! (Order #${orderId})`;
+      headline = 'Your book is being printed';
+      body = 'Great news – the pages are rolling through our press right now.';
+      nextStep = '<p>Next up: binding and a quick quality check.</p>';
+      statusText = 'Printing in progress';
       break;
 
     case 'SHIPPED':
-      subject = `Your Order #${orderId} Has Been Shipped - WISHIYO`;
-      let trackingSection = '';
+      subject = `Your book is on the way 🚚 – track Order #${orderId}`;
+      headline = 'Your book has shipped!';
+      body = "It's officially on its way.";
+      statusText = 'Shipped';
 
+      // 添加跟踪信息（如果有）
       if (trackingInfo && trackingInfo.tracking_id) {
-        trackingSection = `
-          <p><strong>Tracking Number:</strong> ${trackingInfo.tracking_id}</p>
-        `;
+        optionalBlock = `<p><strong>Tracking #</strong>: ${trackingInfo.tracking_id}`;
 
         if (trackingInfo.tracking_urls && trackingInfo.tracking_urls.length > 0) {
-          trackingSection += `
-            <p><a href="${trackingInfo.tracking_urls[0]}" style="color: #FF6B35; text-decoration: none;">Click here to track your shipment</a></p>
-          `;
+          optionalBlock += ` (<a href="${trackingInfo.tracking_urls[0]}" style="color:#FF6B35;">track here</a>)`;
         }
+
+        optionalBlock += '</p>';
       }
 
-      content = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h2 style="color: #FF6B35;">WISHIYO Order Status Update</h2>
-          <p>Hello,</p>
-          <p>Good news! Your book has been printed and shipped.</p>
-          <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
-            <p><strong>Order ID:</strong> ${orderId}</p>
-            <p><strong>Book Title:</strong> ${bookTitle}</p>
-            <p><strong>Current Status:</strong> Shipped</p>
-            ${trackingSection}
-          </div>
-          <p>Thank you for using WISHIYO's services! We hope you enjoy your custom book.</p>
-          <hr style="border: 1px solid #eee; margin: 20px 0;">
-          <p style="font-size: 12px; color: #777;">This email was sent automatically. Please do not reply.</p>
-        </div>
-      `;
+      nextStep = '<p>Watch your mailbox – delivery is usually just a few days.</p>';
       break;
 
     case 'REJECTED':
+      subject = `Update on Order #${orderId} – we need your help`;
+      headline = "There's a hiccup with your order";
+      body = "Something didn't pass our checks and we had to stop the job.";
+      nextStep = "<p>Hit reply and we'll sort it out together.</p>";
+      statusText = 'Rejected';
+      break;
+
     case 'CANCELED':
-      subject = `Your Order #${orderId} Status Update - WISHIYO`;
-      content = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h2 style="color: #FF6B35;">WISHIYO Order Status Update</h2>
-          <p>Hello,</p>
-          <p>We regret to inform you that there was an issue with processing your order.</p>
-          <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
-            <p><strong>Order ID:</strong> ${orderId}</p>
-            <p><strong>Book Title:</strong> ${bookTitle}</p>
-            <p><strong>Current Status:</strong> ${status === 'REJECTED' ? 'Rejected' : 'Canceled'}</p>
-          </div>
-          <p>Please contact our customer support team for more information and assistance.</p>
-          <p>Email: <a href="mailto:support@wishiyo.com" style="color: #FF6B35; text-decoration: none;">support@wishiyo.com</a></p>
-          <p>Thank you for your understanding.</p>
-          <hr style="border: 1px solid #eee; margin: 20px 0;">
-          <p style="font-size: 12px; color: #777;">This email was sent automatically. Please do not reply.</p>
-        </div>
-      `;
+      subject = `Update on Order #${orderId} – we need your help`;
+      headline = 'Your order was canceled';
+      body = "As requested, we've canceled the order. No worries - you can reorder anytime.";
+      nextStep = "<p>Questions? Reply and we're here to help.</p>";
+      statusText = 'Canceled';
       break;
 
     default:
       // 不处理其他状态，返回null表示不发送通知
       return null;
   }
+
+  // 使用统一的HTML模板
+  const content = `
+<div style="font-family:Arial,Helvetica,sans-serif;
+            max-width:600px;margin:0 auto;padding:24px;color:#333;">
+  <h2 style="color:#FF6B35;margin:0 0 16px;">
+    ${headline}
+  </h2>
+
+  <p>Hi ${firstName},</p>
+
+  <p>${body}</p>
+
+  <div style="background:#F6F6F6;padding:16px;border-radius:6px;margin:24px 0;">
+    <p style="margin:4px 0;"><strong>Order&nbsp;ID:</strong> ${orderId}</p>
+    <p style="margin:4px 0;"><strong>Book&nbsp;Title:</strong> ${bookTitle}</p>
+    <p style="margin:4px 0;"><strong>Status:</strong> ${statusText}</p>
+    ${optionalBlock}
+  </div>
+
+  ${nextStep}
+
+  <p>Thanks for choosing Wishiyo – we can't wait for you to hold your book!</p>
+
+  <p>— The Wishiyo Team</p>
+
+  <hr style="border:none;border-top:1px solid #E0E0E0;margin:32px 0;">
+  <p style="font-size:12px;color:#777;margin:0;">
+     This email was sent automatically from an unmonitored address.<br>
+     Need help? Please visit
+     <a href="https://wishiyo.com/contact" style="color:#FF6B35;text-decoration:none;">
+       wishiyo.com/contact
+     </a> to reach our customer service team.
+  </p>
+</div>
+  `;
 
   return { subject, content };
 }
@@ -165,7 +179,7 @@ serve(async (req) => {
     }
 
     // 获取邮件内容
-    const emailContent = getEmailContent(status, bookTitle || "Your Book", orderId, trackingInfo);
+    const emailContent = getEmailContent(status, bookTitle || "Your Book", orderId, trackingInfo, email);
 
     // 如果没有为该状态定义邮件内容，则不发送通知
     if (!emailContent) {
@@ -183,7 +197,7 @@ serve(async (req) => {
 
     // Send email
     const emailResponse = await resend.emails.send({
-      from: "WISHIYO <orders@wishiyo.com>",
+      from: "Wishiyo Team <orders@wishiyo.com>",
       to: [email],
       subject: subject,
       html: content,
