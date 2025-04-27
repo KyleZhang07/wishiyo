@@ -13,7 +13,7 @@ const FriendsLanding = () => {
               "@type": "Product",
               "name": "Funny Biography Book",
               "image": "https://www.wishiyo.com/images/showcase/personalized-books/personalized-book1.png",
-              "description": "Create a funny biography that's literally about them - real unforgettable. We'll do the writing, you get the laughs. Features books like Beatboxing Business Blues, Coffee, Corgis, and Quirks, Shakespeare and Syllables, and Homebrew High Jinks.",
+              "description": "Create a funny biography that's literally about them - really unforgettable. We'll do the writing, you get the laughs. Features books like Beatboxing Business Blues, Coffee, Corgis, and Quirks, Shakespeare and Syllables, and Homebrew High Jinks.",
               "brand": {
                 "@type": "Brand",
                 "name": "Wishiyo"
@@ -41,10 +41,10 @@ const FriendsLanding = () => {
             <div className="max-w-6xl mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                 <div className="md:order-2 text-white space-y-6 max-w-[480px]">
-                  <h1 className="text-4xl font-serif font-bold px-0 mx-0 md:text-4xl text-slate-800">Create a funny biography that's literally about them - real unforgettable</h1>
+                  <h1 className="text-4xl font-serif font-bold px-0 mx-0 md:text-4xl text-slate-800">Create a funny biography that's literally about them - really unforgettable</h1>
                   <p className="text-xl text-slate-800">We'll do the writing, you get the laughs.</p>
                   <Link to="/create/friends/funny-biography/author" className="inline-flex items-center px-6 py-3 text-base font-medium text-white bg-[#FF7F50] rounded-sm hover:bg-[#FF7F50]/80 transition-colors">
-                    Start
+                    Start Creating
                   </Link>
                 </div>
                 <div className="md:order-1 hidden md:block">

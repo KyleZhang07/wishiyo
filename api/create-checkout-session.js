@@ -81,11 +81,11 @@ export default async function handler(req, res) {
             delivery_estimate: {
               minimum: {
                 unit: 'business_day',
-                value: 5,
+                value: 8,
               },
               maximum: {
                 unit: 'business_day',
-                value: 7,
+                value: 12,
               },
             },
           },
@@ -101,11 +101,11 @@ export default async function handler(req, res) {
             delivery_estimate: {
               minimum: {
                 unit: 'business_day',
-                value: 2,
+                value: 5,
               },
               maximum: {
                 unit: 'business_day',
-                value: 3,
+                value: 8,
               },
             },
           },

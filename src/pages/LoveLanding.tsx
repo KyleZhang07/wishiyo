@@ -11,7 +11,7 @@ const LoveLanding = () => {
               "@type": "Product",
               "name": "Picture Book",
               "image": "https://www.wishiyo.com/images/showcase/illustrated-books/illustrated-book1.jpeg",
-              "description": "Get a picture book where every page features their face - created instantly. Any dream, anywhere—they're the star. Features books like Auntie Jasmine's Wonderful Maya, The Magic in Mateo, Charlie's Amazing Adventure, and Matt, I Love You!",
+              "description": "Get a picture book where every page features their face - created instantly Any dream, anywhere—they're the star. Features books like Auntie Jasmine's Wonderful Maya, The Magic in Mateo, Charlie's Amazing Adventure, and Matt, I Love You!",
               "brand": {
                 "@type": "Brand",
                 "name": "Wishiyo"
@@ -39,10 +39,10 @@ const LoveLanding = () => {
             <div className="max-w-6xl mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                 <div className="md:order-2 text-white space-y-6 max-w-[480px]">
-                  <h1 className="text-4xl font-serif font-bold px-0 mx-0 md:text-4xl text-slate-800">Get a picture book where every page features their face - created instantly.</h1>
-                  <p className="text-xl text-slate-800">Any dream, anywhere—they're the star</p>
+                  <h1 className="text-4xl font-serif font-bold px-0 mx-0 md:text-4xl text-slate-800">Get a picture book where every page features their face - created instantly</h1>
+                  <p className="text-xl text-slate-800">Any dream, anywhere—they're the star.</p>
                   <Link to="/create/love/love-story/character" className="inline-flex items-center px-6 py-3 text-base font-medium text-white bg-[#FF7F50] rounded-sm hover:bg-[#FF7F50]/80 transition-colors">
-                    Start
+                    Start Creating
                   </Link>
                 </div>
                 <div className="md:order-1 hidden md:block">
