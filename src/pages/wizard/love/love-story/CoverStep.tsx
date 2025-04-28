@@ -639,16 +639,16 @@ const LoveStoryCoverStep = () => {
       let textPrompt = '';
       if (ageNumber <= 12) {
         // 儿童风格 prompt
-        textPrompt = `the person as an adorable ${personGender === 'male' ? 'boy' : 'girl'} around ${ageNumber} years old, cartoon character, oversized head and smaller body proportions, clear and focused eyes looking gently forward with friendly expression, natural highlights and reflections in the eyes, joyful and innocent facial expression, simplified clothing, warm palette`;
+        textPrompt = `Generating single cover image with prompt: the person as an adorable ${personGender === 'male' ? 'boy' : 'girl'} around ${ageNumber} years old, cartoon character, oversized head and smaller body proportions, clear and focused eyes looking gently forward with friendly expression, natural highlights and reflections in the eyes, joyful and innocent facial expression, simplified clothing, warm palette`;
       } else if (ageNumber <= 18) {
         // 青少年风格 prompt
-        textPrompt = `the person depicted as a ${personGender === 'male' ? 'teenage boy' : 'teenage girl'} around ${ageNumber} years old, in a gentle and romantic semi-realistic style, soft rounded facial features, warm and tender facial expression, smooth and detailed shading with subtle gradients, modern casual and minimalistic clothing, warm palette, soft dreamy lighting`;
+        textPrompt = `Generating single cover image with prompt: the person as a ${personGender === 'male' ? 'teenage boy' : 'teenage girl'} around ${ageNumber} years old, in a gentle and romantic semi-realistic style, soft rounded facial features, warm and tender facial expression, smooth and detailed shading with subtle gradients, modern casual and minimalistic clothing, warm palette, soft dreamy lighting`;
       } else if (ageNumber <= 24) {
         // 年轻成人风格 prompt
-        textPrompt = `the person depicted as a ${personGender === 'male' ? 'young man' : 'young woman'} around ${ageNumber} years old, in a gentle and romantic semi-realistic style, soft rounded facial features, warm and tender facial expression, smooth and detailed shading with subtle gradients, modern casual and minimalistic clothing, warm palette, soft dreamy lighting`;
+        textPrompt = `Generating single cover image with prompt: the person as a ${personGender === 'male' ? 'young man' : 'young woman'} around ${ageNumber} years old, in a gentle and romantic semi-realistic style, soft rounded facial features, warm and tender facial expression, smooth and detailed shading with subtle gradients, modern casual and minimalistic clothing, warm palette, soft dreamy lighting`;
       } else {
         // 成人风格 prompt
-        textPrompt = `the person depicted as a ${personGender === 'male' ? 'man' : 'woman'} around ${ageNumber} years old, in a gentle and romantic semi-realistic style, soft rounded facial features, warm and tender facial expression, smooth and detailed shading with subtle gradients, modern casual and minimalistic clothing, warm palette, soft dreamy lighting`;
+        textPrompt = `Generating single cover image with prompt: the person as a ${personGender === 'male' ? 'man' : 'woman'} around ${ageNumber} years old, in a gentle and romantic semi-realistic style, soft rounded facial features, warm and tender facial expression, smooth and detailed shading with subtle gradients, modern casual and minimalistic clothing, warm palette, soft dreamy lighting`;
       }
 
       if (uploadedImage) {
