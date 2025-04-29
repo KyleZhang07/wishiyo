@@ -58,11 +58,6 @@ const Footer = () => {
             <nav aria-label="Footer Navigation - Support">
               <ul className="space-y-2">
                 <li>
-                  <Link to="/help" className="text-gray-600 hover:text-gray-900 transition-colors">
-                    Help Center
-                  </Link>
-                </li>
-                <li>
                   <Link to="/contact" className="text-gray-600 hover:text-gray-900 transition-colors">
                     Contact Us
                   </Link>
