@@ -180,17 +180,45 @@ const FormatStep = () => {
         {/* 拉高显示区域，h-72 -> h-[22rem]，使得书本图片能完整露出顶部 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* 封面格式选项 */}
-          {coverFormats.map((format) => (
+          {coverFormats.map((format, idx) => (
             <div
               key={format.id}
               className={`border rounded-lg overflow-hidden transition-all ${
                 selectedFormat === format.id
                   ? 'border-[#0C5C4C] ring-1 ring-[#0C5C4C]'
                   : 'border-gray-200'
-              }`}
+              } relative`}
             >
-              {/* 封面图片区域：去除所有padding和空白，图片100%填充区域且不留边 */}
-              <div className="h-[22rem] bg-gray-100 relative flex items-stretch justify-stretch p-0 m-0">
+              {/* 斜角 Most popular 丝带，仅第一个卡片显示 */}
+              {idx === 0 && (
+                <span
+                  className="most-popular-ribbon"
+                  style={{
+                    position: 'absolute',
+                    left: '-36px', 
+                    top: '38px',  
+                    zIndex: 20,
+                    display: 'inline-block',
+                    width: '170px',
+                    height: '32px',
+                    background: '#FF7F50',
+                    color: 'white',
+                    fontWeight: 700,
+                    fontSize: '13px',
+                    textAlign: 'center',
+                    lineHeight: '32px',
+                    letterSpacing: '0.08em',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+                    transform: 'rotate(-45deg)',
+                    borderRadius: '6px',
+                    textShadow: '0 1px 3px rgba(0,0,0,0.08)'
+                  }}
+                >
+                  MOST POPULAR
+                </span>
+              )}
+              {/* 封面图片区域：整体向上平移5%，宽度不变 */}
+              <div className="h-[22rem] bg-gray-100 relative flex items-stretch justify-stretch p-0 m-0" style={{ transform: 'translateY(-5%)' }}>
                 {format.imageSrc ? (
                   <img
                     src={format.imageSrc}
