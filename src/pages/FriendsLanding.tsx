@@ -1,4 +1,3 @@
-
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 
@@ -49,7 +48,7 @@ const FriendsLanding = () => {
                 </div>
                 <div className="md:order-1 hidden md:block">
                   <div className="w-80 h-80 mx-auto rounded-sm overflow-hidden shadow-lg">
-                    <img src="/images/showcase/dream-life/dream-life1.png" alt="Personalized Story Book with funny moments" className="w-full h-full object-cover scale-110" />
+                    <img src="/images/showcase/dream-life/dream-life1.webp" alt="Personalized Story Book with funny moments" className="w-full h-full object-cover scale-110" />
                   </div>
                 </div>
               </div>

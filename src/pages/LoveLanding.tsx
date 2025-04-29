@@ -47,7 +47,7 @@ const LoveLanding = () => {
                 </div>
                 <div className="md:order-1 hidden md:block">
                   <div className="w-80 h-80 mx-auto rounded-sm overflow-hidden shadow-lg transform translate-x-4 translate-y-2">
-                    <img src="/images/showcase/dream-life/dream-life.png" alt="Colorful illustrated picture book with fairy tale characters" className="w-full h-full object-cover scale-110" />
+                    <img src="/images/showcase/dream-life/dream-life.webp" alt="Colorful illustrated picture book with fairy tale characters" className="w-full h-full object-cover scale-110" />
                   </div>
                 </div>
               </div>
