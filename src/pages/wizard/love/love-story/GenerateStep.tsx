@@ -1429,7 +1429,7 @@ const GenerateStep = () => {
         <div className="mb-12">
           <h2 className="text-2xl font-bold mb-8">Cover</h2>
           <div className="max-w-xl mx-auto">
-            {isRenderingCover ? (
+            {(isRenderingCover || !coverRenderComplete || !coverImageUrl) ? (
               <div className="max-w-[640px] mx-auto aspect-[1/1] bg-white rounded-lg shadow-lg flex flex-col items-center justify-center">
                 <div className="relative w-8 h-8 mb-2">
                   <div className="absolute inset-0 rounded-full border-t-2 border-[#FF7F50] animate-spin"></div>
@@ -1438,22 +1438,12 @@ const GenerateStep = () => {
                   Generating cover
                 </p>
               </div>
-            ) : (coverRenderComplete && coverImageUrl) ? (
-              <img
-                src={coverImageUrl}
-                alt="Love Story Cover"
-                className="max-w-[640px] mx-auto w-full h-auto rounded-lg shadow-lg"
-              />
-            ) : coverImage ? (
-              <img
-                src={coverImage}
-                alt="Love Story Cover"
-                className="max-w-[640px] mx-auto w-full h-auto rounded-lg shadow-lg"
-              />
             ) : (
-              <div className="max-w-[640px] mx-auto aspect-[1/1] bg-gray-100 rounded-lg flex items-center justify-center">
-                <p className="text-gray-500">Cover image not available</p>
-              </div>
+              <img
+                src={coverImageUrl + '?t=' + Date.now()}
+                alt="Love Story Cover"
+                className="max-w-[640px] mx-auto w-full h-auto rounded-lg shadow-lg"
+              />
             )}
           </div>
         </div>
@@ -1579,7 +1569,7 @@ const GenerateStep = () => {
           <h2 className="text-2xl font-bold mb-8">Back Cover</h2>
 
           <div className="max-w-xl mx-auto">
-            {isRenderingCover ? (
+            {(isRenderingCover || !coverRenderComplete || !backCoverImageUrl) ? (
               <div className="max-w-[640px] mx-auto aspect-[1/1] bg-white rounded-lg shadow-lg flex flex-col items-center justify-center">
                 <div className="relative w-8 h-8 mb-2">
                   <div className="absolute inset-0 rounded-full border-t-2 border-[#FF7F50] animate-spin"></div>
@@ -1588,17 +1578,11 @@ const GenerateStep = () => {
                   Generating back cover
                 </p>
               </div>
-            ) : (coverRenderComplete && backCoverImageUrl) ? (
+            ) : (
               <img
-                src={backCoverImageUrl}
+                src={backCoverImageUrl + '?t=' + Date.now()}
                 alt="Love Story Back Cover"
                 className="max-w-[640px] mx-auto w-full h-auto rounded-lg shadow-lg"
-              />
-            ) : (
-              <BackCoverPreviewCard
-                authorName={authorName}
-                backCoverText={backCoverText}
-                isGeneratingBackCover={false}
               />
             )}
           </div>
