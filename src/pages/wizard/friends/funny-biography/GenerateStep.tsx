@@ -602,7 +602,7 @@ const FunnyBiographyGenerateStep = () => {
   return (
     <WizardStep
       title="Create Your Cover"
-      description="We've created a cover design based on your ideas"
+      description="Click the ‘Drag Image’ button to adjust the cover image position."
       previousStep="/create/friends/funny-biography/photos"
       currentStep={5}
       totalSteps={7}
