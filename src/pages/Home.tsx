@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowRight, ChevronDown, ChevronUp, Truck, ShieldCheck } from 'lucide-react';
 import { Helmet } from 'react-helmet';
 
 export default function Home() {
@@ -61,7 +61,7 @@ export default function Home() {
         </script>
       </Helmet>
       {/* Hero Section */}
-      <section className="relative py-20 md:py-32 overflow-hidden bg-gradient-to-b from-white via-white to-[#FFE1CE]" style={{ backgroundSize: '100% 200%', backgroundPosition: '0 70%' }}>
+      <section className="relative py-16 md:py-28 overflow-hidden bg-gradient-to-b from-white via-white to-[#FFE1CE]" style={{ backgroundSize: '100% 200%', backgroundPosition: '0 70%' }}>
         {/* Gradient fade at bottom for smooth transition */}
         <div className="absolute bottom-0 left-0 right-0 h-[7vh] bg-gradient-to-t from-white to-transparent z-10"></div>
 
@@ -106,6 +106,45 @@ export default function Home() {
                 <img src="/images/hero/personalized-book1.png" alt="Personalized story book with custom character and storyline" className="w-auto h-auto object-contain" style={{ transform: 'scale(1.6)' }} />
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section with Icons */}
+      <section className="pt-4 pb-4 bg-white">
+        <div className="container px-4 md:px-6 mx-auto">
+          <div className="grid grid-cols-3 gap-6 text-center justify-items-center">
+            {/* Free Shipping Icon */}
+            <div className="flex flex-col items-center">
+              <div className="w-[36px] h-[36px] -mt-1 mb-2 text-[#FF6B35]">
+                {/* 主题色卡车图标 */}
+                <Truck strokeWidth={2.2} className="w-full h-full" />
+              </div>
+            </div>
+
+            {/* Created in 3 Minutes Icon */}
+            <div className="flex flex-col items-center">
+              <div className="w-[36px] h-[36px] -mt-1 mb-2 text-[#FF6B35]">
+                {/* 主题色时钟图标 */}
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
+                  <circle cx="16" cy="16" r="12" stroke="#FF6B35" />
+                  <path d="M16 10v6l4 2" stroke="#FF6B35" />
+                </svg>
+              </div>
+            </div>
+
+            {/* Quality Guarantee Icon */}
+            <div className="flex flex-col items-center">
+              <div className="w-[36px] h-[36px] -mt-1 mb-2 text-[#FF6B35]">
+                {/* 主题色盾牌对勾图标 */}
+                <ShieldCheck strokeWidth={2.2} className="w-full h-full" />
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-6 text-center mt-2">
+            <div className="text-xs font-medium text-gray-700">Free Shipping</div>
+            <div className="text-xs font-medium text-gray-700">Created in 3 Minutes</div>
+            <div className="text-xs font-medium text-gray-700">Quality Guarantee</div>
           </div>
         </div>
       </section>
