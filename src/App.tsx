@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FontProvider } from "@/context/FontContext";
 import { RenderProvider } from "@/context/RenderContext";
 
@@ -40,7 +40,7 @@ import LoveStoryGenerateStep from "./pages/wizard/love/love-story/GenerateStep";
 import DebugPromptsStep from "./pages/wizard/love/love-story/DebugPromptsStep";
 import LoveStoryFormatStep from "./pages/wizard/love/love-story/FormatStep";
 
-// Simple OrderSuccess component
+// OrderSuccess component with storage cleanup
 const OrderSuccess = () => {
   // Get order ID from localStorage (either love story or funny biography)
   const loveStoryOrderId = localStorage.getItem('loveStoryOrderId');
@@ -51,6 +51,81 @@ const OrderSuccess = () => {
   const loveStoryBookTitle = localStorage.getItem('loveStoryBookTitle');
   const funnyBiographyBookTitle = localStorage.getItem('funnyBiographyBookTitle');
   const bookTitle = loveStoryBookTitle || funnyBiographyBookTitle || 'Your Custom Book';
+
+  // Determine which genre was purchased and clear its storage
+  const clearStorageForGenre = () => {
+    if (loveStoryOrderId) {
+      // Clear Love Story localStorage items
+      const loveStoryKeys = [
+        // Character and basic info
+        'loveStoryPersonName', 'loveStoryAuthorName', 'loveStoryPersonAge',
+        'loveStoryPersonGender', 'loveStoryTone', 'loveStoryAnswers',
+
+        // Cover and images
+        'loveStoryCoverTitle', 'loveStoryCoverSubtitle', 'loveStoryCoverThirdLine',
+        'loveStoryCoverStyle', 'loveStorySelectedCoverIndex', 'loveStorySelectedCoverImage',
+        'loveStorySelectedCoverImage_url', 'loveStoryCoverImage_url', 'loveStoryCoverImageCanvas',
+        'loveStoryBackCoverImage_url', 'loveStorySpineImage_url', 'loveStoryEndingPage_url',
+        'loveStoryBlessingImage_url', 'loveStoryBlessingText', 'loveStoryPartnerPhoto',
+        'loveStoryLastUsedPhotoHash',
+
+        // Content images
+        'loveStoryIntroImage_url', 'loveStoryIntroImage_left_url', 'loveStoryIntroImage_right_url',
+        'loveStoryContentImage1_url', 'loveStoryContentImage2_url', 'loveStoryContentImage3_url',
+        'loveStoryContentImage4_url', 'loveStoryContentImage5_url', 'loveStoryContentImage6_url',
+        'loveStoryContentImage7_url', 'loveStoryContentImage8_url', 'loveStoryContentImage9_url',
+        'loveStoryContentImage10_url',
+
+        // Rendering state
+        'lastRenderedCoverTitle', 'lastRenderedCoverSubtitle', 'lastRenderedCoverStyle',
+        'lastRenderedAuthorName', 'lastRenderedRecipientName', 'lastRenderedCoverImageIndex',
+
+        // Order info
+        'loveStoryOrderId', 'loveStoryBookTitle'
+      ];
+
+      // Clear each localStorage item
+      loveStoryKeys.forEach(key => localStorage.removeItem(key));
+
+      console.log('Love Story localStorage items cleared after successful payment');
+    }
+
+    if (funnyBiographyOrderId) {
+      // Clear Funny Biography localStorage items
+      const funnyBiographyKeys = [
+        // Basic info
+        'funnyBiographyAuthorName', 'funnyBiographyAnswers', 'funnyBiographyGeneratedIdeas',
+        'funnyBiographySelectedIdea', 'funnyBiographySelectedStyle',
+
+        // Images and content
+        'funnyBiographyPhoto', 'funnyBiographyProcessedPhoto',
+        'funnyBiographyFrontCoverImage', 'funnyBiographyBackCoverImage', 'funnyBiographySpineImage',
+        'funnyBiographyCoverImagePosition', 'funnyBiographyCoverImageScale',
+        'funnyBiographyChapters', 'funnyBiographyTableOfContent',
+        'funnyBiographyGenerationComplete',
+
+        // Change markers
+        'funnyBiographyIdeaChanged', 'funny-biographyIdeaChanged',
+        'friendsIdeaChanged', 'funnyBiography',
+
+        // Order info
+        'funnyBiographyOrderId', 'funnyBiographyBookTitle'
+      ];
+
+      // Clear each localStorage item
+      funnyBiographyKeys.forEach(key => localStorage.removeItem(key));
+
+      // Clear sessionStorage items for Funny Biography
+      sessionStorage.removeItem('funnyBiographyProcessedPhoto');
+
+      console.log('Funny Biography localStorage and sessionStorage items cleared after successful payment');
+    }
+  };
+
+  // Call the cleanup function when component mounts
+  useEffect(() => {
+    clearStorageForGenre();
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#FFFAF5] flex items-center justify-center">
