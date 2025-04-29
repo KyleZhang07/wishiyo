@@ -118,10 +118,10 @@ export const drawSpine = (
   ctx.translate(spineX + (spineWidth / 2), height * 0.5);
   ctx.rotate(-Math.PI / 2);
   ctx.textAlign = 'center';
-  ctx.font = `bold 1.5rem ${selectedFont}`; // Increased from 1rem
+  ctx.font = `bold 1.5rem 'Merriweather', 'Montserrat', 'Inter', 'Times New Roman', serif`;
   ctx.fillStyle = template.spineStyle.titleColor;
   ctx.fillText(title, 0, 0);
-  ctx.font = `normal 1.2rem ${selectedFont}`; // Increased from 0.8rem
+  ctx.font = `normal 1.2rem 'Merriweather', 'Montserrat', 'Inter', 'Times New Roman', serif`;
   ctx.fillStyle = template.spineStyle.authorColor;
   ctx.fillText(authorName, 0, spineWidth * 0.6);
   ctx.restore();
