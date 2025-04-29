@@ -1,4 +1,3 @@
-
 import { ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
@@ -7,7 +6,7 @@ import StepProgressIndicator from './StepProgressIndicator';
 
 interface WizardStepProps {
   title: string;
-  description: string;
+  description: React.ReactNode;
   children: ReactNode;
   previousStep?: string;
   nextStep?: string;

@@ -30,24 +30,21 @@ const LoveStoryQuestionsStep = () => {
   const navigate = useNavigate();
 
   const getQuestions = (name: string) => [
+    `What is ${name}’s dream job or role in life?`,
     `What's a hobby or activity that ${name} is passionate about?`,
-    `Where is ${name}'s favorite place to relax or unwind?`,
+    `If ${name} could have any superpower, what would it be?`,
+    `What's a dream or goal ${name} is working towards?`,
     `If ${name} could travel anywhere in the world, where would they go?`,
+    `What's a small, everyday habit that's uniquely ${name}?`,
     `What's an outdoor activity ${name} enjoys?`,
     `Describe an outfit or style of clothing that ${name} looks particularly good in.`,
-    `What kind of environment makes ${name} feel most at home? (Nature, city, etc.)`,
-    `What's something ${name} does that always makes you smile?`,
+    `What kind of home would ${name} love to live in? (Treehouse, castle, cozy cabin?)`,
     `If ${name} were a character in a fantasy world, what role would they play?`,
-    `What's ${name}'s idea of a perfect evening?`,
-    `What natural setting does ${name}'s personality remind you of? (Ocean, forest, mountains, etc.)`,
+    `What kind of adventure would ${name} love to go on? (Safari, treasure hunt, outer space?)`,
+    `What would ${name} do with a million dollars?`,
     `What's an achievement or moment in ${name}'s life they're particularly proud of?`,
-    `Is there a specific season or time of year that reminds you of ${name}?`,
-    `What kind of music does ${name} love to listen to or dance to?`,
-    `If ${name} could have any superpower, what would it be?`,
-    `What's a small, everyday gesture or habit that's uniquely ${name}?`,
-    `What's a dream or goal ${name} is working towards?`,
+    `Where is ${name}'s favorite place to relax or unwind?`,
     `If ${name} could be surrounded by one thing, what would it be?`,
-    `What color or palette of colors represents ${name}'s personality?`,
     `What's a special talent or skill ${name} has?`,
     `If you could capture one perfect moment with ${name}, what would it be?`,
   ];
@@ -109,6 +106,14 @@ const LoveStoryQuestionsStep = () => {
     }
   }, [personName]);
 
+  // 关闭问题弹窗
+  const closeQuestionDialog = () => {
+    setTimeout(() => {
+      setIsDialogOpen(false);
+      setSelectedQuestion(null);
+    }, 0);
+  };
+
   return (
     <WizardStep
       title="Share the Story"
@@ -155,10 +160,7 @@ const LoveStoryQuestionsStep = () => {
       </div>
       <QuestionDialog
         isOpen={isDialogOpen}
-        onClose={() => {
-          setIsDialogOpen(false);
-          setSelectedQuestion(null);
-        }}
+        onClose={closeQuestionDialog}
         onSubmitAnswer={handleSubmitAnswer}
         answeredQuestions={answeredQuestions}
         initialQuestion={selectedQuestion}

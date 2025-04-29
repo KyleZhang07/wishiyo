@@ -104,6 +104,14 @@ const FunnyBiographyStoriesStep = () => {
     }
   }, [authorName]);
 
+  // 关闭问题弹窗
+  const closeQuestionDialog = () => {
+    setTimeout(() => {
+      setIsDialogOpen(false);
+      setSelectedQuestion(null);
+    }, 0);
+  };
+
   return (
     <WizardStep
       title={`What's ${authorName}'s Story?`}
@@ -155,10 +163,7 @@ const FunnyBiographyStoriesStep = () => {
       </div>
       <QuestionDialog
         isOpen={isDialogOpen}
-        onClose={() => {
-          setIsDialogOpen(false);
-          setSelectedQuestion(null);
-        }}
+        onClose={closeQuestionDialog}
         onSubmitAnswer={handleSubmitAnswer}
         answeredQuestions={answeredQuestions}
         initialQuestion={selectedQuestion}

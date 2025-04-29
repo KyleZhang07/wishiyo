@@ -148,7 +148,13 @@ const LoveStoryMomentsStep = () => {
   return (
     <WizardStep
       title="Upload the character's photo"
-      description="Bring your fantasy to real life"
+      description={
+        <div className="text-sm text-muted-foreground space-y-1 text-center">
+          <div>1. Upload a photo where the face is clearly visible.</div>
+          <div>2. Make sure the face is the main focus.</div>
+          <div>3. Use a front-facing photo with no obstructions.</div>
+        </div>
+      }
       previousStep="/create/love/love-story/questions"
       currentStep={3}
       totalSteps={6}

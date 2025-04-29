@@ -729,11 +729,7 @@ const LoveStoryCoverStep = () => {
       }, 1000);
     } catch (error) {
       console.error('Error generating cover:', error);
-      toast({
-        title: "Cover generation failed",
-        description: "Could not generate new covers. Please try again.",
-        variant: "destructive"
-      });
+      setIsGeneratingCover(false);
     } finally {
       setIsGeneratingCover(false);
     }
@@ -1716,11 +1712,6 @@ const LoveStoryCoverStep = () => {
     } catch (error) {
       console.error('Error in background rendering:', error);
       setIsRenderingCover(false);
-      toast({
-        title: "Cover rendering failed",
-        description: "There was an issue processing your book cover. Please try again.",
-        variant: "destructive"
-      });
     }
   };
 
@@ -1789,11 +1780,7 @@ const LoveStoryCoverStep = () => {
       navigate('/create/love/love-story/generate');
     } catch (error) {
       console.error('Error starting background rendering:', error);
-      toast({
-        title: "Cover processing failed",
-        description: "Could not start cover processing. Please try again.",
-        variant: "destructive"
-      });
+      setIsRenderingCover(false);
     }
   };
 

@@ -68,7 +68,9 @@ const FontSelectionDialog = ({
 
   const handleApply = () => {
     onSelectFont(tempSelectedFont);
-    onOpenChange(false);
+    setTimeout(() => {
+      onOpenChange(false);
+    }, 0);
   };
 
   return (

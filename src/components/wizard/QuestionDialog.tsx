@@ -112,21 +112,36 @@ const QuestionDialog = ({
 
   const handleSubmit = () => {
     if (selectedQuestion && answer.trim()) {
-      onSubmitAnswer(selectedQuestion, answer.trim());
+      // 先保存答案到本地变量
+      const questionToSubmit = selectedQuestion;
+      const answerToSubmit = answer.trim();
+      
+      // 清除状态
       setSelectedQuestion(null);
       setAnswer('');
-      onClose();
+      
+      // 使用 setTimeout 确保状态更新后再关闭对话框和提交答案
+      // 这有助于避免在 Edge 浏览器中的渲染问题
+      setTimeout(() => {
+        onSubmitAnswer(questionToSubmit, answerToSubmit);
+        onClose();
+      }, 0);
     }
   };
 
   const handleClose = () => {
-    setSelectedQuestion(null);
-    setAnswer('');
-    onClose();
+    // 使用 setTimeout 避免可能的状态更新冲突
+    setTimeout(() => {
+      setSelectedQuestion(null);
+      setAnswer('');
+      onClose();
+    }, 0);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) handleClose();
+    }}>
       <DialogContent className="sm:max-w-xl md:max-w-2xl lg:max-w-3xl bg-white/95 backdrop-blur-sm border-gray-200 shadow-xl p-4">
         <DialogHeader className="relative border-b pb-3">
           <DialogTitle className="text-2xl font-bold text-gray-800 flex items-center justify-center">

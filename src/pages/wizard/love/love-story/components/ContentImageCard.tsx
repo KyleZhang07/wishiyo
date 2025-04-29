@@ -125,7 +125,7 @@ export const ContentImageCard = ({
     localStorage.setItem('loveStoryStyle', selectedStyle);
 
     // Close the dialog
-    setIsDialogOpen(false);
+    closeDialog();
 
     // Call the onRegenerate function with the selected style
     onRegenerate(selectedStyle);
@@ -149,6 +149,20 @@ export const ContentImageCard = ({
     if (onFontChange) {
       await onFontChange(fontId);
     }
+  };
+
+  // 关闭主对话框
+  const closeDialog = () => {
+    setTimeout(() => {
+      setIsDialogOpen(false);
+    }, 0);
+  };
+
+  // 关闭字体选择对话框
+  const closeFontDialog = () => {
+    setTimeout(() => {
+      setIsFontDialogOpen(false);
+    }, 0);
   };
 
   return (
@@ -221,13 +235,13 @@ export const ContentImageCard = ({
           {/* Font Selection Dialog */}
           <FontSelectionDialog
             open={isFontDialogOpen}
-            onOpenChange={setIsFontDialogOpen}
+            onOpenChange={closeFontDialog}
             onSelectFont={handleFontSelect}
             selectedFont={currentFont}
           />
 
           {/* Regenerate Image Dialog */}
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog open={isDialogOpen} onOpenChange={closeDialog}>
             <DialogTrigger asChild>
               <Button
                 className="bg-[#FF7F50] hover:bg-[#FF7F50]/90 text-white"
@@ -279,7 +293,7 @@ export const ContentImageCard = ({
               </div>
 
               <div className="flex justify-between">
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                <Button variant="outline" onClick={closeDialog}>
                   <X className="w-4 h-4 mr-2" />
                   Cancel
                 </Button>
