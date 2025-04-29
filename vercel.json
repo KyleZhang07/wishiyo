@@ -11,6 +11,9 @@
   "functions": {
     "api/merge-pdf.js": {
       "maxDuration": 60
+    },
+    "api/lulu-print-request.js": {
+      "maxDuration": 60
     }
   }
 }
