@@ -195,11 +195,11 @@ const FormatStep = () => {
                   className="most-popular-ribbon"
                   style={{
                     position: 'absolute',
-                    left: '-36px', 
-                    top: '38px',  
+                    left: '-44px', 
+                    top: '40px',  
                     zIndex: 20,
                     display: 'inline-block',
-                    width: '170px',
+                    width: '196px',
                     height: '32px',
                     background: '#FF7F50',
                     color: 'white',
