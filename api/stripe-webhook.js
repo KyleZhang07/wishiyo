@@ -365,6 +365,48 @@ export default async function handler(req, res) {
               shipping_rate_object: expandedSession.shipping_rate_object
             });
 
+            // 发送订单确认邮件
+            try {
+              const customerEmail = expandedSession.customer_details?.email;
+              const bookTitle = title || 'Your Custom Book';
+
+              if (customerEmail) {
+                console.log(`[${orderId}] Sending order confirmation email to ${customerEmail}`);
+
+                // 调用Supabase函数发送邮件通知
+                const notificationResponse = await fetch(
+                  `${supabaseUrl}/functions/v1/send-order-status-notification`,
+                  {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${supabaseKey}`
+                    },
+                    body: JSON.stringify({
+                      email: customerEmail,
+                      orderId: orderId,
+                      status: 'CREATED', // 使用 'CREATED' 状态来触发确认邮件
+                      bookTitle: bookTitle,
+                      trackingInfo: null,
+                      type: productId
+                    })
+                  }
+                );
+
+                if (!notificationResponse.ok) {
+                  const errorText = await notificationResponse.text();
+                  console.error(`[${orderId}] Failed to send order confirmation email: ${notificationResponse.status} ${notificationResponse.statusText} - ${errorText}`);
+                } else {
+                  console.log(`[${orderId}] Order confirmation email sent successfully`);
+                }
+              } else {
+                console.warn(`[${orderId}] No customer email found, skipping confirmation email`);
+              }
+            } catch (emailError) {
+              console.error(`[${orderId}] Error sending confirmation email:`, emailError);
+              // 邮件发送失败不影响后续处理
+            }
+
             // 如果图书类型是funny-biography，启动生成过程
             if (productId === 'funny-biography') {
               try {

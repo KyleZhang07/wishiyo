@@ -131,7 +131,7 @@ export default async function handler(req, res) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': 'Basic YTAyMjU0YjQtYmZkYS00NmIzLTkzNWYtYzg5OTU5NzVhNGM3OmlVWHpGRXYzM3kydDJXc0M4RlU0ZzZLdWJuY0R3WTB1'
+          'Authorization': 'Basic ' + Buffer.from(`${LULU_CLIENT_KEY}:${LULU_CLIENT_SECRET}`).toString('base64')
         },
         body: 'grant_type=client_credentials'
       });
@@ -380,46 +380,8 @@ export default async function handler(req, res) {
         });
       }
 
-      // 发送订单提交确认邮件
-      try {
-        // 获取客户邮箱和书籍标题
-        const customerEmail = updatedOrder.customer_email || order.customer_email;
-        const bookTitle = updatedOrder.title || order.title || 'Your Book';
-
-        if (customerEmail) {
-          // 调用Supabase函数发送邮件通知
-          const notificationResponse = await fetchFunc(
-            `${supabaseUrl}/functions/v1/send-order-status-notification`,
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${supabaseServiceKey}`
-              },
-              body: JSON.stringify({
-                email: customerEmail,
-                orderId: orderId,
-                status: 'CREATED', // 使用 'CREATED' 状态来触发确认邮件
-                bookTitle: bookTitle,
-                trackingInfo: null,
-                type: type
-              })
-            }
-          );
-
-          if (!notificationResponse.ok) {
-            const errorText = await notificationResponse.text();
-            console.error(`Failed to send order confirmation email: ${notificationResponse.status} ${notificationResponse.statusText} - ${errorText}`);
-          } else {
-            console.log(`Order confirmation email sent to ${customerEmail}`);
-          }
-        } else {
-          console.warn(`No customer email found for order ${orderId}, skipping confirmation email`);
-        }
-      } catch (emailError) {
-        console.error(`Error sending confirmation email for order ${orderId}:`, emailError);
-        // 邮件发送失败不影响API响应
-      }
+      // 注意：订单确认邮件现在在 Stripe 支付成功后立即发送，不再在这里发送
+      console.log(`Print job submitted successfully for order ${orderId}. Order confirmation email was already sent after payment.`);
 
       // 返回成功响应
       return res.status(200).json({
