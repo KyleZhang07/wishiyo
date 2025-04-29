@@ -1568,6 +1568,42 @@ const LoveStoryCoverStep = () => {
         const backCoverFilename = `love-back-cover-${timestamp}`;
         const spineFilename = `love-spine-${timestamp}`;
 
+        // 先删除Supabase中的旧封面图片，再上传新图片
+        try {
+          // 获取最新的图片列表
+          const allImages = await getAllImagesFromStorage('images');
+
+          // 过滤出所有需要删除的旧图片
+          const coverImagesToDelete = allImages.filter(img =>
+            (img.name.includes('love-cover') ||
+             img.name.includes('love-story-cover-canvas') ||
+             img.name.includes('love-back-cover') ||
+             img.name.includes('love-spine'))
+          );
+
+          if (coverImagesToDelete.length > 0) {
+            console.log(`Found ${coverImagesToDelete.length} old cover images to delete`);
+
+            // 并行删除所有旧图片
+            const deletePromises = coverImagesToDelete.map(img => {
+              // 从完整路径中提取文件名
+              const pathParts = img.name.split('/');
+              const filename = pathParts[pathParts.length - 1];
+              console.log(`Deleting old cover image: ${filename}`);
+              return deleteImageFromStorage(filename, 'images');
+            });
+
+            // 等待所有删除操作完成
+            await Promise.all(deletePromises);
+            console.log('Successfully deleted all old cover images from Supabase');
+          } else {
+            console.log('No old cover images to delete');
+          }
+        } catch (deleteError) {
+          console.error('Error deleting old cover images:', deleteError);
+          // 即使删除失败，我们仍然尝试上传新图片
+        }
+
         // 上传封面到Supabase
         const storageUrl = await uploadImageToStorage(
           canvasImageData,
@@ -1599,45 +1635,6 @@ const LoveStoryCoverStep = () => {
         setCoverImageUrl(storageUrl);
         setBackCoverImageUrl(backCoverStorageUrl);
         setSpineImageUrl(spineStorageUrl);
-
-        // 清除Supabase中的旧封面图片
-        try {
-          // 获取最新的图片列表
-          const allImages = await getAllImagesFromStorage('images');
-
-          // 过滤出所有需要删除的旧图片
-          const coverImagesToDelete = allImages.filter(img =>
-            (img.name.includes('love-cover') ||
-             img.name.includes('love-story-cover-canvas') ||
-             img.name.includes('love-back-cover') ||
-             img.name.includes('love-spine')) &&
-            !img.name.includes(newFilename) &&
-            !img.name.includes(backCoverFilename) &&
-            !img.name.includes(spineFilename)
-          );
-
-          if (coverImagesToDelete.length > 0) {
-            console.log(`Found ${coverImagesToDelete.length} old cover images to delete`);
-
-            // 并行删除所有旧图片
-            const deletePromises = coverImagesToDelete.map(img => {
-              // 从完整路径中提取文件名
-              const pathParts = img.name.split('/');
-              const filename = pathParts[pathParts.length - 1];
-              console.log(`Deleting old cover image: ${filename}`);
-              return deleteImageFromStorage(filename, 'images');
-            });
-
-            // 等待所有删除操作完成
-            await Promise.all(deletePromises);
-            console.log('Successfully deleted all old cover images from Supabase');
-          } else {
-            console.log('No old cover images to delete');
-          }
-        } catch (deleteError) {
-          console.error('Error deleting old cover images:', deleteError);
-          // 继续处理，即使删除失败
-        }
       }
 
       // 生成并上传版权信息页面
