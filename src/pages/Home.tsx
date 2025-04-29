@@ -103,7 +103,10 @@ export default function Home() {
             <div className="hidden md:flex justify-center relative h-[500px]">
               {/* Single story book */}
               <div className="absolute" style={{ right: '50%', top: '50%', transform: 'translate(50%, -50%)' }}>
-                <img src="/images/hero/personalized-book1.png" alt="Personalized story book with custom character and storyline" className="w-auto h-auto object-contain" style={{ transform: 'scale(1.6)' }} />
+                <picture>
+                  <source srcSet="/images/hero/illustrated-book1.webp" type="image/webp" />
+                  <img src="/images/hero/illustrated-book1.png" alt="Illustrated story book with custom characters" className="rounded-lg shadow-lg w-[320px] h-auto" />
+                </picture>
               </div>
             </div>
           </div>

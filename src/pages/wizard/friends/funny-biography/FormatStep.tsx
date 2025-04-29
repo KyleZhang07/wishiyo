@@ -7,9 +7,9 @@ import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { getClientId } from '@/utils/clientId';
 
-// 导入图片
-import hardcoverImage from '@/assets/format-images/funny-biography/hardcover.jpg';
-import softcoverImage from '@/assets/format-images/funny-biography/softcover.jpg';
+// 导入webp图片
+import hardcoverWebp from '@/assets/format-images/funny-biography/hardcover.webp';
+import softcoverWebp from '@/assets/format-images/funny-biography/softcover.webp';
 
 // 封面类型
 interface CoverFormat {
@@ -33,14 +33,14 @@ const FormatStep = () => {
       name: 'Softcover',
       price: 39.99,
       description: 'Lightweight and beautiful – perfect for everyday reading.',
-      imageSrc: softcoverImage
+      imageSrc: softcoverWebp
     },
     {
       id: 'hardcover',
       name: 'Hardcover',
       price: 59.99,
       description: 'A luxurious hardcover made to last for generations.',
-      imageSrc: hardcoverImage
+      imageSrc: hardcoverWebp
     }
   ];
 

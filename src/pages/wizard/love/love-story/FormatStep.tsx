@@ -7,9 +7,9 @@ import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { getClientId } from '@/utils/clientId';
 
-// 导入图片
-import hardcoverImage from '@/assets/format-images/love-story/hardcover.jpg';
-import softcoverImage from '@/assets/format-images/love-story/softcover.jpg';
+// 导入webp图片
+import hardcoverWebp from '@/assets/format-images/love-story/hardcover.webp';
+import softcoverWebp from '@/assets/format-images/love-story/softcover.webp';
 
 // 封面类型
 interface CoverFormat {
@@ -33,14 +33,14 @@ const FormatStep = () => {
       name: 'Elegant Glossy',
       price: 59.99,
       description: 'A vibrant glossy finish with bright, eye-catching colors.',
-      imageSrc: hardcoverImage
+      imageSrc: hardcoverWebp
     },
     {
       id: 'hardcover_matte',
       name: 'Classic Matte',
       price: 49.99,
       description: 'An elegant matte finish – perfect for timeless gifts.',
-      imageSrc: softcoverImage
+      imageSrc: softcoverWebp
     }
   ];
 
@@ -177,6 +177,7 @@ const FormatStep = () => {
       totalSteps={8}
     >
       <div className="max-w-4xl mx-auto">
+        {/* 拉高显示区域，h-72 -> h-[22rem]，使得书本图片能完整露出顶部 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* 封面格式选项 */}
           {coverFormats.map((format) => (
@@ -188,15 +189,14 @@ const FormatStep = () => {
                   : 'border-gray-200'
               }`}
             >
-
-
-              {/* 封面图片 */}
-              <div className="h-72 bg-gray-100 relative flex items-end">
+              {/* 封面图片区域：去除所有padding和空白，图片100%填充区域且不留边 */}
+              <div className="h-[22rem] bg-gray-100 relative flex items-stretch justify-stretch p-0 m-0">
                 {format.imageSrc ? (
                   <img
                     src={format.imageSrc}
                     alt={`${format.name} book`}
-                    className="w-full object-contain"
+                    className="w-full h-full object-cover"
+                    style={{ objectPosition: 'center', display: 'block' }}
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-500">

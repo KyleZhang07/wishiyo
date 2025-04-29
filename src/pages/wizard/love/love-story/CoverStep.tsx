@@ -1795,20 +1795,13 @@ const LoveStoryCoverStep = () => {
   return (
     <WizardStep
       title="Design your book cover"
-      description=""
+      description="Choose a cover style and edit title by clicking 'Edit title' below."
       previousStep="/create/love/love-story/ideas"
       currentStep={6}
       totalSteps={8}
       onNextClick={handleContinue}
     >
       <div className="max-w-4xl mx-auto px-4">
-        <div className="flex flex-col items-center w-full">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-2 mt-6">Design your book cover</h2>
-          <div className="text-base md:text-lg text-gray-500 mb-6" style={{ fontFamily: 'inherit' }}>
-            Click <b>Edit title</b> below to change your book title
-          </div>
-        </div>
-
         {/* 封面预览 */}
         <div className="relative mb-5">
 
