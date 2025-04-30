@@ -643,12 +643,9 @@ const LoveStoryCoverStep = () => {
       } else if (ageNumber <= 18) {
         // 青少年风格 prompt
         textPrompt = `the person as a ${personGender === 'male' ? 'teenage boy' : 'teenage girl'} around ${ageNumber} years old, soft rounded facial features, bright cheerful smile with visible joy in eyes, warm and enthusiastic facial expression, smooth and detailed shading with subtle gradients, modern casual and minimalistic clothing, warm palette, soft dreamy lighting`;
-      } else if (ageNumber <= 24) {
-        // 年轻成人风格 prompt
-        textPrompt = `the person as a ${personGender === 'male' ? 'young man' : 'young woman'} around ${ageNumber} years old, soft rounded facial features, beaming smile with genuine happiness, expressive joyful eyes, uplifting and positive facial expression, smooth and detailed shading with subtle gradients, modern casual and minimalistic clothing, warm palette, soft dreamy lighting`;
       } else {
         // 成人风格 prompt
-        textPrompt = `the person as a ${personGender === 'male' ? 'man' : 'woman'} around ${ageNumber} years old, soft rounded facial features, confident warm smile with crinkled happy eyes, delighted and approachable facial expression, smooth and detailed shading with subtle gradients, modern casual and minimalistic clothing, warm palette, soft dreamy lighting`;
+        textPrompt = `the person as a ${personGender === 'male' ? 'man' : 'woman'} around ${ageNumber} years old, soft rounded facial features, beaming smile with genuine happiness, expressive joyful eyes, uplifting and positive facial expression, smooth and detailed shading with subtle gradients, modern casual and minimalistic clothing, warm palette, soft dreamy lighting`;
       }
 
       if (uploadedImage) {
