@@ -10,8 +10,8 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Package, CheckCircle, XCircle, Clock, Truck } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 // Order status badge component
 const StatusBadge = ({ status }: { status: string }) => {
@@ -54,6 +54,16 @@ interface Order {
   lulu_print_status?: string;
 }
 
+// Pagination response interface
+interface OrdersResponse {
+  success: boolean;
+  orders: Order[];
+  total: number;
+  page: number;
+  pageSize: number;
+  error?: string;
+}
+
 const OrderHistory = () => {
   const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -61,50 +71,94 @@ const OrderHistory = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [email, setEmail] = useState('');
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const pageSize = 20;
-
-  useEffect(() => {
-    // 获取已验证邮箱
-    const storedEmail = localStorage.getItem('verified_email');
-    if (!storedEmail) {
-      navigate('/verify-order');
-      return;
-    }
-    setEmail(storedEmail);
-  }, [navigate]);
-
-  useEffect(() => {
-    if (!email) return;
-    fetchOrders(1);
-    // eslint-disable-next-line
-  }, [email]);
-
-  const fetchOrders = async (pageNum: number) => {
-    if (!email) return;
-    if (pageNum === 1) setLoading(true);
-    else setLoadingMore(true);
+  const [totalOrders, setTotalOrders] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [error, setError] = useState('');
+  
+  // 获取订单数据
+  const fetchOrders = async (pageNum: number = 1, append: boolean = false) => {
     try {
-      const res = await fetch(`/api/order-history?email=${encodeURIComponent(email)}&page=${pageNum}&pageSize=${pageSize}`);
-      const data = await res.json();
-      if (data.success) {
-        setOrders(pageNum === 1 ? data.orders : [...orders, ...data.orders]);
-        setTotal(data.total);
-        setPage(pageNum);
-      } else {
-        toast({ title: 'Failed to load orders', description: data.error || 'Unknown error', variant: 'destructive' });
+      if (!email) {
+        setError('Email is required to fetch orders');
+        return;
       }
-    } catch (error) {
-      toast({ title: 'Failed to load orders', description: (error as Error).message, variant: 'destructive' });
+      
+      // 设置加载状态
+      if (append) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
+      
+      // 调用API获取订单数据
+      const response = await fetch(`/api/order-history?email=${encodeURIComponent(email)}&page=${pageNum}&pageSize=20`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch orders: ${response.status} ${response.statusText}`);
+      }
+      
+      const data: OrdersResponse = await response.json();
+      
+      if (data.success) {
+        // 更新状态
+        if (append) {
+          setOrders(prev => [...prev, ...data.orders]);
+        } else {
+          setOrders(data.orders);
+        }
+        
+        setTotalOrders(data.total);
+        setPage(data.page);
+        setHasMore(data.orders.length > 0 && orders.length + data.orders.length < data.total);
+      } else {
+        throw new Error(data.error || 'Failed to fetch orders');
+      }
+    } catch (err) {
+      console.error('Error fetching orders:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch orders');
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : 'Failed to fetch orders',
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
       setLoadingMore(false);
     }
   };
-
-  const handleLoadMore = () => {
-    fetchOrders(page + 1);
+  
+  // 加载更多订单
+  const loadMoreOrders = () => {
+    if (!loadingMore && hasMore) {
+      fetchOrders(page + 1, true);
+    }
   };
+
+  useEffect(() => {
+    // Get JWT from localStorage
+    const token = localStorage.getItem('order_verification_token');
+    const storedEmail = localStorage.getItem('verified_email');
+    
+    if (!token) {
+      // If no verification token, redirect to order verification page
+      navigate('/verify-order');
+      return;
+    }
+    
+    if (storedEmail) {
+      setEmail(storedEmail);
+      // 初始加载订单
+      fetchOrders(1, false);
+    } else {
+      toast({
+        title: "No email found",
+        description: "Please verify your email again",
+        variant: "destructive"
+      });
+      // Token exists but no email, redirect
+      navigate('/verify-order');
+    }
+  }, [navigate]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -128,7 +182,6 @@ const OrderHistory = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('order_verification_token');
-    localStorage.removeItem('user_orders');
     localStorage.removeItem('verified_email');
     navigate('/verify-order');
   };
@@ -154,7 +207,12 @@ const OrderHistory = () => {
         <h1 className="text-2xl font-semibold mb-2">My Orders</h1>
         {email && <p className="text-gray-600 mb-4">Email: {email}</p>}
         
-        {orders.length === 0 ? (
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p className="text-gray-500">Loading orders...</p>
+          </div>
+        ) : orders.length === 0 ? (
           <div className="text-center py-12">
             <Package className="h-16 w-16 mx-auto text-gray-400 mb-4" />
             <h3 className="text-xl font-medium text-gray-700">No Orders Found</h3>
@@ -163,49 +221,71 @@ const OrderHistory = () => {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Order ID</TableHead>
-                  <TableHead>Book Title</TableHead>
-                  <TableHead>Book Type</TableHead>
-                  <TableHead>Order Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {orders.map((order) => (
-                  <TableRow key={order.order_id}>
-                    <TableCell className="font-medium">{order.order_id}</TableCell>
-                    <TableCell>{order.title || 'Untitled Book'}</TableCell>
-                    <TableCell>{getOrderTypeName(order.type)}</TableCell>
-                    <TableCell>{formatDate(order.timestamp)}</TableCell>
-                    <TableCell>
-                      <StatusBadge status={order.status} />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {order.lulu_tracking_url && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => handleViewTracking(order.lulu_tracking_url || '')}
-                        >
-                          View Tracking
-                        </Button>
-                      )}
-                    </TableCell>
+          <>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Order ID</TableHead>
+                    <TableHead>Book Title</TableHead>
+                    <TableHead>Book Type</TableHead>
+                    <TableHead>Order Date</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            {orders.length < total && (
-              <Button onClick={handleLoadMore} disabled={loadingMore} className="mt-4 w-full">
-                {loadingMore ? 'Loading...' : 'Load More'}
-              </Button>
+                </TableHeader>
+                <TableBody>
+                  {orders.map((order) => (
+                    <TableRow key={order.order_id}>
+                      <TableCell className="font-medium">{order.order_id}</TableCell>
+                      <TableCell>{order.title || 'Untitled Book'}</TableCell>
+                      <TableCell>{getOrderTypeName(order.type)}</TableCell>
+                      <TableCell>{formatDate(order.timestamp)}</TableCell>
+                      <TableCell>
+                        <StatusBadge status={order.status} />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {order.lulu_tracking_url && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleViewTracking(order.lulu_tracking_url || '')}
+                          >
+                            View Tracking
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            
+            {/* 加载更多按钮 */}
+            {hasMore && (
+              <div className="mt-6 text-center">
+                <Button 
+                  onClick={loadMoreOrders} 
+                  disabled={loadingMore}
+                  variant="outline"
+                >
+                  {loadingMore ? (
+                    <>
+                      <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2"></div>
+                      Loading...
+                    </>
+                  ) : (
+                    'Load More Orders'
+                  )}
+                </Button>
+              </div>
             )}
-          </div>
+            
+            {/* 总订单数显示 */}
+            <div className="mt-4 text-center text-sm text-gray-500">
+              Showing {orders.length} of {totalOrders} orders
+            </div>
+          </>
         )}
       </div>
     </div>
