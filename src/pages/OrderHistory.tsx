@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -11,8 +10,8 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Package, CheckCircle, XCircle, Clock, Truck } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 // Order status badge component
 const StatusBadge = ({ status }: { status: string }) => {
@@ -59,49 +58,53 @@ const OrderHistory = () => {
   const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [email, setEmail] = useState('');
-  
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const pageSize = 20;
+
   useEffect(() => {
-    // Get JWT from localStorage
-    const token = localStorage.getItem('order_verification_token');
-    const storedOrders = localStorage.getItem('user_orders');
+    // 获取已验证邮箱
     const storedEmail = localStorage.getItem('verified_email');
-    
-    if (!token) {
-      // If no verification token, redirect to order verification page
+    if (!storedEmail) {
       navigate('/verify-order');
       return;
     }
-    
-    if (storedEmail) {
-      setEmail(storedEmail);
-    }
-    
-    if (storedOrders) {
-      try {
-        setOrders(JSON.parse(storedOrders));
-      } catch (error) {
-        console.error('Failed to parse saved order data:', error);
-        toast({
-          title: "Failed to load orders",
-          description: "Could not load saved order data",
-          variant: "destructive"
-        });
-        // Token exists but order data has issues, clear data and redirect
-        localStorage.removeItem('user_orders');
-        navigate('/verify-order');
-      }
-    } else {
-      setLoading(true);
-      toast({
-        title: "No order data found",
-        description: "Please verify your email again",
-        variant: "destructive"
-      });
-      // Token exists but no order data, redirect
-      navigate('/verify-order');
-    }
+    setEmail(storedEmail);
   }, [navigate]);
+
+  useEffect(() => {
+    if (!email) return;
+    fetchOrders(1);
+    // eslint-disable-next-line
+  }, [email]);
+
+  const fetchOrders = async (pageNum: number) => {
+    if (!email) return;
+    if (pageNum === 1) setLoading(true);
+    else setLoadingMore(true);
+    try {
+      const res = await fetch(`/api/order-history?email=${encodeURIComponent(email)}&page=${pageNum}&pageSize=${pageSize}`);
+      const data = await res.json();
+      if (data.success) {
+        setOrders(pageNum === 1 ? data.orders : [...orders, ...data.orders]);
+        setTotal(data.total);
+        setPage(pageNum);
+      } else {
+        toast({ title: 'Failed to load orders', description: data.error || 'Unknown error', variant: 'destructive' });
+      }
+    } catch (error) {
+      toast({ title: 'Failed to load orders', description: (error as Error).message, variant: 'destructive' });
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const handleLoadMore = () => {
+    fetchOrders(page + 1);
+  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -197,6 +200,11 @@ const OrderHistory = () => {
                 ))}
               </TableBody>
             </Table>
+            {orders.length < total && (
+              <Button onClick={handleLoadMore} disabled={loadingMore} className="mt-4 w-full">
+                {loadingMore ? 'Loading...' : 'Load More'}
+              </Button>
+            )}
           </div>
         )}
       </div>
