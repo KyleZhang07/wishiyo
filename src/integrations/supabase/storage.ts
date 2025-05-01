@@ -194,15 +194,62 @@ export const getAllImagesFromStorage = async (bucket = 'images', sessionId?: str
  * Deletes an image from Supabase Storage
  * @param path Path of the image to delete
  * @param bucket Bucket name
+ * @param sessionId Optional session ID to specify which order's files to delete
  * @returns Boolean indicating success
  */
-export const deleteImageFromStorage = async (path: string, bucket = 'images'): Promise<boolean> => {
+export const deleteImageFromStorage = async (
+  path: string, 
+  bucket = 'images', 
+  sessionId?: string
+): Promise<boolean> => {
   try {
     // Ensure we only delete files from the current client's folder
     const clientId = getClientId();
     
-    // Make sure the path contains the client ID
-    const fullPath = path.includes(clientId) ? path : `${clientId}/${path}`;
+    // Get current session ID if not provided
+    const currentSessionId = sessionId || localStorage.getItem('current_session_id');
+    
+    // Extract just the filename if it's a full URL
+    if (path.startsWith('http')) {
+      const urlParts = path.split('/');
+      path = urlParts[urlParts.length - 1];
+    }
+    
+    // Make sure the path contains the client ID and session ID
+    let fullPath;
+    
+    // Case 1: Path already includes client ID
+    if (path.includes(clientId)) {
+      fullPath = path;
+    } 
+    // Case 2: We have a session ID and should try both paths
+    else if (currentSessionId) {
+      // First try to delete from the session folder
+      const sessionPath = `${clientId}/${currentSessionId}/${path}`;
+      console.log(`Attempting to delete file at session path: ${sessionPath}`);
+      
+      try {
+        const { error } = await supabase.storage
+          .from(bucket)
+          .remove([sessionPath]);
+          
+        if (!error) {
+          console.log(`Successfully deleted file at session path: ${sessionPath}`);
+          return true;
+        }
+      } catch (e) {
+        console.log(`File not found at session path, trying legacy path`);
+      }
+      
+      // If that fails, try the legacy path
+      fullPath = `${clientId}/${path}`;
+    } 
+    // Case 3: No session ID, use legacy path
+    else {
+      fullPath = `${clientId}/${path}`;
+    }
+    
+    console.log(`Attempting to delete file at path: ${fullPath}`);
     
     const { error } = await supabase.storage
       .from(bucket)
@@ -217,4 +264,4 @@ export const deleteImageFromStorage = async (path: string, bucket = 'images'): P
     console.error('Error deleting image from Supabase Storage:', error);
     return false;
   }
-}; 
+};
