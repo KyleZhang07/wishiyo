@@ -484,14 +484,14 @@ const LoveStoryCoverPreview = ({
         // 三行标题位置，上移以避免与图片重合
         if (style?.id === 'modern') {
           // Modern样式特殊处理位置
-          ctx.fillText(mainTitle, width / 2, height * 0.20); // 上移0.02
+          ctx.fillText(mainTitle, width / 2, height * 0.17); // 上移到0.17（原来是0.20）
 
           const subTitleFontSize = titleFontSize * 2.0; // Modern样式副标题放大2倍
           ctx.font = `bold ${subTitleFontSize}px 'Amatic SC', cursive`;
-          ctx.fillText(subTitle, width / 2, height * 0.30); // 上移0.02
-          ctx.fillText(thirdLine, width / 2, height * 0.40); // 上移0.02
+          ctx.fillText(subTitle, width / 2, height * 0.28); // 上移到0.28（原来是0.30）
+          ctx.fillText(thirdLine, width / 2, height * 0.40); // 保持不变
         } else {
-          ctx.fillText(mainTitle, width / 2, height * 0.20); // 上移0.02
+          ctx.fillText(mainTitle, width / 2, height * 0.17); // 上移到0.17（原来是0.20）
 
           let subTitleFontSize: number;
           if (style?.id === 'playful') {
@@ -507,21 +507,21 @@ const LoveStoryCoverPreview = ({
             subTitleFontSize = titleFontSize * 1.8;
             ctx.font = `bold ${subTitleFontSize}px 'Freckle Face', cursive`;
           }
-          ctx.fillText(subTitle, width / 2, height * 0.30); // 上移0.02
-          ctx.fillText(thirdLine, width / 2, height * 0.40); // 上移0.02
+          ctx.fillText(subTitle, width / 2, height * 0.28); // 上移到0.28（原来是0.30）
+          ctx.fillText(thirdLine, width / 2, height * 0.40); // 保持不变
         }
       } else if (thirdLine) {
         // 其他三行标题情况，增加间距，整体下移0.015
         if (style?.id === 'modern') {
           // Modern样式特殊处理位置
-          ctx.fillText(mainTitle, width / 2, height * 0.25); // 上移0.02
+          ctx.fillText(mainTitle, width / 2, height * 0.22); // 上移到0.22（原来是0.25）
 
           const subTitleFontSize = titleFontSize * 2.0; // Modern样式副标题放大2倍
           ctx.font = `bold ${subTitleFontSize}px 'Amatic SC', cursive`;
-          ctx.fillText(subTitle, width / 2, height * 0.35); // 上移0.02
-          ctx.fillText(thirdLine, width / 2, height * 0.45); // 上移0.02
+          ctx.fillText(subTitle, width / 2, height * 0.33); // 上移到0.33（原来是0.35）
+          ctx.fillText(thirdLine, width / 2, height * 0.45); // 保持不变
         } else {
-          ctx.fillText(mainTitle, width / 2, height * 0.25); // 上移0.02
+          ctx.fillText(mainTitle, width / 2, height * 0.22); // 上移到0.22（原来是0.25）
 
           let subTitleFontSize: number;
           if (style?.id === 'playful') {
@@ -537,8 +537,8 @@ const LoveStoryCoverPreview = ({
             subTitleFontSize = titleFontSize * 1.8;
             ctx.font = `bold ${subTitleFontSize}px 'Freckle Face', cursive`;
           }
-          ctx.fillText(subTitle, width / 2, height * 0.35); // 上移0.02
-          ctx.fillText(thirdLine, width / 2, height * 0.45); // 上移0.02
+          ctx.fillText(subTitle, width / 2, height * 0.33); // 上移到0.33（原来是0.35）
+          ctx.fillText(thirdLine, width / 2, height * 0.45); // 保持不变
         }
       } else {
         // 两行标题的情况，增加行间距，第一行适度上移，第二行位置不变
