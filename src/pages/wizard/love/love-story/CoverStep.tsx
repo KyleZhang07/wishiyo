@@ -1723,7 +1723,7 @@ const LoveStoryCoverStep = () => {
   const handleContinue = () => {
     try {
       // 保存标题数据和封面样式到localStorage
-      localStorage.setItem('loveStoryCoverTitle', titleData.mainTitle || titleData.fullTitle);
+      localStorage.setItem('loveStoryCoverTitle', titleData.fullTitle);
       localStorage.setItem('loveStoryCoverSubtitle', titleData.subTitle || '');
       localStorage.setItem('loveStoryCoverThirdLine', titleData.thirdLine || '');
       localStorage.setItem('loveStoryCoverStyle', selectedStyle); // 保存封面样式
@@ -1740,7 +1740,7 @@ const LoveStoryCoverStep = () => {
       // 检查是否需要重新渲染
       const needsRerender =
         !lastTitle || // 第一次渲染
-        lastTitle !== (titleData.mainTitle || titleData.fullTitle) ||
+        lastTitle !== titleData.fullTitle ||
         lastSubtitle !== (titleData.subTitle || '') ||
         lastStyle !== selectedStyle ||
         lastAuthor !== authorName ||
@@ -1749,7 +1749,7 @@ const LoveStoryCoverStep = () => {
 
       console.log('Cover change detection:', {
         needsRerender,
-        currentTitle: titleData.mainTitle || titleData.fullTitle,
+        currentTitle: titleData.fullTitle,
         lastTitle,
         currentStyle: selectedStyle,
         lastStyle,
@@ -1758,7 +1758,7 @@ const LoveStoryCoverStep = () => {
       });
 
       // 保存当前封面信息作为最后渲染的状态
-      localStorage.setItem('lastRenderedCoverTitle', titleData.mainTitle || titleData.fullTitle);
+      localStorage.setItem('lastRenderedCoverTitle', titleData.fullTitle);
       localStorage.setItem('lastRenderedCoverSubtitle', titleData.subTitle || '');
       localStorage.setItem('lastRenderedCoverStyle', selectedStyle);
       localStorage.setItem('lastRenderedAuthorName', authorName);
