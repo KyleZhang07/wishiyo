@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, ChevronDown, ChevronUp, Truck, ShieldCheck } from 'lucide-react';
+import { ArrowRight, ChevronDown, ChevronUp, Truck, ShieldCheck, Clock } from 'lucide-react';
 import { Helmet } from 'react-helmet';
 
 export default function Home() {
@@ -61,7 +61,7 @@ export default function Home() {
         </script>
       </Helmet>
       {/* Hero Section */}
-      <section className="relative py-16 md:py-28 overflow-hidden bg-gradient-to-b from-white via-white to-[#FFE1CE]" style={{ backgroundSize: '100% 200%', backgroundPosition: '0 70%' }}>
+      <section className="relative pt-24 pb-16 md:py-28 overflow-hidden bg-gradient-to-b from-white via-white to-[#FFE1CE]" style={{ backgroundSize: '100% 200%', backgroundPosition: '0 70%' }}>
         {/* Gradient fade at bottom for smooth transition */}
         <div className="absolute bottom-0 left-0 right-0 h-[7vh] bg-gradient-to-t from-white to-transparent z-10"></div>
 
@@ -134,10 +134,7 @@ export default function Home() {
             <div className="flex flex-col items-center">
               <div className="w-[36px] h-[36px] -mt-1 mb-2 text-[#FF6B35]">
                 {/* 主题色时钟图标 */}
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
-                  <circle cx="16" cy="16" r="12" stroke="#FF6B35" />
-                  <path d="M16 10v6l4 2" stroke="#FF6B35" />
-                </svg>
+                <Clock strokeWidth={2.2} className="w-full h-full" />
               </div>
             </div>
 
