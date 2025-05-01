@@ -81,7 +81,10 @@ const OrderSuccess = () => {
         'lastRenderedAuthorName', 'lastRenderedRecipientName', 'lastRenderedCoverImageIndex',
 
         // Order info
-        'loveStoryOrderId', 'loveStoryBookTitle'
+        'loveStoryOrderId', 'loveStoryBookTitle',
+        
+        // Session ID for storage isolation
+        'current_session_id'
       ];
 
       // Clear each localStorage item
@@ -109,7 +112,10 @@ const OrderSuccess = () => {
         'friendsIdeaChanged', 'funnyBiography',
 
         // Order info
-        'funnyBiographyOrderId', 'funnyBiographyBookTitle'
+        'funnyBiographyOrderId', 'funnyBiographyBookTitle',
+        
+        // Session ID for storage isolation
+        'current_session_id'
       ];
 
       // Clear each localStorage item

@@ -62,12 +62,14 @@ export const ensureBucketExists = async (bucket = 'images'): Promise<boolean> =>
  * @param base64Image Base64 encoded image string
  * @param bucket Bucket name
  * @param path Path within the bucket
+ * @param sessionId Optional session ID to separate different orders
  * @returns Public URL of the uploaded image
  */
 export const uploadImageToStorage = async (
   base64Image: string,
   bucket = 'images',
-  path: string
+  path: string,
+  sessionId?: string
 ): Promise<string> => {
   try {
     // Ensure the bucket exists
@@ -75,6 +77,14 @@ export const uploadImageToStorage = async (
     
     // Get client ID for the current user
     const clientId = getClientId();
+    
+    // Generate a session ID if not provided
+    const currentSessionId = sessionId || localStorage.getItem('current_session_id') || `session_${Date.now()}`;
+    
+    // Store the session ID if it's new
+    if (!localStorage.getItem('current_session_id')) {
+      localStorage.setItem('current_session_id', currentSessionId);
+    }
     
     // Convert base64 to Blob
     const base64Data = base64Image.split(',')[1];
@@ -93,8 +103,8 @@ export const uploadImageToStorage = async (
     
     const blob = new Blob(byteArrays, { type: 'image/jpeg' });
     
-    // Upload file to Supabase Storage with client ID in the path
-    const fileName = `${clientId}/${path}-${Date.now()}.jpg`;
+    // Upload file to Supabase Storage with client ID and session ID in the path
+    const fileName = `${clientId}/${currentSessionId}/${path}-${Date.now()}.jpg`;
     const { data, error } = await supabase.storage
       .from(bucket)
       .upload(fileName, blob, {
@@ -102,7 +112,8 @@ export const uploadImageToStorage = async (
         upsert: true,
         // Add metadata to identify owner
         metadata: {
-          client_id: clientId
+          client_id: clientId,
+          session_id: currentSessionId
         }
       });
     
@@ -125,17 +136,24 @@ export const uploadImageToStorage = async (
 /**
  * Fetches all images from a specific bucket in Supabase Storage for the current client
  * @param bucket Bucket name
+ * @param sessionId Optional session ID to filter images by specific order
  * @returns Array of image objects with URLs and metadata
  */
-export const getAllImagesFromStorage = async (bucket = 'images') => {
+export const getAllImagesFromStorage = async (bucket = 'images', sessionId?: string) => {
   try {
     // Get client ID for the current user
     const clientId = getClientId();
     
-    // List all files in the client's folder
+    // Get current session ID if specified
+    const currentSessionId = sessionId || localStorage.getItem('current_session_id');
+    
+    // Path to list files from - if sessionId is provided, list from that subfolder
+    const listPath = currentSessionId ? `${clientId}/${currentSessionId}` : clientId;
+    
+    // List all files in the client's folder or session subfolder
     const { data, error } = await supabase.storage
       .from(bucket)
-      .list(clientId);
+      .list(listPath);
     
     if (error) {
       throw error;
@@ -148,7 +166,10 @@ export const getAllImagesFromStorage = async (bucket = 'images') => {
     
     // Get public URLs for all images
     return data.map(file => {
-      const filePath = `${clientId}/${file.name}`;
+      const filePath = currentSessionId 
+        ? `${clientId}/${currentSessionId}/${file.name}` 
+        : `${clientId}/${file.name}`;
+      
       const { data: publicUrlData } = supabase.storage
         .from(bucket)
         .getPublicUrl(filePath);
