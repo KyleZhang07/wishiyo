@@ -287,9 +287,6 @@ const LoveStoryCoverStep = () => {
     const savedImageIndex = localStorage.getItem('loveStorySelectedCoverIndex');
     const savedCoverTitle = localStorage.getItem('loveStoryCoverTitle');
 
-    // 从Supabase获取已保存的封面图片
-    loadCoverImagesFromSupabase();
-
     // 设置基本信息
     if (savedAuthorName) setAuthorName(savedAuthorName);
     if (savedTone) setTextTone(savedTone);
@@ -299,11 +296,18 @@ const LoveStoryCoverStep = () => {
 
     // 检查合作伙伴照片是否有变化，如果有则自动重新生成封面
     const photoChanged = checkPartnerPhotoChanged();
+    
     if (photoChanged) {
+      // 设置生成状态为true
+      setIsGeneratingCover(true);
       // 延迟执行，确保其他状态已加载
       setTimeout(() => {
         handleRegenerateCover();
       }, 1000);
+    } else {
+      // 如果不需要重新生成，则加载已有的封面图片
+      // 从Supabase获取已保存的封面图片
+      loadCoverImagesFromSupabase();
     }
 
     // 处理标题选择
@@ -400,21 +404,28 @@ const LoveStoryCoverStep = () => {
 
         // 获取图片URL数组
         const imageUrls = sortedImages.map(img => img.url);
-
-        // 更新状态
+        
+        // 更新封面图片数组
         setCoverImages(imageUrls);
-
-        // 获取用户之前选择的图片索引
-        const savedImageIndex = localStorage.getItem('loveStorySelectedCoverIndex');
-        if (savedImageIndex && parseInt(savedImageIndex) < imageUrls.length) {
-          setCurrentImageIndex(parseInt(savedImageIndex));
-        } else {
-          // 默认选择第一张图片
+        
+        // 如果没有选中的图片索引，默认选择第一张
+        if (currentImageIndex >= imageUrls.length || currentImageIndex < 0) {
           setCurrentImageIndex(0);
         }
+        
+        // 确保加载完成后重置生成状态
+        setIsGeneratingCover(false);
+        
+        console.log('Successfully loaded cover images from Supabase:', imageUrls.length);
+      } else {
+        console.log('No cover images found in Supabase');
+        // 即使没有找到图片，也重置生成状态
+        setIsGeneratingCover(false);
       }
     } catch (error) {
       console.error('Error loading cover images from Supabase:', error);
+      // 出错时也要重置生成状态
+      setIsGeneratingCover(false);
     }
   };
 
