@@ -71,7 +71,9 @@ const FormatStep = () => {
       setIsProcessing(true);
 
       // 保存书籍信息到localStorage
-      const bookTitle = 'THE MAGIC IN ' + (localStorage.getItem('loveStoryPersonName') || 'My Love');
+      // 优先使用用户在CoverStep中设置的标题，如果没有则使用默认格式
+      const bookTitle = localStorage.getItem('loveStoryCoverTitle') || 
+                       ('THE MAGIC IN ' + (localStorage.getItem('loveStoryPersonName') || 'My Love'));
       localStorage.setItem('loveStoryBookTitle', bookTitle);
       localStorage.setItem('loveStoryBookFormat', selectedFormatObj.name);
       localStorage.setItem('loveStoryBookPrice', selectedFormatObj.price.toString());
