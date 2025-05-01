@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, MessageSquare, Check, Lightbulb } from 'lucide-react';
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 interface QuestionDialogProps {
   isOpen: boolean;
@@ -28,6 +28,7 @@ const QuestionDialog = ({
   const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
   const [answer, setAnswer] = useState('');
   const location = useLocation();
+  const navigate = useNavigate();
 
   // 判断当前是否在love category
   const isLoveCategory = location.pathname.includes('/love/');
@@ -115,15 +116,38 @@ const QuestionDialog = ({
       // 先保存答案到本地变量
       const questionToSubmit = selectedQuestion;
       const answerToSubmit = answer.trim();
-      
+
       // 清除状态
       setSelectedQuestion(null);
       setAnswer('');
-      
-      // 使用 setTimeout 确保状态更新后再关闭对话框和提交答案
+
+      // 使用 setTimeout 确保状态更新后再提交答案
       // 这有助于避免在 Edge 浏览器中的渲染问题
       setTimeout(() => {
         onSubmitAnswer(questionToSubmit, answerToSubmit);
+
+        // 检查这个问题是否已经被回答过
+        const isEditingExistingAnswer = answeredQuestions.includes(questionToSubmit);
+
+        // 如果是新回答的问题，则导航到 PickAQuestion 页面
+        // 如果是编辑已回答的问题，则只关闭对话框
+        if (!isEditingExistingAnswer) {
+          // 根据当前路径确定要导航到的 PickAQuestion 页面
+          let pickQuestionPath = '';
+          if (isLoveCategory) {
+            pickQuestionPath = '/create/love/love-story/questions';
+          } else if (isFunnyBiography) {
+            pickQuestionPath = '/create/friends/funny-biography/stories';
+          }
+
+          // 如果成功确定了路径，则导航到该页面
+          if (pickQuestionPath) {
+            navigate(pickQuestionPath);
+            return;
+          }
+        }
+
+        // 如果是编辑已回答的问题或无法确定路径，则只关闭对话框
         onClose();
       }, 0);
     }
@@ -187,9 +211,8 @@ const QuestionDialog = ({
                           <p className="text-lg text-gray-800 font-medium">{question}</p>
                         </div>
                         {isAnswered && (
-                          <span className="ml-3 flex-shrink-0 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-[#FF7F50]/20 text-[#FF7F50]/90">
-                            <Check className="mr-1 h-3.5 w-3.5" />
-                            Answered
+                          <span className="ml-3 flex-shrink-0 inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#FF7F50]/20 text-[#FF7F50]/90">
+                            <Check className="h-3.5 w-3.5" />
                           </span>
                         )}
                       </div>
