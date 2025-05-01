@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -65,7 +64,7 @@ serve(async (req) => {
                  Include specific personal details to make the text feel authentic and tailored.
                  The text should feel like a heartfelt letter to someone deeply loved and cherished.
                  Create text that's 2-3 sentences long, you must mention the person's name in the text.
-                 IMPORTANT: Each sentence must be between 15-25 words long for optimal display.
+                 IMPORTANT: The total length must be between 40-60 words for optimal display.
                  End with a sentiment that captures warm appreciation and nostalgic affection.
                  Example tone: Warm, sincere, emotionally resonant, appreciative.
 
@@ -79,7 +78,7 @@ serve(async (req) => {
                  Include fun hypothetical scenarios or light teasing related to the person's interests or habits.
                  The text should feel like a note from a close friend who knows how to make them laugh.
                  Create text that's 2-3 sentences long, you must mention the person's name in the text.
-                 IMPORTANT: Each sentence must be between 15-25 words long for optimal display.
+                 IMPORTANT: The total length must be between 40-60 words for optimal display.
                  End with an encouraging or adventurous sentiment that's upbeat and positive.
                  Example tone: Lighthearted, humorous, whimsical, friendly.
 
@@ -93,7 +92,7 @@ serve(async (req) => {
                  Include metaphors about journeys, paths, or natural cycles (like seasons changing).
                  The text should feel like motivational encouragement from someone who deeply believes in them.
                  Create text that's 2-3 sentences long, you must mention the person's name in the text.
-                 IMPORTANT: Each sentence must be between 15-25 words long for optimal display.
+                 IMPORTANT: The total length must be between 40-60 words for optimal display.
                  End with a motivational sentiment that inspires them to pursue their dreams.
                  Example tone: Empowering, forward-looking, encouraging, hopeful.
 
@@ -105,7 +104,7 @@ serve(async (req) => {
                  Create short, engaging captions in a ${tone} tone.
                  The captions should complement the illustrations.
                  Write ONLY the caption text, normally 2-3 sentences.
-                 IMPORTANT: Each sentence must be between 15-25 words long for optimal display.`;
+                 IMPORTANT: The total length must be between 40-60 words for optimal display.`;
       }
     };
 
@@ -136,7 +135,7 @@ serve(async (req) => {
                         The caption should relate to this prompt's theme: ${prompt.question}
 
                         Create a brief ${tone.toLowerCase()} caption that feels personal and evocative (2-3 sentences max).
-                        IMPORTANT: Each sentence must be between 15-25 words long for optimal display.
+                        IMPORTANT: The total length must be between 40-60 words for optimal display.
                         Keep it short and meaningful. Less is more.
                         DO NOT include explanations or metadata.
                         DO NOT add any symbols or emoji markers at the beginning.`

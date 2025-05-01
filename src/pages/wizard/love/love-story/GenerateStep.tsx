@@ -1416,7 +1416,7 @@ const GenerateStep = () => {
   return (
     <WizardStep
       title="Create Your Story"
-      description="Here's your special illustrated book."
+      description="We're crafting your picture book and will be ready in minutes."
       previousStep="/create/love/love-story/cover"
       nextStep="/create/love/love-story/format"
       currentStep={7}
@@ -1462,8 +1462,8 @@ const GenerateStep = () => {
         <div className="mb-16">
           <h2 className="text-2xl font-bold mb-8">Blessing</h2>
           <div className="max-w-xl mx-auto">
-            {/* 祝福语预览 */}
-            {isGeneratingBlessing ? (
+            {/* 祝福语预览 - 与cover加载状态保持一致 */}
+            {isRenderingCover || isGeneratingBlessing ? (
               <div className="max-w-[640px] mx-auto aspect-[1/1] bg-white rounded-lg shadow-lg flex flex-col items-center justify-center">
                 <div className="relative w-8 h-8 mb-2">
                   <div className="absolute inset-0 rounded-full border-t-2 border-[#FF7F50] animate-spin"></div>
@@ -1479,8 +1479,13 @@ const GenerateStep = () => {
                 className="max-w-[640px] mx-auto w-full h-auto rounded-lg shadow-lg"
               />
             ) : (
-              <div className="max-w-[640px] mx-auto aspect-[1/1] bg-gray-100 rounded-lg flex items-center justify-center">
-                <p className="text-gray-500">Your blessing will appear here after creation.</p>
+              <div className="max-w-[640px] mx-auto aspect-[1/1] bg-white rounded-lg shadow-lg flex flex-col items-center justify-center">
+                <div className="relative w-8 h-8 mb-2">
+                  <div className="absolute inset-0 rounded-full border-t-2 border-[#FF7F50] animate-spin"></div>
+                </div>
+                <p className="text-sm font-medium text-[#FF7F50]">
+                  Generating blessing
+                </p>
               </div>
             )}
           </div>

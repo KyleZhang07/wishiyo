@@ -240,16 +240,17 @@ export const ContentImageCard = ({
             selectedFont={currentFont}
           />
 
+          {/* Regenerate Image Button */}
+          <Button
+            className="bg-[#FF7F50] hover:bg-[#FF7F50]/90 text-white"
+            disabled={isGenerating}
+            onClick={() => setIsDialogOpen(true)}
+          >
+            Regenerate image
+          </Button>
+
           {/* Regenerate Image Dialog */}
           <Dialog open={isDialogOpen} onOpenChange={closeDialog}>
-            <DialogTrigger asChild>
-              <Button
-                className="bg-[#FF7F50] hover:bg-[#FF7F50]/90 text-white"
-                disabled={isGenerating}
-              >
-                Regenerate image
-              </Button>
-            </DialogTrigger>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
                 <DialogTitle>Regenerate Image</DialogTitle>
