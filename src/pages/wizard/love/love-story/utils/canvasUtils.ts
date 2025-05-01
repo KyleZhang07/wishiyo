@@ -664,8 +664,7 @@ export const renderEndingToCanvas = (): Promise<string> => {
         'This book was created with love using Wishiyo.',
         'No part of this publication may be reproduced, distributed, or',
         'transmitted in any form or by any means without prior written permission.',
-        '',
-        'Printed in the United States of America',
+        'Please enjoy and share the magic, but do not copy or redistribute.',
         '',
         'www.wishiyo.com'
       ];
