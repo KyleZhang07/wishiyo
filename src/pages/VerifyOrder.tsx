@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -98,104 +97,102 @@ const VerifyOrder = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-24 flex flex-col items-center justify-center min-h-[70vh]">
-      <div className="w-full max-w-[420px]">
+    <div className="min-h-screen bg-[#FFFAF5] flex items-center justify-center py-16">
+      <div className="w-full max-w-[450px] px-6">
+        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          <div className="p-10">
+            <div className="flex items-center justify-center mb-10">
+              <Package className="h-12 w-12 text-[#FF7F50]" />
+            </div>
+            <h1 className="text-3xl font-semibold text-center mb-10">Check My Orders</h1>
 
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <div className="p-8">
-          <div className="flex items-center justify-center mb-8">
-            <Package className="h-10 w-10 text-[#FF7F50]" />
-          </div>
-          <h1 className="text-2xl font-semibold text-center mb-8">Check My Orders</h1>
-
-          {step === 'email' ? (
-            <form onSubmit={handleSendVerification}>
-              <div className="space-y-8">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Your order email
-                  </label>
-                  <Input
-                    type="email"
-                    placeholder="you@youremail.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  className="w-full bg-[#FF7F50] hover:bg-[#FF7F50]/90 h-12 text-base font-medium"
-                  disabled={sendLoading}
-                >
-                  {sendLoading ? 'Sending...' : 'Get Code'}
-                  {!sendLoading && <Send className="ml-2 h-4 w-4" />}
-                </Button>
-                {codeSent && (
-                  <div className="text-xs text-gray-500 flex items-center justify-center mt-4">
-                    <span className="inline-block mr-1">⏱️</span> Code expires in 15 min
-                  </div>
-                )}
-              </div>
-            </form>
-          ) : (
-            <form onSubmit={handleVerifyCode}>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Verification Code
+            {step === 'email' ? (
+              <form onSubmit={handleSendVerification}>
+                <div className="space-y-8">
+                  <div>
+                    <label className="block text-base font-medium text-gray-700 mb-3">
+                      Your order email
                     </label>
-                    <button
-                      type="button"
-                      className="text-sm text-[#FF7F50] hover:underline"
-                      onClick={() => setStep('email')}
-                    >
-                      Change Email
-                    </button>
+                    <Input
+                      type="email"
+                      placeholder="your@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      className="h-12"
+                    />
                   </div>
-                  <p className="text-sm text-gray-500 mb-4">
-                    We've sent a 6-digit verification code to {email}
-                  </p>
-                  <div className="flex justify-center mb-4">
-                    <InputOTP
-                      maxLength={6}
-                      value={verificationCode}
-                      onChange={(value) => setVerificationCode(value)}
-                    >
-                      <InputOTPGroup>
-                        <InputOTPSlot index={0} />
-                        <InputOTPSlot index={1} />
-                        <InputOTPSlot index={2} />
-                        <InputOTPSlot index={3} />
-                        <InputOTPSlot index={4} />
-                        <InputOTPSlot index={5} />
-                      </InputOTPGroup>
-                    </InputOTP>
-                  </div>
+                  <Button
+                    type="submit"
+                    className="w-full bg-[#FF7F50] hover:bg-[#FF7F50]/90 h-12 text-base font-medium"
+                    disabled={sendLoading}
+                  >
+                    {sendLoading ? 'Sending...' : 'Get Code'}
+                  </Button>
+                  {codeSent && (
+                    <div className="text-sm text-gray-500 flex items-center justify-center mt-4">
+                      <span className="inline-block mr-1">⏱️</span> Code expires in 15 min
+                    </div>
+                  )}
                 </div>
-                <Button
-                  type="submit"
-                  className="w-full bg-[#FF7F50] hover:bg-[#FF7F50]/90"
-                  disabled={verifyLoading || sendLoading}
-                >
-                  {verifyLoading ? 'Verifying...' : 'Verify and View Orders'}
-                  {!verifyLoading && <ArrowRight className="ml-2 h-4 w-4" />}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleSendVerification}
-                  disabled={verifyLoading || sendLoading}
-                >
-                  {sendLoading ? 'Resending...' : 'Resend Verification Code'}
-                </Button>
-              </div>
-            </form>
-          )}
+              </form>
+            ) : (
+              <form onSubmit={handleVerifyCode}>
+                <div className="space-y-6">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-base font-medium text-gray-700">
+                        Verification Code
+                      </label>
+                      <button
+                        type="button"
+                        className="text-sm text-[#FF7F50] hover:underline"
+                        onClick={() => setStep('email')}
+                      >
+                        Change Email
+                      </button>
+                    </div>
+                    <p className="text-sm text-gray-500 mb-6">
+                      We've sent a 6-digit verification code to {email}
+                    </p>
+                    <div className="flex justify-center mb-6">
+                      <InputOTP
+                        maxLength={6}
+                        value={verificationCode}
+                        onChange={(value) => setVerificationCode(value)}
+                      >
+                        <InputOTPGroup>
+                          <InputOTPSlot index={0} />
+                          <InputOTPSlot index={1} />
+                          <InputOTPSlot index={2} />
+                          <InputOTPSlot index={3} />
+                          <InputOTPSlot index={4} />
+                          <InputOTPSlot index={5} />
+                        </InputOTPGroup>
+                      </InputOTP>
+                    </div>
+                  </div>
+                  <Button
+                    type="submit"
+                    className="w-full bg-[#FF7F50] hover:bg-[#FF7F50]/90 h-12 text-base font-medium"
+                    disabled={verifyLoading || sendLoading}
+                  >
+                    {verifyLoading ? 'Verifying...' : 'Verify'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full h-12 text-base"
+                    onClick={handleSendVerification}
+                    disabled={verifyLoading || sendLoading}
+                  >
+                    {sendLoading ? 'Resending...' : 'Resend'}
+                  </Button>
+                </div>
+              </form>
+            )}
+          </div>
         </div>
-      </div>
       </div>
     </div>
   );

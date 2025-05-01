@@ -1,4 +1,3 @@
-
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, Package, Search } from 'lucide-react';
 import { useState } from 'react';
@@ -31,10 +30,12 @@ const Header = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6 pr-4">
-            <Link to="/verify-order" className="relative">
-              <Button variant="ghost" size="icon">
+            <Link to="/verify-order" className="text-gray-600 hover:text-primary transition-colors relative group" itemProp="url">
+              <div className="flex items-center gap-2">
                 <Package className="h-5 w-5" />
-              </Button>
+                <span itemProp="name">Orders</span>
+              </div>
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gray-200 transition-all duration-300 group-hover:w-full"></span>
             </Link>
           </div>
 

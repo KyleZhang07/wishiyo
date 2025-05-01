@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { FontProvider } from "@/context/FontContext";
 import { RenderProvider } from "@/context/RenderContext";
+import { Facebook, Instagram, Package } from 'lucide-react';
 
 import Header from "./components/Header";
 import Footer from "./components/Footer";
@@ -134,29 +135,65 @@ const OrderSuccess = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#FFFAF5] flex items-center justify-center">
-      <div className="text-center p-8 max-w-md w-full">
-        <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+    <div className="min-h-screen bg-[#FFFAF5] flex items-center justify-center py-10">
+      <div className="text-center p-8 max-w-md w-full mt-8">
+        <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-8">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h1 className="text-4xl font-bold mb-2">Order Successful!</h1>
-        <p className="text-xl text-gray-600 mb-2">Thank you for your purchase</p>
-        <p className="text-gray-500 mb-6">Order ID: {orderId}</p>
+        <h1 className="text-4xl font-bold mb-4">We've got your order!</h1>
+        <p className="text-sm text-gray-500 mb-8">Order ID: {orderId}</p>
 
-        <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-          <p className="text-gray-600">We have received your order for:</p>
-          <p className="font-bold text-lg my-2">{bookTitle}</p>
-          <p className="text-gray-600 text-sm">Your book will be printed and shipped within 3-5 business days.</p>
+        <div className="bg-white p-6 rounded-lg shadow-md mb-10">
+          <p className="text-gray-600 text-lg">Thanks for shopping with us:</p>
+          <p className="font-bold text-xl my-3">{bookTitle}</p>
+          <p className="text-gray-600 text-base">You will receive a shipping confirmation email soon.</p>
+          
+          <div className="mt-6">
+            <a href="/verify-order" className="px-6 py-3 bg-[#FF7F50] text-white rounded-md hover:bg-[#FF7F50]/80 transition-colors w-full inline-block text-lg font-medium">
+              <span className="flex items-center justify-center gap-2">
+                Track my order
+                <Package className="h-5 w-5" />
+              </span>
+            </a>
+          </div>
         </div>
 
-        <button
-          onClick={() => window.location.href = '/'}
-          className="px-6 py-3 bg-[#FF7F50] text-white rounded-md hover:bg-[#FF7F50]/80 transition-colors w-full"
-        >
-          Return Home
-        </button>
+        <div className="mt-10">
+          <h3 className="text-xl font-medium mb-6">Follow Our Updates</h3>
+          <div className="flex justify-center space-x-8">
+            <a 
+              href="https://www.facebook.com/share/16PXVnTnst/?mibextid=wwXIfr" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="bg-blue-500 text-white p-3 rounded-full hover:bg-blue-600 transition-colors"
+              aria-label="Facebook"
+            >
+              <Facebook className="h-6 w-6" />
+            </a>
+            <a 
+              href="https://www.instagram.com/wishiyobook" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 text-white p-3 rounded-full hover:opacity-90 transition-opacity"
+              aria-label="Instagram"
+            >
+              <Instagram className="h-6 w-6" />
+            </a>
+            <a 
+              href="https://www.tiktok.com/@wishiyobook" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="bg-black text-white p-3 rounded-full hover:bg-gray-800 transition-colors"
+              aria-label="TikTok"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 448 512" className="h-6 w-6">
+                <path d="M448,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,185,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,381,102.39a121.43,121.43,0,0,0,67,20.14Z"/>
+              </svg>
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   );
