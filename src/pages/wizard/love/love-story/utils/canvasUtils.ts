@@ -116,6 +116,9 @@ export const renderContentToCanvas = (
           if (fontId === 'patrick-hand' || fontId === 'amatic-sc' || fontId === 'caveat') {
             // 增大Patrick Hand、Amatic SC和Caveat字体的渲染字号
             adjustedFontSize = fontSize + 1;
+          } else if (fontId === 'comic-sans') {
+            // 减小Comic Sans字体的渲染字号
+            adjustedFontSize = fontSize - 1;
           }
 
           ctx.font = `bold ${adjustedFontSize}px ${fontFamily}`;
@@ -164,6 +167,9 @@ export const renderContentToCanvas = (
               if (fontId === 'patrick-hand' || fontId === 'amatic-sc' || fontId === 'caveat') {
                 // 增大Patrick Hand、Amatic SC和Caveat字体的渲染字号
                 adjustedFontSize = fontSize + 1;
+              } else if (fontId === 'comic-sans') {
+                // 减小Comic Sans字体的渲染字号
+                adjustedFontSize = fontSize - 1;
               }
 
               ctx.font = `bold ${adjustedFontSize}px ${fontFamily}`;
@@ -175,6 +181,8 @@ export const renderContentToCanvas = (
                 let adjustedFontSize = fontSize;
                 if (fontId === 'patrick-hand' || fontId === 'amatic-sc' || fontId === 'caveat') {
                   adjustedFontSize = fontSize + 1;
+                } else if (fontId === 'comic-sans') {
+                  adjustedFontSize = fontSize - 1;
                 }
 
                 drawStrokedText(line, x, lineY, adjustedFontSize);
@@ -190,6 +198,8 @@ export const renderContentToCanvas = (
               let adjustedFontSize = fontSize;
               if (fontId === 'patrick-hand' || fontId === 'amatic-sc' || fontId === 'caveat') {
                 adjustedFontSize = fontSize + 1;
+              } else if (fontId === 'comic-sans') {
+                adjustedFontSize = fontSize - 1;
               }
 
               drawStrokedText(line, x, lineY, adjustedFontSize);
