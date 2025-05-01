@@ -40,6 +40,13 @@ const TONE_OPTIONS = [
 // Image style options for love story
 const STYLE_OPTIONS = [
   {
+    id: 'Disney Character',
+    name: 'Disney Character',
+    description: 'Cartoon-like characters with Disney animation style',
+    image: '/images/art-styles/disney-character.png',
+    popular: true
+  },
+  {
     id: 'Comic Book',
     name: 'Comic Book',
     description: 'Bold outlines and vibrant colors',
@@ -62,12 +69,6 @@ const STYLE_OPTIONS = [
     name: 'Photographic',
     description: 'Realistic, photography-like images',
     image: '/images/art-styles/photographic.png'
-  },
-  {
-    id: 'Disney Character',
-    name: 'Disney Character',
-    description: 'Cartoon-like characters with Disney animation style',
-    image: '/images/art-styles/disney-character.png'
   }
 ];
 
@@ -662,7 +663,12 @@ const IdeaStep = ({
                       </div>
                     </div>
                     <div className="flex-grow">
-                      <h4 className={`font-medium leading-tight ${selectedStyle === style.id ? 'text-[#FF7F50]' : 'text-gray-900'}`}>{style.name}</h4>
+                      <div className="flex items-center">
+                        <h4 className={`font-medium leading-tight ${selectedStyle === style.id ? 'text-[#FF7F50]' : 'text-gray-900'}`}>{style.name}</h4>
+                        {style.popular && (
+                          <span className="ml-2 text-xs font-medium text-[#FF6B35] bg-[#FF6B35]/10 px-2 py-0.5 rounded">Most Popular</span>
+                        )}
+                      </div>
                       <p className={`text-sm leading-snug ${selectedStyle === style.id ? 'text-[#FF7F50]/80' : 'text-gray-500'}`}>{style.description}</p>
                     </div>
                     <div className="flex-shrink-0 ml-4">
