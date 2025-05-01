@@ -123,11 +123,7 @@ function getEmailContent(status: string, bookTitle: string, orderId: string, tra
 
   <hr style="border:none;border-top:1px solid #E0E0E0;margin:32px 0;">
   <p style="font-size:12px;color:#777;margin:0;">
-     This email was sent automatically from an unmonitored address.<br>
-     Need help? Please visit
-     <a href="https://wishiyo.com/contact" style="color:#FF6B35;text-decoration:none;">
-       wishiyo.com/contact
-     </a> to reach our customer service team.
+     Need help? Simply reply to this email and our customer service team will assist you.
   </p>
 </div>
   `;
@@ -204,6 +200,7 @@ serve(async (req) => {
     // Send email with improved headers
     const emailResponse = await resend.emails.send({
       from: "Wishiyo <hi@wishiyo.com>",
+      reply_to: "hi@wishiyo.com", // 添加回复地址，使用户可以直接回复
       to: [email],
       subject: subject,
       html: content,
