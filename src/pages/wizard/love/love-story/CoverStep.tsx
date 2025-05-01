@@ -407,47 +407,23 @@ const LoveStoryCoverStep = () => {
       const images = await getAllImagesFromStorage('images');
       const coverImages = images.filter(img => img.name.includes('love-story-cover'));
       
-      // 如果当前封面图片数量小于 8，不需要删除
-      if (coverImages.length < 8) {
-        console.log('Less than 8 cover images, no need to delete');
+      // 如果没有封面图片，不需要删除
+      if (coverImages.length === 0) {
+        console.log('No cover images to delete');
         return;
       }
-      
-      // 按照创建时间排序（使用文件名中的时间戳）
-      coverImages.sort((a, b) => {
-        // 提取时间戳部分
-        const getTimestamp = (filename) => {
-          const parts = filename.split('-');
-          // 假设时间戳是倒数第二个部分
-          if (parts.length >= 2) {
-            return parseInt(parts[parts.length - 2], 10) || 0;
-          }
-          return 0;
-        };
-        
-        return getTimestamp(a.name) - getTimestamp(b.name);
-      });
-      
-      // 计算需要删除的图片数量（保留最新的 8 张）
-      const deleteCount = coverImages.length - 8;
-      if (deleteCount <= 0) {
-        return;
-      }
-      
-      // 获取需要删除的最早的图片
-      const imagesToDelete = coverImages.slice(0, deleteCount);
       
       // 创建删除操作的Promise数组
-      const deletePromises = imagesToDelete.map(img => {
+      const deletePromises = coverImages.map(img => {
         const pathParts = img.name.split('/');
         const filename = pathParts[pathParts.length - 1];
-        console.log(`Deleting old cover image: ${filename}`);
+        console.log(`Deleting cover image: ${filename}`);
         return deleteImageFromStorage(filename, 'images');
       });
       
       // 并行执行所有删除操作
       await Promise.all(deletePromises);
-      console.log(`Deleted ${deleteCount} oldest cover images, keeping the newest 8`);
+      console.log(`Deleted all ${coverImages.length} cover images`);
     } catch (error) {
       console.error('Error managing cover images:', error);
     }
