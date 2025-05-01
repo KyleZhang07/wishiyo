@@ -306,14 +306,13 @@ const LoveStoryCoverStep = () => {
       }, 1000);
     }
 
-    // 获取故事idea
-    const savedIdeas = localStorage.getItem('loveStoryGeneratedIdeas');
-    const savedIdeaIndex = localStorage.getItem('loveStorySelectedIdea');
-
     // 处理标题选择
     if (savedCoverTitle) {
       // 如果用户之前已经选择了标题，使用该标题
-      handleTitleSelect(savedCoverTitle);
+      // 直接解析标题并设置状态，而不是调用handleTitleSelect
+      // 这样可以避免在页面刷新时触发标题更新
+      const parsedTitle = parseTitleString(savedCoverTitle);
+      setTitleData(parsedTitle);
     } else if (savedRecipientName) {
       // 如果没有保存的标题但有收件人姓名，使用第一个标题选项
       const firstTitleOption = `${savedRecipientName}'s amazing adventure`;
@@ -323,22 +322,12 @@ const LoveStoryCoverStep = () => {
       setTitleData(parsedDefaultTitle);
       // 同时保存默认标题到 localStorage，以便后续使用
       localStorage.setItem('loveStoryCoverTitle', firstTitleOption);
-    } else if (savedIdeas && savedIdeaIndex) {
-      try {
-        const ideas = JSON.parse(savedIdeas);
-        const selectedIdea = ideas[parseInt(savedIdeaIndex)];
-        if (selectedIdea) {
-          // 默认标题
-          setTitleData(prev => ({
-            ...prev,
-            fullTitle: 'THE MAGIC IN',
-            mainTitle: 'THE MAGIC IN',
-            subTitle: savedRecipientName || ''
-          }));
-        }
-      } catch (error) {
-        console.error('Error parsing saved ideas:', error);
-      }
+    } else {
+      // 如果既没有标题也没有收件人名称，使用默认标题
+      const defaultTitle = 'THE MAGIC IN My Love';
+      const parsedDefaultTitle = parseTitleString(defaultTitle);
+      setTitleData(parsedDefaultTitle);
+      localStorage.setItem('loveStoryCoverTitle', defaultTitle);
     }
   }, []);
 
@@ -348,18 +337,46 @@ const LoveStoryCoverStep = () => {
     if (recipientName && titleData.mainTitle) {
       // 获取当前保存的标题
       const savedCoverTitle = localStorage.getItem('loveStoryCoverTitle');
-
-      // 如果当前标题包含名字（例如 "XXX's amazing adventure"）
-      if (savedCoverTitle && savedCoverTitle.includes("'s")) {
-        // 创建新标题，替换名字部分
-        const newTitle = `${recipientName}'s amazing adventure`;
-
+      
+      if (!savedCoverTitle) return;
+      
+      // 检查标题中是否包含人名，并更新人名但保持标题格式
+      let newTitle = savedCoverTitle;
+      
+      // 处理不同的标题格式，更新人名但保持格式
+      if (savedCoverTitle.includes("'s amazing adventure")) {
+        // 格式: "xxx's amazing adventure"
+        const oldName = savedCoverTitle.split("'s amazing adventure")[0];
+        newTitle = savedCoverTitle.replace(oldName + "'s", recipientName + "'s");
+      } else if (savedCoverTitle.includes("'s wonderful")) {
+        // 格式: "xxx's wonderful yyy"
+        const parts = savedCoverTitle.split("'s wonderful");
+        if (parts.length > 1) {
+          // 替换第二部分（收件人名称）
+          newTitle = parts[0] + "'s wonderful " + recipientName;
+        }
+      } else if (savedCoverTitle.startsWith("THE MAGIC IN")) {
+        // 格式: "THE MAGIC IN xxx"
+        newTitle = "THE MAGIC IN " + recipientName;
+      } else if (savedCoverTitle.includes(", I love you")) {
+        // 格式: "xxx, I love you!"
+        const oldName = savedCoverTitle.split(", I love you")[0];
+        newTitle = recipientName + ", I love you!";
+      } else if (savedCoverTitle.startsWith("The little book of")) {
+        // 格式: "The little book of xxx"
+        newTitle = "The little book of " + recipientName;
+      }
+      
+      // 只有当标题实际发生变化时才更新
+      if (newTitle !== savedCoverTitle) {
+        console.log(`更新标题: "${savedCoverTitle}" -> "${newTitle}"`);
+        
         // 解析新标题
         const parsedNewTitle = parseTitleString(newTitle);
-
+        
         // 更新标题数据
         setTitleData(parsedNewTitle);
-
+        
         // 更新 localStorage
         localStorage.setItem('loveStoryCoverTitle', newTitle);
       }

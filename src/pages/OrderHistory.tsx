@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Package, CheckCircle, XCircle, Clock, Truck } from 'lucide-react';
@@ -32,7 +32,7 @@ const StatusBadge = ({ status }: { status: string }) => {
   };
 
   const { icon, color } = getStatusProps();
-  
+
   return (
     <div className={`flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${color}`}>
       {icon}
@@ -147,14 +147,14 @@ const OrderHistory = () => {
   };
 
   const getOrderTypeName = (type: string) => {
-    return type === 'love_story' ? 'Love Story' : 'Biography Book';
+    return type === 'love_story' ? 'Picture Book' : 'Story Book';
   };
 
   return (
     <div className="container mx-auto px-4 py-24">
       <div className="mb-6 flex justify-between items-center">
         <button
-          onClick={() => navigate('/')} 
+          onClick={() => navigate('/')}
           className="flex items-center text-gray-600 hover:text-gray-900"
         >
           <ArrowLeft className="h-5 w-5 mr-1" />
