@@ -946,8 +946,9 @@ const GenerateStep = () => {
     }
   };
 
-  // 使用状态变量直接创建映射
+  // 使用状态变量直接创建映射，包含intro(index=0)
   const imageStateMap: {[key: number]: string} = {
+    0: introImage || '',
     1: contentImage1 || '',
     2: contentImage2 || '',
     3: contentImage3 || '',
@@ -960,6 +961,7 @@ const GenerateStep = () => {
     10: contentImage10 || ''
   };
   const loadingStateMap: {[key: number]: boolean} = {
+    0: isGeneratingIntro,
     1: isGeneratingContent1,
     2: isGeneratingContent2,
     3: isGeneratingContent3,
@@ -972,6 +974,7 @@ const GenerateStep = () => {
     10: isGeneratingContent10
   };
   const handleRegenerateMap: {[key: number]: (style?: string) => void} = {
+    0: handleRegenerateIntro,
     1: handleRegenerateContent1,
     2: handleRegenerateContent2,
     3: handleRegenerateContent3,
@@ -1036,16 +1039,16 @@ const GenerateStep = () => {
     }
   }, [coverRenderComplete, coverImageUrl]);
 
-  // 检查是否已生成所有内容图片（引导和内容图片）
-  // 封面和祥福语有自己的处理逻辑，不在这里检查
+  // 检查是否已生成所有内容图片（包括intro作为content[0]和常规content图片）
+  // 封面和祝福语有自己的处理逻辑，不在这里检查
   const checkIfAllImagesGenerated = () => {
-    // 检查引导图片
+    // 检查intro图片(作为content[0])
     const introImageUrl = localStorage.getItem('loveStoryIntroImage_url');
     if (!introImageUrl) {
       return false;
     }
 
-    // 检查所有内容图片
+    // 检查所有常规内容图片(index=1-10)
     for (let i = 1; i <= 10; i++) {
       const contentImageUrl = localStorage.getItem(`loveStoryContentImage${i}_url`);
       if (!contentImageUrl) {
@@ -1053,18 +1056,26 @@ const GenerateStep = () => {
       }
     }
 
-    // 如果引导和所有内容图片都已生成，返回 true
+    // 如果intro和所有content图片都已生成，返回 true
     return true;
   };
 
   // 检查所有内容图片是否已生成
   const checkAllContentImagesGenerated = () => {
-    // 检查intro图片
+    // 检查intro图片(作为content[0])
     const introImageUrl = localStorage.getItem('loveStoryIntroImage_url');
 
-    // 检查所有content图片
+    // 检查所有content图片，包括intro(index=0)和常规content(index=1-10)
     const contentImagesStatus = [];
 
+    // 添加intro作为content[0]
+    contentImagesStatus.push({
+      index: 0,
+      isGenerated: !!introImageUrl,
+      imageState: introImage
+    });
+
+    // 添加常规content图片(index=1-10)
     for (let i = 1; i <= 10; i++) {
       const imageUrl = localStorage.getItem(`loveStoryContentImage${i}_url`);
 
@@ -1149,33 +1160,35 @@ const GenerateStep = () => {
     // 创建生成任务数组
     const generationTasks = [];
 
-    // 检查是否有正在生成的标记
-    const isIntroGenerating = localStorage.getItem('loveStoryIntroGenerating');
+    // 将intro图片(index=0)作为content图片的一部分处理
+    // 检查intro图片是否需要生成
+    const isIntroGenerating = localStorage.getItem('loveStoryContent0Generating'); // 使用统一的命名方式
     const introGeneratingTimestamp = isIntroGenerating ? parseInt(isIntroGenerating) : 0;
     const currentTime = Date.now();
     const isIntroGeneratingExpired = currentTime - introGeneratingTimestamp > 5 * 60 * 1000; // 5分钟过期
 
     // 添加intro图片生成任务（如果需要且没有正在生成）
     if (!generationStatus.intro.isGenerated && (!isIntroGenerating || isIntroGeneratingExpired)) {
-      console.log('Adding intro image generation task...');
+      console.log('Adding intro image generation task (as content[0])...');
       generationTasks.push({
-        type: 'intro',
+        type: 'content',
+        index: 0, // 将intro作为index=0的content处理
         task: async () => {
           try {
-            // 设置正在生成标记
-            localStorage.setItem('loveStoryIntroGenerating', Date.now().toString());
+            // 设置正在生成标记，使用统一的命名方式
+            localStorage.setItem('loveStoryContent0Generating', Date.now().toString());
 
             await handleRegenerateIntro();
-            console.log('Intro image generated successfully');
+            console.log('Content image 0 (intro) generated successfully');
 
             // 清除生成标记
-            localStorage.removeItem('loveStoryIntroGenerating');
+            localStorage.removeItem('loveStoryContent0Generating');
 
             return true;
           } catch (error) {
-            console.error('Error auto-generating intro image:', error);
+            console.error('Error auto-generating content image 0 (intro):', error);
             // 即使出错也清除生成标记
-            localStorage.removeItem('loveStoryIntroGenerating');
+            localStorage.removeItem('loveStoryContent0Generating');
             return false;
           }
         }
@@ -1505,45 +1518,14 @@ const GenerateStep = () => {
         {/* 内容部分 */}
         <div className="mb-16 border-t-2 border-gray-200 pt-10">
           <h2 className="text-2xl font-bold mb-8">Content</h2>
-          <div className="mb-8">
-            <ContentImageCard
-              image={introImage}
-              leftImageUrl={localStorage.getItem('loveStoryIntroImage_left_url') || undefined}
-              rightImageUrl={localStorage.getItem('loveStoryIntroImage_right_url') || undefined}
-              isGenerating={isGeneratingIntro || isWaitingForData}
-              onRegenerate={handleRegenerateIntro}
-              onFontChange={(fontId) => handleRenderIntroImage(fontId)}
-              index={0}
-              text={(() => {
-                // 从 localStorage 直接读取 imageTexts，确保有最新数据
-                const savedTexts = localStorage.getItem('loveStoryImageTexts');
-                if (savedTexts) {
-                  try {
-                    const parsedTexts = JSON.parse(savedTexts);
-                    if (parsedTexts && Array.isArray(parsedTexts) && parsedTexts.length > 1) {
-                      return parsedTexts[1]?.text;
-                    }
-                  } catch (error) {
-                    console.error('Error parsing saved texts for intro:', error);
-                  }
-                }
-
-                // 如果从 localStorage 读取失败，则尝试使用状态变量
-                return imageTexts && imageTexts.length > 1 ? imageTexts[1]?.text : undefined;
-              })()}
-              title=""
-              selectedFont={localStorage.getItem('loveStoryFont_0') || 'comic-sans'}
-            />
-
-
-          </div>
-          <div className="space-y-12 mt-12">
-            {/* 渲染内容图片 - 修改为传递左右图片URL */}
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((index) => {
-              const image = imageStateMap[index];
-              const isLoading = loadingStateMap[index];
-              const onRegenerate = handleRegenerateMap[index];
-              // 根据注释，图像索引1-10对应文本索引2-11，因为text[0]是cover，text[1]是intro
+          <div className="space-y-12">
+            {/* 渲染内容图片 - 包括intro图片(index=0)和其他内容图片 */}
+            {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((index) => {
+              // 处理intro图片(index=0)和常规内容图片(index=1-10)
+              const image = index === 0 ? introImage : imageStateMap[index];
+              const isLoading = index === 0 ? isGeneratingIntro : loadingStateMap[index];
+              const onRegenerate = index === 0 ? handleRegenerateIntro : handleRegenerateMap[index];
+              // 文本索引: index=0(intro)对应text[1], index=1-10对应text[2-11]
               const textIndex = index + 1;
 
               // 从 localStorage 直接读取 imageTexts，确保有最新数据
@@ -1572,14 +1554,14 @@ const GenerateStep = () => {
                 <div key={index}>
                   <ContentImageCard
                     image={image}
-                    leftImageUrl={localStorage.getItem(`loveStoryContentImage${index}_left_url`) || undefined}
-                    rightImageUrl={localStorage.getItem(`loveStoryContentImage${index}_right_url`) || undefined}
+                    leftImageUrl={localStorage.getItem(index === 0 ? 'loveStoryIntroImage_left_url' : `loveStoryContentImage${index}_left_url`) || undefined}
+                    rightImageUrl={localStorage.getItem(index === 0 ? 'loveStoryIntroImage_right_url' : `loveStoryContentImage${index}_right_url`) || undefined}
                     isGenerating={isLoading || isWaitingForData || false}
                     onRegenerate={onRegenerate}
-                    onFontChange={(fontId) => handleRenderContentImage(index, fontId)}
+                    onFontChange={(fontId) => index === 0 ? handleRenderIntroImage(fontId) : handleRenderContentImage(index, fontId)}
                     index={index}
                     text={text}
-                    title={`Moment ${index}`}
+                    title={index === 0 ? "Introduction" : `Moment ${index}`}
                     selectedFont={savedFont}
                   />
 
