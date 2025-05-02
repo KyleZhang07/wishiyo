@@ -20,6 +20,7 @@ import VerifyOrder from "./pages/VerifyOrder";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import ReturnPolicy from "./pages/ReturnPolicy";
 import TermsOfService from "./pages/TermsOfService";
+import Contact from "./pages/Contact";
 
 // Friends Book Creation Routes - Funny Biography
 import FunnyBiographyAuthorStep from "./pages/wizard/friends/funny-biography/AuthorStep";
@@ -247,6 +248,7 @@ const AppLayout = () => {
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/return-policy" element={<ReturnPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/contact" element={<Contact />} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>
