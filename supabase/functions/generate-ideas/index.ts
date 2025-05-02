@@ -47,7 +47,7 @@ serve(async (req) => {
           messages: [
             {
               role: 'system',
-              content: `Create 13 unique and creative scenes focusing solely on one person - the recipient.
+              content: `Create 12 unique and creative scenes focusing solely on one person - the recipient.
                 Each prompt should imagine the person in different fantasy scenarios that represent their ideal dream life.
                 Consider the person's gender (${recipientGender}) and age (${recipientAge}) when creating prompts.
                 Focus on solo portraits and scenes that showcase the person living their fantasy dream life.
@@ -55,11 +55,11 @@ serve(async (req) => {
             },
             {
               role: 'user',
-              content: `Generate 13 creative image prompts based on these answers:\n\n${JSON.stringify(answers, null, 2)}\n\n
+              content: `Generate 12 creative image prompts based on these answers:\n\n${JSON.stringify(answers, null, 2)}\n\n
                 Create:
                 1. One cover image prompt that captures ${recipientName}'s essence (${recipientGender}, ${recipientAge} years old) in an aspirational setting
-                2. Twelve fantasy autobiography image prompts showing ${recipientName} in various dream life scenarios
-                Format the response as a JSON array of 13 objects, each with 'question' (short description) and 'prompt' (detailed AI image generation prompt) fields.
+                2. Eleven fantasy autobiography image prompts showing ${recipientName} in various dream life scenarios
+                Format the response as a JSON array of 12 objects, each with 'question' (short description) and 'prompt' (detailed AI image generation prompt) fields.
                 Make the prompts reflect fantasy scenarios like:
                 - ${recipientName} achieving career dreams
                 - ${recipientName} in adventure settings (exploring exotic locations, etc.)
@@ -143,13 +143,12 @@ serve(async (req) => {
                 2. Make the book about ONE PERSON ONLY - sharing their expertise, unique perspectives, or interesting life approaches
                 3. The tone should vary across the three ideas: one professional, one satirical (gently poking fun at quirks mentioned in answers), and one unexpected
                 4. IMPORTANT: emphasize HUMOR throughout all ideas - include WITTY observations, PLAYFUL exaggerations, and AMUSING perspectives even in the more professional ideas
-                5. The ideas should balance PROFESSIONAL WISDOM with ENTERTAINING ELEMENTS while maintaining an engaging tone
-                6. Each book should present the subject as someone sharing valuable insights through memorable frameworks that might be conventional, satirical, or unexpected
-                7. The author field MUST always be exactly the provided authorName - do not modify it
-                8. Descriptions must ALWAYS be a SINGLE SENTENCE - use other connectors or rephrase as needed
-                9. Avoid using "I" or "you" perspectives in descriptions - use objective third-person statements instead
-                10. For satirical ideas, playfully exaggerate elements from the user's answers but keep it good-natured
-                11. AVOID UNCOMMON words and use EASY to understand language, and avoid complex expressions that average readers might not know
+                5. Each book should present the subject as someone sharing valuable insights through memorable frameworks that might be conventional, satirical, or unexpected
+                6. The author field MUST always be exactly the provided authorName - do not modify it
+                7. Descriptions must ALWAYS be a SINGLE SENTENCE with EXACTLY 10-15 words
+                8. Avoid using "I" or "you" perspectives in descriptions - use objective third-person statements instead
+                9. For satirical ideas, playfully exaggerate elements from the user's answers but keep it good-natured
+                10. AVOID UNCOMMON words and use EASY to understand language, and avoid complex expressions that average readers might not know
 
                 Title examples to follow (ranging from professional to satirical to unexpected):
                 - "The Kitchen Creativity"
@@ -160,7 +159,7 @@ serve(async (req) => {
                 - "Skiing, Strategy, and space"
                 - "How I Befriended Gravity"
 
-                Subtitle examples to follow (ALWAYS ONE SENTENCE NO COMMAS NO "I" OR "YOU"):
+                Subtitle examples to follow (ALWAYS ONE SENTENCE 10-15 words NO COMMAS NO "I" OR "YOU"):
                 - "Essential cooking techniques transformed into business strategies for maximum growth"
                 - "A guide to balancing basketball dreams while building successful ventures"
                 - "Discovering the hidden patterns that connect daily decisions to major life outcomes"
@@ -183,7 +182,7 @@ serve(async (req) => {
                 Respond with ONLY a JSON array of 3 objects, each with:
                 - 'title': The book title (3-5 words, not exceeding 30 characters, where each individual word MUST NOT exceed 14 characters)
                 - 'author': "${authorName}" for all ideas
-                - 'description': A compelling subtitle (ONE SENTENCE NO COMMAS 10-14 words) that expands on the central concept with personality
+                - 'description': A compelling subtitle (ONE SENTENCE NO COMMAS 10-15 words) that expands on the central concept with personality
                 - 'praises': An array of 4 fictional praise objects, each with 'source' (imaginary publication or critic name) and 'text' (the praise quote)
 
                 Make the ideas VARIED IN TONE:
@@ -196,8 +195,7 @@ serve(async (req) => {
                 The descriptions should:
                 - Expand on the central concept established in the title
                 - AVOID USING "I" OR "YOU" PERSPECTIVES - use objective third-person statements instead
-                - ALWAYS BE ONE SENTENCE WITHOUT ANY COMMAS (use alternative sentence structures)
-                - Clearly communicate the value proposition whether serious or lighthearted
+                - ALWAYS BE ONE SENTENCE WITHOUT ANY COMMAS EXACTLY 10-15 words
                 - USE COMMON WORDS AND EASY TO UNDERSTAND LANGUAGE - avoid rare characters, uncommon words, and complex expressions that average readers might not know
                 - INFUSE HUMOR THROUGHOUT ALL IDEAS including witty observations, playful exaggerations, and amusing perspectives even in the more professional concepts
 
