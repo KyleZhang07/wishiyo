@@ -75,8 +75,7 @@ export const handleGenericContentRegeneration = async (
   }
 
   setIsGenerating(true);
-  let retryCount = 0;
-  const maxRetries = 3;
+  
   const regenerateContent = async () => {
     try {
       const prompts = JSON.parse(savedPrompts);
@@ -175,17 +174,9 @@ export const handleGenericContentRegeneration = async (
       // 不需要显示成功通知，用户可以看到图片已更新
     } catch (err: any) {
       console.error("Error in handleGenericContentRegeneration:", err);
-      retryCount++;
-      if (retryCount < maxRetries) {
-        console.log(`Auto retrying generation for content ${index}...`);
-        setTimeout(regenerateContent, 1000);
-      } else {
-        console.error(`Failed to regenerate content ${index} after ${maxRetries} retries`);
-      }
+
     } finally {
-      if (retryCount >= maxRetries) {
-        setIsGenerating(false);
-      }
+      setIsGenerating(false);
     }
   };
   regenerateContent();

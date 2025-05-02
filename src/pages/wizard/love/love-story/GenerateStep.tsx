@@ -216,11 +216,7 @@ const GenerateStep = () => {
       console.log('Intro image rendered successfully with text:', text);
     } catch (renderError: any) {
       console.error('Error auto-rendering intro image:', renderError);
-      toast({
-        title: "Image rendering failed",
-        description: "Could not process the intro image. Please try again.",
-        variant: "destructive",
-      });
+      // 移除toast通知，减少用户干扰
     } finally {
       // 重置加载状态
       setIsGeneratingIntro(false);
@@ -334,20 +330,13 @@ const GenerateStep = () => {
       // 移除toast通知，减少用户干扰
     } catch (renderError: any) {
       console.error(`Error auto-rendering content image ${index}:`, renderError);
-      toast({
-        title: "Image rendering failed",
-        description: "Could not process the image. Please try again.",
-        variant: "destructive",
-      });
+      // 移除toast通知，减少用户干扰
     } finally {
       // 重置加载状态
       const setLoadingFn = loadingSetters[index];
       if (setLoadingFn) setLoadingFn(false);
     }
   };
-
-  // generateInitialImages函数已被删除，使用autoGenerateAllImages代替
-  // 该函数会自动检测并生成所有未生成的图片
 
   // 新增加：从Supabase加载所有图片
   const loadImagesFromSupabase = async () => {
@@ -675,122 +664,110 @@ const GenerateStep = () => {
           localStorage.setItem('loveStoryStyle', style);
         }
 
-        let retryCount = 0;
-        const maxRetries = 3;
-        while (retryCount < maxRetries) {
-          try {
-            // 修复请求结构，使用prompts[1]而非prompts[0]（prompts[0]是封面）
-            const requestBody = {
-              contentPrompt: prompts[1].prompt,
-              photo: characterPhoto,
-              style: imageStyle,
-              type: 'intro'
-            };
+        try {
+          // 修复请求结构，使用prompts[1]而非prompts[0]（prompts[0]是封面）
+          const requestBody = {
+            contentPrompt: prompts[1].prompt,
+            photo: characterPhoto,
+            style: imageStyle,
+            type: 'intro'
+          };
 
-            console.log('Intro generation request (using prompt 1):', JSON.stringify(requestBody));
+          console.log('Intro generation request (using prompt 1):', JSON.stringify(requestBody));
 
-            const { data, error } = await supabase.functions.invoke('generate-love-cover', {
-              body: requestBody
-            });
+          const { data, error } = await supabase.functions.invoke('generate-love-cover', {
+            body: requestBody
+          });
 
-            if (error) throw error;
+          if (error) throw error;
 
-            console.log('Intro generation response:', data);
+          console.log('Intro generation response:', data);
 
-            // 检查各种可能的响应格式
-            let introImageData = '';
-            if (data?.contentImage && data.contentImage.length > 0) {
-              introImageData = data.contentImage[0];
-            } else if (data?.output && data.output.length > 0) {
-              introImageData = data.output[0];
-            } else if (data?.introImage && data.introImage.length > 0) {
-              introImageData = data.introImage[0];
-            } else {
-              throw new Error("No intro image data in response");
-            }
-
-            if (introImageData) {
-              // 尝试扩展图片 - 使用从 imageProcessingUtils 导入的 expandImage 函数
-              try {
-                console.log('Using imported expandImage function from imageProcessingUtils');
-                const expandedBase64 = await expandImage(introImageData);
-                introImageData = expandedBase64;
-              } catch (expandError) {
-                console.error("Error expanding intro image:", expandError);
-                // 即使扩展失败，继续使用原始图片
-              }
-
-              setIntroImage(introImageData);
-
-              // 使用时间戳确保文件名唯一
-              const timestamp = Date.now();
-
-              // Upload to Supabase Storage
-              const storageUrl = await uploadImageToStorage(
-                introImageData,
-                'images',
-                `love-story-intro-${timestamp}`
-              );
-
-              // Update storage map
-              setImageStorageMap(prev => ({
-                ...prev,
-                ['loveStoryIntroImage']: {
-                  localStorageKey: 'loveStoryIntroImage',
-                  url: storageUrl
-                }
-              }));
-
-              // Store only the URL reference in localStorage
-              localStorage.setItem('loveStoryIntroImage_url', storageUrl);
-
-              // 删除旧图片
-              if (currentImagePath) {
-                try {
-                  await deleteImageFromStorage(currentImagePath, 'images');
-                  console.log(`Deleted old image: ${currentImagePath}`);
-                } catch (deleteErr) {
-                  console.error(`Failed to delete old image: ${currentImagePath}`, deleteErr);
-                  // 继续处理，即使删除失败
-                }
-              }
-
-              // 自动渲染intro图片
-              try {
-                await autoRenderIntroImage(introImageData);
-                console.log('Intro image rendered successfully');
-              } catch (renderError) {
-                console.error('Error auto-rendering intro image:', renderError);
-                // 继续处理，即使渲染失败
-              }
-
-              // 延迟刷新图片列表，确保上传完成
-              setTimeout(() => {
-                loadImagesFromSupabase();
-              }, 1000);
-
-              // 不需要显示成功通知，用户可以看到图片已更新
-              break;
-            } else {
-              throw new Error("Failed to generate intro image");
-            }
-          } catch (error: any) {
-            console.error('Error regenerating intro image:', error);
-            retryCount++;
-            if (retryCount < maxRetries) {
-              console.log(`Auto retrying intro image generation... (attempt ${retryCount + 1}/${maxRetries})`);
-              await new Promise(resolve => setTimeout(resolve, 1000));
-            } else {
-              console.log('All retries failed, stopping intro image generation');
-              toast({
-                title: "Error regenerating intro image",
-                description: error.message || "Please try again",
-                variant: "destructive",
-              });
-            }
-          } finally {
-            setIsGeneratingIntro(false);
+          // 检查各种可能的响应格式
+          let introImageData = '';
+          if (data?.contentImage && data.contentImage.length > 0) {
+            introImageData = data.contentImage[0];
+          } else if (data?.output && data.output.length > 0) {
+            introImageData = data.output[0];
+          } else if (data?.introImage && data.introImage.length > 0) {
+            introImageData = data.introImage[0];
+          } else {
+            throw new Error("No intro image data in response");
           }
+
+          if (introImageData) {
+            // 尝试扩展图片 - 使用从 imageProcessingUtils 导入的 expandImage 函数
+            try {
+              console.log('Using imported expandImage function from imageProcessingUtils');
+              const expandedBase64 = await expandImage(introImageData);
+              introImageData = expandedBase64;
+            } catch (expandError) {
+              console.error("Error expanding intro image:", expandError);
+              // 即使扩展失败，继续使用原始图片
+            }
+
+            setIntroImage(introImageData);
+
+            // 使用时间戳确保文件名唯一
+            const timestamp = Date.now();
+
+            // Upload to Supabase Storage
+            const storageUrl = await uploadImageToStorage(
+              introImageData,
+              'images',
+              `love-story-intro-${timestamp}`
+            );
+
+            // Update storage map
+            setImageStorageMap(prev => ({
+              ...prev,
+              ['loveStoryIntroImage']: {
+                localStorageKey: 'loveStoryIntroImage',
+                url: storageUrl
+              }
+            }));
+
+            // Store only the URL reference in localStorage
+            localStorage.setItem('loveStoryIntroImage_url', storageUrl);
+
+            // 删除旧图片
+            if (currentImagePath) {
+              try {
+                await deleteImageFromStorage(currentImagePath, 'images');
+                console.log(`Deleted old image: ${currentImagePath}`);
+              } catch (deleteErr) {
+                console.error(`Failed to delete old image: ${currentImagePath}`, deleteErr);
+                // 继续处理，即使删除失败
+              }
+            }
+
+            // 自动渲染intro图片
+            try {
+              await autoRenderIntroImage(introImageData);
+              console.log('Intro image rendered successfully');
+            } catch (renderError) {
+              console.error('Error auto-rendering intro image:', renderError);
+              // 继续处理，即使渲染失败
+            }
+
+            // 延迟刷新图片列表，确保上传完成
+            setTimeout(() => {
+              loadImagesFromSupabase();
+            }, 1000);
+
+            // 不需要显示成功通知，用户可以看到图片已更新
+          } else {
+            throw new Error("Failed to generate intro image");
+          }
+        } catch (error: any) {
+          console.error('Error generating intro image:', error);
+          toast({
+            title: "Error generating intro image",
+            description: error.message || "Please try again",
+            variant: "destructive",
+          });
+        } finally {
+          setIsGeneratingIntro(false);
         }
       }
     }
@@ -802,11 +779,6 @@ const GenerateStep = () => {
     // 获取当前图片
     if (!introImage) {
       console.error('No intro image found');
-      toast({
-        title: "Rendering failed",
-        description: "No intro image found to render with text",
-        variant: "destructive",
-      });
       return;
     }
 
@@ -863,11 +835,7 @@ const GenerateStep = () => {
       }, 1000);
     } catch (error) {
       console.error('Error rendering intro image with font:', error);
-      toast({
-        title: "Font update failed",
-        description: "Could not apply the selected font to intro image. Please try again.",
-        variant: "destructive",
-      });
+      // 移除toast通知，减少用户干扰
     }
   };
 

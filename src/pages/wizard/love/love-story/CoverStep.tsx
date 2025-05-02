@@ -302,7 +302,7 @@ const LoveStoryCoverStep = () => {
       setIsGeneratingCover(true);
       // 延迟执行，确保其他状态已加载
       setTimeout(() => {
-        handleRegenerateCover();
+        handleRegenerateCover(true);
       }, 1000);
     } else {
       // 如果不需要重新生成，则加载已有的封面图片
@@ -653,15 +653,18 @@ const LoveStoryCoverStep = () => {
   };
 
   // 重新生成封面功能
-  const handleRegenerateCover = async () => {
+  const handleRegenerateCover = async (clearOldImages: boolean = false) => {
     if (isGeneratingCover) return;
 
     setIsGeneratingCover(true);
     // 注意：不需要额外的加载状态，因为LoveStoryCoverPreview组件内部已经有加载状态
 
     try {
-      // 先删除所有旧的封面图片
-      await deleteOldCoverImages();
+      // 只有在需要清除旧图片时才执行删除操作
+      if (clearOldImages) {
+        // 先删除所有旧的封面图片
+        await deleteOldCoverImages();
+      }
 
       // 获取用户上传的图片
       const uploadedImage = localStorage.getItem('loveStoryPartnerPhoto');
@@ -1931,7 +1934,7 @@ const LoveStoryCoverStep = () => {
             </Button>
             <Button
               variant="secondary"
-              onClick={handleRegenerateCover}
+              onClick={() => handleRegenerateCover(false)}
               disabled={isGeneratingCover}
               className="w-28"
             >
