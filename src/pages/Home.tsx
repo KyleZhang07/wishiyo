@@ -178,7 +178,7 @@ export default function Home() {
                 </div>
                 <h3 className="text-2xl font-bold mb-2">Story Book</h3>
                 <p className="text-gray-700 mb-4">Write a story just for them</p>
-                <span className="text-primary group-hover:text-primary/80 inline-flex items-center">
+                <span className="text-[#FF6B35] group-hover:text-[#FF6B35]/80 inline-flex items-center">
                   Explore <ArrowRight className="ml-2 h-4 w-4" />
                 </span>
               </div>
@@ -200,7 +200,7 @@ export default function Home() {
                 </div>
                 <h3 className="text-2xl font-bold mb-2">Picture Book</h3>
                 <p className="text-gray-700 mb-4">Draw an imaginary book for them</p>
-                <span className="text-primary group-hover:text-primary/80 inline-flex items-center">
+                <span className="text-[#FF6B35] group-hover:text-[#FF6B35]/80 inline-flex items-center">
                   Explore <ArrowRight className="ml-2 h-4 w-4" />
                 </span>
               </div>
@@ -210,29 +210,29 @@ export default function Home() {
       </section>
 
       {/* How It Works Section */}
-      <section className="py-24 bg-gray-50">
+      <section className="py-24 bg-white">
         <div className="container px-4 md:px-6 mx-auto">
           <h2 className="text-4xl font-serif font-bold tracking-tighter text-left mb-12">
             How it works
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="bg-white p-6 rounded-lg shadow-sm">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                <span className="font-bold text-primary">1</span>
+              <div className="w-12 h-12 bg-[#FF6B35]/10 rounded-full flex items-center justify-center mb-4">
+                <span className="font-bold text-[#FF6B35]">1</span>
               </div>
               <h3 className="text-xl font-bold mb-2">Enter your idea</h3>
               <p className="text-gray-600">Tell us about your book concept, characters, and story direction.</p>
             </div>
             <div className="bg-white p-6 rounded-lg shadow-sm">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                <span className="font-bold text-primary">2</span>
+              <div className="w-12 h-12 bg-[#FF6B35]/10 rounded-full flex items-center justify-center mb-4">
+                <span className="font-bold text-[#FF6B35]">2</span>
               </div>
               <h3 className="text-xl font-bold mb-2">Customize your book</h3>
               <p className="text-gray-600">Choose your style, pick illustrations, and personalize every detail.</p>
             </div>
             <div className="bg-white p-6 rounded-lg shadow-sm">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                <span className="font-bold text-primary">3</span>
+              <div className="w-12 h-12 bg-[#FF6B35]/10 rounded-full flex items-center justify-center mb-4">
+                <span className="font-bold text-[#FF6B35]">3</span>
               </div>
               <h3 className="text-xl font-bold mb-2">Get your book</h3>
               <p className="text-gray-600">We'll print and ship your finished book directly to your doorstep.</p>
