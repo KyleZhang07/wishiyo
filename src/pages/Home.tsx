@@ -147,9 +147,9 @@ export default function Home() {
             </div>
           </div>
           <div className="grid grid-cols-3 gap-6 text-center mt-2">
-            <div className="text-xs font-medium text-gray-700">Free Shipping</div>
-            <div className="text-xs font-medium text-gray-700">Created in 3 Minutes</div>
-            <div className="text-xs font-medium text-gray-700">Quality Guarantee</div>
+            <div className="text-[13px] font-medium text-gray-700">Free Shipping</div>
+            <div className="text-[13px] font-medium text-gray-700">Created in 3 Minutes</div>
+            <div className="text-[13px] font-medium text-gray-700">Quality Guarantee</div>
           </div>
         </div>
       </section>
