@@ -369,6 +369,14 @@ const FormatStep = () => {
       totalSteps={8}
     >
       <div className="max-w-4xl mx-auto">
+        {/* 免运费提示 - 移动到顶部副标题下方 */}
+        <div className="mt-[-24px] mb-8 bg-green-50 border border-green-200 rounded-lg p-3 flex items-center justify-center">
+          <div className="flex flex-col items-center text-center">
+            <p className="text-green-700 font-medium">🚚 Limited time offer - Free Shipping on All Orders!</p>
+            <p className="text-gray-600 text-sm"></p>
+          </div>
+        </div>
+        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* 封面格式选项 */}
           {coverFormats.map((format) => (
@@ -434,7 +442,7 @@ const FormatStep = () => {
             onClick={handleCheckout}
             disabled={isProcessing}
           >
-            {isProcessing ? 'Processing...' : 'Checkout'}
+            {isProcessing ? 'Processing...' : 'Order Now - Free Shipping!'}
           </Button>
         </div>
       </div>

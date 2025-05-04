@@ -152,9 +152,9 @@ const OrderSuccess = () => {
           <p className="text-gray-600 text-base">You will receive a shipping confirmation email soon.</p>
           
           <div className="mt-6">
-            <a href="/verify-order" className="px-6 py-3 bg-[#FF7F50] text-white rounded-md hover:bg-[#FF7F50]/80 transition-colors w-full inline-block text-lg font-medium">
+            <a href="/" className="px-6 py-3 bg-[#FF7F50] text-white rounded-md hover:bg-[#FF7F50]/80 transition-colors w-full inline-block text-lg font-medium">
               <span className="flex items-center justify-center gap-2">
-                Track my order
+                Return to home
                 <Package className="h-5 w-5" />
               </span>
             </a>
