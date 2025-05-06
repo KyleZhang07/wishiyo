@@ -221,14 +221,14 @@ export default function Home() {
                 <span className="font-bold text-[#FF6B35]">1</span>
               </div>
               <h3 className="text-xl font-bold mb-2">Enter your idea</h3>
-              <p className="text-gray-600">Tell us about your book concept, characters, and story direction.</p>
+              <p className="text-gray-600">Tell us about your story, book character, and book idea.</p>
             </div>
             <div className="bg-white p-6 rounded-lg shadow-sm">
               <div className="w-12 h-12 bg-[#FF6B35]/10 rounded-full flex items-center justify-center mb-4">
                 <span className="font-bold text-[#FF6B35]">2</span>
               </div>
               <h3 className="text-xl font-bold mb-2">Customize your book</h3>
-              <p className="text-gray-600">Choose your style, pick illustrations, and personalize every detail.</p>
+              <p className="text-gray-600">Choose your style, pick cover, and personalize every detail.</p>
             </div>
             <div className="bg-white p-6 rounded-lg shadow-sm">
               <div className="w-12 h-12 bg-[#FF6B35]/10 rounded-full flex items-center justify-center mb-4">
@@ -259,7 +259,9 @@ export default function Home() {
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">Beatboxing Business Blues</h3>
-              <p className="text-gray-700">Her story—beats, business, and a whole lot of laughs.</p>
+              <p className="text-gray-700">"This book captured my personality perfectly! Best gift ever!"
+                <span className="block text-right pr-8">- Zuri</span>
+              </p>
             </div>
 
             {/* Book 2 */}
@@ -272,7 +274,9 @@ export default function Home() {
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">Coffee, Corgis, and Quirks</h3>
-              <p className="text-gray-700">All the little things that make him special.</p>
+              <p className="text-gray-700">"I laughed and cried reading this. So thoughtful and unique!"
+                <span className="block text-right pr-8">- Adrian</span>
+              </p>
             </div>
 
             {/* Book 3 */}
@@ -285,7 +289,9 @@ export default function Home() {
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">Shakespeare and Syllables</h3>
-              <p className="text-gray-700">Celebrating her love of poetry and teaching.</p>
+              <p className="text-gray-700">"A beautiful tribute to my passion. I'll treasure it forever!"
+                <span className="block text-right pr-8">- Ellie</span>
+              </p>
             </div>
 
             {/* Book 4 */}
@@ -298,7 +304,9 @@ export default function Home() {
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">Homebrew High Jinks</h3>
-              <p className="text-gray-700">Cheers to his craft beers and adventures gone sideways!</p>
+              <p className="text-gray-700">"My brewing adventures in book form! Such a creative surprise!"
+                <span className="block text-right pr-8">- Ethan</span>
+              </p>
             </div>
           </div>
         </div>
@@ -322,7 +330,7 @@ export default function Home() {
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">Auntie Jasmine's Wonderful Maya</h3>
-              <p className="text-gray-700">A special story starring Maya and the auntie who adores her.</p>
+              <p className="text-gray-700">"I love my book with all the pretty pictures! Thank you Auntie!"<span className="block text-right pr-8">- Maya</span></p>
             </div>
 
             {/* Book 2 */}
@@ -335,7 +343,7 @@ export default function Home() {
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">The Magic in Mateo</h3>
-              <p className="text-gray-700">Discovering everyday magic through Mateo's eyes.</p>
+              <p className="text-gray-700">"This book is so cool! I can see magic everywhere now!"<span className="block text-right pr-8">- Mateo</span></p>
             </div>
 
             {/* Book 3 */}
@@ -348,7 +356,7 @@ export default function Home() {
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">Charlie's Amazing Adventure</h3>
-              <p className="text-gray-700">Charlie's own adventure, told one page at a time.</p>
+              <p className="text-gray-700">"Wow! I'm the hero in my very own adventure story!"<span className="block text-right pr-8">- Charlie</span></p>
             </div>
 
             {/* Book 4 */}
@@ -361,7 +369,7 @@ export default function Home() {
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">Matt, I love you!</h3>
-              <p className="text-gray-700">Because Matt deserves his very own love story.</p>
+              <p className="text-gray-700">"This is the best gift ever. I'll read it every night."<span className="block text-right pr-8">- Matt</span></p>
             </div>
           </div>
         </div>

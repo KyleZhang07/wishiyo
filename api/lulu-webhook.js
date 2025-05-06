@@ -292,25 +292,23 @@ export default async function handler(req, res) {
     // 提取跟踪信息（如果有）
     let trackingInfo = null;
     if (status === 'SHIPPED') {
-      // 根据文档，line_item_statuses 可能是顶级属性或 printJobData 的属性
-      const lineItemStatuses = printJobData.line_item_statuses || webhookData.line_item_statuses;
+      // 从 line_items 数组中提取跟踪信息
+      if (printJobData.line_items && printJobData.line_items.length > 0) {
+        const lineItem = printJobData.line_items[0];
+        console.log('[LULU-WEBHOOK] Line item:', JSON.stringify(lineItem));
 
-      if (lineItemStatuses && lineItemStatuses.length > 0) {
-        const lineItemStatus = lineItemStatuses[0];
-        console.log('[LULU-WEBHOOK] Line item status:', JSON.stringify(lineItemStatus));
-
-        if (lineItemStatus.messages) {
+        if (lineItem.status && lineItem.status.messages) {
           trackingInfo = {
-            tracking_id: lineItemStatus.messages.tracking_id,
-            tracking_urls: lineItemStatus.messages.tracking_urls,
-            carrier_name: lineItemStatus.messages.carrier_name
+            tracking_id: lineItem.status.messages.tracking_id,
+            tracking_urls: lineItem.status.messages.tracking_urls,
+            carrier_name: lineItem.status.messages.carrier_name
           };
           console.log('[LULU-WEBHOOK] 提取的跟踪信息:', JSON.stringify(trackingInfo));
         } else {
-          console.log('[LULU-WEBHOOK] Line item status 中没有 messages 字段');
+          console.log('[LULU-WEBHOOK] Line item 中没有 status.messages 字段');
         }
       } else {
-        console.log('[LULU-WEBHOOK] 没有找到 line_item_statuses 字段或为空');
+        console.log('[LULU-WEBHOOK] 没有找到 line_items 字段或为空');
       }
     }
 
