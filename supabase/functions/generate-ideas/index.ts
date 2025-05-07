@@ -170,7 +170,7 @@ serve(async (req) => {
                 - "Learning to work with natural forces instead of constantly fighting against them"
 
                 Additionally, for each book idea, create 4 fictional praise quotes from imaginary publications, magazines, or critics.
-                These should sound like authentic book reviews or endorsements that would appear on a book's back cover.
+                These should sound like authentic book reviews or endorsements that would appear on a book's back cover. Each praise should be 2-3 sentences long, 30-50 words.
 
                 You must respond with ONLY a JSON array containing exactly 3 book ideas.`
             },
@@ -213,7 +213,7 @@ serve(async (req) => {
                 - "Chaos Whisperer" / "Transforming spectacular disasters into opportunities through sheer stubbornness and luck"
 
                 For the praises, follow these guidelines:
-                1. Each praise should be a substantial paragraph (2-3 sentences) that analyzes some aspect of the book or author's style
+                1. Each praise should be a substantial paragraph (2-3 sentences, 30-50 words) that analyzes some aspect of the book or author's style
                 2. Use language that matches the tone of the book idea - more formal for professional concepts, more playful for quirky ones
                 3. Include specific insights about the book's themes, the author's approach, or the reader experience
                 4. Make them sound like genuine reviews from publications with names that match the subject matter
