@@ -258,14 +258,16 @@ export default function Home() {
         {/* 使用flex布局确保锯齿与图片相对位置固定 */}
         <div className="flex h-full">
           {/* 左侧内容区域 - 文字和背景 */}
-          <div className="relative w-full md:w-[55%] bg-[#FFFAF5] z-10">
+          <div className="relative w-full md:w-[50%] bg-[#FFFAF5] z-10">
             <div className="flex flex-col justify-center h-full space-y-6 px-4 md:px-6 lg:px-12 xl:px-16 relative z-20">
-              <h2 className="text-4xl font-serif font-bold tracking-tighter">
-                Created with care for those who matter most
-              </h2>
-              <p className="text-lg text-gray-700">
-                Each book is crafted with attention to every detail – helping you express just how special someone is to you. From personalized stories to custom illustrations, we pour our hearts into making moments that last a lifetime.
-              </p>
+              <div className="max-w-[380px] mx-auto">
+                <h2 className="text-4xl font-serif font-bold tracking-tighter">
+                  Created with care for those who matter most
+                </h2>
+                <p className="text-lg text-gray-700 mt-6">
+                  Each book is crafted with attention to every detail – helping you express just how special someone is to you. From personalized stories to custom illustrations, we pour our hearts into making moments that last a lifetime.
+                </p>
+              </div>
             </div>
             
             {/* 锯齿形连接 - 放在左侧区域的右边缘 */}
@@ -277,7 +279,7 @@ export default function Home() {
           </div>
 
           {/* 右侧图片区域 */}
-          <div className="relative w-full md:w-[45%] bg-white z-0">
+          <div className="relative w-full md:w-[50%] bg-white z-0">
             <img 
               src="/images/showcase/story-reading.png" 
               alt="Story reading" 
@@ -363,7 +365,7 @@ export default function Home() {
         {/* 使用flex布局确保直线与图片相对位置固定 */}
         <div className="flex h-full">
           {/* 左侧图片区域 */}
-          <div className="relative w-full md:w-[45%] bg-white z-0 order-2 md:order-1">
+          <div className="relative w-full md:w-[50%] bg-white z-0 order-2 md:order-1">
             <img 
               src="/images/showcase/picture-reading.png" 
               alt="Picture reading" 
@@ -372,7 +374,7 @@ export default function Home() {
           </div>
 
           {/* 右侧内容区域 - 文字和背景 */}
-          <div className="relative w-full md:w-[55%] bg-[#FFFAF5] z-10 order-1 md:order-2">
+          <div className="relative w-full md:w-[50%] bg-[#FFFAF5] z-10 order-1 md:order-2">
             {/* 锯齿形连接 - 放在文字区域的左边缘，颜色为文字区域背景色 */}
             <div className="absolute left-0 top-0 bottom-0 w-[60px] z-20 transform -translate-x-1/2">
               <svg viewBox="0 0 30 200" preserveAspectRatio="none" className="h-full w-full">
@@ -381,12 +383,14 @@ export default function Home() {
             </div>
             
             <div className="flex flex-col justify-center h-full space-y-6 px-4 md:px-6 lg:px-12 xl:px-16 relative z-20">
-              <h2 className="text-4xl font-serif font-bold tracking-tighter">
-                Every story tells their unique journey
-              </h2>
-              <p className="text-lg text-gray-700">
-                We believe the most meaningful gifts are those that celebrate what makes someone special. Our personalized books capture the essence of your loved ones – their personality, interests, and the unique bond you share together.
-              </p>
+              <div className="max-w-[380px] mx-auto">
+                <h2 className="text-4xl font-serif font-bold tracking-tighter">
+                  Every story tells their unique journey
+                </h2>
+                <p className="text-lg text-gray-700 mt-6">
+                  We believe the most meaningful gifts are those that celebrate what makes someone special. Our personalized books capture the essence of your loved ones – their personality, interests, and the unique bond you share together.
+                </p>
+              </div>
             </div>
           </div>
         </div>
