@@ -36,7 +36,7 @@ const FriendsLanding = () => {
       <div className="bg-white shadow-lg">
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-[#FF7F50] to-[#FF7F50]/80" />
-          <div className="relative z-10 px-[60px] my-[64px] bg-[#FFFAF5] py-[100px]">
+          <div className="relative z-10 px-[60px] my-[50px] bg-[#FFFAF5] py-[75px]">
             <div className="max-w-6xl mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                 <div className="md:order-2 text-white space-y-6 max-w-[480px]">
@@ -47,8 +47,8 @@ const FriendsLanding = () => {
                   </Link>
                 </div>
                 <div className="md:order-1 hidden md:block">
-                  <div className="w-80 h-80 mx-auto rounded-sm overflow-hidden shadow-lg">
-                    <img src="/images/showcase/dream-life/dream-life1.webp" alt="Personalized Story Book with funny moments" className="w-full h-full object-cover scale-110" />
+                  <div className="w-[420px] h-96 mx-auto rounded-sm overflow-hidden shadow-lg transform -translate-x-4">
+                    <img src="/images/showcase/dream-life/dream-life1.webp" alt="Personalized Story Book with funny moments" className="w-full h-full object-cover" />
                   </div>
                 </div>
               </div>
@@ -69,7 +69,9 @@ const FriendsLanding = () => {
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">Beatboxing Business Blues</h3>
-              <p className="text-gray-700">Her story—beats, business, and a whole lot of laughs.</p>
+              <p className="text-gray-700">"This book captured my personality perfectly! Best gift ever!"
+                <span className="block text-right pr-8">- Zuri</span>
+              </p>
             </div>
 
             {/* Book 2 */}
@@ -82,7 +84,9 @@ const FriendsLanding = () => {
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">Coffee, Corgis, and Quirks</h3>
-              <p className="text-gray-700">All the little things that make him special.</p>
+              <p className="text-gray-700">"I laughed and cried reading this. So thoughtful and unique!"
+                <span className="block text-right pr-8">- Adrian</span>
+              </p>
             </div>
 
             {/* Book 3 */}
@@ -95,7 +99,9 @@ const FriendsLanding = () => {
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">Shakespeare and Syllables</h3>
-              <p className="text-gray-700">Celebrating her love of poetry and teaching.</p>
+              <p className="text-gray-700">"A beautiful tribute to my passion. I'll treasure it forever!"
+                <span className="block text-right pr-8">- Ellie</span>
+              </p>
             </div>
 
             {/* Book 4 */}
@@ -108,7 +114,9 @@ const FriendsLanding = () => {
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">Homebrew High Jinks</h3>
-              <p className="text-gray-700">Cheers to his craft beers and adventures gone sideways!</p>
+              <p className="text-gray-700">"My brewing adventures in book form! Such a creative surprise!"
+                <span className="block text-right pr-8">- Ethan</span>
+              </p>
             </div>
           </div>
         </div>

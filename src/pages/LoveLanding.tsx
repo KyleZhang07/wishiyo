@@ -35,7 +35,7 @@ const LoveLanding = () => {
       <div className="bg-white shadow-lg">
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-[#FF7F50] to-[#FF7F50]/80" />
-          <div className="relative z-10 px-[60px] my-[64px] bg-[#F6FAFF] py-[100px]">
+          <div className="relative z-10 px-[60px] my-[50px] bg-[#F6FAFF] py-[75px]">
             <div className="max-w-6xl mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                 <div className="md:order-2 text-white space-y-6 max-w-[480px]">
@@ -46,8 +46,8 @@ const LoveLanding = () => {
                   </Link>
                 </div>
                 <div className="md:order-1 hidden md:block">
-                  <div className="w-80 h-80 mx-auto rounded-sm overflow-hidden shadow-lg transform translate-x-4 translate-y-2">
-                    <img src="/images/showcase/dream-life/dream-life.webp" alt="Colorful illustrated picture book with fairy tale characters" className="w-full h-full object-cover scale-110" />
+                  <div className="w-[420px] h-96 mx-auto rounded-sm overflow-hidden shadow-lg transform -translate-x-4 translate-y-2">
+                    <img src="/images/showcase/dream-life/dream-life.webp" alt="Colorful illustrated picture book with fairy tale characters" className="w-full h-full object-cover" />
                   </div>
                 </div>
               </div>
@@ -68,7 +68,9 @@ const LoveLanding = () => {
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">Auntie Jasmine's Wonderful Maya</h3>
-              <p className="text-gray-700">A special story starring Maya and the auntie who adores her.</p>
+              <p className="text-gray-700">"I love my book with all the pretty pictures! Thank you Auntie!"
+                <span className="block text-right pr-8">- Maya</span>
+              </p>
             </div>
 
             {/* Book 2 */}
@@ -81,7 +83,9 @@ const LoveLanding = () => {
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">The Magic in Mateo</h3>
-              <p className="text-gray-700">Discovering everyday magic through Mateo's eyes.</p>
+              <p className="text-gray-700">"This book is so cool! I can see magic everywhere now!"
+                <span className="block text-right pr-8">- Mateo</span>
+              </p>
             </div>
 
             {/* Book 3 */}
@@ -94,7 +98,9 @@ const LoveLanding = () => {
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">Charlie's Amazing Adventure</h3>
-              <p className="text-gray-700">Charlie's own adventure, told one page at a time.</p>
+              <p className="text-gray-700">"Wow! I'm the hero in my very own adventure story!"
+                <span className="block text-right pr-8">- Charlie</span>
+              </p>
             </div>
 
             {/* Book 4 */}
@@ -107,7 +113,9 @@ const LoveLanding = () => {
                 />
               </div>
               <h3 className="text-xl font-bold mb-2">Matt, I love you!</h3>
-              <p className="text-gray-700">Because Matt deserves his very own love story.</p>
+              <p className="text-gray-700">"This is the best gift ever. I'll read it every night."
+                <span className="block text-right pr-8">- Matt</span>
+              </p>
             </div>
           </div>
         </div>
