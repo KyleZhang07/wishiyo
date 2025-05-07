@@ -34,21 +34,27 @@ const Footer = () => {
                 <li>
                   <Link
                     to="/"
-                    onClick={() => {
-                      window.scrollTo(0, 0);
-                    }}
+                    onClick={() => window.scrollTo(0, 0)}
                     className="text-gray-600 hover:text-gray-900 transition-colors"
                   >
                     Home
                   </Link>
                 </li>
                 <li>
-                  <Link to="/friends" className="text-gray-600 hover:text-gray-900 transition-colors">
+                  <Link 
+                    to="/friends" 
+                    className="text-gray-600 hover:text-gray-900 transition-colors"
+                    onClick={() => window.scrollTo(0, 0)}
+                  >
                     Story Book
                   </Link>
                 </li>
                 <li>
-                  <Link to="/love" className="text-gray-600 hover:text-gray-900 transition-colors">
+                  <Link 
+                    to="/love" 
+                    className="text-gray-600 hover:text-gray-900 transition-colors"
+                    onClick={() => window.scrollTo(0, 0)}
+                  >
                     Picture Book
                   </Link>
                 </li>
