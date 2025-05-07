@@ -606,8 +606,63 @@ const CanvasCoverPreview = ({
       imageScale
     });
 
-    // 注意：Sweet Pink 风格的图片绘制已移至后面，确保图片在文字之下
-    // 此处不再绘制 Sweet Pink 风格图片，而是在绘制完文字后再绘制图片
+    // 强制处理 Sweet Pink 风格图片，无论 isSweetPink 变量是否正确
+    if (image?.element && template.id === 'pastel-beige') {
+      console.log('开始处理 Sweet Pink 风格图片');
+      // 计算图片区域 - 使用更大的尺寸
+      const imgSizeMultiplier = 0.95; // 对 Sweet Pink 样式使用更大的尺寸
+      const imgSize = width * imgSizeMultiplier; // 图片大小为宽度的95%
+      const centerX = width / 2;
+      const centerY = height * 0.6; // 将图片中心点放在页面60%的位置，即下移到页面中部偏下
+
+      // 应用图片位置调整 - 将范围从 -1~1 转换为像素偏移
+      const posX = imagePosition.x * imgSize / 2; // 范围从 -imgSize/2 到 imgSize/2
+      const posY = imagePosition.y * imgSize / 2; // 范围从 -imgSize/2 到 imgSize/2
+
+      // 调整中心点位置
+      const adjustedCenterX = centerX + posX;
+      const adjustedCenterY = centerY + posY;
+
+      // 不再使用圆形裁剪，直接显示矩形图片
+      ctx.save(); // 保存上下文状态，但不进行裁剪
+
+      // 计算图片尺寸
+      const imgAspect = image.element.width / image.element.height;
+      let drawWidth, drawHeight;
+
+      if (imgAspect > 1) {
+        // 横向图片
+        drawHeight = imgSize;
+        drawWidth = drawHeight * imgAspect;
+      } else {
+        // 纵向图片
+        drawWidth = imgSize;
+        drawHeight = drawWidth / imgAspect;
+      }
+
+      // 应用缩放
+      const scale = imageScale / 100;
+      drawWidth *= scale;
+      drawHeight *= scale;
+
+      // 计算调整后的位置
+      const x = adjustedCenterX - drawWidth / 2;
+      const y = adjustedCenterY - drawHeight / 2;
+
+      console.log('Sweet Pink 风格图片调整:', { imagePosition, imageScale, posX, posY, x, y, drawWidth, drawHeight });
+
+      // 应用滤镜和透明度
+      ctx.filter = 'none'; // 不使用滤镜
+      ctx.globalAlpha = 0.9; // 设置透明度
+
+      // 绘制图片
+      ctx.drawImage(image.element, x, y, drawWidth, drawHeight);
+
+      // 恢复上下文
+      ctx.restore();
+      ctx.globalAlpha = 1.0;
+      ctx.filter = 'none';
+    }
 
     // 如果是bestseller模板
     if (template.id === 'bestseller') {
@@ -1198,6 +1253,61 @@ const CanvasCoverPreview = ({
       ctx.fillStyle = bottomGradient;
       ctx.fillRect(0, height * 0.33, width, height * 0.67);
 
+      // ========== 图片绘制代码块（从原位置移动到此处） ==========
+      if (image?.element) {
+        // 检查是否已经在前面绘制了图片
+        console.log('备用图片绘制代码执行中...');
+
+        // 计算图片区域 - 使用更大的尺寸
+        const imgSizeMultiplier = 0.95; // 对 Sweet Pink 样式使用更大的尺寸
+        const imgSize = width * imgSizeMultiplier; // 图片大小为宽度的95%
+        const centerX = width / 2;
+        const centerY = height * 0.6; // 将图片中心点放在页面60%的位置，即下移到页面中部偏下
+
+        // 应用图片位置调整 - 将范围从 -1~1 转换为像素偏移
+        const posX = imagePosition.x * imgSize / 2; // 范围从 -imgSize/2 到 imgSize/2
+        const posY = imagePosition.y * imgSize / 2; // 范围从 -imgSize/2 到 imgSize/2
+
+        // 调整中心点位置
+        const adjustedCenterX = centerX + posX;
+        const adjustedCenterY = centerY + posY;
+
+        // 计算图片尺寸
+        const imgAspect = image.element.width / image.element.height;
+        let drawWidth, drawHeight;
+
+        if (imgAspect > 1) {
+          // 横向图片
+          drawHeight = imgSize;
+          drawWidth = drawHeight * imgAspect;
+        } else {
+          // 纵向图片
+          drawWidth = imgSize;
+          drawHeight = drawWidth / imgAspect;
+        }
+
+        // 应用缩放
+        const scale = imageScale / 100;
+        drawWidth *= scale;
+        drawHeight *= scale;
+
+        // 计算最终绘制位置
+        const x = adjustedCenterX - drawWidth / 2;
+        const y = adjustedCenterY - drawHeight / 2;
+
+        console.log('备用 Sweet Pink 风格图片调整:', { imagePosition, imageScale, posX, posY, x, y, drawWidth, drawHeight });
+
+        // 不再使用圆形裁剪，直接显示矩形图片
+        ctx.save(); // 保存上下文状态，但不进行裁剪
+
+        // 绘制图片
+        ctx.drawImage(image.element, x, y, drawWidth, drawHeight);
+
+        // 恢复上下文
+        ctx.restore();
+      }
+      // ========== 图片绘制代码块结束 ==========
+
       // 添加更多星星装饰
       ctx.fillStyle = '#FFF2B3'; // 更浅的黄色星星
 
@@ -1282,60 +1392,6 @@ const CanvasCoverPreview = ({
 
       // Draw subtitle using helper function
       drawTextInArea(ctx, lines, subtitleArea, subtitleFont, subtitleColor, subtitleLineHeight, 'center');
-
-      // 如果前面的专门处理代码没有正确执行，这里提供一个备用的图片绘制代码
-      if (image?.element) {
-        // 检查是否已经在前面绘制了图片
-        console.log('备用图片绘制代码执行中...');
-
-        // 计算图片区域 - 使用更大的尺寸
-        const imgSizeMultiplier = 0.95; // 对 Sweet Pink 样式使用更大的尺寸
-        const imgSize = width * imgSizeMultiplier; // 图片大小为宽度的95%
-        const centerX = width / 2;
-        const centerY = height * 0.6; // 将图片中心点放在页面60%的位置，即下移到页面中部偏下
-
-        // 应用图片位置调整 - 将范围从 -1~1 转换为像素偏移
-        const posX = imagePosition.x * imgSize / 2; // 范围从 -imgSize/2 到 imgSize/2
-        const posY = imagePosition.y * imgSize / 2; // 范围从 -imgSize/2 到 imgSize/2
-
-        // 调整中心点位置
-        const adjustedCenterX = centerX + posX;
-        const adjustedCenterY = centerY + posY;
-
-        // 计算图片尺寸
-        const imgAspect = image.element.width / image.element.height;
-        let drawWidth, drawHeight;
-
-        if (imgAspect > 1) {
-          // 横向图片
-          drawHeight = imgSize;
-          drawWidth = drawHeight * imgAspect;
-        } else {
-          // 纵向图片
-          drawWidth = imgSize;
-          drawHeight = drawWidth / imgAspect;
-        }
-
-        // 应用缩放
-        const scale = imageScale / 100;
-        drawWidth *= scale;
-        drawHeight *= scale;
-
-        // 计算最终绘制位置
-        const x = adjustedCenterX - drawWidth / 2;
-        const y = adjustedCenterY - drawHeight / 2;
-
-        console.log('备用 Sweet Pink 风格图片调整:', { imagePosition, imageScale, posX, posY, x, y, drawWidth, drawHeight });
-
-        // 不再使用圆形裁剪，直接显示矩形图片
-        ctx.save(); // 保存上下文状态，但不进行裁剪
-
-        // 绘制图片
-        ctx.drawImage(image.element, x, y, drawWidth, drawHeight);
-
-        // 恢复上下文
-        ctx.restore();
-      }
 
       // Draw author name - 再向上移动一点
       ctx.font = `bold 35px ${comicFont}`;
@@ -2141,65 +2197,6 @@ const CanvasCoverPreview = ({
       // 如果条形码图像未加载，绘制一个占位区域
       ctx.fillStyle = '#FFFFFF';
       ctx.fillRect(Math.round(width - 260), Math.round(height - 160), 200, 100); // 相应调整占位区域位置
-    }
-    
-    // 在所有文字绘制完成后，为 Sweet Pink 风格添加图片绘制
-    // 这样确保图片在文字之下，不会遮挡文字
-    if (image?.element && template.id === 'pastel-beige') {
-      console.log('在文字之下绘制 Sweet Pink 风格图片');
-      // 计算图片区域 - 使用更大的尺寸
-      const imgSizeMultiplier = 0.95; // 对 Sweet Pink 样式使用更大的尺寸
-      const imgSize = width * imgSizeMultiplier; // 图片大小为宽度的95%
-      const centerX = width / 2;
-      const centerY = height * 0.6; // 将图片中心点放在页面60%的位置，即下移到页面中部偏下
-
-      // 应用图片位置调整 - 将范围从 -1~1 转换为像素偏移
-      const posX = imagePosition.x * imgSize / 2; // 范围从 -imgSize/2 到 imgSize/2
-      const posY = imagePosition.y * imgSize / 2; // 范围从 -imgSize/2 到 imgSize/2
-
-      // 调整中心点位置
-      const adjustedCenterX = centerX + posX;
-      const adjustedCenterY = centerY + posY;
-
-      // 不再使用圆形裁剪，直接显示矩形图片
-      ctx.save(); // 保存上下文状态，但不进行裁剪
-
-      // 计算图片尺寸
-      const imgAspect = image.element.width / image.element.height;
-      let drawWidth, drawHeight;
-
-      if (imgAspect > 1) {
-        // 横向图片
-        drawHeight = imgSize;
-        drawWidth = drawHeight * imgAspect;
-      } else {
-        // 纵向图片
-        drawWidth = imgSize;
-        drawHeight = drawWidth / imgAspect;
-      }
-
-      // 应用缩放
-      const scale = imageScale / 100;
-      drawWidth *= scale;
-      drawHeight *= scale;
-
-      // 计算调整后的位置
-      const x = adjustedCenterX - drawWidth / 2;
-      const y = adjustedCenterY - drawHeight / 2;
-
-      console.log('Sweet Pink 风格图片调整:', { imagePosition, imageScale, posX, posY, x, y, drawWidth, drawHeight });
-
-      // 应用滤镜和透明度
-      ctx.filter = 'none'; // 不使用滤镜
-      ctx.globalAlpha = 0.9; // 设置透明度
-
-      // 绘制图片
-      ctx.drawImage(image.element, x, y, drawWidth, drawHeight);
-
-      // 恢复上下文
-      ctx.restore();
-      ctx.globalAlpha = 1.0;
-      ctx.filter = 'none';
     }
   };
 
