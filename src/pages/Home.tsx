@@ -173,12 +173,18 @@ export default function Home() {
                   <img
                     src="/images/showcase/personalized-book.jpeg"
                     alt="Woman holding a personalized story book with custom title and character"
-                    className="absolute inset-0 w-full h-full object-cover"
+                    className="absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-in-out group-hover:opacity-0"
+                  />
+                  {/* Hover image - Story Book open image */}
+                  <img
+                    src="/images/showcase/story-open.png"
+                    alt="Open personalized story book showing inside pages"
+                    className="absolute inset-0 w-full h-full object-cover opacity-0 transition-all duration-700 ease-in-out group-hover:opacity-100 transform scale-[1.02] group-hover:scale-100"
                   />
                 </div>
                 <h3 className="text-2xl font-bold mb-2">Story Book</h3>
                 <p className="text-gray-700 mb-4">Write a story just for them</p>
-                <span className="text-[#FF6B35] group-hover:text-[#FF6B35]/80 inline-flex items-center">
+                <span className="text-[#FF6B35] group-hover:text-[#FF6B35]/80 inline-flex items-center transition-all duration-300 group-hover:translate-x-1">
                   Explore <ArrowRight className="ml-2 h-4 w-4" />
                 </span>
               </div>
@@ -195,12 +201,18 @@ export default function Home() {
                   <img
                     src="/images/showcase/illustrated-book.png"
                     alt="Child holding a colorful illustrated picture book with vibrant artwork"
-                    className="absolute inset-0 w-full h-full object-cover"
+                    className="absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-in-out group-hover:opacity-0"
+                  />
+                  {/* Hover image - Picture Book open image */}
+                  <img
+                    src="/images/showcase/picture-open.png"
+                    alt="Open illustrated picture book showing colorful inside pages"
+                    className="absolute inset-0 w-full h-full object-cover opacity-0 transition-all duration-700 ease-in-out group-hover:opacity-100 transform scale-[1.02] group-hover:scale-100"
                   />
                 </div>
                 <h3 className="text-2xl font-bold mb-2">Picture Book</h3>
                 <p className="text-gray-700 mb-4">Draw an imaginary book for them</p>
-                <span className="text-[#FF6B35] group-hover:text-[#FF6B35]/80 inline-flex items-center">
+                <span className="text-[#FF6B35] group-hover:text-[#FF6B35]/80 inline-flex items-center transition-all duration-300 group-hover:translate-x-1">
                   Explore <ArrowRight className="ml-2 h-4 w-4" />
                 </span>
               </div>
@@ -236,6 +248,47 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-bold mb-2">Get your book</h3>
               <p className="text-gray-600">We'll print and ship your finished book directly to your doorstep.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Thoughtfully Made Banner Section */}
+      <section className="relative overflow-hidden" style={{height: "500px"}}>
+        <div className="absolute inset-0 w-full h-full">
+          {/* 左侧背景色 */}
+          <div className="absolute left-0 top-0 bottom-0 w-1/2 bg-[#FFFAF5]"></div>
+          {/* 右侧背景色 */}
+          <div className="absolute right-0 top-0 bottom-0 w-1/2 bg-white"></div>
+          {/* 锯齿形连接 */}
+          <div className="absolute left-1/2 top-0 bottom-0 transform -translate-x-1/2 w-[60px] z-10">
+            <svg viewBox="0 0 30 200" preserveAspectRatio="none" className="h-full w-full">
+              <path d="M0,0 L15,10 L0,20 L15,30 L0,40 L15,50 L0,60 L15,70 L0,80 L15,90 L0,100 L15,110 L0,120 L15,130 L0,140 L15,150 L0,160 L15,170 L0,180 L15,190 L0,200 L30,200 L15,190 L30,180 L15,170 L30,160 L15,150 L30,140 L15,130 L30,120 L15,110 L30,100 L15,90 L30,80 L15,70 L30,60 L15,50 L30,40 L15,30 L30,20 L15,10 L30,0 L0,0 Z" fill="#FFFAF5" />
+            </svg>
+          </div>
+        </div>
+
+        <div className="container h-full px-4 md:px-6 mx-auto relative z-20">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch h-full">
+            {/* 左侧文字内容 */}
+            <div className="flex flex-col justify-center h-full space-y-6 pr-4 md:pr-12">
+              <h2 className="text-4xl font-serif font-bold tracking-tighter">
+                Created with care for those who matter most
+              </h2>
+              <p className="text-lg text-gray-700">
+                Each book is crafted with attention to every detail – helping you express just how special someone is to you. From personalized stories to custom illustrations, we pour our hearts into making moments that last a lifetime.
+              </p>
+            </div>
+
+            {/* 右侧图片 */}
+            <div className="flex justify-center h-full">
+              <div className="relative w-full h-full max-w-xl">
+                <img 
+                  src="/images/showcase/story-reading.png" 
+                  alt="Story reading" 
+                  className="w-full h-full object-cover shadow-lg" 
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -306,6 +359,47 @@ export default function Home() {
               <h3 className="text-xl font-bold mb-2">Homebrew High Jinks</h3>
               <p className="text-gray-700">"My brewing adventures in book form! Such a creative surprise!"
                 <span className="block text-right pr-8">- Ethan</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Personalized Experience Banner Section */}
+      <section className="relative overflow-hidden" style={{height: "500px"}}>
+        <div className="absolute inset-0 w-full h-full">
+          {/* 左侧背景色 */}
+          <div className="absolute left-0 top-0 bottom-0 w-1/2 bg-white"></div>
+          {/* 右侧背景色 */}
+          <div className="absolute right-0 top-0 bottom-0 w-1/2 bg-[#FFFAF5]"></div>
+          {/* 锯齿形连接 */}
+          <div className="absolute left-1/2 top-0 bottom-0 transform -translate-x-1/2 w-[60px] z-10">
+            <svg viewBox="0 0 30 200" preserveAspectRatio="none" className="h-full w-full">
+              <path d="M0,0 L15,10 L0,20 L15,30 L0,40 L15,50 L0,60 L15,70 L0,80 L15,90 L0,100 L15,110 L0,120 L15,130 L0,140 L15,150 L0,160 L15,170 L0,180 L15,190 L0,200 L30,200 L15,190 L30,180 L15,170 L30,160 L15,150 L30,140 L15,130 L30,120 L15,110 L30,100 L15,90 L30,80 L15,70 L30,60 L15,50 L30,40 L15,30 L30,20 L15,10 L30,0 L0,0 Z" fill="white" />
+            </svg>
+          </div>
+        </div>
+
+        <div className="container h-full px-4 md:px-6 mx-auto relative z-20">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch h-full">
+            {/* 左侧图片 */}
+            <div className="flex justify-center order-2 md:order-1 h-full">
+              <div className="relative w-full h-full max-w-xl">
+                <img 
+                  src="/images/showcase/picture-reading.png" 
+                  alt="Picture reading" 
+                  className="w-full h-full object-cover shadow-lg" 
+                />
+              </div>
+            </div>
+
+            {/* 右侧文字内容 */}
+            <div className="flex flex-col justify-center h-full space-y-6 pl-4 md:pl-12 order-1 md:order-2">
+              <h2 className="text-4xl font-serif font-bold tracking-tighter">
+                Every story tells their unique journey
+              </h2>
+              <p className="text-lg text-gray-700">
+                We believe the most meaningful gifts are those that celebrate what makes someone special. Our personalized books capture the essence of your loved ones – their personality, interests, and the unique bond you share together.
               </p>
             </div>
           </div>

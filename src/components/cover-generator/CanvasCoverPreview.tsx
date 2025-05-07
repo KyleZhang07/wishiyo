@@ -1383,7 +1383,7 @@ const CanvasCoverPreview = ({
       const subtitleFont = `normal 26px ${comicFont}`; // 从28px减小到26px (折中方案)
       const subtitleColor = '#9400D3'; // Dark purple text
       const subtitleLineHeight = 33; // 从35减小到33 (折中方案)
-      const subtitleArea = { x: width * 0.1, y: height * 0.3, width: width * 0.8, height: height * 0.15 }; // 调整到height*0.3
+      const subtitleArea = { x: width * 0.1, y: height * 0.27, width: width * 0.8, height: height * 0.15 }; // 调整到height*0.3
 
       // Wrap subtitle text
       ctx.font = subtitleFont; // Set font for measurement
