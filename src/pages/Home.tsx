@@ -222,7 +222,7 @@ export default function Home() {
       </section>
 
       {/* How It Works Section */}
-      <section className="py-24 bg-white">
+      <section className="pt-12 pb-24 bg-white">
         <div className="container px-4 md:px-6 mx-auto">
           <h2 className="text-4xl font-serif font-bold tracking-tighter text-left mb-12">
             How it works
@@ -255,23 +255,11 @@ export default function Home() {
 
       {/* Thoughtfully Made Banner Section */}
       <section className="relative overflow-hidden" style={{height: "500px"}}>
-        <div className="absolute inset-0 w-full h-full">
-          {/* 左侧背景色 */}
-          <div className="absolute left-0 top-0 bottom-0 w-1/2 bg-[#FFFAF5]"></div>
-          {/* 右侧背景色 */}
-          <div className="absolute right-0 top-0 bottom-0 w-1/2 bg-white"></div>
-          {/* 锯齿形连接 */}
-          <div className="absolute left-1/2 top-0 bottom-0 transform -translate-x-1/2 w-[60px] z-10">
-            <svg viewBox="0 0 30 200" preserveAspectRatio="none" className="h-full w-full">
-              <path d="M0,0 L15,10 L0,20 L15,30 L0,40 L15,50 L0,60 L15,70 L0,80 L15,90 L0,100 L15,110 L0,120 L15,130 L0,140 L15,150 L0,160 L15,170 L0,180 L15,190 L0,200 L30,200 L15,190 L30,180 L15,170 L30,160 L15,150 L30,140 L15,130 L30,120 L15,110 L30,100 L15,90 L30,80 L15,70 L30,60 L15,50 L30,40 L15,30 L30,20 L15,10 L30,0 L0,0 Z" fill="#FFFAF5" />
-            </svg>
-          </div>
-        </div>
-
-        <div className="container h-full px-4 md:px-6 mx-auto relative z-20">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch h-full">
-            {/* 左侧文字内容 */}
-            <div className="flex flex-col justify-center h-full space-y-6 pr-4 md:pr-12">
+        {/* 使用flex布局确保锯齿与图片相对位置固定 */}
+        <div className="flex h-full">
+          {/* 左侧内容区域 - 文字和背景 */}
+          <div className="relative w-full md:w-[55%] bg-[#FFFAF5] z-10">
+            <div className="flex flex-col justify-center h-full space-y-6 px-4 md:px-6 lg:px-12 xl:px-16 relative z-20">
               <h2 className="text-4xl font-serif font-bold tracking-tighter">
                 Created with care for those who matter most
               </h2>
@@ -279,17 +267,22 @@ export default function Home() {
                 Each book is crafted with attention to every detail – helping you express just how special someone is to you. From personalized stories to custom illustrations, we pour our hearts into making moments that last a lifetime.
               </p>
             </div>
-
-            {/* 右侧图片 */}
-            <div className="flex justify-center h-full">
-              <div className="relative w-full h-full max-w-xl">
-                <img 
-                  src="/images/showcase/story-reading.png" 
-                  alt="Story reading" 
-                  className="w-full h-full object-cover shadow-lg" 
-                />
-              </div>
+            
+            {/* 锯齿形连接 - 放在左侧区域的右边缘 */}
+            <div className="absolute right-0 top-0 bottom-0 w-[60px] z-20 transform translate-x-1/2">
+              <svg viewBox="0 0 30 200" preserveAspectRatio="none" className="h-full w-full">
+                <path d="M0,0 L15,16.7 L0,33.4 L15,50.1 L0,66.8 L15,83.5 L0,100.2 L15,116.9 L0,133.6 L15,150.3 L0,167 L15,183.7 L0,200 L30,200 L15,183.7 L30,167 L15,150.3 L30,133.6 L15,116.9 L30,100.2 L15,83.5 L30,66.8 L15,50.1 L30,33.4 L15,16.7 L30,0 L0,0 Z" fill="#FFFAF5" />
+              </svg>
             </div>
+          </div>
+
+          {/* 右侧图片区域 */}
+          <div className="relative w-full md:w-[45%] bg-white z-0">
+            <img 
+              src="/images/showcase/story-reading.png" 
+              alt="Story reading" 
+              className="h-full w-full object-cover shadow-lg" 
+            />
           </div>
         </div>
       </section>
@@ -367,34 +360,21 @@ export default function Home() {
 
       {/* Personalized Experience Banner Section */}
       <section className="relative overflow-hidden" style={{height: "500px"}}>
-        <div className="absolute inset-0 w-full h-full">
-          {/* 左侧背景色 */}
-          <div className="absolute left-0 top-0 bottom-0 w-1/2 bg-white"></div>
-          {/* 右侧背景色 */}
-          <div className="absolute right-0 top-0 bottom-0 w-1/2 bg-[#FFFAF5]"></div>
-          {/* 锯齿形连接 */}
-          <div className="absolute left-1/2 top-0 bottom-0 transform -translate-x-1/2 w-[60px] z-10">
-            <svg viewBox="0 0 30 200" preserveAspectRatio="none" className="h-full w-full">
-              <path d="M0,0 L15,10 L0,20 L15,30 L0,40 L15,50 L0,60 L15,70 L0,80 L15,90 L0,100 L15,110 L0,120 L15,130 L0,140 L15,150 L0,160 L15,170 L0,180 L15,190 L0,200 L30,200 L15,190 L30,180 L15,170 L30,160 L15,150 L30,140 L15,130 L30,120 L15,110 L30,100 L15,90 L30,80 L15,70 L30,60 L15,50 L30,40 L15,30 L30,20 L15,10 L30,0 L0,0 Z" fill="white" />
-            </svg>
+        {/* 使用flex布局确保直线与图片相对位置固定 */}
+        <div className="flex h-full">
+          {/* 左侧图片区域 */}
+          <div className="relative w-full md:w-[45%] bg-white z-0 order-2 md:order-1">
+            <img 
+              src="/images/showcase/picture-reading.png" 
+              alt="Picture reading" 
+              className="h-full w-full object-cover shadow-lg" 
+            />
           </div>
-        </div>
 
-        <div className="container h-full px-4 md:px-6 mx-auto relative z-20">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch h-full">
-            {/* 左侧图片 */}
-            <div className="flex justify-center order-2 md:order-1 h-full">
-              <div className="relative w-full h-full max-w-xl">
-                <img 
-                  src="/images/showcase/picture-reading.png" 
-                  alt="Picture reading" 
-                  className="w-full h-full object-cover shadow-lg" 
-                />
-              </div>
-            </div>
+          {/* 右侧内容区域 - 文字和背景 */}
+          <div className="relative w-full md:w-[55%] bg-[#FFFAF5] z-10 order-1 md:order-2">
 
-            {/* 右侧文字内容 */}
-            <div className="flex flex-col justify-center h-full space-y-6 pl-4 md:pl-12 order-1 md:order-2">
+            <div className="flex flex-col justify-center h-full space-y-6 px-4 md:px-6 lg:px-12 xl:px-16 relative z-20">
               <h2 className="text-4xl font-serif font-bold tracking-tighter">
                 Every story tells their unique journey
               </h2>
