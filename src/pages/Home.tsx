@@ -222,7 +222,7 @@ export default function Home() {
       </section>
 
       {/* How It Works Section */}
-      <section className="pt-12 pb-24 bg-white">
+      <section className="pt-12 pb-36 bg-white">
         <div className="container px-4 md:px-6 mx-auto">
           <h2 className="text-4xl font-serif font-bold tracking-tighter text-left mb-12">
             How it works
@@ -262,10 +262,10 @@ export default function Home() {
             <div className="flex flex-col justify-center h-full space-y-6 px-4 md:px-6 lg:px-12 xl:px-16 relative z-20">
               <div className="max-w-[380px] mx-auto">
                 <h2 className="text-4xl font-serif font-bold tracking-tighter">
-                  Created with care for those who matter most
+                  Create a delightful surprise they'll treasure
                 </h2>
-                <p className="text-lg text-gray-700 mt-6">
-                  Each book is crafted with attention to every detail – helping you express just how special someone is to you. From personalized stories to custom illustrations, we pour our hearts into making moments that last a lifetime.
+                <p className="mt-6 text-lg leading-8 text-gray-600">
+                  Each book brings joy and laughter – a unique gift that will light up their face and become a treasured memory they'll love for years.
                 </p>
               </div>
             </div>
@@ -385,10 +385,10 @@ export default function Home() {
             <div className="flex flex-col justify-center h-full space-y-6 px-4 md:px-6 lg:px-12 xl:px-16 relative z-20">
               <div className="max-w-[380px] mx-auto">
                 <h2 className="text-4xl font-serif font-bold tracking-tighter">
-                  Every story tells their unique journey
+                  Make them the star of their own story
                 </h2>
-                <p className="text-lg text-gray-700 mt-6">
-                  We believe the most meaningful gifts are those that celebrate what makes someone special. Our personalized books capture the essence of your loved ones – their personality, interests, and the unique bond you share together.
+                <p className="mt-6 text-lg leading-8 text-gray-600">
+                  Celebrate what makes your loved ones special – capturing their unique personality, interests, and the special bond you share together.
                 </p>
               </div>
             </div>
