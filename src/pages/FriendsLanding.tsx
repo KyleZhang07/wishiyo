@@ -56,42 +56,6 @@ const FriendsLanding = () => {
           </div>
         </div>
 
-        {/* Showcase Section with Zigzag Edge */}
-        <section className="relative overflow-hidden mt-24 mb-16" style={{height: "500px"}}>
-          {/* 使用flex布局确保锯齿与图片相对位置固定 */}
-          <div className="flex h-full">
-            {/* 左侧内容区域 - 文字和背景 */}
-            <div className="relative w-full md:w-[35%] bg-[#FFFAF5] z-10">
-              <div className="flex flex-col justify-center h-full space-y-6 px-4 md:px-6 lg:px-12 xl:px-16 relative z-20">
-                <div className="max-w-[360px] mx-auto">
-                  <h2 className="text-4xl font-serif font-bold tracking-tighter">
-                    Celebrate their story
-                  </h2>
-                  <p className="text-lg text-gray-700 mt-6">
-                    Turn their unique personality into a gift they'll never forget!
-                  </p>
-                </div>
-              </div>
-              
-              {/* 锯齿形连接 - 放在左侧区域的右边缘 */}
-              <div className="absolute right-0 top-0 bottom-0 w-[60px] z-20 transform translate-x-1/2">
-                <svg viewBox="0 0 30 200" preserveAspectRatio="none" className="h-full w-full">
-                  <path d="M0,0 L15,16.7 L0,33.4 L15,50.1 L0,66.8 L15,83.5 L0,100.2 L15,116.9 L0,133.6 L15,150.3 L0,167 L15,183.7 L0,200 L30,200 L15,183.7 L30,167 L15,150.3 L30,133.6 L15,116.9 L30,100.2 L15,83.5 L30,66.8 L15,50.1 L30,33.4 L15,16.7 L30,0 L0,0 Z" fill="#FFFAF5" />
-                </svg>
-              </div>
-            </div>
-
-            {/* 右侧图片区域 */}
-            <div className="relative w-full md:w-[65%] bg-white z-0">
-              <img 
-                src="/images/showcase/dream-life/story-surface.webp" 
-                alt="Friends enjoying a personalized story book together" 
-                className="h-full w-full object-cover shadow-lg" 
-              />
-            </div>
-          </div>
-        </section>
-
         <div className="container px-4 md:px-6 mx-auto pt-12 pb-24">
           <h2 className="text-4xl font-serif font-bold tracking-tighter text-left mb-12">Story Book Collection</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -156,6 +120,42 @@ const FriendsLanding = () => {
             </div>
           </div>
         </div>
+
+        {/* Showcase Section with Zigzag Edge */}
+        <section className="relative overflow-hidden mt-24 mb-16" style={{height: "500px"}}>
+          {/* 使用flex布局确保锯齿与图片相对位置固定 */}
+          <div className="flex h-full">
+            {/* 左侧内容区域 - 文字和背景 */}
+            <div className="relative w-full md:w-[35%] bg-[#FFFAF5] z-10">
+              <div className="flex flex-col justify-center h-full space-y-6 px-4 md:px-6 lg:px-12 xl:px-16 relative z-20">
+                <div className="max-w-[360px] mx-auto">
+                  <h2 className="text-4xl font-serif font-bold tracking-tighter">
+                    Celebrate their story
+                  </h2>
+                  <p className="text-lg text-gray-700 mt-6">
+                    Turn their unique personality into a gift they'll never forget!
+                  </p>
+                </div>
+              </div>
+              
+              {/* 锯齿形连接 - 放在左侧区域的右边缘 */}
+              <div className="absolute right-0 top-0 bottom-0 w-[60px] z-20 transform translate-x-1/2">
+                <svg viewBox="0 0 30 200" preserveAspectRatio="none" className="h-full w-full">
+                  <path d="M0,0 L15,16.7 L0,33.4 L15,50.1 L0,66.8 L15,83.5 L0,100.2 L15,116.9 L0,133.6 L15,150.3 L0,167 L15,183.7 L0,200 L30,200 L15,183.7 L30,167 L15,150.3 L30,133.6 L15,116.9 L30,100.2 L15,83.5 L30,66.8 L15,50.1 L30,33.4 L15,16.7 L30,0 L0,0 Z" fill="#FFFAF5" />
+                </svg>
+              </div>
+            </div>
+
+            {/* 右侧图片区域 */}
+            <div className="relative w-full md:w-[65%] bg-white z-0">
+              <img 
+                src="/images/showcase/dream-life/story-surface.webp" 
+                alt="Friends enjoying a personalized story book together" 
+                className="h-full w-full object-cover shadow-lg" 
+              />
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   );
