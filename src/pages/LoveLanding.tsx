@@ -47,7 +47,7 @@ const LoveLanding = () => {
                 </div>
                 <div className="md:order-1 hidden md:block">
                   <div className="w-[420px] h-96 mx-auto rounded-sm overflow-hidden shadow-lg transform -translate-x-4 translate-y-2">
-                    <img src="/images/showcase/dream-life/dream-life.webp" alt="Colorful illustrated picture book with fairy tale characters" className="w-full h-full object-cover" />
+                    <img src="/images/showcase/dream-life/dream-life.webp" alt="Colorful illustrated picture book with fairy tale characters" className="w-full h-full object-cover object-center scale-110" />
                   </div>
                 </div>
               </div>
@@ -121,7 +121,7 @@ const LoveLanding = () => {
         </div>
 
         {/* Showcase Section with Zigzag Edge */}
-        <section className="relative overflow-hidden mt-24 mb-16" style={{height: "500px"}}>
+        <section className="relative overflow-hidden mt-12 mb-16" style={{height: "500px"}}>
           {/* 使用flex布局确保锯齿与图片相对位置固定 */}
           <div className="flex h-full">
             {/* 右侧图片区域 */}
