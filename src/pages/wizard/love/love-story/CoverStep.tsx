@@ -1626,7 +1626,6 @@ const LoveStoryCoverStep = () => {
 
         // 保存URL到localStorage
         localStorage.setItem('loveStorySelectedCoverImage_url', storageUrl);
-        localStorage.setItem('loveStoryCoverImageCanvas', canvasImageData);
         localStorage.setItem('loveStoryBackCoverImage_url', backCoverStorageUrl);
         localStorage.setItem('loveStorySpineImage_url', spineStorageUrl);
 
