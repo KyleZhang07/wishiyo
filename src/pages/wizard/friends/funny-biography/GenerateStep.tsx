@@ -286,28 +286,15 @@ const FunnyBiographyGenerateStep = () => {
     }
   }, [coverImage, lastUsedImage, pdfGenerating, generationComplete]);
 
-  // 只在需要重新生成时执行生成操作
+  // useEffect to trigger regeneration when relevant inputs change
   useEffect(() => {
-    if (shouldRegenerate && coverImage && authorName && coverTitle) {
-      // 清除已有的PDF
-      setFrontCoverPdf(null);
-      setBackCoverPdf(null);
-      setSpinePdf(null);
-
-      // 重置生成状态
-      setGenerationStarted(true);
-      setGenerationComplete(false);
-      localStorage.removeItem('funnyBiographyGenerationComplete');
-
-      // 生成新的图像
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          generateImagesFromCanvas();
-          setShouldRegenerate(false);
-        });
-      });
+    // Only regenerate if fonts are loaded, not currently generating, and regeneration is flagged
+    if (fontsLoaded && !pdfGenerating && shouldRegenerate) {
+      console.log('Regenerating PDF due to changed inputs (style, image, etc.)...');
+      generateImagesFromCanvas();
+      setShouldRegenerate(false); // Reset the flag after starting generation
     }
-  }, [shouldRegenerate, coverImage, authorName, coverTitle]);
+  }, [fontsLoaded, pdfGenerating, shouldRegenerate, selectedStyle, coverImage, coverTitle, subtitle, authorName, imagePosition, imageScale]);
 
   // 保存生成完成的状态到localStorage
   useEffect(() => {
@@ -378,16 +365,15 @@ const FunnyBiographyGenerateStep = () => {
           // 在generateImagesFromCanvas函数中会优先使用sessionStorage中的图片
           setCoverImage(data.image);
 
-          // 确保选择第二种样式（bestseller-style）
-          // 这样可以确保背景去除后立即生成封面
-          setSelectedStyle('bestseller-style');
-          localStorage.setItem('funnyBiographySelectedStyle', 'bestseller-style');
+          // 不再强制切换样式，保持用户选择的样式
+          // 这样可以避免闪烁问题
 
           // 使用requestAnimationFrame确保状态更新完成后再生成封面
           // 这样可以确保封面立即生成，不会卡在加载状态
           requestAnimationFrame(() => {
             // 使用第二个requestAnimationFrame确保状态已完全更新
             requestAnimationFrame(() => {
+              setGenerationComplete(false); // Reset before generating with new image
               generateImagesFromCanvas();
             });
           });
@@ -408,10 +394,9 @@ const FunnyBiographyGenerateStep = () => {
           localStorage.setItem('funnyBiographySelectedStyle', 'bestseller-style');
 
           // 使用requestAnimationFrame确保状态更新完成后再生成封面
-          // 这样可以确保封面立即生成，不会卡在加载状态
           requestAnimationFrame(() => {
-            // 使用第二个requestAnimationFrame确保状态已完全更新
             requestAnimationFrame(() => {
+              setGenerationComplete(false); // Reset before generating with new image
               generateImagesFromCanvas();
             });
           });
@@ -437,10 +422,9 @@ const FunnyBiographyGenerateStep = () => {
       localStorage.setItem('funnyBiographySelectedStyle', 'bestseller-style');
 
       // 使用requestAnimationFrame确保状态更新完成后再生成封面
-      // 这样可以确保封面立即生成，不会卡在加载状态
       requestAnimationFrame(() => {
-        // 使用第二个requestAnimationFrame确保状态已完全更新
         requestAnimationFrame(() => {
+          setGenerationComplete(false); // Reset before generating with new image
           generateImagesFromCanvas();
         });
       });
@@ -481,6 +465,7 @@ const FunnyBiographyGenerateStep = () => {
         // 使用第二个requestAnimationFrame确保状态已完全更新
         requestAnimationFrame(() => {
           console.log('开始重新生成封面，使用新的位置和缩放值:', { position, scale });
+          setGenerationComplete(false); // Reset before generating with new position/scale
           generateImagesFromCanvas();
         });
       });
@@ -490,6 +475,8 @@ const FunnyBiographyGenerateStep = () => {
   const handleStyleChange = (styleId: string) => {
     // 更新样式，触发样式变化监听器
     setSelectedStyle(styleId);
+    setGenerationComplete(false); // Reset completion status to allow new generation
+    setShouldRegenerate(true);    // Signal that regeneration is needed
   };
 
   // 生成图像的函数 - 确保使用sessionStorage中的图片

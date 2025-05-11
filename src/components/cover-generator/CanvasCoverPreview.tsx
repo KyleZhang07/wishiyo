@@ -4,6 +4,22 @@ import CoverImageControls from './components/CoverImageControls';
 import { coverTemplates, coverLayouts } from './types';
 import { useFontLoader, fontMapping } from '@/hooks/useFontLoader';
 
+// 预加载 badge 图片，确保在组件渲染前就开始加载
+(function preloadBadgeImages() {
+  const badgePaths = [
+    '/assets/badges/1badge.png',
+    '/assets/badges/2badge.png',
+    '/assets/badges/3badge.png',
+    '/assets/badges/4badge.png'
+  ];
+  
+  badgePaths.forEach(path => {
+    const img = new Image();
+    img.src = path;
+    console.log(`Preloading badge: ${path}`);
+  });
+})();
+
 interface CanvasCoverPreviewProps {
   coverTitle: string;
   subtitle: string;
@@ -62,6 +78,20 @@ const CanvasCoverPreview = ({
   // 加载第四个 bestseller badge
   const bestsellerBadge4 = useImageLoader('/assets/badges/4badge.png');
 
+  // 检查所有 badge 是否加载完成
+  const allBadgesLoaded = 
+    bestsellerBadge?.isLoaded && 
+    bestsellerBadge2?.isLoaded && 
+    bestsellerBadge3?.isLoaded && 
+    bestsellerBadge4?.isLoaded;
+  
+  // 检查是否有 badge 加载错误
+  const anyBadgeError = 
+    bestsellerBadge?.error || 
+    bestsellerBadge2?.error || 
+    bestsellerBadge3?.error || 
+    bestsellerBadge4?.error;
+    
   useEffect(() => {
     // If font is not yet loaded, delay rendering
     if (fontStatus === 'loading' && renderAttempts < 5) {
@@ -71,10 +101,24 @@ const CanvasCoverPreview = ({
       }, 500);
       return () => clearTimeout(timer);
     }
+    
+    // 如果 badge 未加载完成且尝试次数少于最大值，延迟渲染
+    if (!allBadgesLoaded && !anyBadgeError && renderAttempts < 5) {
+      console.log(`Waiting for badges to load... Attempt ${renderAttempts + 1}/5`);
+      const timer = setTimeout(() => {
+        setRenderAttempts(prev => prev + 1);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
 
     // Font is loaded or max attempts reached, continue rendering
     if (fontStatus === 'loading') {
       console.warn(`Font ${selectedFont} failed to load, continuing with fallback font`);
+    }
+    
+    // 如果有 badge 加载错误，记录警告但继续渲染
+    if (anyBadgeError) {
+      console.warn('Some bestseller badges failed to load, continuing with available badges');
     }
 
     // Get all canvas elements
@@ -1081,12 +1125,12 @@ const CanvasCoverPreview = ({
         ctx.save();
         
         // 计算合适的大小
-        const badgeWidth = width * 0.25; // 封面宽度的24.2%，再增加 10%
+        const badgeWidth = width * 0.25; // 封面宽度的 23%（降低 0.02）
         const badgeHeight = badgeWidth * (bestsellerBadge.element.height / bestsellerBadge.element.width);
         
         // 定位在书名下方
         const badgeX = width * 0.82; // 右侧偏移更多，从 0.75 增加到 0.82
-        const badgeY = height * 0.27; // 上方四分之一处
+        const badgeY = height * 0.33; // 向下移动 0.04（从 0.27 到 0.31）
         
         // 旋转和亮度调整
         ctx.translate(badgeX, badgeY);
