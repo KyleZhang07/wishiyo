@@ -1338,14 +1338,16 @@ const CanvasCoverPreview = ({
         const badgeX = width * 0.82;
         const badgeY = height * 0.15;
         
-        // 亮度调整，但不旋转
+        // 旋转和亮度调整
+        ctx.translate(badgeX, badgeY);
+        ctx.rotate(15 * Math.PI / 180); // 顺时针旋转15度
         ctx.filter = 'brightness(1.1)'; // 增加10%亮度
         
         // 绘制徽章
         ctx.drawImage(
           bestsellerBadge4.element,
-          badgeX - badgeWidth / 2, // 以中心点为基准定位
-          badgeY - badgeHeight / 2,
+          -badgeWidth / 2, // 以中心点为基准定位
+          -badgeHeight / 2,
           badgeWidth,
           badgeHeight
         );
