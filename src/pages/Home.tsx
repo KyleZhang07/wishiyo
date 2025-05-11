@@ -90,12 +90,16 @@ export default function Home() {
                 >
                   Create Story Book
                 </button>
-                <button
-                  onClick={() => navigate('/love')}
-                  className="w-full bg-white text-[#FF6B35] border-2 border-[#FF6B35] py-3 px-5 rounded-md text-center font-medium text-base hover:bg-[#FF6B35] hover:text-white transition-all duration-300 shadow-sm hover:shadow-md"
-                >
-                  Create Picture Book
-                </button>
+                <div className="w-full relative rounded-md overflow-hidden p-[2px] bg-gradient-to-r from-[#4FACFE] via-[#7B68EE] to-[#FF69B4] shadow-sm hover:shadow-md transition-all duration-300">
+                  <button
+                    onClick={() => navigate('/love')}
+                    className="w-full bg-white py-3 px-5 rounded-md text-center font-medium text-base transition-all duration-300 group"
+                  >
+                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#4FACFE] via-[#7B68EE] to-[#FF69B4]">
+                      Create Picture Book
+                    </span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -164,21 +168,24 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* For Story Book */}
             <button
-              onClick={() => navigate('/friends')}
+              onClick={() => {
+                navigate('/friends');
+                window.scrollTo(0, 0);
+              }}
               className="group text-left"
             >
               <div className="p-6 rounded-lg transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
                 <div className="bg-[#FDF7ED] rounded-lg mb-4 aspect-square w-[66%] mx-auto relative overflow-hidden">
-                  {/* Story Book showcase image */}
-                  <img
-                    src="/images/showcase/personalized-book.jpeg"
-                    alt="Woman holding a personalized story book with custom title and character"
-                    className="absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-in-out group-hover:opacity-0"
-                  />
-                  {/* Hover image - Story Book open image */}
+                  {/* Story Book showcase image (previously hover image) */}
                   <img
                     src="/images/showcase/story-open.png"
                     alt="Open personalized story book showing inside pages"
+                    className="absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-in-out group-hover:opacity-0"
+                  />
+                  {/* Hover image - Story Book closed image (previously default image) */}
+                  <img
+                    src="/images/showcase/personalized-book.jpeg"
+                    alt="Woman holding a personalized story book with custom title and character"
                     className="absolute inset-0 w-full h-full object-cover opacity-0 transition-all duration-700 ease-in-out group-hover:opacity-100 transform scale-[1.02] group-hover:scale-100"
                   />
                 </div>
@@ -192,21 +199,24 @@ export default function Home() {
 
             {/* For Picture Book */}
             <button
-              onClick={() => navigate('/love')}
+              onClick={() => {
+                navigate('/love');
+                window.scrollTo(0, 0);
+              }}
               className="group text-left"
             >
               <div className="p-6 rounded-lg transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
                 <div className="bg-[#F0F7FF] rounded-lg mb-4 aspect-square w-[66%] mx-auto relative overflow-hidden">
-                  {/* Picture Book showcase image */}
-                  <img
-                    src="/images/showcase/illustrated-book.png"
-                    alt="Child holding a colorful illustrated picture book with vibrant artwork"
-                    className="absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-in-out group-hover:opacity-0"
-                  />
-                  {/* Hover image - Picture Book open image */}
+                  {/* Picture Book showcase image (previously hover image) */}
                   <img
                     src="/images/showcase/picture-open.png"
                     alt="Open illustrated picture book showing colorful inside pages"
+                    className="absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-in-out group-hover:opacity-0"
+                  />
+                  {/* Hover image - Picture Book closed image (previously default image) */}
+                  <img
+                    src="/images/showcase/illustrated-book.png"
+                    alt="Child holding a colorful illustrated picture book with vibrant artwork"
                     className="absolute inset-0 w-full h-full object-cover opacity-0 transition-all duration-700 ease-in-out group-hover:opacity-100 transform scale-[1.02] group-hover:scale-100"
                   />
                 </div>

@@ -41,7 +41,7 @@ const LoveLanding = () => {
                 <div className="md:order-2 text-white space-y-6 max-w-[480px]">
                   <h1 className="text-4xl font-serif font-bold px-0 mx-0 md:text-4xl text-slate-800">Get a picture book where every page features their face - created instantly</h1>
                   <p className="text-xl text-slate-800">Any dream, anywhere—they're the star.</p>
-                  <Link to="/create/love/love-story/character" className="inline-flex items-center px-6 py-3 text-base font-medium text-white bg-[#FF7F50] rounded-sm hover:bg-[#FF7F50]/80 transition-colors">
+                  <Link to="/create/love/love-story/character" className="inline-flex items-center px-6 py-3 text-base font-medium text-white bg-gradient-to-r from-[#4FACFE] via-[#7B68EE] to-[#FF69B4] rounded-sm shadow-sm hover:shadow-md transition-all duration-300">
                     Start Creating
                   </Link>
                 </div>
