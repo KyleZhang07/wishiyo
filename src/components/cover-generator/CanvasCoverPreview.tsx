@@ -53,6 +53,14 @@ const CanvasCoverPreview = ({
   const spineLogo = useImageLoader('/assets/logos/spine-logo.png');
   // 加载条形码图像 - 更新路径
   const barcode = useImageLoader('/assets/logos/bar-code.png');
+  // 加载 bestseller badge
+  const bestsellerBadge = useImageLoader('/assets/badges/1badge.png');
+  // 加载第二个 bestseller badge
+  const bestsellerBadge2 = useImageLoader('/assets/badges/2badge.png');
+  // 加载第三个 bestseller badge
+  const bestsellerBadge3 = useImageLoader('/assets/badges/3badge.png');
+  // 加载第四个 bestseller badge
+  const bestsellerBadge4 = useImageLoader('/assets/badges/4badge.png');
 
   useEffect(() => {
     // If font is not yet loaded, delay rendering
@@ -865,6 +873,36 @@ const CanvasCoverPreview = ({
       // 绘制描述性副标题在蓝色区域
       const subtitleFont = `500 26px ${oswaldFont}`; // 恢复bestseller样式的原始字体
       const subtitleColor = '#FFC300';
+      
+      // 渲染第二个 Bestseller badge
+      if (bestsellerBadge2?.element) {
+        ctx.save();
+        
+        // 计算合适的大小
+        const badgeWidth = width * 0.275; // 封面宽度的27.5%，再放大 10%
+        const badgeHeight = badgeWidth * (bestsellerBadge2.element.height / bestsellerBadge2.element.width);
+        
+        // 定位在右上角
+        const badgeX = width * 0.82;
+        const badgeY = height * 0.15; // 从 0.25 上移到 0.2，上移 0.05
+        
+        // 旋转和亮度调整
+        ctx.translate(badgeX, badgeY);
+        ctx.rotate(15 * Math.PI / 180); // 顺时针旋转15度
+        ctx.filter = 'brightness(1.1)'; // 增加10%亮度
+        
+        // 绘制徽章
+        ctx.drawImage(
+          bestsellerBadge2.element,
+          -badgeWidth / 2, // 以中心点为基准定位
+          -badgeHeight / 2,
+          badgeWidth,
+          badgeHeight
+        );
+        
+        // 恢复上下文状态
+        ctx.restore();
+      }
       const subtitleLineHeight = 34; // 从32增加到34，略微增加行距
       const subtitleArea = { x: width * 0.075, y: height - blueHeight, width: width * 0.85, height: blueHeight };
 
@@ -964,7 +1002,7 @@ const CanvasCoverPreview = ({
           ctx.fillText(firstHalf, titleArea.x + titleArea.width / 2, currentY);
 
           // 绘制第二部分（红色）
-          ctx.fillStyle = '#9B0000';
+          ctx.fillStyle = '#CE1F1F';
           ctx.font = `bold 80px ${resolvedFont}`;
           currentY += largeLineHeight;
           ctx.fillText(secondHalf, titleArea.x + titleArea.width / 2, currentY);
@@ -980,7 +1018,7 @@ const CanvasCoverPreview = ({
           ctx.fillText(firstHalf, titleArea.x + titleArea.width / 2, currentY);
 
           // 绘制第二部分（红色）
-          ctx.fillStyle = '#9B0000';
+          ctx.fillStyle = '#CE1F1F';
           ctx.font = `bold 80px ${resolvedFont}`;
           currentY += largeLineHeight;
           ctx.fillText(secondHalf, titleArea.x + titleArea.width / 2, currentY);
@@ -999,7 +1037,7 @@ const CanvasCoverPreview = ({
                 }
                 // The transition from white to red uses largeLineHeight
             } else {
-                ctx.fillStyle = '#9B0000';
+                ctx.fillStyle = '#CE1F1F';
                 ctx.font = `bold 80px ${resolvedFont}`;
                 // All red lines use largeLineHeight
             }
@@ -1037,6 +1075,36 @@ const CanvasCoverPreview = ({
       ctx.textAlign = 'right';
       ctx.textBaseline = 'bottom'; // Align to the bottom
       ctx.fillText(authorName, width - (width * 0.075), height - bottomHeight - 10); // Position right-aligned, 10px above red area
+      
+      // 渲染 Bestseller badge
+      if (bestsellerBadge?.element) {
+        ctx.save();
+        
+        // 计算合适的大小
+        const badgeWidth = width * 0.25; // 封面宽度的24.2%，再增加 10%
+        const badgeHeight = badgeWidth * (bestsellerBadge.element.height / bestsellerBadge.element.width);
+        
+        // 定位在书名下方
+        const badgeX = width * 0.82; // 右侧偏移更多，从 0.75 增加到 0.82
+        const badgeY = height * 0.27; // 上方四分之一处
+        
+        // 旋转和亮度调整
+        ctx.translate(badgeX, badgeY);
+        ctx.rotate(15 * Math.PI / 180); // 顺时针旋转15度
+        ctx.filter = 'brightness(1.1)'; // 增加10%亮度
+        
+        // 绘制徽章
+        ctx.drawImage(
+          bestsellerBadge.element,
+          -badgeWidth / 2, // 以中心点为基准定位
+          -badgeHeight / 2,
+          badgeWidth,
+          badgeHeight
+        );
+        
+        // 恢复上下文状态
+        ctx.restore();
+      }
     } else if (template.id === 'modern' || template.id === 'vibrant-green') {
       // 为奶油色肖像风格重写渲染逻辑
 
@@ -1122,6 +1190,34 @@ const CanvasCoverPreview = ({
 
       // Draw subtitle using helper function
       drawTextInArea(ctx, lines, subtitleArea, subtitleFont, subtitleColor, subtitleLineHeight, 'center');
+      
+      // 渲染第三个 Bestseller badge
+      if (bestsellerBadge3?.element) {
+        ctx.save();
+        
+        // 计算合适的大小
+        const badgeWidth = width * 0.275; // 封面宽度的27.5%
+        const badgeHeight = badgeWidth * (bestsellerBadge3.element.height / bestsellerBadge3.element.width);
+        
+        // 定位在右上角
+        const badgeX = width * 0.82;
+        const badgeY = height * 0.15;
+        
+        // 亮度调整，但不旋转
+        ctx.filter = 'brightness(1.1)'; // 增加10%亮度
+        
+        // 绘制徽章
+        ctx.drawImage(
+          bestsellerBadge3.element,
+          badgeX - badgeWidth / 2, // 以中心点为基准定位
+          badgeY - badgeHeight / 2,
+          badgeWidth,
+          badgeHeight
+        );
+        
+        // 恢复上下文状态
+        ctx.restore();
+      }
     } else if (template.id === 'minimal') {
       // 使用安全的字体代替可能加载失败的Montserrat
       const montserratFont = (fontStatus === 'loaded')
@@ -1229,6 +1325,34 @@ const CanvasCoverPreview = ({
       ctx.shadowBlur = 0;
       ctx.shadowOffsetX = 0;
       ctx.shadowOffsetY = 0;
+      
+      // 渲染第四个 Bestseller badge
+      if (bestsellerBadge4?.element) {
+        ctx.save();
+        
+        // 计算合适的大小
+        const badgeWidth = width * 0.275; // 封面宽度的27.5%
+        const badgeHeight = badgeWidth * (bestsellerBadge4.element.height / bestsellerBadge4.element.width);
+        
+        // 定位在右上角
+        const badgeX = width * 0.82;
+        const badgeY = height * 0.15;
+        
+        // 亮度调整，但不旋转
+        ctx.filter = 'brightness(1.1)'; // 增加10%亮度
+        
+        // 绘制徽章
+        ctx.drawImage(
+          bestsellerBadge4.element,
+          badgeX - badgeWidth / 2, // 以中心点为基准定位
+          badgeY - badgeHeight / 2,
+          badgeWidth,
+          badgeHeight
+        );
+        
+        // 恢复上下文状态
+        ctx.restore();
+      }
     } else if (template.id === 'pastel-beige') {
       // 使用安全的字体代替可能加载失败的Comic Sans MS
       const comicFont = (fontStatus === 'loaded')
@@ -1353,11 +1477,11 @@ const CanvasCoverPreview = ({
       drawCloud(ctx, 100, 100, 50); // 左上角云朵
       drawCloud(ctx, width - 100, 120, 40); // 右上角云朵
 
-      // 上部绘制标题 - 调整到height*0.1
+      // 上部绘制标题 - 向上移动 0.02
       const titleFont = `bold 65px ${comicFont}`;
       const titleColor = '#8A2BE2'; // Purple title
       const titleLineHeight = 70;
-      const titleArea = { x: width * 0.1, y: height * 0.1, width: width * 0.8, height: height * 0.25 }; // 调整到height*0.1
+      const titleArea = { x: width * 0.1, y: height * 0.08, width: width * 0.8, height: height * 0.25 }; // 从 0.1 移动到 0.08
 
       // Wrap title text
       ctx.font = titleFont; // Set font for measurement
@@ -1379,11 +1503,11 @@ const CanvasCoverPreview = ({
       // Draw title using helper function
       drawTextInArea(ctx, titleLines.map(line => line.toUpperCase()), titleArea, titleFont, titleColor, titleLineHeight, 'center');
 
-      // 标题下方描述 - 调整到height*0.3
+      // 标题下方描述 - 向上移动 0.02
       const subtitleFont = `normal 26px ${comicFont}`; // 从28px减小到26px (折中方案)
       const subtitleColor = '#9400D3'; // Dark purple text
       const subtitleLineHeight = 33; // 从35减小到33 (折中方案)
-      const subtitleArea = { x: width * 0.1, y: height * 0.27, width: width * 0.8, height: height * 0.15 }; // 调整到height*0.3
+      const subtitleArea = { x: width * 0.1, y: height * 0.25, width: width * 0.8, height: height * 0.15 }; // 从 0.27 移动到 0.25
 
       // Wrap subtitle text
       ctx.font = subtitleFont; // Set font for measurement
