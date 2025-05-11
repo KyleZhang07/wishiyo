@@ -879,7 +879,7 @@ const CanvasCoverPreview = ({
         ctx.save();
         
         // 计算合适的大小
-        const badgeWidth = width * 0.275; // 封面宽度的27.5%，再放大 10%
+        const badgeWidth = width * 0.25; // 封面宽度的25%
         const badgeHeight = badgeWidth * (bestsellerBadge2.element.height / bestsellerBadge2.element.width);
         
         // 定位在右上角
@@ -1196,7 +1196,7 @@ const CanvasCoverPreview = ({
         ctx.save();
         
         // 计算合适的大小
-        const badgeWidth = width * 0.275; // 封面宽度的27.5%
+        const badgeWidth = width * 0.25; // 封面宽度的22%
         const badgeHeight = badgeWidth * (bestsellerBadge3.element.height / bestsellerBadge3.element.width);
         
         // 定位在右上角
@@ -1331,7 +1331,7 @@ const CanvasCoverPreview = ({
         ctx.save();
         
         // 计算合适的大小
-        const badgeWidth = width * 0.275; // 封面宽度的27.5%
+        const badgeWidth = width * 0.25; // 封面宽度的25%
         const badgeHeight = badgeWidth * (bestsellerBadge4.element.height / bestsellerBadge4.element.width);
         
         // 定位在右上角
