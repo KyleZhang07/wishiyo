@@ -41,11 +41,7 @@ export default async function handler(req, res) {
     const session = await stripe.checkout.sessions.create({
       allow_promotion_codes: true,
       payment_method_types: ['card'],
-      // 添加自定义品牌设置，显示公司 logo
-      custom_branding: {
-        logo: 'https://www.wishiyo.com/logo.png', // 替换为您的公司 logo URL
-        brand_color: '#FF6B35', // 主品牌颜色，与网站主色调一致
-      },
+      // 移除自定义品牌设置，避免可能的兼容性问题
       line_items: [
         {
           price_data: {
