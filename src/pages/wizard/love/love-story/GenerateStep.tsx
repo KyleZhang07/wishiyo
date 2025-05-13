@@ -667,7 +667,7 @@ const GenerateStep = () => {
         try {
           // 修复请求结构，使用prompts[1]而非prompts[0]（prompts[0]是封面）
           const requestBody = {
-            contentPrompt: prompts[1].prompt,
+            prompt: prompts[1].prompt,
             photo: characterPhoto,
             style: imageStyle,
             type: 'intro'
