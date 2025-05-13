@@ -112,13 +112,13 @@ export const renderContentToCanvas = (
           const fontFamily = getFontFamily(fontId);
 
           // 根据字体类型调整字体大小
-          let adjustedFontSize = fontSize;
+          let adjustedFontSize = fontSize - 3; // 所有字体大小减小3
           if (fontId === 'patrick-hand' || fontId === 'amatic-sc' || fontId === 'caveat') {
             // 增大Patrick Hand、Amatic SC和Caveat字体的渲染字号
-            adjustedFontSize = fontSize + 1;
+            adjustedFontSize = fontSize - 2; // +1-3 = -2
           } else if (fontId === 'comic-sans') {
             // 减小Comic Sans字体的渲染字号
-            adjustedFontSize = fontSize - 1;
+            adjustedFontSize = fontSize - 4; // -1-3 = -4
           }
 
           ctx.font = `bold ${adjustedFontSize}px ${fontFamily}`;
@@ -163,13 +163,13 @@ export const renderContentToCanvas = (
               const fontFamily = getFontFamily(fontId);
 
               // 根据字体类型调整字体大小
-              let adjustedFontSize = fontSize;
+              let adjustedFontSize = fontSize - 3; // 所有字体大小减小3
               if (fontId === 'patrick-hand' || fontId === 'amatic-sc' || fontId === 'caveat') {
                 // 增大Patrick Hand、Amatic SC和Caveat字体的渲染字号
-                adjustedFontSize = fontSize + 1;
+                adjustedFontSize = fontSize - 2; // +1-3 = -2
               } else if (fontId === 'comic-sans') {
                 // 减小Comic Sans字体的渲染字号
-                adjustedFontSize = fontSize - 1;
+                adjustedFontSize = fontSize - 4; // -1-3 = -4
               }
 
               ctx.font = `bold ${adjustedFontSize}px ${fontFamily}`;
@@ -178,11 +178,11 @@ export const renderContentToCanvas = (
 
               if (testWidth > maxWidth && n > 0) {
                 // 使用相同的字体大小调整逻辑
-                let adjustedFontSize = fontSize;
+                let adjustedFontSize = fontSize - 3; // 所有字体大小减小3
                 if (fontId === 'patrick-hand' || fontId === 'amatic-sc' || fontId === 'caveat') {
-                  adjustedFontSize = fontSize + 1;
+                  adjustedFontSize = fontSize - 2; // +1-3 = -2
                 } else if (fontId === 'comic-sans') {
-                  adjustedFontSize = fontSize - 1;
+                  adjustedFontSize = fontSize - 4; // -1-3 = -4
                 }
 
                 drawStrokedText(line, x, lineY, adjustedFontSize);
@@ -195,11 +195,11 @@ export const renderContentToCanvas = (
 
             if (line) {
               // 使用相同的字体大小调整逻辑
-              let adjustedFontSize = fontSize;
+              let adjustedFontSize = fontSize - 3; // 所有字体大小减小3
               if (fontId === 'patrick-hand' || fontId === 'amatic-sc' || fontId === 'caveat') {
-                adjustedFontSize = fontSize + 1;
+                adjustedFontSize = fontSize - 2; // +1-3 = -2
               } else if (fontId === 'comic-sans') {
-                adjustedFontSize = fontSize - 1;
+                adjustedFontSize = fontSize - 4; // -1-3 = -4
               }
 
               drawStrokedText(line, x, lineY, adjustedFontSize);
