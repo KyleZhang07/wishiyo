@@ -118,7 +118,7 @@ export const renderContentToCanvas = (
             adjustedFontSize = fontSize - 2; // +1-3 = -2
           } else if (fontId === 'comic-sans') {
             // 减小Comic Sans字体的渲染字号
-            adjustedFontSize = fontSize - 4; // -1-3 = -4
+            adjustedFontSize = fontSize - 6; // -1-3-2 = -6
           }
 
           ctx.font = `bold ${adjustedFontSize}px ${fontFamily}`;
@@ -169,7 +169,7 @@ export const renderContentToCanvas = (
                 adjustedFontSize = fontSize - 2; // +1-3 = -2
               } else if (fontId === 'comic-sans') {
                 // 减小Comic Sans字体的渲染字号
-                adjustedFontSize = fontSize - 4; // -1-3 = -4
+                adjustedFontSize = fontSize - 6; // -1-3-2 = -6
               }
 
               ctx.font = `bold ${adjustedFontSize}px ${fontFamily}`;
@@ -182,7 +182,7 @@ export const renderContentToCanvas = (
                 if (fontId === 'patrick-hand' || fontId === 'amatic-sc' || fontId === 'caveat') {
                   adjustedFontSize = fontSize - 2; // +1-3 = -2
                 } else if (fontId === 'comic-sans') {
-                  adjustedFontSize = fontSize - 4; // -1-3 = -4
+                  adjustedFontSize = fontSize - 6; // -1-3-2 = -6
                 }
 
                 drawStrokedText(line, x, lineY, adjustedFontSize);
@@ -199,7 +199,7 @@ export const renderContentToCanvas = (
               if (fontId === 'patrick-hand' || fontId === 'amatic-sc' || fontId === 'caveat') {
                 adjustedFontSize = fontSize - 2; // +1-3 = -2
               } else if (fontId === 'comic-sans') {
-                adjustedFontSize = fontSize - 4; // -1-3 = -4
+                adjustedFontSize = fontSize - 6; // -1-3-2 = -6
               }
 
               drawStrokedText(line, x, lineY, adjustedFontSize);
