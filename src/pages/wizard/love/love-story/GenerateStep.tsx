@@ -1165,6 +1165,11 @@ const GenerateStep = () => {
 
     // 添加所有content图片生成任务（如果需要）
     for (const contentImage of generationStatus.contentImages) {
+      // Skip index 0 (intro image) as it's handled separately above
+      if (contentImage.index === 0) {
+        continue;
+      }
+
       // 检查是否有正在生成的标记
       const isContentGenerating = localStorage.getItem(`loveStoryContent${contentImage.index}Generating`);
       const contentGeneratingTimestamp = isContentGenerating ? parseInt(isContentGenerating) : 0;
