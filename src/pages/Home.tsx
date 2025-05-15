@@ -78,10 +78,10 @@ export default function Home() {
             {/* Center - Text and Buttons */}
             <div className="flex flex-col items-center text-center space-y-8">
               <h1 className="text-5xl md:text-6xl font-serif font-bold tracking-tighter">
-                Every Page, Just for Them
+                Create & Print a Full Book in 3 minutes
               </h1>
-              <p className="text-2xl text-gray-500 max-w-[500px]">
-                The only book where every page is truly about them, in just 3 minutes.
+              <p className="text-xl text-gray-500 max-w-[500px]">
+                The only book where every page is truly about them, authored by you
               </p>
               <div className="flex flex-col items-center gap-8 w-full max-w-[320px]">
                 <button
