@@ -47,7 +47,7 @@ serve(async (req) => {
           messages: [
             {
               role: 'system',
-              content: `Create 12 unique and creative scenes focusing solely on one person - the recipient.
+              content: `Create 13 unique and creative scenes focusing solely on one person - the recipient.
                 Each prompt should imagine the person in different fantasy scenarios that represent their ideal dream life.
                 Consider the person's gender (${recipientGender}) and age (${recipientAge}) when creating prompts.
                 Focus on solo portraits and scenes that showcase the person living their fantasy dream life.
@@ -55,11 +55,11 @@ serve(async (req) => {
             },
             {
               role: 'user',
-              content: `Generate 12 creative image prompts based on these answers:\n\n${JSON.stringify(answers, null, 2)}\n\n
+              content: `Generate 13 creative image prompts based on these answers:\n\n${JSON.stringify(answers, null, 2)}\n\n
                 Create:
                 1. One cover image prompt that captures ${recipientName}'s essence (${recipientGender}, ${recipientAge} years old) in an aspirational setting
                 2. Eleven fantasy autobiography image prompts showing ${recipientName} in various dream life scenarios
-                Format the response as a JSON array of 12 objects, each with 'question' (short description) and 'prompt' (detailed AI image generation prompt) fields.
+                Format the response as a JSON array of 13 objects, each with 'question' (short description) and 'prompt' (detailed AI image generation prompt) fields.
                 Make the prompts reflect fantasy scenarios like:
                 - ${recipientName} achieving career dreams
                 - ${recipientName} in adventure settings (exploring exotic locations, etc.)

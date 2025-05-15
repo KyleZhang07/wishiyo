@@ -85,14 +85,14 @@ export default function Home() {
               </p>
               <div className="flex flex-col items-center gap-8 w-full max-w-[320px]">
                 <button
-                  onClick={() => navigate('/friends')}
+                  onClick={() => navigate('/create/friends/funny-biography/author')}
                   className="w-full bg-[#FF6B35] text-white py-3 px-5 rounded-md text-center font-medium text-base hover:bg-[#FF6B35]/90 transition-all duration-300 shadow-sm hover:shadow-md mt-8"
                 >
                   Create Story Book
                 </button>
                 <div className="w-full relative rounded-md overflow-hidden p-[2px] bg-gradient-to-r from-[#4FACFE] via-[#7B68EE] to-[#FF69B4] shadow-sm hover:shadow-md transition-all duration-300">
                   <button
-                    onClick={() => navigate('/love')}
+                    onClick={() => navigate('/create/love/love-story/character')}
                     className="w-full bg-white py-3 px-5 rounded-md text-center font-medium text-base transition-all duration-300 group"
                   >
                     <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#4FACFE] via-[#7B68EE] to-[#FF69B4]">
