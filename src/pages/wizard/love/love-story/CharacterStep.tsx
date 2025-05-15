@@ -63,7 +63,7 @@ const LoveStoryCharacterStep = () => {
     <WizardStep
       title="Character Information"
       description="Tell us about you and the main character of the story"
-      previousStep="/love"
+      previousStep="/"
       currentStep={1}
       totalSteps={6}
       onNextClick={handleContinue}

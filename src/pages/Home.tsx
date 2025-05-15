@@ -169,7 +169,7 @@ export default function Home() {
             {/* For Story Book */}
             <button
               onClick={() => {
-                navigate('/friends');
+                navigate('/create/friends/funny-biography/author');
                 window.scrollTo(0, 0);
               }}
               className="group text-left"
@@ -200,7 +200,7 @@ export default function Home() {
             {/* For Picture Book */}
             <button
               onClick={() => {
-                navigate('/love');
+                navigate('/create/love/love-story/character');
                 window.scrollTo(0, 0);
               }}
               className="group text-left"

@@ -26,7 +26,7 @@ const FunnyBiographyAuthorStep = () => {
     <WizardStep
       title="Who's writing this book?"
       description="It can be a friend, family member, or even your pet - anyone you want to create a story about!"
-      previousStep="/friends"
+      previousStep="/"
       currentStep={1}
       totalSteps={7}
       onNextClick={handleContinue}
