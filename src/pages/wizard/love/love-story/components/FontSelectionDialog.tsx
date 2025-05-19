@@ -13,18 +13,18 @@ import { Check, X } from 'lucide-react';
 // 为插画书定义四种适合的字体
 export const PICTURE_BOOK_FONTS = [
   {
-    id: 'comic-sans',
-    name: 'Comic Sans',
-    description: 'Playful and friendly, perfect for children\'s books',
-    className: 'font-comic-sans',
-    fontFamily: "'Comic Sans MS', cursive"
-  },
-  {
     id: 'patrick-hand',
     name: 'Patrick Hand',
     description: 'Handwritten style with a casual feel',
     className: 'font-patrick-hand',
     fontFamily: "'Patrick Hand', cursive"
+  },
+  {
+    id: 'comic-sans',
+    name: 'Comic Sans',
+    description: 'Playful and friendly, perfect for children\'s books',
+    className: 'font-comic-sans',
+    fontFamily: "'Comic Sans MS', cursive"
   },
   {
     id: 'amatic-sc',

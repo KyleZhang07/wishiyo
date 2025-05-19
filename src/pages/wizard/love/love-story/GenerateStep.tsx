@@ -188,7 +188,7 @@ const GenerateStep = () => {
       setIsGeneratingIntro(true);
 
       // 获取字体ID，如果没有提供则从localStorage获取
-      const currentFontId = fontId || localStorage.getItem('loveStoryFont_0') || 'comic-sans';
+      const currentFontId = fontId || localStorage.getItem('loveStoryFont_0') || 'patrick-hand';
 
       // 渲染并上传图片
       const result = await renderAndUploadIntroImage(
@@ -268,7 +268,7 @@ const GenerateStep = () => {
       if (setLoadingFn) setLoadingFn(true);
 
       // 获取字体ID，如果没有提供则从localStorage获取
-      const currentFontId = fontId || localStorage.getItem(`loveStoryFont_${index}`) || 'comic-sans';
+      const currentFontId = fontId || localStorage.getItem(`loveStoryFont_${index}`) || 'patrick-hand';
 
       // 移除toast通知，减少用户干扰
 
@@ -1521,7 +1521,7 @@ const GenerateStep = () => {
               }
 
               // 获取保存的字体ID
-              const savedFont = localStorage.getItem(`loveStoryFont_${index}`) || 'comic-sans';
+              const savedFont = localStorage.getItem(`loveStoryFont_${index}`) || 'patrick-hand';
 
               return (
                 <div key={index}>
