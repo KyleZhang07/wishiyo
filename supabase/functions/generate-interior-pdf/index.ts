@@ -1073,14 +1073,14 @@ serve(async (req) => {
 
     console.log('Table of contents page numbers filled in successfully');
 
-    // **添加6页空白页到书的末尾**
-    for (let i = 0; i < 6; i++) {
+    // **添加10页空白页到书的末尾**
+    for (let i = 0; i < 12; i++) {
       addPage();
     }
 
     // **添加页码和最终处理**
     const finalPageCount = pdf.internal.getNumberOfPages(); // 使用准确的页码
-    const lastContentPage = finalPageCount - 6; // 最后一个内容页（减去6页空白页）
+    const lastContentPage = finalPageCount - 12; // 最后一个内容页（减去10页空白页）
 
     // 从第一章开始添加页码，使第一章的页码为1
     for (let i = firstContentPageNumber; i <= lastContentPage; i++) {
