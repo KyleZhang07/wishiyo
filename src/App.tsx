@@ -161,40 +161,7 @@ const OrderSuccess = () => {
           </div>
         </div>
 
-        <div className="mt-10">
-          <h3 className="text-xl font-medium mb-6">Follow Our Updates</h3>
-          <div className="flex justify-center space-x-8">
-            <a 
-              href="https://www.facebook.com/share/16PXVnTnst/?mibextid=wwXIfr" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="bg-blue-500 text-white p-3 rounded-full hover:bg-blue-600 transition-colors"
-              aria-label="Facebook"
-            >
-              <Facebook className="h-6 w-6" />
-            </a>
-            <a 
-              href="https://www.instagram.com/wishiyobook" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 text-white p-3 rounded-full hover:opacity-90 transition-opacity"
-              aria-label="Instagram"
-            >
-              <Instagram className="h-6 w-6" />
-            </a>
-            <a 
-              href="https://www.tiktok.com/@wishiyobook" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="bg-black text-white p-3 rounded-full hover:bg-gray-800 transition-colors"
-              aria-label="TikTok"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 448 512" className="h-6 w-6">
-                <path d="M448,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,185,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,381,102.39a121.43,121.43,0,0,0,67,20.14Z"/>
-              </svg>
-            </a>
-          </div>
-        </div>
+
       </div>
     </div>
   );
