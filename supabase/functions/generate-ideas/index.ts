@@ -139,25 +139,29 @@ serve(async (req) => {
             {
               role: 'system',
               content: `
-                1. Create a concise, punchy title (3-5 words, not exceeding 30 characters) where each individual word MUST NOT exceed 14 characters.
+                1. Create a WITTY, CLEVER title (3-5 words, not exceeding 30 characters) where each individual word MUST NOT exceed 14 characters.
                 2. Make the book about ONE PERSON ONLY - sharing their expertise, unique perspectives, or interesting life approaches
-                3. The tone should vary across the three ideas: one professional, one satirical (gently poking fun at quirks mentioned in answers), and one unexpected
-                4. IMPORTANT: emphasize HUMOR throughout all ideas - include WITTY observations, PLAYFUL exaggerations, and AMUSING perspectives even in the more professional ideas
-                5. Each book should present the subject as someone sharing valuable insights through memorable frameworks that might be conventional, satirical, or unexpected
+                3. ALL titles MUST be WITTY and HUMOROUS - use wordplay, puns, clever twists, or amusing juxtapositions
+                4. CRITICAL: Titles should be MEMORABLE, CATCHY and make readers smile or laugh - avoid generic or straightforward titles
+                5. Each book should present the subject as someone sharing valuable insights through memorable frameworks with a humorous twist
                 6. The author field MUST always be exactly the provided authorName - do not modify it
                 7. Descriptions must ALWAYS be a SINGLE SENTENCE with EXACTLY 10-15 words
                 8. Avoid using "I" or "you" perspectives in descriptions - use objective third-person statements instead
-                9. For satirical ideas, playfully exaggerate elements from the user's answers but keep it good-natured
-                10. AVOID UNCOMMON words and use EASY to understand language, and avoid complex expressions that average readers might not know
+                9. For all ideas, playfully exaggerate elements from the user's answers but keep it good-natured
+                10. AVOID UNCOMMON words and use EASY to understand language, but be CLEVER with wordplay
 
-                Title examples to follow (ranging from professional to satirical to unexpected):
-                - "The Kitchen Creativity"
-                - "Startups and Slam Dunks"
-                - "Mission: Impossible"
-                - "Poop like a pro"
-                - "Accidental Leadership Genius"
-                - "Skiing, Strategy, and space"
-                - "How I Befriended Gravity"
+                Witty Title examples to follow:
+                - "Chaos Whisperer"
+                - "Perfectly Imperfect"
+                - "Professional Weirdo"
+                - "The Accidental Guru"
+                - "Naps and Notebooks"
+                - "Failing Forward Fast"
+                - "Life Without Manual"
+                - "Organized Chaos Theory"
+                - "The Art of Winging It"
+                - "Professionally Unprofessional"
+                - "Overthinking Champion"
 
                 Subtitle examples to follow (ALWAYS ONE SENTENCE 10-15 words NO COMMAS NO "I" OR "YOU"):
                 - "Essential cooking techniques transformed into business strategies for maximum growth"
