@@ -1229,5 +1229,3 @@ async function generatePdfSegment(imageFiles: any[], orderId: string, clientId: 
   const pdfOutput = pdf.output('arraybuffer');
   return new Uint8Array(pdfOutput);
 }
-
-// 注意：dataURLtoBlob函数已被移除，因为它未被使用
