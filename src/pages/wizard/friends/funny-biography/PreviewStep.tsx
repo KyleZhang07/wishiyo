@@ -428,6 +428,9 @@ const PreviewStep = () => {
     navigate('/create/friends/funny-biography/format');
   };
 
+  // 检查是否可以继续：章节必须已生成且不在加载中
+  const canContinue = !isLoading && chapters.length > 0;
+
   const getCurrentStyle = () => {
     const stylePresets = [
       {
@@ -472,6 +475,7 @@ const PreviewStep = () => {
       currentStep={6}
       totalSteps={7}
       onNextClick={handleContinue}
+      nextDisabled={!canContinue}
     >
       <div className="w-full">
         <div className="max-w-4xl mx-auto space-y-6">

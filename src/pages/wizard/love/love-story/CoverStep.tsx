@@ -1945,13 +1945,48 @@ const LoveStoryCoverStep = () => {
         {/* 封面样式选择 */}
         <div className="mb-10">
           <h2 className="text-xl font-semibold mb-4">Choose a Cover</h2>
-          <div className="flex justify-center space-x-8">
+          {/* 桌面端布局 */}
+          <div className="hidden md:flex justify-center space-x-8">
             {coverStyles.map(style => (
               <div
                 key={style.id}
                 onClick={() => handleStyleSelect(style.id)}
                 className={`relative w-24 h-24 rounded-full cursor-pointer overflow-hidden ${
                   selectedStyle === style.id ? 'ring-2 ring-offset-2 ring-[#FF7F50]' : ''
+                }`}
+              >
+                {style.backgroundImage ? (
+                  <>
+                    <div
+                      className="absolute inset-0 bg-center bg-cover"
+                      style={{ backgroundImage: `url(${style.backgroundImage})` }}
+                    />
+                    <div
+                      className="absolute inset-0"
+                      style={{ backgroundColor: style.id === 'modern' ? 'rgba(10, 26, 63, 0.3)' :
+                               style.id === 'playful' ? 'rgba(74, 137, 220, 0.2)' :
+                               style.id === 'elegant' ? 'rgba(255, 255, 255, 0.2)' :
+                               style.id === 'classic' ? 'rgba(245, 235, 220, 0.3)' : 'rgba(0, 0, 0, 0)' }}
+                    />
+                  </>
+                ) : (
+                  <div
+                    className="absolute inset-0"
+                    style={{ background: style.background }}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+          
+          {/* 移动端布局 - 更小的圆形样式选项 */}
+          <div className="md:hidden flex justify-center space-x-4">
+            {coverStyles.map(style => (
+              <div
+                key={style.id}
+                onClick={() => handleStyleSelect(style.id)}
+                className={`relative w-16 h-16 rounded-full cursor-pointer overflow-hidden ${
+                  selectedStyle === style.id ? 'ring-2 ring-offset-1 ring-[#FF7F50]' : ''
                 }`}
               >
                 {style.backgroundImage ? (

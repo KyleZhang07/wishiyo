@@ -689,7 +689,7 @@ const FunnyBiographyGenerateStep = () => {
 
                         {/* 书脊 */}
                         <div className="flex flex-col items-center flex-shrink-0">
-                          <div style={{ width: `${Math.max(standardSpineWidth, 60)}px`, height: `${Math.min(standardPreviewHeight, 420)}px` }} className="border shadow-md bg-gray-50 flex items-center justify-center overflow-hidden">
+                          <div style={{ width: `${Math.min(standardSpineWidth * 1.2, 45)}px`, height: `${Math.min(standardPreviewHeight, 420)}px` }} className="border shadow-md bg-gray-50 flex items-center justify-center overflow-hidden">
                             <img
                               src={spinePdf || ''}
                               style={{ width: '100%', height: '100%', objectFit: 'fill' }}
