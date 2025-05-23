@@ -73,27 +73,85 @@ serve(async (req) => {
       )
     }
 
-    // 尝试从两个可能的路径获取图片
+    // 尝试从多个可能的路径获取图片
     let imageFiles: any[] = [];
     let listError = null;
+    let actualImagePath = '';
 
     // 首先尝试从基于client_id的路径获取
-    const { data: clientImages, error: clientListError } = await supabaseAdmin
+    const { data: clientFolders, error: clientListError } = await supabaseAdmin
       .storage
       .from('images')
       .list(`${clientId}`)
 
-    if (!clientListError && clientImages && clientImages.length > 0) {
-      imageFiles = clientImages;
-    } else {
-      // 如果没有找到，尝试从love-story/${orderId}路径获取
+    if (!clientListError && clientFolders && clientFolders.length > 0) {
+      console.log(`Found ${clientFolders.length} items in client folder ${clientId}`);
+      
+      // 检查是否包含session子文件夹
+      const sessionFolders = clientFolders.filter(item => item.name && item.name.startsWith('session_'));
+      
+      if (sessionFolders.length > 0) {
+        console.log(`Found ${sessionFolders.length} session folders, checking each for images...`);
+        
+        // 按时间排序，取最新的session文件夹
+        sessionFolders.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        
+        for (const sessionFolder of sessionFolders) {
+          const sessionPath = `${clientId}/${sessionFolder.name}`;
+          console.log(`Checking session folder: ${sessionPath}`);
+          
+          const { data: sessionImages, error: sessionError } = await supabaseAdmin
+            .storage
+            .from('images')
+            .list(sessionPath);
+            
+          if (!sessionError && sessionImages && sessionImages.length > 0) {
+            console.log(`Found ${sessionImages.length} images in session folder ${sessionPath}`);
+            
+            // 为图片添加完整路径信息
+            imageFiles = sessionImages.map(file => ({
+              ...file,
+              fullPath: `${sessionPath}/${file.name}`
+            }));
+            actualImagePath = sessionPath;
+            break;
+          }
+        }
+      } else {
+        // 如果没有session文件夹，检查是否直接有图片文件
+        const directImages = clientFolders.filter(item => item.name && (
+          item.name.includes('.jpg') || 
+          item.name.includes('.jpeg') || 
+          item.name.includes('.png') ||
+          item.name.includes('.webp')
+        ));
+        
+        if (directImages.length > 0) {
+          console.log(`Found ${directImages.length} direct images in client folder`);
+          imageFiles = directImages.map(file => ({
+            ...file,
+            fullPath: `${clientId}/${file.name}`
+          }));
+          actualImagePath = clientId;
+        }
+      }
+    }
+
+    // 如果仍然没有找到图片，尝试备用路径
+    if (imageFiles.length === 0) {
+      console.log(`No images found in client folder, trying fallback path: love-story/${orderId}`);
+      
       const { data: orderImages, error: orderListError } = await supabaseAdmin
         .storage
         .from('images')
         .list(`love-story/${orderId}`)
 
       if (!orderListError && orderImages && orderImages.length > 0) {
-        imageFiles = orderImages;
+        imageFiles = orderImages.map(file => ({
+          ...file,
+          fullPath: `love-story/${orderId}/${file.name}`
+        }));
+        actualImagePath = `love-story/${orderId}`;
         listError = null;
       } else {
         // 两个路径都没有找到图片
@@ -102,9 +160,15 @@ serve(async (req) => {
       }
     }
 
+    console.log(`Final image search result: Found ${imageFiles.length} images from path: ${actualImagePath}`);
+
     if (listError || !imageFiles || imageFiles.length === 0) {
       return new Response(
-        JSON.stringify({ error: 'Failed to list images or no images found', details: listError }),
+        JSON.stringify({ 
+          error: 'Failed to list images or no images found', 
+          details: listError,
+          searchPaths: [`${clientId}`, `love-story/${orderId}`]
+        }),
         { headers: { ...headers, 'Content-Type': 'application/json' }, status: 500 }
       )
     }
@@ -389,35 +453,51 @@ async function generateCoverPdf(backCoverFile: any, spineFile: any, frontCoverFi
     let imageData = null
     let imageError = null
 
-    // 首先尝试从client_id路径获取图片
-    if (clientId) {
-      const clientPathResult = await supabase
-        .storage
-        .from('images')
-        .download(`${clientId}/${file.name}`)
+    // 使用文件的完整路径进行下载
+    const filePath = file.fullPath || `${clientId}/${file.name}`;
+    console.log(`Downloading image from path: ${filePath}`);
 
-      if (!clientPathResult.error && clientPathResult.data) {
-        imageData = clientPathResult.data
-        imageError = null
-      } else {
-        // 如果从client_id路径获取失败，尝试从order_id路径获取
-        const orderPathResult = await supabase
+    const { data, error } = await supabase
+      .storage
+      .from('images')
+      .download(filePath);
+
+    imageData = data;
+    imageError = error;
+
+    // 如果下载失败，尝试备用路径
+    if (imageError || !imageData) {
+      console.log(`Failed to download from ${filePath}, trying fallback paths`);
+      
+      // 尝试从client_id直接路径获取图片
+      if (clientId && !filePath.startsWith(clientId)) {
+        const clientPath = `${clientId}/${file.name}`;
+        console.log(`Trying client path: ${clientPath}`);
+        
+        const clientResult = await supabase
           .storage
           .from('images')
-          .download(`love-story/${orderId}/${file.name}`)
+          .download(clientPath);
 
-        imageData = orderPathResult.data
-        imageError = orderPathResult.error
+        if (!clientResult.error && clientResult.data) {
+          imageData = clientResult.data;
+          imageError = null;
+        }
       }
-    } else {
-      // 如果没有client_id，直接从order_id路径获取
-      const { data, error } = await supabase
-        .storage
-        .from('images')
-        .download(`love-story/${orderId}/${file.name}`)
+      
+      // 如果仍然失败，尝试从order_id路径获取
+      if (imageError || !imageData) {
+        const orderPath = `love-story/${orderId}/${file.name}`;
+        console.log(`Trying order path: ${orderPath}`);
+        
+        const orderResult = await supabase
+          .storage
+          .from('images')
+          .download(orderPath);
 
-      imageData = data
-      imageError = error
+        imageData = orderResult.data;
+        imageError = orderResult.error;
+      }
     }
 
     if (imageError || !imageData) {
