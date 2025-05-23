@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -36,15 +35,15 @@ const ImageAdjustDialog = ({
   const [dragStartPos, setDragStartPos] = useState({ x: 0, y: 0 });
   const [dragStartImagePos, setDragStartImagePos] = useState({ x: 0, y: 0 });
 
-  // 更新位置的逻辑 - 只保留拖动功能
-  const updatePosition = (event: React.MouseEvent) => {
+  // 更新位置的逻辑 - 支持鼠标和触摸事件
+  const updatePosition = (clientX: number, clientY: number) => {
     if (!gridRef.current || !isDragging) return;
 
     const rect = gridRef.current.getBoundingClientRect();
 
     // 计算位置偏移
-    const deltaX = (event.clientX - dragStartPos.x) / rect.width * 2;
-    const deltaY = (event.clientY - dragStartPos.y) / rect.height * 2;
+    const deltaX = (clientX - dragStartPos.x) / rect.width * 2;
+    const deltaY = (clientY - dragStartPos.y) / rect.height * 2;
 
     // 基于拖动起始位置计算新位置
     const newX = dragStartImagePos.x + deltaX;
@@ -71,7 +70,7 @@ const ImageAdjustDialog = ({
 
   const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
     if (isDragging) {
-      updatePosition(event);
+      updatePosition(event.clientX, event.clientY);
     }
   };
 
@@ -84,7 +83,37 @@ const ImageAdjustDialog = ({
     setIsDragging(false);
   };
 
-  // 移除点击事件处理，只保留拖动功能
+  // 触摸事件处理函数
+  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    // 只在触摸图片时才开始拖动，并且只处理单点触摸
+    if (event.target instanceof HTMLImageElement && event.touches.length === 1) {
+      const touch = event.touches[0];
+      setIsDragging(true);
+      setDragStartPos({ x: touch.clientX, y: touch.clientY });
+      setDragStartImagePos({ ...position });
+
+      // 防止默认行为和事件冒泡
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  };
+
+  const handleTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (isDragging && event.touches.length === 1) {
+      const touch = event.touches[0];
+      updatePosition(touch.clientX, touch.clientY);
+      // 防止页面滚动和默认行为
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  };
+
+  const handleTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
+    setIsDragging(false);
+    // 防止默认行为
+    event.preventDefault();
+    event.stopPropagation();
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -95,11 +124,14 @@ const ImageAdjustDialog = ({
 
         <div
           ref={gridRef}
-          className="relative aspect-[4/3] mb-6 bg-gray-900 rounded-lg overflow-hidden"
+          className="relative aspect-[4/3] mb-6 bg-gray-900 rounded-lg overflow-hidden touch-none"
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseLeave}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
         >
           {/* Grid lines */}
           <div className="absolute inset-0 grid grid-cols-3 grid-rows-3">

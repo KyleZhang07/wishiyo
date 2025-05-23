@@ -589,7 +589,7 @@ const FunnyBiographyGenerateStep = () => {
   return (
     <WizardStep
       title="Create Your Cover"
-      description="Click the ‘Drag Image’ button to adjust the cover image position."
+      description="Click the 'Drag Image' button to adjust the cover image position."
       previousStep="/create/friends/funny-biography/photos"
       currentStep={5}
       totalSteps={7}
@@ -634,40 +634,90 @@ const FunnyBiographyGenerateStep = () => {
                   </span>
                 </div>
               ) : (
-                <div className="flex items-start space-x-4 justify-center">
-                  {/* 前封面 */}
-                  <div className="flex flex-col items-center">
-                    <div style={{ width: `${standardPreviewWidth}px`, height: `${standardPreviewHeight}px`, aspectRatio: '2/3' }} className="border shadow-md bg-gray-50 flex items-center justify-center overflow-hidden">
-                      <img
-                        src={frontCoverPdf}
-                        style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
-                        alt="Front Cover"
-                      />
+                <>
+                  {/* 桌面端布局 - 在大屏幕上显示 */}
+                  <div className="hidden md:flex items-start space-x-4 justify-center">
+                    {/* 前封面 */}
+                    <div className="flex flex-col items-center">
+                      <div style={{ width: `${standardPreviewWidth}px`, height: `${standardPreviewHeight}px`, aspectRatio: '2/3' }} className="border shadow-md bg-gray-50 flex items-center justify-center overflow-hidden">
+                        <img
+                          src={frontCoverPdf}
+                          style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                          alt="Front Cover"
+                        />
+                      </div>
+                    </div>
+
+                    {/* 书脊 */}
+                    <div className="flex flex-col items-center">
+                      <div style={{ width: `${standardSpineWidth}px`, height: `${standardPreviewHeight}px` }} className="border shadow-md bg-gray-50 flex items-center justify-center overflow-hidden">
+                        <img
+                          src={spinePdf || ''}
+                          style={{ width: '100%', height: '100%', objectFit: 'fill' }}
+                          alt="Spine"
+                        />
+                      </div>
+                    </div>
+
+                    {/* 后封面 */}
+                    <div className="flex flex-col items-center">
+                      <div style={{ width: `${standardPreviewWidth}px`, height: `${standardPreviewHeight}px`, aspectRatio: '2/3' }} className="border shadow-md bg-gray-50 flex items-center justify-center overflow-hidden">
+                        <img
+                          src={backCoverPdf || ''}
+                          style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                          alt="Back Cover"
+                        />
+                      </div>
                     </div>
                   </div>
 
-                  {/* 书脊 */}
-                  <div className="flex flex-col items-center">
-                    <div style={{ width: `${standardSpineWidth}px`, height: `${standardPreviewHeight}px` }} className="border shadow-md bg-gray-50 flex items-center justify-center overflow-hidden">
-                      <img
-                        src={spinePdf || ''}
-                        style={{ width: '100%', height: '100%', objectFit: 'fill' }}
-                        alt="Spine"
-                      />
-                    </div>
-                  </div>
+                  {/* 移动端滑动布局 - 在小屏幕上显示 */}
+                  <div className="md:hidden w-full">
+                    <div className="overflow-x-auto scrollbar-hide">
+                      <div className="flex space-x-4 pb-4" style={{ width: 'max-content' }}>
+                        {/* 前封面 */}
+                        <div className="flex flex-col items-center flex-shrink-0">
+                          <div style={{ width: `${Math.min(standardPreviewWidth, 280)}px`, height: `${Math.min(standardPreviewHeight, 420)}px`, aspectRatio: '2/3' }} className="border shadow-md bg-gray-50 flex items-center justify-center overflow-hidden">
+                            <img
+                              src={frontCoverPdf}
+                              style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                              alt="Front Cover"
+                            />
+                          </div>
+                          <span className="text-sm text-gray-600 mt-2">Front Cover</span>
+                        </div>
 
-                  {/* 后封面 */}
-                  <div className="flex flex-col items-center">
-                    <div style={{ width: `${standardPreviewWidth}px`, height: `${standardPreviewHeight}px`, aspectRatio: '2/3' }} className="border shadow-md bg-gray-50 flex items-center justify-center overflow-hidden">
-                      <img
-                        src={backCoverPdf || ''}
-                        style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
-                        alt="Back Cover"
-                      />
+                        {/* 书脊 */}
+                        <div className="flex flex-col items-center flex-shrink-0">
+                          <div style={{ width: `${Math.max(standardSpineWidth, 60)}px`, height: `${Math.min(standardPreviewHeight, 420)}px` }} className="border shadow-md bg-gray-50 flex items-center justify-center overflow-hidden">
+                            <img
+                              src={spinePdf || ''}
+                              style={{ width: '100%', height: '100%', objectFit: 'fill' }}
+                              alt="Spine"
+                            />
+                          </div>
+                          <span className="text-sm text-gray-600 mt-2">Spine</span>
+                        </div>
+
+                        {/* 后封面 */}
+                        <div className="flex flex-col items-center flex-shrink-0">
+                          <div style={{ width: `${Math.min(standardPreviewWidth, 280)}px`, height: `${Math.min(standardPreviewHeight, 420)}px`, aspectRatio: '2/3' }} className="border shadow-md bg-gray-50 flex items-center justify-center overflow-hidden">
+                            <img
+                              src={backCoverPdf || ''}
+                              style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                              alt="Back Cover"
+                            />
+                          </div>
+                          <span className="text-sm text-gray-600 mt-2">Back Cover</span>
+                        </div>
+                      </div>
+                    </div>
+                    {/* 移动端滑动提示 */}
+                    <div className="text-center text-sm text-gray-500 mt-2">
+                      ← Swipe to see all covers →
                     </div>
                   </div>
-                </div>
+                </>
               )}
             </div>
 
