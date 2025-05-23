@@ -132,9 +132,8 @@ const OrderSuccess = () => {
 
   // Call the cleanup function when component mounts
   useEffect(() => {
-    // 暂时禁用清除存储功能
-    // clearStorageForGenre();
-    console.log('Storage cleanup temporarily disabled');
+    // 暂时禁用清除存储功能 -- 现在恢复启用
+    clearStorageForGenre();
   }, []);
 
   return (
