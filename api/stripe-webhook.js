@@ -256,27 +256,31 @@ export default async function handler(req, res) {
             }
 
             // 提取运输地址信息
-            const shippingAddress = expandedSession.shipping ? {
-              name: expandedSession.shipping.name,
-              address: {
-                line1: expandedSession.shipping.address.line1,
-                line2: expandedSession.shipping.address.line2 || '',
-                city: expandedSession.shipping.address.city,
-                state: expandedSession.shipping.address.state,
-                postal_code: expandedSession.shipping.address.postal_code,
-                country: expandedSession.shipping.address.country
+            // Add detailed logging before address extraction
+            console.log('[WEBHOOK] Attempting to extract shipping address. Expanded session shipping:', JSON.stringify(expandedSession.shipping, null, 2));
+            console.log('[WEBHOOK] For reference, customer_details.address (billing):', JSON.stringify(expandedSession.customer_details?.address, null, 2));
+
+            let shippingAddress = null;
+            if (expandedSession.shipping && expandedSession.shipping.address && expandedSession.shipping.address.line1) {
+              shippingAddress = {
+                name: expandedSession.shipping.name || '', // Ensure name is also handled if potentially null
+                address: {
+                  line1: expandedSession.shipping.address.line1,
+                  line2: expandedSession.shipping.address.line2 || '',
+                  city: expandedSession.shipping.address.city,
+                  state: expandedSession.shipping.address.state,
+                  postal_code: expandedSession.shipping.address.postal_code,
+                  country: expandedSession.shipping.address.country
+                }
+              };
+              console.log('[WEBHOOK] Successfully extracted shippingAddress:', JSON.stringify(shippingAddress, null, 2));
+            } else {
+              console.warn('[WEBHOOK] Shipping address not found in expandedSession.shipping or was incomplete. Setting shippingAddress to null. This might be an issue if shipping was expected.');
+              // Log details if shipping was expected but not found
+              if (expandedSession.shipping_address_collection && expandedSession.shipping_address_collection.allowed_countries.length > 0) {
+                  console.warn('[WEBHOOK] Shipping address collection was enabled for this session, but no shipping address was extracted.');
               }
-            } : (expandedSession.customer_details?.address ? {
-              name: expandedSession.customer_details.name || '',
-              address: {
-                line1: expandedSession.customer_details.address.line1 || '',
-                line2: expandedSession.customer_details.address.line2 || '',
-                city: expandedSession.customer_details.address.city || '',
-                state: expandedSession.customer_details.address.state || '',
-                postal_code: expandedSession.customer_details.address.postal_code || '',
-                country: expandedSession.customer_details.address.country || ''
-              }
-            } : null);
+            }
 
             // 调试日志 - 详细输出shipping地址信息
             console.log('DETAILED SHIPPING ADDRESS DEBUG:', {
