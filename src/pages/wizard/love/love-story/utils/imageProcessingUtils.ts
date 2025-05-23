@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { uploadImageToStorage, deleteImageFromStorage } from '@/integrations/supabase/storage';
+import { uploadImageToStorage, deleteImageFromStorage, deleteContentImagesByIndex } from '@/integrations/supabase/storage';
 
 // 图像扩展功能
 export const expandImage = async (imageUrl: string): Promise<string> => {
@@ -46,22 +46,10 @@ export const handleGenericContentRegeneration = async (
   // Clear existing localStorage entry
   localStorage.removeItem(lsKey);
 
-  // 获取当前图片的URL，用于后续删除
-  const currentImageUrl = localStorage.getItem(`${lsKey}_url`);
+  // 清除当前图片的URL引用
+  localStorage.removeItem(`${lsKey}_url`);
 
-  // 查找当前图片在Supabase中的路径
-  let currentImagePath = '';
-  if (currentImageUrl) {
-    // 从URL中提取路径
-    const currentImageName = currentImageUrl.split('/').pop();
-    if (currentImageName) {
-      // 找到对应的图片对象
-      const currentImage = supabaseImages.find(img => img.name.includes(currentImageName));
-      if (currentImage) {
-        currentImagePath = currentImage.name;
-      }
-    }
-  }
+  console.log(`Starting regeneration for content ${index}...`);
 
   const savedPrompts = localStorage.getItem('loveStoryImagePrompts');
   const characterPhoto = localStorage.getItem('loveStoryPartnerPhoto');
@@ -132,7 +120,7 @@ export const handleGenericContentRegeneration = async (
       const storageUrl = await uploadImageToStorage(
         expandedBase64,
         'images',
-        `love-story-content-${index}-${timestamp}`
+        `content-${index}-${timestamp}`  // 更简洁的命名，去掉love-story前缀
       );
 
       // 4) Update state and storage map
@@ -141,15 +129,13 @@ export const handleGenericContentRegeneration = async (
       // 5) Store only the URL reference in localStorage
       localStorage.setItem(`${lsKey}_url`, storageUrl);
 
-      // 6) 删除旧图片
-      if (currentImagePath) {
-        try {
-          await deleteImageFromStorage(currentImagePath, 'images');
-          console.log(`Deleted old image: ${currentImagePath}`);
-        } catch (deleteErr) {
-          console.error(`Failed to delete old image: ${currentImagePath}`, deleteErr);
-          // 继续处理，即使删除失败
-        }
+      // 6) 删除所有旧的同类型图片 - 使用新的专门函数
+      try {
+        const deletedCount = await deleteContentImagesByIndex(index, 'images');
+        console.log(`Successfully deleted ${deletedCount} old content-${index} images`);
+      } catch (deleteErr) {
+        console.error(`Error deleting old content-${index} images:`, deleteErr);
+        // 继续处理，即使删除失败
       }
 
       // 7) 如果提供了自动渲染函数，则调用它
@@ -166,10 +152,10 @@ export const handleGenericContentRegeneration = async (
         }
       }
 
-      // 8) 延迟刷新图片列表，确保上传完成
+      // 8) 延迟刷新图片列表，确保上传和删除都完成
       setTimeout(() => {
         refreshImages();
-      }, 1000);
+      }, 2000);  // 增加延迟时间，确保删除操作完成
 
       // 不需要显示成功通知，用户可以看到图片已更新
     } catch (err: any) {

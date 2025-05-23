@@ -189,23 +189,42 @@ export const deleteImageFromStorage = async (
     const currentSessionId = sessionId || localStorage.getItem('current_session_id');
     
     // Extract just the filename if it's a full URL
+    let fileName = path;
     if (path.startsWith('http')) {
       const urlParts = path.split('/');
-      path = urlParts[urlParts.length - 1];
+      fileName = urlParts[urlParts.length - 1];
     }
     
-    // Make sure the path contains the client ID and session ID
-    let fullPath;
+    console.log(`Attempting to delete image: ${fileName}`);
     
-    // Case 1: Path already includes client ID
-    if (path.includes(clientId)) {
-      fullPath = path;
-    } 
-    // Case 2: We have a session ID and should try both paths
-    else if (currentSessionId) {
-      // First try to delete from the session folder
-      const sessionPath = `${clientId}/${currentSessionId}/${path}`;
-      console.log(`Attempting to delete file at session path: ${sessionPath}`);
+    // Track all attempted deletion paths
+    const deletionAttempts: string[] = [];
+    let deletionSuccess = false;
+    
+    // Strategy 1: If path already includes full client/session path structure
+    if (path.includes('/')) {
+      console.log(`Attempting deletion with full path: ${path}`);
+      deletionAttempts.push(path);
+      
+      try {
+        const { error } = await supabase.storage
+          .from(bucket)
+          .remove([path]);
+          
+        if (!error) {
+          console.log(`Successfully deleted file at full path: ${path}`);
+          deletionSuccess = true;
+        }
+      } catch (e) {
+        console.log(`Failed to delete at full path: ${path}`);
+      }
+    }
+    
+    // Strategy 2: Try current session path if we have a session ID
+    if (!deletionSuccess && currentSessionId) {
+      const sessionPath = `${clientId}/${currentSessionId}/${fileName}`;
+      console.log(`Attempting deletion at session path: ${sessionPath}`);
+      deletionAttempts.push(sessionPath);
       
       try {
         const { error } = await supabase.storage
@@ -214,33 +233,245 @@ export const deleteImageFromStorage = async (
           
         if (!error) {
           console.log(`Successfully deleted file at session path: ${sessionPath}`);
-          return true;
+          deletionSuccess = true;
         }
       } catch (e) {
-        console.log(`File not found at session path, trying legacy path`);
+        console.log(`Failed to delete at session path: ${sessionPath}`);
       }
+    }
+    
+    // Strategy 3: Try legacy client-only path
+    if (!deletionSuccess) {
+      const legacyPath = `${clientId}/${fileName}`;
+      console.log(`Attempting deletion at legacy path: ${legacyPath}`);
+      deletionAttempts.push(legacyPath);
       
-      // If that fails, try the legacy path
-      fullPath = `${clientId}/${path}`;
-    } 
-    // Case 3: No session ID, use legacy path
-    else {
-      fullPath = `${clientId}/${path}`;
+      try {
+        const { error } = await supabase.storage
+          .from(bucket)
+          .remove([legacyPath]);
+          
+        if (!error) {
+          console.log(`Successfully deleted file at legacy path: ${legacyPath}`);
+          deletionSuccess = true;
+        }
+      } catch (e) {
+        console.log(`Failed to delete at legacy path: ${legacyPath}`);
+      }
     }
     
-    console.log(`Attempting to delete file at path: ${fullPath}`);
-    
-    const { error } = await supabase.storage
-      .from(bucket)
-      .remove([fullPath]);
-    
-    if (error) {
-      throw error;
+    // Strategy 4: Search and delete all matching files across all session folders
+    if (!deletionSuccess) {
+      console.log(`File not found in expected paths, searching across all session folders...`);
+      
+      try {
+        // List all items in the client folder to find session subfolders
+        const { data: clientItems, error: listError } = await supabase.storage
+          .from(bucket)
+          .list(clientId);
+          
+        if (!listError && clientItems) {
+          // Find all session folders
+          const sessionFolders = clientItems.filter(item => 
+            item.name && item.name.startsWith('session_')
+          );
+          
+          console.log(`Found ${sessionFolders.length} session folders to search`);
+          
+          // Search in each session folder
+          for (const sessionFolder of sessionFolders) {
+            const searchPath = `${clientId}/${sessionFolder.name}`;
+            
+            try {
+              const { data: sessionItems, error: sessionListError } = await supabase.storage
+                .from(bucket)
+                .list(searchPath);
+                
+              if (!sessionListError && sessionItems) {
+                // Find files that match our target filename
+                const matchingFiles = sessionItems.filter(item =>
+                  item.name === fileName || item.name.includes(fileName.replace(/\.[^/.]+$/, ""))
+                );
+                
+                if (matchingFiles.length > 0) {
+                  console.log(`Found ${matchingFiles.length} matching files in ${searchPath}`);
+                  
+                  // Delete all matching files
+                  const filesToDelete = matchingFiles.map(file => `${searchPath}/${file.name}`);
+                  
+                  const { error: deleteError } = await supabase.storage
+                    .from(bucket)
+                    .remove(filesToDelete);
+                    
+                  if (!deleteError) {
+                    console.log(`Successfully deleted ${matchingFiles.length} files from ${searchPath}`);
+                    deletionSuccess = true;
+                  }
+                }
+              }
+            } catch (sessionError) {
+              console.log(`Error searching in session folder ${sessionFolder.name}:`, sessionError);
+            }
+          }
+        }
+      } catch (searchError) {
+        console.log(`Error during comprehensive search:`, searchError);
+      }
     }
     
+    if (!deletionSuccess) {
+      console.warn(`Failed to delete file ${fileName} from any of the attempted paths:`, deletionAttempts);
+      return false;
+    }
+    
+    console.log(`Successfully deleted file: ${fileName}`);
     return true;
+    
   } catch (error) {
     console.error('Error deleting image from Supabase Storage:', error);
     return false;
+  }
+};
+
+/**
+ * Deletes all content images with a specific index from Supabase Storage
+ * This function is specifically designed for regenerate functionality
+ * @param contentIndex The content index to delete (e.g., 1, 2, 3...)
+ * @param bucket Bucket name
+ * @param sessionId Optional session ID to specify which session's files to delete
+ * @returns Number of files deleted
+ */
+export const deleteContentImagesByIndex = async (
+  contentIndex: number,
+  bucket = 'images',
+  sessionId?: string
+): Promise<number> => {
+  try {
+    const clientId = getClientId();
+    const currentSessionId = sessionId || localStorage.getItem('current_session_id');
+    
+    console.log(`Searching for content-${contentIndex} images to delete...`);
+    
+    let totalDeleted = 0;
+    const contentPattern = new RegExp(`content-${contentIndex}-\\d+`);
+    
+    // Search in current session folder first
+    if (currentSessionId) {
+      const sessionPath = `${clientId}/${currentSessionId}`;
+      console.log(`Searching in session folder: ${sessionPath}`);
+      
+      try {
+        const { data: sessionItems, error: sessionListError } = await supabase.storage
+          .from(bucket)
+          .list(sessionPath);
+          
+        if (!sessionListError && sessionItems) {
+          const matchingFiles = sessionItems.filter(item =>
+            item.name && contentPattern.test(item.name)
+          );
+          
+          if (matchingFiles.length > 0) {
+            console.log(`Found ${matchingFiles.length} matching content images in session folder`);
+            
+            const filesToDelete = matchingFiles.map(file => `${sessionPath}/${file.name}`);
+            
+            const { error: deleteError } = await supabase.storage
+              .from(bucket)
+              .remove(filesToDelete);
+              
+            if (!deleteError) {
+              console.log(`Successfully deleted ${matchingFiles.length} content images from session folder`);
+              totalDeleted += matchingFiles.length;
+            } else {
+              console.error(`Error deleting files from session folder:`, deleteError);
+            }
+          }
+        }
+      } catch (sessionError) {
+        console.log(`Error searching in session folder:`, sessionError);
+      }
+    }
+    
+    // Also search in legacy client-only path
+    try {
+      console.log(`Searching in legacy client folder: ${clientId}`);
+      
+      const { data: clientItems, error: clientListError } = await supabase.storage
+        .from(bucket)
+        .list(clientId);
+        
+      if (!clientListError && clientItems) {
+        // Find direct files (legacy format)
+        const directMatchingFiles = clientItems.filter(item =>
+          item.name && contentPattern.test(item.name)
+        );
+        
+        if (directMatchingFiles.length > 0) {
+          console.log(`Found ${directMatchingFiles.length} matching content images in legacy client folder`);
+          
+          const filesToDelete = directMatchingFiles.map(file => `${clientId}/${file.name}`);
+          
+          const { error: deleteError } = await supabase.storage
+            .from(bucket)
+            .remove(filesToDelete);
+            
+          if (!deleteError) {
+            console.log(`Successfully deleted ${directMatchingFiles.length} content images from legacy folder`);
+            totalDeleted += directMatchingFiles.length;
+          } else {
+            console.error(`Error deleting files from legacy folder:`, deleteError);
+          }
+        }
+        
+        // Also search in all other session subfolders
+        const sessionFolders = clientItems.filter(item => 
+          item.name && item.name.startsWith('session_') && item.name !== currentSessionId
+        );
+        
+        for (const sessionFolder of sessionFolders) {
+          const otherSessionPath = `${clientId}/${sessionFolder.name}`;
+          
+          try {
+            const { data: otherSessionItems, error: otherSessionListError } = await supabase.storage
+              .from(bucket)
+              .list(otherSessionPath);
+              
+            if (!otherSessionListError && otherSessionItems) {
+              const matchingFiles = otherSessionItems.filter(item =>
+                item.name && contentPattern.test(item.name)
+              );
+              
+              if (matchingFiles.length > 0) {
+                console.log(`Found ${matchingFiles.length} matching content images in other session folder: ${sessionFolder.name}`);
+                
+                const filesToDelete = matchingFiles.map(file => `${otherSessionPath}/${file.name}`);
+                
+                const { error: deleteError } = await supabase.storage
+                  .from(bucket)
+                  .remove(filesToDelete);
+                  
+                if (!deleteError) {
+                  console.log(`Successfully deleted ${matchingFiles.length} content images from other session folder`);
+                  totalDeleted += matchingFiles.length;
+                } else {
+                  console.error(`Error deleting files from other session folder:`, deleteError);
+                }
+              }
+            }
+          } catch (otherSessionError) {
+            console.log(`Error searching in other session folder ${sessionFolder.name}:`, otherSessionError);
+          }
+        }
+      }
+    } catch (clientError) {
+      console.log(`Error searching in client folder:`, clientError);
+    }
+    
+    console.log(`Total content-${contentIndex} images deleted: ${totalDeleted}`);
+    return totalDeleted;
+    
+  } catch (error) {
+    console.error('Error deleting content images by index:', error);
+    return 0;
   }
 };
