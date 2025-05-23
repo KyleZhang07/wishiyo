@@ -256,27 +256,66 @@ export default async function handler(req, res) {
             }
 
             // 提取运输地址信息
-            const shippingAddress = expandedSession.shipping ? {
-              name: expandedSession.shipping.name,
-              address: {
-                line1: expandedSession.shipping.address.line1,
-                line2: expandedSession.shipping.address.line2 || '',
-                city: expandedSession.shipping.address.city,
-                state: expandedSession.shipping.address.state,
-                postal_code: expandedSession.shipping.address.postal_code,
-                country: expandedSession.shipping.address.country
-              }
-            } : (expandedSession.customer_details?.address ? {
-              name: expandedSession.customer_details.name || '',
-              address: {
-                line1: expandedSession.customer_details.address.line1 || '',
-                line2: expandedSession.customer_details.address.line2 || '',
-                city: expandedSession.customer_details.address.city || '',
-                state: expandedSession.customer_details.address.state || '',
-                postal_code: expandedSession.customer_details.address.postal_code || '',
-                country: expandedSession.customer_details.address.country || ''
-              }
-            } : null);
+            console.log('[DIAGNOSTIC_LOG] Stripe Webhook - Raw Address Data Start');
+            console.log('[DIAGNOSTIC_LOG] expandedSession.shipping (raw):', JSON.stringify(expandedSession.shipping, null, 2));
+            console.log('[DIAGNOSTIC_LOG] expandedSession.customer_details.address (raw):', JSON.stringify(expandedSession.customer_details?.address, null, 2));
+            console.log('[DIAGNOSTIC_LOG] expandedSession.customer_details.name (raw):', expandedSession.customer_details?.name);
+            console.log('[DIAGNOSTIC_LOG] Stripe Webhook - Raw Address Data End');
+
+            let determinedShippingAddress = null;
+            let addressSourceForLog = "未提供或无效";
+
+            // 优先尝试 expandedSession.shipping (如果 Stripe 直接填充了它)
+            if (expandedSession.shipping &&
+                expandedSession.shipping.name &&
+                expandedSession.shipping.address &&
+                expandedSession.shipping.address.line1 &&
+                expandedSession.shipping.address.city &&
+                expandedSession.shipping.address.postal_code &&
+                expandedSession.shipping.address.country) {
+                
+                determinedShippingAddress = {
+                    name: expandedSession.shipping.name,
+                    address: {
+                        line1: expandedSession.shipping.address.line1,
+                        line2: expandedSession.shipping.address.line2 || '',
+                        city: expandedSession.shipping.address.city,
+                        state: expandedSession.shipping.address.state || '',
+                        postal_code: expandedSession.shipping.address.postal_code,
+                        country: expandedSession.shipping.address.country
+                    }
+                };
+                addressSourceForLog = "expandedSession.shipping";
+            } 
+            // 如果 expandedSession.shipping 无效，则尝试 expandedSession.shipping_details
+            // 这通常在启用了 shipping_address_collection 时由 Stripe 填充
+            else if (expandedSession.shipping_details &&
+                     expandedSession.shipping_details.name &&
+                     expandedSession.shipping_details.address &&
+                     expandedSession.shipping_details.address.line1 &&
+                     expandedSession.shipping_details.address.city &&
+                     expandedSession.shipping_details.address.postal_code &&
+                     expandedSession.shipping_details.address.country) {
+                
+                determinedShippingAddress = {
+                    name: expandedSession.shipping_details.name,
+                    address: {
+                        line1: expandedSession.shipping_details.address.line1,
+                        line2: expandedSession.shipping_details.address.line2 || '',
+                        city: expandedSession.shipping_details.address.city,
+                        state: expandedSession.shipping_details.address.state || '',
+                        postal_code: expandedSession.shipping_details.address.postal_code,
+                        country: expandedSession.shipping_details.address.country
+                    }
+                };
+                addressSourceForLog = "expandedSession.shipping_details";
+            }
+            // 注意：我们不再回退到 customer_details.address 来获取送货地址
+
+            console.log('[STRIPE_ADDRESS_FINAL_CHECK] Source for shipping address:', addressSourceForLog);
+            console.log('[STRIPE_ADDRESS_FINAL_CHECK] Determined shippingAddress:', JSON.stringify(determinedShippingAddress, null, 2));
+
+            const shippingAddress = determinedShippingAddress; // 将最终确定的地址赋给后续代码使用的变量
 
             // 调试日志 - 详细输出shipping地址信息
             console.log('DETAILED SHIPPING ADDRESS DEBUG:', {
