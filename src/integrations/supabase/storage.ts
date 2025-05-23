@@ -350,15 +350,15 @@ export const deleteContentImagesByIndex = async (
     const clientId = getClientId();
     const currentSessionId = sessionId || localStorage.getItem('current_session_id');
     
-    console.log(`Searching for content-${contentIndex} images to delete...`);
+    console.log(`Searching for content-${contentIndex} images to delete in current session only...`);
     
     let totalDeleted = 0;
     const contentPattern = new RegExp(`content-${contentIndex}-\\d+`);
     
-    // Search in current session folder first
+    // Only search in current session folder
     if (currentSessionId) {
       const sessionPath = `${clientId}/${currentSessionId}`;
-      console.log(`Searching in session folder: ${sessionPath}`);
+      console.log(`Searching in current session folder: ${sessionPath}`);
       
       try {
         const { data: sessionItems, error: sessionListError } = await supabase.storage
@@ -371,7 +371,7 @@ export const deleteContentImagesByIndex = async (
           );
           
           if (matchingFiles.length > 0) {
-            console.log(`Found ${matchingFiles.length} matching content images in session folder`);
+            console.log(`Found ${matchingFiles.length} matching content images in current session`);
             
             const filesToDelete = matchingFiles.map(file => `${sessionPath}/${file.name}`);
             
@@ -380,94 +380,56 @@ export const deleteContentImagesByIndex = async (
               .remove(filesToDelete);
               
             if (!deleteError) {
-              console.log(`Successfully deleted ${matchingFiles.length} content images from session folder`);
+              console.log(`Successfully deleted ${matchingFiles.length} content images from current session`);
               totalDeleted += matchingFiles.length;
             } else {
-              console.error(`Error deleting files from session folder:`, deleteError);
+              console.error(`Error deleting files from current session:`, deleteError);
             }
+          } else {
+            console.log(`No matching content-${contentIndex} images found in current session`);
           }
         }
       } catch (sessionError) {
-        console.log(`Error searching in session folder:`, sessionError);
+        console.log(`Error searching in current session:`, sessionError);
       }
-    }
-    
-    // Also search in legacy client-only path
-    try {
-      console.log(`Searching in legacy client folder: ${clientId}`);
+    } else {
+      // Fallback: if no session ID, search in legacy client-only path
+      console.log(`No session ID found, searching in legacy client folder: ${clientId}`);
       
-      const { data: clientItems, error: clientListError } = await supabase.storage
-        .from(bucket)
-        .list(clientId);
-        
-      if (!clientListError && clientItems) {
-        // Find direct files (legacy format)
-        const directMatchingFiles = clientItems.filter(item =>
-          item.name && contentPattern.test(item.name)
-        );
-        
-        if (directMatchingFiles.length > 0) {
-          console.log(`Found ${directMatchingFiles.length} matching content images in legacy client folder`);
+      try {
+        const { data: clientItems, error: clientListError } = await supabase.storage
+          .from(bucket)
+          .list(clientId);
           
-          const filesToDelete = directMatchingFiles.map(file => `${clientId}/${file.name}`);
+        if (!clientListError && clientItems) {
+          // Find direct files (legacy format)
+          const directMatchingFiles = clientItems.filter(item =>
+            item.name && contentPattern.test(item.name) && !item.name.startsWith('session_')
+          );
           
-          const { error: deleteError } = await supabase.storage
-            .from(bucket)
-            .remove(filesToDelete);
+          if (directMatchingFiles.length > 0) {
+            console.log(`Found ${directMatchingFiles.length} matching content images in legacy format`);
             
-          if (!deleteError) {
-            console.log(`Successfully deleted ${directMatchingFiles.length} content images from legacy folder`);
-            totalDeleted += directMatchingFiles.length;
-          } else {
-            console.error(`Error deleting files from legacy folder:`, deleteError);
-          }
-        }
-        
-        // Also search in all other session subfolders
-        const sessionFolders = clientItems.filter(item => 
-          item.name && item.name.startsWith('session_') && item.name !== currentSessionId
-        );
-        
-        for (const sessionFolder of sessionFolders) {
-          const otherSessionPath = `${clientId}/${sessionFolder.name}`;
-          
-          try {
-            const { data: otherSessionItems, error: otherSessionListError } = await supabase.storage
+            const filesToDelete = directMatchingFiles.map(file => `${clientId}/${file.name}`);
+            
+            const { error: deleteError } = await supabase.storage
               .from(bucket)
-              .list(otherSessionPath);
+              .remove(filesToDelete);
               
-            if (!otherSessionListError && otherSessionItems) {
-              const matchingFiles = otherSessionItems.filter(item =>
-                item.name && contentPattern.test(item.name)
-              );
-              
-              if (matchingFiles.length > 0) {
-                console.log(`Found ${matchingFiles.length} matching content images in other session folder: ${sessionFolder.name}`);
-                
-                const filesToDelete = matchingFiles.map(file => `${otherSessionPath}/${file.name}`);
-                
-                const { error: deleteError } = await supabase.storage
-                  .from(bucket)
-                  .remove(filesToDelete);
-                  
-                if (!deleteError) {
-                  console.log(`Successfully deleted ${matchingFiles.length} content images from other session folder`);
-                  totalDeleted += matchingFiles.length;
-                } else {
-                  console.error(`Error deleting files from other session folder:`, deleteError);
-                }
-              }
+            if (!deleteError) {
+              console.log(`Successfully deleted ${directMatchingFiles.length} content images from legacy format`);
+              totalDeleted += directMatchingFiles.length;
+            } else {
+              console.error(`Error deleting files from legacy format:`, deleteError);
             }
-          } catch (otherSessionError) {
-            console.log(`Error searching in other session folder ${sessionFolder.name}:`, otherSessionError);
           }
         }
+      } catch (clientError) {
+        console.log(`Error searching in legacy client folder:`, clientError);
       }
-    } catch (clientError) {
-      console.log(`Error searching in client folder:`, clientError);
     }
     
-    console.log(`Total content-${contentIndex} images deleted: ${totalDeleted}`);
+    console.log(`Total content-${contentIndex} images deleted from current session: ${totalDeleted}`);
     return totalDeleted;
     
   } catch (error) {
