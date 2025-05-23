@@ -1104,35 +1104,51 @@ async function generatePdfSegment(imageFiles: any[], orderId: string, clientId: 
       let imageData = null;
       let imageError = null;
 
-      // 首先尝试仌client_id路径获取图片
-      if (clientId) {
-        const clientPathResult = await supabase
-          .storage
-          .from('images')
-          .download(`${clientId}/${file.name}`);
+      // 使用文件的完整路径进行下载
+      const filePath = file.fullPath || `${clientId}/${file.name}`;
+      console.log(`Downloading image from path: ${filePath}`);
 
-        if (!clientPathResult.error && clientPathResult.data) {
-          imageData = clientPathResult.data;
-          imageError = null;
-        } else {
-          // 如果仌client_id路径获取失败，尝试仌order_id路径获取
-          const orderPathResult = await supabase
+      const { data, error } = await supabase
+        .storage
+        .from('images')
+        .download(filePath);
+
+      imageData = data;
+      imageError = error;
+
+      // 如果下载失败，尝试备用路径
+      if (imageError || !imageData) {
+        console.log(`Failed to download from ${filePath}, trying fallback paths`);
+        
+        // 尝试从client_id直接路径获取图片
+        if (clientId && !filePath.startsWith(clientId)) {
+          const clientPath = `${clientId}/${file.name}`;
+          console.log(`Trying client path: ${clientPath}`);
+          
+          const clientResult = await supabase
             .storage
             .from('images')
-            .download(`love-story/${orderId}/${file.name}`);
+            .download(clientPath);
 
-          imageData = orderPathResult.data;
-          imageError = orderPathResult.error;
+          if (!clientResult.error && clientResult.data) {
+            imageData = clientResult.data;
+            imageError = null;
+          }
         }
-      } else {
-        // 如果没有client_id，直接仌order_id路径获取
-        const { data, error } = await supabase
-          .storage
-          .from('images')
-          .download(`love-story/${orderId}/${file.name}`);
+        
+        // 如果仍然失败，尝试从order_id路径获取
+        if (imageError || !imageData) {
+          const orderPath = `love-story/${orderId}/${file.name}`;
+          console.log(`Trying order path: ${orderPath}`);
+          
+          const orderResult = await supabase
+            .storage
+            .from('images')
+            .download(orderPath);
 
-        imageData = data;
-        imageError = error;
+          imageData = orderResult.data;
+          imageError = orderResult.error;
+        }
       }
 
       if (imageError || !imageData) {
