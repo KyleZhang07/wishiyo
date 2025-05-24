@@ -365,19 +365,46 @@ serve(async (req) => {
 
 // 新增函数：生成完整封面PDF（封底+书脊+封面）
 async function generateCoverPdf(backCoverFile: any, spineFile: any, frontCoverFile: any, orderId: string, clientId: string | null, supabase: any): Promise<Uint8Array> {
-  // 创建PDF，设置为Lulu要求的总文档尺寸 (19" x 10.25")
+  // 获取书籍记录，以获取封面样式和装订类型
+  const { data: bookData, error: bookError } = await supabase
+    .from('love_story_books')
+    .select('style, binding_type')
+    .eq('order_id', orderId)
+    .single()
+
+  // 根据装订类型设置不同的PDF尺寸
+  let pdfDimensions: { width: number; height: number; spineWidth: number; bookTrimWidth: number; bookTrimHeight: number };
+  
+  const bindingType = bookData?.binding_type || 'hardcover';
+  
+  if (bindingType === 'paperback') {
+    // Square Paperback 格式尺寸 (根据图片中的规格)
+    pdfDimensions = {
+      width: 17.38,      // 总文档宽度 (WITH BLEED)
+      height: 8.75,      // 总文档高度 
+      spineWidth: 0.1321, // 最小书脊宽度 (Perfect Bind)
+      bookTrimWidth: 8.5, // 书籍裁切尺寸宽度 (SQUARE)
+      bookTrimHeight: 8.5 // 书籍裁切尺寸高度 (SQUARE)
+    };
+  } else {
+    // 原有的精装格式尺寸
+    pdfDimensions = {
+      width: 19,         // 总文档宽度
+      height: 10.25,     // 总文档高度
+      spineWidth: 0.25,  // 书脊宽度 (精装)
+      bookTrimWidth: 8.5, // 书籍裁切尺寸宽度
+      bookTrimHeight: 8.5 // 书籍裁切尺寸高度
+    };
+  }
+
+  console.log(`生成封面PDF，装订类型: ${bindingType}，使用尺寸: ${pdfDimensions.width}" x ${pdfDimensions.height}"`);
+
+  // 创建PDF，设置为对应格式要求的总文档尺寸
   const pdf = new jsPDF({
     orientation: 'landscape',
     unit: 'in',
-    format: [19, 10.25] // Lulu模板总文档尺寸
+    format: [pdfDimensions.width, pdfDimensions.height]
   })
-
-  // 获取书籍记录，以获取封面样式
-  const { data: bookData, error: bookError } = await supabase
-    .from('love_story_books')
-    .select('style')
-    .eq('order_id', orderId)
-    .single()
 
   // 定义样式到背景色的映射
   const styleBackgroundColors: Record<string, { r: number, g: number, b: number }> = {
@@ -467,21 +494,21 @@ async function generateCoverPdf(backCoverFile: any, spineFile: any, frontCoverFi
   const frontCoverBase64 = await downloadImage(frontCoverFile)
 
   // Lulu模板中的精确尺寸设置
-  const totalDocWidth = 19;        // 总文档宽度 (外边缘到外边缘)
-  const totalDocHeight = 10.25;    // 总文档高度
+  const totalDocWidth = pdfDimensions.width;        // 总文档宽度 (外边缘到外边缘)
+  const totalDocHeight = pdfDimensions.height;    // 总文档高度
   const bleedWidth = 0.125;        // 裁切区域宽度 (Bleed Area)
   const wrapAreaWidth = 0.75;      // 包装区域宽度 (Wrap Area)
   const totalWrapWidth = bleedWidth + wrapAreaWidth; // 总出血区域宽度 = 0.875英寸
-  const spineWidth = 0.25;         // 书脊宽度 (Spine Width for hardcover)
-  const bookTrimWidth = 8.5;       // 书籍裁切尺寸宽度 (Book Trim Size)
-  const bookTrimHeight = 8.5;      // 书籍裁切尺寸高度
+  const spineWidth = pdfDimensions.spineWidth;         // 书脊宽度 (Spine Width for hardcover)
+  const bookTrimWidth = pdfDimensions.bookTrimWidth;       // 书籍裁切尺寸宽度 (Book Trim Size)
+  const bookTrimHeight = pdfDimensions.bookTrimHeight;      // 书籍裁切尺寸高度
   const safetyMarginWidth = 0.5;   // 安全边距宽度
 
   // 根据总文档宽度和书脊宽度计算封面和封底的实际宽度
   // 总文档宽度 = 封底宽度 + 书脊宽度 + 封面宽度
-  // 19 = 封面宽度 * 2 + 0.25
-  // 封面宽度 = (19 - 0.25) / 2 = 9.375"
-  const coverWidth = (totalDocWidth - spineWidth) / 2;  // 9.375"
+  // 对于精装：19 = 封面宽度 * 2 + 0.25，封面宽度 = (19 - 0.25) / 2 = 9.375"
+  // 对于平装：17.38 = 封面宽度 * 2 + 0.1321，封面宽度 = (17.38 - 0.1321) / 2 = 8.624"
+  const coverWidth = (totalDocWidth - spineWidth) / 2;
 
   // 计算总内容宽度（封底 + 书脊 + 封面）
   const totalContentWidth = (coverWidth * 2) + spineWidth; // 9.375 + 9.375 + 0.25 = 19"

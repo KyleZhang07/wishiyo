@@ -41,6 +41,13 @@ const FormatStep = () => {
       price: 49.99,
       description: 'An elegant matte finish – perfect for timeless gifts.',
       imageSrc: softcoverWebp
+    },
+    {
+      id: 'paperback',
+      name: 'Square Paperback',
+      price: 39.99,
+      description: 'A unique square format paperback – perfect for modern style.',
+      imageSrc: softcoverWebp // 暂时使用现有图片，之后可以替换
     }
   ];
 
@@ -192,7 +199,7 @@ const FormatStep = () => {
         </div>
         
         {/* 拉高显示区域，h-72 -> h-[22rem]，使得书本图片能完整露出顶部 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* 封面格式选项 */}
           {coverFormats.map((format, idx) => (
             <div

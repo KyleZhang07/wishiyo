@@ -229,9 +229,11 @@ export default async function handler(req, res) {
 
       // 根据书籍类型和装订类型选择正确的 pod_package_id
       if (bookType === 'love_story_books') {
-        // Love Story 书籍 - 只使用精装本，分为高光和哑光两种
+        // Love Story 书籍 - 支持精装和平装
         if (bindingType.toLowerCase() === 'hardcover_matte') {
           return '0850X0850FCPRECW080CW444MXX'; // 精装哑光 (Matte)
+        } else if (bindingType.toLowerCase() === 'paperback') {
+          return '0850X0850FCPRECW080PB444MXX'; // 平装 (Square Paperback)
         } else {
           return '0850X0850FCPRECW080CW444GXX'; // 精装高光 (Glossy) - 默认
         }
