@@ -119,6 +119,9 @@ const FormatStep = () => {
           // 获取用户选择的封面样式
           const coverStyle = localStorage.getItem('loveStoryCoverStyle') || 'classic';
 
+          const sessionIdToSave = localStorage.getItem('current_session_id') || undefined;
+          console.log('[FormatStep] About to insert into love_story_books. Order ID:', orderId, 'Client ID:', clientId, 'Session ID to save:', sessionIdToSave);
+
           const { data, error } = await supabase
             .from('love_story_books')
             .insert({
@@ -128,7 +131,7 @@ const FormatStep = () => {
               status: 'created',
               timestamp: new Date().toISOString(),
               client_id: clientId,
-              session_id: localStorage.getItem('current_session_id') || undefined,
+              session_id: sessionIdToSave,
               // 保存封面样式信息
               style: coverStyle,
               // 保存装订类型（精装高光或精装哈光）
