@@ -233,7 +233,7 @@ export default async function handler(req, res) {
         if (bindingType.toLowerCase() === 'hardcover_matte') {
           return '0850X0850FCPRECW080CW444MXX'; // 精装哑光 (Matte)
         } else if (bindingType.toLowerCase() === 'paperback') {
-          return '0850X0850FCPRECW080PB444MXX'; // 平装 (Square Paperback)
+          return '0850X0850FCPREPB080CW444MXX'; // 平装 (Square Paperback)
         } else {
           return '0850X0850FCPRECW080CW444GXX'; // 精装高光 (Glossy) - 默认
         }

@@ -1058,6 +1058,18 @@ async function generateAndUploadPdfInSegments(imageFiles: any[], orderId: string
 async function generatePdfSegment(imageFiles: any[], orderId: string, clientId: string | null, supabase: any): Promise<Uint8Array> {
   console.log(`开始生成PDF段，处理 ${imageFiles.length} 张图片...`);
 
+  // 获取书籍记录，以获取装订类型
+  const { data: bookData, error: bookError } = await supabase
+    .from('love_story_books')
+    .select('binding_type')
+    .eq('order_id', orderId)
+    .single()
+
+  const bindingType = bookData?.binding_type || 'hardcover';
+  const isPaperback = bindingType.toLowerCase() === 'paperback';
+
+  console.log(`装订类型: ${bindingType}, 是否为平装: ${isPaperback}`);
+
   // 创建新的PDF
   const pdf = new jsPDF({
     orientation: 'portrait',
@@ -1072,6 +1084,22 @@ async function generatePdfSegment(imageFiles: any[], orderId: string, clientId: 
   let currentPage = 0;
   let successCount = 0;
   let errorCount = 0;
+
+  // 如果是平装，先添加4页空白页
+  if (isPaperback) {
+    console.log('平装格式：添加4页前置空白页');
+    for (let i = 0; i < 4; i++) {
+      if (currentPage > 0) {
+        pdf.addPage();
+      }
+      
+      // 填充白色背景
+      pdf.setFillColor(255, 255, 255);
+      pdf.rect(0, 0, totalDocSize, totalDocSize, 'F');
+      
+      currentPage++;
+    }
+  }
 
   // 处理每张图片
   for (const file of imageFiles) {
@@ -1201,7 +1229,21 @@ async function generatePdfSegment(imageFiles: any[], orderId: string, clientId: 
     }
   }
 
-  console.log(`PDF段生成完成，共处理 ${imageFiles.length} 张图片 (成功: ${successCount}, 失败: ${errorCount})`);
+  // 如果是平装，最后添加4页空白页
+  if (isPaperback) {
+    console.log('平装格式：添加4页后置空白页');
+    for (let i = 0; i < 4; i++) {
+      pdf.addPage();
+      
+      // 填充白色背景
+      pdf.setFillColor(255, 255, 255);
+      pdf.rect(0, 0, totalDocSize, totalDocSize, 'F');
+      
+      currentPage++;
+    }
+  }
+
+  console.log(`PDF段生成完成，共处理 ${imageFiles.length} 张图片 (成功: ${successCount}, 失败: ${errorCount})，总页数: ${currentPage}`);
 
   // 转换PDF为Uint8Array
   const pdfOutput = pdf.output('arraybuffer');
