@@ -988,261 +988,225 @@ async function blobToBase64(blob: Blob): Promise<string> {
 }
 
 // 分段生成PDF并上传
-async function generateAndUploadPdfInSegments(imageFiles: any[], orderId: string, clientId: string | null, supabase: any) {
-  const segmentSize = 3; // 每段处理3张图片
-  const segments: string[] = [];
+async function generateAndUploadPdfInSegments(
+  imageFiles: any[], // 这些是所有非封面的图片，按顺序排列
+  orderId: string,
+  clientId: string | null,
+  supabase: any
+) {
+  const segmentSize = 3; // 每段处理N张内容图片，恢复为原始值3
+  const segments: string[] = []; // 存储所有PDF段的路径，供索引文件使用
   let totalSize = 0;
 
-  console.log(`开始分段生成PDF，共 ${imageFiles.length} 张图片，每段 ${segmentSize} 张`);
+  // 首先获取书籍的装订类型
+  const { data: bookData, error: bookFetchError } = await supabase
+    .from('love_story_books')
+    .select('binding_type')
+    .eq('order_id', orderId)
+    .single();
 
-  // 注意：Deno环境不支持process.memoryUsage()
+  if (bookFetchError) {
+    console.error(`无法获取书籍信息 (orderId: ${orderId}):`, bookFetchError);
+    throw new Error(`无法获取书籍信息: ${bookFetchError.message}`);
+  }
+  const isPaperback = bookData?.binding_type?.toLowerCase() === 'paperback';
+  const totalDocSize = 8.75; // 与 generatePdfSegment 中使用的尺寸一致
 
-  // 分段处理图片
-  for (let i = 0; i < imageFiles.length; i += segmentSize) {
-    const segmentImages = imageFiles.slice(i, Math.min(i + segmentSize, imageFiles.length));
-    console.log(`生成第 ${Math.floor(i/segmentSize) + 1} 段PDF，处理 ${segmentImages.length} 张图片`);
+  console.log(`开始分段生成内页PDF (Paperback: ${isPaperback})，共 ${imageFiles.length} 张内容图片，每段最多 ${segmentSize} 张`);
 
-    // 为这一段图片生成PDF
-    const segmentPdf = await generatePdfSegment(segmentImages, orderId, clientId, supabase);
-
-    // 上传段PDF
-    const segmentPath = `love-story/${orderId}/interior-part${Math.floor(i/segmentSize) + 1}.pdf`;
-    console.log(`上传PDF段 ${Math.floor(i/segmentSize) + 1} 到 ${segmentPath}, 大小: ${segmentPdf.byteLength} 字节`);
-
-    // 创建Blob对象，明确设置MIME类型
-    const segmentPdfBlob = new Blob([segmentPdf], { type: 'application/pdf' });
-
-    // 使用Blob上传，不再设置contentType参数
-    const { error: segmentUploadError } = await supabase.storage.from('pdfs').upload(
-      segmentPath,
-      segmentPdfBlob,
-      { upsert: true }
-    );
-
-    if (segmentUploadError) {
-      console.error(`上传PDF段 ${Math.floor(i/segmentSize) + 1} 失败:`, segmentUploadError);
-      throw new Error(`上传PDF段失败: ${JSON.stringify(segmentUploadError)}`);
+  // 1. 如果是Paperback，先生成并上传4页前置空白PDF
+  if (isPaperback) {
+    console.log('Paperback: 生成4页前置空白PDF');
+    const frontBlanksPdf = new jsPDF({
+      orientation: 'portrait', unit: 'in', format: [totalDocSize, totalDocSize]
+    });
+    for (let k = 0; k < 4; k++) {
+      if (k > 0) frontBlanksPdf.addPage();
+      frontBlanksPdf.setFillColor(255, 255, 255);
+      frontBlanksPdf.rect(0, 0, totalDocSize, totalDocSize, 'F');
     }
-
-    segments.push(segmentPath);
-    totalSize += segmentPdf.byteLength;
-
-    // 清空内存
-    if (typeof global !== 'undefined' && global.gc) {
-      global.gc();
+    const frontBlanksBytes = new Uint8Array(frontBlanksPdf.output('arraybuffer'));
+    const frontBlanksPath = `love-story/${orderId}/interior-part-frontblanks.pdf`;
+    
+    console.log(`上传前置空白PDF段到 ${frontBlanksPath}, 大小: ${frontBlanksBytes.byteLength} 字节`);
+    const frontBlanksBlob = new Blob([frontBlanksBytes], { type: 'application/pdf' });
+    const { error: uploadError } = await supabase.storage.from('pdfs').upload(frontBlanksPath, frontBlanksBlob, { upsert: true });
+    if (uploadError) {
+      console.error(`上传前置空白PDF段失败:`, uploadError);
+      throw new Error(`上传前置空白PDF段失败: ${JSON.stringify(uploadError)}`);
     }
-    await new Promise(resolve => setTimeout(resolve, 500));
+    segments.push(frontBlanksPath);
+    totalSize += frontBlanksBytes.length;
   }
 
-  // 创建索引文件
+  // 2. 分段处理并上传所有内容图片 (imageFiles)
+  for (let i = 0; i < imageFiles.length; i += segmentSize) {
+    const segmentImages = imageFiles.slice(i, Math.min(i + segmentSize, imageFiles.length));
+    const segmentPartNumber = Math.floor(i / segmentSize) + 1;
+    console.log(`生成内容PDF段 ${segmentPartNumber}，处理 ${segmentImages.length} 张图片`);
+
+    // 调用已修改的 generatePdfSegment，它现在只处理图片，不关心空白页
+    const segmentPdfBytes = await generatePdfSegment(segmentImages, orderId, clientId, supabase);
+
+    const segmentPath = `love-story/${orderId}/interior-part-content${segmentPartNumber}.pdf`;
+    console.log(`上传内容PDF段 ${segmentPartNumber} 到 ${segmentPath}, 大小: ${segmentPdfBytes.byteLength} 字节`);
+    
+    const segmentPdfBlob = new Blob([segmentPdfBytes], { type: 'application/pdf' });
+    const { error: uploadError } = await supabase.storage.from('pdfs').upload(segmentPath, segmentPdfBlob, { upsert: true });
+    if (uploadError) {
+      console.error(`上传内容PDF段 ${segmentPartNumber} 失败:`, uploadError);
+      throw new Error(`上传内容PDF段 ${segmentPartNumber} 失败: ${JSON.stringify(uploadError)}`);
+    }
+    segments.push(segmentPath);
+    totalSize += segmentPdfBytes.length;
+
+    if (typeof global !== 'undefined' && global.gc) { global.gc(); }
+    await new Promise(resolve => setTimeout(resolve, 500)); // 段间稍作停顿
+  }
+
+  // 3. 如果是Paperback，生成并上传4页后置空白PDF
+  if (isPaperback) {
+    console.log('Paperback: 生成4页后置空白PDF');
+    const backBlanksPdf = new jsPDF({
+      orientation: 'portrait', unit: 'in', format: [totalDocSize, totalDocSize]
+    });
+    for (let k = 0; k < 4; k++) {
+      if (k > 0) backBlanksPdf.addPage();
+      backBlanksPdf.setFillColor(255, 255, 255);
+      backBlanksPdf.rect(0, 0, totalDocSize, totalDocSize, 'F');
+    }
+    const backBlanksBytes = new Uint8Array(backBlanksPdf.output('arraybuffer'));
+    const backBlanksPath = `love-story/${orderId}/interior-part-backblanks.pdf`;
+
+    console.log(`上传后置空白PDF段到 ${backBlanksPath}, 大小: ${backBlanksBytes.byteLength} 字节`);
+    const backBlanksBlob = new Blob([backBlanksBytes], { type: 'application/pdf' });
+    const { error: uploadError } = await supabase.storage.from('pdfs').upload(backBlanksPath, backBlanksBlob, { upsert: true });
+    if (uploadError) {
+      console.error(`上传后置空白PDF段失败:`, uploadError);
+      throw new Error(`上传后置空白PDF段失败: ${JSON.stringify(uploadError)}`);
+    }
+    segments.push(backBlanksPath);
+    totalSize += backBlanksBytes.length;
+  }
+
+  // 4. 创建并上传索引文件 (segments 数组现在包含了所有部分的正确顺序)
   const indexContent = JSON.stringify({
     orderId: orderId,
-    parts: segments,
+    parts: segments, // 这个数组现在包含了空白页段和内容页段的正确顺序
     totalSize: totalSize,
     createdAt: new Date().toISOString()
   });
-
-  // 上传索引文件
   const indexPath = `love-story/${orderId}/interior-index.json`;
-
-  // 创建Blob对象，明确设置MIME类型
+  console.log(`上传索引文件到 ${indexPath}`);
+  
   const indexBlob = new Blob([new TextEncoder().encode(indexContent)], { type: 'application/json' });
-
-  // 使用Blob上传，不再设置contentType参数
-  const { error: indexUploadError } = await supabase.storage.from('pdfs').upload(
-    indexPath,
-    indexBlob,
-    { upsert: true }
-  );
-
+  const { error: indexUploadError } = await supabase.storage.from('pdfs').upload(indexPath, indexBlob, { upsert: true });
   if (indexUploadError) {
     console.error(`上传索引文件失败:`, indexUploadError);
     throw new Error(`上传索引文件失败: ${JSON.stringify(indexUploadError)}`);
   }
 
-  console.log(`索引文件上传成功，共 ${segments.length} 个PDF段，总大小 ${totalSize} 字节`);
-
+  console.log(`所有PDF段及索引文件上传成功。总共 ${segments.length} 个PDF段，预估总大小 ${totalSize} 字节`);
   return { segments, totalSize, indexPath };
 }
 
 // 生成单个PDF段
-async function generatePdfSegment(imageFiles: any[], orderId: string, clientId: string | null, supabase: any): Promise<Uint8Array> {
+async function generatePdfSegment(
+  imageFiles: any[], // 这些是当前段的图片
+  orderId: string,   // 用于图片下载回退
+  clientId: string | null, // 用于图片下载回退
+  supabase: any
+): Promise<Uint8Array> {
   console.log(`开始生成PDF段，处理 ${imageFiles.length} 张图片...`);
 
-  // 获取书籍记录，以获取装订类型
-  const { data: bookData, error: bookError } = await supabase
-    .from('love_story_books')
-    .select('binding_type')
-    .eq('order_id', orderId)
-    .single()
-
-  const bindingType = bookData?.binding_type || 'hardcover';
-  const isPaperback = bindingType.toLowerCase() === 'paperback';
-
-  console.log(`装订类型: ${bindingType}, 是否为平装: ${isPaperback}`);
-
-  // 创建新的PDF
   const pdf = new jsPDF({
     orientation: 'portrait',
     unit: 'in',
     format: [8.75, 8.75] // 总文档尺寸 8.75" x 8.75"
   });
 
-  // Lulu内页模板尺寸设置
   const totalDocSize = 8.75;       // 总文档尺寸
-  const bleedWidth = 0.125;        // 出血区域宽度
+  const bleedWidth = 0.125;        // 出血区域宽度 (用于可能的调试线)
 
-  let currentPage = 0;
+  // 这些计数器仅用于此段的日志记录
   let successCount = 0;
   let errorCount = 0;
 
-  // 如果是平装，先添加4页空白页
-  if (isPaperback) {
-    console.log('平装格式：添加4页前置空白页');
-    for (let i = 0; i < 4; i++) {
-      if (currentPage > 0) {
-        pdf.addPage();
-      }
-      
-      // 填充白色背景
-      pdf.setFillColor(255, 255, 255);
-      pdf.rect(0, 0, totalDocSize, totalDocSize, 'F');
-      
-      currentPage++;
-    }
-  }
-
-  // 跟踪是否已经处理了第一张内容图片（不包括前置空白页）
-  let isFirstContentPage = true;
-
-  // 处理每张图片
-  for (const file of imageFiles) {
+  // 处理当前段的每张图片
+  for (let i = 0; i < imageFiles.length; i++) {
+    const file = imageFiles[i];
     try {
-      console.log(`处理图片 ${successCount + 1}/${imageFiles.length}: ${file.name}`);
+      // console.log(`处理图片 ${successCount + 1}/${imageFiles.length}: ${file.name}`);
+      // ^^^ 使用 (i + 1) 作为当前图片编号更准确，因为 successCount 只在成功后增加
 
-      // 下载图片
+      // --- 开始：图片下载逻辑 (基本保持不变) ---
+      console.log(`处理图片 ${i + 1}/${imageFiles.length}: ${file.name}`);
       let imageData = null;
       let imageError = null;
-
-      // 使用文件的完整路径进行下载
       const filePath = file.fullPath || `${clientId}/${file.name}`;
-      console.log(`Downloading image from path: ${filePath}`);
-
-      const { data, error } = await supabase
-        .storage
-        .from('images')
-        .download(filePath);
-
+      // console.log(`Downloading image from path: ${filePath}`); // Verbose
+      const { data, error } = await supabase.storage.from('images').download(filePath);
       imageData = data;
       imageError = error;
-
-      // 如果下载失败，尝试备用路径
       if (imageError || !imageData) {
-        console.log(`Failed to download from ${filePath}, trying fallback paths`);
-        
-        // 尝试从client_id直接路径获取图片
+        // console.log(`Failed to download from ${filePath}, trying fallback paths`); // Verbose
         if (clientId && !filePath.startsWith(clientId)) {
           const clientPath = `${clientId}/${file.name}`;
-          console.log(`Trying client path: ${clientPath}`);
-          
-          const clientResult = await supabase
-            .storage
-            .from('images')
-            .download(clientPath);
-
+          // console.log(`Trying client path: ${clientPath}`); // Verbose
+          const clientResult = await supabase.storage.from('images').download(clientPath);
           if (!clientResult.error && clientResult.data) {
-            imageData = clientResult.data;
-            imageError = null;
+            imageData = clientResult.data; imageError = null;
           }
         }
-        
-        // 如果仍然失败，尝试从order_id路径获取
         if (imageError || !imageData) {
           const orderPath = `love-story/${orderId}/${file.name}`;
-          console.log(`Trying order path: ${orderPath}`);
-          
-          const orderResult = await supabase
-            .storage
-            .from('images')
-            .download(orderPath);
-
-          imageData = orderResult.data;
-          imageError = orderResult.error;
+          // console.log(`Trying order path: ${orderPath}`); // Verbose
+          const orderResult = await supabase.storage.from('images').download(orderPath);
+          imageData = orderResult.data; imageError = orderResult.error;
         }
       }
-
       if (imageError || !imageData) {
         console.error(`无法下载图片 ${file.name}:`, imageError);
         errorCount++;
-        continue; // 跳过这张图片，继续处理下一张
+        continue;
       }
-
-      // 转换图片为base64
       const imageBase64 = await blobToBase64(imageData);
+      imageData = null; // 立即释放内存
+      // --- 结束：图片下载逻辑 ---
 
-      // 立即释放原始图片数据内存
-      imageData = null;
-
-      // 添加新页（对于内容图片，除了第一张内容图片）
-      if (!isFirstContentPage) {
+      // 如果不是这个PDF段的第一张图片，则添加新页面
+      if (i > 0) {
         pdf.addPage();
-      } else {
-        // 如果没有前置空白页且这是第一张内容图片，不添加新页
-        // 如果有前置空白页，这里需要添加新页因为前面已经有空白页了
-        if (isPaperback) {
-          pdf.addPage();
-        }
-        isFirstContentPage = false;
       }
 
-      // 添加图片到PDF
       pdf.addImage(
         imageBase64,
         'JPEG',
-        0, // x坐标
-        0, // y坐标
-        totalDocSize, // 宽度
-        totalDocSize, // 高度
-        `img_${successCount}` // 唯一ID，使用successCount而不是currentPage
+        0, 0, totalDocSize, totalDocSize,
+        `img_seg_${i}` // 确保ID在此段内唯一
       );
 
-      // 添加边界线和标记（如果需要）
-      // 注意：Deno环境不支持process.env
-      const DEBUG_LINES = false; // 设置为静态值
+      // --- 开始：调试线逻辑 (基本保持不变) ---
+      const DEBUG_LINES = false;
       if (DEBUG_LINES) {
-        // 添加裁切线
-        pdf.setDrawColor(255, 0, 0); // 红色
+        pdf.setDrawColor(255, 0, 0);
         pdf.rect(bleedWidth, bleedWidth, totalDocSize - 2 * bleedWidth, totalDocSize - 2 * bleedWidth);
-
-        // 添加总文档边界
-        pdf.setDrawColor(0, 162, 232); // 浅蓝色
+        pdf.setDrawColor(0, 162, 232);
         pdf.rect(0, 0, totalDocSize, totalDocSize);
-
-        // 添加标签文本
         pdf.setFontSize(6);
         pdf.setTextColor(0, 162, 232);
         pdf.text('TRIM / BLEED AREA', totalDocSize/2, 0.1, { align: 'center' });
         pdf.text('TRIM / BLEED AREA', totalDocSize/2, totalDocSize - 0.05, { align: 'center' });
-
-        // 添加页码标签
         pdf.setTextColor(0, 0, 0);
-        pdf.text(`PAGE ${currentPage + 1}`, totalDocSize/2, bleedWidth/2, { align: 'center' });
+        pdf.text(`Segment Page ${i + 1}`, totalDocSize/2, bleedWidth/2, { align: 'center' });
       }
+      // --- 结束：调试线逻辑 ---
 
-      currentPage++;
       successCount++;
 
-      // 每处理一张图片就尝试手动触发垃圾回收
-      if (typeof global !== 'undefined' && global.gc) {
-        global.gc();
-      }
-
-      // 每张图片处理后暂停一小段时间
+      if (typeof global !== 'undefined' && global.gc) { global.gc(); }
       await new Promise(resolve => setTimeout(resolve, 100));
-
-      // 记录处理进度
-      console.log(`处理完图片 ${successCount}/${imageFiles.length}`);
-      // 注意：Deno环境不支持process.memoryUsage()
+      // console.log(`处理完图片 ${successCount}/${imageFiles.length}`); // Verbose
 
     } catch (error) {
       console.error(`处理图片 ${file.name} 时出错:`, error);
@@ -1250,23 +1214,9 @@ async function generatePdfSegment(imageFiles: any[], orderId: string, clientId: 
     }
   }
 
-  // 如果是平装，最后添加4页空白页
-  if (isPaperback) {
-    console.log('平装格式：添加4页后置空白页');
-    for (let i = 0; i < 4; i++) {
-      pdf.addPage();
-      
-      // 填充白色背景
-      pdf.setFillColor(255, 255, 255);
-      pdf.rect(0, 0, totalDocSize, totalDocSize, 'F');
-      
-      currentPage++;
-    }
-  }
+  // 注意：移除了基于 isPaperback 添加后置空白页的逻辑
 
-  console.log(`PDF段生成完成，共处理 ${imageFiles.length} 张图片 (成功: ${successCount}, 失败: ${errorCount})，总页数: ${currentPage}`);
-
-  // 转换PDF为Uint8Array
+  console.log(`PDF段生成完成，共处理 ${imageFiles.length} 张图片 (成功: ${successCount}, 失败: ${errorCount})，此段页数: ${pdf.getNumberOfPages()}`);
   const pdfOutput = pdf.output('arraybuffer');
   return new Uint8Array(pdfOutput);
 }
