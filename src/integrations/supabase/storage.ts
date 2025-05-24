@@ -298,9 +298,9 @@ export const deleteImageFromStorage = async (
                   
                   // Delete all matching files
                   const filesToDelete = matchingFiles.map(file => `${searchPath}/${file.name}`);
-                  
+    
                   const { error: deleteError } = await supabase.storage
-                    .from(bucket)
+      .from(bucket)
                     .remove(filesToDelete);
                     
                   if (!deleteError) {

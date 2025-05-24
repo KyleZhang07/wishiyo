@@ -130,12 +130,12 @@ export const handleGenericContentRegeneration = async (
       localStorage.setItem(`${lsKey}_url`, storageUrl);
 
       // 6) 删除所有旧的同类型图片 - 使用新的专门函数
-      try {
+        try {
         const deletedCount = await deleteContentImagesByIndex(index, 'images');
         console.log(`Successfully deleted ${deletedCount} old content-${index} images`);
-      } catch (deleteErr) {
+        } catch (deleteErr) {
         console.error(`Error deleting old content-${index} images:`, deleteErr);
-        // 继续处理，即使删除失败
+          // 继续处理，即使删除失败
       }
 
       // 7) 如果提供了自动渲染函数，则调用它

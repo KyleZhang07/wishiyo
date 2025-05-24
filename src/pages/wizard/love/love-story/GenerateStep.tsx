@@ -342,8 +342,11 @@ const GenerateStep = () => {
   const loadImagesFromSupabase = async () => {
     setIsLoadingImages(true);
     try {
-      // 获取所有Supabase中的图片
-      const images = await getAllImagesFromStorage('images');
+      // 获取当前会话ID
+      const currentSessionId = localStorage.getItem('current_session_id');
+
+      // 获取所有Supabase中的图片, 明确传递会话ID
+      const images = await getAllImagesFromStorage('images', currentSessionId || undefined);
 
       // 按照创建时间排序图片，确保最新的图片显示在前面
       const sortedImages = [...images].sort((a, b) => {
