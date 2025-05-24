@@ -497,8 +497,19 @@ async function generateCoverPdf(backCoverFile: any, spineFile: any, frontCoverFi
   const totalDocWidth = pdfDimensions.width;        // 总文档宽度 (外边缘到外边缘)
   const totalDocHeight = pdfDimensions.height;    // 总文档高度
   const bleedWidth = 0.125;        // 裁切区域宽度 (Bleed Area)
-  const wrapAreaWidth = 0.75;      // 包装区域宽度 (Wrap Area)
-  const totalWrapWidth = bleedWidth + wrapAreaWidth; // 总出血区域宽度 = 0.875英寸
+  
+  // 根据装订类型设置不同的出血区域
+  let totalWrapWidth;
+  if (bindingType === 'paperback') {
+    // Paperback 只使用基本的出血区域
+    totalWrapWidth = bleedWidth; // 0.125英寸
+    console.log('Paperback格式：使用简化出血区域 0.125"');
+  } else {
+    // Hardcover 使用完整的包装区域
+    const wrapAreaWidth = 0.75;      // 包装区域宽度 (Wrap Area)
+    totalWrapWidth = bleedWidth + wrapAreaWidth; // 总出血区域宽度 = 0.875英寸
+    console.log('Hardcover格式：使用完整出血区域 0.875"');
+  }
   const spineWidth = pdfDimensions.spineWidth;         // 书脊宽度 (Spine Width for hardcover)
   const bookTrimWidth = pdfDimensions.bookTrimWidth;       // 书籍裁切尺寸宽度 (Book Trim Size)
   const bookTrimHeight = pdfDimensions.bookTrimHeight;      // 书籍裁切尺寸高度
@@ -578,8 +589,8 @@ async function generateCoverPdf(backCoverFile: any, spineFile: any, frontCoverFi
 
   // 定义缩放因子和偏移量，以确保内容在安全区域内
 
-  // 定义出血区域边距
-  const bleedMargin = 0.875; // 0.875英寸的出血区域
+  // 定义出血区域边距 - 根据装订类型设置
+  const bleedMargin = totalWrapWidth; // 使用对应装订类型的出血区域宽度
 
   // 计算蓝色辅助线内的尺寸
   // 我们只需要高度，因为宽度将根据书脊位置计算
@@ -648,7 +659,7 @@ async function generateCoverPdf(backCoverFile: any, spineFile: any, frontCoverFi
   const debugLines = false; // 暂时禁用辅助线
   if (debugLines) {
     // 蓝色辅助线 - 表示裁切区域的边界
-    const bleedMargin = 0.875; // 0.875英寸的出血区域
+    // 使用与实际图片相同的出血区域设置
 
     // 封底安全区域
     pdf.setDrawColor(0, 0, 255); // 蓝色
@@ -1101,10 +1112,13 @@ async function generatePdfSegment(imageFiles: any[], orderId: string, clientId: 
     }
   }
 
+  // 跟踪是否已经处理了第一张内容图片（不包括前置空白页）
+  let isFirstContentPage = true;
+
   // 处理每张图片
   for (const file of imageFiles) {
     try {
-      console.log(`处理图片 ${currentPage + 1}/${imageFiles.length}: ${file.name}`);
+      console.log(`处理图片 ${successCount + 1}/${imageFiles.length}: ${file.name}`);
 
       // 下载图片
       let imageData = null;
@@ -1169,9 +1183,16 @@ async function generatePdfSegment(imageFiles: any[], orderId: string, clientId: 
       // 立即释放原始图片数据内存
       imageData = null;
 
-      // 添加新页（除了第一页）
-      if (currentPage > 0) {
+      // 添加新页（对于内容图片，除了第一张内容图片）
+      if (!isFirstContentPage) {
         pdf.addPage();
+      } else {
+        // 如果没有前置空白页且这是第一张内容图片，不添加新页
+        // 如果有前置空白页，这里需要添加新页因为前面已经有空白页了
+        if (isPaperback) {
+          pdf.addPage();
+        }
+        isFirstContentPage = false;
       }
 
       // 添加图片到PDF
@@ -1182,7 +1203,7 @@ async function generatePdfSegment(imageFiles: any[], orderId: string, clientId: 
         0, // y坐标
         totalDocSize, // 宽度
         totalDocSize, // 高度
-        `img_${currentPage}` // 唯一ID
+        `img_${successCount}` // 唯一ID，使用successCount而不是currentPage
       );
 
       // 添加边界线和标记（如果需要）
@@ -1220,7 +1241,7 @@ async function generatePdfSegment(imageFiles: any[], orderId: string, clientId: 
       await new Promise(resolve => setTimeout(resolve, 100));
 
       // 记录处理进度
-      console.log(`处理完图片 ${currentPage}/${imageFiles.length}`);
+      console.log(`处理完图片 ${successCount}/${imageFiles.length}`);
       // 注意：Deno环境不支持process.memoryUsage()
 
     } catch (error) {
