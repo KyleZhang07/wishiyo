@@ -128,6 +128,7 @@ const FormatStep = () => {
               status: 'created',
               timestamp: new Date().toISOString(),
               client_id: clientId,
+              session_id: localStorage.getItem('current_session_id') || undefined,
               // 保存封面样式信息
               style: coverStyle,
               // 保存装订类型（精装高光或精装哈光）

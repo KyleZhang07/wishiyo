@@ -52,7 +52,7 @@ serve(async (req) => {
     // 获取love_story_books记录
     const { data: bookData, error: bookError } = await supabaseAdmin
       .from('love_story_books')
-      .select('*')
+      .select('*, client_id, session_id') // Ensure session_id is selected
       .eq('order_id', orderId)
       .single()
 
@@ -63,8 +63,9 @@ serve(async (req) => {
       )
     }
 
-    // 获取client_id，用于查找图片
+    // 获取client_id和session_id，用于查找图片
     const clientId = bookData.client_id;
+    const sessionId = bookData.session_id; // Get session_id from bookData
 
     if (!clientId) {
       return new Response(
@@ -73,102 +74,52 @@ serve(async (req) => {
       )
     }
 
-    // 尝试从多个可能的路径获取图片
+    // session_id 现在是必需的，用于精确定位图片文件夹
+    if (!sessionId) {
+      return new Response(
+        JSON.stringify({ error: 'Session ID not found in book record. Cannot locate specific image folder.' }),
+        { headers: { ...headers, 'Content-Type': 'application/json' }, status: 404 }
+      )
+    }
+
     let imageFiles: any[] = [];
     let listError = null;
     let actualImagePath = '';
 
-    // 首先尝试从基于client_id的路径获取
-    const { data: clientFolders, error: clientListError } = await supabaseAdmin
+    // 直接使用 client_id 和 session_id 构建精确的图片路径
+    const imagePath = `${clientId}/${sessionId}`;
+    console.log(`Attempting to list images from specific path: ${imagePath}`);
+
+    const { data: imagesInSessionPath, error: pathListError } = await supabaseAdmin
       .storage
       .from('images')
-      .list(`${clientId}`)
+      .list(imagePath);
 
-    if (!clientListError && clientFolders && clientFolders.length > 0) {
-      console.log(`Found ${clientFolders.length} items in client folder ${clientId}`);
-      
-      // 检查是否包含session子文件夹
-      const sessionFolders = clientFolders.filter(item => item.name && item.name.startsWith('session_'));
-      
-      if (sessionFolders.length > 0) {
-        console.log(`Found ${sessionFolders.length} session folders, checking each for images...`);
-        
-        // 按时间排序，取最新的session文件夹
-        sessionFolders.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-        
-        for (const sessionFolder of sessionFolders) {
-          const sessionPath = `${clientId}/${sessionFolder.name}`;
-          console.log(`Checking session folder: ${sessionPath}`);
-          
-          const { data: sessionImages, error: sessionError } = await supabaseAdmin
-            .storage
-            .from('images')
-            .list(sessionPath);
-            
-          if (!sessionError && sessionImages && sessionImages.length > 0) {
-            console.log(`Found ${sessionImages.length} images in session folder ${sessionPath}`);
-            
-            // 为图片添加完整路径信息
-            imageFiles = sessionImages.map(file => ({
-              ...file,
-              fullPath: `${sessionPath}/${file.name}`
-            }));
-            actualImagePath = sessionPath;
-            break;
-          }
-        }
-      } else {
-        // 如果没有session文件夹，检查是否直接有图片文件
-        const directImages = clientFolders.filter(item => item.name && (
-          item.name.includes('.jpg') || 
-          item.name.includes('.jpeg') || 
-          item.name.includes('.png') ||
-          item.name.includes('.webp')
-        ));
-        
-        if (directImages.length > 0) {
-          console.log(`Found ${directImages.length} direct images in client folder`);
-          imageFiles = directImages.map(file => ({
-            ...file,
-            fullPath: `${clientId}/${file.name}`
-          }));
-          actualImagePath = clientId;
-        }
-      }
-    }
-
-    // 如果仍然没有找到图片，尝试备用路径
-    if (imageFiles.length === 0) {
-      console.log(`No images found in client folder, trying fallback path: love-story/${orderId}`);
-      
-      const { data: orderImages, error: orderListError } = await supabaseAdmin
-        .storage
-        .from('images')
-        .list(`love-story/${orderId}`)
-
-      if (!orderListError && orderImages && orderImages.length > 0) {
-        imageFiles = orderImages.map(file => ({
-          ...file,
-          fullPath: `love-story/${orderId}/${file.name}`
-        }));
-        actualImagePath = `love-story/${orderId}`;
-        listError = null;
-      } else {
-        // 两个路径都没有找到图片
-        imageFiles = [];
-        listError = clientListError || orderListError;
-      }
+    if (pathListError) {
+      console.error(`Error listing images from ${imagePath}:`, pathListError);
+      listError = pathListError;
+    } else if (imagesInSessionPath && imagesInSessionPath.length > 0) {
+      console.log(`Found ${imagesInSessionPath.length} items in specific path ${imagePath}`);
+      imageFiles = imagesInSessionPath.map(file => ({
+        ...file,
+        fullPath: `${imagePath}/${file.name}` // Construct full path for each file
+      }));
+      actualImagePath = imagePath;
+    } else {
+      console.log(`No images found in specific path: ${imagePath}`);
+      // No fallback, if specific path is empty, it means no images for this session.
     }
 
     console.log(`Final image search result: Found ${imageFiles.length} images from path: ${actualImagePath}`);
 
     if (listError || !imageFiles || imageFiles.length === 0) {
+      // 更新错误信息，明确指出是在特定会话路径中未找到图片
+      const errorDetails = listError 
+        ? { error: 'Failed to list images from specific session path', details: listError, searchPath: imagePath }
+        : { error: 'No images found in the specific session path', searchPath: imagePath };
+
       return new Response(
-        JSON.stringify({ 
-          error: 'Failed to list images or no images found', 
-          details: listError,
-          searchPaths: [`${clientId}`, `love-story/${orderId}`]
-        }),
+        JSON.stringify(errorDetails),
         { headers: { ...headers, 'Content-Type': 'application/json' }, status: 500 }
       )
     }
