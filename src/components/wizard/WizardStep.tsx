@@ -14,6 +14,7 @@ interface WizardStepProps {
   totalSteps: number;
   onNextClick?: () => void | Promise<void>;
   nextDisabled?: boolean;
+  contentMaxWidth?: string;
 }
 
 const WizardStep = ({
@@ -25,7 +26,8 @@ const WizardStep = ({
   currentStep,
   totalSteps,
   onNextClick,
-  nextDisabled
+  nextDisabled,
+  contentMaxWidth = 'max-w-3xl'
 }: WizardStepProps) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -35,7 +37,7 @@ const WizardStep = ({
   
   return (
     <div className="min-h-screen bg-[#FFFAF5]">
-      <div className="container mx-auto px-4 pt-8 pb-16 max-w-3xl">
+      <div className={`container mx-auto px-4 pt-8 pb-16 ${contentMaxWidth}`}>
         <div className="mb-8">
           <StepProgressIndicator currentStep={currentStep} totalSteps={totalSteps} />
         </div>

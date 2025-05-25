@@ -10,6 +10,7 @@ import { getClientId } from '@/utils/clientId';
 // 导入webp图片
 import hardcoverWebp from '@/assets/format-images/love-story/hardcover.webp';
 import softcoverWebp from '@/assets/format-images/love-story/softcover.webp';
+import softcover1Jpg from '@/assets/format-images/love-story/softcover1.jpg'; // 导入新图片
 
 // 封面类型
 interface CoverFormat {
@@ -30,24 +31,24 @@ const FormatStep = () => {
   const coverFormats: CoverFormat[] = [
     {
       id: 'hardcover',
-      name: 'Elegant Glossy',
+      name: 'Premium Hardcover',
       price: 59.99,
-      description: 'A vibrant glossy finish with bright, eye-catching colors.',
+      description: 'A premium hardcover with an eye-catching glossy finish',
       imageSrc: hardcoverWebp
     },
     {
       id: 'hardcover_matte',
-      name: 'Classic Matte',
-      price: 49.99,
-      description: 'An elegant matte finish – perfect for timeless gifts.',
+      name: 'Hardcover',
+      price: 54.99,
+      description: 'A hardcover with quality matte finish - perfect for timeless gifts',
       imageSrc: softcoverWebp
     },
     {
       id: 'paperback',
-      name: 'Square Paperback',
+      name: 'Softcover',
       price: 39.99,
-      description: 'A unique square format paperback – perfect for modern style.',
-      imageSrc: softcoverWebp // 暂时使用现有图片，之后可以替换
+      description: 'A lovely and lightweight softcover printed on thick and durable paper.',
+      imageSrc: softcover1Jpg // 修改为新图片
     }
   ];
 
@@ -188,8 +189,9 @@ const FormatStep = () => {
       previousStep="/create/love/love-story/generate"
       currentStep={8}
       totalSteps={8}
+      contentMaxWidth="max-w-5xl"
     >
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         {/* 免运费提示 - 移动到顶部副标题下方 */}
         <div className="mt-[-24px] mb-8 bg-green-50 border border-green-200 rounded-lg p-3 flex items-center justify-center">
           <div className="flex flex-col items-center text-center">
@@ -204,7 +206,7 @@ const FormatStep = () => {
           {coverFormats.map((format, idx) => (
             <div
               key={format.id}
-              className={`border rounded-lg overflow-hidden transition-all ${
+              className={`border rounded-lg overflow-hidden transition-all flex flex-col ${
                 selectedFormat === format.id
                   ? 'border-[#0C5C4C] ring-1 ring-[#0C5C4C]'
                   : 'border-gray-200'
@@ -255,12 +257,12 @@ const FormatStep = () => {
               </div>
 
               {/* 文本内容 */}
-              <div className="p-7">
+              <div className="p-7 flex flex-col flex-grow">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-2xl font-bold">{format.name}</h3>
                   <p className="text-xl font-bold">${format.price.toFixed(2)}</p>
                 </div>
-                <p className="text-gray-600 mb-6">{format.description}</p>
+                <p className="text-gray-600 mb-6 flex-grow">{format.description}</p>
 
                 {/* 选择按钮 */}
                 <Button
