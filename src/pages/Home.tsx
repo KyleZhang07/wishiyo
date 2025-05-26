@@ -82,7 +82,7 @@ export default function Home() {
                     src="/images/hero/left2.png" 
                     alt="Personalized story book" 
                     className="w-auto h-auto object-contain" 
-                    style={{ transform: 'scale(2.376)' }} 
+                    style={{ transform: 'scale(2.16)' }} 
                   />
                 </div>
                 {/* Front book - left1.png */}
@@ -96,7 +96,7 @@ export default function Home() {
                     src="/images/hero/left1.png" 
                     alt="Personalized story book with custom character" 
                     className="w-auto h-auto object-contain" 
-                    style={{ transform: 'scale(3.564)' }} 
+                    style={{ transform: 'scale(3.24)' }} 
                   />
                 </div>
               </div>
@@ -145,7 +145,7 @@ export default function Home() {
                     src="/images/hero/right2.png" 
                     alt="Illustrated picture book" 
                     className="w-auto h-auto object-contain" 
-                    style={{ transform: 'scale(2.16)' }} 
+                    style={{ transform: 'scale(2.052)' }} 
                   />
                 </div>
                 {/* Front book - right1.png */}
@@ -159,7 +159,7 @@ export default function Home() {
                     src="/images/hero/right1.png" 
                     alt="Colorful illustrated picture book with vibrant cover design" 
                     className="w-auto h-auto object-contain" 
-                    style={{ transform: 'scale(3.24)' }} 
+                    style={{ transform: 'scale(3.078)' }} 
                   />
                 </div>
               </div>
