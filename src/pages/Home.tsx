@@ -103,17 +103,17 @@ export default function Home() {
             </div>
 
             {/* Center - Text and Buttons */}
-            <div className="flex flex-col items-center text-center space-y-8">
-              <h1 className="text-5xl md:text-6xl font-serif font-bold tracking-tighter">
+            <div className="flex flex-col items-center text-center space-y-8 mt-8">
+              <h1 className="text-5xl md:text-5xl font-serif font-bold tracking-tighter">
                 Create & Print a Full Book in 3 minutes
               </h1>
-              <p className="text-xl text-gray-500 max-w-[500px]">
+              <p className="text-lg text-gray-500 max-w-[500px]">
                 The only book where every page is truly about them, authored by you
               </p>
-              <div className="flex flex-col items-center gap-8 w-full max-w-[320px]">
+              <div className="flex flex-col items-center gap-8 w-full max-w-[300px]">
                 <button
                   onClick={() => navigate('/create/friends/funny-biography/author')}
-                  className="w-full bg-[#FF6B35] text-white py-3 px-5 rounded-md text-center font-medium text-base hover:bg-[#FF6B35]/90 transition-all duration-300 shadow-sm hover:shadow-md mt-8"
+                  className="w-full bg-[#FF6B35] text-white py-3 px-5 rounded-md text-center font-medium text-base hover:bg-[#FF6B35]/90 transition-all duration-300 shadow-sm hover:shadow-md mt-4"
                 >
                   Create Story Book
                 </button>
