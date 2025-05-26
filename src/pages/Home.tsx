@@ -67,11 +67,38 @@ export default function Home() {
 
         <div className="container px-4 md:px-6 mx-auto relative z-20">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
-            {/* Left side - Picture Book */}
+            {/* Left side - Stacked Books */}
             <div className="hidden md:flex justify-center relative h-[500px]">
-              {/* Single picture book */}
-              <div className="absolute" style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}>
-                <img src="/images/hero/illustrated-book1.png" alt="Colorful illustrated picture book with vibrant cover design" className="w-auto h-auto object-contain" style={{ transform: 'scale(1.6)' }} />
+              {/* Left stacked books */}
+              <div className="relative w-full h-full flex items-center justify-center">
+                {/* Back book - left2.png */}
+                <div className="absolute" style={{ 
+                  left: '38%', 
+                  top: '43%', 
+                  transform: 'translate(-50%, -50%) rotate(-15deg)',
+                  zIndex: 1
+                }}>
+                  <img 
+                    src="/images/hero/left2.png" 
+                    alt="Personalized story book" 
+                    className="w-auto h-auto object-contain" 
+                    style={{ transform: 'scale(2.376)' }} 
+                  />
+                </div>
+                {/* Front book - left1.png */}
+                <div className="absolute" style={{ 
+                  left: '60%', 
+                  top: '55%', 
+                  transform: 'translate(-50%, -50%) rotate(-5deg)',
+                  zIndex: 2
+                }}>
+                  <img 
+                    src="/images/hero/left1.png" 
+                    alt="Personalized story book with custom character" 
+                    className="w-auto h-auto object-contain" 
+                    style={{ transform: 'scale(3.564)' }} 
+                  />
+                </div>
               </div>
             </div>
 
@@ -103,19 +130,38 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Right side - Story Book */}
+            {/* Right side - Stacked Books */}
             <div className="hidden md:flex justify-center relative h-[500px]">
-              {/* Single story book */}
-              <div className="absolute" style={{ right: '50%', top: '50%', transform: 'translate(50%, -50%)' }}>
-                <picture>
-                  <source srcSet="/images/hero/personalized-book1.webp" type="image/webp" />
+              {/* Right stacked books */}
+              <div className="relative w-full h-full flex items-center justify-center">
+                {/* Back book - right2.png */}
+                <div className="absolute" style={{ 
+                  right: '38%', 
+                  top: '43%', 
+                  transform: 'translate(50%, -50%) rotate(15deg)',
+                  zIndex: 1
+                }}>
                   <img 
-                    src="/images/hero/personalized-book1.webp" 
-                    alt="Personalized story book with custom characters" 
+                    src="/images/hero/right2.png" 
+                    alt="Illustrated picture book" 
                     className="w-auto h-auto object-contain" 
-                    style={{ transform: 'scale(1.6)' }} 
+                    style={{ transform: 'scale(2.16)' }} 
                   />
-                </picture>
+                </div>
+                {/* Front book - right1.png */}
+                <div className="absolute" style={{ 
+                  right: '60%', 
+                  top: '55%', 
+                  transform: 'translate(50%, -50%) rotate(5deg)',
+                  zIndex: 2
+                }}>
+                  <img 
+                    src="/images/hero/right1.png" 
+                    alt="Colorful illustrated picture book with vibrant cover design" 
+                    className="w-auto h-auto object-contain" 
+                    style={{ transform: 'scale(3.24)' }} 
+                  />
+                </div>
               </div>
             </div>
           </div>
