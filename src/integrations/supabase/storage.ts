@@ -57,14 +57,42 @@ export const uploadImageToStorage = async (
     // Get client ID for the current user
     const clientId = getClientId();
     
-    // Generate a session ID if not provided
-    const currentSessionId = sessionId || localStorage.getItem('current_session_id') || `session_${Date.now()}`;
-    
-    // Store the session ID if it's new
-    if (!localStorage.getItem('current_session_id')) {
-      localStorage.setItem('current_session_id', currentSessionId);
+    // Robustly determine currentSessionId
+    let resolvedSessionId: string;
+    const paramSessionId = sessionId; // function argument
+    const lsSessionId = localStorage.getItem('current_session_id');
+
+    if (paramSessionId && paramSessionId.trim() !== '') {
+        resolvedSessionId = paramSessionId.trim();
+        // If param is used, and localStorage was empty/invalid, update localStorage
+        // This matches original intent of setting localStorage if it was initially empty and param was provided
+        if (!lsSessionId || lsSessionId.trim() === '') {
+            localStorage.setItem('current_session_id', resolvedSessionId);
+        }
+    } else if (lsSessionId && lsSessionId.trim() !== '') {
+        resolvedSessionId = lsSessionId.trim();
+        // If localStorage version was used but needed trimming, update it
+        if (lsSessionId !== resolvedSessionId) {
+            localStorage.setItem('current_session_id', resolvedSessionId);
+        }
+    } else {
+        // Fallback to generating a new session ID if param and localStorage are invalid/empty
+        resolvedSessionId = `session_${Date.now()}`;
+        localStorage.setItem('current_session_id', resolvedSessionId);
     }
+    const currentSessionId = resolvedSessionId;
     
+    // Trim the path argument
+    const trimmedPath = path.trim();
+    if (path !== trimmedPath) {
+        console.warn(`Path argument "${path}" was trimmed to "${trimmedPath}" before uploading.`);
+    }
+    if (trimmedPath === '') {
+        console.error("Critical: Path argument to uploadImageToStorage became empty after trimming. Using a placeholder name.");
+        // Using a placeholder ensures the filename is not just '-<timestamp>.jpg' at the root of the session.
+        // This situation ideally should be fixed upstream where `path` is generated.
+    }
+
     // Convert base64 to Blob
     const base64Data = base64Image.split(',')[1];
     const byteCharacters = atob(base64Data);
@@ -83,7 +111,9 @@ export const uploadImageToStorage = async (
     const blob = new Blob(byteArrays, { type: 'image/jpeg' });
     
     // Upload file to Supabase Storage with client ID and session ID in the path
-    const fileName = `${clientId}/${currentSessionId}/${path}-${Date.now()}.jpg`;
+    // If trimmedPath is empty, filename will be `clientId/currentSessionId/-${Date.now()}.jpg`
+    // which is a valid filename.
+    const fileName = `${clientId}/${currentSessionId}/${trimmedPath}-${Date.now()}.jpg`;
     const { data, error } = await supabase.storage
       .from(bucket)
       .upload(fileName, blob, {
