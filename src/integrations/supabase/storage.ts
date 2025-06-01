@@ -11,8 +11,16 @@ export const getClientId = (): string => {
   const STORAGE_KEY = 'wishiyo_client_id';
   let clientId = localStorage.getItem(STORAGE_KEY);
   
-  if (!clientId) {
-    // Generate a new client ID if none exists
+  if (clientId) {
+    // Sanitize the clientId if fetched from localStorage
+    const sanitizedClientId = clientId.replace(/[^a-zA-Z0-9_\-]/g, '-');
+    if (clientId !== sanitizedClientId) {
+      console.warn(`Client ID "${clientId}" was sanitized to "${sanitizedClientId}".`);
+      localStorage.setItem(STORAGE_KEY, sanitizedClientId); // Store the sanitized version
+      clientId = sanitizedClientId;
+    }
+  } else {
+    // Generate a new client ID if none exists (already clean)
     clientId = `client_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
     localStorage.setItem(STORAGE_KEY, clientId);
   }
@@ -80,18 +88,35 @@ export const uploadImageToStorage = async (
         resolvedSessionId = `session_${Date.now()}`;
         localStorage.setItem('current_session_id', resolvedSessionId);
     }
-    const currentSessionId = resolvedSessionId;
+    const currentSessionIdFromResolution = resolvedSessionId;
     
     // Trim the path argument
-    const trimmedPath = path.trim();
-    if (path !== trimmedPath) {
-        console.warn(`Path argument "${path}" was trimmed to "${trimmedPath}" before uploading.`);
+    const initiallyTrimmedPath = path.trim();
+    if (path !== initiallyTrimmedPath) {
+        console.warn(`Path argument "${path}" was trimmed to "${initiallyTrimmedPath}" before uploading.`);
     }
-    if (trimmedPath === '') {
+    if (initiallyTrimmedPath === '') {
         console.error("Critical: Path argument to uploadImageToStorage became empty after trimming. Using a placeholder name.");
         // Using a placeholder ensures the filename is not just '-<timestamp>.jpg' at the root of the session.
         // This situation ideally should be fixed upstream where `path` is generated.
     }
+
+    // Sanitize all path components before final assembly
+    const sanitizePathComponent = (component: string, componentName: string): string => {
+      if (typeof component !== 'string') {
+        console.warn(`Path component "${componentName}" was not a string (${typeof component}), using empty string.`);
+        return '';
+      }
+      const sanitized = component.replace(/[^a-zA-Z0-9_\-]/g, '-');
+      if (component !== sanitized) {
+        console.warn(`Path component "${componentName}" value "${component}" was sanitized to "${sanitized}".`);
+      }
+      return sanitized;
+    };
+
+    const finalClientId = sanitizePathComponent(clientId, "clientId"); // Already sanitized in getClientId, but good practice to ensure.
+    const finalSessionId = sanitizePathComponent(currentSessionIdFromResolution, "currentSessionId");
+    const finalTrimmedPath = sanitizePathComponent(initiallyTrimmedPath, "trimmedPath");
 
     // Convert base64 to Blob
     const base64Data = base64Image.split(',')[1];
@@ -111,9 +136,9 @@ export const uploadImageToStorage = async (
     const blob = new Blob(byteArrays, { type: 'image/jpeg' });
     
     // Upload file to Supabase Storage with client ID and session ID in the path
-    // If trimmedPath is empty, filename will be `clientId/currentSessionId/-${Date.now()}.jpg`
+    // If finalTrimmedPath is empty, filename will be `finalClientId/finalSessionId/-${Date.now()}.jpg`
     // which is a valid filename.
-    const fileName = `${clientId}/${currentSessionId}/${trimmedPath}-${Date.now()}.jpg`;
+    const fileName = `${finalClientId}/${finalSessionId}/${finalTrimmedPath}-${Date.now()}.jpg`;
     const { data, error } = await supabase.storage
       .from(bucket)
       .upload(fileName, blob, {
@@ -121,8 +146,8 @@ export const uploadImageToStorage = async (
         upsert: true,
         // Add metadata to identify owner
         metadata: {
-          client_id: clientId,
-          session_id: currentSessionId
+          client_id: finalClientId, // Use the sanitized version for metadata too
+          session_id: finalSessionId // Use the sanitized version for metadata too
         }
       });
     
